@@ -1,0 +1,53 @@
+data_set_name: processed_data_yz.csv
+URI: ./
+
+columns:
+  - name: x-Amplitude
+    type: scalar
+    description: ".."
+    min: 0.2
+    max: 0.9
+    quantity: acceleration
+    unit: meter
+  - name: x-Frequency
+    min: 0.2
+    max: 0.3
+    quantity: frequency
+    unit: Hertz
+  - name: y-Amplitude
+    min: 0.0
+    max: 0.8
+    quantity: length
+    unit: meter
+  - name: y-Frequency
+    min: 0.2
+    max: 0.3
+    quantity: frequency
+    unit: Hertz
+  - name: z-Amplitude
+    min: 0.0
+    max: 0.6
+    quantity: length
+    unit: meter
+  - name: z-Frequency
+    min: 0.2
+    max: 0.3
+    quantity: frequency
+    unit: Hertz
+  - name: Growth-rate
+    min: 0.0
+    max: 0.1
+    quantity: ~
+    unit: ~
+  - name: Estimated-Failure-Time
+    min: -62
+    max: 11000
+    quantity: Time
+    unit: seconds
+
+features:
+  - func: my_func_repo:mult
+    params:
+      - x-Amplitude
+      - x-Frequency
+    target: cool_attribute
