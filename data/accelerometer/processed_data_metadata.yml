@@ -1,4 +1,4 @@
-data_set_name: processed_data_yz.csv
+data_set_name: processed_data.csv
 URI: ./
 
 columns:
