@@ -14,8 +14,8 @@ message ColumnMetaData {
 
 enum ColumnType {
     COLUMNTYPE_UNDEFINED = 0;
-    COLUMNTYPE_DATA = 1;
-    COLUMNTYPE_LABEL = 2;
+    COLUMNTYPE_INPUT = 1;
+    COLUMNTYPE_TARGET = 2;
 }
 
 message DataPackage {
