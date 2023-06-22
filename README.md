@@ -1,5 +1,33 @@
 # ToyExample_PassiveDataLearning
 
+## Installation
+
+The *one-script-to-run-everything*-file is the `debug_run.py`. 
+To be able to use it, you should first setup a virtual python environment:
+
+```bash
+python -m venv venv
+# On Linux:
+. ./venv/bin/activate
+# Or for windows/powershell:
+.\venv\Scripts\activate.ps1
+```
+
+Afterwards, you can install the package with
+
+```bash
+pip install -e .
+```
+
+and finally start the script with
+
+```bash
+python debug_run.py
+```
+
+Currently, it should run the training and then exit with an error afterwards.
+
+
 ## Downloaded Data
 
 The Accelerometer Dataset (00611) is found at the UCI Machine Learning Repository <https://archive.ics.uci.edu/ml/datasets/Accelerometer>.

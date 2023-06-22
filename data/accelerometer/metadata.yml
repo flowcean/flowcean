@@ -1,5 +1,8 @@
-data_set_name: processed_data.csv
-URI: ./
+data_set_name: data/accelerometer/processed_data.csv
+train_data_set_name: train.csv
+test_data_set_name: test.csv
+URI: ./data/accelerometer
+
 
 columns:
   - name: x-Amplitude
