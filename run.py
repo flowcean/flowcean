@@ -16,8 +16,8 @@ def main():
 
     predictions = learner.predict(test_data)
 
-    print(f"RMSE: {rmse(test_data.outputs, predictions)}")
-    print(f"MAE: {mae(test_data.outputs, predictions)}")
+    print(f"RMSE: {rmse([outputs for _, outputs in test_data], predictions)}")
+    print(f"MAE: {mae([outputs for _, outputs in test_data], predictions)}")
 
 
 if __name__ == "__main__":
