@@ -2,7 +2,7 @@
 
 ## Installation
 
-The *one-script-to-run-everything*-file is the `debug_run.py`. 
+The _one-script-to-run-everything_-file is the `run.py`.
 To be able to use it, you should first setup a virtual python environment:
 
 ```bash
@@ -22,11 +22,10 @@ pip install -e .
 and finally start the script with
 
 ```bash
-python debug_run.py
+python run.py
 ```
 
-Currently, it should run the training and then exit with an error afterwards.
-
+Currently, it should run the training and exit with an output of metrics evaluated on the test data.
 
 ## Downloaded Data
 
@@ -65,14 +64,4 @@ Run the the script to generate a train and test split.
 ./split_train_test.py data/accelerometer/processed_data.csv
 ```
 
-The dataset is split in 80%/20% fashioln and the respective files are placed at `data/accelerometer/train.csv` and `data/accelerometer/test.csv`.
-
-### Start the Training Process
-
-Start the training process of the [pytorch-lightning](https://lightning.ai/) neural network learner to train a neural network.
-
-```sh
-python learner.py
-```
-
-The learner expects the `training.csv` and `test.csv` data to reside in `data/accelerometer/`.
+The dataset is split in 80%/20% fashion and the respective files are placed at `data/accelerometer/train.csv` and `data/accelerometer/test.csv`.
