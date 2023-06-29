@@ -1,0 +1,16 @@
+data:
+  metadata: file:../data/accelerometer/metadata.yml
+  inputs:
+    - y-Amplitude
+    - z-Amplitude
+    - Growth-rate
+  outputs:
+    - Estimated-Failure-Time
+
+learner:
+  method: MLP
+  parameters:
+    learning_rate: 1e-3
+    batch_size: 64
+    num_workers: 8
+    max_epochs: 1

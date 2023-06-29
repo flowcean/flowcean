@@ -1,67 +1,65 @@
-from pathlib import Path
-
 import lightning
-import polars as pl
+import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import Dataset as _Dataset, random_split
+from torch.utils.data.dataloader import DataLoader
+
+from agenc.data import Data
 
 
-class AccelerometerDataset(Dataset):
-    def __init__(self, root: Path | str, train: bool = True):
-        root = Path(root)
-        if train:
-            filename = "train.csv"
-        else:
-            filename = "test.csv"
-        data = pl.read_csv(root / filename)
-        print(data)
-        self.inputs = data.select(
-            "y-Amplitude",
-            "z-Amplitude",
-            "Growth-rate",
-        ).to_numpy()
-        self.targets = data.select("Estimated-Failure-Time").to_numpy()
+class Dataset(_Dataset):
+    def __init__(self, data: Data):
+        self.data = data
 
-    def __len__(self):
-        return len(self.targets)
+    def __len__(self) -> int:
+        return len(self.data)
 
-    def __getitem__(self, idx):
-        inputs = torch.tensor(self.inputs[idx], dtype=torch.float32)
-        targets = torch.tensor(self.targets[idx], dtype=torch.float32)
-        return inputs, targets
+    def __getitem__(self, item: int) -> tuple[torch.Tensor, torch.Tensor]:
+        inputs, outputs = self.data[item]
+        return torch.Tensor(inputs), torch.Tensor(outputs)
 
 
-class AccelerometerData(lightning.LightningDataModule):
-    def __init__(self):
-        super().__init__()
+class Learner:
+    def __init__(self, parameters: dict):
+        self.parameters = parameters
+        self.model = MLP(learning_rate=parameters["learning_rate"])
 
-    def setup(self, stage=None):
-        if stage == "fit" or stage == "validate" or stage is None:
-            full_training_dataset = AccelerometerDataset(
-                "data/accelerometer/",
-                train=True,
-            )
-            train_len = int(0.8 * len(full_training_dataset))
-            val_len = len(full_training_dataset) - train_len
-            self.train_dataset, self.val_dataset = random_split(
-                full_training_dataset,
-                [train_len, val_len],
-            )
-        if stage == "test" or stage is None:
-            self.test_dataset = AccelerometerDataset("data/accelerometer", train=False)
+    def train(self, dataset: Data):
+        train_len = int(0.8 * len(dataset))
+        validation_len = len(dataset) - train_len
+        train_dataset, val_dataset = random_split(
+            Dataset(dataset),
+            [train_len, validation_len],
+        )
+        train_dataloader = DataLoader(
+            train_dataset,
+            batch_size=self.parameters["batch_size"],
+            shuffle=True,
+            num_workers=self.parameters["num_workers"],
+        )
+        validation_dataloader = DataLoader(
+            val_dataset,
+            batch_size=self.parameters["batch_size"],
+            num_workers=self.parameters["num_workers"],
+        )
+        trainer = lightning.Trainer(max_epochs=self.parameters["max_epochs"])
+        trainer.fit(self.model, train_dataloader, validation_dataloader)
 
-    def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=64, shuffle=True)
-
-    def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=64)
-
-    def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=64)
+    def predict(self, dataset: Data) -> np.ndarray:
+        dataloader = DataLoader(
+            Dataset(dataset),
+            batch_size=self.parameters["batch_size"],
+            num_workers=self.parameters["num_workers"],
+        )
+        predictions = []
+        for batch in dataloader:
+            inputs, _ = batch
+            predictions.append(self.model(inputs).detach().numpy())
+        return np.concatenate(predictions)
 
 
 class MLP(lightning.LightningModule):
-    def __init__(self, learning_rate: float = 1e-3):
+    def __init__(self, learning_rate: float):
         super().__init__()
         self.learning_rate = learning_rate
         self.model = torch.nn.Sequential(
@@ -97,10 +95,3 @@ class MLP(lightning.LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-
-
-if __name__ == "__main__":
-    data = AccelerometerData()
-    model = MLP()
-    trainer = lightning.Trainer(max_epochs=10)
-    trainer.fit(model, data)

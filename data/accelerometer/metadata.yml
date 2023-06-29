@@ -1,12 +1,9 @@
-data_set_name: data/accelerometer/processed_data.csv
-train_data_set_name: train.csv
-test_data_set_name: test.csv
-URI: ./data/accelerometer
-
+train_data: file:./train.csv
+test_data: file:./test.csv
 
 columns:
   - name: x-Amplitude
-    type: scalar
+    kind: scalar
     description: ".."
     min: 0.2
     max: 0.9
