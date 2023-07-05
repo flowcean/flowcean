@@ -1,6 +1,9 @@
+import argparse
+from pathlib import Path
+
 from agenc.data import Dataset
 from agenc.experiment import Experiment
-from agenc.metrics import rmse, mae
+from agenc.metrics import mae, rmse
 
 
 def instantiate_learner(experiment: Experiment):
@@ -12,7 +15,16 @@ def instantiate_learner(experiment: Experiment):
 
 
 def main():
-    experiment = Experiment.load_from_path("experiments/failure_time_prediction.yaml")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--experiment",
+        type=Path,
+        required=True,
+        help="Path to experiment file",
+    )
+    arguments = parser.parse_args()
+
+    experiment = Experiment.load_from_path(arguments.experiment)
 
     dataset = Dataset.from_experiment(experiment)
 
