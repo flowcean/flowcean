@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Tuple
 
 import lightning
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
@@ -19,7 +20,7 @@ class TorchDataset(_Dataset):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __getitem__(self, item: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, item: int) -> Tuple[torch.Tensor, torch.Tensor]:
         inputs, outputs = self.data[item]
         return torch.Tensor(inputs), torch.Tensor(outputs)
 
