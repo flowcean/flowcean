@@ -1,4 +1,5 @@
 import argparse
+from functools import reduce
 from pathlib import Path
 
 from agenc.data import Dataset
@@ -27,6 +28,10 @@ def main():
 
     dataset = Dataset.from_experiment(experiment)
 
+    preprocessors = [
+        _instantiate_class(preprocessor.class_path, preprocessor.init_arguments)
+        for preprocessor in experiment.data.preprocessors
+    ]
     learner = _instantiate_class(
         experiment.learner.class_path,
         experiment.learner.init_arguments,
@@ -35,6 +40,12 @@ def main():
         _instantiate_class(metric.class_path, metric.init_arguments)
         for metric in experiment.metrics
     ]
+
+    dataset = reduce(
+        lambda dataset, transform: transform(dataset),
+        preprocessors,
+        dataset,
+    )
 
     train_data, test_data = dataset.train_test_split(
         experiment.data.train_test_split,
@@ -47,7 +58,7 @@ def main():
     predictions = learner.predict(test_data)
 
     for metric in metrics:
-        print(f"{metric.name}: {metric(test_data.outputs, predictions)}")
+        print(f"{metric.name}: {metric(test_data.outputs(), predictions)}")
 
 
 if __name__ == "__main__":

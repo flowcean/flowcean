@@ -16,13 +16,15 @@ from agenc.learner import Learner
 
 class TorchDataset(_Dataset):
     def __init__(self, data: Dataset):
-        self.data = data
+        self.inputs = data.inputs()
+        self.outputs = data.outputs()
+        assert len(self.inputs) == len(self.outputs)
 
     def __len__(self) -> int:
-        return len(self.data)
+        return len(self.inputs)
 
     def __getitem__(self, item: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        inputs, outputs = self.data[item]
+        inputs, outputs = self.inputs[item], self.outputs[item]
         return torch.Tensor(inputs), torch.Tensor(outputs)
 
 
@@ -107,11 +109,7 @@ class MultilayerPerceptron(lightning.LightningModule):
         )
 
     def forward(self, x):
-        input_mean = torch.Tensor([0.12495715, 0.10395051, 0.02667484])
-        input_std = torch.Tensor([0.17149029, 0.11083332, 0.01697188])
-        output_mean = torch.Tensor([3725.85228508])
-        output_std = torch.Tensor([3710.73972826])
-        return self.model((x - input_mean) / input_std) * output_std + output_mean
+        return self.model(x)
 
     def _shared_eval_step(self, batch):
         inputs, targets = batch
