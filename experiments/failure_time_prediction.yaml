@@ -12,6 +12,10 @@ data:
 
 learner:
   class_path: agenc.simple_dense.SimpleDense
-  parameters:
+  init_arguments:
     learning_rate: 1e-2
     batch_size: 64
+
+metrics:
+  - class_path: agenc.metrics.RMSE
+  - class_path: agenc.metrics.MAE

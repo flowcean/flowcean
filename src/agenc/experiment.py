@@ -11,7 +11,7 @@ from agenc.metadata import AgencMetadata, _file_uri_to_path
 @dataclass
 class Learner:
     class_path: str
-    parameters: dict
+    init_arguments: dict
 
 
 @dataclass
@@ -22,11 +22,18 @@ class Data:
 
 
 @dataclass
+class Metric:
+    class_path: str
+    init_arguments: dict
+
+
+@dataclass
 class Experiment:
     random_state: int
     metadata: AgencMetadata
     learner: Learner
     data: Data
+    metrics: List[Metric]
 
     @classmethod
     def load_from_path(cls, path: Union[str, os.PathLike]) -> "Experiment":
@@ -38,17 +45,25 @@ class Experiment:
         )
         learner = Learner(
             class_path=content["learner"]["class_path"],
-            parameters=content["learner"]["parameters"],
+            init_arguments=content["learner"].get("init_arguments", {}),
         )
         data = Data(
             inputs=content["data"]["inputs"],
             outputs=content["data"]["outputs"],
             train_test_split=content["data"]["train_test_split"],
         )
+        metrics = [
+            Metric(
+                class_path=metric["class_path"],
+                init_arguments=metric.get("init_arguments", {}),
+            )
+            for metric in content.get("metrics", [])
+        ]
 
         return cls(
             random_state=random_state,
             metadata=metadata,
             learner=learner,
             data=data,
+            metrics=metrics,
         )
