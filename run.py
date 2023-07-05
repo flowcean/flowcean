@@ -9,7 +9,7 @@ def main():
 
     dataset = Dataset.from_experiment(experiment)
 
-    learner = Learner(experiment.learner.parameters)
+    learner = Learner(**experiment.learner.parameters)
 
     learner.train(dataset.train_data)
 

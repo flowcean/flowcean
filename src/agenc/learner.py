@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import lightning
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -22,9 +25,17 @@ class Dataset(_Dataset):
 
 
 class Learner:
-    def __init__(self, parameters: dict):
-        self.parameters = parameters
-        self.model = MLP(learning_rate=parameters["learning_rate"])
+    def __init__(
+        self,
+        learning_rate: float = 1e-3,
+        batch_size: int = 32,
+        num_workers: int = os.cpu_count() or 1,
+        max_epochs: int = 100,
+    ):
+        self.model = MLP(learning_rate=learning_rate)
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.max_epochs = max_epochs
 
     def train(self, dataset: DataSplit):
         train_len = int(0.8 * len(dataset))
@@ -35,14 +46,14 @@ class Learner:
         )
         train_dataloader = DataLoader(
             train_dataset,
-            batch_size=self.parameters["batch_size"],
+            batch_size=self.batch_size,
             shuffle=True,
-            num_workers=self.parameters["num_workers"],
+            num_workers=self.num_workers,
         )
         validation_dataloader = DataLoader(
             val_dataset,
-            batch_size=self.parameters["batch_size"],
-            num_workers=self.parameters["num_workers"],
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
         )
         early_stopping = EarlyStopping(
             monitor="validate/loss",
@@ -50,14 +61,13 @@ class Learner:
             mode="min",
         )
         checkpoint_callback = ModelCheckpoint(
-            dirpath="checkpoints/",
-            filename="model-{epoch:02d}",
             monitor="validate/loss",
+            mode="min",
             save_last=True,
         )
-        logger = TensorBoardLogger(save_dir="logs/", default_hp_metric=False)
+        logger = TensorBoardLogger(Path.cwd(), default_hp_metric=False)
         trainer = lightning.Trainer(
-            max_epochs=self.parameters["max_epochs"],
+            max_epochs=self.max_epochs,
             callbacks=[early_stopping, checkpoint_callback],
             logger=logger,
             enable_checkpointing=True,
@@ -71,8 +81,8 @@ class Learner:
     def predict(self, dataset: DataSplit) -> np.ndarray:
         dataloader = DataLoader(
             Dataset(dataset),
-            batch_size=self.parameters["batch_size"],
-            num_workers=self.parameters["num_workers"],
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
         )
         predictions = []
         for batch in dataloader:
