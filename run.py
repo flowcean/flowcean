@@ -9,14 +9,19 @@ def main():
 
     dataset = Dataset.from_experiment(experiment)
 
+    train_data, test_data = dataset.train_test_split(
+        experiment.data.train_test_split,
+        experiment.random_state,
+    )
+
     learner = Learner(**experiment.learner.parameters)
 
-    learner.train(dataset.train_data)
+    learner.train(train_data)
 
-    predictions = learner.predict(dataset.test_data)
+    predictions = learner.predict(test_data)
 
-    print(f"RMSE: {rmse([outputs for _, outputs in dataset.test_data], predictions)}")
-    print(f"MAE: {mae([outputs for _, outputs in dataset.test_data], predictions)}")
+    print(f"RMSE: {rmse([outputs for _, outputs in test_data], predictions)}")
+    print(f"MAE: {mae([outputs for _, outputs in test_data], predictions)}")
 
 
 if __name__ == "__main__":
