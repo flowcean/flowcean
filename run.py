@@ -1,7 +1,14 @@
 from agenc.data import Dataset
 from agenc.experiment import Experiment
 from agenc.metrics import rmse, mae
-from agenc.learner import Learner
+
+
+def instantiate_learner(experiment: Experiment):
+    class_module, class_name = experiment.learner.class_path.rsplit(".", 1)
+    module = __import__(class_module, fromlist=[class_name])
+    args_class = getattr(module, class_name)
+
+    return args_class(**experiment.learner.parameters)
 
 
 def main():
@@ -14,8 +21,7 @@ def main():
         experiment.random_state,
     )
 
-    learner = Learner(**experiment.learner.parameters)
-
+    learner = instantiate_learner(experiment)
     learner.train(train_data)
 
     predictions = learner.predict(test_data)

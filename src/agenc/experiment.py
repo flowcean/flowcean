@@ -10,7 +10,7 @@ from agenc.metadata import AgencMetadata, _file_uri_to_path
 
 @dataclass
 class Learner:
-    method: str
+    class_path: str
     parameters: dict
 
 
@@ -37,7 +37,7 @@ class Experiment:
             _file_uri_to_path(content["data"]["metadata"], path.parent)
         )
         learner = Learner(
-            method=content["learner"]["method"],
+            class_path=content["learner"]["class_path"],
             parameters=content["learner"]["parameters"],
         )
         data = Data(

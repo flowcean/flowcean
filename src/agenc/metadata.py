@@ -28,6 +28,7 @@ class AgencMetadata:
         path = Path(path)
         content = YAML(typ="safe").load(path)
 
+        path = _file_uri_to_path(content["uri"], path.parent)
         columns = [
             AgencMetadatum(
                 name=column["name"],
@@ -40,8 +41,6 @@ class AgencMetadata:
             )
             for column in content["columns"]
         ]
-
-        path = _file_uri_to_path(content["uri"], path.parent)
 
         return cls(
             data_path=path,
