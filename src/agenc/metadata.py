@@ -20,8 +20,7 @@ class AgencMetadatum:
 
 @dataclass
 class AgencMetadata:
-    train_data: Path
-    test_data: Path
+    data_path: Path
     columns: List[AgencMetadatum]
 
     @classmethod
@@ -42,12 +41,10 @@ class AgencMetadata:
             for column in content["columns"]
         ]
 
-        train_data = _file_uri_to_path(content["train_data"], path.parent)
-        test_data = _file_uri_to_path(content["test_data"], path.parent)
+        path = _file_uri_to_path(content["uri"], path.parent)
 
         return cls(
-            train_data=train_data,
-            test_data=test_data,
+            data_path=path,
             columns=columns,
         )
 

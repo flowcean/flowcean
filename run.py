@@ -1,4 +1,4 @@
-from agenc.data import Data
+from agenc.data import Dataset
 from agenc.experiment import Experiment
 from agenc.metrics import rmse, mae
 from agenc.learner import Learner
@@ -7,17 +7,16 @@ from agenc.learner import Learner
 def main():
     experiment = Experiment.load_from_path("experiments/failure_time_prediction.yaml")
 
-    train_data = Data.from_experiment(experiment, "train")
-    test_data = Data.from_experiment(experiment, "test")
+    dataset = Dataset.from_experiment(experiment)
 
     learner = Learner(experiment.learner.parameters)
 
-    learner.train(train_data)
+    learner.train(dataset.train_data)
 
-    predictions = learner.predict(test_data)
+    predictions = learner.predict(dataset.test_data)
 
-    print(f"RMSE: {rmse([outputs for _, outputs in test_data], predictions)}")
-    print(f"MAE: {mae([outputs for _, outputs in test_data], predictions)}")
+    print(f"RMSE: {rmse([outputs for _, outputs in dataset.test_data], predictions)}")
+    print(f"MAE: {mae([outputs for _, outputs in dataset.test_data], predictions)}")
 
 
 if __name__ == "__main__":

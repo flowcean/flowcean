@@ -15,16 +15,24 @@ class Learner:
 
 
 @dataclass
-class Experiment:
-    metadata: AgencMetadata
+class Data:
     inputs: List[str]
     outputs: List[str]
+    train_test_split: float
+
+
+@dataclass
+class Experiment:
+    random_state: int
+    metadata: AgencMetadata
     learner: Learner
+    data: Data
 
     @classmethod
     def load_from_path(cls, path: Union[str, os.PathLike]) -> "Experiment":
         path = Path(path)
         content = YAML(typ="safe").load(path)
+        random_state = content["random_state"]
         metadata = AgencMetadata.load_from_path(
             _file_uri_to_path(content["data"]["metadata"], path.parent)
         )
@@ -32,10 +40,15 @@ class Experiment:
             method=content["learner"]["method"],
             parameters=content["learner"]["parameters"],
         )
-
-        return cls(
-            metadata=metadata,
+        data = Data(
             inputs=content["data"]["inputs"],
             outputs=content["data"]["outputs"],
+            train_test_split=content["data"]["train_test_split"],
+        )
+
+        return cls(
+            random_state=random_state,
+            metadata=metadata,
             learner=learner,
+            data=data,
         )

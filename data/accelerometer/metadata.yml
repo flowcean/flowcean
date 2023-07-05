@@ -1,5 +1,4 @@
-train_data: file:./train.csv
-test_data: file:./test.csv
+uri: file:./processed_data.csv
 
 columns:
   - name: x-Amplitude

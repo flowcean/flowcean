@@ -6,11 +6,11 @@ import torch
 from torch.utils.data import Dataset as _Dataset, random_split
 from torch.utils.data.dataloader import DataLoader
 
-from agenc.data import Data
+from agenc.data import DataSplit
 
 
 class Dataset(_Dataset):
-    def __init__(self, data: Data):
+    def __init__(self, data: DataSplit):
         self.data = data
 
     def __len__(self) -> int:
@@ -26,7 +26,7 @@ class Learner:
         self.parameters = parameters
         self.model = MLP(learning_rate=parameters["learning_rate"])
 
-    def train(self, dataset: Data):
+    def train(self, dataset: DataSplit):
         train_len = int(0.8 * len(dataset))
         validation_len = len(dataset) - train_len
         train_dataset, val_dataset = random_split(
@@ -68,7 +68,7 @@ class Learner:
             checkpoint_callback.best_model_path,
         )
 
-    def predict(self, dataset: Data) -> np.ndarray:
+    def predict(self, dataset: DataSplit) -> np.ndarray:
         dataloader = DataLoader(
             Dataset(dataset),
             batch_size=self.parameters["batch_size"],
