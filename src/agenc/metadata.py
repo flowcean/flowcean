@@ -17,11 +17,17 @@ class AgencMetadatum:
     quantity: Optional[str]
     unit: Optional[str]
 
+@dataclass
+class AgencFeature:
+    metadatum: AgencMetadatum
+    import_str: str
+    params: List[str]
 
 @dataclass
 class AgencMetadata:
     data_path: Path
     columns: List[AgencMetadatum]
+    features: List[AgencFeature]
 
     @classmethod
     def load_from_path(cls, path: Union[str, os.PathLike]) -> "AgencMetadata":
@@ -41,10 +47,28 @@ class AgencMetadata:
             )
             for column in content["columns"]
         ]
+        features = [
+            AgencFeature(
+                AgencMetadatum(
+                    name=feature["name"],
+                    description=feature.get("description"),
+                    kind=feature.get("kind"),
+                    min=feature.get("min"),
+                    max=feature.get("max"),
+                    quantity=feature.get("quantity"),
+                    unit=feature.get("unit")
+                ),
+                import_str=feature["import_str"],
+                params=[attr for attr in feature.get("params", [])],
+            )
+            for feature in content.get("features", [])
+        ]
+
 
         return cls(
             data_path=path,
             columns=columns,
+            features=features
         )
 
 

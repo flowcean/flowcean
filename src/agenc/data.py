@@ -6,6 +6,7 @@ import polars as pl
 from sklearn.model_selection import train_test_split
 
 from agenc.experiment import Experiment
+from .dyna_loader import load_function
 
 
 class Dataset:
@@ -23,6 +24,13 @@ class Dataset:
     def from_experiment(cls, experiment: Experiment) -> "Dataset":
         columns = [column.name for column in experiment.metadata.columns]
         data = pl.read_csv(experiment.metadata.data_path, columns=columns)
+
+        for feature in experiment.metadata.features:
+            data = load_function(feature.import_str)(
+                data, feature.metadatum.name, *(feature.params)
+            )
+            columns.append(feature.metadatum.name)
+
         return cls(
             data=data,
             input_columns=experiment.data.inputs,
