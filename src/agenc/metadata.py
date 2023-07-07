@@ -17,11 +17,13 @@ class AgencMetadatum:
     quantity: Optional[str]
     unit: Optional[str]
 
+
 @dataclass
 class AgencFeature:
     metadatum: AgencMetadatum
     import_str: str
     params: List[str]
+
 
 @dataclass
 class AgencMetadata:
@@ -56,7 +58,7 @@ class AgencMetadata:
                     min=feature.get("min"),
                     max=feature.get("max"),
                     quantity=feature.get("quantity"),
-                    unit=feature.get("unit")
+                    unit=feature.get("unit"),
                 ),
                 import_str=feature["import_str"],
                 params=[attr for attr in feature.get("params", [])],
@@ -64,12 +66,7 @@ class AgencMetadata:
             for feature in content.get("features", [])
         ]
 
-
-        return cls(
-            data_path=path,
-            columns=columns,
-            features=features
-        )
+        return cls(data_path=path, columns=columns, features=features)
 
 
 def _file_uri_to_path(uri: str, root: Path) -> Path:
