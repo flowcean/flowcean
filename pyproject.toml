@@ -14,8 +14,15 @@ description = "AGenC Framework"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules", 
 ]
 dependencies = [
     "scikit-learn",
@@ -24,6 +31,16 @@ dependencies = [
     "polars",
     "ruamel.yaml",
     "pandas",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==23.3.0",
+    "pytest",
+    "coverage",
+    "wheel",
+    "sphinx",
+    "flake8",
 ]
 
 [project.urls]
