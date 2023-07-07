@@ -74,7 +74,6 @@ class Experiment:
             )
             for metric in content.get("metrics", [])
         ]
-        
 
         return cls(
             random_state=random_state,
