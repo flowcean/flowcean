@@ -1,5 +1,0 @@
-scikit-learn
-lightning
-tensorboard
-polars
-ruamel.yaml
