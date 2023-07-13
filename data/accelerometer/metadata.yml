@@ -46,7 +46,7 @@ columns:
 
 features:
   - name: cool_attribute
-    import_str: agenc.feature_engineering.mult
+    import_str: agenc.feature_engineering.multiply
     params:
       - x-Amplitude
       - x-Frequency
