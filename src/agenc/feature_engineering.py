@@ -7,18 +7,19 @@ import polars as pl
 LOG = logging.getLogger(__name__)
 
 
-def mult(
+def multiply(
     data: pl.DataFrame,
-    new_col: str,
-    *cols: List[str],
+    new_column_name: str,
+    first_factor_name: str,
+    second_factor_name: str,
 ) -> pl.DataFrame:
-    if len(cols) < 2:
-        LOG.error(f"Not enough arguments for multiplication: {cols}")
-        return data
-    elif len(cols) > 2:
-        LOG.error(f"More than two arguments are not yet supported!")
-        return data
+    """Multiplies two columns of the dataframe and stores the result as
+    a new column.
 
-    data.with_columns((pl.col(cols[0]) * pl.col(cols[1])).alias(new_col))
+    """
 
-    return data
+    return data.with_columns(
+        (pl.col(first_factor_name) * pl.col(second_factor_name)).alias(
+            new_column_name
+        )
+    )
