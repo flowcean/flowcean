@@ -37,12 +37,20 @@ class TorchDataset(Dataset):
 class SimpleDense(Learner):
     def __init__(
         self,
+        input_size: int,
+        output_size: int,
         learning_rate: float = 1e-3,
+        hidden_dimensions: list[int] = [],
         batch_size: int = 32,
         num_workers: int = os.cpu_count() or 1,
         max_epochs: int = 100,
     ):
-        self.model = MultilayerPerceptron(learning_rate=learning_rate)
+        self.model = MultilayerPerceptron(
+            learning_rate=learning_rate,
+            input_size=input_size,
+            output_size=output_size,
+            hidden_dimensions=hidden_dimensions,
+        )
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.max_epochs = max_epochs
@@ -102,17 +110,25 @@ class SimpleDense(Learner):
 
 
 class MultilayerPerceptron(lightning.LightningModule):
-    def __init__(self, learning_rate: float):
+    def __init__(
+        self,
+        learning_rate: float,
+        input_size: int,
+        output_size: int,
+        hidden_dimensions: list[int] = [],
+    ):
         super().__init__()
         self.save_hyperparameters()
         self.learning_rate = learning_rate
-        self.model = torch.nn.Sequential(
-            torch.nn.Linear(3, 25),
-            torch.nn.LeakyReLU(),
-            torch.nn.Linear(25, 25),
-            torch.nn.LeakyReLU(),
-            torch.nn.Linear(25, 1),
-        )
+
+        layers = []
+        hidden_size = input_size
+        for dimension in hidden_dimensions:
+            layers.append(torch.nn.Linear(hidden_size, dimension))
+            layers.append(torch.nn.LeakyReLU())
+            hidden_size = dimension
+        layers.append(torch.nn.Linear(hidden_size, output_size))
+        self.model = torch.nn.Sequential(*layers)
 
     def forward(self, x):
         return self.model(x)
