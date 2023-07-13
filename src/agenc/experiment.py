@@ -15,7 +15,7 @@ class Learner:
 
 
 @dataclass
-class Preprocessor:
+class Transform:
     class_path: str
     init_arguments: dict
 
@@ -25,7 +25,7 @@ class Data:
     inputs: List[str]
     outputs: List[str]
     train_test_split: float
-    preprocessors: List[Preprocessor]
+    transforms: List[Transform]
 
 
 @dataclass
@@ -54,18 +54,18 @@ class Experiment:
             class_path=content["learner"]["class_path"],
             init_arguments=content["learner"].get("init_arguments", {}),
         )
-        preprocessors = [
-            Preprocessor(
-                class_path=preprocessor["class_path"],
-                init_arguments=preprocessor.get("init_arguments", {}),
+        transforms = [
+            Transform(
+                class_path=transform["class_path"],
+                init_arguments=transform.get("init_arguments", {}),
             )
-            for preprocessor in content["data"].get("preprocessors", [])
+            for transform in content["data"].get("transforms", [])
         ]
         data = Data(
             inputs=content["data"]["inputs"],
             outputs=content["data"]["outputs"],
             train_test_split=content["data"]["train_test_split"],
-            preprocessors=preprocessors,
+            transforms=transforms,
         )
         metrics = [
             Metric(

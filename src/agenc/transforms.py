@@ -1,13 +1,14 @@
-from agenc.data import Dataset
 import polars as pl
 
+from agenc.data import Dataset
 
-class Preprocessor:
+
+class Transform:
     def __call__(self, data: Dataset) -> Dataset:
         raise NotImplementedError
 
 
-class StandardScaler(Preprocessor):
+class StandardScaler(Transform):
     def __call__(self, data: Dataset) -> Dataset:
         return Dataset(
             data=self._transform(data.data),

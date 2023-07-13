@@ -5,6 +5,7 @@ from pathlib import Path
 from agenc.data import Dataset
 from agenc.dyna_loader import load_class
 from agenc.experiment import Experiment
+from agenc.transforms import Transform
 
 
 def main() -> None:
@@ -21,9 +22,9 @@ def main() -> None:
 
     dataset = Dataset.from_experiment(experiment)
 
-    preprocessors = [
-        load_class(preprocessor.class_path, preprocessor.init_arguments)
-        for preprocessor in experiment.data.preprocessors
+    transforms: list[Transform] = [
+        load_class(transform.class_path, transform.init_arguments)
+        for transform in experiment.data.transforms
     ]
     learner = load_class(
         experiment.learner.class_path,
@@ -36,7 +37,7 @@ def main() -> None:
 
     dataset = reduce(
         lambda dataset, transform: transform(dataset),
-        preprocessors,
+        transforms,
         dataset,
     )
 

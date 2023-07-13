@@ -9,8 +9,8 @@ data:
   outputs:
     - Estimated-Failure-Time
   train_test_split: 0.8
-  preprocessors:
-    - class_path: agenc.preprocessing.StandardScaler
+  transforms:
+    - class_path: agenc.transforms.StandardScaler
 
 learner:
   class_path: agenc.simple_dense.SimpleDense
