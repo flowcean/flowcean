@@ -11,7 +11,7 @@ class MeanAbsoluteError(Metric):
     def __call__(
         self, y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
     ):
-        return metrics.mean_absolute_error(y_true, y_pred, sample_weight, multioutput)
+        return metrics.mean_absolute_error(y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput)
 
 
 class MeanSquaredError(Metric):
@@ -25,7 +25,7 @@ class MeanSquaredError(Metric):
         squared=True
     ):
         return metrics.mean_squared_error(
-            y_true, y_pred, sample_weight, multioutput, squared
+            y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput, squared=squared
         )
 
 
@@ -40,5 +40,5 @@ class R2Score(Metric):
         force_finite=True
     ):
         return metrics.r2_score(
-            y_true, y_pred, sample_weight, multioutput, force_finite
+            y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput, force_finite=force_finite
         )
