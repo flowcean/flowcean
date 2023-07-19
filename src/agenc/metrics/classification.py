@@ -53,7 +53,7 @@ class F1Score(Metric):
             pos_label=pos_label,
             average=average,
             sample_weight=sample_weight,
-            zero_division=zero_division
+            zero_division=zero_division,
         )
 
 
@@ -68,7 +68,7 @@ class FBetaScore(Metric):
         pos_label=1,
         average="binary",
         sample_weight=None,
-        zero_division="warn"
+        zero_division="warn",
     ):
         return metrics.fbeta_score(
             y_true,
@@ -78,7 +78,7 @@ class FBetaScore(Metric):
             pos_label=pos_label,
             average=average,
             sample_weight=sample_weight,
-            zero_division=zero_division
+            zero_division=zero_division,
         )
 
 
@@ -101,7 +101,7 @@ class PrecisionScore(Metric):
             pos_label=pos_label,
             average=average,
             sample_weight=sample_weight,
-            zero_division=zero_division
+            zero_division=zero_division,
         )
 
 
@@ -124,5 +124,5 @@ class Recall(Metric):
             pos_label=pos_label,
             average=average,
             sample_weight=sample_weight,
-            zero_division=zero_division
+            zero_division=zero_division,
         )

@@ -25,7 +25,6 @@ class TestMetrics(unittest.TestCase):
         self.empty = np.array([])
 
     def test_accuracy(self):
-
         accuracy = Accuracy()
 
         with pytest.raises(ValueError):
@@ -35,7 +34,6 @@ class TestMetrics(unittest.TestCase):
             accuracy(self.empty, self.empty)
 
     def test_f1_score(self):
-
         f1_score = F1Score()
 
         with pytest.raises(ValueError):
@@ -45,7 +43,6 @@ class TestMetrics(unittest.TestCase):
             f1_score(self.empty, self.empty)
 
     def test_fbeta_score(self):
-
         fbeta_score = FBetaScore()
 
         with pytest.raises(ValueError):
@@ -55,7 +52,6 @@ class TestMetrics(unittest.TestCase):
             fbeta_score(self.empty, self.empty, beta=1)
 
     def test_precision_score(self):
-
         precision_score = PrecisionScore()
 
         with pytest.raises(ValueError):
@@ -65,7 +61,6 @@ class TestMetrics(unittest.TestCase):
             precision_score(self.empty, self.empty)
 
     def test_recall(self):
-
         recall = Recall()
 
         with pytest.raises(ValueError):
@@ -75,7 +70,6 @@ class TestMetrics(unittest.TestCase):
             recall(self.empty, self.empty)
 
     def test_max_error(self):
-
         max_error = MaxError()
 
         with pytest.raises(ValueError):
@@ -85,7 +79,6 @@ class TestMetrics(unittest.TestCase):
             max_error(self.empty, self.empty)
 
     def test_mean_absolute_error(self):
-
         mean_absolute_error = MeanAbsoluteError()
 
         with pytest.raises(ValueError):
@@ -95,7 +88,6 @@ class TestMetrics(unittest.TestCase):
             mean_absolute_error(self.empty, self.empty)
 
     def test_mean_squared_error(self):
-
         mean_squared_error = MeanSquaredError()
 
         with pytest.raises(ValueError):
@@ -105,7 +97,6 @@ class TestMetrics(unittest.TestCase):
             mean_squared_error(self.empty, self.empty)
 
     def test_r2_score(self):
-
         r2_score = R2Score()
 
         with pytest.raises(ValueError):

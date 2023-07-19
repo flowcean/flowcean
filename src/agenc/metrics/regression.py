@@ -9,10 +9,18 @@ class MaxError(Metric):
 
 class MeanAbsoluteError(Metric):
     def __call__(
-        self, y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+        self,
+        y_true,
+        y_pred,
+        *,
+        sample_weight=None,
+        multioutput="uniform_average"
     ):
         return metrics.mean_absolute_error(
-            y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+            y_true,
+            y_pred,
+            sample_weight=sample_weight,
+            multioutput=multioutput,
         )
 
 
