@@ -14,7 +14,7 @@ class MeanAbsoluteError(Metric):
         y_pred,
         *,
         sample_weight=None,
-        multioutput="uniform_average"
+        multioutput="uniform_average",
     ):
         return metrics.mean_absolute_error(
             y_true,
@@ -32,7 +32,7 @@ class MeanSquaredError(Metric):
         *,
         sample_weight=None,
         multioutput="uniform_average",
-        squared=True
+        squared=True,
     ):
         return metrics.mean_squared_error(
             y_true,
@@ -51,7 +51,7 @@ class R2Score(Metric):
         *,
         sample_weight=None,
         multioutput="uniform_average",
-        force_finite=True
+        force_finite=True,
     ):
         return metrics.r2_score(
             y_true,
