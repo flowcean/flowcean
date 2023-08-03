@@ -73,7 +73,8 @@ def _file_uri_to_path(uri: str, root: Path) -> Path:
     url = urlparse(uri)
     if url.scheme != "file":
         raise ValueError(
-            f"only local files are supported as data source, but got: `{url.scheme}`"
+            "only local files are supported as data source, but got:"
+            f" `{url.scheme}`"
         )
     data_source = Path(url.path)
     if not data_source.is_absolute():

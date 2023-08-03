@@ -7,106 +7,77 @@ stages:
   - tests
   - docs
 
-default:
-  image: python:3.8-slim
+.python-setup:
   cache:
     paths:
       - .cache/pip
-      - venv/
   before_script:
+    - python3 -m venv venv
     - source venv/bin/activate
-    - pip install -e .[dev]
+    - pip install --upgrade pip
+    - python --version; pip --version
+    - pip install -e .[test]
 
 black:
   stage: lint
-  image: pyfound/black:23.3.0
-  cache: {}
-  before_script: []
+  image: pyfound/black
   script:
     - black --check src/ tests/ run.py
 
 flake8:
   stage: lint
-  cache: {}
-  before_script:
-    - python -m pip install --quiet --upgrade flake8
+  image:
+    name: alpine/flake8
+    entrypoint: [""]
   script:
-    - python -m flake8 --max-line-length=79 --extend-ignore=E306,E501,E203,F401,FE402 src/ tests/ run.py
+    - flake8 --extend-ignore=E501,E203 src/ tests/ run.py
 
 agenc-setup:
+  extends: .python-setup
   stage: build
-  cache:
-    key: "$CI_COMMIT_SHA"
-    paths:
-      - .cache/pip
-      - venv/
-  before_script:
-    - echo "Skip before_script in build stage"
+  image: python:3.8-slim
   script:
-    - apt-get update
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install --upgrade pip
-    - pip install -e .[dev]
+    - python -c "import agenc"
 
 test-3.8:
+  extends: .python-setup
   stage: tests
-  cache:
-    key: "$CI_COMMIT_SHA"
-    paths:
-      - .cache/pip
-      - venv/
-    policy: pull
-  before_script:
-    - source venv/bin/activate
+  image: python:3.8-slim
   script:
+    - pip install coverage
     - coverage run --source=src/agenc -m pytest
     - coverage report
 
 test-3.9:
+  extends: .python-setup
   stage: tests
   image: python:3.9-slim
-  before_script:
-    - python3 --version
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install --upgrade pip
-    - pip install -e .[dev]
   script:
+    - pip install coverage
     - coverage run --source=src/agenc -m pytest
     - coverage report
 
 test-3.10:
+  extends: .python-setup
   stage: tests
   image: python:3.10-slim
-  before_script:
-    - python3 --version
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install --upgrade pip
-    - pip install -e .[dev]
   script:
+    - pip install coverage
     - coverage run --source=src/agenc -m pytest
     - coverage report
 
 test-3.11:
+  extends: .python-setup
   stage: tests
   image: python:3.11-slim
-  before_script:
-    - python3 --version
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install --upgrade pip
-    - pip install -e .[dev]
   script:
+    - pip install coverage
     - coverage run --source=src/agenc -m pytest
     - coverage report
 
 pages:
   stage: docs
   image: sphinxdoc/sphinx
-  cache: {}
-  before_script: []
   script:
     - cd docs
     - make html

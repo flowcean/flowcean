@@ -1,5 +1,8 @@
 # ToyExample_PassiveDataLearning
 
+[![Pipeline Status](https://collaborating.tuhh.de/w-6/forschung/agenc/agenc/badges/main/pipeline.svg)](https://collaborating.tuhh.de/w-6/forschung/agenc/agenc/pipelines/main/latest)
+![Coverage](https://collaborating.tuhh.de/w-6/forschung/agenc/agenc/badges/main/coverage.svg)
+
 ## Installation
 
 The _one-script-to-run-everything_-file is the `run.py`.

@@ -26,21 +26,17 @@ classifiers = [
 ]
 dependencies = [
     "scikit-learn",
-    "lightning",
-    "tensorboard",
     "polars",
     "ruamel.yaml",
-    "pandas",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "black==23.3.0",
-    "pytest",
-    "coverage",
-    "wheel",
-    "sphinx",
-    "flake8",
+test = [
+  "pytest",
+]
+pytorch = [
+  "lightning",
+  "tensorboard",
 ]
 
 [project.urls]
@@ -49,3 +45,4 @@ dev = [
 
 [tool.black]
 line-length = 79
+preview = true

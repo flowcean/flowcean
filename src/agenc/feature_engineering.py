@@ -1,7 +1,5 @@
 import logging
-from typing import List
 
-import numpy as np
 import polars as pl
 
 LOG = logging.getLogger(__name__)
