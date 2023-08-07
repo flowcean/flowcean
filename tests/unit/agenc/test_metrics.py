@@ -36,7 +36,11 @@ class TestMetrics(unittest.TestCase):
     def test_classification_report(self):
         classification_report = ClassificationReport()
 
-        pass
+        with pytest.raises(ValueError):
+            classification_report(self.true, self.wrong_length)
+
+        with pytest.raises(ValueError):
+            classification_report(self.empty, self.empty)
 
     def test_f1_score(self):
         f1_score = F1Score()
