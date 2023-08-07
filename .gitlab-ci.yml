@@ -22,7 +22,7 @@ black:
   stage: lint
   image: pyfound/black
   script:
-    - black --check src/ tests/ run.py
+    - black --check src/ tests/
 
 flake8:
   stage: lint
@@ -30,7 +30,7 @@ flake8:
     name: alpine/flake8
     entrypoint: [""]
   script:
-    - flake8 --extend-ignore=E501,E203 src/ tests/ run.py
+    - flake8 --extend-ignore=E501,E203 src/ tests/
 
 agenc-setup:
   extends: .python-setup

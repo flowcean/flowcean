@@ -1,7 +1,7 @@
 random_state: 42
 
 data:
-  metadata: file:../data/accelerometer/metadata.yml
+  metadata: file:./data/metadata.yml
   inputs:
     - y-Amplitude
     - z-Amplitude

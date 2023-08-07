@@ -7,7 +7,7 @@ from agenc.dyna_loader import load_class
 from agenc.experiment import Experiment
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--experiment",
