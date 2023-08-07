@@ -16,6 +16,7 @@ from .regression import (
 
 
 __all__ = [
+    Metric,
     Accuracy,
     ClassificationReport,
     F1Score,
