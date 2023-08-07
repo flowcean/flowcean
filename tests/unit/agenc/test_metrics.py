@@ -33,6 +33,11 @@ class TestMetrics(unittest.TestCase):
         with pytest.warns(RuntimeWarning):
             accuracy(self.empty, self.empty)
 
+    def test_classification_report(self):
+        classification_report = ClassificationReport()
+
+        pass
+
     def test_f1_score(self):
         f1_score = F1Score()
 
