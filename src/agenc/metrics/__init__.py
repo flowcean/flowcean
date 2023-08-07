@@ -6,5 +6,5 @@ from .classification import (
     FBetaScore,
     PrecisionScore,
     Recall,
-)
-from .regression import MaxError, MeanAbsoluteError, MeanSquaredError, R2Score
+) # noqa
+from .regression import MaxError, MeanAbsoluteError, MeanSquaredError, R2Score # noqa
