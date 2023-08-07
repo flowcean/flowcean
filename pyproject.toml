@@ -30,6 +30,9 @@ dependencies = [
     "ruamel.yaml",
 ]
 
+[project.scripts]
+agenc = "agenc.cli:main"
+
 [project.optional-dependencies]
 test = [
   "pytest",
