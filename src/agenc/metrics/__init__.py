@@ -16,15 +16,15 @@ from .regression import (
 
 
 __all__ = [
-    Metric,
-    Accuracy,
-    ClassificationReport,
-    F1Score,
-    FBetaScore,
-    PrecisionScore,
-    Recall,
-    MaxError,
-    MeanAbsoluteError,
-    MeanSquaredError,
-    R2Score,
+    "Metric",
+    "Accuracy",
+    "ClassificationReport",
+    "F1Score",
+    "FBetaScore",
+    "PrecisionScore",
+    "Recall",
+    "MaxError",
+    "MeanAbsoluteError",
+    "MeanSquaredError",
+    "R2Score",
 ]
