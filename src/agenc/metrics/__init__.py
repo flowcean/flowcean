@@ -2,7 +2,6 @@ from .metric import Metric
 from .classification import (
     Accuracy,
     ClassificationReport,
-    F1Score,
     FBetaScore,
     PrecisionScore,
     Recall,
@@ -19,7 +18,6 @@ __all__ = [
     "Metric",
     "Accuracy",
     "ClassificationReport",
-    "F1Score",
     "FBetaScore",
     "PrecisionScore",
     "Recall",

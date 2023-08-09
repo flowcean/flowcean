@@ -6,14 +6,13 @@ import pytest
 from agenc.metrics import (
     Accuracy,
     ClassificationReport,
-    F1Score,
     FBetaScore,
-    PrecisionScore,
-    Recall,
     MaxError,
     MeanAbsoluteError,
     MeanSquaredError,
+    PrecisionScore,
     R2Score,
+    Recall,
 )
 
 
@@ -42,23 +41,14 @@ class TestMetrics(unittest.TestCase):
         with pytest.raises(ValueError):
             classification_report(self.empty, self.empty)
 
-    def test_f1_score(self):
-        f1_score = F1Score()
-
-        with pytest.raises(ValueError):
-            f1_score(self.true, self.wrong_length)
-
-        with pytest.warns(Warning):
-            f1_score(self.empty, self.empty)
-
     def test_fbeta_score(self):
-        fbeta_score = FBetaScore()
+        fbeta_score = FBetaScore(beta=1.0)
 
         with pytest.raises(ValueError):
-            fbeta_score(self.true, self.wrong_length, beta=1)
+            fbeta_score(self.true, self.wrong_length)
 
         with pytest.warns(Warning):
-            fbeta_score(self.empty, self.empty, beta=1)
+            fbeta_score(self.empty, self.empty)
 
     def test_precision_score(self):
         precision_score = PrecisionScore()

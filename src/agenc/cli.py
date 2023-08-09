@@ -6,6 +6,8 @@ from agenc.data import Dataset
 from agenc.dyna_loader import load_class
 from agenc.experiment import Experiment
 from agenc.transforms import Transform
+from agenc.learner import Learner
+from agenc.metrics import Metric
 
 
 def main() -> None:
@@ -26,11 +28,11 @@ def main() -> None:
         load_class(transform.class_path, transform.init_arguments)
         for transform in experiment.data.transforms
     ]
-    learner = load_class(
+    learner: Learner = load_class(
         experiment.learner.class_path,
         experiment.learner.init_arguments,
     )
-    metrics = [
+    metrics: list[Metric] = [
         load_class(metric.class_path, metric.init_arguments)
         for metric in experiment.metrics
     ]
