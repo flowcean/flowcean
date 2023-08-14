@@ -13,6 +13,7 @@ from agenc.metrics import (
     PrecisionScore,
     R2Score,
     Recall,
+    Metric,
 )
 
 
@@ -22,6 +23,15 @@ class TestMetrics(unittest.TestCase):
         self.pred = np.array([1, 1, 0, 0])
         self.wrong_length = np.array([0, 0])
         self.empty = np.array([])
+
+    def test_abstract_metric(self):
+        with self.assertRaises(NotImplementedError):
+            metric = Metric()
+            metric(self.true, self.pred)
+
+    def test_name(self):
+        accuracy = Accuracy()
+        self.assertEqual(accuracy.name, "Accuracy")
 
     def test_accuracy(self):
         accuracy = Accuracy()

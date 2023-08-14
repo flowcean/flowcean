@@ -2,8 +2,10 @@ import argparse
 from functools import reduce
 from pathlib import Path
 
-from agenc.data import Dataset
-from agenc.dyna_loader import load_class
+import polars as pl
+
+from agenc.data.split import train_test_split
+from agenc.dynamic_loader import load_class
 from agenc.experiment import Experiment
 from agenc.transforms import Transform
 from agenc.learner import Learner
@@ -22,7 +24,7 @@ def main() -> None:
 
     experiment = Experiment.load_from_path(arguments.experiment)
 
-    dataset = Dataset.from_experiment(experiment)
+    dataset: pl.DataFrame = experiment.metadata.load_dataset()
 
     transforms: list[Transform] = [
         load_class(transform.class_path, transform.init_arguments)
@@ -43,18 +45,25 @@ def main() -> None:
         dataset,
     )
 
-    train_data, test_data = dataset.train_test_split(
+    train_data, test_data = train_test_split(
+        dataset,
         experiment.data.train_test_split,
-        experiment.random_state,
     )
 
-    learner.train(train_data)
+    learner.train(
+        train_data.select(experiment.data.inputs).to_numpy(),
+        train_data.select(experiment.data.outputs).to_numpy(),
+    )
 
-    # TODO: the prediction should not get the ground truth
-    predictions = learner.predict(test_data)
+    predictions = learner.predict(
+        test_data.select(experiment.data.inputs).to_numpy()
+    )
 
     for metric in metrics:
-        print(f"{metric.name}: {metric(test_data.outputs(), predictions)}")
+        result = metric(
+            test_data.select(experiment.data.outputs).to_numpy(), predictions
+        )
+        print(f"{metric.name}: {result}")
 
 
 if __name__ == "__main__":

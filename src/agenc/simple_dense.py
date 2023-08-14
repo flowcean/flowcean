@@ -1,31 +1,37 @@
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Optional
 
 import lightning
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 import numpy as np
 import torch
-from torch.utils.data import Dataset as _Dataset, random_split
+from torch.utils.data import Dataset, random_split
 from torch.utils.data.dataloader import DataLoader
 
-from agenc.data import Dataset
 from agenc.learner import Learner
 
 
-class TorchDataset(_Dataset):
-    def __init__(self, data: Dataset):
-        self.inputs = data.inputs()
-        self.outputs = data.outputs()
-        assert len(self.inputs) == len(self.outputs)
+class TorchDataset(Dataset):
+    def __init__(
+        self,
+        inputs: np.ndarray,
+        outputs: Optional[np.ndarray] = None,
+    ):
+        self.inputs = inputs
+        self.outputs = outputs
 
     def __len__(self) -> int:
         return len(self.inputs)
 
-    def __getitem__(self, item: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        inputs, outputs = self.inputs[item], self.outputs[item]
-        return torch.Tensor(inputs), torch.Tensor(outputs)
+    def __getitem__(self, item: int) -> tuple[torch.Tensor, torch.Tensor]:
+        inputs = torch.Tensor(self.inputs[item])
+        if self.outputs is None:
+            outputs = torch.Tensor([])
+        else:
+            outputs = torch.Tensor(self.outputs[item])
+        return inputs, outputs
 
 
 class SimpleDense(Learner):
@@ -41,11 +47,11 @@ class SimpleDense(Learner):
         self.num_workers = num_workers
         self.max_epochs = max_epochs
 
-    def train(self, dataset: Dataset):
-        train_len = int(0.8 * len(dataset))
-        validation_len = len(dataset) - train_len
+    def train(self, inputs: np.ndarray, outputs: np.ndarray) -> None:
+        train_len = int(0.8 * len(inputs))
+        validation_len = len(inputs) - train_len
         train_dataset, val_dataset = random_split(
-            TorchDataset(dataset),
+            TorchDataset(inputs, outputs),
             [train_len, validation_len],
         )
         train_dataloader = DataLoader(
@@ -82,9 +88,9 @@ class SimpleDense(Learner):
             checkpoint_callback.best_model_path,
         )
 
-    def predict(self, dataset: Dataset) -> np.ndarray:
+    def predict(self, inputs: np.ndarray) -> np.ndarray:
         dataloader = DataLoader(
-            TorchDataset(dataset),
+            TorchDataset(inputs),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )

@@ -1,11 +1,9 @@
 import numpy as np
 
-from agenc.data import Dataset
-
 
 class Learner:
-    def train(self, dataset: Dataset):
+    def train(self, inputs: np.ndarray, outputs: np.ndarray) -> None:
         pass
 
-    def predict(self, dataset: Dataset) -> np.ndarray:
+    def predict(self, inputs: np.ndarray) -> np.ndarray:
         raise NotImplementedError

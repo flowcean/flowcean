@@ -5,7 +5,7 @@ from typing import List, Union
 
 from ruamel.yaml import YAML
 
-from agenc.metadata import AgencMetadata, _file_uri_to_path
+from agenc.data.metadata import AgencMetadata, _file_uri_to_path
 
 
 @dataclass

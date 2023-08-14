@@ -39,15 +39,6 @@ agenc-setup:
   script:
     - python -c "import agenc"
 
-test-3.8:
-  extends: .python-setup
-  stage: tests
-  image: python:3.8-slim
-  script:
-    - pip install coverage
-    - coverage run --source=src/agenc -m pytest
-    - coverage report
-
 test-3.9:
   extends: .python-setup
   stage: tests

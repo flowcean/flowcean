@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 from urllib.parse import urlparse
 
+import polars as pl
 from ruamel.yaml import YAML
 
 
@@ -67,6 +68,17 @@ class AgencMetadata:
         ]
 
         return cls(data_path=path, columns=columns, features=features)
+
+    def load_dataset(self) -> pl.DataFrame:
+        if self.data_path.suffix == ".csv":
+            data_frame = pl.read_csv(self.data_path)
+            return data_frame
+        else:
+            supported_file_types = [".csv"]
+            raise ValueError(
+                "file type of data source has to be one of"
+                f" {supported_file_types}, but got: `{self.data_path.suffix}`"
+            )
 
 
 def _file_uri_to_path(uri: str, root: Path) -> Path:
