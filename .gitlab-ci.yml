@@ -20,7 +20,7 @@ stages:
 
 black:
   stage: lint
-  image: pyfound/black
+  image: pyfound/black:23.7.0
   script:
     - black --check src/ tests/
 

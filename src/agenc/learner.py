@@ -1,9 +1,12 @@
 import numpy as np
+from abc import ABC, abstractmethod
 
 
-class Learner:
+class Learner(ABC):
+    @abstractmethod
     def train(self, inputs: np.ndarray, outputs: np.ndarray) -> None:
-        pass
+        ...
 
+    @abstractmethod
     def predict(self, inputs: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
+        ...

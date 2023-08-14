@@ -1,9 +1,11 @@
 import polars as pl
+from abc import ABC, abstractmethod
 
 
-class Transform:
+class Transform(ABC):
+    @abstractmethod
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
-        raise NotImplementedError
+        ...
 
 
 class StandardScaler(Transform):
