@@ -12,6 +12,11 @@ class MaxError(Metric):
 
 
 class MeanAbsoluteError(Metric):
+    """Mean absolute error (MAE) regression loss
+
+    The :class:`MeanAbsoluteError` metric computes the MAE as defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html>`_.
+    """
+
     def __call__(
         self,
         y_true: np.ndarray,

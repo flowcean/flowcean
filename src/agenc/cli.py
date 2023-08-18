@@ -1,3 +1,9 @@
+"""
+This is the main entry point for the CLI. It is responsible for loading the
+experiment file, loading the dataset, loading the transforms, learner and
+metrics, and running the experiment.
+"""
+
 import argparse
 from functools import reduce
 from pathlib import Path

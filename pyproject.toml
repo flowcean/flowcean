@@ -36,6 +36,12 @@ agenc = "agenc.cli:main"
 [project.optional-dependencies]
 test = [
   "pytest",
+  "coverage",
+]
+doc = [
+  "sphinx<=7.1.2",
+  "furo",
+  "myst-parser",
 ]
 pytorch = [
   "lightning",
