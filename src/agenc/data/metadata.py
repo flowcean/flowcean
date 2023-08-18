@@ -37,7 +37,11 @@ class AgencMetadata:
         path = Path(path)
         content = YAML(typ="safe").load(path)
 
-        path = _file_uri_to_path(content["uri"], path.parent)
+        paths = []
+        for i in range(len(content["uri"])):
+            paths.append(_file_uri_to_path(content["uri"][i], path.parent))
+            
+        print(path)
         columns = [
             AgencMetadatum(
                 name=column["name"],
@@ -67,9 +71,24 @@ class AgencMetadata:
             for feature in content.get("features", [])
         ]
 
-        return cls(data_path=path, columns=columns, features=features)
+        return cls(data_path=paths, columns=columns, features=features)
 
     def load_dataset(self) -> pl.DataFrame:
+        data_frame = None
+        for path in self.data_path:
+            if path.suffix == ".csv":
+                if data_frame is None:
+                    data_frame = pl.read_csv(path)
+                else:
+                    data_frame = data_frame.vcat(pl.read_csv(path))
+                return data_frame
+            else:
+                supported_file_types = [".csv"]
+                raise ValueError(
+                    "file type of data source has to be one of"
+                    f" {supported_file_types}, but got: `{path.suffix}`"
+                )
+        
         if self.data_path.suffix == ".csv":
             data_frame = pl.read_csv(self.data_path)
             return data_frame

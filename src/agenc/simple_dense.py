@@ -56,6 +56,7 @@ class SimpleDense(Learner):
         self.max_epochs = max_epochs
 
     def train(self, inputs: np.ndarray, outputs: np.ndarray) -> None:
+        print(f"Size of training data set: {len(inputs)}")
         train_len = int(0.8 * len(inputs))
         validation_len = len(inputs) - train_len
         train_dataset, val_dataset = random_split(
