@@ -28,9 +28,10 @@ class AgencFeature:
 
 @dataclass
 class AgencMetadata:
-    data_path: Path
+    data_paths: List[Path]
     columns: List[AgencMetadatum]
     features: List[AgencFeature]
+    data_frames: List[pl.DataFrame] = None
 
     @classmethod
     def load_from_path(cls, path: Union[str, os.PathLike]) -> "AgencMetadata":
@@ -40,7 +41,7 @@ class AgencMetadata:
         paths = []
         for i in range(len(content["uri"])):
             paths.append(_file_uri_to_path(content["uri"][i], path.parent))
-            
+               
         print(path)
         columns = [
             AgencMetadatum(
@@ -71,7 +72,15 @@ class AgencMetadata:
             for feature in content.get("features", [])
         ]
 
-        return cls(data_path=paths, columns=columns, features=features)
+        return cls(data_paths=paths, columns=columns, features=features)
+
+
+    def load_csvs(self) -> List[pl.DataFrame]:
+        data_frames = []
+        for path in self.data_paths:
+            data_frames.append(pl.read_csv(path))
+        return data_frames
+    
 
     def load_dataset(self) -> pl.DataFrame:
         data_frame = None
