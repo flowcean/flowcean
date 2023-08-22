@@ -28,10 +28,9 @@ class AgencFeature:
 
 @dataclass
 class AgencMetadata:
-    data_paths: List[Path]
+    data_path: Path
     columns: List[AgencMetadatum]
     features: List[AgencFeature]
-    data_frames: List[pl.DataFrame] = None
 
     @classmethod
     def load_from_path(cls, path: Union[str, os.PathLike]) -> "AgencMetadata":
@@ -72,14 +71,19 @@ class AgencMetadata:
             for feature in content.get("features", [])
         ]
 
-        return cls(data_paths=paths, columns=columns, features=features)
+        return cls(data_path=paths, columns=columns, features=features)
 
 
     def load_csvs(self) -> List[pl.DataFrame]:
         data_frames = []
-        for path in self.data_paths:
+        for path in self.data_path:
             data_frames.append(pl.read_csv(path))
         return data_frames
+    
+
+    # def concatenate_dataframes(self) -> pl.DataFrame:
+    #     data_frames = self.load_csvs()
+    #     return data_frames[0].vcat(data_frames[1])
     
 
     def load_dataset(self) -> pl.DataFrame:
@@ -89,24 +93,14 @@ class AgencMetadata:
                 if data_frame is None:
                     data_frame = pl.read_csv(path)
                 else:
-                    data_frame = data_frame.vcat(pl.read_csv(path))
-                return data_frame
+                    data_frame = pl.concat([data_frame, pl.read_csv(path)])
             else:
                 supported_file_types = [".csv"]
                 raise ValueError(
                     "file type of data source has to be one of"
                     f" {supported_file_types}, but got: `{path.suffix}`"
                 )
-        
-        if self.data_path.suffix == ".csv":
-            data_frame = pl.read_csv(self.data_path)
-            return data_frame
-        else:
-            supported_file_types = [".csv"]
-            raise ValueError(
-                "file type of data source has to be one of"
-                f" {supported_file_types}, but got: `{self.data_path.suffix}`"
-            )
+        return data_frame
 
 
 def _file_uri_to_path(uri: str, root: Path) -> Path:

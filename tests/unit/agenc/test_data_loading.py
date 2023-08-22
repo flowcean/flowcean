@@ -2,18 +2,40 @@ import unittest
 
 import polars as pl
 import os
+from pathlib import Path
+
 
 from agenc.data.metadata import AgencMetadata, AgencMetadatum, AgencFeature
 
 # Get the current script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-class TestCSVToDataframeConversion(unittest.TestCase):
-    def test_load_csvs(self):
-        # test that the dataframes are loaded correctly
-        metadata = AgencMetadata(
-            data_paths=[os.path.join(script_dir, "..", "..", "..", "examples", "failure_time_prediction", "data", "processed_data.csv"),
-                       os.path.join(script_dir, "..",  "..", "..", "examples", "failure_time_prediction", "data", "processed_data_2.csv")],
+
+class TestDataLoading(unittest.TestCase):
+    def setUp(self):
+        self.metadata = AgencMetadata(
+            data_path=[
+                Path(os.path.join(
+                    script_dir,
+                    "..",
+                    "..",
+                    "..",
+                    "examples",
+                    "failure_time_prediction",
+                    "data",
+                    "processed_data.csv",
+                )),
+                Path(os.path.join(
+                    script_dir,
+                    "..",
+                    "..",
+                    "..",
+                    "examples",
+                    "failure_time_prediction",
+                    "data",
+                    "processed_data_2.csv",
+                )),
+            ],
             columns=[
                 AgencMetadatum(
                     name="a",
@@ -63,12 +85,22 @@ class TestCSVToDataframeConversion(unittest.TestCase):
                 ),
             ],
         )
-        data_frames = metadata.load_csvs()
-        # check that the dataframes are loaded correctly
-        self.assertEqual(len(data_frames), 2)
-        # check that the dataframes have the correct data type
-        self.assertIsInstance(data_frames[0], pl.DataFrame)
 
+
+    def test_dataframe_concatenation(self):
+        concatenated_data_frame = self.metadata.load_dataset()
+        individual_data_frames = []
+        for path in self.metadata.data_path:
+            individual_data_frames.append(pl.read_csv(path))
+        # check that the dataframes are concatenated correctly
+        self.assertTrue(
+            concatenated_data_frame.shape[0]
+            == sum([df.shape[0] for df in individual_data_frames])
+        )
+        self.assertTrue(
+            concatenated_data_frame.shape[1]
+            == individual_data_frames[0].shape[1]
+        )
 
 
 if __name__ == "__main__":
