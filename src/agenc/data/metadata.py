@@ -40,7 +40,7 @@ class AgencMetadata:
         paths = []
         for i in range(len(content["uri"])):
             paths.append(_file_uri_to_path(content["uri"][i], path.parent))
-               
+
         print(path)
         columns = [
             AgencMetadatum(
@@ -72,19 +72,6 @@ class AgencMetadata:
         ]
 
         return cls(data_path=paths, columns=columns, features=features)
-
-
-    def load_csvs(self) -> List[pl.DataFrame]:
-        data_frames = []
-        for path in self.data_path:
-            data_frames.append(pl.read_csv(path))
-        return data_frames
-    
-
-    # def concatenate_dataframes(self) -> pl.DataFrame:
-    #     data_frames = self.load_csvs()
-    #     return data_frames[0].vcat(data_frames[1])
-    
 
     def load_dataset(self) -> pl.DataFrame:
         data_frame = None

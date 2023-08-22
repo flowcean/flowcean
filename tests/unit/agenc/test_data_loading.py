@@ -15,26 +15,30 @@ class TestDataLoading(unittest.TestCase):
     def setUp(self):
         self.metadata = AgencMetadata(
             data_path=[
-                Path(os.path.join(
-                    script_dir,
-                    "..",
-                    "..",
-                    "..",
-                    "examples",
-                    "failure_time_prediction",
-                    "data",
-                    "processed_data.csv",
-                )),
-                Path(os.path.join(
-                    script_dir,
-                    "..",
-                    "..",
-                    "..",
-                    "examples",
-                    "failure_time_prediction",
-                    "data",
-                    "processed_data_2.csv",
-                )),
+                Path(
+                    os.path.join(
+                        script_dir,
+                        "..",
+                        "..",
+                        "..",
+                        "examples",
+                        "failure_time_prediction",
+                        "data",
+                        "processed_data.csv",
+                    )
+                ),
+                Path(
+                    os.path.join(
+                        script_dir,
+                        "..",
+                        "..",
+                        "..",
+                        "examples",
+                        "failure_time_prediction",
+                        "data",
+                        "processed_data_2.csv",
+                    )
+                ),
             ],
             columns=[
                 AgencMetadatum(
@@ -85,7 +89,6 @@ class TestDataLoading(unittest.TestCase):
                 ),
             ],
         )
-
 
     def test_dataframe_concatenation(self):
         concatenated_data_frame = self.metadata.load_dataset()
