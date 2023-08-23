@@ -43,11 +43,9 @@ class AgencMetadata:
             paths.append(_file_uri_to_path(content["uri"][i], path.parent))
 
         test_paths = []
-        if type(content["test_uri"]) == str:
-            for i in range(len(content["test_uri"])):
-                test_paths.append(
-                    _file_uri_to_path(content["test_uri"][i], path.parent)
-                )
+        if isinstance(content.get("test_uri"), list):
+            for uri in content["test_uri"]:
+                test_paths.append(_file_uri_to_path(uri, path.parent))
 
         print(path)
         columns = [
