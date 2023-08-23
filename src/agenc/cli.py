@@ -26,6 +26,8 @@ def main() -> None:
 
     dataset: pl.DataFrame = experiment.metadata.load_dataset()
 
+    test_data: pl.DataFrame = experiment.metadata.load_test_dataset()
+
     transforms: list[Transform] = [
         load_class(transform.class_path, transform.init_arguments)
         for transform in experiment.data.transforms
@@ -45,10 +47,13 @@ def main() -> None:
         dataset,
     )
 
-    train_data, test_data = train_test_split(
-        dataset,
-        experiment.data.train_test_split,
-    )
+    if test_data is None:
+        train_data, test_data = train_test_split(
+            dataset,
+            experiment.data.train_test_split,
+        )
+    else:
+        train_data = dataset
 
     learner.train(
         train_data.select(experiment.data.inputs).to_numpy(),

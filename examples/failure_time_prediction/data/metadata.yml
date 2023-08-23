@@ -2,6 +2,10 @@ uri:
   - file:./processed_data.csv
   - file:./processed_data_2.csv
 
+test_uri: 
+  - file:./processed_data.csv
+  - file:./processed_data_2.csv
+
 columns:
   - name: x-Amplitude
     kind: scalar

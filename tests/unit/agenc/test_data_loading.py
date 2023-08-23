@@ -40,6 +40,32 @@ class TestDataLoading(unittest.TestCase):
                     )
                 ),
             ],
+            test_data_path=[
+                Path(
+                    os.path.join(
+                        script_dir,
+                        "..",
+                        "..",
+                        "..",
+                        "examples",
+                        "failure_time_prediction",
+                        "data",
+                        "processed_data.csv",
+                    )
+                ),
+                Path(
+                    os.path.join(
+                        script_dir,
+                        "..",
+                        "..",
+                        "..",
+                        "examples",
+                        "failure_time_prediction",
+                        "data",
+                        "processed_data_2.csv",
+                    )
+                ),
+            ],
             columns=[
                 AgencMetadatum(
                     name="a",
@@ -94,6 +120,21 @@ class TestDataLoading(unittest.TestCase):
         concatenated_data_frame = self.metadata.load_dataset()
         individual_data_frames = []
         for path in self.metadata.data_path:
+            individual_data_frames.append(pl.read_csv(path))
+        # check that the dataframes are concatenated correctly
+        self.assertTrue(
+            concatenated_data_frame.shape[0]
+            == sum([df.shape[0] for df in individual_data_frames])
+        )
+        self.assertTrue(
+            concatenated_data_frame.shape[1]
+            == individual_data_frames[0].shape[1]
+        )
+
+    def test_dataframe_concatenation_test(self):
+        concatenated_data_frame = self.metadata.load_test_dataset()
+        individual_data_frames = []
+        for path in self.metadata.test_data_path:
             individual_data_frames.append(pl.read_csv(path))
         # check that the dataframes are concatenated correctly
         self.assertTrue(
