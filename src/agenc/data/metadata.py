@@ -45,8 +45,10 @@ class AgencMetadata:
         test_paths = []
         if type(content["test_uri"]) == str:
             for i in range(len(content["test_uri"])):
-                test_paths.append(_file_uri_to_path(content["test_uri"][i], path.parent))
-        
+                test_paths.append(
+                    _file_uri_to_path(content["test_uri"][i], path.parent)
+                )
+
         print(path)
         columns = [
             AgencMetadatum(
@@ -77,7 +79,12 @@ class AgencMetadata:
             for feature in content.get("features", [])
         ]
 
-        return cls(data_path=paths, test_data_path=test_paths, columns=columns, features=features)
+        return cls(
+            data_path=paths,
+            test_data_path=test_paths,
+            columns=columns,
+            features=features,
+        )
 
     def load_dataset(self) -> pl.DataFrame:
         data_frame = None
@@ -94,7 +101,6 @@ class AgencMetadata:
                     f" {supported_file_types}, but got: `{path.suffix}`"
                 )
         return data_frame
-
 
     def load_test_dataset(self) -> pl.DataFrame:
         data_frame = None
