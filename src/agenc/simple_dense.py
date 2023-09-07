@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Optional
 
 import lightning
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
@@ -17,8 +16,8 @@ class TorchDataset(Dataset):
     def __init__(
         self,
         inputs: np.ndarray,
-        outputs: Optional[np.ndarray] = None,
-    ):
+        outputs: np.ndarray | None = None,
+    ) -> None:
         self.inputs = inputs
         self.outputs = outputs
 
@@ -44,7 +43,7 @@ class SimpleDense(Learner):
         batch_size: int = 32,
         num_workers: int = os.cpu_count() or 1,
         max_epochs: int = 100,
-    ):
+    ) -> None:
         self.model = MultilayerPerceptron(
             learning_rate=learning_rate,
             input_size=input_size,
@@ -116,7 +115,7 @@ class MultilayerPerceptron(lightning.LightningModule):
         input_size: int,
         output_size: int,
         hidden_dimensions: list[int] = [],
-    ):
+    ) -> None:
         super().__init__()
         self.save_hyperparameters()
         self.learning_rate = learning_rate
