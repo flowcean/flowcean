@@ -14,3 +14,8 @@
 .. autoclass:: agenc.transforms.StandardScaler
    :members:
 ```
+
+```{eval-rst}
+.. autoclass:: agenc.transforms.SlidingWindow
+   :members:
+```
