@@ -181,10 +181,8 @@ class _RuntimeConfig:
                     deserialized = yaml.load(fp)
                     if not isinstance(deserialized, dict):
                         LOG.warning(
-                            (
-                                "The contents of '%s' could not be"
-                                " deserialized to dict, skipping it."
-                            ),
+                            "The contents of '%s' could not be"
+                            " deserialized to dict, skipping it.",
                             fil,
                         )
                         continue
@@ -206,10 +204,8 @@ class _RuntimeConfig:
                 stream_or_dict = open(stream_or_dict, "r")
             except OSError:
                 LOG.warning(
-                    (
-                        "Failed to load runtime configuration from file at"
-                        " '%s', ignoring"
-                    ),
+                    "Failed to load runtime configuration from file at"
+                    " '%s', ignoring",
                     stream_or_dict,
                 )
         if stream_or_dict is not None:
@@ -225,10 +221,8 @@ class _RuntimeConfig:
                 has_seen_nondefault_config = True
             except TypeError:
                 LOG.warning(
-                    (
-                        "Failed to load runtime configuration from stream"
-                        " at '%s', ignoring it"
-                    ),
+                    "Failed to load runtime configuration from stream"
+                    " at '%s', ignoring it",
                     repr(stream_or_dict),
                 )
             finally:
