@@ -2,6 +2,7 @@
 
 :::{toctree}
 installation
+logging
 examples/index
 reference/index
 :::

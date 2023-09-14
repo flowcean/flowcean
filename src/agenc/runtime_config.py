@@ -16,7 +16,6 @@ LOG = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "agenc-runtime-conf.yml"
 CONFIG_FILE_PATHS = [
-    f"{appdirs.site_config_dir('agenc')}/{CONFIG_FILE_NAME}",
     f"{appdirs.user_config_dir('agenc')}/{CONFIG_FILE_NAME}",
     f"{os.getcwd()}/{CONFIG_FILE_NAME}",
 ]
@@ -63,7 +62,7 @@ DEFAULT_BASE_CONFIG = {
                 "mode": "w",
             },
         },
-        "loggers": {"agenc": {"level": "DEBUG"}},
+        "loggers": {"agenc": {"level": "WARNING"}},
         "root": {"level": "ERROR", "handlers": ["console", "logfile-debug"]},
     }
 }
