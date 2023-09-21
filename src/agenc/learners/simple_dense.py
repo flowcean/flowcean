@@ -74,11 +74,13 @@ class SimpleDense(Learner):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
         validation_dataloader = DataLoader(
             val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
         early_stopping = EarlyStopping(
             monitor="validate/loss",
@@ -108,6 +110,7 @@ class SimpleDense(Learner):
             TorchDataset(inputs),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
         )
         predictions = []
         for batch in dataloader:
