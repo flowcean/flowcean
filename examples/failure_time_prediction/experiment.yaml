@@ -1,7 +1,7 @@
-random_state: 42
+seed: 42
 
 data:
-  metadata: file:./data/metadata.yml
+  metadata: file:./data/metadata.yaml
   inputs:
     - y-Amplitude
     - z-Amplitude
@@ -10,11 +10,11 @@ data:
     - Estimated-Failure-Time
   train_test_split: 0.8
   transforms:
-    - class_path: agenc.transforms.StandardScaler
+    - agenc.transforms.StandardScaler
 
 learner:
   class_path: agenc.simple_dense.SimpleDense
-  init_arguments:
+  arguments:
     learning_rate: 1e-2
     batch_size: 64
     max_epochs: 10
@@ -22,5 +22,5 @@ learner:
     output_size: 1
 
 metrics:
-  - class_path: agenc.metrics.MeanSquaredError
-  - class_path: agenc.metrics.MeanAbsoluteError
+  - agenc.metrics.MeanSquaredError
+  - agenc.metrics.MeanAbsoluteError

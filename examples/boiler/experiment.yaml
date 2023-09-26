@@ -1,4 +1,4 @@
-random_state: 42
+seed: 42
 
 data:
   metadata: file:data/metadata.yaml
@@ -25,18 +25,18 @@ data:
   train_test_split: 0.8
   transforms:
     - class_path: agenc.transforms.Select
-      init_arguments:
+      arguments:
         features:
           - reference
           - temperature
     - class_path: agenc.transforms.StandardScaler
     - class_path: agenc.transforms.SlidingWindow
-      init_arguments:
+      arguments:
         window_size: 9
 
 learner:
   class_path: agenc.regression_tree.RegressionTree
-  init_arguments:
+  arguments:
     max_depth: 10
 
 metrics:

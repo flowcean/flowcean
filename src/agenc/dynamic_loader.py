@@ -1,17 +1,17 @@
 from importlib import import_module
-from typing import Any, Callable, Optional
+from typing import Any
 
 
-def load_function(function_path: str) -> Callable:
-    """Dynamically load a function without calling it."""
-    function_module, function_name = function_path.rsplit(".", 1)
-    module = import_module(function_module)
+def load_instance(class_path: str, kwargs: dict | None) -> Any:
+    """Dynamically load a class with arguments and keyword arguments.
 
-    return getattr(module, function_name)
+    Args:
+        class_path: The path to the class to load.
+        kwargs: The keyword arguments to pass to the class constructor.
 
-
-def load_class(class_path: str, kwargs: Optional[Any]) -> Any:
-    """Dynamically load a class with arguments and keyword arguments."""
+    Returns:
+        An instance of the class.
+    """
     class_module, class_name = class_path.rsplit(".", 1)
     module = import_module(class_module)
     class_reference = getattr(module, class_name)

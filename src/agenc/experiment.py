@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Any, List, Union
 
 from ruamel.yaml import YAML
 
 from agenc.data.metadata import Metadata, _file_uri_to_path
-from agenc.dynamic_loader import load_class
+from agenc.dynamic_loader import load_instance
 from agenc.learner import Learner
 from agenc.metrics import Metric
 from agenc.transforms import Transform
@@ -22,7 +22,7 @@ class Data:
 
 @dataclass
 class Experiment:
-    random_state: int
+    seed: int
     metadata: Metadata
     learner: Learner
     data: Data
@@ -32,18 +32,13 @@ class Experiment:
     def load_from_path(cls, path: Union[str, os.PathLike]) -> "Experiment":
         path = Path(path)
         content = YAML(typ="safe").load(path)
-        random_state = content["random_state"]
+        seed = content["seed"]
         metadata = Metadata.load_from_path(
             _file_uri_to_path(content["data"]["metadata"], path.parent)
         )
-        learner = load_class(
-            content["learner"]["class_path"],
-            content["learner"].get("init_arguments", {}),
-        )
+        learner = _load_instance_from_yaml(content["learner"])
         transforms = [
-            load_class(
-                transform["class_path"], transform.get("init_arguments", {})
-            )
+            _load_instance_from_yaml(transform)
             for transform in content["data"].get("transforms", [])
         ]
         data = Data(
@@ -53,14 +48,25 @@ class Experiment:
             transforms=transforms,
         )
         metrics = [
-            load_class(metric["class_path"], metric.get("init_arguments", {}))
+            _load_instance_from_yaml(metric)
             for metric in content.get("metrics", [])
         ]
 
         return cls(
-            random_state=random_state,
+            seed=seed,
             metadata=metadata,
             learner=learner,
             data=data,
             metrics=metrics,
+        )
+
+
+def _load_instance_from_yaml(entry: dict | str) -> Any:
+    if isinstance(entry, dict):
+        return load_instance(entry["class_path"], entry.get("arguments", {}))
+    elif isinstance(entry, str):
+        return load_instance(entry, {})
+    else:
+        raise ValueError(
+            f"Expected either a dictionary or a string, got {type(entry)}"
         )
