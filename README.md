@@ -11,14 +11,13 @@ First, install all necessary dependencies to build the documentation.
 
 ```bash
 pip install --upgrade pip
-pip install -e .[doc]
+pip install nox
 ```
 
-Build the documentation using sphinx.
+Build the documentation using the nox session.
 
 ```bash
-cd docs/
-make html
+nox --session docs
 ```
 
-After a successful build, the documentation resides in `docs/build/html/`.
+After a successful build, the documentation resides in `docs/_build/html/`.

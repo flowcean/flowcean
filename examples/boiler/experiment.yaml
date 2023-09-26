@@ -35,7 +35,7 @@ data:
         window_size: 9
 
 learner:
-  class_path: agenc.regression_tree.RegressionTree
+  class_path: agenc.learners.regression_tree.RegressionTree
   arguments:
     max_depth: 10
 

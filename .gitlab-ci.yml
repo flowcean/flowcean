@@ -1,80 +1,38 @@
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-stages:
-  - lint
-  - build
-  - tests
-  - docs
-
-.python-setup:
-  cache:
-    paths:
-      - .cache/pip
-  before_script:
-    - python -m venv venv
-    - source venv/bin/activate
-    - pip install --upgrade pip
-    - python --version; pip --version
+default:
+  image: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
+  tags:
+    - tuhh-registry
 
 black:
-  stage: lint
-  image: pyfound/black:23.7.0
   script:
-    - black --check src/ tests/
+    - nox --verbose --session black
 
-flake8:
-  stage: lint
-  image:
-    name: alpine/flake8
-    entrypoint: [""]
+ruff:
   script:
-    - flake8 --extend-ignore=E501,E203 src/ tests/
+    - nox --verbose --session ruff
 
-agenc-setup:
-  extends: .python-setup
-  stage: build
-  image: python:3.11-slim
+mypy:
+  cache:
+    - key: mypy-$CI_COMMIT_REF_SLUG
+      paths:
+        - .mypy_cache/
   script:
-    - pip install -e .
-    - python -c "import agenc"
+    - nox --verbose --session mypy
 
-test-3.9:
-  extends: .python-setup
-  stage: tests
-  image: python:3.9-slim
+test:
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11"]
   script:
-    - pip install -e .[test]
-    - coverage run --source=src/agenc -m pytest
-    - coverage report
-
-test-3.10:
-  extends: .python-setup
-  stage: tests
-  image: python:3.10-slim
-  script:
-    - pip install -e .[test]
-    - coverage run --source=src/agenc -m pytest
-    - coverage report
-
-test-3.11:
-  extends: .python-setup
-  stage: tests
-  image: python:3.11-slim
-  script:
-    - pip install -e .[test]
-    - coverage run --source=src/agenc -m pytest
-    - coverage report
+    - nox --verbose --session test --python $PYTHON_VERSION
 
 pages:
-  extends: .python-setup
-  stage: docs
-  image: sphinxdoc/sphinx
   script:
-    - pip install -e .[doc]
-    - cd docs
-    - make html
-    - mv build/html ../public
+    - nox --verbose --session docs
+    - mv docs/_build/html public
   artifacts:
     paths:
       - public

@@ -1,13 +1,13 @@
 from typing import Any
 
-import numpy as np
+from numpy.typing import NDArray
 from sklearn import metrics
 
-from .metric import Metric
+from agenc.core import Metric
 
 
 class Accuracy(Metric):
-    def __call__(self, y_true: np.ndarray, y_predicted: np.ndarray) -> Any:
+    def __call__(self, y_true: NDArray[Any], y_predicted: NDArray[Any]) -> Any:
         return metrics.accuracy_score(
             y_true,
             y_predicted,
@@ -17,8 +17,8 @@ class Accuracy(Metric):
 class ClassificationReport(Metric):
     def __call__(
         self,
-        y_true: np.ndarray,
-        y_predicted: np.ndarray,
+        y_true: NDArray[Any],
+        y_predicted: NDArray[Any],
     ) -> Any:
         return metrics.classification_report(
             y_true,
@@ -35,8 +35,8 @@ class FBetaScore(Metric):
 
     def __call__(
         self,
-        y_true: np.ndarray,
-        y_predicted: np.ndarray,
+        y_true: NDArray[Any],
+        y_predicted: NDArray[Any],
     ) -> Any:
         return metrics.fbeta_score(
             y_true,
@@ -48,8 +48,8 @@ class FBetaScore(Metric):
 class PrecisionScore(Metric):
     def __call__(
         self,
-        y_true: np.ndarray,
-        y_predicted: np.ndarray,
+        y_true: NDArray[Any],
+        y_predicted: NDArray[Any],
     ) -> Any:
         return metrics.precision_score(
             y_true,
@@ -60,8 +60,8 @@ class PrecisionScore(Metric):
 class Recall(Metric):
     def __call__(
         self,
-        y_true: np.ndarray,
-        y_predicted: np.ndarray,
+        y_true: NDArray[Any],
+        y_predicted: NDArray[Any],
     ) -> Any:
         return metrics.recall_score(
             y_true,
