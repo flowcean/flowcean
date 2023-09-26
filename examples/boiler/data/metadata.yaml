@@ -1,6 +1,6 @@
 uri: file:./trace_287401a5.csv
 
-columns:
+features:
   - name: t
     kind: scalar
     description: "time in seconds since simulation start"

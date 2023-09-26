@@ -1,6 +1,6 @@
 uri: file:./processed_data.csv
 
-columns:
+features:
   - name: x-Amplitude
     kind: scalar
     description: ".."
@@ -43,15 +43,3 @@ columns:
     max: 11000
     quantity: Time
     unit: seconds
-
-features:
-  - name: cool_attribute
-    import_str: agenc.feature_engineering.multiply
-    params:
-      - x-Amplitude
-      - x-Frequency
-    min: 0.0
-    max: 1.0
-    quantity: ~
-    unit: ~
-

@@ -5,19 +5,11 @@ from typing import List, Union
 
 from ruamel.yaml import YAML
 
-from agenc.data.metadata import AgencMetadata, _file_uri_to_path
-
-
-@dataclass
-class Learner:
-    class_path: str
-    init_arguments: dict
-
-
-@dataclass
-class Transform:
-    class_path: str
-    init_arguments: dict
+from agenc.data.metadata import Metadata, _file_uri_to_path
+from agenc.dynamic_loader import load_class
+from agenc.learner import Learner
+from agenc.metrics import Metric
+from agenc.transforms import Transform
 
 
 @dataclass
@@ -29,15 +21,9 @@ class Data:
 
 
 @dataclass
-class Metric:
-    class_path: str
-    init_arguments: dict
-
-
-@dataclass
 class Experiment:
     random_state: int
-    metadata: AgencMetadata
+    metadata: Metadata
     learner: Learner
     data: Data
     metrics: List[Metric]
@@ -47,17 +33,16 @@ class Experiment:
         path = Path(path)
         content = YAML(typ="safe").load(path)
         random_state = content["random_state"]
-        metadata = AgencMetadata.load_from_path(
+        metadata = Metadata.load_from_path(
             _file_uri_to_path(content["data"]["metadata"], path.parent)
         )
-        learner = Learner(
-            class_path=content["learner"]["class_path"],
-            init_arguments=content["learner"].get("init_arguments", {}),
+        learner = load_class(
+            content["learner"]["class_path"],
+            content["learner"].get("init_arguments", {}),
         )
         transforms = [
-            Transform(
-                class_path=transform["class_path"],
-                init_arguments=transform.get("init_arguments", {}),
+            load_class(
+                transform["class_path"], transform.get("init_arguments", {})
             )
             for transform in content["data"].get("transforms", [])
         ]
@@ -68,10 +53,7 @@ class Experiment:
             transforms=transforms,
         )
         metrics = [
-            Metric(
-                class_path=metric["class_path"],
-                init_arguments=metric.get("init_arguments", {}),
-            )
+            load_class(metric["class_path"], metric.get("init_arguments", {}))
             for metric in content.get("metrics", [])
         ]
 

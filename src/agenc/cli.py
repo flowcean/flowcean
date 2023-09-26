@@ -11,11 +11,7 @@ from pathlib import Path
 import polars as pl
 
 from agenc.data.split import train_test_split
-from agenc.dynamic_loader import load_class
 from agenc.experiment import Experiment
-from agenc.transforms import Transform
-from agenc.learner import Learner
-from agenc.metrics import Metric
 
 
 def main() -> None:
@@ -32,22 +28,9 @@ def main() -> None:
 
     dataset: pl.DataFrame = experiment.metadata.load_dataset()
 
-    transforms: list[Transform] = [
-        load_class(transform.class_path, transform.init_arguments)
-        for transform in experiment.data.transforms
-    ]
-    learner: Learner = load_class(
-        experiment.learner.class_path,
-        experiment.learner.init_arguments,
-    )
-    metrics: list[Metric] = [
-        load_class(metric.class_path, metric.init_arguments)
-        for metric in experiment.metrics
-    ]
-
     dataset = reduce(
         lambda dataset, transform: transform(dataset),
-        transforms,
+        experiment.data.transforms,
         dataset,
     )
 
@@ -56,16 +39,16 @@ def main() -> None:
         experiment.data.train_test_split,
     )
 
-    learner.train(
+    experiment.learner.train(
         train_data.select(experiment.data.inputs).to_numpy(),
         train_data.select(experiment.data.outputs).to_numpy(),
     )
 
-    predictions = learner.predict(
+    predictions = experiment.learner.predict(
         test_data.select(experiment.data.inputs).to_numpy()
     )
 
-    for metric in metrics:
+    for metric in experiment.metrics:
         result = metric(
             test_data.select(experiment.data.outputs).to_numpy(), predictions
         )

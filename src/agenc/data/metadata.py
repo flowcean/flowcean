@@ -9,65 +9,41 @@ from ruamel.yaml import YAML
 
 
 @dataclass
-class AgencMetadatum:
+class Feature:
     name: str
-    description: Optional[str]
-    kind: Optional[str]
-    min: Optional[float]
-    max: Optional[float]
-    quantity: Optional[str]
-    unit: Optional[str]
+    description: Optional[str] = None
+    kind: Optional[str] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    quantity: Optional[str] = None
+    unit: Optional[str] = None
 
 
 @dataclass
-class AgencFeature:
-    metadatum: AgencMetadatum
-    import_str: str
-    params: List[str]
-
-
-@dataclass
-class AgencMetadata:
+class Metadata:
     data_path: Path
-    columns: List[AgencMetadatum]
-    features: List[AgencFeature]
+    features: List[Feature]
 
     @classmethod
-    def load_from_path(cls, path: Union[str, os.PathLike]) -> "AgencMetadata":
+    def load_from_path(cls, path: Union[str, os.PathLike]) -> "Metadata":
         path = Path(path)
         content = YAML(typ="safe").load(path)
 
         path = _file_uri_to_path(content["uri"], path.parent)
-        columns = [
-            AgencMetadatum(
-                name=column["name"],
-                description=column.get("description"),
-                kind=column.get("kind"),
-                min=column.get("min"),
-                max=column.get("max"),
-                quantity=column.get("quantity"),
-                unit=column.get("unit"),
-            )
-            for column in content["columns"]
-        ]
         features = [
-            AgencFeature(
-                AgencMetadatum(
-                    name=feature["name"],
-                    description=feature.get("description"),
-                    kind=feature.get("kind"),
-                    min=feature.get("min"),
-                    max=feature.get("max"),
-                    quantity=feature.get("quantity"),
-                    unit=feature.get("unit"),
-                ),
-                import_str=feature["import_str"],
-                params=[attr for attr in feature.get("params", [])],
+            Feature(
+                name=feature["name"],
+                description=feature.get("description"),
+                kind=feature.get("kind"),
+                min=feature.get("min"),
+                max=feature.get("max"),
+                quantity=feature.get("quantity"),
+                unit=feature.get("unit"),
             )
-            for feature in content.get("features", [])
+            for feature in content["features"]
         ]
 
-        return cls(data_path=path, columns=columns, features=features)
+        return cls(data_path=path, features=features)
 
     def load_dataset(self) -> pl.DataFrame:
         if self.data_path.suffix == ".csv":
