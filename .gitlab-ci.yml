@@ -26,6 +26,7 @@ test:
   parallel:
     matrix:
       - PYTHON_VERSION: ["3.10", "3.11"]
+  coverage: "/(?i)total.*? (100(?:\\.0+)?\\%|[1-9]?\\d(?:\\.\\d+)?\\%)$/"
   script:
     - nox --verbose --session test --python $PYTHON_VERSION
 
