@@ -1,0 +1,43 @@
+random_state: 42
+
+data:
+  metadata: file:data/metadata.yaml
+  inputs:
+    - reference_0
+    - temperature_0
+    - reference_1
+    - temperature_1
+    - reference_2
+    - temperature_2
+    - reference_3
+    - temperature_3
+    - reference_4
+    - temperature_4
+    - reference_5
+    - temperature_5
+    - reference_6
+    - temperature_6
+    - reference_7
+    - temperature_7
+    - reference_8
+  outputs:
+    - temperature_8
+  train_test_split: 0.8
+  transforms:
+    - class_path: agenc.transforms.Select
+      init_arguments:
+        features:
+          - reference
+          - temperature
+    - class_path: agenc.transforms.StandardScaler
+    - class_path: agenc.transforms.SlidingWindow
+      init_arguments:
+        window_size: 9
+
+learner:
+  class_path: agenc.regression_tree.RegressionTree
+  init_arguments:
+    max_depth: 10
+
+metrics:
+  - class_path: agenc.metrics.MeanAbsoluteError

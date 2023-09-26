@@ -1,0 +1,14 @@
+uri: file:./trace_287401a5.csv
+
+columns:
+  - name: t
+    kind: scalar
+    description: "time in seconds since simulation start"
+    unit: seconds
+  - name: reference
+    kind: scalar
+    description: "target temperature as input to the control loop"
+    unit: Celsius
+  - name: temperature
+    kind: scalar
+    description: "measured temperature of the system"

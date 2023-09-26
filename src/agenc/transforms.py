@@ -54,3 +54,17 @@ class SlidingWindow(Transform):
             )
             .unnest(columns)
         )
+
+
+class Select(Transform):
+    """Select a subset of features.
+
+    Args:
+        features (list[str]): The features to select.
+    """
+
+    def __init__(self, features: list[str]) -> None:
+        self.features = features
+
+    def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
+        return data.select(self.features)
