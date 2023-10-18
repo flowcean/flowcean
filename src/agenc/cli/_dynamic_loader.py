@@ -16,4 +16,6 @@ def load_instance(class_path: str, kwargs: dict[str, Any] | None) -> Any:
     module = import_module(class_module)
     class_reference = getattr(module, class_name)
 
-    return class_reference(**kwargs)
+    return (
+        class_reference(**kwargs) if kwargs is not None else class_reference()
+    )

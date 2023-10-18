@@ -19,6 +19,7 @@ dependencies = [
   "scikit-learn",
   "lightning",
   "tensorboard",
+  "grpcio",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +39,9 @@ docs = [
   "pyenchant",
   "sphinxcontrib-spelling"
 ]
+grpcio-tools = [
+  "grpcio-tools",
+]
 
 [project.scripts]
 agenc = "agenc.cli:main"
@@ -55,10 +59,16 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = [
+  "agenc.learners.external.*",
+]
+ignore_errors = true
+
 [tool.ruff]
 select = ["E", "F", "D", "I", "N", "W", "UP", "RUF", "COM", "A", "B", "PT", "Q", "RET", "ARG", "NPY", "PERF"]
-ignore = ["D10"]
-exclude = ["docs"]
+ignore = ["D10", "COM812"]
+exclude = ["docs", "*pb2*"]
 line-length = 79
 target-version = "py311"
 

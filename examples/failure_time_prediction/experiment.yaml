@@ -31,13 +31,8 @@ data:
           Estimated-Failure-Time: 2477.355746
 
 learner:
-  class_path: agenc.learners.simple_dense.SimpleDense
+  class_path: agenc.learners.external.external_grpc_learner.ExternalGRPCLearner
   arguments:
-    learning_rate: 1e-2
-    batch_size: 64
-    max_epochs: 10
-    input_size: 3
-    output_size: 1
 
 metrics:
   - agenc.metrics.MeanSquaredError
