@@ -40,7 +40,7 @@ class Metadata:
     def load_test_dataset(self) -> pl.DataFrame:
         data_frame = None
         if self.test_data_path is None:
-            return None
+            return pl.DataFrame()
         for path in self.test_data_path:
             if path.suffix == ".csv":
                 if data_frame is None:
@@ -53,4 +53,6 @@ class Metadata:
                     "file type of data source has to be one of"
                     f" {supported_file_types}, but got: `{path.suffix}`"
                 )
+        if data_frame is None:
+            return pl.DataFrame()
         return data_frame

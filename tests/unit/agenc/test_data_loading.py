@@ -6,7 +6,7 @@ from agenc.core import Metadata
 
 
 class TestMetadata(unittest.TestCase):
-    def test_load_dataset_from_csv(self):
+    def test_load_dataset_from_csv(self) -> None:
         # Create a temporary CSV file for testing
         data_file = "test_data.csv"
         data = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
@@ -23,7 +23,7 @@ class TestMetadata(unittest.TestCase):
         assert isinstance(loaded_data, pl.DataFrame)
         assert len(loaded_data) == 3
 
-    def test_load_test_dataset_from_csv(self):
+    def test_load_test_dataset_from_csv(self) -> None:
         # Create temporary CSV files for testing
         test_data_file = "test_test_data.csv"
         data = pl.DataFrame({"A": [7, 8, 9], "B": [10, 11, 12]})
