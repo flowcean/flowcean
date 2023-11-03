@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 
 import polars as pl
-
 from agenc.core import Metadata
 
 

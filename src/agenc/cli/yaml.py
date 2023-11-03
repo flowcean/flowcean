@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, TypedDict, Union
+from typing import Any, TypedDict
 
 from ruamel.yaml import YAML
 
