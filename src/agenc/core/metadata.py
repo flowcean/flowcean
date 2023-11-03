@@ -35,6 +35,8 @@ class Metadata:
                     "file type of data source has to be one of"
                     f" {supported_file_types}, but got: `{path.suffix}`"
                 )
+        if data_frame is None:
+            return pl.DataFrame()
         return data_frame
 
     def load_test_dataset(self) -> pl.DataFrame:
