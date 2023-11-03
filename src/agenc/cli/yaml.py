@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, List, TypedDict, Union
 
 from ruamel.yaml import YAML
 
@@ -8,14 +8,11 @@ from agenc.core import Experiment, Feature, Metadata
 from ._dynamic_loader import load_instance
 from ._uri import file_uri_to_path
 
-
-def load_experiment(path: str | Path) -> Experiment:
+def load_experiment(path: Union[str, Path]) -> Experiment:
     path = Path(path)
     content = YAML(typ="safe").load(path)
     seed = content["seed"]
-    metadata = load_metadata(
-        file_uri_to_path(content["data"]["metadata"], path.parent),
-    )
+    metadata = load_metadata(file_uri_to_path(content["data"]["metadata"], path.parent))
     learner = _load_instance_from_yaml(content["learner"])
     transforms = [
         _load_instance_from_yaml(transform)
@@ -40,19 +37,12 @@ def load_experiment(path: str | Path) -> Experiment:
         metrics=metrics,
     )
 
-
-def load_metadata(path: str | Path) -> Metadata:
+def load_metadata(path: Union[str, Path]) -> Metadata:
     path = Path(path)
     content = YAML(typ="safe").load(path)
 
-    paths = []
-    for i in range(len(content["uri"])):
-        paths.append(file_uri_to_path(content["uri"][i], path.parent))
-
-    test_paths = []
-    if isinstance(content.get("test_uri"), list):
-        for uri in content["test_uri"]:
-            test_paths.append(file_uri_to_path(uri, path.parent))
+    paths = [file_uri_to_path(uri, path.parent) for uri in content.get("uri", [])]
+    test_paths = [file_uri_to_path(uri, path.parent) for uri in content.get("test_uri", [])]
 
     features = [
         Feature(
@@ -67,23 +57,17 @@ def load_metadata(path: str | Path) -> Metadata:
         for feature in content["features"]
     ]
 
-    return Metadata(
-        data_path=paths, test_data_path=test_paths, features=features
-    )
-
+    return Metadata(data_path=paths, test_data_path=test_paths, features=features)
 
 class InstanceConfiguration(TypedDict):
     class_path: str
     arguments: dict[str, Any]
 
-
 def _load_instance_from_yaml(
-    entry: InstanceConfiguration | str,
+    entry: Union[InstanceConfiguration, str]
 ) -> Any:
     if isinstance(entry, dict):
         return load_instance(entry["class_path"], entry.get("arguments", {}))
     if isinstance(entry, str):
         return load_instance(entry, {})
-    raise ValueError(
-        f"Expected either a dictionary or a string, got {type(entry)}",
-    )
+    raise ValueError(f"Expected either a dictionary or a string, got {type(entry)}")
