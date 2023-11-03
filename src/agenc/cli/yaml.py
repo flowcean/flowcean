@@ -48,7 +48,7 @@ def load_metadata(path: str | Path) -> Metadata:
     paths = []
     for i in range(len(content["uri"])):
         paths.append(file_uri_to_path(content["uri"][i], path.parent))
-    
+
     test_paths = []
     if isinstance(content.get("test_uri"), list):
         for uri in content["test_uri"]:
@@ -67,8 +67,9 @@ def load_metadata(path: str | Path) -> Metadata:
         for feature in content["features"]
     ]
 
-    return Metadata(data_path=paths, test_data_path=test_paths, features=features)
-
+    return Metadata(
+        data_path=paths, test_data_path=test_paths, features=features
+    )
 
 
 class InstanceConfiguration(TypedDict):
