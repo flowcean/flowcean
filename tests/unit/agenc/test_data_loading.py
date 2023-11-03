@@ -5,147 +5,44 @@ import os
 from pathlib import Path
 
 
-from agenc.data.metadata import AgencMetadata, AgencMetadatum, AgencFeature
-
-# Get the current script's directory
-script_dir = os.path.dirname(os.path.abspath(__file__))
+from agenc.core import Experiment, Feature, Metadata 
 
 
-class TestDataLoading(unittest.TestCase):
-    def setUp(self):
-        self.metadata = AgencMetadata(
-            data_path=[
-                Path(
-                    os.path.join(
-                        script_dir,
-                        "..",
-                        "..",
-                        "..",
-                        "examples",
-                        "failure_time_prediction",
-                        "data",
-                        "processed_data.csv",
-                    )
-                ),
-                Path(
-                    os.path.join(
-                        script_dir,
-                        "..",
-                        "..",
-                        "..",
-                        "examples",
-                        "failure_time_prediction",
-                        "data",
-                        "processed_data_2.csv",
-                    )
-                ),
-            ],
-            test_data_path=[
-                Path(
-                    os.path.join(
-                        script_dir,
-                        "..",
-                        "..",
-                        "..",
-                        "examples",
-                        "failure_time_prediction",
-                        "data",
-                        "processed_data.csv",
-                    )
-                ),
-                Path(
-                    os.path.join(
-                        script_dir,
-                        "..",
-                        "..",
-                        "..",
-                        "examples",
-                        "failure_time_prediction",
-                        "data",
-                        "processed_data_2.csv",
-                    )
-                ),
-            ],
-            columns=[
-                AgencMetadatum(
-                    name="a",
-                    description="a description",
-                    kind="continuous",
-                    min=0.0,
-                    max=1.0,
-                    quantity="length",
-                    unit="m",
-                ),
-                AgencMetadatum(
-                    name="b",
-                    description="b description",
-                    kind="continuous",
-                    min=0.0,
-                    max=1.0,
-                    quantity="length",
-                    unit="m",
-                ),
-            ],
-            features=[
-                AgencFeature(
-                    AgencMetadatum(
-                        name="a",
-                        description="a description",
-                        kind="continuous",
-                        min=0.0,
-                        max=1.0,
-                        quantity="length",
-                        unit="m",
-                    ),
-                    import_str="agenc.features.identity.Identity",
-                    params=[],
-                ),
-                AgencFeature(
-                    AgencMetadatum(
-                        name="b",
-                        description="b description",
-                        kind="continuous",
-                        min=0.0,
-                        max=1.0,
-                        quantity="length",
-                        unit="m",
-                    ),
-                    import_str="agenc.features.identity.Identity",
-                    params=[],
-                ),
-            ],
-        )
+class TestFeature(unittest.TestCase):
+    def test_feature_creation(self):
+        feature = Feature(name="TestFeature", description="Description", kind="Scalar", minimum=0.1, maximum=0.9, quantity="Length", unit="meter")
+        self.assertEqual(feature.name, "TestFeature")
+        self.assertEqual(feature.description, "Description")
+        self.assertEqual(feature.kind, "Scalar")
+        self.assertEqual(feature.minimum, 0.1)
+        self.assertEqual(feature.maximum, 0.9)
+        self.assertEqual(feature.quantity, "Length")
+        self.assertEqual(feature.unit, "meter")
 
-    def test_dataframe_concatenation(self):
-        concatenated_data_frame = self.metadata.load_dataset()
-        individual_data_frames = []
-        for path in self.metadata.data_path:
-            individual_data_frames.append(pl.read_csv(path))
-        # check that the dataframes are concatenated correctly
-        self.assertTrue(
-            concatenated_data_frame.shape[0]
-            == sum([df.shape[0] for df in individual_data_frames])
-        )
-        self.assertTrue(
-            concatenated_data_frame.shape[1]
-            == individual_data_frames[0].shape[1]
-        )
+class TestMetadata(unittest.TestCase):
+    def test_load_dataset_from_csv(self):
+        # Create a temporary CSV file for testing
+        data_file = "test_data.csv"
+        data = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        data.write_csv(data_file)
 
-    def test_dataframe_concatenation_test(self):
-        concatenated_data_frame = self.metadata.load_test_dataset()
-        individual_data_frames = []
-        for path in self.metadata.test_data_path:
-            individual_data_frames.append(pl.read_csv(path))
-        # check that the dataframes are concatenated correctly
-        self.assertTrue(
-            concatenated_data_frame.shape[0]
-            == sum([df.shape[0] for df in individual_data_frames])
-        )
-        self.assertTrue(
-            concatenated_data_frame.shape[1]
-            == individual_data_frames[0].shape[1]
-        )
+        metadata = Metadata(data_path=[data_file], test_data_path=[], features=[])
 
+        loaded_data = metadata.load_dataset()
+        self.assertIsInstance(loaded_data, pl.DataFrame)
+        self.assertEqual(len(loaded_data), 3)
 
-if __name__ == "__main__":
+    def test_load_test_dataset_from_csv(self):
+        # Create temporary CSV files for testing
+        test_data_file = "test_test_data.csv"
+        data = pl.DataFrame({"A": [7, 8, 9], "B": [10, 11, 12]})
+        data.write_csv(test_data_file)
+
+        metadata = Metadata(data_path=[], test_data_path=[test_data_file], features=[])
+
+        loaded_data = metadata.load_test_dataset()
+        self.assertIsInstance(loaded_data, pl.DataFrame)
+        self.assertEqual(len(loaded_data), 3)
+
+if __name__ == '__main__':
     unittest.main()
