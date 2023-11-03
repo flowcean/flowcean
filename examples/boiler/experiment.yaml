@@ -29,7 +29,14 @@ data:
         features:
           - reference
           - temperature
-    - class_path: agenc.transforms.StandardScaler
+    - class_path: agenc.transforms.Standardize
+      arguments:
+        mean:
+          reference: 0.0
+          temperature: 0.0
+        std:
+          reference: 1.0
+          temperature: 1.0
     - class_path: agenc.transforms.SlidingWindow
       arguments:
         window_size: 9
