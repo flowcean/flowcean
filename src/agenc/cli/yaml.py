@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List, TypedDict, Union
+from typing import Any, TypedDict, Union
 
 from ruamel.yaml import YAML
 
@@ -9,7 +9,7 @@ from ._dynamic_loader import load_instance
 from ._uri import file_uri_to_path
 
 
-def load_experiment(path: Union[str, Path]) -> Experiment:
+def load_experiment(path: str | Path) -> Experiment:
     path = Path(path)
     content = YAML(typ="safe").load(path)
     seed = content["seed"]
@@ -41,7 +41,7 @@ def load_experiment(path: Union[str, Path]) -> Experiment:
     )
 
 
-def load_metadata(path: Union[str, Path]) -> Metadata:
+def load_metadata(path: str | Path) -> Metadata:
     path = Path(path)
     content = YAML(typ="safe").load(path)
 
@@ -76,7 +76,7 @@ class InstanceConfiguration(TypedDict):
     arguments: dict[str, Any]
 
 
-def _load_instance_from_yaml(entry: Union[InstanceConfiguration, str]) -> Any:
+def _load_instance_from_yaml(entry: InstanceConfiguration | str) -> Any:
     if isinstance(entry, dict):
         return load_instance(entry["class_path"], entry.get("arguments", {}))
     if isinstance(entry, str):
