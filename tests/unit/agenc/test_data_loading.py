@@ -3,6 +3,7 @@ import polars as pl
 from pathlib import Path
 from agenc.core import Metadata
 
+
 class TestMetadata(unittest.TestCase):
     def test_load_dataset_from_csv(self):
         # Create a temporary CSV file for testing
@@ -18,8 +19,8 @@ class TestMetadata(unittest.TestCase):
         )
 
         loaded_data = metadata.load_dataset()
-        self.assertIsInstance(loaded_data, pl.DataFrame)
-        self.assertEqual(len(loaded_data), 3)
+        assert isinstance(loaded_data, pl.DataFrame)
+        assert len(loaded_data) == 3
 
     def test_load_test_dataset_from_csv(self):
         # Create temporary CSV files for testing
@@ -35,8 +36,9 @@ class TestMetadata(unittest.TestCase):
         )
 
         loaded_data = metadata.load_test_dataset()
-        self.assertIsInstance(loaded_data, pl.DataFrame)
-        self.assertEqual(len(loaded_data), 3)
+        assert isinstance(loaded_data, pl.DataFrame)
+        assert len(loaded_data) == 3
+
 
 if __name__ == "__main__":
     unittest.main()
