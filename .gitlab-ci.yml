@@ -5,6 +5,9 @@ default:
   image: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
   tags:
     - tuhh-registry
+  cache:
+    paths:
+      - .cache/pip
 
 black:
   script:
