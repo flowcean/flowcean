@@ -1,6 +1,10 @@
+import logging
+
 import polars as pl
 
 from agenc.core import Transform
+
+logger = logging.getLogger(__name__)
 
 
 class Select(Transform):
@@ -14,4 +18,5 @@ class Select(Transform):
         self.features = features
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
+        logger.debug(f"selecting features {self.features}")
         return data.select(self.features)

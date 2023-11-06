@@ -6,11 +6,14 @@ metrics, and running the experiment.
 """
 
 import argparse
+import logging as _logging
 from functools import reduce
+from os.path import exists
 from pathlib import Path
 
 from agenc.core import train_test_split
 
+from . import logging, runtime_configuration
 from .yaml import load_experiment
 
 
@@ -22,7 +25,26 @@ def main() -> None:
         required=True,
         help="Path to experiment file",
     )
+    parser.add_argument(
+        "--configuration",
+        type=Path,
+        required=False,
+        help="Path to runtime configuration",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_const",
+        const=_logging.DEBUG,
+        help="increase verbosity",
+    )
     arguments = parser.parse_args()
+
+    if arguments.configuration is not None:
+        runtime_configuration.load_from_file(arguments.configuration)
+    elif exists(path := Path.cwd() / "runtime.yaml"):
+        runtime_configuration.load_from_file(path)
+
+    logging.inititialize(level=arguments.verbose)
 
     experiment = load_experiment(arguments.experiment)
 

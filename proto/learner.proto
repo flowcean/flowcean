@@ -1,0 +1,101 @@
+syntax = "proto3";
+option java_package = "io.agenc.learner.grpc";
+
+message DataPackage {
+  repeated ColumnMetadata metadata = 1;
+  repeated Observation observations = 2;
+}
+
+message Prediction {
+  repeated Observation predictions = 1;
+  StatusMessage status = 2;
+}
+
+message ColumnMetadata {
+  string name = 1;
+  FeatureType feature_type = 2;
+  DataType data_type = 3;
+}
+
+message Observation {
+  repeated ObservationField fields = 1;
+  optional VectorDouble time_vector = 2;
+}
+
+message ObservationField {
+  oneof field {
+    int32 int = 1;
+    double double = 2;
+    VectorInt vector_int = 3;
+    VectorDouble vector_double = 4;
+    MatrixInt matrix_int = 5;
+    MatrixDouble matrix_double = 6;
+  }
+}
+
+message VectorInt { repeated int32 data = 1; }
+
+message VectorDouble { repeated double data = 1; }
+
+message MatrixInt {
+  repeated int32 data = 1;
+  int32 row_count = 2;
+  int32 column_count = 3;
+}
+
+message MatrixDouble {
+  repeated double data = 1;
+  int32 row_count = 2;
+  int32 column_count = 3;
+}
+
+message StatusMessage {
+  Status status = 1;
+  repeated Message messages = 2;
+  optional int32 progress = 3;
+}
+
+message Message {
+  LogLevel log_level = 1;
+  string sender = 2;
+  string message = 3;
+}
+
+enum FeatureType {
+  FEATURETYPE_UNDEFINED = 0;
+  FEATURETYPE_INPUT = 1;
+  FEATURETYPE_TARGET = 2;
+}
+
+enum DataType {
+  DATATYPE_UNDEFINED = 0;
+  DATATYPE_SCALAR = 1;
+  DATATYPE_VECTOR = 2;
+  DATATYPE_MATRIX = 3;
+  DATATYPE_SCALAR_TIMESERIES = 4;
+  DATATYPE_VECTOR_TIMESERIES = 5;
+}
+
+enum Status {
+  STATUS_UNDEFINED = 0;
+  STATUS_RUNNING = 1;
+  STATUS_FINISHED = 2;
+  STATUS_FAILED = 3;
+}
+
+enum LogLevel {
+  LOGLEVEL_UNDEFINED = 0;
+  LOGLEVEL_DEBUG = 1;
+  LOGLEVEL_INFO = 2;
+  LOGLEVEL_WARNING = 3;
+  LOGLEVEL_ERROR = 4;
+  LOGLEVEL_FATAL = 5;
+}
+
+message Empty {}
+
+service Learner {
+  rpc Train(DataPackage) returns (stream StatusMessage) {}
+  rpc Predict(DataPackage) returns (Prediction) {}
+  rpc Export(Empty) returns (Empty) {}
+}
