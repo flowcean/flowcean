@@ -26,9 +26,7 @@ def ruff(session: nox.Session) -> None:
 @nox.session()
 def black(session: nox.Session) -> None:
     session.install("black")
-    session.run("black", "--diff", "--check", "src/", "tests/",
-                "--extend-exclude",
-                "src/agenc/learners/external/\\w*pb2\\w*.py")
+    session.run("black", "--diff", "--check", "src/", "tests/")
 
 
 @nox.session(python="3.11")

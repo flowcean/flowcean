@@ -30,6 +30,8 @@ test = [
 typecheck = [
   "pytest",
   "argcomplete",
+  "grpc-stubs",
+  "types-protobuf",
   "mypy",
 ]
 docs = [
@@ -39,8 +41,9 @@ docs = [
   "pyenchant",
   "sphinxcontrib-spelling"
 ]
-grpcio-tools = [
+grpc = [
   "grpcio-tools",
+  "mypy-protobuf",
 ]
 
 [project.scripts]
@@ -58,12 +61,6 @@ module = [
   "sklearn.*",
 ]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-  "agenc.learners.external.*",
-]
-ignore_errors = true
 
 [tool.ruff]
 select = ["E", "F", "D", "I", "N", "W", "UP", "RUF", "COM", "A", "B", "PT", "Q", "RET", "ARG", "NPY", "PERF"]

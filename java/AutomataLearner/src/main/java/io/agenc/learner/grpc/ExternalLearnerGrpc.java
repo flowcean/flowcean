@@ -12,7 +12,7 @@ public final class ExternalLearnerGrpc {
 
   private ExternalLearnerGrpc() {}
 
-  public static final String SERVICE_NAME = "ExternalLearner";
+  public static final String SERVICE_NAME = "Learner";
 
   // Static method descriptors that strictly reflect the proto.
   private static volatile io.grpc.MethodDescriptor<io.agenc.learner.grpc.GrpcLearner.DataPackage,
