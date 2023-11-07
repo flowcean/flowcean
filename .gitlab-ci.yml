@@ -1,6 +1,5 @@
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  JOB_SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
 
 default:
   image: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
@@ -39,24 +38,16 @@ pages:
     paths:
       - public
 
-.before_upload_script: &before_upload_script
-  - apt update; apt install -y openssh-client -y
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
-  - eval $(ssh-agent -s)
-  - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
-
-.upload_docu_script: &upload_docu_script
-  - scp -rP "${SSH_PORT}" ./public/* "${SSH_USER}"@"${HOST_NAME}":"${WEBSERVER_ROOT}/"
-
-upload:docu:
-  image: ubuntu
-  stage: upload
+deploy:
   before_script:
-   - *before_upload_script
+   - mkdir -p ~/.ssh
+   - chmod 700 ~/.ssh
+   - echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+   - chmod 644 ~/.ssh/known_hosts
+   - eval $(ssh-agent -s)
+   - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
   script:
-   - *upload_docu_script
+   - scp -rP 40043 ./public/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
+  needs: ["pages"]
   rules:
    - if: $CI_COMMIT_REF_NAME == "main"
