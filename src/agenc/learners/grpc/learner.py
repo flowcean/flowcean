@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from typing import Any
 
@@ -24,6 +25,8 @@ from ._generated.learner_pb2 import (
 from ._generated.learner_pb2_grpc import LearnerStub
 
 MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
+
+logger = logging.getLogger(__name__)
 
 
 class GrpcLearner(Learner):
@@ -69,10 +72,8 @@ class GrpcLearner(Learner):
 
 def _log_messages(messages: Iterable[Message]) -> None:
     for log_message in messages:
-        print(
-            "[gRPC Learner]"
-            f" [{_loglevel_to_string(log_message.log_level)}]"
-            f" {log_message.message}"
+        logger.log(
+            _loglevel_from_proto(log_message.log_level), log_message.message
         )
 
 
@@ -104,20 +105,20 @@ def _predictions_to_array(
     return np.array(data)
 
 
-def _loglevel_to_string(loglevel: LogLevel.V) -> str:
+def _loglevel_from_proto(loglevel: LogLevel.V) -> int:
     match loglevel:
         case LogLevel.LOGLEVEL_DEBUG:
-            return "DEBUG"
+            return logging.DEBUG
         case LogLevel.LOGLEVEL_INFO:
-            return "INFO"
+            return logging.INFO
         case LogLevel.LOGLEVEL_WARNING:
-            return "WARN"
+            return logging.WARN
         case LogLevel.LOGLEVEL_ERROR:
-            return "ERROR"
+            return logging.ERROR
         case LogLevel.LOGLEVEL_FATAL:
-            return "FATAL"
+            return logging.FATAL
         case _:
-            return "UNDEF"
+            return logging.NOTSET
 
 
 def _dataset_to_proto(
