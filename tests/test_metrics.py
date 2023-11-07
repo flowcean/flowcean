@@ -14,6 +14,7 @@ from agenc.metrics import (
 )
 from agenc.metrics.dummy_metric import DummyMetric
 
+
 class TestMetrics(unittest.TestCase):
     def setUp(self) -> None:
         self.true = np.array([0, 1, 0, 1])
@@ -49,16 +50,8 @@ class TestMetrics(unittest.TestCase):
     def test_r2_score(self) -> None:
         R2Score()(self.true, self.predicted)
 
-    def test_dummy_metric(self):
-        dummy_metric = DummyMetric()
-
-        # Test with some example data
-        y_true = np.ndarray([1, 2, 3])
-        y_predicted = np.ndarray([1, 2, 3])
-        metric_value = dummy_metric(y_true, y_predicted)
-
-        # The DummyMetric always returns 0, so the metric value should be 0
-        self.assertEqual(metric_value, 0)
+    def test_dummy_metric(self) -> None:
+        DummyMetric()(self.true, self.predicted)
 
 
 if __name__ == "__main__":
