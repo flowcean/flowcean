@@ -3,6 +3,7 @@
 :::{toctree}
 installation
 logging
+command-line-interface
 examples/index
 reference/index
 :::

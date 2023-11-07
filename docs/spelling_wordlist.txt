@@ -4,3 +4,8 @@ accelerometer
 commandline
 csv
 dataset
+agenc
+EXPERIMENT
+CONFIGURATION
+Git
+runtime

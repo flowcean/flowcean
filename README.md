@@ -20,4 +20,14 @@ Build the documentation using the nox session.
 nox --session docs
 ```
 
-After a successful build, the documentation resides in `docs/_build/html/`.
+After the documentation has been built, you can open it in your browser by opening `docs/_build/html/index.html`.
+
+Building the documentation again can be sped up by using the `-r` flag.
+```bash 
+nox --session docs -r
+```
+
+The rest of the CI/CD pipeline can be checked locally using the command below.
+```bash
+nox --session
+```
