@@ -5,6 +5,9 @@ default:
   image: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
   tags:
     - tuhh-registry
+  cache:
+    paths:
+      - .cache/pip
 
 black:
   script:
@@ -37,3 +40,17 @@ pages:
   artifacts:
     paths:
       - public
+
+deploy:
+  before_script:
+   - mkdir -p ~/.ssh
+   - chmod 700 ~/.ssh
+   - echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+   - chmod 644 ~/.ssh/known_hosts
+   - eval $(ssh-agent -s)
+   - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
+  script:
+   - scp -rP 40043 ./public/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
+  needs: ["pages"]
+  rules:
+   - if: $CI_COMMIT_REF_NAME == "main"
