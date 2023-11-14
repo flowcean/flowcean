@@ -1,6 +1,6 @@
 # Container for Continuous Integration (CI)
 
-Login to registry:
+Login to registry (requires a connection to TUHH network):
 
 ```bash
 docker login collaborating.tuhh.de:5005
