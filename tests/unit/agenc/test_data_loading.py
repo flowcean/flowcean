@@ -22,6 +22,7 @@ class TestMetadata(unittest.TestCase):
         loaded_data = metadata.load_dataset()
         assert isinstance(loaded_data, pl.DataFrame)
         assert len(loaded_data) == 3
+        data_file_path.unlink()
 
     def test_load_test_dataset_from_csv(self) -> None:
         # Create temporary CSV files for testing
@@ -39,6 +40,7 @@ class TestMetadata(unittest.TestCase):
         loaded_data = metadata.load_test_dataset()
         assert isinstance(loaded_data, pl.DataFrame)
         assert len(loaded_data) == 3
+        test_data_file_path.unlink()
 
 
 if __name__ == "__main__":
