@@ -4,3 +4,4 @@ accelerometer
 commandline
 csv
 dataset
+fine-grained

@@ -24,34 +24,44 @@ class TestMetrics(unittest.TestCase):
         assert Accuracy().name == "Accuracy"
 
     def test_accuracy(self) -> None:
-        Accuracy()(self.true, self.predicted)
+        accuracy = Accuracy()(self.true, self.predicted)
+        assert accuracy == 0.5
 
     def test_classification_report(self) -> None:
-        ClassificationReport()(self.true, self.predicted)
+        report_value = ClassificationReport()(self.true, self.predicted)
+        assert report_value.startswith("              precision    recall ")
 
     def test_fbeta_score(self) -> None:
-        FBetaScore(beta=1.0)(self.true, self.predicted)
+        fbeta = FBetaScore(beta=1.0)(self.true, self.predicted)
+        assert fbeta == 0.5
 
     def test_precision_score(self) -> None:
-        PrecisionScore()(self.true, self.predicted)
+        precision = PrecisionScore()(self.true, self.predicted)
+        assert precision == 0.5
 
     def test_recall(self) -> None:
-        Recall()(self.true, self.predicted)
+        recall = Recall()(self.true, self.predicted)
+        assert recall == 0.5
 
     def test_max_error(self) -> None:
-        MaxError()(self.true, self.predicted)
+        max_error = MaxError()(self.true, self.predicted)
+        assert max_error == 1
 
     def test_mean_absolute_error(self) -> None:
-        MeanAbsoluteError()(self.true, self.predicted)
+        mae = MeanAbsoluteError()(self.true, self.predicted)
+        assert mae == 0.5
 
     def test_mean_squared_error(self) -> None:
-        MeanSquaredError()(self.true, self.predicted)
+        mse = MeanSquaredError()(self.true, self.predicted)
+        assert mse == 0.5
 
     def test_r2_score(self) -> None:
-        R2Score()(self.true, self.predicted)
+        r2 = R2Score()(self.true, self.predicted)
+        assert r2 == -1.0
 
     def test_dummy_metric(self) -> None:
-        DummyMetric()(self.true, self.predicted)
+        dummy_value = DummyMetric()(self.true, self.predicted)
+        assert dummy_value == 0.0
 
 
 if __name__ == "__main__":

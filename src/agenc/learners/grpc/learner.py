@@ -126,19 +126,17 @@ def _dataset_to_proto(
     metadata: list[ColumnMetadata] = []
     observations: list[Observation] = []
     input_names = dataset.input_columns
-    metadata.extend(
-        [
-            ColumnMetadata(
-                name=column_name,
-                feature_type=(
-                    FeatureType.FEATURETYPE_INPUT
-                    if (column_name in input_names)
-                    else FeatureType.FEATURETYPE_TARGET
-                ),
-                data_type=DataType.DATATYPE_SCALAR,
-            )
-            for column_name in dataset.input_columns + dataset.output_columns
-        ]
-    )
+    metadata.extend([
+        ColumnMetadata(
+            name=column_name,
+            feature_type=(
+                FeatureType.FEATURETYPE_INPUT
+                if (column_name in input_names)
+                else FeatureType.FEATURETYPE_TARGET
+            ),
+            data_type=DataType.DATATYPE_SCALAR,
+        )
+        for column_name in dataset.input_columns + dataset.output_columns
+    ])
     observations.extend([_row_to_proto(row) for row in dataset.data])
     return DataPackage(metadata=metadata, observations=observations)

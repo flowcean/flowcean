@@ -1,19 +1,15 @@
 import unittest
 
+import numpy as np
 from agenc.learners.dummy_learner import DummyLearner
-from numpy import ndarray
 
 
 class TestDummyLearner(unittest.TestCase):
     def test_dummy_learner(self) -> None:
         dummy_learner = DummyLearner()
-
-        # Training with some example data should not raise any exceptions
-        dummy_learner.train(ndarray([1, 2, 3]), ndarray([4, 5, 6]))
-
-        # Predictions from the DummyLearner should be an empty array
-        predictions = dummy_learner.predict(ndarray([7, 8, 9]))
-        assert isinstance(predictions, ndarray)
+        dummy_learner.train(np.array([1, 2, 3]), np.array([4, 5, 6]))
+        predictions = dummy_learner.predict(np.array([7, 8, 9]))
+        assert predictions.shape == (3,)
 
 
 if __name__ == "__main__":
