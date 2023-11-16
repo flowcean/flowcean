@@ -32,3 +32,14 @@ make html
 ```
 
 The configuration is afterwards generated to `docs/build/html/`.
+
+
+Building the documentation again can be sped up by using the `--reuse-existing-virtualenvs` flag.
+```bash 
+nox --session docs -r
+```
+
+The rest of the CI/CD pipeline can be checked locally using the command below.
+```bash
+nox --session
+```

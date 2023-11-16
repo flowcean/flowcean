@@ -4,5 +4,8 @@ accelerometer
 commandline
 csv
 dataset
+<<<<<<< HEAD
 fine-grained
+=======
+>>>>>>> 0683bc09dcd87546e2ae4891ba2637de35306ecb
 runtime
