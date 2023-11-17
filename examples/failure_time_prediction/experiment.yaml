@@ -31,7 +31,14 @@ data:
           Estimated-Failure-Time: 2477.355746
 
 learner:
-  class_path: agenc.learners.dummy_learner.DummyLearner
+  class_path: agenc.learners.simple_dense.SimpleDense
+  arguments:
+    learning_rate: 1e-2
+    batch_size: 64
+    max_epochs: 10
+    num_workers: 1
+    input_size: 3
+    output_size: 1
 
 metrics:
   - agenc.metrics.dummy_metric.DummyMetric
