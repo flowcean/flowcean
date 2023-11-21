@@ -4,6 +4,7 @@
 installation
 logging
 command-line-interface
+dvc
 examples/index
 reference/index
 :::
