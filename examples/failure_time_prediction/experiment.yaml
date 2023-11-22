@@ -1,14 +1,21 @@
 seed: 42
 
 data:
-  metadata: file:./data/metadata.yaml
+  loader:
+    class_path: agenc.data.UriDataLoader
+    arguments:
+      uri: file:./data/processed_data.csv
+  test_loader:
+    class_path: agenc.data.TrainTestSplit
+    arguments:
+      ratio: 0.8
+      shuffle: True
   inputs:
     - y-Amplitude
     - z-Amplitude
     - Growth-rate
   outputs:
     - Estimated-Failure-Time
-  train_test_split: 0.8
   transforms:
     - class_path: agenc.transforms.Select
       arguments:

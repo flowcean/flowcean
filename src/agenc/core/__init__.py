@@ -1,17 +1,13 @@
 __all__ = [
+    "DataLoader",
     "Dataset",
     "Learner",
-    "Metadata",
-    "Feature",
     "Metric",
-    "split",
-    "train_test_split",
     "Transform",
 ]
 
+from .data_loader import DataLoader
 from .dataset import Dataset
 from .learner import Learner
-from .metadata import Feature, Metadata
 from .metric import Metric
-from .split import split, train_test_split
 from .transform import Transform

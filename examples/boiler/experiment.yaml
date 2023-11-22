@@ -1,7 +1,14 @@
 seed: 42
 
 data:
-  metadata: file:data/metadata.yaml
+  loader:
+    class_path: agenc.data.UriDataLoader
+    arguments:
+      uri: file:./data/trace_287401a5.csv
+  test_loader:
+    class_path: agenc.data.TrainTestSplit
+    arguments:
+      ratio: 0.8
   inputs:
     - reference_0
     - temperature_0
@@ -22,7 +29,6 @@ data:
     - reference_8
   outputs:
     - temperature_8
-  train_test_split: 0.8
   transforms:
     - class_path: agenc.transforms.Select
       arguments:

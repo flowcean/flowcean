@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from agenc.core import Metadata
-
 from ._dynamic_loader import load_instance
 
 
@@ -69,10 +67,10 @@ class LearnerSpecification(InstanceSpecification):
 @dataclass
 class Experiment:
     seed: int
-    metadata: Metadata
+    data_loader: InstanceSpecification
+    test_data_loader: InstanceSpecification
     inputs: list[str]
     outputs: list[str]
-    train_test_split: float
     transforms: list[InstanceSpecification]
     learner: LearnerSpecification
     metrics: list[InstanceSpecification]

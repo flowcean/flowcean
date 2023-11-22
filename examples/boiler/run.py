@@ -1,33 +1,38 @@
-from pathlib import Path
-
 import polars as pl
-from agenc.core import Feature, Metadata, train_test_split
+from agenc.data.split import TrainTestSplit
+from agenc.data.uri import UriDataLoader
 from agenc.learners.regression_tree import RegressionTree
 from agenc.metrics.regression import MeanAbsoluteError
 from agenc.transforms import Select, SlidingWindow, Standardize
+from agenc.transforms.chain import Chain
 
 
 def main() -> None:
-    metadata = Metadata(
-        data_path=Path("data/trace_287401a5.csv"),
-        features=[Feature(name="x")],
-    )
-    dataset: pl.DataFrame = metadata.load_dataset()
+    dataset: pl.DataFrame = UriDataLoader(
+        uri="file:./data/trace_287401a5.csv",
+    ).load()
 
-    dataset = Select(features=["reference", "temperature"])(dataset)
-    dataset = Standardize(
-        mean={
-            "reference": 0.0,
-            "temperature": 0.0,
-        },
-        std={
-            "reference": 1.0,
-            "temperature": 1.0,
-        },
+    train_data, test_data = TrainTestSplit(
+        ratio=0.8,
+        shuffle=False,
     )(dataset)
-    dataset = SlidingWindow(window_size=3)(dataset)
 
-    train_data, test_data = train_test_split(dataset, ratio=0.8)
+    transforms = Chain(
+        Select(features=["reference", "temperature"]),
+        Standardize(
+            mean={
+                "reference": 0.0,
+                "temperature": 0.0,
+            },
+            std={
+                "reference": 1.0,
+                "temperature": 1.0,
+            },
+        ),
+        SlidingWindow(window_size=3),
+    )
+    train_data = transforms(train_data)
+    test_data = transforms(test_data)
 
     learner = RegressionTree()
     inputs = [
