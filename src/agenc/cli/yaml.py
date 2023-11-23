@@ -14,11 +14,14 @@ def load_experiment(path: str | Path) -> Experiment:
         content["data"]["loader"]
     )
     test_data_loader = InstanceSpecification.from_dict_or_string(
-        content["data"]["loader"]
+        content["data"]["test_loader"]
     )
     inputs = content["data"]["inputs"]
     outputs = content["data"]["outputs"]
-    learner = LearnerSpecification.from_dict_or_string(content["learner"])
+    learners = [
+        LearnerSpecification.from_dict(learner)
+        for learner in content["learners"]
+    ]
     transforms = [
         InstanceSpecification.from_dict_or_string(transform)
         for transform in content["data"].get("transforms", [])
@@ -32,7 +35,7 @@ def load_experiment(path: str | Path) -> Experiment:
         seed=seed,
         data_loader=data_loader,
         test_data_loader=test_data_loader,
-        learner=learner,
+        learners=learners,
         transforms=transforms,
         inputs=inputs,
         outputs=outputs,

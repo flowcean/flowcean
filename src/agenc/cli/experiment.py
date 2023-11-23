@@ -30,22 +30,16 @@ class InstanceSpecification:
 
 @dataclass
 class LearnerSpecification(InstanceSpecification):
+    name: str
     save_path: Path | None
     load_path: Path | None
     train: bool
 
     @classmethod
-    def from_dict_or_string(
-        cls, data: dict[str, Any] | str
+    def from_dict(
+        cls,
+        data: dict[str, Any],
     ) -> "LearnerSpecification":
-        if isinstance(data, str):
-            return cls(
-                class_path=data,
-                arguments={},
-                save_path=None,
-                load_path=None,
-                train=True,
-            )
         if "save_path" in data:
             save_path = Path(data["save_path"])
         else:
@@ -56,6 +50,7 @@ class LearnerSpecification(InstanceSpecification):
             load_path = None
 
         return cls(
+            name=data["name"],
             class_path=data["class_path"],
             arguments=data.get("arguments", {}),
             save_path=save_path,
@@ -72,5 +67,5 @@ class Experiment:
     inputs: list[str]
     outputs: list[str]
     transforms: list[InstanceSpecification]
-    learner: LearnerSpecification
+    learners: list[LearnerSpecification]
     metrics: list[InstanceSpecification]

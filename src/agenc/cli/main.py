@@ -7,6 +7,7 @@ metrics, and running the experiment.
 
 import argparse
 import logging as _logging
+import sys
 from os.path import exists
 from pathlib import Path
 
@@ -40,6 +41,7 @@ def main() -> None:
     )
     arguments = parser.parse_args()
     cwd = Path.cwd()
+    sys.path.append(str(cwd))
 
     if arguments.configuration is not None:
         runtime_configuration.load_from_file(arguments.configuration)
@@ -49,16 +51,20 @@ def main() -> None:
     logging.inititialize(level=arguments.verbose)
     logger = _logging.getLogger(__name__)
 
+    logger.info(f"Loading experiment from `{arguments.experiment}`")
     experiment = load_experiment(arguments.experiment)
 
+    logger.info(f"Loading data using `{experiment.data_loader.class_path}`")
     data_loader: DataLoader = experiment.data_loader.load()
     dataset = data_loader.load()
 
     test_data_loader = experiment.test_data_loader.load()
     if isinstance(test_data_loader, DataLoader):
+        logger.info("Loading test data using data loader")
         train_data = dataset
         test_data = test_data_loader.load()
     elif isinstance(test_data_loader, TrainTestSplit):
+        logger.info("Splitting data into train and test set")
         train_data, test_data = test_data_loader(dataset)
     else:
         raise ValueError(
@@ -69,38 +75,53 @@ def main() -> None:
     transforms = Chain(
         *[transform.load() for transform in experiment.transforms]
     )
-    learner: Learner = experiment.learner.load()
+    learners: list[Learner] = [
+        learner.load() for learner in experiment.learners
+    ]
     metrics: list[Metric] = [metric.load() for metric in experiment.metrics]
 
+    logger.info("Applying transforms")
     train_data = transforms(train_data)
     test_data = transforms(test_data)
 
-    if experiment.learner.load_path is not None:
-        logger.info(f"Loading learner from `{experiment.learner.load_path}`")
-        learner.load(experiment.learner.load_path)
-    if experiment.learner.train:
-        logger.info("Start training")
-        learner.train(
-            train_data.select(experiment.inputs).to_numpy(),
-            train_data.select(experiment.outputs).to_numpy(),
-        )
-        if experiment.learner.save_path is not None:
-            logger.info(f"Saving learner to `{experiment.learner.save_path}`")
-            experiment.learner.save_path.parent.mkdir(
-                parents=True, exist_ok=True
+    for specification, learner in zip(
+        experiment.learners,
+        learners,
+        strict=True,
+    ):
+        if specification.load_path is not None:
+            logger.info(f"Loading learner from `{specification.load_path}`")
+            learner.load(specification.load_path)
+        if specification.train:
+            logger.info(f"Start training of `{specification.name}`")
+            learner.train(
+                train_data.select(experiment.inputs).to_numpy(),
+                train_data.select(experiment.outputs).to_numpy(),
             )
-            learner.save(experiment.learner.save_path)
+            logger.info("Finished training")
+            if specification.save_path is not None:
+                logger.info(f"Saving learner to `{specification.save_path}`")
+                specification.save_path.parent.mkdir(
+                    parents=True, exist_ok=True
+                )
+                learner.save(specification.save_path)
 
-    predictions = learner.predict(
-        test_data.select(experiment.inputs).to_numpy(),
-    )
-
-    for metric in metrics:
-        result = metric(
-            test_data.select(experiment.outputs).to_numpy(),
-            predictions,
+    for specification, learner in zip(
+        experiment.learners,
+        learners,
+        strict=True,
+    ):
+        logger.info(f"Predicting with `{specification.name}`")
+        predictions = learner.predict(
+            test_data.select(experiment.inputs).to_numpy(),
         )
-        print(f"{metric.__class__.__name__}: {result}")
+
+        for metric in metrics:
+            result = metric(
+                test_data.select(experiment.outputs).to_numpy(),
+                predictions,
+            )
+            print(f"{metric.__class__.__name__}: {result}")
 
 
 if __name__ == "__main__":
