@@ -4,6 +4,7 @@ from typing import Any
 
 import lightning
 import numpy as np
+import polars as pl
 import torch
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -65,11 +66,19 @@ class SimpleDense(Learner):
         self.trainer: None | lightning.Trainer = None
 
     @override
-    def train(self, inputs: NDArray[Any], outputs: NDArray[Any]) -> None:
+    def train(
+        self,
+        data: pl.DataFrame,
+        inputs: list[str],
+        outputs: list[str],
+    ) -> None:
         train_len = int(0.8 * len(inputs))
         validation_len = len(inputs) - train_len
         train_dataset, val_dataset = random_split(
-            TorchDataset(inputs, outputs),
+            TorchDataset(
+                data.select(inputs).to_numpy(),
+                data.select(outputs).to_numpy(),
+            ),
             [train_len, validation_len],
         )
         train_dataloader = DataLoader(

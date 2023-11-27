@@ -95,9 +95,15 @@ def main() -> None:
         if specification.train:
             logger.info(f"Start training of `{specification.name}`")
             learner.train(
-                train_data.select(experiment.inputs).to_numpy(),
-                train_data.select(experiment.outputs).to_numpy(),
+                train_data,
+                experiment.inputs,
+                experiment.outputs,
             )
+            if specification.save_path is not None:
+                logger.info(f"Saving learner to `{specification.save_path}`")
+                specification.save_path.parent.mkdir(
+                    parents=True, exist_ok=True
+                )
             logger.info("Finished training")
             if specification.save_path is not None:
                 logger.info(f"Saving learner to `{specification.save_path}`")

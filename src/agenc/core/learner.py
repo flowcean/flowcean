@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
+import polars as pl
 from numpy.typing import NDArray
 
 
@@ -17,14 +18,18 @@ class Learner(ABC):
     """
 
     @abstractmethod
-    def train(self, inputs: NDArray[Any], outputs: NDArray[Any]) -> None:
+    def train(
+        self,
+        data: pl.DataFrame,
+        inputs: list[str],
+        outputs: list[str],
+    ) -> None:
         """Train the learner.
 
         Args:
-            inputs:
-                A ``numpy.ndarray`` with input values for the model.
-            outputs:
-                A ``numpy.ndarray`` with output values for the model.
+            data: The data to train on.
+            inputs: The names of the input columns.
+            outputs: The names of the output columns.
         """
 
     @abstractmethod

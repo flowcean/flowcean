@@ -6,6 +6,7 @@ from typing import Any
 
 import grpc
 import numpy as np
+import polars as pl
 from numpy.typing import NDArray
 
 from agenc.core import Learner
@@ -52,8 +53,16 @@ class GrpcLearner(Learner):
         )
         self.stub = LearnerStub(self.channel)
 
-    def train(self, inputs: NDArray[Any], outputs: NDArray[Any]) -> None:
-        dataset = _create_dataset(inputs, outputs)
+    def train(
+        self,
+        data: pl.DataFrame,
+        inputs: list[str],
+        outputs: list[str],
+    ) -> None:
+        dataset = _create_dataset(
+            data.select(inputs).to_numpy(),
+            data.select(outputs).to_numpy(),
+        )
         proto_dataset = _dataset_to_proto(dataset)
         stream = self.stub.Train(proto_dataset)
         for status_message in stream:
