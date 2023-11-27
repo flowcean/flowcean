@@ -8,7 +8,7 @@ import grpc
 import numpy as np
 from numpy.typing import NDArray
 
-from agenc.core import Dataset, Learner
+from agenc.core import Learner
 
 from ._generated.learner_pb2 import (
     ColumnMetadata,
@@ -23,6 +23,7 @@ from ._generated.learner_pb2 import (
     Status,
 )
 from ._generated.learner_pb2_grpc import LearnerStub
+from .dataset import Dataset
 
 MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
 
