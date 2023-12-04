@@ -8,11 +8,10 @@ import io.agenc.learner.grpc.LearnerOuterClass.Prediction;
 import io.agenc.learner.grpc.LearnerOuterClass.Prediction.Builder;
 import io.agenc.learner.grpc.LearnerOuterClass.Status;
 import io.agenc.learner.grpc.LearnerOuterClass.StatusMessage;
-import io.agenc.learner.grpc.LearnerOuterClass.VectorInt;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,9 +20,9 @@ import java.util.Set;
 
 import org.javatuples.Pair;
 
-import de.learnlib.algorithms.rpni.BlueFringeRPNIMealy;
-import de.learnlib.api.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
 import io.agenc.learner.grpc.LearnerGrpc;
+import de.learnlib.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
+import de.learnlib.algorithm.rpni.BlueFringeRPNIMealy;
 
 public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 	private MealyMachine<?, Integer, ?, Integer> model;
