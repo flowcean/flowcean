@@ -1,0 +1,5 @@
+outs:
+- md5: 925796ab3b4e94afb9d1936b45f5206b
+  size: 116962
+  hash: md5
+  path: 20231013_145729_cyegu.parquet

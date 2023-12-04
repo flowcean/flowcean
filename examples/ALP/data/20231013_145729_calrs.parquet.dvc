@@ -1,0 +1,5 @@
+outs:
+- md5: d35d413053ef19d6e0a23b8bba7a6e4f
+  size: 117691
+  hash: md5
+  path: 20231013_145729_calrs.parquet

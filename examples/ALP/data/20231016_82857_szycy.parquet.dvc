@@ -1,0 +1,5 @@
+outs:
+- md5: aec8f2f9496cc7e1c10c814869870844
+  size: 111618
+  hash: md5
+  path: 20231016_82857_szycy.parquet

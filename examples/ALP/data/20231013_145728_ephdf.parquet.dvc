@@ -1,0 +1,5 @@
+outs:
+- md5: 18cdd91d7b544d5fe6aacef0b77e5879
+  size: 122220
+  hash: md5
+  path: 20231013_145728_ephdf.parquet

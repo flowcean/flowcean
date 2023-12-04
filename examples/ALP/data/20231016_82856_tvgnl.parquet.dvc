@@ -1,0 +1,5 @@
+outs:
+- md5: 1d6f54e37aa8e3124315676be0c1a10b
+  size: 116302
+  hash: md5
+  path: 20231016_82856_tvgnl.parquet

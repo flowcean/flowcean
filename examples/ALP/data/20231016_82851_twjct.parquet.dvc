@@ -1,0 +1,5 @@
+outs:
+- md5: cea930778d1b2d92a171c22c6a75fb27
+  size: 121121
+  hash: md5
+  path: 20231016_82851_twjct.parquet

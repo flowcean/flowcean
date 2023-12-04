@@ -1,0 +1,5 @@
+outs:
+- md5: 2349696b991810c12418ff965ea502d2
+  size: 118717
+  hash: md5
+  path: 20231016_82855_vfura.parquet

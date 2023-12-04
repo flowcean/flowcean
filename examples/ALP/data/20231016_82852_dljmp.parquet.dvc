@@ -1,0 +1,5 @@
+outs:
+- md5: 725559a3fb93e43f692edba6e5a653a1
+  size: 121629
+  hash: md5
+  path: 20231016_82852_dljmp.parquet

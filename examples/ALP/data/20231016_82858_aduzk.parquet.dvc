@@ -1,0 +1,5 @@
+outs:
+- md5: 360d1df109be3a3d72b1be3aa3477ce2
+  size: 116151
+  hash: md5
+  path: 20231016_82858_aduzk.parquet

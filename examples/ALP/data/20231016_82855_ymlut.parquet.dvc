@@ -1,0 +1,5 @@
+outs:
+- md5: 3dfdd21d3314aa1e3eed63a6a41378dc
+  size: 118056
+  hash: md5
+  path: 20231016_82855_ymlut.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 3972b98f56a35ad3cb3f6964b52daab6
+  size: 123481
+  hash: md5
+  path: 20231016_82854_wxery.parquet

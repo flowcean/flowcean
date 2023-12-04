@@ -1,0 +1,5 @@
+outs:
+- md5: 1aed9d3cd8ecc97a76c1e70429241a8a
+  size: 123002
+  hash: md5
+  path: 20231013_145725_aliee.parquet

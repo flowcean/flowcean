@@ -1,0 +1,5 @@
+outs:
+- md5: c6eb0829944b3f592aa048d79c07fdca
+  size: 123431
+  hash: md5
+  path: 20231016_82851_dwbrt.parquet

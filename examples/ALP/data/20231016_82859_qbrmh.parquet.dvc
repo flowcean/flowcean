@@ -1,0 +1,5 @@
+outs:
+- md5: 6360dd54b02b47242dab8737f4cc42b8
+  size: 123275
+  hash: md5
+  path: 20231016_82859_qbrmh.parquet

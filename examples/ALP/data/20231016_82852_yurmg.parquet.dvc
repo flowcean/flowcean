@@ -1,0 +1,5 @@
+outs:
+- md5: 8af1cbdc66fcec61f576e72d94060460
+  size: 123488
+  hash: md5
+  path: 20231016_82852_yurmg.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: d2fc91c6a25a119304de2872d2d0cf77
+  size: 120880
+  hash: md5
+  path: 20231016_82857_ebivj.parquet

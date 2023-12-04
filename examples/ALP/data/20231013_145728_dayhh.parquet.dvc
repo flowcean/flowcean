@@ -1,0 +1,5 @@
+outs:
+- md5: 125e90d81bcea3d60f12a7e23074a5f5
+  size: 122678
+  hash: md5
+  path: 20231013_145728_dayhh.parquet

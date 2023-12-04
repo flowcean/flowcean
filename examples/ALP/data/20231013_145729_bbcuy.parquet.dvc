@@ -1,0 +1,5 @@
+outs:
+- md5: e30f53b38d352fb4c7e604e70553503c
+  size: 112273
+  hash: md5
+  path: 20231013_145729_bbcuy.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 96667b66f9a26ef84a7024e3163d26f6
+  size: 123152
+  hash: md5
+  path: 20231016_82856_rdukx.parquet

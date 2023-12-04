@@ -1,0 +1,5 @@
+outs:
+- md5: 341e7dbaa377aea5b4172545a835d1e6
+  size: 113304
+  hash: md5
+  path: 20231016_82855_oygzj.parquet

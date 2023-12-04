@@ -1,0 +1,5 @@
+outs:
+- md5: c1395bedc4101ca5de17b6b154b868c1
+  size: 122846
+  hash: md5
+  path: 20231013_145728_qccux.parquet

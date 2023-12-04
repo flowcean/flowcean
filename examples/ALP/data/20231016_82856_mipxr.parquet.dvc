@@ -1,0 +1,5 @@
+outs:
+- md5: c659136602b2f62f91972fb8ac4f3875
+  size: 117792
+  hash: md5
+  path: 20231016_82856_mipxr.parquet

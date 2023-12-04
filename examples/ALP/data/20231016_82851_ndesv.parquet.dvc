@@ -1,0 +1,5 @@
+outs:
+- md5: 0e9e786fda9dd181909112b51c2eb98b
+  size: 121698
+  hash: md5
+  path: 20231016_82851_ndesv.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 8cfebaaf89c58dfbab3832adcb316bbf
+  size: 124518
+  hash: md5
+  path: 20231016_82857_tuawu.parquet

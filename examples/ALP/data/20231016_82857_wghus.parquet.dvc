@@ -1,0 +1,5 @@
+outs:
+- md5: 939a90c9f43bc575a2474603069e9115
+  size: 118219
+  hash: md5
+  path: 20231016_82857_wghus.parquet

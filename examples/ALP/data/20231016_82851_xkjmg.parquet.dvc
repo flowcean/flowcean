@@ -1,0 +1,5 @@
+outs:
+- md5: 6bd70e64520c3281fda8ac8f731c2743
+  size: 123244
+  hash: md5
+  path: 20231016_82851_xkjmg.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 2d3337e96985fc645ca040bf8242f5a2
+  size: 110511
+  hash: md5
+  path: 20231016_82853_mnxfi.parquet

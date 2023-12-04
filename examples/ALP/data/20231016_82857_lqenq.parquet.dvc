@@ -1,0 +1,5 @@
+outs:
+- md5: cb82a06856257da01ceddb94ca864223
+  size: 123217
+  hash: md5
+  path: 20231016_82857_lqenq.parquet

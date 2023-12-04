@@ -1,0 +1,5 @@
+outs:
+- md5: 4b8045df507429b6d2cf623ba5222e42
+  size: 113242
+  hash: md5
+  path: 20231016_82853_pvzxf.parquet

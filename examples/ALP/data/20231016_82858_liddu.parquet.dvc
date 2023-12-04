@@ -1,0 +1,5 @@
+outs:
+- md5: 411951eabefb50b493733b5a9e1db590
+  size: 122153
+  hash: md5
+  path: 20231016_82858_liddu.parquet

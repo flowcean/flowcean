@@ -1,0 +1,5 @@
+outs:
+- md5: f704a3696ed8a0b6e350edc2bde6c8ea
+  size: 114810
+  hash: md5
+  path: 20231013_145729_cdefi.parquet

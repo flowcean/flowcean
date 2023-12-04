@@ -1,0 +1,5 @@
+outs:
+- md5: 344e2cd1bf5a321e542325e8a6d08a3b
+  size: 123301
+  hash: md5
+  path: 20231016_82850_hkwpz.parquet

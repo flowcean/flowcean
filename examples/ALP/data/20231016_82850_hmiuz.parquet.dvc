@@ -1,0 +1,5 @@
+outs:
+- md5: 2e1bac0f322360ae19032908dc4d02bb
+  size: 118133
+  hash: md5
+  path: 20231016_82850_hmiuz.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 7e4e549266cc0f957898ba16af8fe910
+  size: 115490
+  hash: md5
+  path: 20231013_145730_tttcr.parquet

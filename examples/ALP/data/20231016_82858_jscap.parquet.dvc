@@ -1,0 +1,5 @@
+outs:
+- md5: 1f787f6e1ed7a3fc68dc297f3dd7da2d
+  size: 123485
+  hash: md5
+  path: 20231016_82858_jscap.parquet

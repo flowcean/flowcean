@@ -1,0 +1,5 @@
+outs:
+- md5: db99bdea22226b15cffbe8b52a026412
+  size: 118356
+  hash: md5
+  path: 20231016_82853_yttkg.parquet

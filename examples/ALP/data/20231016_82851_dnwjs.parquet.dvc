@@ -1,0 +1,5 @@
+outs:
+- md5: a40d6ee0cfba836b283919d522abb574
+  size: 123486
+  hash: md5
+  path: 20231016_82851_dnwjs.parquet

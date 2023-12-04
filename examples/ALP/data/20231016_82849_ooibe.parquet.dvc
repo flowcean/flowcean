@@ -1,0 +1,5 @@
+outs:
+- md5: 1d4a93232116f4454a63cd4d0b410b49
+  size: 118241
+  hash: md5
+  path: 20231016_82849_ooibe.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: b2209b1aa7e44eb31a8d8afbed76b51a
+  size: 123488
+  hash: md5
+  path: 20231016_82856_gojan.parquet

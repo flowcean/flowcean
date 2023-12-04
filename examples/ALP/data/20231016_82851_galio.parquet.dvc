@@ -1,0 +1,5 @@
+outs:
+- md5: f5cb1ce8474fef5ce872385727ca1be0
+  size: 116461
+  hash: md5
+  path: 20231016_82851_galio.parquet

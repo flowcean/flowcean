@@ -1,0 +1,5 @@
+outs:
+- md5: d735a0d8ecc6c18b06de52df783080aa
+  size: 112456
+  hash: md5
+  path: 20231013_145728_wunek.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 089a71aa6c20eb31851af837560d6bf7
+  size: 122208
+  hash: md5
+  path: 20231016_82852_uyenq.parquet

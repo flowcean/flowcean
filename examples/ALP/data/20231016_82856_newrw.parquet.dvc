@@ -1,0 +1,5 @@
+outs:
+- md5: 6294f7d8e9c574a3b9ffec8b779a6a1b
+  size: 123505
+  hash: md5
+  path: 20231016_82856_newrw.parquet

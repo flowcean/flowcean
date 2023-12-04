@@ -1,0 +1,5 @@
+outs:
+- md5: 7ff56ed4489dbc186645b77ea5e43651
+  size: 111803
+  hash: md5
+  path: 20231016_82855_zcrpm.parquet

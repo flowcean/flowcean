@@ -1,0 +1,5 @@
+outs:
+- md5: 25b5d45667c8873bc78b00a7bff9fdbb
+  size: 117334
+  hash: md5
+  path: 20231016_82853_omgpw.parquet

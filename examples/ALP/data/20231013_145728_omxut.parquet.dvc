@@ -1,0 +1,5 @@
+outs:
+- md5: 653aca494b0aff5080834cd0cea109ca
+  size: 122504
+  hash: md5
+  path: 20231013_145728_omxut.parquet

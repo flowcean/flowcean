@@ -1,0 +1,5 @@
+outs:
+- md5: 2a0d76835736b915b5870ef71f93bee3
+  size: 111400
+  hash: md5
+  path: 20231016_82857_oukny.parquet

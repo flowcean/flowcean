@@ -1,0 +1,5 @@
+outs:
+- md5: 0d5f6b70bede20c6285fd10da4088709
+  size: 123486
+  hash: md5
+  path: 20231016_82850_zoysm.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 59d509a9488b89ce93d3a8b3a5474b61
+  size: 111121
+  hash: md5
+  path: 20231016_82856_fcypj.parquet

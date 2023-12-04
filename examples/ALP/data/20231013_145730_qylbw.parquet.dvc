@@ -1,0 +1,5 @@
+outs:
+- md5: cfb8fb11b72de9138db440a10e1d41c1
+  size: 113380
+  hash: md5
+  path: 20231013_145730_qylbw.parquet

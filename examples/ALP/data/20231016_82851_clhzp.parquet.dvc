@@ -1,0 +1,5 @@
+outs:
+- md5: 8ccb5113f65d123b15a3edf97cf4fc6c
+  size: 123482
+  hash: md5
+  path: 20231016_82851_clhzp.parquet

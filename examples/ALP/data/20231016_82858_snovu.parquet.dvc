@@ -1,0 +1,5 @@
+outs:
+- md5: add61bf740e758dcb7a305c954b782cf
+  size: 113437
+  hash: md5
+  path: 20231016_82858_snovu.parquet

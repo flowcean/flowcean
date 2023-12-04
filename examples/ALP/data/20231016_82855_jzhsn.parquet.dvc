@@ -1,0 +1,5 @@
+outs:
+- md5: d775f92e739ecce85e2d80bbc9aa60f5
+  size: 118394
+  hash: md5
+  path: 20231016_82855_jzhsn.parquet

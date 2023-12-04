@@ -1,0 +1,5 @@
+outs:
+- md5: 06c28325b0378a5f7091c910b34cc4cd
+  size: 112755
+  hash: md5
+  path: 20231016_82856_lxqzp.parquet

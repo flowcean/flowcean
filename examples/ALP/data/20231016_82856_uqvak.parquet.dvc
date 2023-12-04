@@ -1,0 +1,5 @@
+outs:
+- md5: 90b937ee4e7d5b630a2fb6e814049edc
+  size: 118875
+  hash: md5
+  path: 20231016_82856_uqvak.parquet

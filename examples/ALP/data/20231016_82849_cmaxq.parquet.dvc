@@ -1,0 +1,5 @@
+outs:
+- md5: ddfada726c42bfa1183baf6379a8c012
+  size: 118898
+  hash: md5
+  path: 20231016_82849_cmaxq.parquet

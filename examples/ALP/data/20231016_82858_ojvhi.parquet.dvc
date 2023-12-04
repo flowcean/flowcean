@@ -1,0 +1,5 @@
+outs:
+- md5: 4c7df7f6654725d025750823a42f37e2
+  size: 123483
+  hash: md5
+  path: 20231016_82858_ojvhi.parquet

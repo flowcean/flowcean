@@ -1,0 +1,5 @@
+outs:
+- md5: 91ae2088f26fb8315ac257266e46cc0d
+  size: 120888
+  hash: md5
+  path: 20231016_82851_pybgz.parquet

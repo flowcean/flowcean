@@ -1,0 +1,5 @@
+outs:
+- md5: 705d2bb9d7aa9d7671a5c9f9b3e300e2
+  size: 123505
+  hash: md5
+  path: 20231016_82852_mmykd.parquet

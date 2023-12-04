@@ -1,0 +1,5 @@
+outs:
+- md5: 2962eed72f465d94d4bf4e14f5ac193e
+  size: 114015
+  hash: md5
+  path: 20231016_82849_xppwa.parquet

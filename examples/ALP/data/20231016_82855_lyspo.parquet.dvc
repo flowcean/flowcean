@@ -1,0 +1,5 @@
+outs:
+- md5: 1600ac53806118dede8098d872484ab5
+  size: 122026
+  hash: md5
+  path: 20231016_82855_lyspo.parquet

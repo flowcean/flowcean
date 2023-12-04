@@ -1,0 +1,5 @@
+outs:
+- md5: 00908fd5b3738f6550a638250c8c1eed
+  size: 123082
+  hash: md5
+  path: 20231016_82850_dpbvs.parquet

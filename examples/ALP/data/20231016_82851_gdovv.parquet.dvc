@@ -1,0 +1,5 @@
+outs:
+- md5: 03e8645b68f5b5b40ad69ec9dc479fa1
+  size: 124536
+  hash: md5
+  path: 20231016_82851_gdovv.parquet

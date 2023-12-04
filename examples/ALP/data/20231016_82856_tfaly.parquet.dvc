@@ -1,0 +1,5 @@
+outs:
+- md5: a0a57f13d4c6ff4b9d041baca8ef2e77
+  size: 122951
+  hash: md5
+  path: 20231016_82856_tfaly.parquet

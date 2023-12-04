@@ -1,0 +1,5 @@
+outs:
+- md5: 2f606965db5b9c801ef5ff799b8b2ac5
+  size: 123673
+  hash: md5
+  path: 20231016_82856_kmgaz.parquet

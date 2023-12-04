@@ -1,0 +1,5 @@
+outs:
+- md5: b090362703b749ac5bee9dc867ef0882
+  size: 120401
+  hash: md5
+  path: 20231016_82849_ciugt.parquet

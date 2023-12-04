@@ -1,0 +1,5 @@
+outs:
+- md5: 8ad55858a6462f37cdf4cb97d2349dd1
+  size: 123398
+  hash: md5
+  path: 20231016_82853_uyxke.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 490b84340cc800f1ffc7dc69a6ee749d
+  size: 123591
+  hash: md5
+  path: 20231016_82858_keoyr.parquet

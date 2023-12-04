@@ -1,0 +1,5 @@
+outs:
+- md5: d6eda49e9cafb205e6d25f79f707cd26
+  size: 111404
+  hash: md5
+  path: 20231016_82854_bzrjn.parquet

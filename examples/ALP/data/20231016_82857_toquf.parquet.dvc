@@ -1,0 +1,5 @@
+outs:
+- md5: 9e1e72b63faaa769dea9cf77da98f02e
+  size: 113161
+  hash: md5
+  path: 20231016_82857_toquf.parquet

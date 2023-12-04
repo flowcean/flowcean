@@ -1,0 +1,5 @@
+outs:
+- md5: 3d83fbcc3830370989b47367530b6de6
+  size: 117735
+  hash: md5
+  path: 20231016_82854_kzgrz.parquet

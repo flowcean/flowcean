@@ -1,0 +1,5 @@
+outs:
+- md5: 8bca6adf41dae5ba270cea917022ecbb
+  size: 116324
+  hash: md5
+  path: 20231016_82849_pjwum.parquet

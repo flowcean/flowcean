@@ -1,0 +1,5 @@
+outs:
+- md5: 52ed18355b735a11d486dba5a549a2f4
+  size: 123506
+  hash: md5
+  path: 20231016_82856_yselq.parquet

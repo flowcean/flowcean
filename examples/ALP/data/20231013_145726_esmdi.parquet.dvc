@@ -1,0 +1,5 @@
+outs:
+- md5: 45176e3b05d55936d60a45c69efa0c36
+  size: 123930
+  hash: md5
+  path: 20231013_145726_esmdi.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: cfd0cb60a186a80e6efc46e3a9e55662
+  size: 122056
+  hash: md5
+  path: 20231013_145730_tfbtr.parquet

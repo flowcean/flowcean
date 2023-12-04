@@ -1,0 +1,5 @@
+outs:
+- md5: 978a4ea2742991d7f6e5f25719739343
+  size: 120689
+  hash: md5
+  path: 20231013_145725_xwvgp.parquet

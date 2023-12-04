@@ -1,0 +1,5 @@
+outs:
+- md5: 138c445339cc6ec500db81eaa4c6b8d5
+  size: 112155
+  hash: md5
+  path: 20231013_145729_gnckc.parquet

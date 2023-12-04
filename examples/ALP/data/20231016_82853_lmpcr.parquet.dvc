@@ -1,0 +1,5 @@
+outs:
+- md5: 30cef583897f9b6a9475a902958f9f8f
+  size: 120982
+  hash: md5
+  path: 20231016_82853_lmpcr.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 84a6003276611133cc12f991ea47692b
+  size: 116656
+  hash: md5
+  path: 20231016_82854_lkkcl.parquet

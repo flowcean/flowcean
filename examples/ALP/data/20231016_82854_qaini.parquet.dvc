@@ -1,0 +1,5 @@
+outs:
+- md5: 80535b280326e447132c089352cbb139
+  size: 123488
+  hash: md5
+  path: 20231016_82854_qaini.parquet

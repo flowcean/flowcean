@@ -1,0 +1,5 @@
+outs:
+- md5: 4e7aff21ded43c3e0a5b51a5fef22ac2
+  size: 123484
+  hash: md5
+  path: 20231016_82854_skcfg.parquet

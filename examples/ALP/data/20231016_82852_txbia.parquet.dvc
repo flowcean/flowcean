@@ -1,0 +1,5 @@
+outs:
+- md5: 1a0a84398b6e6393c5c327ed0c4d5441
+  size: 122117
+  hash: md5
+  path: 20231016_82852_txbia.parquet

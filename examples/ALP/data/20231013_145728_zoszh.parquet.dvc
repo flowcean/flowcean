@@ -1,0 +1,5 @@
+outs:
+- md5: cf56931d878769389b94af02d0a4057d
+  size: 118749
+  hash: md5
+  path: 20231013_145728_zoszh.parquet

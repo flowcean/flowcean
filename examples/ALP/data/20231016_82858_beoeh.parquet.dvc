@@ -1,0 +1,5 @@
+outs:
+- md5: 048672b32d1616ffc1d28e88d304cfcf
+  size: 122843
+  hash: md5
+  path: 20231016_82858_beoeh.parquet

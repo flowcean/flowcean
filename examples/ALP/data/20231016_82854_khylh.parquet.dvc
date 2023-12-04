@@ -1,0 +1,5 @@
+outs:
+- md5: f1757d61e6e2d44775c2819bf176fab9
+  size: 122439
+  hash: md5
+  path: 20231016_82854_khylh.parquet

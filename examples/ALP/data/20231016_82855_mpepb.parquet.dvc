@@ -1,0 +1,5 @@
+outs:
+- md5: b55e0a8088815d54bbf2d7b040e6580a
+  size: 113974
+  hash: md5
+  path: 20231016_82855_mpepb.parquet

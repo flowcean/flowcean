@@ -1,0 +1,5 @@
+outs:
+- md5: e2f5dd29e522b49f38d6b1462222e810
+  size: 118772
+  hash: md5
+  path: 20231016_82852_flawp.parquet

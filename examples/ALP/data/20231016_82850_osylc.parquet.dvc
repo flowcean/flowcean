@@ -1,0 +1,5 @@
+outs:
+- md5: a2f42cbe7f49b1069117d964cb9da73f
+  size: 123672
+  hash: md5
+  path: 20231016_82850_osylc.parquet

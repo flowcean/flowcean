@@ -1,0 +1,5 @@
+outs:
+- md5: 4c07eb3b2413c53f1187d93eab25218d
+  size: 123277
+  hash: md5
+  path: 20231016_82851_blsik.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: f02987c560b5a63eed919b22c5838d04
+  size: 121693
+  hash: md5
+  path: 20231016_82855_iltnj.parquet

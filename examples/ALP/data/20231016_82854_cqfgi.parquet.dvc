@@ -1,0 +1,5 @@
+outs:
+- md5: b9a0258440a9f01bc0afdd6fea9f79bf
+  size: 123439
+  hash: md5
+  path: 20231016_82854_cqfgi.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 11a3a5c5f55af6b19fd6369fda7e1bec
+  size: 116200
+  hash: md5
+  path: 20231016_82852_rpfkq.parquet

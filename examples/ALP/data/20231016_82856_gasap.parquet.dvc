@@ -1,0 +1,5 @@
+outs:
+- md5: 6310fb7f1a24a7f0b2482337548b2839
+  size: 112452
+  hash: md5
+  path: 20231016_82856_gasap.parquet

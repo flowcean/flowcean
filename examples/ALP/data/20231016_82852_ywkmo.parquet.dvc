@@ -1,0 +1,5 @@
+outs:
+- md5: ae133bb84697fabead447ccf161c1742
+  size: 110873
+  hash: md5
+  path: 20231016_82852_ywkmo.parquet

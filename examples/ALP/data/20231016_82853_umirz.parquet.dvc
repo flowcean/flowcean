@@ -1,0 +1,5 @@
+outs:
+- md5: 6f41091e737eaa00880ab09e65fb51bb
+  size: 118872
+  hash: md5
+  path: 20231016_82853_umirz.parquet

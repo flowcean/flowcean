@@ -1,0 +1,5 @@
+outs:
+- md5: 78386ddb510047b110d348dabf7b0e86
+  size: 112019
+  hash: md5
+  path: 20231016_82852_pnary.parquet

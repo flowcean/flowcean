@@ -1,0 +1,5 @@
+outs:
+- md5: 93ce9bc04269d1eeba2c6de109d9e888
+  size: 122811
+  hash: md5
+  path: 20231016_82851_czavv.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 6d321fa3851b9d31b23016aa992c843f
+  size: 123509
+  hash: md5
+  path: 20231016_82854_excip.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: cb0a04ed625ef94892ce806bf9fce678
+  size: 111810
+  hash: md5
+  path: 20231016_82858_xzdnv.parquet

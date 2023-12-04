@@ -1,0 +1,5 @@
+outs:
+- md5: c67e90d6c60850534d0ec4b49519c26d
+  size: 121487
+  hash: md5
+  path: 20231016_82852_tdjkx.parquet

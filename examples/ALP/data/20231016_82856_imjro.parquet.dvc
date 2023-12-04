@@ -1,0 +1,5 @@
+outs:
+- md5: 4a86b239eb2627c3b2d4af79f9842bb6
+  size: 105987
+  hash: md5
+  path: 20231016_82856_imjro.parquet

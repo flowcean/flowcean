@@ -1,0 +1,5 @@
+outs:
+- md5: 9d0b5d9857ce846819b78ee5777d60e1
+  size: 123282
+  hash: md5
+  path: 20231016_82854_zooen.parquet

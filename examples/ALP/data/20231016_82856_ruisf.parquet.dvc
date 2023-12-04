@@ -1,0 +1,5 @@
+outs:
+- md5: b0b04167fc38a04e676a094cb2dd26df
+  size: 122194
+  hash: md5
+  path: 20231016_82856_ruisf.parquet

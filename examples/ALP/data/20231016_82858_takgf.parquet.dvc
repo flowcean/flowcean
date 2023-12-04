@@ -1,0 +1,5 @@
+outs:
+- md5: a12fa334699ff63a9e46a59a66903e1d
+  size: 121004
+  hash: md5
+  path: 20231016_82858_takgf.parquet

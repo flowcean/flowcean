@@ -1,0 +1,5 @@
+outs:
+- md5: e7e1598c327e61b52e717bf788506d2e
+  size: 115286
+  hash: md5
+  path: 20231013_145731_vjqon.parquet

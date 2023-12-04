@@ -1,0 +1,5 @@
+outs:
+- md5: 4de3be36f0c48495f678d9216e1da0a0
+  size: 112069
+  hash: md5
+  path: 20231016_82856_rwmbi.parquet

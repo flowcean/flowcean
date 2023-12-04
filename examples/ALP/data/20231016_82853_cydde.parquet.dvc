@@ -1,0 +1,5 @@
+outs:
+- md5: 5578a4c20d777b835b6555594c4d6bcf
+  size: 106535
+  hash: md5
+  path: 20231016_82853_cydde.parquet

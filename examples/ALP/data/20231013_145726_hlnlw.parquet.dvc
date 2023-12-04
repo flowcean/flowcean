@@ -1,0 +1,5 @@
+outs:
+- md5: 42b77197fb745d393366a059b231608e
+  size: 111142
+  hash: md5
+  path: 20231013_145726_hlnlw.parquet

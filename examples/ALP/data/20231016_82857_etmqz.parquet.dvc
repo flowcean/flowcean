@@ -1,0 +1,5 @@
+outs:
+- md5: bf0a74652a795a37467ae3fb58dacb12
+  size: 121513
+  hash: md5
+  path: 20231016_82857_etmqz.parquet

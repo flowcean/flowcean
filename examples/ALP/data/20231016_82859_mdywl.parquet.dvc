@@ -1,0 +1,5 @@
+outs:
+- md5: 667cc107a9d27301d87487dd93b540a3
+  size: 117978
+  hash: md5
+  path: 20231016_82859_mdywl.parquet

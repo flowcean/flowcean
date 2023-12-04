@@ -1,0 +1,5 @@
+outs:
+- md5: fedbf4b93dd511f9a5f9bbc88ddb2cfe
+  size: 110540
+  hash: md5
+  path: 20231016_82851_yhiwi.parquet

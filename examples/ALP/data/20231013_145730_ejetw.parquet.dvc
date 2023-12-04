@@ -1,0 +1,5 @@
+outs:
+- md5: 4ede8526e73536664ae241468aa90e5c
+  size: 124257
+  hash: md5
+  path: 20231013_145730_ejetw.parquet

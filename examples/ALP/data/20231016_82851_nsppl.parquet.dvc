@@ -1,0 +1,5 @@
+outs:
+- md5: 732c81216fcfea85e276903d75ef0583
+  size: 112710
+  hash: md5
+  path: 20231016_82851_nsppl.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 301d1593834f52816dceddface6edbb8
+  size: 121076
+  hash: md5
+  path: 20231016_82852_vnjfn.parquet

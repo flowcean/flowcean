@@ -1,0 +1,23 @@
+[
+  {
+    "name": "containerWeight",
+    "value": 15.849512980954078
+  },
+  {
+    "name": "p_initial",
+    "value": 138.50080819969443
+  },
+  {
+    "name": "valveState",
+    "value": [
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "name": "activeValveCount",
+    "value": 1
+  }
+]

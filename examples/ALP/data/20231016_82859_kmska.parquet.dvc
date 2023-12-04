@@ -1,0 +1,5 @@
+outs:
+- md5: 1811a0e134e4275d307f57a0ec3d0d2a
+  size: 111323
+  hash: md5
+  path: 20231016_82859_kmska.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 82ce7fb04700eba5971f97e79fe85c91
+  size: 123195
+  hash: md5
+  path: 20231016_82859_oknxd.parquet

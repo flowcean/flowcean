@@ -1,0 +1,5 @@
+outs:
+- md5: 9cf8ee0b5896c0abcac5d1a01b3d9f89
+  size: 110018
+  hash: md5
+  path: 20231016_82853_ficji.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: f469482020594c26c2cd2308547dc6d2
+  size: 114459
+  hash: md5
+  path: 20231013_145724_hsros.parquet

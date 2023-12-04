@@ -1,0 +1,5 @@
+outs:
+- md5: 4b6d14ed47138e9e666da0a2d147201f
+  size: 123481
+  hash: md5
+  path: 20231016_82854_smsyn.parquet

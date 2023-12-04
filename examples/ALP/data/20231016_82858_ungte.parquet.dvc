@@ -1,0 +1,5 @@
+outs:
+- md5: 113a0efcd464200b30448ebb73421201
+  size: 118985
+  hash: md5
+  path: 20231016_82858_ungte.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 51be5faa070a2cd0ca149afc83f23fe7
+  size: 114798
+  hash: md5
+  path: 20231016_82856_epycx.parquet

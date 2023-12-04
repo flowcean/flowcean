@@ -1,0 +1,5 @@
+outs:
+- md5: db645c63a0f35471c3dc147ddf892eb6
+  size: 118619
+  hash: md5
+  path: 20231016_82858_flgll.parquet

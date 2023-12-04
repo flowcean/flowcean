@@ -1,0 +1,5 @@
+outs:
+- md5: b3ea322ce6fb24d586e8e788f36c4b8a
+  size: 112498
+  hash: md5
+  path: 20231016_82853_mfbeg.parquet

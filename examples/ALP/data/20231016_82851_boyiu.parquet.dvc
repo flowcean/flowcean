@@ -1,0 +1,5 @@
+outs:
+- md5: 3f2e2a6c8d51b8aaa5ed015ee2b3494c
+  size: 122927
+  hash: md5
+  path: 20231016_82851_boyiu.parquet

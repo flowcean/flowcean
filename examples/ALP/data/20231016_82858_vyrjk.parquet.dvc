@@ -1,0 +1,5 @@
+outs:
+- md5: 2f7e9ac6ef2eeb18f8da46798aecb01f
+  size: 123479
+  hash: md5
+  path: 20231016_82858_vyrjk.parquet

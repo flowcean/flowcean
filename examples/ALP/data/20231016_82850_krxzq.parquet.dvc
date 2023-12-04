@@ -1,0 +1,5 @@
+outs:
+- md5: 15c127aa143cfc2867af57384edfa59f
+  size: 124680
+  hash: md5
+  path: 20231016_82850_krxzq.parquet

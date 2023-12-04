@@ -1,0 +1,5 @@
+outs:
+- md5: bb48826fabef98c0640f205c7174faa1
+  size: 121436
+  hash: md5
+  path: 20231016_82857_pvvmt.parquet

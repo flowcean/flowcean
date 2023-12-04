@@ -1,0 +1,5 @@
+outs:
+- md5: ed1bf1699bbb38fce4b7e9b761b66a7c
+  size: 118018
+  hash: md5
+  path: 20231016_82851_cwaxx.parquet

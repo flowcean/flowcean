@@ -1,0 +1,5 @@
+outs:
+- md5: 450e3b52e3059175194eb6c8032e15c1
+  size: 123222
+  hash: md5
+  path: 20231013_145729_cuhpz.parquet

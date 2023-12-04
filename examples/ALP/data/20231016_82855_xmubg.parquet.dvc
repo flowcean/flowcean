@@ -1,0 +1,5 @@
+outs:
+- md5: 7c92b89e892a67fbf87695e5bec6a447
+  size: 119125
+  hash: md5
+  path: 20231016_82855_xmubg.parquet

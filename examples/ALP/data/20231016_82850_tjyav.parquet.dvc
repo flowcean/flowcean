@@ -1,0 +1,5 @@
+outs:
+- md5: 9c5e4c4bbb1ef760e0efd7ccbdb447e2
+  size: 116422
+  hash: md5
+  path: 20231016_82850_tjyav.parquet

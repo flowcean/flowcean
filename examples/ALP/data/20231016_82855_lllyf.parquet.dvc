@@ -1,0 +1,5 @@
+outs:
+- md5: 0ce2418fad7c8aaa32857d519306d6e6
+  size: 123491
+  hash: md5
+  path: 20231016_82855_lllyf.parquet

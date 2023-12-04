@@ -1,0 +1,5 @@
+outs:
+- md5: 3cead1689fffb53d187afa15c4704a3c
+  size: 112856
+  hash: md5
+  path: 20231016_82859_uxnuo.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 2625cf63b2432d01020e773f26c5949f
+  size: 124365
+  hash: md5
+  path: 20231013_145726_kcpms.parquet

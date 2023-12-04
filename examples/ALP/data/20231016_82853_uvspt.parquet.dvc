@@ -1,0 +1,5 @@
+outs:
+- md5: bcb250224c29f7f92d4b436b063d855d
+  size: 111545
+  hash: md5
+  path: 20231016_82853_uvspt.parquet

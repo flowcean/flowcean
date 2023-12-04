@@ -1,0 +1,5 @@
+outs:
+- md5: e3435f88f50383e0dd195ce39fdcdaa7
+  size: 123222
+  hash: md5
+  path: 20231016_82857_ynglr.parquet

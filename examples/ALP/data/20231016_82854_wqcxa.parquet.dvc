@@ -1,0 +1,5 @@
+outs:
+- md5: a3d316984d704fb882bd1f4b4450cf3b
+  size: 113769
+  hash: md5
+  path: 20231016_82854_wqcxa.parquet

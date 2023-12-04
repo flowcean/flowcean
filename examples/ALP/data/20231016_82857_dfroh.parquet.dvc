@@ -1,0 +1,5 @@
+outs:
+- md5: 1543f917dadc33d0e51131c72d899462
+  size: 123488
+  hash: md5
+  path: 20231016_82857_dfroh.parquet

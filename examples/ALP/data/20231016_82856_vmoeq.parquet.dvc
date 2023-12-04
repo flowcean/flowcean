@@ -1,0 +1,5 @@
+outs:
+- md5: 96b897b8c37851eddedb626dd656dd64
+  size: 121929
+  hash: md5
+  path: 20231016_82856_vmoeq.parquet

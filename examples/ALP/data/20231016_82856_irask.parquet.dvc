@@ -1,0 +1,5 @@
+outs:
+- md5: b763d2a6d4becf10b5e62e991fdda467
+  size: 123242
+  hash: md5
+  path: 20231016_82856_irask.parquet

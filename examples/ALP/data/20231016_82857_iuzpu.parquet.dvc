@@ -1,0 +1,5 @@
+outs:
+- md5: 6a7b5bbfca1b059837333513d55aad49
+  size: 116901
+  hash: md5
+  path: 20231016_82857_iuzpu.parquet

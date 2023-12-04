@@ -1,0 +1,5 @@
+outs:
+- md5: 327722e33371f1b4ed6342540eaf276f
+  size: 123479
+  hash: md5
+  path: 20231016_82859_blekx.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: d01725f17a290639116789e707247d99
+  size: 123479
+  hash: md5
+  path: 20231016_82853_ljytt.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 3e25403534a57be8d3ef748726ae6567
+  size: 123479
+  hash: md5
+  path: 20231016_82851_qmzto.parquet

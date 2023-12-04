@@ -1,0 +1,5 @@
+outs:
+- md5: a4365cc5ab293c4b9d89ca5f54ce7c1f
+  size: 121576
+  hash: md5
+  path: 20231016_82850_bbarp.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: de59bc5296637d773f3368b1fcd8c344
+  size: 123484
+  hash: md5
+  path: 20231016_82850_sullm.parquet

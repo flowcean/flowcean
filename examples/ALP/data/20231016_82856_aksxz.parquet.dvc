@@ -1,0 +1,5 @@
+outs:
+- md5: b0bb8e238cf27b8684967f99b6b8fd80
+  size: 118513
+  hash: md5
+  path: 20231016_82856_aksxz.parquet

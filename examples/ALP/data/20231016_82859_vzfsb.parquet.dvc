@@ -1,0 +1,5 @@
+outs:
+- md5: 62dfb7608da0af9d9816b048909c1711
+  size: 122414
+  hash: md5
+  path: 20231016_82859_vzfsb.parquet

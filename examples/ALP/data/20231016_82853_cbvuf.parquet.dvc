@@ -1,0 +1,5 @@
+outs:
+- md5: 6da7ea550205a16ef6f2770e4e560851
+  size: 123261
+  hash: md5
+  path: 20231016_82853_cbvuf.parquet

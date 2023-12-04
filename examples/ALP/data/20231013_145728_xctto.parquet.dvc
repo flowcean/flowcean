@@ -1,0 +1,5 @@
+outs:
+- md5: f6237f1ed1b48e6594f17ea6075c85a0
+  size: 115887
+  hash: md5
+  path: 20231013_145728_xctto.parquet

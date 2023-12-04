@@ -1,0 +1,5 @@
+outs:
+- md5: 08342194046692b7a0f2f003392b3d73
+  size: 123487
+  hash: md5
+  path: 20231016_82852_yzamw.parquet

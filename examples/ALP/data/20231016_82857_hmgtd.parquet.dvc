@@ -1,0 +1,5 @@
+outs:
+- md5: 30bc95613ba5c91f7b8297e6374f8d1c
+  size: 118137
+  hash: md5
+  path: 20231016_82857_hmgtd.parquet

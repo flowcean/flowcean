@@ -1,0 +1,5 @@
+outs:
+- md5: cbed2b933f5f5f0bb6dfcf63e150e260
+  size: 112561
+  hash: md5
+  path: 20231016_82858_gdkni.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: df57ca54452fcb474da53c82b0026b74
+  size: 116547
+  hash: md5
+  path: 20231016_82850_caqoz.parquet

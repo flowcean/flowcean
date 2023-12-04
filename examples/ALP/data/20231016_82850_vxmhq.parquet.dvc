@@ -1,0 +1,5 @@
+outs:
+- md5: cb87dcbe64d65c65d37df3cdbb27be8b
+  size: 115500
+  hash: md5
+  path: 20231016_82850_vxmhq.parquet

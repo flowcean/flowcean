@@ -1,0 +1,5 @@
+outs:
+- md5: aa014f62e232a0d14fb2e6644e9bb1fb
+  size: 111423
+  hash: md5
+  path: 20231016_82856_japmi.parquet

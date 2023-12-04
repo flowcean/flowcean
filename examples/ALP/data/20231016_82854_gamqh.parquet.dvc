@@ -1,0 +1,5 @@
+outs:
+- md5: a9db930a784f3ab84380011f95b9e6db
+  size: 120138
+  hash: md5
+  path: 20231016_82854_gamqh.parquet

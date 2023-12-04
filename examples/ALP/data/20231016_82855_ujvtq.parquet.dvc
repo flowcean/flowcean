@@ -1,0 +1,5 @@
+outs:
+- md5: a3c7cdce461d5d9b75002fcd3f99afac
+  size: 123487
+  hash: md5
+  path: 20231016_82855_ujvtq.parquet

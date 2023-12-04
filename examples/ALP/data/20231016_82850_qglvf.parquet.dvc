@@ -1,0 +1,5 @@
+outs:
+- md5: 143141a4d9a1f4b492f1a5fcd69a727f
+  size: 112579
+  hash: md5
+  path: 20231016_82850_qglvf.parquet

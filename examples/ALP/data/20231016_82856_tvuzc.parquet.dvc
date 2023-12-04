@@ -1,0 +1,5 @@
+outs:
+- md5: d4e595a587d6ad75cb49d15c45da65ee
+  size: 118905
+  hash: md5
+  path: 20231016_82856_tvuzc.parquet

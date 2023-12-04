@@ -1,0 +1,5 @@
+outs:
+- md5: bb19ac52f07cf1960906d773d5b0b138
+  size: 111763
+  hash: md5
+  path: 20231016_82858_vttym.parquet

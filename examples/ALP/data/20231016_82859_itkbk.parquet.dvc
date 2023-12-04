@@ -1,0 +1,5 @@
+outs:
+- md5: dc76829a6d0eae3b2113391d155807e3
+  size: 116205
+  hash: md5
+  path: 20231016_82859_itkbk.parquet

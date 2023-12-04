@@ -1,0 +1,5 @@
+outs:
+- md5: a539bfb642f9e0deefc9a3609f541e51
+  size: 116552
+  hash: md5
+  path: 20231016_82855_udmae.parquet

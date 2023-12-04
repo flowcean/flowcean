@@ -1,0 +1,5 @@
+outs:
+- md5: 275cdd3ed797bb5a55b1bb545484bd01
+  size: 112497
+  hash: md5
+  path: 20231016_82849_qutdv.parquet

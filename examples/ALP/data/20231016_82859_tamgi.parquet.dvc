@@ -1,0 +1,5 @@
+outs:
+- md5: 41ea1f1827ac055c1ccb6eaa8cd4fb4d
+  size: 121109
+  hash: md5
+  path: 20231016_82859_tamgi.parquet

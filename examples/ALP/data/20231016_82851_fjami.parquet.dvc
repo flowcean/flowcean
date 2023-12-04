@@ -1,0 +1,5 @@
+outs:
+- md5: d8727200c890a3bfd1a8bfca5acf6711
+  size: 121113
+  hash: md5
+  path: 20231016_82851_fjami.parquet

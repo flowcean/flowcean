@@ -1,0 +1,5 @@
+outs:
+- md5: c761904325247c61d0c1445584823b0d
+  size: 123639
+  hash: md5
+  path: 20231016_82854_vdhay.parquet

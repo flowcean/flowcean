@@ -1,0 +1,5 @@
+outs:
+- md5: d748745a19c3916f673284e07fd21bb8
+  size: 123487
+  hash: md5
+  path: 20231016_82854_qzftx.parquet

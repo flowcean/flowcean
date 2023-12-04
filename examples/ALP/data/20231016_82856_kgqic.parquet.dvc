@@ -1,0 +1,5 @@
+outs:
+- md5: 8823ac66cb59ce78478bdb49c3b95360
+  size: 122108
+  hash: md5
+  path: 20231016_82856_kgqic.parquet

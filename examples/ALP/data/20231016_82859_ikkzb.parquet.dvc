@@ -1,0 +1,5 @@
+outs:
+- md5: 1a12c79f0f51ee49276b1f8cda03f534
+  size: 118162
+  hash: md5
+  path: 20231016_82859_ikkzb.parquet

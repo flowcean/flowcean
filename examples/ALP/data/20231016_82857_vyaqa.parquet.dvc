@@ -1,0 +1,5 @@
+outs:
+- md5: e432ae436187cc485fe251fa6f1037e5
+  size: 121691
+  hash: md5
+  path: 20231016_82857_vyaqa.parquet

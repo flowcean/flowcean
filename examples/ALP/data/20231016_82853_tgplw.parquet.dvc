@@ -1,0 +1,5 @@
+outs:
+- md5: 5abc10466f261474f862bd1933babc16
+  size: 123053
+  hash: md5
+  path: 20231016_82853_tgplw.parquet

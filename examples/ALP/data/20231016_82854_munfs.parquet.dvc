@@ -1,0 +1,5 @@
+outs:
+- md5: 33d31b1267f6d91cc002d82fdacded61
+  size: 116674
+  hash: md5
+  path: 20231016_82854_munfs.parquet

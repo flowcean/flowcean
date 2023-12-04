@@ -1,0 +1,5 @@
+outs:
+- md5: 4e78a2937f33436567e723a9d1603d99
+  size: 122246
+  hash: md5
+  path: 20231016_82854_rfhtn.parquet

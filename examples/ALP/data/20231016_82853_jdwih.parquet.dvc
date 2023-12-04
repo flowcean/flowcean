@@ -1,0 +1,5 @@
+outs:
+- md5: 5ddb1875d16597c28bda28ada79572b5
+  size: 116650
+  hash: md5
+  path: 20231016_82853_jdwih.parquet

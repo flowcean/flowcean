@@ -1,0 +1,5 @@
+outs:
+- md5: 419b0f4aa7ef26df79543e5d975d0d31
+  size: 114788
+  hash: md5
+  path: 20231013_145728_imqav.parquet

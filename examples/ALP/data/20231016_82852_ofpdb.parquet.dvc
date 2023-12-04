@@ -1,0 +1,5 @@
+outs:
+- md5: 862a73a9715968159866d5336f8fa35c
+  size: 115690
+  hash: md5
+  path: 20231016_82852_ofpdb.parquet

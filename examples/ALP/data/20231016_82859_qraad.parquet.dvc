@@ -1,0 +1,5 @@
+outs:
+- md5: 43a99095e107a01599165d9cba145dae
+  size: 112770
+  hash: md5
+  path: 20231016_82859_qraad.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 4c927826079170b504e624b270cd4779
+  size: 118272
+  hash: md5
+  path: 20231016_82850_xwlud.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 91ef26c92115d3669cb163abd15663bf
+  size: 122813
+  hash: md5
+  path: 20231016_82854_swufz.parquet

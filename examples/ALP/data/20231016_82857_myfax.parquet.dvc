@@ -1,0 +1,5 @@
+outs:
+- md5: b0021e81f3e4f764bead7297c2f2e4a4
+  size: 112204
+  hash: md5
+  path: 20231016_82857_myfax.parquet

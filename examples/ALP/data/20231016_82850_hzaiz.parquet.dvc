@@ -1,0 +1,5 @@
+outs:
+- md5: 5d38ef31ce93b4b49d1594ea8993fd33
+  size: 113112
+  hash: md5
+  path: 20231016_82850_hzaiz.parquet

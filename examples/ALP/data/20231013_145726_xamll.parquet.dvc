@@ -1,0 +1,5 @@
+outs:
+- md5: 2226c6f72f5d3e044c2dcfe3688b138c
+  size: 122144
+  hash: md5
+  path: 20231013_145726_xamll.parquet

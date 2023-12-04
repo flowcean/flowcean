@@ -1,0 +1,5 @@
+outs:
+- md5: 4406bd03f34d6824cbe40b49aa5e8dbe
+  size: 124498
+  hash: md5
+  path: 20231016_82853_zwcig.parquet

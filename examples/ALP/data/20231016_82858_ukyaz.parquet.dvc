@@ -1,0 +1,5 @@
+outs:
+- md5: 483a299402caae6f366de858d45ff150
+  size: 111890
+  hash: md5
+  path: 20231016_82858_ukyaz.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 54c4a7864979f475511a86b2ccd1c525
+  size: 118775
+  hash: md5
+  path: 20231016_82852_xmlib.parquet

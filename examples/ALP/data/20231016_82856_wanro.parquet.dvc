@@ -1,0 +1,5 @@
+outs:
+- md5: 1f13c663fc35b889537f76dfe80bccc9
+  size: 106479
+  hash: md5
+  path: 20231016_82856_wanro.parquet

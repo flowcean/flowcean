@@ -1,0 +1,5 @@
+outs:
+- md5: a8da21930b351e457eabd3e51fa00460
+  size: 118815
+  hash: md5
+  path: 20231016_82854_oemnf.parquet

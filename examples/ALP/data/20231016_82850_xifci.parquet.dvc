@@ -1,0 +1,5 @@
+outs:
+- md5: 3f5b0f338fb48d426b58501ff48e738a
+  size: 122996
+  hash: md5
+  path: 20231016_82850_xifci.parquet

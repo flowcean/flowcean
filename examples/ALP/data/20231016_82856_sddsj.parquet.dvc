@@ -1,0 +1,5 @@
+outs:
+- md5: 763cc93d8bf4914ce3b143e08c084bce
+  size: 116487
+  hash: md5
+  path: 20231016_82856_sddsj.parquet

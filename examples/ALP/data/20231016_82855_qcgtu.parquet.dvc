@@ -1,0 +1,5 @@
+outs:
+- md5: afebd03e40518eb210dac5d6628ac70f
+  size: 105773
+  hash: md5
+  path: 20231016_82855_qcgtu.parquet

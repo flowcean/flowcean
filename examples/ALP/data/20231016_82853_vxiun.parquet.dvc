@@ -1,0 +1,5 @@
+outs:
+- md5: e4c6c92525cd9d75d46f752d0bdfaf4b
+  size: 112202
+  hash: md5
+  path: 20231016_82853_vxiun.parquet

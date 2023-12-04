@@ -1,0 +1,5 @@
+outs:
+- md5: f00bdd42cadddd097b6a88dc5ba58821
+  size: 108797
+  hash: md5
+  path: 20231016_82858_garxo.parquet

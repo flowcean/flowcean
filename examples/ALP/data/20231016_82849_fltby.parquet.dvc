@@ -1,0 +1,5 @@
+outs:
+- md5: 5e5478127c58e5d63d69865718f57803
+  size: 118046
+  hash: md5
+  path: 20231016_82849_fltby.parquet

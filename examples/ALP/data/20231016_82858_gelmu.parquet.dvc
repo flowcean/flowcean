@@ -1,0 +1,5 @@
+outs:
+- md5: 912390efb157b5edb9391c560e229187
+  size: 123493
+  hash: md5
+  path: 20231016_82858_gelmu.parquet

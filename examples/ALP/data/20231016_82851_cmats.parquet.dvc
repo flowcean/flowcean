@@ -1,0 +1,5 @@
+outs:
+- md5: 24af7fe0db26661c0ee00aa8a754b7b4
+  size: 123208
+  hash: md5
+  path: 20231016_82851_cmats.parquet

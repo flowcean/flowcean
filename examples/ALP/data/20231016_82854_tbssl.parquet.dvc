@@ -1,0 +1,5 @@
+outs:
+- md5: fe363216f706760a6097e7f4ce1b27f6
+  size: 122814
+  hash: md5
+  path: 20231016_82854_tbssl.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: d7be5c5d7d7381f952b7029127c486cc
+  size: 105507
+  hash: md5
+  path: 20231016_82859_widti.parquet

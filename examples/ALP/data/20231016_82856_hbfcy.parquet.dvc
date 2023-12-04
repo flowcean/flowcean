@@ -1,0 +1,5 @@
+outs:
+- md5: ac8a26fdfa28468f5636d0317a32d401
+  size: 124535
+  hash: md5
+  path: 20231016_82856_hbfcy.parquet

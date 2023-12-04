@@ -1,0 +1,5 @@
+outs:
+- md5: 08603b676ca4477290e848de7efb5aa8
+  size: 124479
+  hash: md5
+  path: 20231013_145726_ulcgd.parquet

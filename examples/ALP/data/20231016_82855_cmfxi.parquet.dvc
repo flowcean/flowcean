@@ -1,0 +1,5 @@
+outs:
+- md5: 1247d167a14500f81f47f2f2b3caa638
+  size: 111439
+  hash: md5
+  path: 20231016_82855_cmfxi.parquet

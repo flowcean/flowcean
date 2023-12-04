@@ -1,0 +1,5 @@
+outs:
+- md5: d084ad2006f41716ec4ec5054fd9e8d3
+  size: 116380
+  hash: md5
+  path: 20231016_82858_hphuu.parquet

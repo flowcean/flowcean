@@ -1,0 +1,5 @@
+outs:
+- md5: f953a3c939e11c355b4ca73706c952ad
+  size: 122094
+  hash: md5
+  path: 20231016_82853_qpddh.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 2572ecfe2a8e2d40d69500585dbd5577
+  size: 118450
+  hash: md5
+  path: 20231016_82851_utkbp.parquet

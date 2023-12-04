@@ -1,0 +1,5 @@
+outs:
+- md5: a29ff7caf602c729c8454ad48043df52
+  size: 122349
+  hash: md5
+  path: 20231016_82858_goouw.parquet

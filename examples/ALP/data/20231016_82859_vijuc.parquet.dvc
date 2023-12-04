@@ -1,0 +1,5 @@
+outs:
+- md5: 255d6b42c437140f028e2c431e55c45c
+  size: 124286
+  hash: md5
+  path: 20231016_82859_vijuc.parquet

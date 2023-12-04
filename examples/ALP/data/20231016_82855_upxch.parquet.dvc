@@ -1,0 +1,5 @@
+outs:
+- md5: e8e1287fd6cbf190ed8b03c41cf88ac8
+  size: 122826
+  hash: md5
+  path: 20231016_82855_upxch.parquet

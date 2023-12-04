@@ -1,0 +1,5 @@
+outs:
+- md5: 37a1a248e686b3f5e5719bdeded31ca2
+  size: 114124
+  hash: md5
+  path: 20231013_145727_dmwwh.parquet

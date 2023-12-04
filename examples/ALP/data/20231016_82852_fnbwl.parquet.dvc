@@ -1,0 +1,5 @@
+outs:
+- md5: 3373db61db39162c8d8fb20d0313825b
+  size: 123486
+  hash: md5
+  path: 20231016_82852_fnbwl.parquet

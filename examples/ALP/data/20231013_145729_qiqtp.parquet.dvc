@@ -1,0 +1,5 @@
+outs:
+- md5: cb7e26d5f71c6cf581700b35f6fb95d1
+  size: 123483
+  hash: md5
+  path: 20231013_145729_qiqtp.parquet

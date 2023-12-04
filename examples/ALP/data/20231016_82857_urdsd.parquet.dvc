@@ -1,0 +1,5 @@
+outs:
+- md5: 5648d225318d954c5298824b5aa50eec
+  size: 123114
+  hash: md5
+  path: 20231016_82857_urdsd.parquet

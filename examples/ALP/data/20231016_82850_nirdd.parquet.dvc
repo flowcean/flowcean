@@ -1,0 +1,5 @@
+outs:
+- md5: 31325a31c98f9c9fef32cdd69ada890b
+  size: 124255
+  hash: md5
+  path: 20231016_82850_nirdd.parquet

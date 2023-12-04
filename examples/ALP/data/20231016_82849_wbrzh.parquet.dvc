@@ -1,0 +1,5 @@
+outs:
+- md5: 954e9c31b33606eb30ba383acb2130e4
+  size: 113350
+  hash: md5
+  path: 20231016_82849_wbrzh.parquet

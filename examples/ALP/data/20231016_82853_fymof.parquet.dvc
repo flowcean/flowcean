@@ -1,0 +1,5 @@
+outs:
+- md5: 988c8e58d98e3a0e7c514ac1f29720af
+  size: 123497
+  hash: md5
+  path: 20231016_82853_fymof.parquet

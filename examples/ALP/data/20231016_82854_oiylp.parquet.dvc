@@ -1,0 +1,5 @@
+outs:
+- md5: b42bbd892e30eecb534e1693ab4b6889
+  size: 118362
+  hash: md5
+  path: 20231016_82854_oiylp.parquet

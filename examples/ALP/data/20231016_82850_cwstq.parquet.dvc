@@ -1,0 +1,5 @@
+outs:
+- md5: dad33186d7da53d822c4ca4fe2b2b334
+  size: 121113
+  hash: md5
+  path: 20231016_82850_cwstq.parquet

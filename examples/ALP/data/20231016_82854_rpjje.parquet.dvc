@@ -1,0 +1,5 @@
+outs:
+- md5: 10f2436c8e9c4586fd09f5d97b14cd44
+  size: 113484
+  hash: md5
+  path: 20231016_82854_rpjje.parquet

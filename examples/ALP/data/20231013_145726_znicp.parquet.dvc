@@ -1,0 +1,5 @@
+outs:
+- md5: 20b0f43889bc17b06e914cc027b7fa00
+  size: 122766
+  hash: md5
+  path: 20231013_145726_znicp.parquet

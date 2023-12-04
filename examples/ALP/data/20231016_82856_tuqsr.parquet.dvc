@@ -1,0 +1,5 @@
+outs:
+- md5: 841be3d51ec62d062cb508882cf5ae8f
+  size: 122625
+  hash: md5
+  path: 20231016_82856_tuqsr.parquet

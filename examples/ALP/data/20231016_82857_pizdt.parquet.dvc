@@ -1,0 +1,5 @@
+outs:
+- md5: 946b850dd90e5e0bd82c92235ab72255
+  size: 124436
+  hash: md5
+  path: 20231016_82857_pizdt.parquet

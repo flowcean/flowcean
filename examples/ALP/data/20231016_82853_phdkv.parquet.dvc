@@ -1,0 +1,5 @@
+outs:
+- md5: ae0cf8b0ed8bee77c2c1e69602df26dc
+  size: 122376
+  hash: md5
+  path: 20231016_82853_phdkv.parquet

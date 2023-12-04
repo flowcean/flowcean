@@ -1,0 +1,5 @@
+outs:
+- md5: 9feb6ab78b34bba4a35a9a2c4377625a
+  size: 120846
+  hash: md5
+  path: 20231013_145727_tkrsl.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: e14928c6950c060d2dd6a19fc54f535f
+  size: 116479
+  hash: md5
+  path: 20231016_82851_pkcam.parquet

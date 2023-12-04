@@ -1,0 +1,5 @@
+outs:
+- md5: 4c23ac1fdb9e3a67f7497d58172921aa
+  size: 118006
+  hash: md5
+  path: 20231013_145726_gfrvi.parquet

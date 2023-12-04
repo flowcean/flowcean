@@ -1,0 +1,5 @@
+outs:
+- md5: 9c9277d168a8e8f57acdbfdfb1c013d6
+  size: 122943
+  hash: md5
+  path: 20231016_82855_jeocb.parquet

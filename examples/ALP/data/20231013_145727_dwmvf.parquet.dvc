@@ -1,0 +1,5 @@
+outs:
+- md5: 2a30f4590db57d1798726c87eae32a68
+  size: 111654
+  hash: md5
+  path: 20231013_145727_dwmvf.parquet

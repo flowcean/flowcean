@@ -1,0 +1,5 @@
+outs:
+- md5: e0dbcea8a7cd3dc8ec2e6e3a1f7d1034
+  size: 123480
+  hash: md5
+  path: 20231016_82851_fpoea.parquet

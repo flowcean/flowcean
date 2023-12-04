@@ -1,0 +1,5 @@
+outs:
+- md5: f0b455a046ebd9002458da01403e0dd2
+  size: 114097
+  hash: md5
+  path: 20231016_82857_ifvje.parquet

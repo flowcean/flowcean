@@ -1,0 +1,5 @@
+outs:
+- md5: e382930cd61976c1a9a313e09c2c477e
+  size: 117888
+  hash: md5
+  path: 20231013_145729_ifgxs.parquet

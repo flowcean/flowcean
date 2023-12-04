@@ -1,0 +1,5 @@
+outs:
+- md5: 93303f590787db8550e7d91b22417cf5
+  size: 112618
+  hash: md5
+  path: 20231016_82859_bgpmf.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 2b38003a7e317f7e9af19f7b70151809
+  size: 116566
+  hash: md5
+  path: 20231016_82852_lbtay.parquet

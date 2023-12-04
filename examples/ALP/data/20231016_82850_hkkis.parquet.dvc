@@ -1,0 +1,5 @@
+outs:
+- md5: ad8b33d107cb7eb71979fef4623ab2a7
+  size: 123482
+  hash: md5
+  path: 20231016_82850_hkkis.parquet

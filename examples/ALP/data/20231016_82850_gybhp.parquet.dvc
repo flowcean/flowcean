@@ -1,0 +1,5 @@
+outs:
+- md5: c6b44c358ae14910d29e1373547620cf
+  size: 120686
+  hash: md5
+  path: 20231016_82850_gybhp.parquet

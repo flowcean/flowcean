@@ -1,0 +1,5 @@
+outs:
+- md5: 4a0f7e1c782a9f2c07766af1b682e912
+  size: 123149
+  hash: md5
+  path: 20231016_82857_eqahq.parquet

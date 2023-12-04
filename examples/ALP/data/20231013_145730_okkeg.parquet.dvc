@@ -1,0 +1,5 @@
+outs:
+- md5: 94059d3e7efaad32676304782f023732
+  size: 115424
+  hash: md5
+  path: 20231013_145730_okkeg.parquet

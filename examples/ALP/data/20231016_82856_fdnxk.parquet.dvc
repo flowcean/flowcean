@@ -1,0 +1,5 @@
+outs:
+- md5: 5018c9218d91f3410d1e42af9ab129ad
+  size: 111016
+  hash: md5
+  path: 20231016_82856_fdnxk.parquet

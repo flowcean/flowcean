@@ -1,0 +1,5 @@
+outs:
+- md5: dc7b9e4253f461aed23d8bfdd201daba
+  size: 118130
+  hash: md5
+  path: 20231016_82857_ibujp.parquet

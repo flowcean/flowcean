@@ -1,0 +1,5 @@
+outs:
+- md5: 7ba8f0177a92593dce198eecad0259c5
+  size: 111440
+  hash: md5
+  path: 20231016_82852_btlrs.parquet

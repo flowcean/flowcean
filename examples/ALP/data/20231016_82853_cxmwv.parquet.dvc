@@ -1,0 +1,5 @@
+outs:
+- md5: 92540c2ba3f7d18d6545d0365d6aa2fa
+  size: 115996
+  hash: md5
+  path: 20231016_82853_cxmwv.parquet

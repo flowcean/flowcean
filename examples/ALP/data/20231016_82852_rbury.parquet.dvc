@@ -1,0 +1,5 @@
+outs:
+- md5: a5cc5a02d9a0da795d3f8ca735fc5b24
+  size: 123506
+  hash: md5
+  path: 20231016_82852_rbury.parquet

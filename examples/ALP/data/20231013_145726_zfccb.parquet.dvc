@@ -1,0 +1,5 @@
+outs:
+- md5: 6a1f848a2da0367bb6075dabff515cd3
+  size: 122932
+  hash: md5
+  path: 20231013_145726_zfccb.parquet

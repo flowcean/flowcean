@@ -1,0 +1,5 @@
+outs:
+- md5: 381a432fd0fbbde7348e38bd77978fbe
+  size: 123255
+  hash: md5
+  path: 20231016_82849_lbbcp.parquet

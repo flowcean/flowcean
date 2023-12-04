@@ -1,0 +1,5 @@
+outs:
+- md5: a0742872f65ae5f00975d100b01b472f
+  size: 123485
+  hash: md5
+  path: 20231016_82849_fyrzl.parquet

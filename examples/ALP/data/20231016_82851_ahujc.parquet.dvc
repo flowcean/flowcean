@@ -1,0 +1,5 @@
+outs:
+- md5: 01547bbea9db5abc433c98d9a469ff6c
+  size: 121119
+  hash: md5
+  path: 20231016_82851_ahujc.parquet

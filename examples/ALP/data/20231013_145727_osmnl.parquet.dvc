@@ -1,0 +1,5 @@
+outs:
+- md5: dc80ba691076b69464e47b3e8ede946d
+  size: 108167
+  hash: md5
+  path: 20231013_145727_osmnl.parquet

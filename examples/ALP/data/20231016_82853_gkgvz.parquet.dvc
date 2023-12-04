@@ -1,0 +1,5 @@
+outs:
+- md5: 82768a64e11feded19d449cd456fa0c3
+  size: 122369
+  hash: md5
+  path: 20231016_82853_gkgvz.parquet

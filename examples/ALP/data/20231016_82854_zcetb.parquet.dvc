@@ -1,0 +1,5 @@
+outs:
+- md5: 0b7bdff9cb8dccb96ced35f48a095812
+  size: 123503
+  hash: md5
+  path: 20231016_82854_zcetb.parquet

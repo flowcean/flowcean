@@ -1,0 +1,5 @@
+outs:
+- md5: 77b32a0f7114c0f9239875de5f164e59
+  size: 112152
+  hash: md5
+  path: 20231016_82853_botim.parquet

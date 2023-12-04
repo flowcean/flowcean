@@ -1,0 +1,5 @@
+outs:
+- md5: 63d0058a0f87dcf6981d21d63d9b1642
+  size: 123486
+  hash: md5
+  path: 20231013_145727_debqh.parquet

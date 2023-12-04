@@ -1,0 +1,5 @@
+outs:
+- md5: fce855c44ffdef85e96e6c2bf46e59d8
+  size: 118563
+  hash: md5
+  path: 20231016_82854_mvqrq.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: d4d2608a77d161d0311cfd9abb0c2134
+  size: 120918
+  hash: md5
+  path: 20231016_82858_dsmcs.parquet

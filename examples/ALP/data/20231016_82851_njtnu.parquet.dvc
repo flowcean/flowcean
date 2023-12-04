@@ -1,0 +1,5 @@
+outs:
+- md5: 2c6e6a861992410587f7a5ed1b626908
+  size: 118115
+  hash: md5
+  path: 20231016_82851_njtnu.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 00f75d485a2b5982a8ad717156579303
+  size: 113600
+  hash: md5
+  path: 20231013_145727_memdb.parquet

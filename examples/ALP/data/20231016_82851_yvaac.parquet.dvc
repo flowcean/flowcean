@@ -1,0 +1,5 @@
+outs:
+- md5: 3c786d88aab66b32557f8c2fd276f94a
+  size: 122847
+  hash: md5
+  path: 20231016_82851_yvaac.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: f5ed618673178d90620096e77691d8cb
+  size: 123867
+  hash: md5
+  path: 20231013_145726_powgi.parquet

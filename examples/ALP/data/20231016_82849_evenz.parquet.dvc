@@ -1,0 +1,5 @@
+outs:
+- md5: 6257edaa2c38e4157c8bf0336451e9e4
+  size: 118763
+  hash: md5
+  path: 20231016_82849_evenz.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 3b9b04a589aa2270875ed58eb81bbdde
+  size: 117973
+  hash: md5
+  path: 20231016_82859_ztgrd.parquet

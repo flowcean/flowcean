@@ -1,0 +1,5 @@
+outs:
+- md5: 23f51159ded9eaf6b489f6e9670d2461
+  size: 111092
+  hash: md5
+  path: 20231013_145730_ayqye.parquet

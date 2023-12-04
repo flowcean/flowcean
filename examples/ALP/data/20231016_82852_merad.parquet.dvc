@@ -1,0 +1,5 @@
+outs:
+- md5: 4872c347850af16ca0d163d09cc62e24
+  size: 123481
+  hash: md5
+  path: 20231016_82852_merad.parquet

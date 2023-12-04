@@ -1,0 +1,5 @@
+outs:
+- md5: 3a785abdff6843f9d229794cf060347c
+  size: 123184
+  hash: md5
+  path: 20231016_82859_irwtw.parquet

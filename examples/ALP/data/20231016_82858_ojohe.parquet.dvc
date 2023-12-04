@@ -1,0 +1,5 @@
+outs:
+- md5: 13e5350c404c60fb9c24a4ee87dfbfbb
+  size: 118774
+  hash: md5
+  path: 20231016_82858_ojohe.parquet

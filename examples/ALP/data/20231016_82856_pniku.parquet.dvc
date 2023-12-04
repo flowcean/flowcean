@@ -1,0 +1,5 @@
+outs:
+- md5: 4f2367ad4730b903ca29a550618bdb51
+  size: 123512
+  hash: md5
+  path: 20231016_82856_pniku.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: dc5bcad070d0c7ed9bcb3e8f2dddb082
+  size: 123506
+  hash: md5
+  path: 20231013_145727_bmfdf.parquet

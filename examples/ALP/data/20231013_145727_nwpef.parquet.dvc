@@ -1,0 +1,5 @@
+outs:
+- md5: 5ea57e3de56df8aab5f433fd365b3adc
+  size: 123518
+  hash: md5
+  path: 20231013_145727_nwpef.parquet

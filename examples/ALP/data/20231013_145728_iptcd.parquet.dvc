@@ -1,0 +1,5 @@
+outs:
+- md5: d6a22d518ea9ee375d2605e613ae1eac
+  size: 116385
+  hash: md5
+  path: 20231013_145728_iptcd.parquet

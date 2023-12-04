@@ -1,0 +1,5 @@
+outs:
+- md5: 9f9e7f41c25f1488ae640d4b15d5472d
+  size: 118913
+  hash: md5
+  path: 20231016_82855_yewkj.parquet

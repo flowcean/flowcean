@@ -1,0 +1,5 @@
+outs:
+- md5: 60a040e2045264a274d2277cae917770
+  size: 118878
+  hash: md5
+  path: 20231016_82849_aktuj.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 2faa6be815fce6735131f898d4d30bf1
+  size: 116997
+  hash: md5
+  path: 20231016_82850_grdde.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: b2d308463d9e945a6589d295af35ba27
+  size: 123483
+  hash: md5
+  path: 20231016_82856_njuwt.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 0297a399343d0368866618d95f08f7b4
+  size: 111046
+  hash: md5
+  path: 20231016_82853_hrdns.parquet

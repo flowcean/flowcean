@@ -1,0 +1,5 @@
+outs:
+- md5: a2ace78de02486bce267c70ec6a709e7
+  size: 111226
+  hash: md5
+  path: 20231016_82849_grglj.parquet

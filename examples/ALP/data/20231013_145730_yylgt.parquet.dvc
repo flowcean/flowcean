@@ -1,0 +1,5 @@
+outs:
+- md5: 0659655ee57cc829e2039c6d300ca0a8
+  size: 120686
+  hash: md5
+  path: 20231013_145730_yylgt.parquet

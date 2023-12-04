@@ -1,0 +1,5 @@
+outs:
+- md5: d3340b1904d1c17da2190413c04738ea
+  size: 111291
+  hash: md5
+  path: 20231016_82852_jgwul.parquet

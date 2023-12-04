@@ -1,0 +1,5 @@
+outs:
+- md5: ec89e0ee4bab399dd364077dd63c8794
+  size: 122808
+  hash: md5
+  path: 20231013_145728_sokbu.parquet

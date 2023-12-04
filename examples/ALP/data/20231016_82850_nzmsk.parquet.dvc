@@ -1,0 +1,5 @@
+outs:
+- md5: dae6e74b5b9c1ee5d63f7e5b517dde9d
+  size: 120235
+  hash: md5
+  path: 20231016_82850_nzmsk.parquet

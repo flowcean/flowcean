@@ -1,0 +1,5 @@
+outs:
+- md5: b2e0af98713a973baf896fe3e0ad40c5
+  size: 124536
+  hash: md5
+  path: 20231016_82853_xrrza.parquet

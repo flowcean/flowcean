@@ -1,0 +1,5 @@
+outs:
+- md5: 1f1841be41338f55894ed01c1a50f200
+  size: 122471
+  hash: md5
+  path: 20231016_82857_rnncz.parquet

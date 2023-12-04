@@ -1,0 +1,5 @@
+outs:
+- md5: 4aed2d0d9e85aaf4f4acc2ca85110130
+  size: 123258
+  hash: md5
+  path: 20231016_82856_quhmv.parquet

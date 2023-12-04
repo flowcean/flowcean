@@ -1,0 +1,5 @@
+outs:
+- md5: f4944cb37d796d2fb42cd740bf074ee8
+  size: 123260
+  hash: md5
+  path: 20231013_145728_lczih.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: c6a8b2063c76a28878ef26a943b8e782
+  size: 118736
+  hash: md5
+  path: 20231013_145727_vtewz.parquet

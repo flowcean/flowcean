@@ -1,0 +1,5 @@
+outs:
+- md5: b10f7abdc62b1b97a0a1573f6955f3fd
+  size: 123329
+  hash: md5
+  path: 20231016_82853_okcsp.parquet

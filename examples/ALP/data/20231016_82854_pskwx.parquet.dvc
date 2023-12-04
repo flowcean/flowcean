@@ -1,0 +1,5 @@
+outs:
+- md5: 3fa8fa2565479d88dc2b78e71b682628
+  size: 113820
+  hash: md5
+  path: 20231016_82854_pskwx.parquet

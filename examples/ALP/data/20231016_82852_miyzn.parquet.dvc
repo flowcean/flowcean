@@ -1,0 +1,5 @@
+outs:
+- md5: 44cbe335aa5c9eb67c528a95862989b5
+  size: 123030
+  hash: md5
+  path: 20231016_82852_miyzn.parquet

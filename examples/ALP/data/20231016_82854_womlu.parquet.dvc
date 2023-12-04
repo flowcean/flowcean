@@ -1,0 +1,5 @@
+outs:
+- md5: 52ad0a15240b8fb4e41f20e3a06afacf
+  size: 118083
+  hash: md5
+  path: 20231016_82854_womlu.parquet

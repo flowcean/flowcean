@@ -1,0 +1,5 @@
+outs:
+- md5: 3da6460bc054963e6030637236d26b56
+  size: 108015
+  hash: md5
+  path: 20231013_145730_jrhnv.parquet

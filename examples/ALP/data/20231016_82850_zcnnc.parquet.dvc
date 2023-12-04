@@ -1,0 +1,5 @@
+outs:
+- md5: e6881757388094e89edcb075c240f766
+  size: 118822
+  hash: md5
+  path: 20231016_82850_zcnnc.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: f10f6acb25f1d7d8893aed92f67ad1e8
+  size: 112272
+  hash: md5
+  path: 20231016_82855_nkiav.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: ca8c1d4a73e24fd288cb1cc98838f874
+  size: 123490
+  hash: md5
+  path: 20231016_82851_qlmyc.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: e02ccdf22f6f8862df4eca8e0769f92e
+  size: 120739
+  hash: md5
+  path: 20231016_82855_jmryc.parquet

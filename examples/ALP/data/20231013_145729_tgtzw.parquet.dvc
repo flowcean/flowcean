@@ -1,0 +1,5 @@
+outs:
+- md5: 04f5776ffe0fd2ca298716d0ca86f6e2
+  size: 123612
+  hash: md5
+  path: 20231013_145729_tgtzw.parquet

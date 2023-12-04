@@ -1,0 +1,5 @@
+outs:
+- md5: 6d735c2d8ec2539b02aad6c43d6d99f0
+  size: 118963
+  hash: md5
+  path: 20231016_82858_sodjk.parquet

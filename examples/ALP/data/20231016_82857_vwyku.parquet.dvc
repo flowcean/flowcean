@@ -1,0 +1,5 @@
+outs:
+- md5: bcd1d4701dce8f70bec0c9c195d3e244
+  size: 121346
+  hash: md5
+  path: 20231016_82857_vwyku.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: aee7941a18253ebf614257ebdc2081f4
+  size: 123486
+  hash: md5
+  path: 20231016_82855_jegbx.parquet

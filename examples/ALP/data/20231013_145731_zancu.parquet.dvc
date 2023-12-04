@@ -1,0 +1,5 @@
+outs:
+- md5: 08841704d7cbe13e8c0a2b78435cee8c
+  size: 122953
+  hash: md5
+  path: 20231013_145731_zancu.parquet

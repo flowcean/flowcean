@@ -1,0 +1,5 @@
+outs:
+- md5: 9975ea30661c566d11f80684acc62965
+  size: 123475
+  hash: md5
+  path: 20231016_82852_hzxea.parquet

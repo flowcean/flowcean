@@ -1,0 +1,5 @@
+outs:
+- md5: 1b694f5a2825b68ff8f9d5e4eb7ba6ed
+  size: 112594
+  hash: md5
+  path: 20231013_145726_sqabi.parquet

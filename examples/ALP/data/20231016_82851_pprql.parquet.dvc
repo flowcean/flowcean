@@ -1,0 +1,5 @@
+outs:
+- md5: 107bae199949b8688d9d4b8c24659e93
+  size: 123489
+  hash: md5
+  path: 20231016_82851_pprql.parquet

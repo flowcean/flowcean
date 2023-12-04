@@ -1,0 +1,5 @@
+outs:
+- md5: 96849a8cb4061a407241573f1831e4b6
+  size: 114463
+  hash: md5
+  path: 20231013_145727_pznmu.parquet

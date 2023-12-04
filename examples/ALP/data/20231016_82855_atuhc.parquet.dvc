@@ -1,0 +1,5 @@
+outs:
+- md5: 8a6c773f50b699342a6923cbbdddcb2f
+  size: 122368
+  hash: md5
+  path: 20231016_82855_atuhc.parquet

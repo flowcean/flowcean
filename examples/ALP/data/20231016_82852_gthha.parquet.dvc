@@ -1,0 +1,5 @@
+outs:
+- md5: 276b70c061ecdea08cba7a3cc842be68
+  size: 115304
+  hash: md5
+  path: 20231016_82852_gthha.parquet

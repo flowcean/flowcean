@@ -1,0 +1,5 @@
+outs:
+- md5: 457887cc5b3c4e83874079ed4f7b8258
+  size: 118460
+  hash: md5
+  path: 20231016_82855_aoscf.parquet

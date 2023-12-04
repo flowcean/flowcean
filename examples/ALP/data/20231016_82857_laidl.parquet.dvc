@@ -1,0 +1,5 @@
+outs:
+- md5: 4aa14989cb11247b1f1c814d6c06fff9
+  size: 118773
+  hash: md5
+  path: 20231016_82857_laidl.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 2b14fee5aa5921faf3c9f575be64db50
+  size: 123479
+  hash: md5
+  path: 20231016_82854_ytzgc.parquet

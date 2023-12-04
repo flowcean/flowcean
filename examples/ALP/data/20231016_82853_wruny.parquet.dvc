@@ -1,0 +1,5 @@
+outs:
+- md5: ec071dfe7133ea7fd89875964f6ea6d4
+  size: 117052
+  hash: md5
+  path: 20231016_82853_wruny.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: d45711ce007e8dd2ddc87926488fc689
+  size: 111015
+  hash: md5
+  path: 20231016_82856_vgbgr.parquet

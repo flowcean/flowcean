@@ -1,0 +1,5 @@
+outs:
+- md5: bc8e5d0e5f2343e9112b5d6cb6b9a470
+  size: 123510
+  hash: md5
+  path: 20231016_82853_ynulw.parquet

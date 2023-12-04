@@ -1,0 +1,5 @@
+outs:
+- md5: cadf3555fc20862a9b56b7db98162831
+  size: 107247
+  hash: md5
+  path: 20231016_82850_ugpcn.parquet

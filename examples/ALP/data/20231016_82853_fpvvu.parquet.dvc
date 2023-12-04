@@ -1,0 +1,5 @@
+outs:
+- md5: 755f29d062965486faa6749e7cde28df
+  size: 122939
+  hash: md5
+  path: 20231016_82853_fpvvu.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 8272e61d28823c97f8093117cef9f5cd
+  size: 118375
+  hash: md5
+  path: 20231013_145730_jotll.parquet

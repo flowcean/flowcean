@@ -1,0 +1,5 @@
+outs:
+- md5: 833e5cedc35e107ede599407f5ddd55b
+  size: 123486
+  hash: md5
+  path: 20231016_82858_nyzkj.parquet

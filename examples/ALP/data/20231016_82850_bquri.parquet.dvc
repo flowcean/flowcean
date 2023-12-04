@@ -1,0 +1,5 @@
+outs:
+- md5: 9850252e0cd3c72f0232c6b5f0e5263b
+  size: 121124
+  hash: md5
+  path: 20231016_82850_bquri.parquet

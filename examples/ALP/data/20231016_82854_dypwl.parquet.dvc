@@ -1,0 +1,5 @@
+outs:
+- md5: 39d9d6cd8486a6aa82051f7f6328a6ee
+  size: 121770
+  hash: md5
+  path: 20231016_82854_dypwl.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 5e274535389be16f8e0a16ffd41ee147
+  size: 121059
+  hash: md5
+  path: 20231016_82858_bbqlx.parquet

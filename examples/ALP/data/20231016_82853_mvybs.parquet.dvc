@@ -1,0 +1,5 @@
+outs:
+- md5: 0d60907d2b39f0fee655700eb0e1d38c
+  size: 123502
+  hash: md5
+  path: 20231016_82853_mvybs.parquet

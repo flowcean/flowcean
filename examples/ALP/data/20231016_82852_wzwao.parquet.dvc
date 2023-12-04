@@ -1,0 +1,5 @@
+outs:
+- md5: c7418b33aba4f69cfb7e4e99ddcb66d8
+  size: 123428
+  hash: md5
+  path: 20231016_82852_wzwao.parquet

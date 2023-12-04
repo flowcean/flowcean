@@ -1,0 +1,5 @@
+outs:
+- md5: f7b9695f65e2f37a457b153a5382cc0a
+  size: 119111
+  hash: md5
+  path: 20231016_82855_uxmvd.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 8a1db852dfffdee343c85323f4e322a9
+  size: 118684
+  hash: md5
+  path: 20231016_82850_czwbm.parquet

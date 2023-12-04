@@ -1,0 +1,5 @@
+outs:
+- md5: 6139b2388a2d383c9a70a23d75126e56
+  size: 112668
+  hash: md5
+  path: 20231016_82852_ajxom.parquet

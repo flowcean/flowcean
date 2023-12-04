@@ -1,0 +1,5 @@
+outs:
+- md5: f27c59043a473ffa3dc321236ec9d820
+  size: 118702
+  hash: md5
+  path: 20231016_82853_izhbt.parquet

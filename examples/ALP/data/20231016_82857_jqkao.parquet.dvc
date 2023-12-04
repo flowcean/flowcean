@@ -1,0 +1,5 @@
+outs:
+- md5: 8a4865af20ae24823a454cd64f486afc
+  size: 118570
+  hash: md5
+  path: 20231016_82857_jqkao.parquet

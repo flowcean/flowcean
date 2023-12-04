@@ -1,0 +1,5 @@
+outs:
+- md5: 153353e9a2a6230fc9a28347a733e0c8
+  size: 122938
+  hash: md5
+  path: 20231016_82853_fpiwd.parquet

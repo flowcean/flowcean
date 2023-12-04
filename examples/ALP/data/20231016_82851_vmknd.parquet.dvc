@@ -1,0 +1,5 @@
+outs:
+- md5: da1d3cb93ca9a18834a1267d5033707f
+  size: 111649
+  hash: md5
+  path: 20231016_82851_vmknd.parquet

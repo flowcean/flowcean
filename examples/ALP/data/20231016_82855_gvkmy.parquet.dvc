@@ -1,0 +1,5 @@
+outs:
+- md5: 7a1a2ae6d062c5bb534b6dca1d7656d0
+  size: 123469
+  hash: md5
+  path: 20231016_82855_gvkmy.parquet

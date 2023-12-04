@@ -1,0 +1,5 @@
+outs:
+- md5: 98fc94b047bc33dedda60556baa72c80
+  size: 122970
+  hash: md5
+  path: 20231016_82852_tyngg.parquet

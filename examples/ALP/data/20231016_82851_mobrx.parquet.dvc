@@ -1,0 +1,5 @@
+outs:
+- md5: b61bfd9c1f3e924074a486d0b2873b86
+  size: 123481
+  hash: md5
+  path: 20231016_82851_mobrx.parquet

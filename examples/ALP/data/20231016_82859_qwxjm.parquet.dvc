@@ -1,0 +1,5 @@
+outs:
+- md5: 69569e3ea6e36d46092f14b2e9caf8ed
+  size: 106641
+  hash: md5
+  path: 20231016_82859_qwxjm.parquet

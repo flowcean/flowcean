@@ -1,0 +1,5 @@
+outs:
+- md5: 6e5a13faaac216312ba51320f19c8e0e
+  size: 123480
+  hash: md5
+  path: 20231013_145728_axfch.parquet

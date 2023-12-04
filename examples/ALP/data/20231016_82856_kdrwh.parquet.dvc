@@ -1,0 +1,5 @@
+outs:
+- md5: b5c8370d630aa104ce2f5927dd3e9d28
+  size: 118753
+  hash: md5
+  path: 20231016_82856_kdrwh.parquet

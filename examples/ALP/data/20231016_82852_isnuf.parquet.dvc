@@ -1,0 +1,5 @@
+outs:
+- md5: 64af002226d1b8a425167fff53a7d33c
+  size: 122759
+  hash: md5
+  path: 20231016_82852_isnuf.parquet

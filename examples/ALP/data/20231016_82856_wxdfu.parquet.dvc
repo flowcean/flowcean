@@ -1,0 +1,5 @@
+outs:
+- md5: fd849c33d9fdb41815974b7799aff269
+  size: 123504
+  hash: md5
+  path: 20231016_82856_wxdfu.parquet

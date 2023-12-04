@@ -1,0 +1,5 @@
+outs:
+- md5: a28a5898b37385b10ff340171be58e2f
+  size: 121668
+  hash: md5
+  path: 20231016_82855_wmzvc.parquet

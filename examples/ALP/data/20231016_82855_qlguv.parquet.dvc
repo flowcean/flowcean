@@ -1,0 +1,5 @@
+outs:
+- md5: 5c12b0bfae295f618d0f7f518c1fc5eb
+  size: 123251
+  hash: md5
+  path: 20231016_82855_qlguv.parquet

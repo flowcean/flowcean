@@ -1,0 +1,5 @@
+outs:
+- md5: 9e951135025887a297dac278e38d8b4a
+  size: 123485
+  hash: md5
+  path: 20231016_82850_xnzfc.parquet

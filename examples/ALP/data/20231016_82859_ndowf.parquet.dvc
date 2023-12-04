@@ -1,0 +1,5 @@
+outs:
+- md5: fde756b5303531efba30158766403b3d
+  size: 123367
+  hash: md5
+  path: 20231016_82859_ndowf.parquet

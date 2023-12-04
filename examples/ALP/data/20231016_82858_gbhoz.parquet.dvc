@@ -1,0 +1,5 @@
+outs:
+- md5: 862f8c2edb54e02a6d26ae357c493f37
+  size: 111242
+  hash: md5
+  path: 20231016_82858_gbhoz.parquet

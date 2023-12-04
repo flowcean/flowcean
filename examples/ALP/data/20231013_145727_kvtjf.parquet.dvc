@@ -1,0 +1,5 @@
+outs:
+- md5: a34ffef3f7cbe01307d482dbc774e271
+  size: 113334
+  hash: md5
+  path: 20231013_145727_kvtjf.parquet

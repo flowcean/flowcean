@@ -1,0 +1,5 @@
+outs:
+- md5: e31c21888b389f3eaaf35d5135168de7
+  size: 123503
+  hash: md5
+  path: 20231016_82859_nxczc.parquet

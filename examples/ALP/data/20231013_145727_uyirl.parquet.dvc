@@ -1,0 +1,5 @@
+outs:
+- md5: 20b75f4dfb2aa71c54bb8a76275a628b
+  size: 121786
+  hash: md5
+  path: 20231013_145727_uyirl.parquet

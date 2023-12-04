@@ -1,0 +1,5 @@
+outs:
+- md5: 96b9e102692046f498e838f5e2e05c8a
+  size: 123487
+  hash: md5
+  path: 20231016_82853_uexii.parquet

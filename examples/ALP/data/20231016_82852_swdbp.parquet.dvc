@@ -1,0 +1,5 @@
+outs:
+- md5: d376dc0bd1e6ac285a0eb6659a98239f
+  size: 123418
+  hash: md5
+  path: 20231016_82852_swdbp.parquet

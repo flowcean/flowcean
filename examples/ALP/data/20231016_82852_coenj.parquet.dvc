@@ -1,0 +1,5 @@
+outs:
+- md5: e27cd0eb8a271724bab236902169517e
+  size: 123224
+  hash: md5
+  path: 20231016_82852_coenj.parquet

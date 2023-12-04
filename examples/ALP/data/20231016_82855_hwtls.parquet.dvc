@@ -1,0 +1,5 @@
+outs:
+- md5: b43fee689dd4be58b26db4be568bc06e
+  size: 123316
+  hash: md5
+  path: 20231016_82855_hwtls.parquet

@@ -1,0 +1,5 @@
+outs:
+- md5: 77edef7a5030421ef367375c512fc600
+  size: 120768
+  hash: md5
+  path: 20231016_82859_wbqiq.parquet
