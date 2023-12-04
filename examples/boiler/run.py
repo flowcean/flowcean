@@ -7,7 +7,7 @@ from agenc.metrics.regression import MeanAbsoluteError
 from agenc.transforms import Select, SlidingWindow, Standardize
 
 
-def main():
+def main() -> None:
     metadata = Metadata(
         data_path=Path("data/trace_287401a5.csv"),
         features=[Feature(name="x")],

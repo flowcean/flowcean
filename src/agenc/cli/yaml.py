@@ -45,9 +45,10 @@ def load_metadata(path: str | Path) -> Metadata:
     path = Path(path)
     content = YAML(typ="safe").load(path)
 
-    paths = [
-        file_uri_to_path(uri, path.parent) for uri in content.get("uri", [])
-    ]
+    uri = content.get("uri")
+    if isinstance(uri, str):
+        uri = [uri]
+    paths = [file_uri_to_path(uri, path.parent) for uri in uri]
     test_paths = [
         file_uri_to_path(uri, path.parent)
         for uri in content.get("test_uri", [])

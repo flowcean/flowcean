@@ -16,22 +16,31 @@ dependencies = [
   "numpy",
   "polars",
   "ruamel.yaml",
-  "scikit-learn",
-  "lightning",
-  "tensorboard",
-  "grpcio",
 ]
 
 [project.optional-dependencies]
+sklearn = [
+  "scikit-learn",
+]
+lightning = [
+  "lightning",
+  "tensorboard",
+]
+grpc = [
+  "grpcio",
+]
 test = [
   "pytest",
   "coverage",
+  "scikit-learn",
 ]
 typecheck = [
+  "lightning",
   "pytest",
   "argcomplete",
-  "grpc-stubs",
+  "protobuf",
   "types-protobuf",
+  "grpc-stubs",
   "mypy",
 ]
 docs = [
@@ -39,9 +48,11 @@ docs = [
   "furo",
   "myst-parser",
   "pyenchant",
-  "sphinxcontrib-spelling"
+  "sphinxcontrib-spelling",
+  "scikit-learn",
+  "lightning",
 ]
-grpc = [
+grpc-dev = [
   "grpcio-tools",
   "mypy-protobuf",
 ]
