@@ -14,10 +14,12 @@ def inititialize(level: logging._Level | None = None) -> None:
     if level is not None:
         for name in logging.root.manager.loggerDict:
             logging.getLogger(name).setLevel(level)
-            get_configuration()["logging"].update({
-                "loggers": {
-                    name: {
-                        "level": level,
+            get_configuration()["logging"].update(
+                {
+                    "loggers": {
+                        name: {
+                            "level": level,
+                        }
                     }
                 }
-            })
+            )
