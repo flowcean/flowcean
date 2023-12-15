@@ -32,6 +32,11 @@ test:
   coverage: "/(?i)total.*? (100(?:\\.0+)?\\%|[1-9]?\\d(?:\\.\\d+)?\\%)$/"
   script:
     - nox --verbose --session test --python $PYTHON_VERSION
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
 
 pages:
   script:
@@ -43,14 +48,14 @@ pages:
 
 deploy:
   before_script:
-   - mkdir -p ~/.ssh
-   - chmod 700 ~/.ssh
-   - echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
-   - chmod 644 ~/.ssh/known_hosts
-   - eval $(ssh-agent -s)
-   - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
   script:
-   - scp -rP 40043 ./public/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
+    - scp -rP 40043 ./public/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
   needs: ["pages"]
   rules:
-   - if: $CI_COMMIT_REF_NAME == "main"
+    - if: $CI_COMMIT_REF_NAME == "main"

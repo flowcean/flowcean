@@ -15,6 +15,7 @@ def test(session: nox.Session) -> None:
         )
     finally:
         session.run("coverage", "report")
+        session.run("coverage", "xml")
 
 
 @nox.session()
