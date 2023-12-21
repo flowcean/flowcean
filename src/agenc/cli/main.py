@@ -66,9 +66,9 @@ def main() -> None:
             f" TrainTestSplit, but got: `{test_data_loader}`"
         )
 
-    transforms = Chain(*[
-        transform.load() for transform in experiment.transforms
-    ])
+    transforms = Chain(
+        *[transform.load() for transform in experiment.transforms]
+    )
     learner: Learner = experiment.learner.load()
     metrics: list[Metric] = [metric.load() for metric in experiment.metrics]
 
