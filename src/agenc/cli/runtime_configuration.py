@@ -4,7 +4,7 @@ import logging
 import logging.config
 from collections.abc import Mapping, MutableMapping
 from copy import deepcopy
-from os import PathLike
+from pathlib import Path
 from typing import Any
 
 import ruamel.yaml
@@ -15,37 +15,20 @@ DEFAULT_BASE_CONFIG = {
     "logging": {
         "version": 1,
         "formatters": {
-            "simple": {
-                "format": "%(asctime)s [%(name)s][%(levelname)s] %(message)s"
-            },
-            "debug": {
-                "format": (
-                    "%(asctime)s [%(name)s (%(process)d)][%(levelname)s] "
-                    "%(message)s (%(module)s.%(funcName)s in %(filename)s"
-                    ":%(lineno)d)"
-                )
+            "default": {
+                "format": "%(asctime)s [%(name)s][%(levelname)s] %(message)s",
             },
         },
         "handlers": {
-            "console": {
+            "default": {
                 "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "simple",
-                "stream": "ext://sys.stdout",
-            },
-            "console-debug": {
-                "class": "logging.StreamHandler",
-                "level": "DEBUG",
-                "formatter": "debug",
+                "formatter": "default",
                 "stream": "ext://sys.stdout",
             },
         },
         "root": {
             "level": "INFO",
-            "handlers": [
-                "console",
-                "console-debug",
-            ],
+            "handlers": ["default"],
         },
     }
 }
@@ -71,7 +54,7 @@ def get_configuration() -> RuntimeConfiguration:
     return _configuration
 
 
-def load_from_file(path: PathLike[Any]) -> None:
+def load_from_file(path: Path) -> None:
     with open(path) as file:
         yaml = ruamel.yaml.YAML(typ="safe").load(file)
     get_configuration().update(yaml)

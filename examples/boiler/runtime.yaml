@@ -1,4 +1,0 @@
-logging:
-  version: 1
-  root:
-    level: "DEBUG"

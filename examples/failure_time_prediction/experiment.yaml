@@ -41,4 +41,4 @@ learner:
     output_size: 1
 
 metrics:
-  - agenc.metrics.dummy_metric.DummyMetric
+  - agenc.metrics.regression.MeanAbsoluteError

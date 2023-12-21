@@ -16,6 +16,7 @@ dependencies = [
   "numpy",
   "polars",
   "ruamel.yaml",
+  "typing-extensions",
 ]
 
 [project.optional-dependencies]
@@ -70,6 +71,7 @@ strict = true
 [[tool.mypy.overrides]]
 module = [
   "sklearn.*",
+  "joblib.*",
 ]
 ignore_missing_imports = true
 

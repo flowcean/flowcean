@@ -1,6 +1,5 @@
 __all__ = [
     "Dataset",
-    "Experiment",
     "Learner",
     "Metadata",
     "Feature",
@@ -11,7 +10,6 @@ __all__ = [
 ]
 
 from .dataset import Dataset
-from .experiment import Experiment
 from .learner import Learner
 from .metadata import Feature, Metadata
 from .metric import Metric

@@ -11,7 +11,7 @@ from functools import reduce
 from os.path import exists
 from pathlib import Path
 
-from agenc.core import train_test_split
+from agenc.core import Learner, Metric, Transform, train_test_split
 
 from . import logging, runtime_configuration
 from .yaml import load_experiment
@@ -45,6 +45,7 @@ def main() -> None:
         runtime_configuration.load_from_file(path)
 
     logging.inititialize(level=arguments.verbose)
+    logger = _logging.getLogger(__name__)
 
     experiment = load_experiment(arguments.experiment)
 
@@ -55,27 +56,44 @@ def main() -> None:
         experiment.train_test_split,
     )
 
+    transforms: list[Transform] = [
+        transform.load() for transform in experiment.transforms
+    ]
+    learner: Learner = experiment.learner.load()
+    metrics: list[Metric] = [metric.load() for metric in experiment.metrics]
+
     train_data = reduce(
         lambda dataset, transform: transform(dataset),
-        experiment.transforms,
+        transforms,
         train_data,
     )
     test_data = reduce(
         lambda dataset, transform: transform(dataset),
-        experiment.transforms,
+        transforms,
         test_data,
     )
 
-    experiment.learner.train(
-        train_data.select(experiment.inputs).to_numpy(),
-        train_data.select(experiment.outputs).to_numpy(),
-    )
+    if experiment.learner.load_path is not None:
+        logger.info(f"Loading learner from `{experiment.learner.load_path}`")
+        learner.load(experiment.learner.load_path)
+    if experiment.learner.train:
+        logger.info("Start training")
+        learner.train(
+            train_data.select(experiment.inputs).to_numpy(),
+            train_data.select(experiment.outputs).to_numpy(),
+        )
+        if experiment.learner.save_path is not None:
+            logger.info(f"Saving learner to `{experiment.learner.save_path}`")
+            experiment.learner.save_path.parent.mkdir(
+                parents=True, exist_ok=True
+            )
+            learner.save(experiment.learner.save_path)
 
-    predictions = experiment.learner.predict(
+    predictions = learner.predict(
         test_data.select(experiment.inputs).to_numpy(),
     )
 
-    for metric in experiment.metrics:
+    for metric in metrics:
         result = metric(
             test_data.select(experiment.outputs).to_numpy(),
             predictions,

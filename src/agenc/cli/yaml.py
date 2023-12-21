@@ -1,31 +1,35 @@
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
 from ruamel.yaml import YAML
 
-from agenc.core import Experiment, Feature, Metadata
+from agenc.core import Feature, Metadata
 
-from ._dynamic_loader import load_instance
 from ._uri import file_uri_to_path
+from .experiment import Experiment, InstanceSpecification, LearnerSpecification
 
 
 def load_experiment(path: str | Path) -> Experiment:
     path = Path(path)
     content = YAML(typ="safe").load(path)
+    return _load(content, path.parent)
+
+
+def _load(content: Any, working_directory: Path) -> Experiment:
     seed = content["seed"]
     metadata = load_metadata(
-        file_uri_to_path(content["data"]["metadata"], path.parent)
+        file_uri_to_path(content["data"]["metadata"], working_directory)
     )
-    learner = _load_instance_from_yaml(content["learner"])
+    learner = LearnerSpecification.from_dict_or_string(content["learner"])
     transforms = [
-        _load_instance_from_yaml(transform)
+        InstanceSpecification.from_dict_or_string(transform)
         for transform in content["data"].get("transforms", [])
     ]
     inputs = content["data"]["inputs"]
     outputs = content["data"]["outputs"]
     train_test_split = content["data"]["train_test_split"]
     metrics = [
-        _load_instance_from_yaml(metric)
+        InstanceSpecification.from_dict_or_string(metric)
         for metric in content.get("metrics", [])
     ]
 
@@ -69,19 +73,4 @@ def load_metadata(path: str | Path) -> Metadata:
 
     return Metadata(
         data_path=paths, test_data_path=test_paths, features=features
-    )
-
-
-class InstanceConfiguration(TypedDict):
-    class_path: str
-    arguments: dict[str, Any]
-
-
-def _load_instance_from_yaml(entry: InstanceConfiguration | str) -> Any:
-    if isinstance(entry, dict):
-        return load_instance(entry["class_path"], entry.get("arguments", {}))
-    if isinstance(entry, str):
-        return load_instance(entry, {})
-    raise ValueError(
-        f"Expected either a dictionary or a string, got {type(entry)}"
     )

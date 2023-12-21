@@ -12,6 +12,7 @@ from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import Dataset, random_split
 from torch.utils.data.dataloader import DataLoader
+from typing_extensions import override
 
 from agenc.core import Learner
 
@@ -61,7 +62,9 @@ class SimpleDense(Learner):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.max_epochs = max_epochs
+        self.trainer: None | lightning.Trainer = None
 
+    @override
     def train(self, inputs: NDArray[Any], outputs: NDArray[Any]) -> None:
         train_len = int(0.8 * len(inputs))
         validation_len = len(inputs) - train_len
@@ -93,18 +96,19 @@ class SimpleDense(Learner):
             save_last=True,
         )
         logger = TensorBoardLogger(Path.cwd(), default_hp_metric=False)
-        trainer = lightning.Trainer(
+        self.trainer = lightning.Trainer(
             max_epochs=self.max_epochs,
             callbacks=[early_stopping, checkpoint_callback],
             logger=logger,
             enable_checkpointing=True,
         )
-        trainer.fit(self.model, train_dataloader, validation_dataloader)
+        self.trainer.fit(self.model, train_dataloader, validation_dataloader)
 
         self.model = MultilayerPerceptron.load_from_checkpoint(
             checkpoint_callback.best_model_path,
         )
 
+    @override
     def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
         dataloader = DataLoader(
             TorchDataset(inputs),
@@ -117,6 +121,19 @@ class SimpleDense(Learner):
             inputs, _ = batch
             predictions.append(self.model(inputs).detach().numpy())
         return np.concatenate(predictions)
+
+    @override
+    def save(self, path: Path) -> None:
+        if self.trainer is None:
+            raise RuntimeError(
+                "this learner has not been trained yet, cannot save model"
+                " before training"
+            )
+        self.trainer.save_checkpoint(path)
+
+    @override
+    def load(self, path: Path) -> None:
+        self.model = MultilayerPerceptron.load_from_checkpoint(path)
 
 
 class MultilayerPerceptron(lightning.LightningModule):

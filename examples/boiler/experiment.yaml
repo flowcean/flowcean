@@ -45,6 +45,7 @@ learner:
   class_path: agenc.learners.regression_tree.RegressionTree
   arguments:
     max_depth: 10
+  save_path: ./models/regression_tree.model
 
 metrics:
   - class_path: agenc.metrics.MeanAbsoluteError
