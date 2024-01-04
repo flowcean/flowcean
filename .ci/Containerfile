@@ -16,12 +16,15 @@ RUN apt-get update --quiet --yes && \
         openssh-client \
         libenchant-2-2 \
         python3.9 \
+        python3.9-venv \
         python3.9-dev \
         python3.9-distutils \
         python3.10 \
+        python3.10-venv \
         python3.10-dev \
         python3.10-distutils \
         python3.11 \
+        python3.11-venv \
         python3.11-dev \
         python3.11-distutils && \
     curl -fsSo /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \

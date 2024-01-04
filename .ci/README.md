@@ -3,17 +3,17 @@
 Login to registry (requires a connection to TUHH network):
 
 ```bash
-docker login collaborating.tuhh.de:5005
+buildah login collaborating.tuhh.de:5005
 ```
 
 Build the image:
 
 ```bash
-docker build -t collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci .
+buildah build -t collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci .
 ```
 
 Upload to registry:
 
 ```bash
-docker push collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
+buildah push collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
 ```
