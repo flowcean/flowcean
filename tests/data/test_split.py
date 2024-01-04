@@ -2,6 +2,7 @@ import random
 import unittest
 
 import polars as pl
+import pytest
 from agenc.data.split import TrainTestSplit
 from polars.testing import assert_frame_equal
 
@@ -20,6 +21,9 @@ class TestTrainTestSplit(unittest.TestCase):
 
         expected_test = pl.DataFrame({"a": [5, 6]})
         assert_frame_equal(expected_test, test)
+
+        with pytest.raises(ValueError, match="ratio must be between 0 and 1"):
+            TrainTestSplit(ratio=1.5, shuffle=False)
 
     def test_split_shuffle(self) -> None:
         random.seed(42)
