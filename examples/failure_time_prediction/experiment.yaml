@@ -38,10 +38,15 @@ data:
           Estimated-Failure-Time: 2477.355746
 
 learners:
-  - name: Automata Learner
-    class_path: agenc.learners.grpc.learner.GrpcLearner
+  - name: Simple Dense
+    class_path: agenc.learners.simple_dense.SimpleDense
     arguments:
-      server_address: localhost:8080
+      learning_rate: 1e-2
+      batch_size: 64
+      max_epochs: 10
+      num_workers: 1
+      input_size: 3
+      output_size: 1
 
 metrics:
   - agenc.metrics.regression.MeanAbsoluteError
