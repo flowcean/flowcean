@@ -3,8 +3,6 @@ variables:
 
 default:
   image: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
-  tags:
-    - tuhh-registry
   cache:
     paths:
       - .cache/pip
@@ -39,6 +37,8 @@ test:
         path: coverage.xml
 
 pages:
+  tags:
+    - tuhh-registry
   script:
     - nox --verbose --session docs
     - mv docs/_build/html public
@@ -47,6 +47,8 @@ pages:
       - public
 
 deploy:
+  tags:
+    - tuhh-registry
   before_script:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
