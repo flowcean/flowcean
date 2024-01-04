@@ -19,56 +19,6 @@ else:
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-class _FeatureType:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
-
-class _FeatureTypeEnumTypeWrapper(
-    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
-        _FeatureType.ValueType
-    ],
-    builtins.type,
-):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-    FEATURETYPE_UNDEFINED: _FeatureType.ValueType  # 0
-    FEATURETYPE_INPUT: _FeatureType.ValueType  # 1
-    FEATURETYPE_TARGET: _FeatureType.ValueType  # 2
-
-class FeatureType(_FeatureType, metaclass=_FeatureTypeEnumTypeWrapper): ...
-
-FEATURETYPE_UNDEFINED: FeatureType.ValueType  # 0
-FEATURETYPE_INPUT: FeatureType.ValueType  # 1
-FEATURETYPE_TARGET: FeatureType.ValueType  # 2
-global___FeatureType = FeatureType
-
-class _DataType:
-    ValueType = typing.NewType("ValueType", builtins.int)
-    V: typing_extensions.TypeAlias = ValueType
-
-class _DataTypeEnumTypeWrapper(
-    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
-        _DataType.ValueType
-    ],
-    builtins.type,
-):
-    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-    DATATYPE_UNDEFINED: _DataType.ValueType  # 0
-    DATATYPE_SCALAR: _DataType.ValueType  # 1
-    DATATYPE_VECTOR: _DataType.ValueType  # 2
-    DATATYPE_MATRIX: _DataType.ValueType  # 3
-    DATATYPE_SCALAR_TIMESERIES: _DataType.ValueType  # 4
-    DATATYPE_VECTOR_TIMESERIES: _DataType.ValueType  # 5
-
-class DataType(_DataType, metaclass=_DataTypeEnumTypeWrapper): ...
-
-DATATYPE_UNDEFINED: DataType.ValueType  # 0
-DATATYPE_SCALAR: DataType.ValueType  # 1
-DATATYPE_VECTOR: DataType.ValueType  # 2
-DATATYPE_MATRIX: DataType.ValueType  # 3
-DATATYPE_SCALAR_TIMESERIES: DataType.ValueType  # 4
-DATATYPE_VECTOR_TIMESERIES: DataType.ValueType  # 5
-global___DataType = DataType
-
 class _Status:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
@@ -125,34 +75,30 @@ global___LogLevel = LogLevel
 class DataPackage(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    METADATA_FIELD_NUMBER: builtins.int
-    OBSERVATIONS_FIELD_NUMBER: builtins.int
+    INPUTS_FIELD_NUMBER: builtins.int
+    OUTPUTS_FIELD_NUMBER: builtins.int
     @property
-    def metadata(
+    def inputs(
         self,
     ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
-        global___ColumnMetadata
+        global___DataRow
     ]: ...
     @property
-    def observations(
+    def outputs(
         self,
     ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
-        global___Observation
+        global___DataRow
     ]: ...
     def __init__(
         self,
         *,
-        metadata: (
-            collections.abc.Iterable[global___ColumnMetadata] | None
-        ) = ...,
-        observations: (
-            collections.abc.Iterable[global___Observation] | None
-        ) = ...,
+        inputs: collections.abc.Iterable[global___DataRow] | None = ...,
+        outputs: collections.abc.Iterable[global___DataRow] | None = ...,
     ) -> None: ...
     def ClearField(
         self,
         field_name: typing_extensions.Literal[
-            "metadata", b"metadata", "observations", b"observations"
+            "inputs", b"inputs", "outputs", b"outputs"
         ],
     ) -> None: ...
 
@@ -168,16 +114,14 @@ class Prediction(google.protobuf.message.Message):
     def predictions(
         self,
     ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
-        global___Observation
+        global___DataRow
     ]: ...
     @property
     def status(self) -> global___StatusMessage: ...
     def __init__(
         self,
         *,
-        predictions: (
-            collections.abc.Iterable[global___Observation] | None
-        ) = ...,
+        predictions: collections.abc.Iterable[global___DataRow] | None = ...,
         status: global___StatusMessage | None = ...,
     ) -> None: ...
     def HasField(
@@ -193,86 +137,29 @@ class Prediction(google.protobuf.message.Message):
 global___Prediction = Prediction
 
 @typing_extensions.final
-class ColumnMetadata(google.protobuf.message.Message):
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
-
-    NAME_FIELD_NUMBER: builtins.int
-    FEATURE_TYPE_FIELD_NUMBER: builtins.int
-    DATA_TYPE_FIELD_NUMBER: builtins.int
-    name: builtins.str
-    feature_type: global___FeatureType.ValueType
-    data_type: global___DataType.ValueType
-    def __init__(
-        self,
-        *,
-        name: builtins.str = ...,
-        feature_type: global___FeatureType.ValueType = ...,
-        data_type: global___DataType.ValueType = ...,
-    ) -> None: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "data_type",
-            b"data_type",
-            "feature_type",
-            b"feature_type",
-            "name",
-            b"name",
-        ],
-    ) -> None: ...
-
-global___ColumnMetadata = ColumnMetadata
-
-@typing_extensions.final
-class Observation(google.protobuf.message.Message):
+class DataRow(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     FIELDS_FIELD_NUMBER: builtins.int
-    TIME_VECTOR_FIELD_NUMBER: builtins.int
     @property
     def fields(
         self,
     ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
-        global___ObservationField
+        global___DataField
     ]: ...
-    @property
-    def time_vector(self) -> global___VectorDouble: ...
     def __init__(
         self,
         *,
-        fields: (
-            collections.abc.Iterable[global___ObservationField] | None
-        ) = ...,
-        time_vector: global___VectorDouble | None = ...,
+        fields: collections.abc.Iterable[global___DataField] | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_time_vector", b"_time_vector", "time_vector", b"time_vector"
-        ],
-    ) -> builtins.bool: ...
     def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_time_vector",
-            b"_time_vector",
-            "fields",
-            b"fields",
-            "time_vector",
-            b"time_vector",
-        ],
+        self, field_name: typing_extensions.Literal["fields", b"fields"]
     ) -> None: ...
-    def WhichOneof(
-        self,
-        oneof_group: typing_extensions.Literal[
-            "_time_vector", b"_time_vector"
-        ],
-    ) -> typing_extensions.Literal["time_vector"] | None: ...
 
-global___Observation = Observation
+global___DataRow = DataRow
 
 @typing_extensions.final
-class ObservationField(google.protobuf.message.Message):
+class DataField(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     INT_FIELD_NUMBER: builtins.int
@@ -353,7 +240,7 @@ class ObservationField(google.protobuf.message.Message):
         | None
     ): ...
 
-global___ObservationField = ObservationField
+global___DataField = DataField
 
 @typing_extensions.final
 class VectorInt(google.protobuf.message.Message):

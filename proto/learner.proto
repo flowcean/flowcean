@@ -2,27 +2,21 @@ syntax = "proto3";
 option java_package = "io.agenc.learner.grpc";
 
 message DataPackage {
-  repeated ColumnMetadata metadata = 1;
-  repeated Observation observations = 2;
+  repeated DataRow inputs = 1;
+  repeated DataRow outputs = 2;
+
 }
 
 message Prediction {
-  repeated Observation predictions = 1;
+  repeated DataRow predictions = 1;
   StatusMessage status = 2;
 }
 
-message ColumnMetadata {
-  string name = 1;
-  FeatureType feature_type = 2;
-  DataType data_type = 3;
+message DataRow {
+  repeated DataField fields = 1;
 }
 
-message Observation {
-  repeated ObservationField fields = 1;
-  optional VectorDouble time_vector = 2;
-}
-
-message ObservationField {
+message DataField {
   oneof field {
     int32 int = 1;
     double double = 2;
@@ -59,21 +53,6 @@ message Message {
   LogLevel log_level = 1;
   string sender = 2;
   string message = 3;
-}
-
-enum FeatureType {
-  FEATURETYPE_UNDEFINED = 0;
-  FEATURETYPE_INPUT = 1;
-  FEATURETYPE_TARGET = 2;
-}
-
-enum DataType {
-  DATATYPE_UNDEFINED = 0;
-  DATATYPE_SCALAR = 1;
-  DATATYPE_VECTOR = 2;
-  DATATYPE_MATRIX = 3;
-  DATATYPE_SCALAR_TIMESERIES = 4;
-  DATATYPE_VECTOR_TIMESERIES = 5;
 }
 
 enum Status {

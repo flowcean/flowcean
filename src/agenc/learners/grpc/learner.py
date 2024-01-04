@@ -12,19 +12,15 @@ from numpy.typing import NDArray
 from agenc.core import Learner
 
 from ._generated.learner_pb2 import (
-    ColumnMetadata,
+    DataField,
     DataPackage,
-    DataType,
-    FeatureType,
+    DataRow,
     LogLevel,
     Message,
-    Observation,
-    ObservationField,
     Prediction,
     Status,
 )
 from ._generated.learner_pb2_grpc import LearnerStub
-from .dataset import Dataset
 
 MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
 
@@ -59,25 +55,32 @@ class GrpcLearner(Learner):
         inputs: list[str],
         outputs: list[str],
     ) -> None:
-        dataset = _create_dataset(
-            data.select(inputs).to_numpy(),
-            data.select(outputs).to_numpy(),
-        )
-        proto_dataset = _dataset_to_proto(dataset)
-        stream = self.stub.Train(proto_dataset)
+        proto_datapackage = _data_to_proto(data, inputs, outputs)
+        stream = self.stub.Train(proto_datapackage)
         for status_message in stream:
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 raise RuntimeError("training failed")
 
     def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
-        dataset = _create_dataset(inputs, np.zeros((inputs.shape[0], 1)))
-        predictions = self.stub.Predict(_dataset_to_proto(dataset))
+        # This is kind of hacky. Because of the way "_data_to_proto" works,
+        # no field names need to be given, instead all fields are automatically
+        # assumed to be features.
+        proto_datapackage = _data_to_proto(pl.DataFrame(inputs), [], [])
+        predictions = self.stub.Predict(proto_datapackage)
         _log_messages(predictions.status.messages)
         return _predictions_to_array(predictions)
 
     def drop(self) -> None:
         self.channel.close()
+
+    @override
+    def save(self, path: Path) -> None:
+        raise RuntimeError("Save no yet implemented for GrPC Learner")
+
+    @override
+    def load(self, path: Path) -> None:
+        raise RuntimeError("Load no yet implemented for GrPC Learner")
 
 
 def _log_messages(messages: Iterable[Message]) -> None:
@@ -87,22 +90,19 @@ def _log_messages(messages: Iterable[Message]) -> None:
         )
 
 
-def _create_dataset(inputs: NDArray[Any], outputs: NDArray[Any]) -> Dataset:
-    assert inputs.ndim == 2
-    input_names = [f"i{i}" for i in range(0, inputs.shape[1])]
-    output_names = [f"o{i}" for i in range(0, outputs.shape[1])]
-    return Dataset(
-        input_names,
-        output_names,
-        np.concatenate([inputs, outputs], axis=1),
-    )
-
-
 def _row_to_proto(
-    row: NDArray[Any],
-) -> Observation:
-    fields = [ObservationField(double=entry) for entry in row]
-    return Observation(fields=fields)
+    row: tuple[Any, ...],
+) -> DataRow:
+    return DataRow(
+        fields=[
+            (
+                DataField(int=entry)
+                if isinstance(entry, int)
+                else DataField(double=entry)
+            )
+            for entry in row
+        ]
+    )
 
 
 def _predictions_to_array(
@@ -113,6 +113,20 @@ def _predictions_to_array(
         for prediction in predictions.predictions
     ]
     return np.array(data)
+
+
+def _data_to_proto(
+    data: pl.DataFrame,
+    inputs: list[str],
+    outputs: list[str],
+) -> DataPackage:
+    input_rows: list[DataRow] = [
+        _row_to_proto(row) for row in data.select(inputs).rows()
+    ]
+    output_rows: list[DataRow] = [
+        _row_to_proto(row) for row in data.select(outputs).rows()
+    ]
+    return DataPackage(inputs=input_rows, outputs=output_rows)
 
 
 def _loglevel_from_proto(loglevel: LogLevel.V) -> int:
@@ -129,25 +143,3 @@ def _loglevel_from_proto(loglevel: LogLevel.V) -> int:
             return logging.FATAL
         case _:
             return logging.NOTSET
-
-
-def _dataset_to_proto(
-    dataset: Dataset,
-) -> DataPackage:
-    metadata: list[ColumnMetadata] = []
-    observations: list[Observation] = []
-    input_names = dataset.input_columns
-    metadata.extend([
-        ColumnMetadata(
-            name=column_name,
-            feature_type=(
-                FeatureType.FEATURETYPE_INPUT
-                if (column_name in input_names)
-                else FeatureType.FEATURETYPE_TARGET
-            ),
-            data_type=DataType.DATATYPE_SCALAR,
-        )
-        for column_name in dataset.input_columns + dataset.output_columns
-    ])
-    observations.extend([_row_to_proto(row) for row in dataset.data])
-    return DataPackage(metadata=metadata, observations=observations)
