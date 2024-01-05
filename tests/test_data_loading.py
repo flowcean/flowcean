@@ -15,8 +15,7 @@ class TestDataloading(unittest.TestCase):
             datapath = Path(f.name)
             dataloader = CsvDataLoader(path=datapath)
             loaded_data = dataloader.load()
-            assert isinstance(loaded_data, pl.DataFrame)
-            assert len(loaded_data) == 3
+            assert loaded_data == data
 
 
 if __name__ == "__main__":
