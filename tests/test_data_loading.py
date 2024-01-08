@@ -15,7 +15,7 @@ class TestDataloading(unittest.TestCase):
             datapath = Path(f.name)
             dataloader = CsvDataLoader(path=datapath)
             loaded_data = dataloader.load()
-            assert loaded_data.frame_equal(data) is True
+            assert loaded_data.frame_equal(data)
 
 
 if __name__ == "__main__":
