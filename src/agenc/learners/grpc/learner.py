@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any
 
 import grpc
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
+from typing_extensions import override
 
 from agenc.core import Learner
 
@@ -109,7 +111,10 @@ def _predictions_to_array(
     predictions: Prediction,
 ) -> NDArray[Any]:
     data = [
-        [field.double for field in prediction.fields]
+        [
+            field.double if field.HasField("double") else field.int
+            for field in prediction.fields
+        ]
         for prediction in predictions.predictions
     ]
     return np.array(data)

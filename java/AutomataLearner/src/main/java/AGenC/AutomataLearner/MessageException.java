@@ -1,9 +1,9 @@
 package AGenC.AutomataLearner;
 
-import io.agenc.learner.grpc.GrpcLearner.LogLevel;
-import io.agenc.learner.grpc.GrpcLearner.Message;
-import io.agenc.learner.grpc.GrpcLearner.Status;
-import io.agenc.learner.grpc.GrpcLearner.StatusMessage;
+import io.agenc.learner.grpc.LearnerOuterClass.LogLevel;
+import io.agenc.learner.grpc.LearnerOuterClass.Message;
+import io.agenc.learner.grpc.LearnerOuterClass.Status;
+import io.agenc.learner.grpc.LearnerOuterClass.StatusMessage;
 
 public class MessageException extends Exception {
 	private static final long serialVersionUID = 1L;

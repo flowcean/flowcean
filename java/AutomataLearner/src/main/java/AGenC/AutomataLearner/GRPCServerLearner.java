@@ -1,16 +1,14 @@
 package AGenC.AutomataLearner;
 
-import io.agenc.learner.grpc.GrpcLearner.ColumnMetadata;
-import io.agenc.learner.grpc.GrpcLearner.FeatureType;
-import io.agenc.learner.grpc.GrpcLearner.LogLevel;
-import io.agenc.learner.grpc.GrpcLearner.Message;
-import io.agenc.learner.grpc.GrpcLearner.Observation;
-import io.agenc.learner.grpc.GrpcLearner.ObservationField;
-import io.agenc.learner.grpc.GrpcLearner.Prediction;
-import io.agenc.learner.grpc.GrpcLearner.Prediction.Builder;
-import io.agenc.learner.grpc.GrpcLearner.Status;
-import io.agenc.learner.grpc.GrpcLearner.StatusMessage;
-import io.agenc.learner.grpc.GrpcLearner.VectorInt;
+import io.agenc.learner.grpc.LearnerOuterClass.LogLevel;
+import io.agenc.learner.grpc.LearnerOuterClass.Message;
+import io.agenc.learner.grpc.LearnerOuterClass.DataRow;
+import io.agenc.learner.grpc.LearnerOuterClass.DataField;
+import io.agenc.learner.grpc.LearnerOuterClass.Prediction;
+import io.agenc.learner.grpc.LearnerOuterClass.Prediction.Builder;
+import io.agenc.learner.grpc.LearnerOuterClass.Status;
+import io.agenc.learner.grpc.LearnerOuterClass.StatusMessage;
+import io.agenc.learner.grpc.LearnerOuterClass.VectorInt;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -25,37 +23,26 @@ import org.javatuples.Pair;
 
 import de.learnlib.algorithms.rpni.BlueFringeRPNIMealy;
 import de.learnlib.api.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
-import io.agenc.learner.grpc.ExternalLearnerGrpc;
+import io.agenc.learner.grpc.LearnerGrpc;
 
-public class GRPCServerLearner extends ExternalLearnerGrpc.ExternalLearnerImplBase {
+public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 	private MealyMachine<?, Integer, ?, Integer> model;
 
 	// TODO: add Docs here and in tool docu
-	public void train(io.agenc.learner.grpc.GrpcLearner.DataPackage data,
-			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.GrpcLearner.StatusMessage> responseObserver) {
+	public void train(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
+			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.StatusMessage> responseObserver) {
 
 		StatusMessage message = buildMessage(Status.STATUS_RUNNING, "Started Processing",LogLevel.LOGLEVEL_INFO);
 		responseObserver.onNext(message);
 
-		List<ColumnMetadata> metadata = data.getMetadataList();
-		List<Observation> observations = data.getObservationsList();
-
-		// Find input and output index
-		Pair<Integer, Integer> indices;
-		try {
-			indices = findInputOutputIndex(metadata);
-		} catch (MessageException e) {
-			responseObserver.onNext(e.getStatusMessage());
-			responseObserver.onCompleted();
-			return;
-		}
+		List<DataRow> inputs = data.getInputsList();
+		List<DataRow> outputs = data.getOutputsList();
 
 		responseObserver.onNext(message);
-		responseObserver.onCompleted();
 
 		List<Pair<Word<Integer>, Word<Integer>>> wordObs;
 		try {
-			wordObs = exportObservationsAsWords(observations, indices);
+			wordObs = exportDataRowAsWords(inputs, outputs);
 		} catch (MessageException e) {
 			responseObserver.onNext(e.getStatusMessage());
 			responseObserver.onCompleted();
@@ -77,27 +64,16 @@ public class GRPCServerLearner extends ExternalLearnerGrpc.ExternalLearnerImplBa
 		responseObserver.onCompleted();
 	}
 
-	public void predict(io.agenc.learner.grpc.GrpcLearner.DataPackage data,
-			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.GrpcLearner.Prediction> responseObserver) {
+	public void predict(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
+			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Prediction> responseObserver) {
 		
 		Builder pred = Prediction.newBuilder();
-		Pair<Integer, Integer> indices;
-		try {
-			indices = findInputOutputIndex(data.getMetadataList());
-		} catch (MessageException e1) {
-			io.agenc.learner.grpc.GrpcLearner.Observation emptyObs = Observation.newBuilder().build();
-			pred.addPredictions(emptyObs);
-			pred.setStatus(buildMessage(Status.STATUS_FAILED, e1.getMessage(),LogLevel.LOGLEVEL_FATAL));
-			responseObserver.onNext(pred.build());
-			responseObserver.onCompleted();
-			return;
-		}
 
-		List<Pair<Word<Integer>, Word<Integer>>> wordObs;
+		List<Word<Integer>> wordObs;
 		try {
-			wordObs = exportObservationsAsWords(data.getObservationsList(), indices);
+			wordObs = exportAsWords(data.getInputsList());
 		} catch (MessageException e) {
-			io.agenc.learner.grpc.GrpcLearner.Observation emptyObs = Observation.newBuilder().build();
+			io.agenc.learner.grpc.LearnerOuterClass.DataRow emptyObs = DataRow.newBuilder().build();
 			pred.setStatus(buildMessage(Status.STATUS_FAILED, e.getMessage(),LogLevel.LOGLEVEL_FATAL));
 			pred.addPredictions(emptyObs);
 			responseObserver.onNext(pred.build());
@@ -105,75 +81,57 @@ public class GRPCServerLearner extends ExternalLearnerGrpc.ExternalLearnerImplBa
 			return;
 		}
 
-		int correct = 0;
-		for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
-			Word<Integer> input = pair.getValue0();
-			Word<Integer> output = pair.getValue1();
+		for (Word<Integer> input : wordObs) {
 			Word<Integer> pred_output = model.computeOutput(Word.fromWords(input));
-			io.agenc.learner.grpc.GrpcLearner.Observation.Builder obs = Observation.newBuilder().addFields(
-					ObservationField.newBuilder().setVectorInt(VectorInt.newBuilder().addAllData(pred_output)));
-			pred.addPredictions(obs.build());
-			if (pred_output.equals(output)) {
-				correct++;
+			List<DataField> fields = new ArrayList<DataField>();
+			for(int val : pred_output) {
+				fields.add(DataField.newBuilder().setInt(val).build());
 			}
+			io.agenc.learner.grpc.LearnerOuterClass.DataRow.Builder obs = DataRow.newBuilder().addAllFields(fields);
+			pred.addPredictions(obs.build());
 		}
-
-		System.out.println("Correct predictions: " + correct);
 
 		responseObserver.onNext(pred.build());
 		responseObserver.onCompleted();
 	}
 
-	public void export(io.agenc.learner.grpc.GrpcLearner.Empty request,
-			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.GrpcLearner.Empty> responseObserver) {
+	public void export(io.agenc.learner.grpc.LearnerOuterClass.Empty request,
+			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Empty> responseObserver) {
 		//TODO
 	}
-
-	Pair<Integer, Integer> findInputOutputIndex(List<ColumnMetadata> metadata) throws MessageException {
-		int input_index = -1, output_index = -1;
-		for (int i = 0; i < metadata.size(); i++) {
-			if (metadata.get(i).getFeatureType() == FeatureType.FEATURETYPE_INPUT) {
-				if (input_index != -1) {
-					throw new MessageException("Multiple Definition of Input");
+	
+	List<Word<Integer>> exportAsWords(List<DataRow> datarows) throws MessageException{
+		
+		List<Word<Integer>> words = new ArrayList<Word<Integer>>();
+		
+		for (DataRow row : datarows) {
+			List<DataField> fields = row.getFieldsList();
+			
+			//TODO: add other types of inputs
+			Word<Integer> word = Word.epsilon();
+			for(DataField field : fields) {
+				if (field.hasInt()) { //TODO: add other types of inputs
+					word = word.append(field.getInt());
 				} else {
-					input_index = i;
-				}
-			} else if (metadata.get(i).getFeatureType() == FeatureType.FEATURETYPE_TARGET) {
-				if (output_index != -1) {
-					throw new MessageException("Multiple Definition of Output");
-				} else {
-					output_index = i;
+					throw new MessageException("Input and Output have to be of type Int");
 				}
 			}
+			words.add(word);
 		}
-
-		if (output_index == -1 || input_index == -1) {
-			throw new MessageException("Missing Definition of in- or output");
-		}
-		return new Pair<>(input_index, output_index);
+		return words;
 	}
 
-	List<Pair<Word<Integer>, Word<Integer>>> exportObservationsAsWords(List<Observation> observations,
-			Pair<Integer, Integer> indices) throws MessageException {
+	List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> inputs, List<DataRow> outputs) throws MessageException {
 		List<Pair<Word<Integer>, Word<Integer>>> wordObs = new ArrayList<Pair<Word<Integer>, Word<Integer>>>();
-		int input_index = indices.getValue0();
-		int output_index = indices.getValue1();
+		//number of inputs / outputs equals number of observations / sequences
+		assert(inputs.size() == outputs.size()); //TODO: change assert to throw of MessageException?
+		
+		List<Word<Integer>> inputWords = exportAsWords(inputs);
+		List<Word<Integer>> outputWords = exportAsWords(outputs);
 
-		for (Observation obs : observations) {
-			List<ObservationField> fields = obs.getFieldsList();
-			ObservationField inputField = fields.get(input_index);
-			ObservationField outputField = fields.get(output_index);
-
-			Word<Integer> input, output;
-			if (inputField.hasInt() && outputField.hasInt()) {
-				input = Word.fromLetter(inputField.getInt());
-				output = Word.fromLetter(outputField.getInt());
-			} else if (inputField.hasVectorInt() && outputField.hasVectorInt()) {
-				input = Word.fromList(inputField.getVectorInt().getDataList());
-				output = Word.fromList(inputField.getVectorInt().getDataList());
-			} else {
-				throw new MessageException("Input and Output have to be of same type from Int or VectorInt");
-			}
+		for (int i = 0; i < inputWords.size(); i++) {
+			Word<Integer> input = inputWords.get(i), output = outputWords.get(i);
+			assert(input.size() == output.size()); // number of samples within an observation / sequence
 			wordObs.add(new Pair<>(input, output));
 		}
 		return wordObs;
