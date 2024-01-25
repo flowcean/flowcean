@@ -37,6 +37,20 @@ def mypy(session: nox.Session) -> None:
 
 
 @nox.session(python="3.11")
+def boiler(session: nox.Session) -> None:
+    session.install(".[sklearn]")
+    session.chdir("examples/boiler/")
+    session.run("python", "run.py")
+
+
+@nox.session(python="3.11")
+def failure_time_prediction(session: nox.Session) -> None:
+    session.install(".[lightning,sklearn]")
+    session.chdir("examples/failure_time_prediction/")
+    session.run("agenc", "--experiment", "experiment.yaml")
+
+
+@nox.session(python="3.11")
 def docs(session: nox.Session) -> None:
     session.install(".[docs]")
     session.run(
