@@ -33,6 +33,15 @@ test:
         coverage_format: cobertura
         path: coverage.xml
 
+examples:
+  before_script:
+    - dvc remote modify --local tuhh-cloud password ${TUHH_CLOUD_SECRET}
+    - dvc pull --recursive examples/boiler
+    - dvc pull --recursive examples/failure_time_prediction
+  script:
+    - nox --verbose --session boiler
+    - nox --verbose --session failure_time_prediction
+
 pages:
   tags:
     - tuhh-registry
