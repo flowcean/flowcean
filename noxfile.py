@@ -1,5 +1,8 @@
 import nox
 
+nox.options.reuse_existing_virtualenvs = True
+nox.options.default_venv_backend = "venv"
+
 
 @nox.session(python=["3.10", "3.11"])
 def test(session: nox.Session) -> None:
