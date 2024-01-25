@@ -35,7 +35,7 @@ test:
 
 examples:
   before_script:
-    - dvc remote modify --local tuhh-cloud password ${TUHH_CLOUD_SECRET}
+    - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
     - dvc pull --recursive examples/boiler
     - dvc pull --recursive examples/failure_time_prediction
   script:
