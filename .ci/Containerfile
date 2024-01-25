@@ -36,4 +36,5 @@ RUN apt-get update --quiet --yes && \
     python3.11 -m pip install --no-cache-dir --upgrade pip && \
     rm /tmp/get-pip.py && \
     python3 -m pip install --no-cache-dir nox==2023.4.22 && \
+    python3 -m pip install --no-cache-dir dvc && \
     rm -rf /var/cache/apt/lists
