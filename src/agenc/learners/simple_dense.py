@@ -72,12 +72,14 @@ class SimpleDense(Learner):
         inputs: list[str],
         outputs: list[str],
     ) -> None:
-        train_len = int(0.8 * len(inputs))
-        validation_len = len(inputs) - train_len
+        input_data = data.select(inputs).to_numpy()
+        output_data = data.select(outputs).to_numpy()
+        train_len = int(0.8 * len(input_data))
+        validation_len = len(input_data) - train_len
         train_dataset, val_dataset = random_split(
             TorchDataset(
-                data.select(inputs).to_numpy(),
-                data.select(outputs).to_numpy(),
+                input_data,
+                output_data,
             ),
             [train_len, validation_len],
         )
