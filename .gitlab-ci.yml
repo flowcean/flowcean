@@ -4,18 +4,24 @@ variables:
 default:
   image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
 
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
 black:
-  stage: test
+  stage: lint
   script:
     - nox --verbose --session black
 
 ruff:
-  stage: test
+  stage: lint
   script:
     - nox --verbose --session ruff
 
 mypy:
-  stage: test
+  stage: lint
   cache:
     - key: mypy-$CI_COMMIT_REF_SLUG
       paths:
@@ -50,7 +56,7 @@ examples:
     - nox --verbose --session $EXAMPLE
 
 pages:
-  stage: deploy
+  stage: build
   tags:
     - tuhh-registry
   script:
