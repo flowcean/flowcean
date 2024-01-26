@@ -4,24 +4,15 @@ variables:
 default:
   image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
 
-stages:
-  - lint
-  - test
-  - build
-  - deploy
-
 black:
-  stage: lint
   script:
     - nox --verbose --session black
 
 ruff:
-  stage: lint
   script:
     - nox --verbose --session ruff
 
 mypy:
-  stage: lint
   cache:
     - key: mypy-$CI_COMMIT_REF_SLUG
       paths:
@@ -30,7 +21,6 @@ mypy:
     - nox --verbose --session mypy
 
 test:
-  stage: test
   parallel:
     matrix:
       - PYTHON_VERSION: ["3.10", "3.11"]
@@ -47,7 +37,6 @@ examples:
   parallel:
     matrix:
       - EXAMPLE: ["boiler", "failure_time_prediction"]
-  stage: test
   retry: 1
   before_script:
     - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
@@ -56,7 +45,6 @@ examples:
     - nox --verbose --session $EXAMPLE
 
 pages:
-  stage: build
   tags:
     - tuhh-registry
   script:
@@ -67,7 +55,6 @@ pages:
       - public
 
 deploy-pages:
-  stage: deploy
   tags:
     - tuhh-registry
   before_script:
@@ -84,7 +71,6 @@ deploy-pages:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
 build-and-deploy-java:
-  stage: deploy
   image: quay.io/buildah/stable:latest
   variables:
     STORAGE_DRIVER: vfs
