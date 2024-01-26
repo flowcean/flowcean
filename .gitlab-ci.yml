@@ -18,7 +18,7 @@ build-ci:
         tag="latest"
         echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
       else
-        tag="$CI_COMMIT_REF_NAME"
+        tag="$CI_COMMIT_SHORT_SHA"
         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
       fi
     - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file .ci/Containerfile .ci
