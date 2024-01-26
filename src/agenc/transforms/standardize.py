@@ -1,3 +1,5 @@
+import typing
+
 import polars as pl
 
 from agenc.core import Transform
@@ -20,7 +22,10 @@ class Standardize(Transform):
         std: The standard deviation :math:`\sigma` of each feature.
     """
 
-    def __init__(self):
+    mean: None | dict[str, typing.Any]
+    std: None | dict[str, typing.Any]
+
+    def __init__(self) -> None:
         self.mean = None
         self.std = None
 
