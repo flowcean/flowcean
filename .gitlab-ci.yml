@@ -89,7 +89,6 @@ build-and-deploy-java:
       fi
     - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
     - buildah push "${FQ_IMAGE_NAME}:${tag}"
-  rules:
   when: manual
 
 build-ci:
