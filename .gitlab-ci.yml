@@ -2,17 +2,20 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 default:
-  image: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci
+  image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
 
 black:
+  stage: test
   script:
     - nox --verbose --session black
 
 ruff:
+  stage: test
   script:
     - nox --verbose --session ruff
 
 mypy:
+  stage: test
   cache:
     - key: mypy-$CI_COMMIT_REF_SLUG
       paths:
@@ -21,6 +24,7 @@ mypy:
     - nox --verbose --session mypy
 
 test:
+  stage: test
   parallel:
     matrix:
       - PYTHON_VERSION: ["3.10", "3.11"]
@@ -37,6 +41,8 @@ examples:
   parallel:
     matrix:
       - EXAMPLE: ["boiler", "failure_time_prediction"]
+  stage: test
+  retry: 1
   before_script:
     - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
     - dvc pull --recursive examples/$EXAMPLE
@@ -44,6 +50,7 @@ examples:
     - nox --verbose --session $EXAMPLE
 
 pages:
+  stage: deploy
   tags:
     - tuhh-registry
   script:
@@ -54,6 +61,7 @@ pages:
       - public
 
 deploy-pages:
+  stage: deploy
   tags:
     - tuhh-registry
   before_script:
@@ -67,31 +75,28 @@ deploy-pages:
     - scp -rP 40043 ./public/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
   needs: ["pages"]
   rules:
-    - if: $CI_COMMIT_REF_NAME == "main"
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
 build-java:
-  image: docker:24.0.5
-  tags:
-    - docker-builder
-  services:
-    - docker:24.0.5-dind
+  stage: build
+  image: quay.io/buildah/stable:latest
   variables:
-    DOCKER_TLS_VERTDIR: "/certs"
+    STORAGE_DRIVER: vfs
+    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/java-automata-learner"
   before_script:
-    - docker info
-    - docker login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - buildah info
+    - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - |
-      image_name="collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/java-automata-learner"
       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        tag=""
-        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+        tag="latest"
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
       else
-        tag=":$CI_COMMIT_REF_SLUG"
+        tag="$CI_COMMIT_REF_NAME"
         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
       fi
-    - docker build --pull --tag "${image_name}${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
-    - docker push "${image_name}${tag}"
+    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
+    - buildah push "${FQ_IMAGE_NAME}:${tag}"
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:

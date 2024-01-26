@@ -6,10 +6,10 @@ RUN apt-get update --quiet --yes && \
     apt-get install --quiet --yes --no-install-recommends \
         ca-certificates \
         curl \
-        gnupg2 && \
+        gnupg2 \
+        software-properties-common && \
     . /etc/os-release && \
-    echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu ${UBUNTU_CODENAME} main" > /etc/apt/sources.list.d/deadsnakes.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 && \
+    add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update --quiet --yes && \
     apt-get install --quiet --yes --no-install-recommends \
         git \
