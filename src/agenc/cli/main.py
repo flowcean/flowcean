@@ -79,6 +79,9 @@ def main() -> None:
     ]
     metrics: list[Metric] = [metric.load() for metric in experiment.metrics]
 
+    logger.info("Fitting transforms")
+    transforms.fit(train_data)
+
     logger.info("Applying transforms")
     train_data = transforms(train_data)
     test_data = transforms(test_data)

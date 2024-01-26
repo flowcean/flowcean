@@ -20,11 +20,21 @@ class Standardize(Transform):
         std: The standard deviation :math:`\sigma` of each feature.
     """
 
-    def __init__(self, mean: dict[str, float], std: dict[str, float]):
-        self.mean = mean
-        self.std = std
+    def __init__(self):
+        self.mean = None
+        self.std = None
+
+    def fit(self, data: pl.DataFrame) -> None:
+        self.mean = {c: data[c].mean() for c in data.columns}
+        self.std = {c: data[c].std() for c in data.columns}
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
+        if self.mean is None or self.std is None:
+            raise RuntimeError("Standardize transform has not been fitted.")
+
+        print(self.mean)
+        print(self.std)
+
         return data.select(
             [
                 (pl.col(c) - (self.mean.get(c) or 0.0))

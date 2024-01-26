@@ -23,6 +23,15 @@ class Transform(ABC):
             The transformed data.
         """
 
+    def fit(self, data: pl.DataFrame) -> None:
+        """Fit the transform to the data.
+
+        Args:
+            data: The data to fit the transform to.
+        """
+        _ = data
+        return
+
     def __or__(self, other: "Transform") -> "Compose":
         """Pipe this transform into another transform.
 
@@ -61,6 +70,11 @@ class Compose(Transform):
         for transform in self.transforms:
             data = transform(data)
         return data
+
+    def fit(self, data: pl.DataFrame) -> None:
+        for transform in self.transforms:
+            transform.fit(data)
+            data = transform(data)
 
     def __or__(self, other: Transform) -> "Compose":
         return Compose(*self.transforms, other)

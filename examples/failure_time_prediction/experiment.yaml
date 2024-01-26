@@ -24,18 +24,7 @@ data:
           - z-Amplitude
           - Growth-rate
           - Estimated-Failure-Time
-    - class_path: agenc.transforms.Standardize
-      arguments:
-        mean:
-          y-Amplitude: 0.122053
-          z-Amplitude: 0.101741
-          Growth-rate: 0.026661
-          Estimated-Failure-Time: 2490.564146
-        std:
-          y-Amplitude: 0.168689
-          z-Amplitude: 0.108594
-          Growth-rate: 0.016992
-          Estimated-Failure-Time: 2477.355746
+    - agenc.transforms.Standardize
 
 learners:
   - name: Simple Dense

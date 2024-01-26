@@ -18,18 +18,11 @@ def main() -> None:
 
     transforms = (
         Select(features=["reference", "temperature"])
-        | Standardize(
-            mean={
-                "reference": 0.0,
-                "temperature": 0.0,
-            },
-            std={
-                "reference": 1.0,
-                "temperature": 1.0,
-            },
-        )
+        | Standardize()
         | SlidingWindow(window_size=3)
     )
+
+    transforms.fit(train_data)
 
     train_data = transforms(train_data)
     test_data = transforms(test_data)
