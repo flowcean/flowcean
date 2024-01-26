@@ -4,7 +4,6 @@ from agenc.data.uri import UriDataLoader
 from agenc.learners.regression_tree import RegressionTree
 from agenc.metrics.regression import MeanAbsoluteError
 from agenc.transforms import Select, SlidingWindow, Standardize
-from agenc.transforms.chain import Chain
 
 
 def main() -> None:
@@ -17,9 +16,9 @@ def main() -> None:
         shuffle=False,
     )(dataset)
 
-    transforms = Chain(
-        Select(features=["reference", "temperature"]),
-        Standardize(
+    transforms = (
+        Select(features=["reference", "temperature"])
+        | Standardize(
             mean={
                 "reference": 0.0,
                 "temperature": 0.0,
@@ -28,9 +27,10 @@ def main() -> None:
                 "reference": 1.0,
                 "temperature": 1.0,
             },
-        ),
-        SlidingWindow(window_size=3),
+        )
+        | SlidingWindow(window_size=3)
     )
+
     train_data = transforms(train_data)
     test_data = transforms(test_data)
 
