@@ -4,27 +4,6 @@ variables:
 default:
   image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
 
-build-ci:
-  image: quay.io/buildah/stable:latest
-  variables:
-    STORAGE_DRIVER: vfs
-    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/ci"
-  before_script:
-    - buildah info
-    - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        tag="latest"
-        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
-      else
-        tag="$CI_COMMIT_SHORT_SHA"
-        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
-      fi
-    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file .ci/Containerfile .ci
-    - buildah push "${FQ_IMAGE_NAME}:${tag}"
-  when: manual
-
 black:
   script:
     - nox --verbose --session black
@@ -111,7 +90,25 @@ build-and-deploy-java:
     - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
     - buildah push "${FQ_IMAGE_NAME}:${tag}"
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - .gitlab-ci.yml
-        - java/AutomataLearner/**/*
+  when: manual
+
+build-ci:
+  image: quay.io/buildah/stable:latest
+  variables:
+    STORAGE_DRIVER: vfs
+    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/ci"
+  before_script:
+    - buildah info
+    - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        tag="latest"
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
+      else
+        tag="$CI_COMMIT_SHORT_SHA"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file .ci/Containerfile .ci
+    - buildah push "${FQ_IMAGE_NAME}:${tag}"
+  when: manual
