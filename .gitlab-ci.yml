@@ -43,7 +43,7 @@ pages:
     paths:
       - public
 
-deploy:
+deploy-pages:
   tags:
     - tuhh-registry
   before_script:
@@ -58,3 +58,32 @@ deploy:
   needs: ["pages"]
   rules:
     - if: $CI_COMMIT_REF_NAME == "main"
+
+build-java:
+  image: docker:24.0.5
+  tags:
+    - docker-builder
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_TLS_VERTDIR: "/certs"
+  before_script:
+    - docker info
+    - docker login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - |
+      image_name="collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/java-automata-learner"
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        tag=""
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+      else
+        tag=":$CI_COMMIT_REF_SLUG"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - docker build --pull --tag "${image_name}${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
+    - docker push "${image_name}${tag}"
+  rules:
+   - if: $CI_PIPELINE_SOURCE == "push"
+     changes:
+       - .gitlab-ci.yml
+       - java/AutomataLearner/**/*
