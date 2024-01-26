@@ -70,11 +70,11 @@ deploy-pages:
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
-build-and-deploy-java:
+.container-build:
   image: quay.io/buildah/stable:latest
   variables:
     STORAGE_DRIVER: vfs
-    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/java-automata-learner"
+    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/$CONTAINER_IMAGE_NAME"
   before_script:
     - buildah info
     - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
@@ -87,27 +87,21 @@ build-and-deploy-java:
         tag="$CI_COMMIT_SHORT_SHA"
         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
       fi
-    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
+    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file ${CONTAINER_FILE} ${CONTAINER_CONTEXT}
     - buildah push "${FQ_IMAGE_NAME}:${tag}"
+
+build-and-deploy-java:
+  extends: .container-build
+  variables:
+    CONTAINER_IMAGE_NAME: "java-automata-learner"
+    CONTAINER_FILE: java/AutomataLearner/Containerfile
+    CONTAINER_CONTEXT: java/AutomataLearner
   when: manual
 
 build-ci:
-  image: quay.io/buildah/stable:latest
+  extends: .container-build
   variables:
-    STORAGE_DRIVER: vfs
-    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/ci"
-  before_script:
-    - buildah info
-    - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        tag="latest"
-        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
-      else
-        tag="$CI_COMMIT_SHORT_SHA"
-        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
-      fi
-    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file .ci/Containerfile .ci
-    - buildah push "${FQ_IMAGE_NAME}:${tag}"
+    CONTAINER_IMAGE_NAME: "ci"
+    CONTAINER_FILE: .ci/Containerfile
+    CONTAINER_CONTEXT: .ci
   when: manual
