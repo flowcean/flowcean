@@ -23,8 +23,7 @@ build-ci:
       fi
     - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file .ci/Containerfile .ci
     - buildah push "${FQ_IMAGE_NAME}:${tag}"
-  rules:
-    - when: manual
+  when: manual
 
 black:
   script:
