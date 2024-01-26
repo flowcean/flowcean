@@ -98,6 +98,7 @@ build-and-deploy-java:
     - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file java/AutomataLearner/Containerfile java/AutomataLearner
     - buildah push "${FQ_IMAGE_NAME}:${tag}"
   rules:
-    - changes:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
         - .gitlab-ci.yml
         - java/AutomataLearner/**/*
