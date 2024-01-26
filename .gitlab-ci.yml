@@ -1,8 +1,45 @@
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  CI_IMAGE_TAG: "latest"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .gitlab-ci.yml
+        - .ci/**/*
+      variables:
+        CI_IMAGE_TAG: $CI_COMMIT_REF_NAME
+    - if: $CI_PIPELINE_SOURCE == "push"
 
 default:
-  image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
+  image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci:${CI_IMAGE_TAG}"
+
+build-ci:
+  image: quay.io/buildah/stable:latest
+  variables:
+    STORAGE_DRIVER: vfs
+    FQ_IMAGE_NAME: "$CI_REGISTRY_IMAGE/ci"
+  stage: build
+  before_script:
+    - buildah info
+    - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        tag="latest"
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
+      else
+        tag="$CI_COMMIT_REF_NAME"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file .ci/Containerfile .ci
+    - buildah push "${FQ_IMAGE_NAME}:${tag}"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .gitlab-ci.yml
+        - .ci/**/*
 
 black:
   stage: test
