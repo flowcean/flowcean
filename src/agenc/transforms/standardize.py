@@ -37,9 +37,6 @@ class Standardize(Transform):
         if self.mean is None or self.std is None:
             raise RuntimeError("Standardize transform has not been fitted.")
 
-        print(self.mean)
-        print(self.std)
-
         return data.select(
             [
                 (pl.col(c) - (self.mean.get(c) or 0.0))
