@@ -29,8 +29,8 @@ class Standardize(Transform):
         self.std = None
 
     def fit(self, data: pl.DataFrame) -> None:
-        self.mean = {c: __as_float(data[c].mean()) for c in data.columns}
-        self.std = {c: __as_float(data[c].std()) for c in data.columns}
+        self.mean = {c: _as_float(data[c].mean()) for c in data.columns}
+        self.std = {c: _as_float(data[c].std()) for c in data.columns}
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
         if self.mean is None or self.std is None:
@@ -45,7 +45,7 @@ class Standardize(Transform):
         )
 
 
-def __as_float(value: PythonLiteral | None) -> float:
+def _as_float(value: PythonLiteral | None) -> float:
     if value is None:
         raise ValueError("Value cannot be None.")
     if isinstance(value, float):
