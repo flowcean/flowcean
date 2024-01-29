@@ -44,10 +44,9 @@ def main() -> None:
     ]
     outputs = ["temperature_2"]
     learner.train(
-        inputs=train_data.select(
-            inputs,
-        ).to_numpy(),
-        outputs=train_data.select(outputs).to_numpy(),
+        data=train_data,
+        inputs=inputs,
+        outputs=outputs,
     )
 
     predictions = learner.predict(inputs=test_data.select(inputs).to_numpy())
