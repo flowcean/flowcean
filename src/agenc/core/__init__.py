@@ -3,10 +3,10 @@ __all__ = [
     "Learner",
     "Metric",
     "Transform",
-    "Compose",
+    "Chain",
 ]
 
 from .data_loader import DataLoader
 from .learner import Learner
 from .metric import Metric
-from .transform import Compose, Transform
+from .transform import Chain, Transform

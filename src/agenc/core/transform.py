@@ -32,34 +32,34 @@ class Transform(ABC):
         _ = data
         return
 
-    def __or__(self, other: "Transform") -> "Compose":
+    def __or__(self, other: "Transform") -> "Chain":
         """Pipe this transform into another transform.
 
         Args:
             other: The transform to pipe into.
 
         Returns:
-            A new Compose transform.
+            A new Chain transform.
         """
-        return Compose(self, other)
+        return Chain(self, other)
 
-    def __ror__(self, other: "Transform") -> "Compose":
+    def __ror__(self, other: "Transform") -> "Chain":
         """Pipe another transform into this transform.
 
         Args:
             other: The transform to pipe into this transform.
 
         Returns:
-            A new Compose transform.
+            A new Chain transform.
         """
-        return Compose(other, self)
+        return Chain(other, self)
 
 
-class Compose(Transform):
+class Chain(Transform):
     """A transform that is a chain of other transforms."""
 
     def __init__(self, *transforms: Transform) -> None:
-        """Initialize a Compose transform.
+        """Initialize a Chain transform.
 
         Args:
             transforms: The transforms to pipe together.
@@ -76,8 +76,8 @@ class Compose(Transform):
             transform.fit(data)
             data = transform(data)
 
-    def __or__(self, other: Transform) -> "Compose":
-        return Compose(*self.transforms, other)
+    def __or__(self, other: Transform) -> "Chain":
+        return Chain(*self.transforms, other)
 
-    def __ror__(self, other: Transform) -> "Compose":
-        return Compose(other, *self.transforms)
+    def __ror__(self, other: Transform) -> "Chain":
+        return Chain(other, *self.transforms)

@@ -11,7 +11,7 @@ import sys
 from os.path import exists
 from pathlib import Path
 
-from agenc.core import Compose, DataLoader, Learner, Metric
+from agenc.core import Chain, DataLoader, Learner, Metric
 from agenc.data.split import TrainTestSplit
 
 from . import logging, runtime_configuration
@@ -71,7 +71,7 @@ def main() -> None:
             f" TrainTestSplit, but got: `{test_data_loader}`"
         )
 
-    transforms = Compose(
+    transforms = Chain(
         *[transform.load() for transform in experiment.transforms]
     )
     learners: list[Learner] = [
