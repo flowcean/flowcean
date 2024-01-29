@@ -33,19 +33,15 @@ test:
         coverage_format: cobertura
         path: coverage.xml
 
-example-boiler:
+examples:
+  parallel:
+    matrix:
+      - EXAMPLE: ["boiler", "failure_time_prediction"]
   before_script:
     - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
-    - dvc pull --recursive examples/boiler
+    - dvc pull --recursive examples/$EXAMPLE
   script:
-    - nox --verbose --session boiler
-
-example-failure-time-prediction:
-  before_script:
-    - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
-    - dvc pull --recursive examples/failure_time_prediction
-  script:
-    - nox --verbose --session failure_time_prediction
+    - nox --verbose --session $EXAMPLE
 
 pages:
   tags:
