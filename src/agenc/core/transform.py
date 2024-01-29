@@ -34,6 +34,18 @@ class Transform(ABC):
         _ = data
         return
 
+    def fit_then_transform(self, data: pl.DataFrame) -> pl.DataFrame:
+        """Fit the transform to the data, then transform the data.
+
+        Args:
+            data: The data to fit the transform to.
+
+        Returns:
+            The transformed data.
+        """
+        self.fit(data)
+        return self(data)
+
     def __or__(self, other: Transform) -> Chain:
         """Pipe this transform into another transform.
 
@@ -75,8 +87,7 @@ class Chain(Transform):
 
     def fit(self, data: pl.DataFrame) -> None:
         for transform in self.transforms:
-            transform.fit(data)
-            data = transform(data)
+            data = transform.fit_then_transform(data)
 
     def __or__(self, other: Transform) -> Chain:
         return Chain(*self.transforms, other)
