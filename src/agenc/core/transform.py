@@ -4,6 +4,8 @@ Transforms are used to transform the data before it is used in the learner.
 This is useful for scaling the data, or for adding new features to the data.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 import polars as pl
@@ -32,7 +34,7 @@ class Transform(ABC):
         _ = data
         return
 
-    def __or__(self, other: "Transform") -> "Chain":
+    def __or__(self, other: Transform) -> Chain:
         """Pipe this transform into another transform.
 
         Args:
@@ -43,7 +45,7 @@ class Transform(ABC):
         """
         return Chain(self, other)
 
-    def __ror__(self, other: "Transform") -> "Chain":
+    def __ror__(self, other: Transform) -> Chain:
         """Pipe another transform into this transform.
 
         Args:
@@ -76,8 +78,8 @@ class Chain(Transform):
             transform.fit(data)
             data = transform(data)
 
-    def __or__(self, other: Transform) -> "Chain":
+    def __or__(self, other: Transform) -> Chain:
         return Chain(*self.transforms, other)
 
-    def __ror__(self, other: Transform) -> "Chain":
+    def __ror__(self, other: Transform) -> Chain:
         return Chain(other, *self.transforms)
