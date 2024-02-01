@@ -7,8 +7,6 @@ import io.grpc.ServerBuilder;
 
 public final class Main {
 
-	private static final int EXPLORATION_DEPTH = 4;
-
 	private Main() {
 		// prevent instantiation
 	}

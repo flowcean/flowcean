@@ -113,6 +113,7 @@ def _predictions_to_array(
         ]
         for prediction in predictions.predictions
     ]
+    print(data)
     return np.array(data)
 
 

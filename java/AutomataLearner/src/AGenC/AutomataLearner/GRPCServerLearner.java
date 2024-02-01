@@ -24,6 +24,8 @@ import io.agenc.learner.grpc.LearnerGrpc;
 import de.learnlib.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
 import de.learnlib.algorithm.rpni.BlueFringeRPNIMealy;
 
+import javax.xml.crypto.Data;
+
 public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 	private MealyMachine<?, Integer, ?, Integer> model;
 
@@ -34,14 +36,14 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 		StatusMessage message = buildMessage(Status.STATUS_RUNNING, "Started Processing",LogLevel.LOGLEVEL_INFO);
 		responseObserver.onNext(message);
 
-		List<DataRow> inputs = data.getInputsList();
-		List<DataRow> outputs = data.getOutputsList();
+		List<DataRow> rawwords = data.getInputsList();
+		List<DataRow> rawoutputs = data.getOutputsList();
 
 		responseObserver.onNext(message);
 
 		List<Pair<Word<Integer>, Word<Integer>>> wordObs;
 		try {
-			wordObs = exportDataRowAsWords(inputs, outputs);
+			wordObs = exportDataRowAsWords(rawwords, rawoutputs,true);
 		} catch (MessageException e) {
 			responseObserver.onNext(e.getStatusMessage());
 			responseObserver.onCompleted();
@@ -65,12 +67,14 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 
 	public void predict(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
 			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Prediction> responseObserver) {
-		
 		Builder pred = Prediction.newBuilder();
 
-		List<Word<Integer>> wordObs;
+		List<DataRow> rawwords = data.getInputsList();
+		List<DataRow> rawoutputs = data.getOutputsList();
+
+		List<Pair<Word<Integer>, Word<Integer>>> wordObs;
 		try {
-			wordObs = exportAsWords(data.getInputsList());
+			wordObs = exportDataRowAsWords(rawwords, rawoutputs,false);
 		} catch (MessageException e) {
 			io.agenc.learner.grpc.LearnerOuterClass.DataRow emptyObs = DataRow.newBuilder().build();
 			pred.setStatus(buildMessage(Status.STATUS_FAILED, e.getMessage(),LogLevel.LOGLEVEL_FATAL));
@@ -80,12 +84,12 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 			return;
 		}
 
-		for (Word<Integer> input : wordObs) {
-			Word<Integer> pred_output = model.computeOutput(Word.fromWords(input));
+
+		for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
+			Word<Integer> pred_output = model.computeOutput(pair.getValue0());
+			int val = pred_output.lastSymbol();
 			List<DataField> fields = new ArrayList<DataField>();
-			for(int val : pred_output) {
-				fields.add(DataField.newBuilder().setInt(val).build());
-			}
+			fields.add(DataField.newBuilder().setInt(val).build());
 			io.agenc.learner.grpc.LearnerOuterClass.DataRow.Builder obs = DataRow.newBuilder().addAllFields(fields);
 			pred.addPredictions(obs.build());
 		}
@@ -98,40 +102,26 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Empty> responseObserver) {
 		//TODO
 	}
-	
-	List<Word<Integer>> exportAsWords(List<DataRow> datarows) throws MessageException{
-		
-		List<Word<Integer>> words = new ArrayList<Word<Integer>>();
-		
-		for (DataRow row : datarows) {
-			List<DataField> fields = row.getFieldsList();
-			
-			//TODO: add other types of inputs
-			Word<Integer> word = Word.epsilon();
-			for(DataField field : fields) {
-				if (field.hasInt()) { //TODO: add other types of inputs
-					word = word.append(field.getInt());
-				} else {
-					throw new MessageException("Input and Output have to be of type Int");
-				}
-			}
-			words.add(word);
-		}
-		return words;
-	}
 
-	List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> inputs, List<DataRow> outputs) throws MessageException {
+	List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> rawwords, List<DataRow> rawoutputs, Boolean withOut) throws MessageException {
 		List<Pair<Word<Integer>, Word<Integer>>> wordObs = new ArrayList<Pair<Word<Integer>, Word<Integer>>>();
 		//number of inputs / outputs equals number of observations / sequences
-		assert(inputs.size() == outputs.size()); //TODO: change assert to throw of MessageException?
-		
-		List<Word<Integer>> inputWords = exportAsWords(inputs);
-		List<Word<Integer>> outputWords = exportAsWords(outputs);
 
-		for (int i = 0; i < inputWords.size(); i++) {
-			Word<Integer> input = inputWords.get(i), output = outputWords.get(i);
-			assert(input.size() == output.size()); // number of samples within an observation / sequence
-			wordObs.add(new Pair<>(input, output));
+		for (int i = 0; i < rawwords.size(); i++) {
+			DataRow row = rawwords.get(i);
+			List<Integer> inputWord = new ArrayList<>();
+			List<Integer> outputWord = new ArrayList<>();
+			for(int j = 0; j < row.getFieldsCount(); j++){
+				if(j % 2 == 0){
+					inputWord.add(row.getFields(j).getInt());
+				}
+				else{
+					outputWord.add(row.getFields(j).getInt());
+				}
+			}
+			if(withOut)
+				outputWord.add(rawoutputs.get(i).getFields(0).getInt());
+			wordObs.add(new Pair<>(Word.fromList(inputWord), Word.fromList(outputWord)));
 		}
 		return wordObs;
 	}

@@ -1,5 +1,6 @@
 /target/
 .metadata
+/.idea/
 bin/
 tmp/
 *.tmp
@@ -7,6 +8,7 @@ tmp/
 *.swp
 *~.nib
 *.log
+*.iml
 local.properties
 .settings/
 .loadpath
