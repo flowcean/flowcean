@@ -1,0 +1,63 @@
+seed: 42
+
+data:
+  loader:
+    class_path: agenc.data.UriDataLoader
+    arguments:
+      uri: file:./data/coffee_data.csv
+  test_loader:
+    class_path: agenc.data.TrainTestSplit
+    arguments:
+      ratio: 0.8
+      shuffle: True
+  inputs:
+    - i0
+    - o0
+    - i1
+    - o1
+    - i2
+    - o2
+    - i3
+    - o3
+    - i4
+    - o4
+    - i5
+    - o5
+    - i6
+    - o6
+    - i7
+    - o7
+    - i8
+    - o8
+    - i9
+    - o9
+    - i10
+    - o10
+    - i11
+    - o11
+    - i12
+    - o12
+    - i13
+    - o13
+    - i14
+    - o14
+    - i15
+    - o15
+    - i16
+    - o16
+    - i17
+    - o17
+    - i18
+    - o18
+    - i19
+  outputs:
+    - o19
+
+learners:
+  - name: GRPC Learner
+    class_path: agenc.learners.grpc.learner.GrpcLearner
+    arguments:
+      server_address: localhost:8080
+
+metrics:
+  - agenc.metrics.regression.MeanAbsoluteError
