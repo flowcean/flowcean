@@ -13,15 +13,14 @@ class DummyLearner(Learner):
     @override
     def train(
         self,
-        data: pl.DataFrame,
-        inputs: list[str],
-        outputs: list[str],
+        input_features: pl.DataFrame,
+        output_features: pl.DataFrame,
     ) -> None:
         assert True
-        self.output_shape = data.select(outputs).to_numpy().shape
+        self.output_shape = output_features.to_numpy().shape
 
     @override
-    def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
+    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
         return np.zeros(self.output_shape)
 
     @override

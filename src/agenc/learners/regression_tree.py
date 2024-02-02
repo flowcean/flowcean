@@ -31,12 +31,11 @@ class RegressionTree(Learner):
 
     def train(
         self,
-        data: pl.DataFrame,
-        inputs: list[str],
-        outputs: list[str],
+        input_features: pl.DataFrame,
+        output_features: pl.DataFrame,
     ) -> None:
-        input_data = data.select(inputs).to_numpy()
-        output_data = data.select(outputs).to_numpy()
+        input_data = input_features.to_numpy()
+        output_data = output_features.to_numpy()
         self.regressor.fit(input_data, output_data)
         if self.dot_graph_export_path is not None:
             logger.info(
@@ -48,8 +47,10 @@ class RegressionTree(Learner):
                 out_file=self.dot_graph_export_path,
             )
 
-    def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
-        return cast(NDArray[Any], self.regressor.predict(inputs))
+    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
+        return cast(
+            NDArray[Any], self.regressor.predict(input_features.to_numpy())
+        )
 
     def save(self, path: Path) -> None:
         joblib.dump(self.regressor, path)

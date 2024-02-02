@@ -97,9 +97,8 @@ def main() -> None:
         if specification.train:
             logger.info(f"Start training of `{specification.name}`")
             learner.train(
-                train_data,
-                experiment.inputs,
-                experiment.outputs,
+                train_data.select(experiment.inputs),
+                train_data.select(experiment.outputs),
             )
             if specification.save_path is not None:
                 logger.info(f"Saving learner to `{specification.save_path}`")
@@ -121,7 +120,7 @@ def main() -> None:
     ):
         logger.info(f"Predicting with `{specification.name}`")
         predictions = learner.predict(
-            test_data.select(experiment.inputs).to_numpy(),
+            test_data.select(experiment.inputs),
         )
 
         for metric in metrics:

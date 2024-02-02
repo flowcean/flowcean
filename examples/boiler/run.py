@@ -37,12 +37,11 @@ def main() -> None:
     ]
     outputs = ["temperature_2"]
     learner.train(
-        data=train_data,
-        inputs=inputs,
-        outputs=outputs,
+        input_features=train_data.select(inputs),
+        output_features=train_data.select(outputs),
     )
 
-    predictions = learner.predict(inputs=test_data.select(inputs).to_numpy())
+    predictions = learner.predict(input_features=test_data.select(inputs))
 
     metric = MeanAbsoluteError()
     result = metric(

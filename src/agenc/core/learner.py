@@ -20,27 +20,28 @@ class Learner(ABC):
     @abstractmethod
     def train(
         self,
-        data: pl.DataFrame,
-        inputs: list[str],
-        outputs: list[str],
+        input_features: pl.DataFrame,
+        output_features: pl.DataFrame,
     ) -> None:
         """Train the learner.
 
         Args:
-            data: The data to train on.
-            inputs: The names of the input columns.
-            outputs: The names of the output columns.
+            input_features: Dataframe with all the input features to train on.
+            output_features: Dataframe with the corresponding output features.
         """
 
     @abstractmethod
-    def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
+    def predict(
+        self,
+        input_features: pl.DataFrame,
+    ) -> NDArray[Any]:
         """Predict outputs for given inputs.
 
         Args:
-            inputs: Inputs to the model
+            input_features: Input Dataframe to the model.
 
         Returns:
-            Predicted outputs
+            Predicted outputs.
         """
 
     @abstractmethod

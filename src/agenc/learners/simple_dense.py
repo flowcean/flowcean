@@ -68,12 +68,11 @@ class SimpleDense(Learner):
     @override
     def train(
         self,
-        data: pl.DataFrame,
-        inputs: list[str],
-        outputs: list[str],
+        input_features: pl.DataFrame,
+        output_features: pl.DataFrame,
     ) -> None:
-        input_data = data.select(inputs).to_numpy()
-        output_data = data.select(outputs).to_numpy()
+        input_data = input_features.to_numpy()
+        output_data = output_features.to_numpy()
         train_len = int(0.8 * len(input_data))
         validation_len = len(input_data) - train_len
         train_dataset, val_dataset = random_split(
@@ -120,9 +119,9 @@ class SimpleDense(Learner):
         )
 
     @override
-    def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
+    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
         dataloader = DataLoader(
-            TorchDataset(inputs),
+            TorchDataset(input_features.to_numpy()),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=True,

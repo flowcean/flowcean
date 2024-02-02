@@ -11,10 +11,8 @@ class TestDummyLearner(unittest.TestCase):
             "input": [1, 2, 3],
             "output": [4, 5, 6],
         })
-        dummy_learner.train(dataset, ["input"], ["output"])
-        predictions = dummy_learner.predict(
-            dataset.select(["input"]).to_numpy()
-        )
+        dummy_learner.train(dataset.select("input"), dataset.select("output"))
+        predictions = dummy_learner.predict(dataset.select(["input"]))
         assert predictions.shape == (3, 1)
 
 

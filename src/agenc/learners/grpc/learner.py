@@ -53,22 +53,18 @@ class GrpcLearner(Learner):
 
     def train(
         self,
-        data: pl.DataFrame,
-        inputs: list[str],
-        outputs: list[str],
+        input_features: pl.DataFrame,
+        output_features: pl.DataFrame,
     ) -> None:
-        proto_datapackage = _data_to_proto(data, inputs, outputs)
+        proto_datapackage = _data_to_proto(input_features, output_features)
         stream = self.stub.Train(proto_datapackage)
         for status_message in stream:
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 raise RuntimeError("training failed")
 
-    def predict(self, inputs: NDArray[Any]) -> NDArray[Any]:
-        # This is kind of hacky. Because of the way "_data_to_proto" works,
-        # no field names need to be given, instead all fields are automatically
-        # assumed to be features.
-        proto_datapackage = _data_to_proto(pl.DataFrame(inputs), [], [])
+    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
+        proto_datapackage = _data_to_proto(input_features, pl.DataFrame([]))
         predictions = self.stub.Predict(proto_datapackage)
         _log_messages(predictions.status.messages)
         return _predictions_to_array(predictions)
@@ -121,15 +117,13 @@ def _predictions_to_array(
 
 
 def _data_to_proto(
-    data: pl.DataFrame,
-    inputs: list[str],
-    outputs: list[str],
+    input_features: pl.DataFrame, output_features: pl.DataFrame
 ) -> DataPackage:
     input_rows: list[DataRow] = [
-        _row_to_proto(row) for row in data.select(inputs).rows()
+        _row_to_proto(row) for row in input_features.rows()
     ]
     output_rows: list[DataRow] = [
-        _row_to_proto(row) for row in data.select(outputs).rows()
+        _row_to_proto(row) for row in output_features.rows()
     ]
     return DataPackage(inputs=input_rows, outputs=output_rows)
 
