@@ -52,7 +52,7 @@ This document is periodically reviewed and updated based on the evolving needs o
   - The merge request should come with a short title and a useful description to explain the change to the reviewer.
   - A non-author should review the code and request changes, or approve the request.
   - All non-authors are implicitly tasked to review MRs
-  - If there are multiple authors involved in one MR, they may approve the MR together without asking for approval of an external non-author. Additional approval of a non-author can be requested if considered necessary or helpful by the authors.
+  - If there are multiple authors involved in one MR, approval by a non-author is not mandatory.
   - A review should check that the proposed changes comply to our coding guidelines, and carefully evaluate whether the changes are useful and intended.
   - The author is resposible to address the comments and answer questions.
   - During dicussion, only the person who opened the discussion is allowed to resolve the discussion. This reduces the risk of misscommunication and maintains accountability. Only the author of the comment is able to decide whether a discussion is resolved.
