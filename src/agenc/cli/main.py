@@ -13,6 +13,7 @@ from pathlib import Path
 
 from agenc.core import Chain, DataLoader, Learner, Metric
 from agenc.data.split import TrainTestSplit
+from agenc.transforms import Select
 
 from . import logging, runtime_configuration
 from .yaml import load_experiment
@@ -86,6 +87,9 @@ def main() -> None:
     train_data = transforms(train_data)
     test_data = transforms(test_data)
 
+    select_inputs = Select(experiment.inputs)
+    select_outputs = Select(experiment.outputs)
+
     for specification, learner in zip(
         experiment.learners,
         learners,
@@ -97,8 +101,8 @@ def main() -> None:
         if specification.train:
             logger.info(f"Start training of `{specification.name}`")
             learner.train(
-                train_data.select(experiment.inputs),
-                train_data.select(experiment.outputs),
+                select_inputs(train_data),
+                select_outputs(train_data),
             )
             if specification.save_path is not None:
                 logger.info(f"Saving learner to `{specification.save_path}`")
@@ -120,12 +124,12 @@ def main() -> None:
     ):
         logger.info(f"Predicting with `{specification.name}`")
         predictions = learner.predict(
-            test_data.select(experiment.inputs),
+            select_inputs(test_data),
         )
 
         for metric in metrics:
             result = metric(
-                test_data.select(experiment.outputs).to_numpy(),
+                select_outputs(test_data).to_numpy(),
                 predictions,
             )
             print(f"{metric.__class__.__name__}: {result}")

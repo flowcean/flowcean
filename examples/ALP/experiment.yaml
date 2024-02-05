@@ -33,22 +33,7 @@ data:
     - class_path: agenc.transforms.Select
       arguments:
         features:
-          - p_cylinder1_00
-          - p_cylinder1_01
-          - p_cylinder1_02
-          - p_cylinder1_03
-          - p_cylinder1_04
-          - p_cylinder1_05
-          - p_cylinder1_06
-          - p_cylinder1_07
-          - p_cylinder1_08
-          - p_cylinder1_09
-          - p_cylinder1_10
-          - p_cylinder1_11
-          - p_cylinder1_12
-          - p_cylinder1_13
-          - p_cylinder1_14
-          - p_cylinder1_15
+          - /p_cylinder1_.*
           - activeValveCount
           - containerWeight
 
