@@ -1,146 +1,234 @@
 package AGenC.AutomataLearner;
 
-import io.agenc.learner.grpc.LearnerOuterClass.LogLevel;
-import io.agenc.learner.grpc.LearnerOuterClass.Message;
-import io.agenc.learner.grpc.LearnerOuterClass.DataRow;
-import io.agenc.learner.grpc.LearnerOuterClass.DataField;
-import io.agenc.learner.grpc.LearnerOuterClass.Prediction;
+import de.learnlib.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
+import de.learnlib.algorithm.rpni.BlueFringeRPNIMealy;
+import io.agenc.learner.grpc.LearnerGrpc;
+import io.agenc.learner.grpc.LearnerOuterClass.*;
 import io.agenc.learner.grpc.LearnerOuterClass.Prediction.Builder;
-import io.agenc.learner.grpc.LearnerOuterClass.Status;
-import io.agenc.learner.grpc.LearnerOuterClass.StatusMessage;
 import net.automatalib.alphabet.Alphabet;
 import net.automatalib.alphabet.Alphabets;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.word.Word;
+import org.javatuples.Pair;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.javatuples.Pair;
-
-import io.agenc.learner.grpc.LearnerGrpc;
-import de.learnlib.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
-import de.learnlib.algorithm.rpni.BlueFringeRPNIMealy;
-
-import javax.xml.crypto.Data;
-
+/**
+ * Instantiation of the GRPC-Learner class defined by the protobuf protocol.
+ */
 public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
-	private MealyMachine<?, Integer, ?, Integer> model;
+    private MealyMachine<?, Integer, ?, Integer> model;
 
-	// TODO: add Docs here and in tool docu
-	public void train(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
-			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.StatusMessage> responseObserver) {
+    /**
+     * Train a MealyMachine model
+     * 1. Read data
+     * 2. Transform Data to Words
+     * 3. Extract input Alphabet
+     * 4. Learn Model
+     *
+     * @param data             GRPC DataPackage, rows are traces where entries are alternating inputs and outputs
+     * @param responseObserver Interface to transmit status messages via the GRPC connection
+     */
+    public void train(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
+                      io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.StatusMessage> responseObserver) {
 
-		StatusMessage message = buildMessage(Status.STATUS_RUNNING, "Started Processing",LogLevel.LOGLEVEL_INFO);
-		responseObserver.onNext(message);
+        StatusMessage message = buildMessage(
+                Status.STATUS_RUNNING,
+                "Started Processing; Start Reading Data...",
+                LogLevel.LOGLEVEL_INFO);
+        responseObserver.onNext(message);
 
-		List<DataRow> rawwords = data.getInputsList();
-		List<DataRow> rawoutputs = data.getOutputsList();
+        //1. Read data
+        List<DataRow> rawWords = data.getInputsList();
+        List<DataRow> rawOutputs = data.getOutputsList();
 
-		responseObserver.onNext(message);
+        //2. Transform Data to Words
+        List<Pair<Word<Integer>, Word<Integer>>> wordObs;
+        try {
+            wordObs = exportDataRowAsWords(
+                    rawWords,
+                    rawOutputs);
+        } catch (MessageException e) {
+            responseObserver.onNext(e.getStatusMessage());
+            responseObserver.onCompleted();
+            return;
+        }
 
-		List<Pair<Word<Integer>, Word<Integer>>> wordObs;
-		try {
-			wordObs = exportDataRowAsWords(rawwords, rawoutputs,true);
-		} catch (MessageException e) {
-			responseObserver.onNext(e.getStatusMessage());
-			responseObserver.onCompleted();
-			return;
-		}
-		Alphabet<Integer> inputAlphabet = extractAlphabet(wordObs);
+        //3. Extract input Alphabet
+        Alphabet<Integer> inputAlphabet = extractAlphabet(wordObs);
 
-		final PassiveMealyLearner<Integer, Integer> learner = new BlueFringeRPNIMealy<>(inputAlphabet);
-		for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
-			message = buildMessage(Status.STATUS_RUNNING, "Inferring Observations",LogLevel.LOGLEVEL_INFO);
-			responseObserver.onNext(message);
-			learner.addSample(pair.getValue0(), pair.getValue1());
-		}
+        message = buildMessage(
+                Status.STATUS_RUNNING,
+                "Read Data; Start Learning Mealy Machine...",
+                LogLevel.LOGLEVEL_INFO);
+        responseObserver.onNext(message);
 
-		model = learner.computeModel();
+        // 4. Learn Model
+        final PassiveMealyLearner<Integer, Integer> learner = new BlueFringeRPNIMealy<>(inputAlphabet);
+        for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
+            learner.addSample(pair.getValue0(), pair.getValue1());
+        }
 
-		message = buildMessage(Status.STATUS_FINISHED, "Model built successfully",LogLevel.LOGLEVEL_INFO);
-		responseObserver.onNext(message);
-		responseObserver.onCompleted();
-	}
+        model = learner.computeModel();
 
-	public void predict(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
-			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Prediction> responseObserver) {
-		Builder pred = Prediction.newBuilder();
+        //TODO: optional artefact Observation table or dot file (see LearnLib Examples)
+        //new ObservationTableASCIIWriter<>().write(lstar.getObservationTable(), System.out);
+        //Desktop.getDesktop().browse(OTUtils.writeHTMLToFile(lstar.getObservationTable()).toURI());
+        //GraphDOT.write(result, driver.getInputs(), System.out);
 
-		List<DataRow> rawwords = data.getInputsList();
-		List<DataRow> rawoutputs = data.getOutputsList();
+        message = buildMessage(Status.STATUS_FINISHED, "Model learned successfully", LogLevel.LOGLEVEL_INFO);
+        responseObserver.onNext(message);
+        responseObserver.onCompleted();
+    }
 
-		List<Pair<Word<Integer>, Word<Integer>>> wordObs;
-		try {
-			wordObs = exportDataRowAsWords(rawwords, rawoutputs,false);
-		} catch (MessageException e) {
-			io.agenc.learner.grpc.LearnerOuterClass.DataRow emptyObs = DataRow.newBuilder().build();
-			pred.setStatus(buildMessage(Status.STATUS_FAILED, e.getMessage(),LogLevel.LOGLEVEL_FATAL));
-			pred.addPredictions(emptyObs);
-			responseObserver.onNext(pred.build());
-			responseObserver.onCompleted();
-			return;
-		}
+    /**
+     * Predicts the final output of a trace
+     * 1. Read Data
+     * 2. Transform Data to Words
+     * 3. Compute Prediction
+     *
+     * @param data             GRPC DataPackage, rows are traces where entries are alternating inputs and outputs
+     * @param responseObserver Interface to transmit status messages via the GRPC connection
+     */
+    public void predict(io.agenc.learner.grpc.LearnerOuterClass.DataPackage data,
+                        io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Prediction> responseObserver) {
+        //1. Read Data
+        List<DataRow> rawWords = data.getInputsList();
+        List<DataRow> rawOutputs = data.getOutputsList();
 
+        // 2. Transform Data to Words
+        List<Pair<Word<Integer>, Word<Integer>>> wordObs;
+        Builder prediction = Prediction.newBuilder();
+        try {
+            wordObs = exportDataRowAsWords(
+                    rawWords,
+                    rawOutputs);
+        } catch (MessageException e) {
+            prediction.setStatus(buildMessage(
+                    Status.STATUS_FAILED,
+                    e.getMessage(),
+                    LogLevel.LOGLEVEL_FATAL));
+            io.agenc.learner.grpc.LearnerOuterClass.DataRow emptyObs = DataRow.newBuilder().build();
+            prediction.addPredictions(emptyObs);
+            responseObserver.onNext(prediction.build());
+            responseObserver.onCompleted();
+            return;
+        }
 
-		for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
-			Word<Integer> pred_output = model.computeOutput(pair.getValue0());
-			int val = pred_output.lastSymbol();
-			List<DataField> fields = new ArrayList<DataField>();
-			fields.add(DataField.newBuilder().setInt(val).build());
-			io.agenc.learner.grpc.LearnerOuterClass.DataRow.Builder obs = DataRow.newBuilder().addAllFields(fields);
-			pred.addPredictions(obs.build());
-		}
+        //3. Compute Prediction
+        for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
+            Word<Integer> predictedOutput = model.computeOutput(pair.getValue0());
+            int val = predictedOutput.lastSymbol();
+            List<DataField> fields = new ArrayList<>();
+            fields.add(DataField.newBuilder().setInt(val).build());
+            io.agenc.learner.grpc.LearnerOuterClass.DataRow.Builder obs = DataRow.newBuilder().addAllFields(fields);
+            prediction.addPredictions(obs.build());
+        }
 
-		responseObserver.onNext(pred.build());
-		responseObserver.onCompleted();
-	}
+        responseObserver.onNext(prediction.build());
+        responseObserver.onCompleted();
+    }
 
-	public void export(io.agenc.learner.grpc.LearnerOuterClass.Empty request,
-			io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Empty> responseObserver) {
-		//TODO
-	}
+    /**
+     * Exports the Java-object to a file
+     * TODO: this function should be called "save"
+     *
+     * @param request          GRPC request token
+     * @param responseObserver GRPC interface for a response
+     */
+    public void export(io.agenc.learner.grpc.LearnerOuterClass.Empty request,
+                       io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Empty> responseObserver) {
+        try {
+            FileOutputStream fileOut = new FileOutputStream("model.ser"); //TODO: file path as parameter
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(model);
+            out.close();
+            fileOut.close();
+        } catch (IOException e) {
+            responseObserver.onCompleted();
+            throw new RuntimeException(e);
+        }
+        responseObserver.onCompleted();
+    }
 
-	List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> rawwords, List<DataRow> rawoutputs, Boolean withOut) throws MessageException {
-		List<Pair<Word<Integer>, Word<Integer>>> wordObs = new ArrayList<Pair<Word<Integer>, Word<Integer>>>();
-		//number of inputs / outputs equals number of observations / sequences
+    /**
+     * Exports the GRPCPackage's data rows as input-output pairs of LearnLib's words
+     *
+     * @param rawWords   Data from GRPC Package, contains the all inputs which are all entries except for the last output
+     * @param rawOutputs Data from GRPC package, contains the output, i,e,m the last output of each word, for prediction this should be empty
+     * @return a list of input-output pairs representing observed traces
+     * @throws MessageException exception for unexpected data
+     */
+    List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> rawWords, List<DataRow> rawOutputs) throws MessageException {
+        if (rawWords.isEmpty()) {
+            throw new MessageException("No inputs received.");
+        }
 
-		for (int i = 0; i < rawwords.size(); i++) {
-			DataRow row = rawwords.get(i);
-			List<Integer> inputWord = new ArrayList<>();
-			List<Integer> outputWord = new ArrayList<>();
-			for(int j = 0; j < row.getFieldsCount(); j++){
-				if(j % 2 == 0){
-					inputWord.add(row.getFields(j).getInt());
-				}
-				else{
-					outputWord.add(row.getFields(j).getInt());
-				}
-			}
-			if(withOut)
-				outputWord.add(rawoutputs.get(i).getFields(0).getInt());
-			wordObs.add(new Pair<>(Word.fromList(inputWord), Word.fromList(outputWord)));
-		}
-		return wordObs;
-	}
+        boolean withOutput = !rawOutputs.isEmpty();
 
-	Alphabet<Integer> extractAlphabet(List<Pair<Word<Integer>, Word<Integer>>> wordObs) {
-		Set<Integer> inputSet = new HashSet<Integer>();
+        List<Pair<Word<Integer>, Word<Integer>>> wordObs = new ArrayList<>();
 
-		for (Pair<Word<Integer>, Word<Integer>> observation : wordObs) {
-			for (int symbol : observation.getValue0()) {
-				inputSet.add(symbol);
-			}
-		}
+        for (int i = 0; i < rawWords.size(); i++) {
+            DataRow row = rawWords.get(i);
+            List<Integer> inputWord = new ArrayList<>();
+            List<Integer> outputWord = new ArrayList<>();
+            for (int j = 0; j < row.getFieldsCount(); j++) {
+                if (!row.getFields(j).hasInt()) {
+                    throw new MessageException("Inputs don't have field int.");
+                }
+                //Separate alternating in- and outputs
+                if (j % 2 == 0) {
+                    inputWord.add(row.getFields(j).getInt());
+                } else {
+                    outputWord.add(row.getFields(j).getInt());
+                }
+            }
+            if (withOutput) {
+                outputWord.add(rawOutputs.get(i).getFields(0).getInt());
+                if (outputWord.size() != inputWord.size()) {
+                    throw new MessageException("Inputs and Outputs do not have same length.");
+                }
+            }
+            wordObs.add(new Pair<>(Word.fromList(inputWord), Word.fromList(outputWord)));
+        }
+        return wordObs;
+    }
 
-		return Alphabets.fromCollection(inputSet);
-	}
+    /**
+     * Extracts the input alphabet from the observed data
+     *
+     * @param wordObs the observed data
+     * @return the estimated input alphabet
+     */
+    Alphabet<Integer> extractAlphabet(List<Pair<Word<Integer>, Word<Integer>>> wordObs) {
+        Set<Integer> inputSet = new HashSet<>();
 
-	StatusMessage buildMessage(Status status, String message, LogLevel level) {
-		return StatusMessage.newBuilder().setStatus(status).addMessages(Message.newBuilder().setMessage(message).setLogLevel(level))
-				.build();
-	}
+        for (Pair<Word<Integer>, Word<Integer>> observation : wordObs) {
+            for (int symbol : observation.getValue0()) {
+                inputSet.add(symbol);
+            }
+        }
+
+        return Alphabets.fromCollection(inputSet);
+    }
+
+    /**
+     * Abbreviates the built of a StatusMessage
+     *
+     * @param status  the status type
+     * @param message the message of the status
+     * @param level   the log level
+     * @return status message
+     */
+    StatusMessage buildMessage(Status status, String message, LogLevel level) {
+        return StatusMessage.newBuilder().setStatus(status).addMessages(Message.newBuilder().setMessage(message).setLogLevel(level))
+                .build();
+    }
 
 }
