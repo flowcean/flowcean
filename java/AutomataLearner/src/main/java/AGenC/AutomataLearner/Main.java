@@ -18,7 +18,6 @@ public final class Main {
      * @throws IOException termination await exception
      */
     public static void main(String[] args) throws IOException {
-        // TODO give port number via command line
         Server server = ServerBuilder.forPort(8080).maxInboundMessageSize(Integer.MAX_VALUE)
                 .addService(new GRPCServerLearner()).build();
 
@@ -26,7 +25,7 @@ public final class Main {
         try {
             server.awaitTermination();
         } catch (InterruptedException e) {
-            System.out.println("Error in awaiting server termination: " + e.getMessage());
+            System.out.println("Awaiting server termination failed: " + e.getMessage());
         }
 
     }

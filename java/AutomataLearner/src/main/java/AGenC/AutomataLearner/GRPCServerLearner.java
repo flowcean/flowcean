@@ -40,7 +40,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 
         StatusMessage message = buildMessage(
                 Status.STATUS_RUNNING,
-                "Started Processing; Start Reading Data...",
+                "Receiving data",
                 LogLevel.LOGLEVEL_INFO);
         responseObserver.onNext(message);
 
@@ -65,7 +65,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 
         message = buildMessage(
                 Status.STATUS_RUNNING,
-                "Read Data; Start Learning Mealy Machine...",
+                "Learning Mealy machine",
                 LogLevel.LOGLEVEL_INFO);
         responseObserver.onNext(message);
 
@@ -137,7 +137,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
 
     /**
      * Exports the Java-object to a file
-     * TODO: this function should be called "save"
+     * TODO: this function will change and implement the learner's "save"-functionality
      *
      * @param request          GRPC request token
      * @param responseObserver GRPC interface for a response
@@ -145,7 +145,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
     public void export(io.agenc.learner.grpc.LearnerOuterClass.Empty request,
                        io.grpc.stub.StreamObserver<io.agenc.learner.grpc.LearnerOuterClass.Empty> responseObserver) {
         try {
-            FileOutputStream fileOut = new FileOutputStream("model.ser"); //TODO: file path as parameter
+            FileOutputStream fileOut = new FileOutputStream("model.ser");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             out.writeObject(model);
             out.close();
@@ -167,7 +167,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
      */
     List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> rawWords, List<DataRow> rawOutputs) throws MessageException {
         if (rawWords.isEmpty()) {
-            throw new MessageException("No inputs received.");
+            throw new MessageException("No inputs received");
         }
 
         boolean withOutput = !rawOutputs.isEmpty();
@@ -180,7 +180,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
             List<Integer> outputWord = new ArrayList<>();
             for (int j = 0; j < row.getFieldsCount(); j++) {
                 if (!row.getFields(j).hasInt()) {
-                    throw new MessageException("Inputs don't have field int.");
+                    throw new MessageException("Inputs don't have field Int");
                 }
                 //Separate alternating in- and outputs
                 if (j % 2 == 0) {
@@ -192,7 +192,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
             if (withOutput) {
                 outputWord.add(rawOutputs.get(i).getFields(0).getInt());
                 if (outputWord.size() != inputWord.size()) {
-                    throw new MessageException("Inputs and Outputs do not have same length.");
+                    throw new MessageException("Inputs and outputs do not have same length.");
                 }
             }
             wordObs.add(new Pair<>(Word.fromList(inputWord), Word.fromList(outputWord)));
