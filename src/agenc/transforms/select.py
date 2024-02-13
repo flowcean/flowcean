@@ -36,10 +36,15 @@ class Select(Transform):
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
         logger.debug(f"selecting features {self.features}")
-        return data.select([
-            column_name
-            for column_name in data.columns
-            if any([
-                pattern.match(column_name) for pattern in self.feature_patterns
-            ])
-        ])
+        return data.select(
+            [
+                column_name
+                for column_name in data.columns
+                if any(
+                    [
+                        pattern.match(column_name) 
+                        for pattern in self.feature_patterns
+                    ]
+                )
+            ]
+        )
