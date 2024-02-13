@@ -42,7 +42,7 @@ class Select(Transform):
                 for column_name in data.columns
                 if any(
                     [
-                        pattern.match(column_name) 
+                        pattern.match(column_name)
                         for pattern in self.feature_patterns
                     ]
                 )
