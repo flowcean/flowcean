@@ -76,11 +76,13 @@ module = [
 ignore_missing_imports = true
 
 [tool.ruff]
-select = ["E", "F", "D", "I", "N", "W", "UP", "RUF", "COM", "A", "B", "PT", "Q", "RET", "ARG", "NPY", "PERF"]
-ignore = ["D10", "COM812"]
 exclude = ["docs", "*pb2*"]
 line-length = 79
 target-version = "py311"
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint]
+select = ["E", "F", "D", "I", "N", "W", "UP", "RUF", "COM", "A", "B", "PT", "Q", "RET", "ARG", "NPY", "PERF"]
+ignore = ["D10", "COM812"]
+
+[tool.ruff.lint.pydocstyle]
 convention = "google"

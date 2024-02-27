@@ -44,19 +44,21 @@ class AlpDataLoader(DataLoader):
                     columns=~cs.by_name("t"),
                 )
                 .hstack(
-                    pl.DataFrame({
-                        "containerWeight": sample.parameters[
-                            "containerWeight"
-                        ],
-                        "p_initial": sample.parameters["p_initial"],
-                        "valveState0": sample.parameters["valveState"][0],
-                        "valveState1": sample.parameters["valveState"][1],
-                        "valveState2": sample.parameters["valveState"][2],
-                        "valveState3": sample.parameters["valveState"][3],
-                        "activeValveCount": sample.parameters[
-                            "activeValveCount"
-                        ],
-                    })
+                    pl.DataFrame(
+                        {
+                            "containerWeight": sample.parameters[
+                                "containerWeight"
+                            ],
+                            "p_initial": sample.parameters["p_initial"],
+                            "valveState0": sample.parameters["valveState"][0],
+                            "valveState1": sample.parameters["valveState"][1],
+                            "valveState2": sample.parameters["valveState"][2],
+                            "valveState3": sample.parameters["valveState"][3],
+                            "activeValveCount": sample.parameters[
+                                "activeValveCount"
+                            ],
+                        }
+                    )
                 )
                 for sample in datas
             ],
