@@ -33,7 +33,7 @@ data:
     - class_path: agenc.transforms.Select
       arguments:
         features:
-          - /p_cylinder1_.*
+          - ^p_cylinder1_.*$
           - activeValveCount
           - containerWeight
 

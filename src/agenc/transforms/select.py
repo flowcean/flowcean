@@ -1,50 +1,27 @@
 import logging
-import re
+from collections.abc import Iterable
 
 import polars as pl
+from polars.type_aliases import IntoExpr
 
 from agenc.core import Transform
 
 logger = logging.getLogger(__name__)
 
-REGEX_INDICATION_SEQUENCE = "/"
-
 
 class Select(Transform):
-    """Selects a subset of features from the data.
+    """Selects a subset of features from the data."""
 
-    Args:
-        features (list[str]): The features to select.
-                              Treats the feature name as a regular expression,
-                              when it starts with '/' and select all matching
-                              features.
-    """
+    def __init__(self, features: IntoExpr | Iterable[IntoExpr]) -> None:
+        """Initializes the Select transform.
 
-    def __init__(self, features: list[str]) -> None:
+        Args:
+            features: The features to select. Treats the selection as a
+              parameter to polars `select` method. You can use regular
+              expressions by wrapping the argument by ^ and $.
+        """
         self.features = features
-        self.feature_patterns = [
-            re.compile(f"^{pattern}$")
-            for pattern in [
-                (
-                    name[len(REGEX_INDICATION_SEQUENCE) :].strip()
-                    if name.startswith(REGEX_INDICATION_SEQUENCE)
-                    else re.escape(name)
-                )
-                for name in features
-            ]
-        ]
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
         logger.debug(f"selecting features {self.features}")
-        return data.select(
-            [
-                column_name
-                for column_name in data.columns
-                if any(
-                    [
-                        pattern.match(column_name)
-                        for pattern in self.feature_patterns
-                    ]
-                )
-            ]
-        )
+        return data.select(self.features)

@@ -32,7 +32,7 @@ class SelectTransform(unittest.TestCase):
         )
 
     def test_select_regex(self) -> None:
-        transform = Select(features=["a", "/c.*"])
+        transform = Select(features=["a", "^c.*$"])
 
         data_frame = pl.DataFrame(
             [
