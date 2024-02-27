@@ -11,6 +11,9 @@ import sys
 from os.path import exists
 from pathlib import Path
 
+import polars as pl
+
+from agenc.cli.experiment import LearnerSpecification
 from agenc.core import Chain, DataLoader, Learner, Metric
 from agenc.data.split import TrainTestSplit
 from agenc.transforms import Select
@@ -19,7 +22,7 @@ from . import logging, runtime_configuration
 from .yaml import load_experiment
 
 
-def main() -> None:
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--experiment",
@@ -39,52 +42,74 @@ def main() -> None:
         const=_logging.DEBUG,
         help="increase verbosity",
     )
-    arguments = parser.parse_args()
-    cwd = Path.cwd()
-    sys.path.append(str(cwd))
+    return parser.parse_args()
 
-    if arguments.configuration is not None:
-        runtime_configuration.load_from_file(arguments.configuration)
-    elif exists(path := cwd / "runtime.yaml"):
+
+def load_runtime_configuration(path: Path | None) -> None:
+    if path is not None:
+        runtime_configuration.load_from_file(path)
+    elif exists(path := Path.cwd() / "runtime.yaml"):
         runtime_configuration.load_from_file(path)
 
-    logging.inititialize(level=arguments.verbose)
+
+def load_data(
+    data_loader: DataLoader,
+    test_data_loader: DataLoader | TrainTestSplit,
+) -> tuple[pl.DataFrame, pl.DataFrame]:
+    dataset = data_loader.load()
+    if isinstance(test_data_loader, TrainTestSplit):
+        return test_data_loader(dataset)
+    return dataset, test_data_loader.load()
+
+
+def train_learner(
+    learner: Learner,
+    train_data: pl.DataFrame,
+    specification: LearnerSpecification,
+) -> None:
+    logger = _logging.getLogger(__name__)
+    logger.info(f"Start training of `{specification.name}`")
+    learner.train(
+        train_data,
+        train_data,
+    )
+    if specification.save_path is not None:
+        logger.info(f"Saving learner to `{specification.save_path}`")
+        specification.save_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Finished training")
+    if specification.save_path is not None:
+        logger.info(f"Saving learner to `{specification.save_path}`")
+        specification.save_path.parent.mkdir(parents=True, exist_ok=True)
+        learner.save(specification.save_path)
+
+
+def main() -> None:
+    sys.path.append(str(Path.cwd()))
+
+    arguments = parse_arguments()
+    load_runtime_configuration(arguments.configuration)
+
+    logging.initialize(level=arguments.verbose)
     logger = _logging.getLogger(__name__)
 
     logger.info(f"Loading experiment from `{arguments.experiment}`")
     experiment = load_experiment(arguments.experiment)
 
-    logger.info(f"Loading data using `{experiment.data_loader.class_path}`")
-    data_loader: DataLoader = experiment.data_loader.load()
-    dataset = data_loader.load()
-
-    test_data_loader = experiment.test_data_loader.load()
-    if isinstance(test_data_loader, DataLoader):
-        logger.info("Loading test data using data loader")
-        train_data = dataset
-        test_data = test_data_loader.load()
-    elif isinstance(test_data_loader, TrainTestSplit):
-        logger.info("Splitting data into train and test set")
-        train_data, test_data = test_data_loader(dataset)
-    else:
-        raise ValueError(
-            "test_data_loader has to be of type DataLoader or"
-            f" TrainTestSplit, but got: `{test_data_loader}`"
-        )
-
+    data_loader: DataLoader = experiment.data_loader.create()
+    test_data_loader = experiment.test_data_loader.create()
     transforms = Chain(
-        *[transform.load() for transform in experiment.transforms]
+        *[transform.create() for transform in experiment.transforms]
     )
     learners: list[Learner] = [
-        learner.load() for learner in experiment.learners
+        learner.create() for learner in experiment.learners
     ]
-    metrics: list[Metric] = [metric.load() for metric in experiment.metrics]
+    metrics: list[Metric] = [metric.create() for metric in experiment.metrics]
 
-    logger.info("Fitting transforms")
-    transforms.fit(train_data)
+    logger.info("Loading data")
+    train_data, test_data = load_data(data_loader, test_data_loader)
 
-    logger.info("Applying transforms")
-    train_data = transforms(train_data)
+    logger.info("Transforming data")
+    train_data = transforms.fit_then_transform(train_data)
     test_data = transforms(test_data)
 
     select_inputs = Select(experiment.inputs)
@@ -99,23 +124,8 @@ def main() -> None:
             logger.info(f"Loading learner from `{specification.load_path}`")
             learner.load(specification.load_path)
         if specification.train:
-            logger.info(f"Start training of `{specification.name}`")
-            learner.train(
-                select_inputs(train_data),
-                select_outputs(train_data),
-            )
-            if specification.save_path is not None:
-                logger.info(f"Saving learner to `{specification.save_path}`")
-                specification.save_path.parent.mkdir(
-                    parents=True, exist_ok=True
-                )
-            logger.info("Finished training")
-            if specification.save_path is not None:
-                logger.info(f"Saving learner to `{specification.save_path}`")
-                specification.save_path.parent.mkdir(
-                    parents=True, exist_ok=True
-                )
-                learner.save(specification.save_path)
+            input_data = select_inputs(train_data)
+            train_learner(learner, input_data, specification)
 
     for specification, learner in zip(
         experiment.learners,
@@ -123,9 +133,8 @@ def main() -> None:
         strict=True,
     ):
         logger.info(f"Predicting with `{specification.name}`")
-        predictions = learner.predict(
-            select_inputs(test_data),
-        )
+        input_data = select_inputs(test_data)
+        predictions = learner.predict(input_data)
 
         for metric in metrics:
             result = metric(

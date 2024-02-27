@@ -6,7 +6,7 @@ import logging.config
 from agenc.cli.runtime_configuration import get_configuration
 
 
-def inititialize(level: logging._Level | None = None) -> None:
+def initialize(level: logging._Level | None = None) -> None:
     """Initialize logger from RuntimeConfiguration."""
     logging.config.dictConfig(get_configuration()["logging"])
     logging.debug("initialized logging from RuntimeConfiguration")

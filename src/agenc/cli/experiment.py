@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ._dynamic_loader import load_instance
+from ._dynamic_loader import load_and_create
 
 
 @dataclass
@@ -24,8 +24,8 @@ class InstanceSpecification:
             class_path=data["class_path"], arguments=data.get("arguments", {})
         )
 
-    def load(self) -> Any:
-        return load_instance(self.class_path, self.arguments)
+    def create(self) -> Any:
+        return load_and_create(self.class_path, self.arguments)
 
 
 @dataclass

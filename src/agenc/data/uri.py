@@ -12,7 +12,7 @@ from agenc.data.parquet import ParquetDataLoader
 class UriDataLoader(DataLoader):
     """DataLoader for files specified by an URI."""
 
-    def __init__(self, uri: str):
+    def __init__(self, uri: str) -> None:
         """Initialize the UriDataLoader.
 
         Args:
@@ -40,7 +40,7 @@ def _file_uri_to_path(uri: str, root: Path) -> Path:
     url = urlparse(uri)
     if url.scheme != "file":
         raise ValueError(
-            "only local files are supported as data source, but got:"
+            "only file URIs can be converted to a path, but got"
             f" `{url.scheme}`",
         )
     data_source = Path(url.path)

@@ -2,7 +2,7 @@ from importlib import import_module
 from typing import Any
 
 
-def load_instance(class_path: str, kwargs: dict[str, Any] | None) -> Any:
+def load_and_create(class_path: str, kwargs: dict[str, Any] | None) -> Any:
     """Dynamically load a class with arguments and keyword arguments.
 
     Args:

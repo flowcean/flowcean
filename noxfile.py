@@ -15,6 +15,7 @@ def test(session: nox.Session) -> None:
             "src/agenc/",
             "--module",
             "pytest",
+            *session.posargs,
         )
     finally:
         session.run("coverage", "report")
