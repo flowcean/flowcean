@@ -4,10 +4,6 @@ variables:
 default:
   image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
 
-black:
-  script:
-    - nox --verbose --session black
-
 ruff:
   script:
     - nox --verbose --session ruff

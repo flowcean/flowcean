@@ -23,14 +23,8 @@ def test(session: nox.Session) -> None:
 
 @nox.session()
 def ruff(session: nox.Session) -> None:
-    session.install("ruff")
+    session.install("ruff==0.2.*")
     session.run("ruff", "check", ".")
-
-
-@nox.session()
-def black(session: nox.Session) -> None:
-    session.install("black")
-    session.run("black", "--diff", "--check", "src/", "tests/")
 
 
 @nox.session(python="3.11")
