@@ -10,6 +10,13 @@ Transforms are all types of manipulations on data and, thus include methods know
    :special-members: __call__
 ```
 
+## Compute Feature
+
+```{eval-rst}
+.. autoclass:: agenc.transforms.ComputeFeature
+   :members:
+```
+
 ## Select
 
 ```{eval-rst}
