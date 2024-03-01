@@ -53,6 +53,8 @@ def docs(session: nox.Session) -> None:
     session.install(".[docs]")
     session.run(
         "sphinx-build",
+        "-E",
+        "-a",
         "-b",
         "spelling",
         "-W",
