@@ -1,5 +1,6 @@
 __all__ = [
     "CsvDataLoader",
+    "JsonDataLoader",
     "ParquetDataLoader",
     "UriDataLoader",
     "TrainTestSplit",
@@ -7,6 +8,7 @@ __all__ = [
 ]
 
 from .csv import CsvDataLoader
+from .json import JsonDataLoader
 from .parquet import ParquetDataLoader
 from .split import TrainTestSplit
 from .uri import UriDataLoader
