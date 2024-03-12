@@ -21,3 +21,10 @@
 .. autoclass:: agenc.learners.simple_dense.SimpleDense
    :members:
 ```
+
+## External gRPC Learner
+
+```{eval-rst}
+.. autoclass:: agenc.learners.grpc.learner.GrpcLearner
+   :members:
+```

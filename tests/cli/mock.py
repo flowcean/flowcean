@@ -12,10 +12,12 @@ from numpy.typing import NDArray
 
 class MyLoader(DataLoader):
     def load(self) -> pl.DataFrame:
-        return pl.DataFrame({
-            "A": [1, 2, 3],
-            "B": [4, 5, 6],
-        })
+        return pl.DataFrame(
+            {
+                "A": [1, 2, 3],
+                "B": [4, 5, 6],
+            }
+        )
 
 
 class MyTestLoader(DataLoader):
@@ -24,10 +26,12 @@ class MyTestLoader(DataLoader):
         self.end = end
 
     def load(self) -> pl.DataFrame:
-        return pl.DataFrame({
-            "A": [self.start, self.end],
-            "B": [self.start, self.end],
-        })
+        return pl.DataFrame(
+            {
+                "A": [self.start, self.end],
+                "B": [self.start, self.end],
+            }
+        )
 
 
 class MyTransform(Transform):

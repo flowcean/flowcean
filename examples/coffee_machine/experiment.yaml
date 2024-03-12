@@ -15,13 +15,17 @@ data:
     - /o\d
     - /o1[0-8]
   outputs:
-    - o19
+    - /o19
 
 learners:
-  - name: GRPC Learner
-    class_path: agenc.learners.grpc.learner.GrpcLearner
+  - name: Automaton Learner
+    class_path: agenc.learners.grpc.GrpcLearner
     arguments:
-      server_address: localhost:8080
+      backend: docker # Possible values: "docker", "none"
+      # port: 8080 # Only required for backend: none
+      # ip: "localhost" # Only required for backend: none
+      image_name: collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/java-automata-learner:latest  # Only required for backend: docker
+    # save_path: models/automaton.model
 
 metrics:
-  - agenc.metrics.regression.MeanAbsoluteError
+  - class_path: agenc.metrics.MeanAbsoluteError

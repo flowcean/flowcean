@@ -17,7 +17,7 @@ dependencies = [
   "polars",
   "ruamel.yaml",
   "typing-extensions",
-  "sympy"
+  "sympy",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +30,7 @@ lightning = [
 ]
 grpc = [
   "grpcio",
+  "docker",
 ]
 test = [
   "pytest",
@@ -53,6 +54,9 @@ docs = [
   "sphinxcontrib-spelling",
   "scikit-learn",
   "lightning",
+  "docker",
+  "grpcio",
+  "grpcio-tools",
 ]
 grpc-dev = [
   "grpcio-tools",
