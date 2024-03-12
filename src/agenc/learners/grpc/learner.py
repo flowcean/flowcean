@@ -15,7 +15,7 @@ import polars as pl
 from numpy.typing import NDArray
 from typing_extensions import override
 
-from agenc.core import Learner
+from agenc.core import Learner, Model
 
 from ._generated.learner_pb2 import (
     DataField,
@@ -33,7 +33,7 @@ MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
 logger = logging.getLogger(__name__)
 
 
-class GrpcLearner(Learner):
+class GrpcLearner(Learner, Model):
     """Binding for an external learner using gRPC.
 
     This learner class connects to an external program/learner using gRPC.
@@ -117,7 +117,7 @@ class GrpcLearner(Learner):
         self,
         input_features: pl.DataFrame,
         output_features: pl.DataFrame,
-    ) -> None:
+    ) -> GrpcLearner:
         proto_datapackage = DataPackage(
             inputs=[_row_to_proto(row) for row in input_features.rows()],
             outputs=[_row_to_proto(row) for row in output_features.rows()],
@@ -127,6 +127,7 @@ class GrpcLearner(Learner):
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 raise RuntimeError("training failed")
+        return self
 
     def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
         proto_datapackage = DataPackage(

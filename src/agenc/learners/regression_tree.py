@@ -7,9 +7,31 @@ import polars as pl
 from numpy.typing import NDArray
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
-from agenc.core import Learner
+from agenc.core import Learner, Model
 
 logger = logging.getLogger(__name__)
+
+
+class SciKitModel(Model):
+    def __init__(
+        self,
+        model: Any,
+        output_name: str,
+    ) -> None:
+        self.model = model
+        self.output_name = output_name
+
+    def predict(
+        self,
+        input_features: pl.DataFrame,
+    ) -> NDArray[Any]:
+        return cast(NDArray[Any], self.model.predict(input_features))
+
+    def save(self, path: Path) -> None:
+        joblib.dump(self.model, path)
+
+    def load(self, path: Path) -> None:
+        self.model = joblib.load(path)
 
 
 class RegressionTree(Learner):
@@ -33,10 +55,8 @@ class RegressionTree(Learner):
         self,
         input_features: pl.DataFrame,
         output_features: pl.DataFrame,
-    ) -> None:
-        input_data = input_features.to_numpy()
-        output_data = output_features.to_numpy()
-        self.regressor.fit(input_data, output_data)
+    ) -> Model:
+        self.regressor.fit(input_features, output_features)
         if self.dot_graph_export_path is not None:
             logger.info(
                 "Exporting decision tree graph to"
@@ -46,14 +66,4 @@ class RegressionTree(Learner):
                 self.regressor,
                 out_file=self.dot_graph_export_path,
             )
-
-    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
-        return cast(
-            NDArray[Any], self.regressor.predict(input_features.to_numpy())
-        )
-
-    def save(self, path: Path) -> None:
-        joblib.dump(self.regressor, path)
-
-    def load(self, path: Path) -> None:
-        self.regressor = joblib.load(path)
+        return SciKitModel(self.regressor, output_features.columns[0])

@@ -4,9 +4,12 @@ __all__ = [
     "Metric",
     "Transform",
     "Chain",
+    "Model",
 ]
+
 
 from .data_loader import DataLoader
 from .learner import Learner
 from .metric import Metric
+from .model import Model
 from .transform import Chain, Transform

@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import polars as pl
-from agenc.core.data_loader import DataLoader
-from agenc.core.learner import Learner
-from agenc.core.metric import Metric
-from agenc.core.transform import Transform
+from agenc.core import DataLoader, Learner, Metric, Model, Transform
 from numpy.typing import NDArray
 
 
@@ -47,9 +46,13 @@ class MyLearner(Learner):
         self,
         input_features: pl.DataFrame,
         output_features: pl.DataFrame,
-    ) -> None:
-        pass
+    ) -> MyModel:
+        _ = input_features
+        _ = output_features
+        return MyModel()
 
+
+class MyModel(Model):
     def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
         _ = input_features
         return np.array([1, 2, 3])

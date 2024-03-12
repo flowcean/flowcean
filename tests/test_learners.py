@@ -6,15 +6,18 @@ from agenc.learners.dummy_learner import DummyLearner
 
 class TestDummyLearner(unittest.TestCase):
     def test_dummy_learner(self) -> None:
-        dummy_learner = DummyLearner()
+        learner = DummyLearner()
         dataset = pl.DataFrame(
             {
                 "input": [1, 2, 3],
                 "output": [4, 5, 6],
             }
         )
-        dummy_learner.train(dataset.select("input"), dataset.select("output"))
-        predictions = dummy_learner.predict(dataset.select(["input"]))
+        model = learner.train(
+            dataset.select("input"),
+            dataset.select("output"),
+        )
+        predictions = model.predict(dataset.select(["input"]))
         assert predictions.shape == (3, 1)
 
 

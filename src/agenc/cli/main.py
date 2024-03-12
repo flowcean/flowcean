@@ -14,7 +14,7 @@ from pathlib import Path
 import polars as pl
 
 from agenc.cli.experiment import LearnerSpecification
-from agenc.core import Chain, DataLoader, Learner, Metric
+from agenc.core import Chain, DataLoader, Learner, Metric, Model
 from agenc.data.split import TrainTestSplit
 from agenc.transforms import Select
 
@@ -66,21 +66,19 @@ def train_learner(
     learner: Learner,
     train_data: pl.DataFrame,
     specification: LearnerSpecification,
-) -> None:
+) -> Model:
     logger = _logging.getLogger(__name__)
     logger.info(f"Start training of `{specification.name}`")
-    learner.train(
+    model = learner.train(
         train_data,
         train_data,
     )
-    if specification.save_path is not None:
-        logger.info(f"Saving learner to `{specification.save_path}`")
-        specification.save_path.parent.mkdir(parents=True, exist_ok=True)
     logger.info("Finished training")
     if specification.save_path is not None:
-        logger.info(f"Saving learner to `{specification.save_path}`")
+        logger.info(f"Saving model to `{specification.save_path}`")
         specification.save_path.parent.mkdir(parents=True, exist_ok=True)
-        learner.save(specification.save_path)
+        model.save(specification.save_path)
+    return model
 
 
 def main() -> None:
@@ -115,26 +113,24 @@ def main() -> None:
     select_inputs = Select(experiment.inputs)
     select_outputs = Select(experiment.outputs)
 
+    models = []
     for specification, learner in zip(
         experiment.learners,
         learners,
         strict=True,
     ):
-        if specification.load_path is not None:
-            logger.info(f"Loading learner from `{specification.load_path}`")
-            learner.load(specification.load_path)
-        if specification.train:
-            input_data = select_inputs(train_data)
-            train_learner(learner, input_data, specification)
+        input_data = select_inputs(train_data)
+        model = train_learner(learner, input_data, specification)
+        models.append(model)
 
-    for specification, learner in zip(
+    for specification, model in zip(
         experiment.learners,
-        learners,
+        models,
         strict=True,
     ):
         logger.info(f"Predicting with `{specification.name}`")
         input_data = select_inputs(test_data)
-        predictions = learner.predict(input_data)
+        predictions = model.predict(input_data)
 
         for metric in metrics:
             result = metric(

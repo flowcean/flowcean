@@ -15,14 +15,50 @@ from torch.utils.data import Dataset, random_split
 from torch.utils.data.dataloader import DataLoader
 from typing_extensions import override
 
-from agenc.core import Learner
+from agenc.core import Learner, Model
+
+
+class PyTorchModel(Model):
+    def __init__(
+        self,
+        model: Module,
+        output_names: list[str],
+        batch_size: int = 32,
+        num_workers: int = 1,
+    ) -> None:
+        self.model = model
+        self.output_names = output_names
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    @override
+    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
+        dataloader = DataLoader(
+            TorchDataset(input_features),
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            persistent_workers=True,
+        )
+        predictions = []
+        for batch in dataloader:
+            inputs, _ = batch
+            predictions.append(self.model(inputs).detach().numpy())
+        return np.concatenate(predictions, axis=0)
+
+    @override
+    def save(self, path: Path) -> None:
+        torch.save(self.model.state_dict(), path)
+
+    @override
+    def load(self, path: Path) -> None:
+        self.model.load_state_dict(torch.load(path))
 
 
 class TorchDataset(Dataset[tuple[Tensor, Tensor]]):
     def __init__(
         self,
-        inputs: NDArray[Any],
-        outputs: NDArray[Any] | None = None,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame | None = None,
     ) -> None:
         self.inputs = inputs
         self.outputs = outputs
@@ -31,11 +67,11 @@ class TorchDataset(Dataset[tuple[Tensor, Tensor]]):
         return len(self.inputs)
 
     def __getitem__(self, item: int) -> tuple[Tensor, Tensor]:
-        inputs = Tensor(self.inputs[item])
+        inputs = Tensor(self.inputs.row(item))
         if self.outputs is None:
             outputs = Tensor([])
         else:
-            outputs = Tensor(self.outputs[item])
+            outputs = Tensor(self.outputs.row(item))
         return inputs, outputs
 
 
@@ -70,15 +106,13 @@ class SimpleDense(Learner):
         self,
         input_features: pl.DataFrame,
         output_features: pl.DataFrame,
-    ) -> None:
-        input_data = input_features.to_numpy()
-        output_data = output_features.to_numpy()
-        train_len = int(0.8 * len(input_data))
-        validation_len = len(input_data) - train_len
+    ) -> PyTorchModel:
+        train_len = int(0.8 * len(input_features))
+        validation_len = len(input_features) - train_len
         train_dataset, val_dataset = random_split(
             TorchDataset(
-                input_data,
-                output_data,
+                input_features,
+                output_features,
             ),
             [train_len, validation_len],
         )
@@ -117,33 +151,7 @@ class SimpleDense(Learner):
         self.model = MultilayerPerceptron.load_from_checkpoint(
             checkpoint_callback.best_model_path,
         )
-
-    @override
-    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
-        dataloader = DataLoader(
-            TorchDataset(input_features.to_numpy()),
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            persistent_workers=True,
-        )
-        predictions = []
-        for batch in dataloader:
-            inputs, _ = batch
-            predictions.append(self.model(inputs).detach().numpy())
-        return np.concatenate(predictions)
-
-    @override
-    def save(self, path: Path) -> None:
-        if self.trainer is None:
-            raise RuntimeError(
-                "this learner has not been trained yet, cannot save model"
-                " before training"
-            )
-        self.trainer.save_checkpoint(path)
-
-    @override
-    def load(self, path: Path) -> None:
-        self.model = MultilayerPerceptron.load_from_checkpoint(path)
+        return PyTorchModel(self.model, output_features.columns)
 
 
 class MultilayerPerceptron(lightning.LightningModule):
