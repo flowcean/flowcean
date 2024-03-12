@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
-import numpy as np
 import polars as pl
 from agenc.core import DataLoader, Learner, Metric, Model, Transform
-from numpy.typing import NDArray
+from typing_extensions import override
 
 
 class MyLoader(DataLoader):
@@ -49,13 +47,16 @@ class MyLearner(Learner):
     ) -> MyModel:
         _ = input_features
         _ = output_features
-        return MyModel()
+        return MyModel(output_features)
 
 
 class MyModel(Model):
-    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
+    def __init__(self, train_outputs: pl.DataFrame) -> None:
+        self.train_outputs = train_outputs
+
+    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         _ = input_features
-        return np.array([1, 2, 3])
+        return self.train_outputs
 
     def load(self, path: Path) -> None:
         _ = path
@@ -68,9 +69,8 @@ class MyMetric(Metric):
     def __init__(self, error: bool = False) -> None:
         self.error = error
 
-    def __call__(
-        self, y_true: NDArray[Any], y_predicted: NDArray[Any]
-    ) -> float:
-        _ = y_true
-        _ = y_predicted
+    @override
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> float:
+        _ = true
+        _ = predicted
         return 0.0

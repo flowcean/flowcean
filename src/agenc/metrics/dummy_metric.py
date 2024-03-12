@@ -1,12 +1,12 @@
 from typing import Any
 
-from numpy.typing import NDArray
+import polars as pl
+from typing_extensions import override
 
 from agenc.core import Metric
 
 
 class DummyMetric(Metric):
-    def __call__(
-        self, _y_true: NDArray[Any], _y_predicted: NDArray[Any]
-    ) -> Any:
+    @override
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
         return 0

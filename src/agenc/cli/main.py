@@ -64,14 +64,15 @@ def load_data(
 
 def train_learner(
     learner: Learner,
-    train_data: pl.DataFrame,
+    input_data: pl.DataFrame,
+    output_data: pl.DataFrame,
     specification: LearnerSpecification,
 ) -> Model:
     logger = _logging.getLogger(__name__)
     logger.info(f"Start training of `{specification.name}`")
     model = learner.train(
-        train_data,
-        train_data,
+        input_data,
+        output_data,
     )
     logger.info("Finished training")
     if specification.save_path is not None:
@@ -120,7 +121,8 @@ def main() -> None:
         strict=True,
     ):
         input_data = select_inputs(train_data)
-        model = train_learner(learner, input_data, specification)
+        output_data = select_outputs(train_data)
+        model = train_learner(learner, input_data, output_data, specification)
         models.append(model)
 
     for specification, model in zip(
@@ -134,7 +136,7 @@ def main() -> None:
 
         for metric in metrics:
             result = metric(
-                select_outputs(test_data).to_numpy(),
+                select_outputs(test_data),
                 predictions,
             )
             print(f"{metric.__class__.__name__}: {result}")

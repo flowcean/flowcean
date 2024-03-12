@@ -1,54 +1,51 @@
 from typing import Any
 
-from numpy.typing import NDArray
+import polars as pl
 from sklearn import metrics
+from typing_extensions import override
 
 from agenc.core import Metric
 
 
 class MaxError(Metric):
-    def __call__(self, y_true: NDArray[Any], y_predicted: NDArray[Any]) -> Any:
-        return metrics.max_error(y_true, y_predicted)
+    """Max error regression loss.
+
+    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.max_error.html>`.
+    """
+
+    @override
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
+        return metrics.max_error(true, predicted)
 
 
 class MeanAbsoluteError(Metric):
     """Mean absolute error (MAE) regression loss.
 
-    The :class:`MeanAbsoluteError` metric computes the MAE as defined by
-    `scikit-learn
-    <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html>`.
+    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html>`.
     """
 
-    def __call__(
-        self,
-        y_true: NDArray[Any],
-        y_predicted: NDArray[Any],
-    ) -> Any:
-        return metrics.mean_absolute_error(
-            y_true,
-            y_predicted,
-        )
+    @override
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
+        return metrics.mean_absolute_error(true, predicted)
 
 
 class MeanSquaredError(Metric):
-    def __call__(
-        self,
-        y_true: NDArray[Any],
-        y_predicted: NDArray[Any],
-    ) -> Any:
-        return metrics.mean_squared_error(
-            y_true,
-            y_predicted,
-        )
+    """Mean squared error (MSE) regression loss.
+
+    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html>`.
+    """
+
+    @override
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
+        return metrics.mean_squared_error(true, predicted)
 
 
 class R2Score(Metric):
-    def __call__(
-        self,
-        y_true: NDArray[Any],
-        y_predicted: NDArray[Any],
-    ) -> Any:
-        return metrics.r2_score(
-            y_true,
-            y_predicted,
-        )
+    """R^2 (coefficient of determination) regression score.
+
+    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html>`.
+    """
+
+    @override
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
+        return metrics.r2_score(true, predicted)

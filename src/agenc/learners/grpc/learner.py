@@ -10,9 +10,7 @@ from typing import Any
 
 import docker  # type:ignore
 import grpc
-import numpy as np
 import polars as pl
-from numpy.typing import NDArray
 from typing_extensions import override
 
 from agenc.core import Learner, Model
@@ -129,14 +127,14 @@ class GrpcLearner(Learner, Model):
                 raise RuntimeError("training failed")
         return self
 
-    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
+    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         proto_datapackage = DataPackage(
             inputs=[_row_to_proto(row) for row in input_features.rows()],
             outputs=[],
         )
         predictions = self.stub.Predict(proto_datapackage)
         _log_messages(predictions.status.messages)
-        return _predictions_to_array(predictions)
+        return _predictions_to_frame(predictions)
 
     def __del__(self) -> None:
         # Close the gRPC conenction
@@ -182,9 +180,9 @@ def _row_to_proto(
     )
 
 
-def _predictions_to_array(
+def _predictions_to_frame(
     predictions: Prediction,
-) -> NDArray[Any]:
+) -> pl.DataFrame:
     data = [
         [
             field.double if field.HasField("double") else field.int
@@ -192,8 +190,7 @@ def _predictions_to_array(
         ]
         for prediction in predictions.predictions
     ]
-    print(data)
-    return np.array(data)
+    return pl.DataFrame(data)
 
 
 def _loglevel_from_proto(loglevel: LogLevel.V) -> int:

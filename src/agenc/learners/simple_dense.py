@@ -8,7 +8,6 @@ import polars as pl
 import torch
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
-from numpy.typing import NDArray
 from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import Dataset, random_split
@@ -32,7 +31,7 @@ class PyTorchModel(Model):
         self.num_workers = num_workers
 
     @override
-    def predict(self, input_features: pl.DataFrame) -> NDArray[Any]:
+    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         dataloader = DataLoader(
             TorchDataset(input_features),
             batch_size=self.batch_size,
@@ -43,7 +42,8 @@ class PyTorchModel(Model):
         for batch in dataloader:
             inputs, _ = batch
             predictions.append(self.model(inputs).detach().numpy())
-        return np.concatenate(predictions, axis=0)
+        predictions = np.concatenate(predictions, axis=0)
+        return pl.DataFrame(predictions, self.output_names)
 
     @override
     def save(self, path: Path) -> None:

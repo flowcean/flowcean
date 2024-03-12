@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from numpy.typing import NDArray
+import polars as pl
 
 
 class Metric(ABC):
@@ -17,13 +17,13 @@ class Metric(ABC):
         return self.__class__.__name__
 
     @abstractmethod
-    def __call__(self, y_true: NDArray[Any], y_predicted: NDArray[Any]) -> Any:
+    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
         """Calculate the metric value for given true and predicted labels.
 
         Args:
-            y_true: True labels
-            y_predicted: Predicted labels
+            true: True labels
+            predicted: Predicted labels
 
         Returns:
-            Any: Metric value
+            Metric value
         """

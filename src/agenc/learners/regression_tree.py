@@ -1,10 +1,9 @@
 import logging
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import joblib
 import polars as pl
-from numpy.typing import NDArray
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
 from agenc.core import Learner, Model
@@ -24,8 +23,9 @@ class SciKitModel(Model):
     def predict(
         self,
         input_features: pl.DataFrame,
-    ) -> NDArray[Any]:
-        return cast(NDArray[Any], self.model.predict(input_features))
+    ) -> pl.DataFrame:
+        outputs = self.model.predict(input_features)
+        return pl.DataFrame({self.output_name: outputs})
 
     def save(self, path: Path) -> None:
         joblib.dump(self.model, path)

@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
 
 import polars as pl
-from numpy.typing import NDArray
 
 
 class Model(ABC):
@@ -11,7 +9,7 @@ class Model(ABC):
     def predict(
         self,
         input_features: pl.DataFrame,
-    ) -> NDArray[Any]:
+    ) -> pl.DataFrame:
         """Predict outputs for the given inputs.
 
         Args:

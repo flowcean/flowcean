@@ -1,6 +1,6 @@
 import unittest
 
-import numpy as np
+import polars as pl
 from agenc.metrics import (
     Accuracy,
     ClassificationReport,
@@ -17,8 +17,8 @@ from agenc.metrics.dummy_metric import DummyMetric
 
 class TestMetrics(unittest.TestCase):
     def setUp(self) -> None:
-        self.true = np.array([0, 1, 0, 1])
-        self.predicted = np.array([1, 1, 0, 0])
+        self.true = pl.DataFrame({"a": [0, 1, 0, 1]})
+        self.predicted = pl.DataFrame({"a": [1, 1, 0, 0]})
 
     def test_name(self) -> None:
         assert Accuracy().name == "Accuracy"
