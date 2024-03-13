@@ -24,7 +24,7 @@ def test(session: nox.Session) -> None:
 
 @nox.session()
 def ruff(session: nox.Session) -> None:
-    session.install("ruff==0.2.*")
+    session.install("ruff==0.3.*")
     session.run("ruff", "check", ".")
 
 
