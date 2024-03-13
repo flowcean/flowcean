@@ -12,8 +12,15 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinxcontrib.spelling",
+    "sphinxcontrib.bibtex",
 ]
+bibtex_bibfiles = ["references.bib"]
+bibtex_reference_style = "label"
 html_theme = "furo"
 myst_enable_extensions = [
     "colon_fence",
+]
+myst_footnote_transition = False
+suppress_warnings = [
+    "myst.footnote",
 ]

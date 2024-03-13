@@ -52,6 +52,7 @@ docs = [
   "myst-parser",
   "pyenchant",
   "sphinxcontrib-spelling",
+  "sphinxcontrib-bibtex",
   "scikit-learn",
   "lightning",
   "docker",
