@@ -1,4 +1,5 @@
 import polars as pl
+from typing_extensions import override
 
 from agenc.core import Transform
 
@@ -84,7 +85,8 @@ class SlidingWindow(Transform):
     def __init__(self, window_size: int) -> None:
         self.window_size = window_size
 
-    def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
         columns = data.columns
         return (
             data.with_row_count()

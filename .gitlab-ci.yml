@@ -19,7 +19,7 @@ mypy:
 test:
   parallel:
     matrix:
-      - PYTHON_VERSION: ["3.10", "3.11"]
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12"]
   coverage: "/(?i)total.*? (100(?:\\.0+)?\\%|[1-9]?\\d(?:\\.\\d+)?\\%)$/"
   script:
     - nox --verbose --session test --python $PYTHON_VERSION
@@ -32,7 +32,7 @@ test:
 examples:
   parallel:
     matrix:
-      - EXAMPLE: ["boiler", "failure_time_prediction"]
+      - EXAMPLE: ["boiler", "failure_time_prediction", "linear_data"]
   retry: 1
   before_script:
     - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
@@ -75,16 +75,8 @@ deploy-pages:
     - buildah info
     - buildah login --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        tag="latest"
-        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = $tag"
-      else
-        tag="$CI_COMMIT_SHORT_SHA"
-        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
-      fi
-    - buildah build --pull --tag "${FQ_IMAGE_NAME}:${tag}" --file ${CONTAINER_FILE} ${CONTAINER_CONTEXT}
-    - buildah push "${FQ_IMAGE_NAME}:${tag}"
+    - buildah build --pull --tag "${FQ_IMAGE_NAME}:latest" --file ${CONTAINER_FILE} ${CONTAINER_CONTEXT}
+    - buildah push "${FQ_IMAGE_NAME}:latest"
 
 build-and-deploy-java:
   extends: .container-build

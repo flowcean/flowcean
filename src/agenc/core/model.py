@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
 
 import polars as pl
+from typing_extensions import override
+
+from .transform import Transform
 
 
 class Model(ABC):
@@ -34,3 +38,25 @@ class Model(ABC):
         Args:
             path: The path to load the model from.
         """
+
+
+@dataclass
+class ModelWithTransform(Model):
+    model: Model
+    transform: Transform
+
+    @override
+    def predict(
+        self,
+        input_features: pl.DataFrame,
+    ) -> pl.DataFrame:
+        transformed = self.transform.transform(input_features)
+        return self.model.predict(transformed)
+
+    @override
+    def save(self, path: Path) -> None:
+        raise NotImplementedError
+
+    @override
+    def load(self, path: Path) -> None:
+        raise NotImplementedError

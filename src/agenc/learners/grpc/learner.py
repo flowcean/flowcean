@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import logging
-import socket
+from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from contextlib import closing
-from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import docker  # type:ignore
+import docker
 import grpc
 import polars as pl
-from typing_extensions import override
+from docker import DockerClient
+from docker.models.containers import Container
+from typing_extensions import Self, override
 
-from agenc.core import Learner, Model
+from agenc.core import Model, SupervisedLearner
 
 from ._generated.learner_pb2 import (
     DataField,
@@ -26,142 +26,197 @@ from ._generated.learner_pb2 import (
 )
 from ._generated.learner_pb2_grpc import LearnerStub
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from pathlib import Path
+
 MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
 
 logger = logging.getLogger(__name__)
 
 
-class GrpcLearner(Learner, Model):
-    """Binding for an external learner using gRPC.
+class _Backend(ABC):
+    @property
+    @abstractmethod
+    def server_address(self) -> str:
+        pass
 
-    This learner class connects to an external program/learner using gRPC.
-    Processed data for training or inference is sent to the learner and results
-    are received from it.
 
-    Args:
-        backend (str): The name of the backend to use. Valid options are:
-            `none`: No external process or container is started.
-            `docker`: Use docker to start a container with the
-            external learner.
-        port (int, required when `backend = none`): Port to connect to.
-        ip (str, required when `backend = none`): IP address to connect to.
-        image_name (str, required when `backend = docker`): Name of the image
-            to pull and start.
-        max_message_length (int, optional): Maximal length of a gRPC message.
-            Defaults to 1 GB.
-    """
+class _AddressBackend(_Backend):
+    def __init__(self, address: str) -> None:
+        self._address = address
 
-    class _BackendType(Enum):
-        NONE = 0
-        DOCKER = 1
+    @property
+    @override
+    def server_address(self) -> str:
+        return self._address
+
+
+class _DockerBackend(_Backend):
+    _docker_client: DockerClient
+    _docker_container: Container
+    _server_address: str
 
     def __init__(
         self,
-        backend: str,
-        port: int | None = None,
-        ip: str | None = None,
-        image_name: str | None = None,
-        max_message_length: int = MAX_MESSAGE_LENGTH,
+        image_name: str,
+        internal_port: int,
+        *,
+        pull: bool,
+    ) -> None:
+        logger.info("Connecting to docker daemon")
+        self._docker_client = docker.from_env()
+        if pull:
+            logger.info("Pulling image '%s'", image_name)
+            self._docker_client.images.pull(image_name)
+        logger.info("Starting container")
+        container = self._docker_client.containers.run(
+            image_name,
+            ports={f"{internal_port}/tcp": None},
+            detach=True,
+            remove=True,
+        )
+        if isinstance(container, Container):
+            self._docker_container = container
+        else:
+            message = "did not receive a container"
+            raise TypeError(message)
+        self._docker_container.reload()
+        ports = self._docker_container.ports
+        host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
+        host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
+        self._server_address = f"{host_ip}:{host_port}"
+
+    @property
+    @override
+    def server_address(self) -> str:
+        return self._server_address
+
+    def __del__(self) -> None:
+        if hasattr(self, "_docker_container"):
+            logger.info("Stopping container")
+            self._docker_container.stop()
+            logger.info("Removing container")
+            self._docker_container.remove()
+        if hasattr(self, "_docker_client"):
+            self._docker_client.close()
+
+
+class GrpcLearner(SupervisedLearner, Model):
+    """Binding for an external learner using gRPC.
+
+    This learner class connects to an external learner using gRPC.
+    Processed data for training or inference is sent to the learner and results
+    are received from it.
+    """
+
+    _backend: _Backend
+    _stub: LearnerStub
+
+    def __init__(
+        self,
+        backend: _Backend,
     ) -> None:
         super().__init__()
-
-        # Check the backend and arguments
-        match backend:
-            case "none":
-                self._backend = GrpcLearner._BackendType.NONE
-                if port is None:
-                    raise ValueError('Argument "port" not given')
-                if ip is None:
-                    raise ValueError('Argument "ip" not given')
-                server_address = f"{ip}:{port}"
-            case "docker":
-                self._backend = GrpcLearner._BackendType.DOCKER
-                if image_name is None:
-                    raise ValueError('Argument "image_name" not given')
-
-                # Start the learner container
-                logger.info("Connecting to docker daemon")
-                self._docker_client = docker.from_env()
-                free_port: int = find_free_port()
-                logger.info(f"Pulling image '{image_name}'")
-                self._docker_client.images.pull(image_name)
-                logger.info("Starting container")
-                self._docker_container: Any = (
-                    self._docker_client.containers.run(
-                        image_name,
-                        ports={"8080/tcp": free_port},
-                        detach=True,
-                    )
-                )
-                server_address = f"localhost:{free_port}"
-
+        self._backend = backend
         self.channel = grpc.insecure_channel(
-            server_address,
+            self._backend.server_address,
             options=[
                 (
                     "grpc.max_send_message_length",
-                    max_message_length,
+                    MAX_MESSAGE_LENGTH,
                 ),
                 (
                     "grpc.max_receive_message_length",
-                    max_message_length,
+                    MAX_MESSAGE_LENGTH,
                 ),
             ],
         )
-        logger.info("Establishing gRPC connection with container")
-        self.stub = LearnerStub(self.channel)
+        logger.info("Establishing gRPC connection...")
+        self._stub = LearnerStub(self.channel)
 
-    def train(
+    @classmethod
+    def with_address(
+        cls,
+        address: str,
+    ) -> Self:
+        """Create a GrpcLearner with a specific address.
+
+        Args:
+            address: The address of the learner.
+
+        Returns:
+            A GrpcLearner instance.
+        """
+        backend = _AddressBackend(address)
+        return cls(backend=backend)
+
+    @classmethod
+    def run_docker(
+        cls,
+        image: str,
+        internal_port: int = 8080,
+        *,
+        pull: bool = True,
+    ) -> Self:
+        """Create a GrpcLearner running in a Docker container.
+
+        Args:
+            image: The name of the Docker image to run.
+            internal_port: port the learner listens on inside the container.
+            pull: Whether to pull the image from the registry.
+
+        Returns:
+            A GrpcLearner instance.
+        """
+        backend = _DockerBackend(image, internal_port, pull=pull)
+        return cls(backend=backend)
+
+    @override
+    def learn(
         self,
-        input_features: pl.DataFrame,
-        output_features: pl.DataFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> GrpcLearner:
         proto_datapackage = DataPackage(
-            inputs=[_row_to_proto(row) for row in input_features.rows()],
-            outputs=[_row_to_proto(row) for row in output_features.rows()],
+            inputs=[_row_to_proto(row) for row in inputs.rows()],
+            outputs=[_row_to_proto(row) for row in outputs.rows()],
         )
-        stream = self.stub.Train(proto_datapackage)
+        stream = self._stub.Train(proto_datapackage)
         for status_message in stream:
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
-                raise RuntimeError("training failed")
+                msg = "training failed"
+                raise RuntimeError(msg)
         return self
 
+    @override
     def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         proto_datapackage = DataPackage(
             inputs=[_row_to_proto(row) for row in input_features.rows()],
             outputs=[],
         )
-        predictions = self.stub.Predict(proto_datapackage)
+        predictions = self._stub.Predict(proto_datapackage)
         _log_messages(predictions.status.messages)
         return _predictions_to_frame(predictions)
 
     def __del__(self) -> None:
-        # Close the gRPC conenction
         self.channel.close()
-
-        # Perform cleanup dependent on backend
-        match self._backend:
-            case GrpcLearner._BackendType.NONE:
-                pass
-            case GrpcLearner._BackendType.DOCKER:
-                self._docker_container.stop()
-                self._docker_container.remove()
-                self._docker_client.close()
 
     @override
     def save(self, path: Path) -> None:
-        raise RuntimeError("Save not yet implemented for gRPC Learner")
+        raise NotImplementedError
 
     @override
     def load(self, path: Path) -> None:
-        raise RuntimeError("Load not yet implemented for gRPC Learner")
+        raise NotImplementedError
 
 
 def _log_messages(messages: Iterable[Message]) -> None:
     for log_message in messages:
         logger.log(
-            _loglevel_from_proto(log_message.log_level), log_message.message
+            _loglevel_from_proto(log_message.log_level),
+            log_message.message,
         )
 
 
@@ -176,7 +231,7 @@ def _row_to_proto(
                 else DataField(double=entry)
             )
             for entry in row
-        ]
+        ],
     )
 
 
@@ -200,17 +255,10 @@ def _loglevel_from_proto(loglevel: LogLevel.V) -> int:
         case LogLevel.LOGLEVEL_INFO:
             return logging.INFO
         case LogLevel.LOGLEVEL_WARNING:
-            return logging.WARN
+            return logging.WARNING
         case LogLevel.LOGLEVEL_ERROR:
             return logging.ERROR
         case LogLevel.LOGLEVEL_FATAL:
             return logging.FATAL
         case _:
             return logging.NOTSET
-
-
-def find_free_port() -> int:
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("localhost", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return int(s.getsockname()[1])

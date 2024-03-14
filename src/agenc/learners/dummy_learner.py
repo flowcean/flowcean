@@ -3,16 +3,22 @@ from pathlib import Path
 import polars as pl
 from typing_extensions import override
 
-from agenc.core import Learner, Model
+from agenc.core.learner import SupervisedLearner
+from agenc.core.model import Model
 
 
 class DummyModel(Model):
-    def __init__(self, train_outputs: pl.DataFrame) -> None:
-        self.train_outputs = train_outputs
+    def __init__(self, output_names: list[str]) -> None:
+        self.output_names = output_names
 
     @override
     def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
-        return self.train_outputs
+        return pl.DataFrame(
+            {
+                output_name: [0] * input_features.height
+                for output_name in self.output_names
+            },
+        )
 
     @override
     def save(self, path: Path) -> None:
@@ -23,11 +29,11 @@ class DummyModel(Model):
         pass
 
 
-class DummyLearner(Learner):
+class DummyLearner(SupervisedLearner):
     @override
-    def train(
+    def learn(
         self,
-        input_features: pl.DataFrame,
-        output_features: pl.DataFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> DummyModel:
-        return DummyModel(output_features)
+        return DummyModel(outputs.columns)

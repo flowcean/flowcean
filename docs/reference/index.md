@@ -4,5 +4,4 @@
 transform
 learner
 metric
-cli
 :::

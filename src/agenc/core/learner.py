@@ -5,30 +5,51 @@ import polars as pl
 from .model import Model
 
 
-class Learner(ABC):
-    """Base class for learners.
-
-    Learners are used to generate models from training on input and output
-    features. All learners should inherit from this class.
-    """
-
-    @property
-    def name(self) -> str:
-        """The name of the learner."""
-        return self.__class__.__name__
-
+class UnsupervisedLearner(ABC):
     @abstractmethod
-    def train(
-        self,
-        input_features: pl.DataFrame,
-        output_features: pl.DataFrame,
-    ) -> Model:
-        """Train a model on the given input and output features.
+    def fit(self, data: pl.DataFrame) -> None:
+        """Fit to the data.
 
         Args:
-            input_features: The input features to train on.
-            output_features: The corresponding output features.
+            data: The data to fit to.
+        """
 
-        Returns:
-            The trained model.
+
+class UnsupervisedIncrementalLearner(ABC):
+    @abstractmethod
+    def fit_incremental(self, data: pl.DataFrame) -> None:
+        """Fit to the data incrementally.
+
+        Args:
+            data: The data to fit to.
+        """
+
+
+class SupervisedLearner(ABC):
+    @abstractmethod
+    def learn(
+        self,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
+    ) -> Model:
+        """Learn from the data.
+
+        Args:
+            inputs: The input data.
+            outputs: The output data.
+        """
+
+
+class SupervisedIncrementalLearner(ABC):
+    @abstractmethod
+    def learn_incremental(
+        self,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
+    ) -> Model:
+        """Learn from the data incrementally.
+
+        Args:
+            inputs: The input data.
+            outputs: The output data.
         """

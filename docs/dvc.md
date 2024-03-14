@@ -12,3 +12,9 @@ dvc remote modify --local tuhh-cloud password <xxxxxxxxx>
 
 Afterwards, you are able to push and pull using DVC.
 Refer to the official [DVC documentation](https://dvc.org/doc) on how to use DVC for data management.
+
+To pull all data from the remote server, use the following command:
+
+```sh
+dvc pull
+```

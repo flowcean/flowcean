@@ -17,7 +17,6 @@ dependencies = [
   "polars",
   "ruamel.yaml",
   "typing-extensions",
-  "sympy",
 ]
 
 [project.optional-dependencies]
@@ -44,7 +43,6 @@ typecheck = [
   "protobuf",
   "types-protobuf",
   "grpc-stubs",
-  "mypy",
 ]
 docs = [
   "sphinx",
@@ -64,9 +62,6 @@ grpc-dev = [
   "mypy-protobuf",
 ]
 
-[project.scripts]
-agenc = "agenc.cli:main"
-
 [tool.black]
 line-length = 79
 preview = true
@@ -78,17 +73,55 @@ strict = true
 module = [
   "sklearn.*",
   "joblib.*",
+  "matplotlib.*",
+  "docker.*",
 ]
 ignore_missing_imports = true
 
+[tool.pyright]
+ignore = [
+  "src/agenc/learners/grpc/_generated/*",
+]
+pythonVersion = "3.12"
+
 [tool.ruff]
-exclude = ["docs", "*pb2*"]
+exclude = ["docs", "*_pb2*"]
 line-length = 79
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "D", "I", "N", "W", "UP", "RUF", "COM", "A", "B", "PT", "Q", "RET", "ARG", "NPY", "PERF"]
-ignore = ["D10", "COM812"]
+select = ["ALL"]
+ignore = [
+  "ANN101", # deprecated
+  "ANN102", # deprecated
+  "ANN401", # dynamically typed expressions (typing.Any) are disallowed
+  "D10", # missing docstrings
+  "INP001", # implicit namespace packages
+  "PD", # pandas
+  "PLR0913", # too many arguments
+  "T", # print
+  "TD002", # missing author in TODO
+  "TD003" # missing issue link in TODO
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+  "S101", # asserts
+  "PLR2004", # Magic value used in comparison
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.coverage.run]
+omit = [
+  "src/agenc/learners/grpc/_generated/*",
+]
+
+[tool.coverage.report]
+exclude_also = [
+  "pass",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]

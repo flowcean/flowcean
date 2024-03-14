@@ -5,41 +5,38 @@ Consult the python [documentation](https://docs.python.org/3/library/venv.html) 
 
 Install the AGenC package:
 
-```bash
+```sh
 python -m pip install -e .
 ```
 
 For the full functioning experience, AGenC splits its features into optional dependency packages.
 Have a look at `pyproject.toml` and respectively install additional dependency groups.
 
-The package installs a command line tool called `agenc`.
-Run `agenc --help` to verify successful installation and see the available commands.
-
 ## Building the documentation
 
-To build the documentation, you need the `[doc]` feature:
+The documentation is managed by [Sphinx](https://www.sphinx-doc.org/en/master/).
 
-```bash
+To build the documentation, you can use the `nox` automation tool and run the `docs` session.
+
+```sh
+nox --session docs
+```
+
+Nox automatically creates a virtual environment and installs the necessary dependencies to build the documentation.
+The configuration is afterwards generated to `docs/build/html/`.
+
+### Manually
+
+Alternatively, you can build the documentation manually.
+First, install the necessary dependencies of the `docs` feature:
+
+```sh
 python -m pip install -e .[doc]
 ```
 
-The documentation is managed by [Sphinx](https://www.sphinx-doc.org/en/master/).
 To build a local html version of the documentation:
 
-```bash
+```sh
 cd docs/
 make html
-```
-
-The configuration is afterwards generated to `docs/build/html/`.
-
-
-Building the documentation again can be sped up by using the `--reuse-existing-virtualenvs` flag.
-```bash 
-nox --session docs -r
-```
-
-The rest of the CI/CD pipeline can be checked locally using the command below.
-```bash
-nox --session
 ```

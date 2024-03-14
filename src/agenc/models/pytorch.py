@@ -1,0 +1,47 @@
+from pathlib import Path
+
+import numpy as np
+import polars as pl
+import torch
+from agenc.core.model import Model
+from agenc.data.pytorch import TorchDataset
+from torch.nn import Module
+from torch.utils.data import DataLoader
+from typing_extensions import override
+
+
+class PyTorchModel(Model):
+    def __init__(
+        self,
+        module: Module,
+        output_names: list[str],
+        batch_size: int = 32,
+        num_workers: int = 1,
+    ) -> None:
+        self.module = module
+        self.output_names = output_names
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    @override
+    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
+        dataloader = DataLoader(
+            TorchDataset(input_features),
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            persistent_workers=True,
+        )
+        predictions = []
+        for batch in dataloader:
+            inputs, _ = batch
+            predictions.append(self.module(inputs).detach().numpy())
+        predictions = np.concatenate(predictions, axis=0)
+        return pl.DataFrame(predictions, self.output_names)
+
+    @override
+    def save(self, path: Path) -> None:
+        torch.save(self.module.state_dict(), path)
+
+    @override
+    def load(self, path: Path) -> None:
+        self.module.load_state_dict(torch.load(path))

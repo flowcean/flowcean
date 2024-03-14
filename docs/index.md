@@ -3,7 +3,6 @@
 :::{toctree}
 installation
 logging
-command-line-interface
 dvc
 transforms
 examples/index

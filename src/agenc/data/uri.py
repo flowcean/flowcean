@@ -2,15 +2,24 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import polars as pl
-from typing_extensions import override
+from typing_extensions import Self, override
 
-from agenc.core import DataLoader
+from agenc.core import OfflineDataLoader
+from agenc.core.environment import NotLoadedError
 from agenc.data.csv import CsvDataLoader
 from agenc.data.parquet import ParquetDataLoader
 
 
-class UriDataLoader(DataLoader):
+class UnsupportedFileTypeError(Exception):
+    def __init__(self, suffix: str) -> None:
+        super().__init__(f"file type `{suffix}` is not supported")
+
+
+class UriDataLoader(OfflineDataLoader):
     """DataLoader for files specified by an URI."""
+
+    uri: str
+    data_loader: OfflineDataLoader | None = None
 
     def __init__(self, uri: str) -> None:
         """Initialize the UriDataLoader.
@@ -21,29 +30,34 @@ class UriDataLoader(DataLoader):
         self.uri = uri
 
     @override
-    def load(self) -> pl.DataFrame:
-        path = _file_uri_to_path(self.uri, Path.cwd())
+    def load(self) -> Self:
+        path = _file_uri_to_path(self.uri)
         suffix = path.suffix
         if suffix == ".csv":
-            return CsvDataLoader(path).load()
-        if suffix == ".parquet":
-            return ParquetDataLoader(path).load()
+            self.data_loader = CsvDataLoader(path)
+        elif suffix == ".parquet":
+            self.data_loader = ParquetDataLoader(path)
+        else:
+            raise UnsupportedFileTypeError(suffix)
+        self.data_loader.load()
+        return self
 
-        supported_file_types = [".csv", ".parquet"]
-        raise ValueError(
-            "file type of data source has to be one of"
-            f" {supported_file_types}, but got: `{suffix}`"
+    @override
+    def get_data(self) -> pl.DataFrame:
+        if self.data_loader is None:
+            raise NotLoadedError
+        return self.data_loader.get_data()
+
+
+class InvalidUriSchemeError(Exception):
+    def __init__(self, scheme: str) -> None:
+        super().__init__(
+            f"only file URIs can be converted to a path, but got `{scheme}`",
         )
 
 
-def _file_uri_to_path(uri: str, root: Path) -> Path:
+def _file_uri_to_path(uri: str) -> Path:
     url = urlparse(uri)
     if url.scheme != "file":
-        raise ValueError(
-            "only file URIs can be converted to a path, but got"
-            f" `{url.scheme}`",
-        )
-    data_source = Path(url.path)
-    if not data_source.is_absolute():
-        data_source = (root / data_source).absolute()
-    return data_source
+        raise InvalidUriSchemeError(url.scheme)
+    return Path(url.path)

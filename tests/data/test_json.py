@@ -1,10 +1,11 @@
-import os
 import tempfile
 import unittest
 from pathlib import Path
 
 import polars as pl
-from agenc.data import JsonDataLoader
+import pytest
+from agenc.core.environment import NotLoadedError
+from agenc.data.json import JsonDataLoader
 from polars.testing import assert_frame_equal
 
 
@@ -26,11 +27,12 @@ class TestJsonDataLoader(unittest.TestCase):
                 f.close()
 
                 dataloader = JsonDataLoader(path=Path(f.name))
-                loaded_data = dataloader.load()
+                dataloader.load()
+                loaded_data = dataloader.get_data()
                 assert_frame_equal(loaded_data, data)
             finally:
                 f.close()
-                os.remove(f.name)
+                Path(f.name).unlink()
 
     def test_multiple_samples(self) -> None:
         json_content = """
@@ -56,11 +58,14 @@ class TestJsonDataLoader(unittest.TestCase):
                 f.close()
 
                 dataloader = JsonDataLoader(path=Path(f.name))
-                loaded_data = dataloader.load()
+                with pytest.raises(NotLoadedError):
+                    dataloader.get_data()
+                dataloader.load()
+                loaded_data = dataloader.get_data()
                 assert_frame_equal(loaded_data, data)
             finally:
                 f.close()
-                os.remove(f.name)
+                Path(f.name).unlink()
 
 
 if __name__ == "__main__":

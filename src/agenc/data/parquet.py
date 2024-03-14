@@ -1,15 +1,19 @@
 from pathlib import Path
 
 import polars as pl
-from typing_extensions import override
+from typing_extensions import Self, override
 
-from agenc.core import DataLoader
+from agenc.core import OfflineDataLoader
+from agenc.core.environment import NotLoadedError
 
 
-class ParquetDataLoader(DataLoader):
+class ParquetDataLoader(OfflineDataLoader):
     """DataLoader for Parquet files."""
 
-    def __init__(self, path: str | Path):
+    path: Path
+    data: pl.DataFrame | None = None
+
+    def __init__(self, path: str | Path) -> None:
         """Initialize the ParquetDataLoader.
 
         Args:
@@ -18,5 +22,12 @@ class ParquetDataLoader(DataLoader):
         self.path = Path(path)
 
     @override
-    def load(self) -> pl.DataFrame:
-        return pl.read_parquet(self.path)
+    def load(self) -> Self:
+        self.data = pl.read_parquet(self.path)
+        return self
+
+    @override
+    def get_data(self) -> pl.DataFrame:
+        if self.data is None:
+            raise NotLoadedError
+        return self.data

@@ -9,7 +9,7 @@ buildah login collaborating.tuhh.de:5005
 Build the image:
 
 ```bash
-buildah build -t collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci .
+buildah build --pull --tag collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci .
 ```
 
 Upload to registry:

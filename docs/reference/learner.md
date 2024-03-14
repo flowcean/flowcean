@@ -3,7 +3,7 @@
 ## Abstract Base Class
 
 ```{eval-rst}
-.. autoclass:: agenc.core.Learner
+.. autoclass:: agenc.core.SupervisedLearner
    :members:
    :special-members: __call__
 ```
@@ -18,7 +18,7 @@
 ## Dense Neural Network
 
 ```{eval-rst}
-.. autoclass:: agenc.learners.simple_dense.SimpleDense
+.. autoclass:: agenc.learners.lightning.LightningLearner
    :members:
 ```
 

@@ -3,6 +3,7 @@ from collections.abc import Iterable
 
 import polars as pl
 from polars.type_aliases import IntoExpr
+from typing_extensions import override
 
 from agenc.core import Transform
 
@@ -22,6 +23,7 @@ class Select(Transform):
         """
         self.features = features
 
-    def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
-        logger.debug(f"selecting features {self.features}")
+    @override
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+        logger.debug("selecting features %s", self.features)
         return data.select(self.features)

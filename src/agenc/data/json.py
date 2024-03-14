@@ -2,24 +2,28 @@ import json
 from pathlib import Path
 
 import polars as pl
-from typing_extensions import override
+from typing_extensions import Self, override
 
-from agenc.core import DataLoader
+from agenc.core import OfflineDataLoader
+from agenc.core.environment import NotLoadedError
 
 
-class JsonDataLoader(DataLoader):
-    """DataLoader for json files."""
+class JsonDataLoader(OfflineDataLoader):
+    path: Path
+    data: pl.DataFrame | None = None
 
-    def __init__(self, path: str | Path):
-        """Initialize the JsonDataLoader.
-
-        Args:
-            path: Path to the Json file.
-        """
+    def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
 
     @override
-    def load(self) -> pl.DataFrame:
-        with open(self.path) as file:
+    def load(self) -> Self:
+        with self.path.open() as file:
             json_content = json.load(file)
-        return pl.DataFrame(json_content)
+        self.data = pl.DataFrame(json_content)
+        return self
+
+    @override
+    def get_data(self) -> pl.DataFrame:
+        if self.data is None:
+            raise NotLoadedError
+        return self.data
