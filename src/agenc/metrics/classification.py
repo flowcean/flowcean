@@ -10,7 +10,7 @@ from agenc.core import Metric
 class Accuracy(Metric):
     """Accuracy classification score.
 
-    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html>`.
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html).
     """
 
     @override
@@ -21,7 +21,7 @@ class Accuracy(Metric):
 class ClassificationReport(Metric):
     """Build a text report showing the main classification metrics.
 
-    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html>`.
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html).
     """
 
     @override
@@ -32,7 +32,7 @@ class ClassificationReport(Metric):
 class FBetaScore(Metric):
     """F-beta score.
 
-    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html>`.
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html).
     """
 
     def __init__(self, beta: float = 1.0) -> None:
@@ -46,7 +46,7 @@ class FBetaScore(Metric):
 class PrecisionScore(Metric):
     """Precision classification score.
 
-    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html>`.
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html).
     """
 
     @override
@@ -57,7 +57,7 @@ class PrecisionScore(Metric):
 class Recall(Metric):
     """Recall classification score.
 
-    As defined by `scikit-learn <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html>`.
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html).
     """
 
     @override

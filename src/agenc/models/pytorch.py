@@ -3,11 +3,12 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 import torch
-from agenc.core.model import Model
-from agenc.data.pytorch import TorchDataset
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from typing_extensions import override
+
+from agenc.core.model import Model
+from agenc.data.pytorch import TorchDataset
 
 
 class PyTorchModel(Model):

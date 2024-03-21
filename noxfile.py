@@ -77,21 +77,4 @@ def linear_data(session: nox.Session) -> None:
 @nox.session()
 def docs(session: nox.Session) -> None:
     session.install(".[docs]")
-    session.run(
-        "sphinx-build",
-        "-E",
-        "-a",
-        "-b",
-        "spelling",
-        "-W",
-        "docs/",
-        "docs/_build/html",
-    )
-    session.run(
-        "sphinx-build",
-        "-b",
-        "html",
-        "-W",
-        "docs/",
-        "docs/_build/html",
-    )
+    session.run("mkdocs", "build")

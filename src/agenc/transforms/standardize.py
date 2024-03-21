@@ -8,23 +8,27 @@ from agenc.core import Transform, UnsupervisedLearner
 class Standardize(Transform, UnsupervisedLearner):
     r"""Standardize features by removing the mean and scaling to unit variance.
 
-    A sample :math:`x` is standardized as:
+    A sample $x$ is standardized as:
 
-    .. math::
+    $$
         z = \frac{(x - \mu)}{\sigma}
+    $$
 
     where
-        :math:`\mu` is the mean of the samples
-        :math:`\sigma` is the standard deviation of the samples.
 
-    Args:
-        mean: The mean :math:`\mu` of each feature.
-        std: The standard deviation :math:`\sigma` of each feature.
+    - $\mu$ is the mean of the samples
+    - $\sigma$ is the standard deviation of the samples.
+
+    Attributes:
+        mean: The mean $\mu$ of each feature.
+        std: The standard deviation $\sigma$
+            of each feature.
+        counts: Number of samples already learned
     """
 
-    mean: None | dict[str, float] = None
-    std: None | dict[str, float] = None
-    counts: None | int = None
+    mean: dict[str, float] | None = None
+    std: dict[str, float] | None = None
+    counts: int | None = None
 
     @override
     def fit(self, data: pl.DataFrame) -> None:

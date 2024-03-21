@@ -18,8 +18,8 @@ class Select(Transform):
 
         Args:
             features: The features to select. Treats the selection as a
-              parameter to polars `select` method. You can use regular
-              expressions by wrapping the argument by ^ and $.
+                parameter to polars `select` method. You can use regular
+                expressions by wrapping the argument by ^ and $.
         """
         self.features = features
 
