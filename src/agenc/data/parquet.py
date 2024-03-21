@@ -3,11 +3,11 @@ from pathlib import Path
 import polars as pl
 from typing_extensions import Self, override
 
-from agenc.core import OfflineDataLoader
+from agenc.core import OfflineEnvironment
 from agenc.core.environment import NotLoadedError
 
 
-class ParquetDataLoader(OfflineDataLoader):
+class ParquetDataLoader(OfflineEnvironment):
     """DataLoader for Parquet files."""
 
     path: Path

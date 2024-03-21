@@ -4,8 +4,8 @@ import agenc.cli
 from agenc.data.train_test_split import TrainTestSplit
 from agenc.data.uri import UriDataLoader
 from agenc.learners.lightning import LightningLearner, MultilayerPerceptron
-from agenc.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from agenc.strategies.offline import evaluate, learn_offline
+from agenc.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from agenc.strategies.offline import learn_offline
 from agenc.transforms import Select, Standardize
 
 logger = logging.getLogger(__name__)

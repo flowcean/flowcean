@@ -3,10 +3,10 @@ from typing import Any
 import polars as pl
 from typing_extensions import Self, override
 
-from agenc.core import OfflineDataLoader
+from agenc.core import OfflineEnvironment
 
 
-class Dataset(OfflineDataLoader):
+class Dataset(OfflineEnvironment):
     data: pl.DataFrame
 
     def __init__(self, data: pl.DataFrame) -> None:

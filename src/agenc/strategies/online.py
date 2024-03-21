@@ -1,7 +1,7 @@
 from agenc.core import (
     Model,
     ModelWithTransform,
-    PassiveOnlineDataLoader,
+    PassiveOnlineEnvironment,
     SupervisedIncrementalLearner,
     Transform,
     UnsupervisedIncrementalLearner,
@@ -9,15 +9,28 @@ from agenc.core import (
 
 
 def learn_incremental(
-    environment: PassiveOnlineDataLoader,
+    environment: PassiveOnlineEnvironment,
     learner: SupervisedIncrementalLearner,
     inputs: list[str],
     outputs: list[str],
     input_transform: Transform | None = None,
-    # feature transform
-    # label transform
-    # output transform
 ) -> Model:
+    """Learn from a passive online environment.
+
+    Learn from a passive online environment by incrementally learning from
+    the input-output pairs. The learning process stops when the environment
+    ends.
+
+    Args:
+        environment: The passive online environment.
+        learner: The supervised incremental learner.
+        inputs: The input feature names.
+        outputs: The output feature names.
+        input_transform: The transform to apply to the input features.
+
+    Returns:
+        The model learned from the environment.
+    """
     model = None
     for data in environment.get_next_data():
         input_features = data.select(inputs)

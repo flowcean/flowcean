@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import polars as pl
 from typing_extensions import Self, override
 
-from agenc.core import OfflineDataLoader
+from agenc.core import OfflineEnvironment
 from agenc.core.environment import NotLoadedError
 from agenc.data.csv import CsvDataLoader
 from agenc.data.parquet import ParquetDataLoader
@@ -15,11 +15,11 @@ class UnsupportedFileTypeError(Exception):
         super().__init__(f"file type `{suffix}` is not supported")
 
 
-class UriDataLoader(OfflineDataLoader):
+class UriDataLoader(OfflineEnvironment):
     """DataLoader for files specified by an URI."""
 
     uri: str
-    data_loader: OfflineDataLoader | None = None
+    data_loader: OfflineEnvironment | None = None
 
     def __init__(self, uri: str) -> None:
         """Initialize the UriDataLoader.

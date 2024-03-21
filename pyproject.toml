@@ -101,7 +101,9 @@ ignore = [
   "PLR0913", # too many arguments
   "T", # print
   "TD002", # missing author in TODO
-  "TD003" # missing issue link in TODO
+  "TD003", # missing issue link in TODO
+  "S311", # pseudo-random number generation
+  "N818", # Error suffix on exceptions
 ]
 
 [tool.ruff.lint.per-file-ignores]

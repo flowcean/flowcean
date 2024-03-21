@@ -14,6 +14,30 @@ def initialize(
     *,
     parse_arguments: bool = True,
 ) -> None:
+    """Initialize an experiment for commandline usage.
+
+    This function configures commandline arguments and initializes the logging
+    framework. Three sources of configuration are checked in the following
+    priority:
+        1. Commandline arguments
+        2. Configuration file
+        3. Function arguments
+    That is, commandline arguments take precedence over the configuration
+    file, and the configuration file takes precedence over the function
+    arguments.
+
+    Example:
+        >>> import agenc
+        >>> agenc.initialize(log_level="DEBUG")
+
+    Example:
+        > python my_experiment.py --log-level DEBUG
+
+    Args:
+        log_level: The logging level to use.
+        runtime_configuration: The path to the runtime configuration file.
+        parse_arguments: Whether to parse commandline arguments.
+    """
     if parse_arguments:
         arguments = _parse_arguments()
         if arguments.log_level is not None:

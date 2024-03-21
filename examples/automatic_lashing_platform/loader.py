@@ -6,7 +6,7 @@ from typing import Any, TypedDict
 
 import polars as pl
 import polars.selectors as cs
-from agenc.core import OfflineDataLoader
+from agenc.core import OfflineEnvironment
 from agenc.core.environment import NotLoadedError
 from typing_extensions import Self, override
 
@@ -17,7 +17,7 @@ class AlpSample:
     parameters: dict[str, Any]
 
 
-class AlpDataLoader(OfflineDataLoader):
+class AlpDataLoader(OfflineEnvironment):
     path: Path
     data: pl.DataFrame | None = None
 

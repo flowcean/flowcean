@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from itertools import accumulate
 from typing import TYPE_CHECKING
 
@@ -10,7 +11,9 @@ if TYPE_CHECKING:
 
     import polars as pl
 
-    from agenc.core import OfflineDataLoader
+    from agenc.core import OfflineEnvironment
+
+logger = logging.getLogger(__name__)
 
 
 class TrainTestSplit:
@@ -26,7 +29,11 @@ class TrainTestSplit:
         self.ratio = ratio
         self.shuffle = shuffle
 
-    def split(self, environment: OfflineDataLoader) -> tuple[Dataset, Dataset]:
+    def split(
+        self,
+        environment: OfflineEnvironment,
+    ) -> tuple[Dataset, Dataset]:
+        logger.info("Splitting data into train and test sets")
         data = environment.get_data()
         pivot = int(len(data) * self.ratio)
         splits = _split(

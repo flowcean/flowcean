@@ -4,11 +4,11 @@ import polars as pl
 from ruamel.yaml import YAML
 from typing_extensions import Self, override
 
-from agenc.core import OfflineDataLoader
+from agenc.core import OfflineEnvironment
 from agenc.core.environment import NotLoadedError
 
 
-class YamlDataLoader(OfflineDataLoader):
+class YamlDataLoader(OfflineEnvironment):
     path: Path
     data: pl.DataFrame | None = None
 

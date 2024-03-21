@@ -1,14 +1,13 @@
 __all__ = [
-    "ActiveOnlineDataLoader",
+    "ActiveLearner",
+    "ActiveOnlineEnvironment",
     "Chain",
-    "ControlledSimulation",
     "Environment",
     "Metric",
     "Model",
     "ModelWithTransform",
-    "OfflineDataLoader",
-    "PassiveOnlineDataLoader",
-    "Simulation",
+    "OfflineEnvironment",
+    "PassiveOnlineEnvironment",
     "SupervisedIncrementalLearner",
     "SupervisedLearner",
     "Transform",
@@ -19,15 +18,14 @@ __all__ = [
 
 from .chain import Chain
 from .environment import (
-    ActiveOnlineDataLoader,
-    ControlledSimulation,
+    ActiveOnlineEnvironment,
     Environment,
-    OfflineDataLoader,
-    PassiveOnlineDataLoader,
-    Simulation,
+    OfflineEnvironment,
+    PassiveOnlineEnvironment,
     TransformedEnvironment,
 )
 from .learner import (
+    ActiveLearner,
     SupervisedIncrementalLearner,
     SupervisedLearner,
     UnsupervisedIncrementalLearner,

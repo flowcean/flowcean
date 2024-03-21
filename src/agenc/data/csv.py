@@ -4,13 +4,13 @@ from pathlib import Path
 import polars as pl
 from typing_extensions import Self, override
 
-from agenc.core import OfflineDataLoader
+from agenc.core import OfflineEnvironment
 from agenc.core.environment import NotLoadedError
 
 logger = logging.getLogger(__name__)
 
 
-class CsvDataLoader(OfflineDataLoader):
+class CsvDataLoader(OfflineEnvironment):
     """DataLoader for CSV files."""
 
     path: Path

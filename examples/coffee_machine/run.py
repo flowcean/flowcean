@@ -2,8 +2,8 @@ import agenc.cli
 from agenc.data.train_test_split import TrainTestSplit
 from agenc.data.uri import UriDataLoader
 from agenc.learners.grpc.learner import GrpcLearner
-from agenc.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from agenc.strategies.offline import evaluate, learn_offline
+from agenc.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from agenc.strategies.offline import learn_offline
 
 
 def main() -> None:

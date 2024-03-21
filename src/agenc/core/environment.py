@@ -28,6 +28,14 @@ class Environment(ABC):
         self,
         transform: Transform,
     ) -> TransformedEnvironment[Self]:
+        """Attach a transform to the environment.
+
+        Args:
+            transform: The transform to apply to the data of the environment.
+
+        Returns:
+            The transformed environment.
+        """
         return TransformedEnvironment(self, transform)
 
 
@@ -39,11 +47,11 @@ class NotLoadedError(Exception):
     """
 
 
-class OfflineDataLoader(Environment):
-    """Base class for data loaders.
+class OfflineEnvironment(Environment):
+    """Base class for offline environments.
 
-    An offline data loader loads data from e.g., a file, a database, etc.
-    Data can be retrieved once using the `get_data` method.
+    An offline environment loads data in an non-interactive way, e.g., from a
+    file, a database, etc. Data can only be retrieved once.
     """
 
     @abstractmethod
@@ -55,53 +63,89 @@ class OfflineDataLoader(Environment):
         """
 
     def as_stream(self, batch_size: int = 1) -> StreamingOfflineData:
+        """Get a streaming interface to the data of the environment.
+
+        Args:
+            batch_size: The number of rows to yield at each iteration.
+
+        Returns:
+            A streaming offline data.
+        """
         return StreamingOfflineData(self, batch_size)
 
 
-Request = TypeVar("Request")
+class PassiveOnlineEnvironment(Environment):
+    """Base class for passive online environments.
 
-
-class ActiveOnlineDataLoader(Environment, Generic[Request]):
-    """Base class for active online data loaders.
-
-    An active online data loader retrieves data given a request.
+    A passive online environment loads data in an interactive way, e.g., from a
+    stream, a sensor, etc. Data can be retrieved multiple times.
     """
 
     @abstractmethod
-    def request_data(self, request: Request) -> pl.DataFrame:
-        """Get data from the environment.
+    def get_next_data(self) -> Generator[pl.DataFrame, None, None]:
+        """Get the next data from the environment.
 
-        Args:
-            request: The request
-
-        Returns:
-            The data matching the request.
+        Yields:
+            The next batch of data.
         """
 
 
-class PassiveOnlineDataLoader(Environment):
-    """Base class for passive online data loaders."""
+Action = TypeVar("Action")
+Observation = TypeVar("Observation")
+
+
+class ActiveOnlineEnvironment(Environment, Generic[Action, Observation]):
+    """Base class for active online environments.
+
+    An active online environment loads data in an interactive way, e.g., from a
+    stream, a sensor, etc. Data can be retrieved multiple times. It also allows
+    to act on the environment, e.g., to control a robot, a simulation, etc.
+    """
 
     @abstractmethod
-    def get_next_data(self) -> Generator[pl.DataFrame, None, None]:
-        """Get the next data.
+    def act(self, action: Action) -> None:
+        """Act on the environment.
+
+        Args:
+            action: The action to perform.
+        """
+
+    @abstractmethod
+    def step(self) -> None:
+        """Advance the environment by one step."""
+
+    @abstractmethod
+    def observe(self) -> Observation:
+        """Observe the environment.
 
         Returns:
-            The next data.
+            The observation of the environment.
         """
 
 
-class StreamingOfflineData(PassiveOnlineDataLoader):
-    environment: OfflineDataLoader
+class StreamingOfflineData(PassiveOnlineEnvironment):
+    """Streaming offline data.
+
+    This class wraps an offline environment and provides a streaming interface
+    to its data.
+    """
+
+    environment: OfflineEnvironment
     batch_size: int
     index: int
     data: pl.DataFrame | None
 
     def __init__(
         self,
-        environment: OfflineDataLoader,
+        environment: OfflineEnvironment,
         batch_size: int = 1,
     ) -> None:
+        """Initialize a streaming offline data.
+
+        Args:
+            environment: The offline environment to wrap.
+            batch_size: The number of rows to yield at each iteration.
+        """
         self.environment = environment
         self.batch_size = batch_size
         self.index = 0
@@ -121,68 +165,27 @@ class StreamingOfflineData(PassiveOnlineDataLoader):
             yield self.data.slice(i, self.batch_size)
 
 
-Parameters = TypeVar("Parameters")
-
-
-class Simulation(Environment, Generic[Parameters]):
-    """Base class for simulations."""
-
-    @abstractmethod
-    def start(self, parameters: Parameters) -> None:
-        """Start the simulation.
-
-        Args:
-            parameters: The parameters to start the simulation.
-        """
-
-    @abstractmethod
-    def stop(self) -> None:
-        """Stop the simulation."""
-
-    @abstractmethod
-    def next_simulated_data(self) -> pl.DataFrame:
-        """Get the next data from the simulation.
-
-        Returns:
-            The next data from the simulation.
-        """
-
-
-Action = TypeVar("Action")
-
-
-class ControlledSimulation(
-    Simulation[Parameters],
-    Generic[Action, Parameters],
-):
-    """Base class for controlled simulations.
-
-    A simulation that can be controlled by a learner.
-    """
-
-    @abstractmethod
-    def act(self, action: Action) -> None:
-        """Act in the simulation.
-
-        Args:
-            action: The action to take.
-        """
-
-
 T_Environment = TypeVar("T_Environment", bound=Environment)
-T_OfflineDataLoader = TypeVar("T_OfflineDataLoader", bound=OfflineDataLoader)
-T_PassiveOnlineDataLoader = TypeVar(
-    "T_PassiveOnlineDataLoader",
-    bound=PassiveOnlineDataLoader,
+T_OfflineEnvironment = TypeVar(
+    "T_OfflineEnvironment",
+    bound=OfflineEnvironment,
+)
+T_PassiveOnlineEnvironment = TypeVar(
+    "T_PassiveOnlineEnvironment",
+    bound=PassiveOnlineEnvironment,
 )
 
 
 class TransformedEnvironment(
-    OfflineDataLoader,
-    PassiveOnlineDataLoader,
+    OfflineEnvironment,
+    PassiveOnlineEnvironment,
     Generic[T_Environment],
 ):
-    """DataLoader that applies a transform to the data."""
+    """Environment with a transform.
+
+    This class wraps an environment and a transform. It applies the transform
+    to the data of the environment before returning it.
+    """
 
     environment: T_Environment
     transform: Transform
@@ -192,6 +195,12 @@ class TransformedEnvironment(
         environment: T_Environment,
         transform: Transform,
     ) -> None:
+        """Initialize a transformed environment.
+
+        Args:
+            environment: The environment to wrap.
+            transform: The transform to apply to the data of the environment.
+        """
         self.environment = environment
         self.transform = transform
 
@@ -202,13 +211,13 @@ class TransformedEnvironment(
 
     @override
     def get_data(
-        self: TransformedEnvironment[T_OfflineDataLoader],
+        self: TransformedEnvironment[T_OfflineEnvironment],
     ) -> pl.DataFrame:
         data = self.environment.get_data()
         return self.transform.transform(data)
 
     @override
     def get_next_data(
-        self: TransformedEnvironment[T_PassiveOnlineDataLoader],
+        self: TransformedEnvironment[T_PassiveOnlineEnvironment],
     ) -> Generator[pl.DataFrame, None, None]:
         return self.environment.get_next_data()

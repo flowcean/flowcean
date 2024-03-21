@@ -5,8 +5,7 @@ import polars as pl
 from agenc.data.dataset import Dataset
 from agenc.data.train_test_split import TrainTestSplit
 from agenc.learners.linear_regression import LinearRegression
-from agenc.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from agenc.strategies.offline import evaluate
+from agenc.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
 from agenc.strategies.online import learn_incremental
 
 logger = logging.getLogger(__name__)
