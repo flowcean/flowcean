@@ -1,7 +1,7 @@
 import unittest
 
 import polars as pl
-from agenc.metrics.regression import (
+from flowcean.metrics.regression import (
     MaxError,
     MeanAbsoluteError,
     MeanSquaredError,

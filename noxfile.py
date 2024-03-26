@@ -12,7 +12,7 @@ def test(session: nox.Session) -> None:
             "coverage",
             "run",
             "--source",
-            "src/agenc/",
+            "src/",
             "--module",
             "pytest",
             *session.posargs,
@@ -77,4 +77,7 @@ def linear_data(session: nox.Session) -> None:
 @nox.session()
 def docs(session: nox.Session) -> None:
     session.install(".[docs]")
-    session.run("mkdocs", "build")
+    if session.posargs:
+        session.run("mkdocs", *session.posargs)
+    else:
+        session.run("mkdocs", "build")

@@ -1,12 +1,12 @@
 import logging
 
-import agenc.cli
+import flowcean.cli
 import polars as pl
-from agenc.data.dataset import Dataset
-from agenc.data.train_test_split import TrainTestSplit
-from agenc.learners.linear_regression import LinearRegression
-from agenc.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from agenc.strategies.online import learn_incremental
+from flowcean.data.dataset import Dataset
+from flowcean.data.train_test_split import TrainTestSplit
+from flowcean.learners.linear_regression import LinearRegression
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from flowcean.strategies.online import learn_incremental
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ N = 1_000
 
 
 def main() -> None:
-    agenc.cli.initialize()
+    flowcean.cli.initialize_logging()
 
     data = Dataset(
         pl.DataFrame(

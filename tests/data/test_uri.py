@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 import pytest
-from agenc.data.uri import InvalidUriSchemeError, _file_uri_to_path
+from flowcean.data.uri import InvalidUriSchemeError, _file_uri_to_path
 
 
 class TestFileUriToPath(unittest.TestCase):

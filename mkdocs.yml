@@ -9,28 +9,44 @@ theme:
     - navigation.sections
     - navigation.top
   palette:
-    - media: "(prefers-color-scheme: light)" 
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
       scheme: default
-      toggle: 
+      primary: custom
+      toggle:
         icon: material/weather-sunny
         name: Switch to dark mode
-      primary: custom
-    - media: "(prefers-color-scheme: dark)" 
+    - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      toggle: 
-        icon: material/weather-night
-        name: Switch to light mode
       primary: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            merge_init_into_class: true
+            members_order: source
   - search
+  - gen-files:
+      scripts:
+        - scripts/generate_reference_pages.py
   - literate-nav:
-      implicit_index: true
+      nav_file: SUMMARY.md
+  - section-index
 
 markdown_extensions:
   - footnotes
   - tables
+  - admonition
+  - pymdownx.details
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.snippets
@@ -44,6 +60,8 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.tilde
+  - attr_list
+  - md_in_html
 
 extra_javascript:
   - javascripts/mathjax.js
@@ -55,3 +73,26 @@ extra_css:
 
 watch:
   - src
+
+nav:
+  - Flowcean: index.md
+  - Getting Started:
+    - Preparation: getting_started/preparation.md
+    - Installation: getting_started/installation.md
+    - New Project: getting_started/new_project.md
+    - Documentation: getting_started/documentation.md
+    - DVC: getting_started/dvc.md
+  - User Guide:
+    - Overview: user_guide/overview.md
+    - Modules: user_guide/modules.md
+    - Environment: user_guide/environment.md
+    - Transform: user_guide/transform.md
+    - Learning Strategies: user_guide/learning_strategies.md
+    - Model: user_guide/model.md
+    - Evaluation: user_guide/evaluation.md
+    - Experiment: user_guide/experiment.md
+    - Tools: user_guide/tools.md
+  - Examples:
+    - Coffee Machine: examples/coffee_machine.md
+    - Failure Time Prediction: examples/failure_time_prediction.md
+  - Reference: reference/

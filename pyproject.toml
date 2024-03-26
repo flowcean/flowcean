@@ -3,12 +3,12 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agenc"
+name = "flowcean"
 version = "0.1.0"
 authors = [
   {name = "The AGenC Team", email = "agenc.team@tuhh.de"}
 ]
-description = "AGenC is a framework to train models for cyber-physical systems."
+description = "flowcean is a framework to train models for cyber-physical systems."
 readme = "README.md"
 requires-python = ">=3.10"
 
@@ -20,6 +20,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+all = [
+  "flowcean[sklearn]",
+  "flowcean[lightning]",
+  "flowcean[grpc]",
+  "flowcean[test]",
+  "flowcean[typecheck]",
+  "flowcean[docs]",
+  "flowcean[grpc-dev]",
+]
 sklearn = [
   "scikit-learn",
 ]
@@ -46,9 +55,12 @@ typecheck = [
 ]
 docs = [
   "mkdocs",
-  "mkdocstrings[python]",
-  "mkdocs-material",
+  "mkdocs-gen-files",
   "mkdocs-literate-nav",
+  "mkdocs-material",
+  "mkdocs-section-index",
+  "mkdocstrings",
+  "mkdocstrings-python",
   "pymdown-extensions",
   "scikit-learn",
   "lightning",
@@ -79,7 +91,7 @@ ignore_missing_imports = true
 
 [tool.pyright]
 ignore = [
-  "src/agenc/learners/grpc/_generated/*",
+  "src/flowcean/learners/grpc/_generated/*",
 ]
 pythonVersion = "3.12"
 
@@ -119,7 +131,7 @@ convention = "google"
 
 [tool.coverage.run]
 omit = [
-  "src/agenc/learners/grpc/_generated/*",
+  "src/flowcean/learners/grpc/_generated/*",
 ]
 
 [tool.coverage.report]

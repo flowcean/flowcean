@@ -4,8 +4,8 @@ from pathlib import Path
 
 import polars as pl
 import pytest
-from agenc.core.environment import NotLoadedError
-from agenc.data.parquet import ParquetDataLoader
+from flowcean.core.environment import NotLoadedError
+from flowcean.data.parquet import ParquetDataLoader
 from polars.testing import assert_frame_equal
 
 

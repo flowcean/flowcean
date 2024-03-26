@@ -44,7 +44,7 @@ pages:
   tags:
     - tuhh-registry
   script:
-    - nox --verbose --session docs
+    - nox --verbose --session docs -- build
     - mv site public
   artifacts:
     paths:

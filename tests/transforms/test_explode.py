@@ -1,7 +1,7 @@
 import unittest
 
 import polars as pl
-from agenc.transforms import Explode
+from flowcean.transforms import Explode
 from polars.testing import assert_frame_equal
 
 

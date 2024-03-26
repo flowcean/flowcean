@@ -1,2 +1,0 @@
-# Metric
-::: agenc.core.metric

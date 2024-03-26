@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from math import nan
 from pathlib import Path
 
-import agenc.cli
+import flowcean.cli
 import polars as pl
-from agenc.core import ActiveLearner, ActiveOnlineEnvironment, Model
-from agenc.strategies.active import StopLearning, learn_active
+from flowcean.core import ActiveLearner, ActiveOnlineEnvironment, Model
+from flowcean.strategies.active import StopLearning, learn_active
 from typing_extensions import Self, override
 
 logger = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ class MyLearner(ActiveLearner[Action, ReinforcementObservation]):
 
 
 def main() -> None:
-    agenc.cli.initialize()
+    flowcean.cli.initialize_logging()
 
     environment = MyEnvironment(
         initial_state=0.0,

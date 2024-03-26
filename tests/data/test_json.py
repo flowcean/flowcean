@@ -4,8 +4,8 @@ from pathlib import Path
 
 import polars as pl
 import pytest
-from agenc.core.environment import NotLoadedError
-from agenc.data.json import JsonDataLoader
+from flowcean.core.environment import NotLoadedError
+from flowcean.data.json import JsonDataLoader
 from polars.testing import assert_frame_equal
 
 

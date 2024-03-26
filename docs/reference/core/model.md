@@ -1,2 +1,0 @@
-# Model
-::: agenc.core.model

@@ -1,4 +1,4 @@
-# DVC - Data Version Control
+# DVC — Data Version Control
 
 DVC is an open-source git-based version control tool to manage data.
 We use DVC to manage experiment data.
@@ -10,7 +10,7 @@ To be able to access the configured default remote server, you have to set the p
 dvc remote modify --local tuhh-cloud password <xxxxxxxxx>
 ```
 
-Afterwards, you are able to push and pull using DVC.
+Afterward, you can push and pull using DVC.
 Refer to the official [DVC documentation](https://dvc.org/doc) on how to use DVC for data management.
 
 To pull all data from the remote server, use the following command:

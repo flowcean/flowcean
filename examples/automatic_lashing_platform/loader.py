@@ -6,8 +6,8 @@ from typing import Any, TypedDict
 
 import polars as pl
 import polars.selectors as cs
-from agenc.core import OfflineEnvironment
-from agenc.core.environment import NotLoadedError
+from flowcean.core import OfflineEnvironment
+from flowcean.core.environment import NotLoadedError
 from typing_extensions import Self, override
 
 

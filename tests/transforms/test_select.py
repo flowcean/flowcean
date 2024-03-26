@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 import polars as pl
-from agenc.transforms import Select
+from flowcean.transforms import Select
 from polars.testing import assert_frame_equal
 
 

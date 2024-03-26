@@ -1,2 +1,0 @@
-# Chain
-::: agenc.core.chain

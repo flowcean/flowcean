@@ -32,6 +32,11 @@ The resulting file is stored at `data/processed_data.csv`.
 
 ## Learning a Model
 
+!!! todo
+
+    This explanation is outdated, we no longer use `experiment.yaml` but `run.py` to run experiments.
+    Update the explanation accordingly.
+
 Data used in the AGenC framework needs to be supplied with additional metadata.
 The metadata of this example is located in `data/metadata.yaml`.
 The experiment is configured in `experiment.yaml`.
@@ -41,10 +46,4 @@ Use the AGenC commandline interface to run the experiment.
 
 ```bash
 agenc --experiment experiment.yaml
-```
-
-```{spelling:word-list}
-Sampaio
-wconfid
-pctid
 ```

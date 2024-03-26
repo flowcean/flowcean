@@ -1,7 +1,7 @@
 import unittest
 
 import polars as pl
-from agenc.metrics.classification import (
+from flowcean.metrics.classification import (
     Accuracy,
     ClassificationReport,
     FBetaScore,

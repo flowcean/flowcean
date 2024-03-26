@@ -1,18 +1,18 @@
 import logging
 
-import agenc.cli
-from agenc.data.train_test_split import TrainTestSplit
-from agenc.data.uri import UriDataLoader
-from agenc.learners.regression_tree import RegressionTree
-from agenc.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from agenc.strategies.offline import learn_offline
-from agenc.transforms import Select, SlidingWindow, Standardize
+import flowcean.cli
+from flowcean.data.train_test_split import TrainTestSplit
+from flowcean.data.uri import UriDataLoader
+from flowcean.learners.regression_tree import RegressionTree
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from flowcean.strategies.offline import learn_offline
+from flowcean.transforms import Select, SlidingWindow, Standardize
 
 logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    agenc.cli.initialize()
+    flowcean.cli.initialize_logging()
 
     data = UriDataLoader(
         uri="file:./data/trace_287401a5.csv",

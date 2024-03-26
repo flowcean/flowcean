@@ -3,8 +3,8 @@ import unittest
 
 import polars as pl
 import pytest
-from agenc.data.dataset import Dataset
-from agenc.data.train_test_split import TrainTestSplit
+from flowcean.data.dataset import Dataset
+from flowcean.data.train_test_split import TrainTestSplit
 from polars.testing import assert_frame_equal
 
 

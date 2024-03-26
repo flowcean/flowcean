@@ -1,5 +1,5 @@
 syntax = "proto3";
-option java_package = "io.agenc.learner.grpc";
+option java_package = "io.flowcean.learner.grpc";
 
 message DataPackage {
   repeated DataRow inputs = 1;

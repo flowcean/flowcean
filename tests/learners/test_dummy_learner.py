@@ -1,7 +1,7 @@
 import unittest
 
 import polars as pl
-from agenc.learners.dummy_learner import DummyLearner
+from flowcean.learners.dummy_learner import DummyLearner
 
 
 class TestDummyLearner(unittest.TestCase):

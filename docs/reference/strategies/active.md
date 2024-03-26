@@ -1,2 +1,0 @@
-# Active
-::: agenc.strategies.active

@@ -1,2 +1,0 @@
-# Online
-::: agenc.strategies.online

@@ -1,14 +1,14 @@
-import agenc.cli
-from agenc.data.train_test_split import TrainTestSplit
-from agenc.learners.regression_tree import RegressionTree
-from agenc.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from agenc.strategies.offline import learn_offline
-from agenc.transforms.select import Select
+import flowcean.cli
+from flowcean.data.train_test_split import TrainTestSplit
+from flowcean.learners.regression_tree import RegressionTree
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from flowcean.strategies.offline import learn_offline
+from flowcean.transforms.select import Select
 from loader import AlpDataLoader
 
 
 def main() -> None:
-    agenc.cli.initialize()
+    flowcean.cli.initialize_logging()
 
     data = AlpDataLoader(path="./data/").with_transform(
         Select(

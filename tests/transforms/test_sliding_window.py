@@ -1,7 +1,7 @@
 import unittest
 
 import polars as pl
-from agenc.transforms import SlidingWindow
+from flowcean.transforms import SlidingWindow
 from polars.testing import assert_frame_equal
 
 
