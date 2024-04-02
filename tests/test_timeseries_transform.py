@@ -1,6 +1,5 @@
 import unittest
 
-import numpy as np
 import polars as pl
 from flowcean.transforms import Flatten
 from polars.testing import assert_frame_equal
@@ -13,13 +12,13 @@ class TimeSeriesTransform(unittest.TestCase):
         data_frame = pl.DataFrame(
             [
                 {
-                    "a": np.array([[0, 0], [1, 1]]),
-                    "b": np.array([[0, 0], [1, 1], [2, 2]]),
+                    "a": [0, 1],
+                    "b": [0, 1, 2],
                     "c": 3,
                 },
                 {
-                    "a": np.array([[0, 1], [1, 2]]),
-                    "b": np.array([[0, 3], [1, 4], [2, 5]]),
+                    "a": [1, 2],
+                    "b": [3, 4, 5],
                     "c": 6,
                 },
             ],

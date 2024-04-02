@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 
 import polars as pl
 from typing_extensions import override
@@ -30,23 +31,32 @@ class Flatten(Transform):
     3             | 4             | 5             | 42 | 43
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, features: Iterable[str] | None = None) -> None:
+        self.features = features
 
     @override
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
-        for feature_name in data.columns:
-            if data[feature_name].dtype != pl.Object:
-                continue  # Skip any non timeseries features
-            flatten_df = self.__flatten_feature__(data[feature_name])
-            data = data.drop(feature_name).hstack(flatten_df)
+        if self.features is None:
+            target_features = [
+                feature_name
+                for feature_name in data.columns
+                if data[feature_name].dtype == pl.List
+            ]
+        else:
+            target_features = list(self.features)
+
+        for feature_name in target_features:
+            data = data.drop(feature_name).hstack(
+                self.__flatten_feature__(data[feature_name]),
+            )
+
         return data.rechunk()
 
     def __flatten_feature__(self, feature_series: pl.Series) -> pl.DataFrame:
         # First check if all entries have the same shape
-        shapes = [sample.shape for sample in feature_series]
+        lengths = [len(sample) for sample in feature_series]
 
-        if not all(shapes[0] == shape for shape in shapes[1:]):
+        if not all(lengths[0] == length for length in lengths[1:]):
             logger.error(
                 "Timeseries in %s has inconsistent length.",
                 feature_series.name,
@@ -59,8 +69,8 @@ class Flatten(Transform):
         return pl.DataFrame(
             [
                 {
-                    f"{feature_series.name}_{index}": sample[index, 1]
-                    for index in range(len(sample[:, 1]))
+                    f"{feature_series.name}_{index}": sample[index]
+                    for index in range(len(sample))
                 }
                 for sample in feature_series
             ],
