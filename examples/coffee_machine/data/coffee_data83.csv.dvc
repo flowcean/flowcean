@@ -1,0 +1,5 @@
+outs:
+- md5: 4c45680bb2916dd885e69be80515ade0
+  size: 145
+  hash: md5
+  path: coffee_data83.csv

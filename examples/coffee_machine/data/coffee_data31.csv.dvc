@@ -1,0 +1,5 @@
+outs:
+- md5: 9f6c756a24fe0cc863e90f9a270d09a4
+  size: 145
+  hash: md5
+  path: coffee_data31.csv
