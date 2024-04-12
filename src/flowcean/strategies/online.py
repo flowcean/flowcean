@@ -1,7 +1,7 @@
 from flowcean.core import (
+    IncrementalEnvironment,
     Model,
     ModelWithTransform,
-    PassiveOnlineEnvironment,
     SupervisedIncrementalLearner,
     Transform,
     UnsupervisedIncrementalLearner,
@@ -9,20 +9,20 @@ from flowcean.core import (
 
 
 def learn_incremental(
-    environment: PassiveOnlineEnvironment,
+    environment: IncrementalEnvironment,
     learner: SupervisedIncrementalLearner,
     inputs: list[str],
     outputs: list[str],
     input_transform: Transform | None = None,
 ) -> Model:
-    """Learn from a passive online environment.
+    """Learn from a incremental environment.
 
-    Learn from a passive online environment by incrementally learning from
+    Learn from a incremental environment by incrementally learning from
     the input-output pairs. The learning process stops when the environment
     ends.
 
     Args:
-        environment: The passive online environment.
+        environment: The incremental environment.
         learner: The supervised incremental learner.
         inputs: The input feature names.
         outputs: The output feature names.

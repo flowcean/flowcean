@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self, override
 
 from .base import NotLoadedError
-from .passive_online import PassiveOnlineEnvironment
+from .incremental import IncrementalEnvironment
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .offline import OfflineEnvironment
 
 
-class StreamingOfflineData(PassiveOnlineEnvironment):
+class StreamingOfflineData(IncrementalEnvironment):
     """Streaming offline data.
 
     This class wraps an offline environment and provides a streaming interface

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import flowcean.cli
 import polars as pl
-from flowcean.core import ActiveLearner, ActiveOnlineEnvironment, Model
+from flowcean.core import ActiveEnvironment, ActiveLearner, Model
 from flowcean.strategies.active import StopLearning, learn_active
 from typing_extensions import Self, override
 
@@ -21,7 +21,7 @@ class ReinforcementObservation:
     sensor: float
 
 
-class MyEnvironment(ActiveOnlineEnvironment[Action, ReinforcementObservation]):
+class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
     state: float
     max_value: float
     last_action: Action | None

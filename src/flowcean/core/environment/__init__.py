@@ -4,14 +4,14 @@ __all__ = [
     "TransformedEnvironment",
     "OfflineEnvironment",
     "StreamingOfflineData",
-    "PassiveOnlineEnvironment",
+    "IncrementalEnvironment",
     "TransformedEnvironment",
-    "ActiveOnlineEnvironment",
+    "ActiveEnvironment",
 ]
 
-from .active_online import ActiveOnlineEnvironment
+from .active import ActiveEnvironment
 from .base import Environment, NotLoadedError
+from .incremental import IncrementalEnvironment
 from .offline import OfflineEnvironment
-from .passive_online import PassiveOnlineEnvironment
 from .streaming import StreamingOfflineData
 from .transformed import TransformedEnvironment

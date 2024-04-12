@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from typing_extensions import Self, override
 
 from .base import Environment
+from .incremental import IncrementalEnvironment
 from .offline import OfflineEnvironment
-from .passive_online import PassiveOnlineEnvironment
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -20,15 +20,15 @@ T_OfflineEnvironment = TypeVar(
     "T_OfflineEnvironment",
     bound=OfflineEnvironment,
 )
-T_PassiveOnlineEnvironment = TypeVar(
-    "T_PassiveOnlineEnvironment",
-    bound=PassiveOnlineEnvironment,
+T_IncrementalEnvironment = TypeVar(
+    "T_IncrementalEnvironment",
+    bound=IncrementalEnvironment,
 )
 
 
 class TransformedEnvironment(
     OfflineEnvironment,
-    PassiveOnlineEnvironment,
+    IncrementalEnvironment,
     Generic[T_Environment],
 ):
     """Environment with a transform.
@@ -72,6 +72,6 @@ class TransformedEnvironment(
 
     @override
     def get_next_data(
-        self: TransformedEnvironment[T_PassiveOnlineEnvironment],
+        self: TransformedEnvironment[T_IncrementalEnvironment],
     ) -> Generator[pl.DataFrame, None, None]:
         return self.environment.get_next_data()

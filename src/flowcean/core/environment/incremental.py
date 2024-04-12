@@ -11,10 +11,10 @@ if TYPE_CHECKING:
     import polars as pl
 
 
-class PassiveOnlineEnvironment(Environment):
-    """Base class for passive online environments.
+class IncrementalEnvironment(Environment):
+    """Base class for incremental environments.
 
-    A passive online environment loads data in a semi-interactive way, e.g.,
+    An incremental environment loads data in a semi-interactive way, e.g.,
     stream, a sensor, etc. Data can be retrieved multiple times, but the
     environment cannot be controlled.
     """

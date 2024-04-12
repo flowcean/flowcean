@@ -1,8 +1,8 @@
 from typing import TypeVar
 
 from flowcean.core import (
+    ActiveEnvironment,
     ActiveLearner,
-    ActiveOnlineEnvironment,
     Model,
 )
 
@@ -19,17 +19,17 @@ Observation = TypeVar("Observation")
 
 
 def learn_active(
-    environment: ActiveOnlineEnvironment[Action, Observation],
+    environment: ActiveEnvironment[Action, Observation],
     learner: ActiveLearner[Action, Observation],
 ) -> Model:
-    """Learn from an active online environment.
+    """Learn from an active environment.
 
-    Learn from an active online environment by interacting with it and
+    Learn from an active environment by interacting with it and
     learning from the observations. The learning process stops when the
     environment ends or when the learner requests to stop.
 
     Args:
-        environment: The active online environment.
+        environment: The active environment.
         learner: The active learner.
 
     Returns:

@@ -33,7 +33,7 @@ import flowcean.cli
 flowcean.cli.initialize()
 ```
 
-For active online learning, the next step is to set an environment representing your dataset/datastream/simulation:
+For active learning, the next step is to set an environment representing your dataset/datastream/simulation:
 
 ```python
 environment = MyEnvironment(

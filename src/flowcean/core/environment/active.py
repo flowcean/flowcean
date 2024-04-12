@@ -9,10 +9,10 @@ Action = TypeVar("Action")
 Observation = TypeVar("Observation")
 
 
-class ActiveOnlineEnvironment(Environment, Generic[Action, Observation]):
-    """Base class for active online environments.
+class ActiveEnvironment(Environment, Generic[Action, Observation]):
+    """Base class for active environments.
 
-    An active online environment loads data in an interactive way, e.g., from a
+    An active environment loads data in an interactive way, e.g., from a
     simulation or real system. The environment requires actions to be taken to
     advance. Data can be retrieved by observing the environment.
     """
