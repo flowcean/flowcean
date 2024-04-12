@@ -6,7 +6,7 @@ from flowcean.data.dataset import Dataset
 from flowcean.data.train_test_split import TrainTestSplit
 from flowcean.learners.linear_regression import LinearRegression
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from flowcean.strategies.online import learn_incremental
+from flowcean.strategies.incremental import learn_incremental
 
 logger = logging.getLogger(__name__)
 
