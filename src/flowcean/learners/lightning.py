@@ -1,12 +1,11 @@
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 import lightning
 import polars as pl
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader
-from typing_extensions import override
 
 from flowcean.core import SupervisedLearner
 from flowcean.data.pytorch import TorchDataset
@@ -66,8 +65,12 @@ class MultilayerPerceptron(lightning.LightningModule):
         layers: list[Module] = []
         hidden_size = input_size
         for dimension in hidden_dimensions:
-            layers.append(torch.nn.Linear(hidden_size, dimension))
-            layers.append(torch.nn.LeakyReLU())
+            layers.extend(
+                (
+                    torch.nn.Linear(hidden_size, dimension),
+                    torch.nn.LeakyReLU(),
+                ),
+            )
             hidden_size = dimension
         layers.append(torch.nn.Linear(hidden_size, output_size))
         self.model = torch.nn.Sequential(*layers)

@@ -5,7 +5,8 @@ from pathlib import Path
 
 import ruamel.yaml
 
-from .default import DEFAULT_RUNTIME_CONFIGURATION_PATH
+DEFAULT_RUNTIME_CONFIGURATION_PATH: Path = Path("runtime.yaml")
+"""The default path to the runtime configuration file."""
 
 
 def initialize_logging(

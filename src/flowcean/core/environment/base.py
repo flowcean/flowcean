@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from flowcean.core import Transform

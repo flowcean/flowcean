@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self, override
 
 import docker
 import grpc
 import polars as pl
 from docker import DockerClient
 from docker.models.containers import Container
-from typing_extensions import Self, override
 
 from flowcean.core import Model, SupervisedLearner
 

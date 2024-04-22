@@ -11,5 +11,7 @@ __all__ = [
 ]
 
 
-from .default import DEFAULT_RUNTIME_CONFIGURATION_PATH
-from .logging import initialize_logging
+from .logging import (
+    DEFAULT_RUNTIME_CONFIGURATION_PATH,
+    initialize_logging,
+)

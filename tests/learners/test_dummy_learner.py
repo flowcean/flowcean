@@ -1,6 +1,7 @@
 import unittest
 
 import polars as pl
+
 from flowcean.learners.dummy_learner import DummyLearner
 
 

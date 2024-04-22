@@ -4,9 +4,10 @@ from pathlib import Path
 
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal
+
 from flowcean.core.environment import NotLoadedError
 from flowcean.data.json import JsonDataLoader
-from polars.testing import assert_frame_equal
 
 
 class TestJsonDataLoader(unittest.TestCase):

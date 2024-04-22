@@ -2,27 +2,28 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 default:
-  image: "collaborating.tuhh.de:5005/w-6/forschung/agenc/agenc/ci"
+  image: "docker.io/python"
 
 ruff:
+  before_script:
+    - pip install hatch hatch-mkdocs
   script:
-    - nox --verbose --session ruff
+    - hatch fmt --check
 
-mypy:
-  cache:
-    - key: mypy-$CI_COMMIT_REF_SLUG
-      paths:
-        - .mypy_cache/
+types:
+  before_script:
+    - pip install hatch
+    - pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
   script:
-    - nox --verbose --session mypy
+    - hatch run types:check
 
 test:
-  parallel:
-    matrix:
-      - PYTHON_VERSION: ["3.10", "3.11", "3.12"]
   coverage: "/(?i)total.*? (100(?:\\.0+)?\\%|[1-9]?\\d(?:\\.\\d+)?\\%)$/"
+  before_script:
+    - pip install hatch
+    - pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
   script:
-    - nox --verbose --session test --python $PYTHON_VERSION
+    - hatch run tests:report-xml
   artifacts:
     reports:
       coverage_report:
@@ -35,20 +36,24 @@ examples:
       - EXAMPLE: ["boiler", "failure_time_prediction", "linear_data"]
   retry: 1
   before_script:
+    - pip install hatch
+    - pip install dvc dvc-webdav
+    - pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
     - dvc remote modify --local tuhh-cloud password "${TUHH_CLOUD_SECRET}"
     - dvc pull --recursive examples/$EXAMPLE
   script:
-    - nox --verbose --session $EXAMPLE
+    - hatch run examples:$EXAMPLE
 
 pages:
   tags:
     - tuhh-registry
+  before_script:
+    - pip install hatch
   script:
-    - nox --verbose --session docs -- build
-    - mv site public
+    - hatch run docs:build
   artifacts:
     paths:
-      - public
+      - site
 
 deploy-pages:
   tags:
@@ -61,7 +66,7 @@ deploy-pages:
     - eval $(ssh-agent -s)
     - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
   script:
-    - scp -rP 40043 ./public/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
+    - scp -rP 40043 ./site/* rhlkekke@prod-docker-goldmoon.rz.tuhh.de:/home/rhlkekke/html
   needs: ["pages"]
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
@@ -84,12 +89,4 @@ build-and-deploy-java:
     CONTAINER_IMAGE_NAME: "java-automata-learner"
     CONTAINER_FILE: java/AutomataLearner/Containerfile
     CONTAINER_CONTEXT: java/AutomataLearner
-  when: manual
-
-build-ci:
-  extends: .container-build
-  variables:
-    CONTAINER_IMAGE_NAME: "ci"
-    CONTAINER_FILE: .ci/Containerfile
-    CONTAINER_CONTEXT: .ci
   when: manual

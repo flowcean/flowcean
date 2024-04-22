@@ -2,8 +2,9 @@ import unittest
 
 import numpy as np
 import polars as pl
-from flowcean.transforms import Select
 from polars.testing import assert_frame_equal
+
+from flowcean.transforms import Select
 
 
 class SelectTransform(unittest.TestCase):

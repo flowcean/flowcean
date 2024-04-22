@@ -7,17 +7,24 @@ The flowcean framework.
 
 ## Building the Documentation
 
-First, install all necessary dependencies to build the documentation.
+First, install hatch.
 
 ```bash
-pip install --upgrade pip
-pip install nox
+pipx install hatch
 ```
 
-Build the documentation using the nox session.
+Then, build the documentation:
 
 ```bash
-nox --session docs -- build
+hatch run docs:build
 ```
 
 After the documentation has been built, you can open it in your browser by opening `site/index.html`.
+
+Alternatively, run:
+
+```bash
+hatch run docs:serve
+```
+
+to get an interactively reloading session of the documentation.

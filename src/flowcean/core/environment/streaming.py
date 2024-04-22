@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
-from typing_extensions import Self, override
+from typing_extensions import override
 
 from .base import NotLoadedError
 from .incremental import IncrementalEnvironment

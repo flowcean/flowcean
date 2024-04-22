@@ -3,12 +3,13 @@ import random
 from dataclasses import dataclass
 from math import nan
 from pathlib import Path
+from typing import Self, override
+
+import polars as pl
 
 import flowcean.cli
-import polars as pl
 from flowcean.core import ActiveEnvironment, ActiveLearner, Model
 from flowcean.strategies.active import StopLearning, learn_active
-from typing_extensions import Self, override
 
 logger = logging.getLogger(__name__)
 

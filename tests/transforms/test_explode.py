@@ -1,8 +1,9 @@
 import unittest
 
 import polars as pl
-from flowcean.transforms import Explode
 from polars.testing import assert_frame_equal
+
+from flowcean.transforms import Explode
 
 
 class ExplodeTransform(unittest.TestCase):

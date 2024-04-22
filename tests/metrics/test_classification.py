@@ -1,6 +1,7 @@
 import unittest
 
 import polars as pl
+
 from flowcean.metrics.classification import (
     Accuracy,
     ClassificationReport,

@@ -1,7 +1,8 @@
 import logging
 
-import flowcean.cli
 import polars as pl
+
+import flowcean.cli
 from flowcean.data.dataset import Dataset
 from flowcean.data.train_test_split import TrainTestSplit
 from flowcean.learners.linear_regression import LinearRegression
