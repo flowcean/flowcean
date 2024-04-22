@@ -7,7 +7,7 @@ docstring-code-format = true
 docstring-code-line-length = 80
 
 [lint]
-preview = true
+preview = false
 select = ["ALL"]
 ignore = [
   "ANN101", # deprecated
