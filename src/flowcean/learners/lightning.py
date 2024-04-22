@@ -1,4 +1,5 @@
 import os
+import platform
 from typing import TYPE_CHECKING, Any, override
 
 import lightning
@@ -40,6 +41,7 @@ class LightningLearner(SupervisedLearner):
             dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=platform.system() == "Windows",
         )
         trainer = lightning.Trainer(
             max_epochs=self.max_epochs,
