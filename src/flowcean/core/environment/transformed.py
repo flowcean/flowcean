@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, Self, TypeVar
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, Generic, Self, TypeVar, override
 
 from .base import Environment
 from .incremental import IncrementalEnvironment

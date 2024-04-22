@@ -2,12 +2,12 @@ __all__ = [
     "Accuracy",
     "ClassificationReport",
     "FBetaScore",
-    "PrecisionScore",
-    "Recall",
     "MaxError",
     "MeanAbsoluteError",
     "MeanSquaredError",
+    "PrecisionScore",
     "R2Score",
+    "Recall",
     "evaluate",
 ]
 

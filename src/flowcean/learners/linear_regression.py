@@ -1,7 +1,8 @@
+from typing import override
+
 import polars as pl
 import torch
 from torch import nn
-from typing_extensions import override
 
 from flowcean.core import SupervisedIncrementalLearner
 from flowcean.models.pytorch import PyTorchModel

@@ -1,9 +1,8 @@
 from pathlib import Path
-from typing import Self
+from typing import Self, override
 
 import polars as pl
 from ruamel.yaml import YAML
-from typing_extensions import override
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError

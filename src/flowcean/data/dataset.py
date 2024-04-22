@@ -1,7 +1,6 @@
-from typing import Any, Self
+from typing import Any, Self, override
 
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import OfflineEnvironment
 

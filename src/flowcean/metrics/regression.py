@@ -1,8 +1,7 @@
-from typing import Any
+from typing import Any, override
 
 import polars as pl
 from sklearn import metrics
-from typing_extensions import override
 
 from flowcean.core import Metric
 

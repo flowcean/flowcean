@@ -2,11 +2,10 @@ import json
 from dataclasses import dataclass
 from functools import reduce
 from pathlib import Path
-from typing import Any, Self, TypedDict
+from typing import Any, Self, TypedDict, override
 
 import polars as pl
 import polars.selectors as cs
-from typing_extensions import override
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError

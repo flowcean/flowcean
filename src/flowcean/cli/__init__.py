@@ -6,8 +6,8 @@ experiments.
 """
 
 __all__ = [
-    "initialize_logging",
     "DEFAULT_RUNTIME_CONFIGURATION_PATH",
+    "initialize_logging",
 ]
 
 

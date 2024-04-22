@@ -1,12 +1,12 @@
 __all__ = [
+    "ActiveEnvironment",
     "Environment",
+    "IncrementalEnvironment",
     "NotLoadedError",
-    "TransformedEnvironment",
     "OfflineEnvironment",
     "StreamingOfflineData",
-    "IncrementalEnvironment",
     "TransformedEnvironment",
-    "ActiveEnvironment",
+    "TransformedEnvironment",
 ]
 
 from .active import ActiveEnvironment
