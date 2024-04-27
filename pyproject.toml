@@ -60,6 +60,7 @@ module = [
   "sklearn.*",
   "joblib.*",
   "docker.*",
+  "scipy.*",
 ]
 ignore_missing_imports = true
 
