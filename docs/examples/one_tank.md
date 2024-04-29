@@ -185,11 +185,34 @@ However, it is clear, that both learners produced models with relativ small erro
 
 ## Run this example
 
-First make sure you followed the [installation instructions](../getting_started/preparation.md) to setup python and flowcean.
+To run this example first make sure you followed the [installation instructions](../getting_started/preparation.md) to setup python and git.
+Afterwards you can either use `hatch` or run the examples from source.
+
+### Hatch
+
+The easist way to run this example is using `hatch`.
+Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before install it or any of it's dependencies.
+Now you can run the example using
+
+```sh
+hatch run examples:one_tank
+```
+
+This command will take care to install any required dependencies in a seperate environment.
+After a short moment you should see the learning results from both methods and the achieved metric values.
+
+### From source
+
+Follow the [installation guide](../getting_started/installation.md) to install flowcean and it's dependencies from source.
+Afterwards you can navigate to the `examples` folder and run the examples.
+
+```sh
+cd examples/one_tank
+python run.py
+```
 
 !!! todo
         Explain how to:
-            1. Run the example from source
             2. Run the example using hatch
 
 [^1]: <https://de.mathworks.com/help/slcontrol/ug/watertank-simulink-model.html>.
