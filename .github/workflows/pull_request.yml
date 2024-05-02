@@ -1,7 +1,7 @@
 name: Check
 on: [pull_request]
 jobs:
-  ruff:
+  format-and-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,3 +17,6 @@ jobs:
       - name: Check Formatting
         run: |
           hatch fmt --check
+      - name: Check Types
+        run: |
+          hatch run types:check
