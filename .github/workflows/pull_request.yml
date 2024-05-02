@@ -19,7 +19,7 @@ jobs:
           hatch fmt --check
       - name: Check Types
         run: |
-          hatch run types:check
+          hatch --verbose run types:check
 
   test:
     runs-on: ubuntu-latest
@@ -36,4 +36,4 @@ jobs:
           hatch --version
       - name: Run Tests
         run: |
-          hatch run tests:report-xml
+          hatch --verbose run tests:report-xml
