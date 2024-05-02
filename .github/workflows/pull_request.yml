@@ -1,13 +1,14 @@
-name: learn-github-actions
-run-name: ${{ github.actor }} is learning GitHub Actions
-on: [push]
+name: Check
+on: [pull_request]
 jobs:
-  check-bats-version:
+  ruff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: '20'
-      - run: npm install -g bats
-      - run: bats -v
+          cache: "pip"
+      - name: Install Hatch
+        run: |
+          python -m pip install --upgrade pip 
+          pip install hatch
