@@ -10,9 +10,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
-            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -37,9 +34,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
-            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -64,9 +58,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
-            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -96,9 +87,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
-            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
