@@ -10,6 +10,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -34,6 +37,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -58,6 +64,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -74,7 +83,7 @@ jobs:
       - name: Create Environment
         run: |
           hatch --verbose env create examples
-      - name: Run Tests
+      - name: Run Example
         run: |
           hatch --verbose run examples:${{ matrix.example }}
 
@@ -87,6 +96,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            .github/workflows/pull_request.yml
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
