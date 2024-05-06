@@ -1,5 +1,8 @@
 name: Check
-on: [pull_request]
+on: 
+  pull_request:
+  push: 
+    branches: ["main"]
 jobs:
   format-and-lint:
     name: Check Formatting and Lint
@@ -98,3 +101,7 @@ jobs:
       - name: Build Documentation
         run: |
           hatch --verbose run docs:build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./site/"
