@@ -3,6 +3,7 @@ on:
   pull_request:
   push: 
     branches: ["main"]
+  merge_group:
 jobs:
   format-and-lint:
     name: Check Formatting and Lint
