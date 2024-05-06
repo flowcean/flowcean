@@ -54,7 +54,7 @@ class MatchSamplingRate(Transform):
 
 
     Note that the used feature `time_feature_b` is still
-    present in the DataFrame. To remove it use :class:`.SelectTransform`.
+    present in the DataFrame. To remove it use the `select` transform.
     """
 
     def __init__(
