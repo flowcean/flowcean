@@ -1,7 +1,7 @@
 import logging
 
 import polars as pl
-from scipy.interpolate import interp1d
+from numpy import interp
 
 from flowcean.core import Transform
 
@@ -76,14 +76,10 @@ class MatchSamplingRate(Transform):
             ) in self.feature_columns_with_timestamps.items():
                 timestamps = data[timestamp][i].to_numpy()
                 feature_data = data[feature][i].to_numpy()
-                interp_func = interp1d(
+                resampled_timeseries = interp(
+                    reference_timestamps,
                     timestamps,
                     feature_data,
-                    axis=0,
-                    fill_value="extrapolate",
-                )
-                resampled_timeseries = interp_func(
-                    reference_timestamps
                 ).tolist()
                 data = (
                     data.lazy()
