@@ -18,6 +18,8 @@ jobs:
   documentation:
     name: Build Documentation
     runs-on: self-hosted
+    env:
+      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -6,6 +6,8 @@ jobs:
   format-and-lint:
     name: Check Formatting and Lint
     runs-on: self-hosted
+    env:
+      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,6 +31,8 @@ jobs:
   tests:
     name: Run Tests
     runs-on: self-hosted
+    env:
+      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,6 +56,11 @@ jobs:
       matrix:
         example: ["boiler", "failure_time_prediction", "linear_data"]
     runs-on: self-hosted
+    container:
+      image: ubuntu
+      options: --user=1000:1000
+    env:
+      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -69,7 +78,7 @@ jobs:
           dvc remote modify --local tuhh-cloud password ${{ secrets.TUHH_CLOUD_DVC_SHARE_PASSWORD }}
       - name: DVC pull
         run: |
-          dvc pull --recursive examples/${{ matrix.example }}
+          dvc pull --verbose --recursive examples/${{ matrix.example }}
       - name: Create Environment
         run: |
           hatch --verbose env create examples
@@ -80,6 +89,8 @@ jobs:
   documentation:
     name: Build Documentation
     runs-on: self-hosted
+    env:
+      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
