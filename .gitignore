@@ -1,5 +1,4 @@
 lightning_logs/
-.nox/
 
 #   Byte-compiled / optimized / DLL files
 __pycache__/

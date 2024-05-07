@@ -1,0 +1,44 @@
+name: Deploy Pages
+
+on: 
+  push: 
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  documentation:
+    name: Build Documentation
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Install Hatch
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch
+          hatch --version
+      - name: Create Environment
+        run: |
+          hatch --verbose env create docs
+      - name: Build Documentation
+        run: |
+          hatch --verbose run docs:build
+      - uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
