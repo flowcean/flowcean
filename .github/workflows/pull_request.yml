@@ -5,13 +5,12 @@ on:
 jobs:
   format-and-lint:
     name: Check Formatting and Lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-          cache: "pip"
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -29,13 +28,12 @@ jobs:
 
   tests:
     name: Run Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-          cache: "pip"
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -53,13 +51,12 @@ jobs:
     strategy:
       matrix:
         example: ["boiler", "failure_time_prediction", "linear_data"]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-          cache: "pip"
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -82,13 +79,12 @@ jobs:
 
   documentation:
     name: Build Documentation
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-          cache: "pip"
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
