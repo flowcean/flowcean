@@ -52,6 +52,8 @@ jobs:
       matrix:
         example: ["boiler", "failure_time_prediction", "linear_data"]
     runs-on: self-hosted
+    container:
+      image: ubuntu
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
