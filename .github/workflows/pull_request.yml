@@ -6,11 +6,11 @@ jobs:
   format-and-lint:
     name: Check Formatting and Lint
     runs-on: self-hosted
-    container:
-      image: python
-      options: --user=1000:1000
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -29,11 +29,11 @@ jobs:
   tests:
     name: Run Tests
     runs-on: self-hosted
-    container:
-      image: python
-      options: --user=1000:1000
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -52,11 +52,11 @@ jobs:
       matrix:
         example: ["boiler", "failure_time_prediction", "linear_data"]
     runs-on: self-hosted
-    container:
-      image: python
-      options: --user=1000:1000
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
@@ -80,11 +80,11 @@ jobs:
   documentation:
     name: Build Documentation
     runs-on: self-hosted
-    container:
-      image: python
-      options: --user=1000:1000
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
       - name: Install Hatch
         run: |
           python -m pip install --upgrade pip
