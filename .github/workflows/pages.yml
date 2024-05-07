@@ -19,7 +19,7 @@ jobs:
     name: Build Documentation
     runs-on: self-hosted
     container:
-      image: python
+      image: fedora
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
