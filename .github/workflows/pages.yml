@@ -18,6 +18,8 @@ jobs:
   documentation:
     name: Build Documentation
     runs-on: self-hosted
+    container:
+      image: ubuntu
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
