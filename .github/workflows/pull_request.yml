@@ -70,6 +70,7 @@ jobs:
           pip install dvc dvc-webdav
           dvc --version
           dvc remote modify --local tuhh-cloud password ${{ secrets.TUHH_CLOUD_DVC_SHARE_PASSWORD }}
+          dvc config cache.dir ../dvc_cache
       - name: DVC pull
         run: |
           dvc pull --verbose --recursive examples/${{ matrix.example }}
