@@ -2,12 +2,11 @@ name: Check
 on: 
   pull_request:
   merge_group:
+
 jobs:
   format-and-lint:
     name: Check Formatting and Lint
     runs-on: self-hosted
-    env:
-      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,8 +30,6 @@ jobs:
   tests:
     name: Run Tests
     runs-on: self-hosted
-    env:
-      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,7 +54,6 @@ jobs:
         example: ["boiler", "failure_time_prediction", "linear_data"]
     runs-on: self-hosted
     env:
-      HATCH_DATA_DIR: .hatch
       CUDA_VISIBLE_DEVICES: ""
     steps:
       - uses: actions/checkout@v4
@@ -87,8 +83,6 @@ jobs:
   documentation:
     name: Build Documentation
     runs-on: self-hosted
-    env:
-      HATCH_DATA_DIR: .hatch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
