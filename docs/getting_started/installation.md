@@ -6,7 +6,7 @@ Consult [Preparation](preparation.md) or the official [python documentation](htt
 Install the flowcean package:
 
 ```sh
-$ pip install -e .
+pip install -e .
 ```
 
 For the full functioning experience, flowcean splits its features into optional dependency packages.
