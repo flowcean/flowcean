@@ -2,7 +2,7 @@ name: Deploy Pages
 
 on: 
   push: 
-    branches: ["deploy-mkdocs-pages"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
