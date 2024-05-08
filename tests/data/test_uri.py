@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from flowcean.data.uri import (
+from flowcean.environments.uri import (
     InvalidUriSchemeError,
     _file_uri_to_path,
 )

@@ -9,7 +9,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from flowcean.core import SupervisedLearner
-from flowcean.data.pytorch import TorchDataset
+from flowcean.environments.pytorch import TorchDataset
 from flowcean.models.pytorch import PyTorchModel
 
 if TYPE_CHECKING:

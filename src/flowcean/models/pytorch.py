@@ -8,7 +8,7 @@ from torch.nn import Module
 from torch.utils.data import DataLoader
 
 from flowcean.core.model import Model
-from flowcean.data.pytorch import TorchDataset
+from flowcean.environments.pytorch import TorchDataset
 
 
 class PyTorchModel(Model):

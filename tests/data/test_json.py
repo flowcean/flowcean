@@ -7,7 +7,7 @@ import pytest
 from polars.testing import assert_frame_equal
 
 from flowcean.core.environment import NotLoadedError
-from flowcean.data.json import JsonDataLoader
+from flowcean.environments.json import JsonDataLoader
 
 
 class TestJsonDataLoader(unittest.TestCase):
