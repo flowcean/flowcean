@@ -1,56 +1,17 @@
-import logging
+#!/usr/bin/env python
 
-import flowcean.cli
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.environments.uri import UriDataLoader
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from flowcean.strategies.offline import learn_offline
-from flowcean.transforms import Select, SlidingWindow, Standardize
-
-logger = logging.getLogger(__name__)
+from boiler import Boiler, Heating
+from matplotlib import pyplot as plt
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
-
-    data = UriDataLoader(
-        uri="file:./data/trace_287401a5.csv",
-    ).with_transform(
-        Select(features=["reference", "temperature"])
-        | SlidingWindow(window_size=3),
+    boiler = Boiler(
+        initial_mode=Heating(temperature=0.0, timeout=0.0),
+        sampling_time=0.1,
     )
-    data.load()
-    data.get_data()
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
-
-    input_transform = Standardize()
-    learner = RegressionTree()
-    inputs = [
-        "reference_0",
-        "temperature_0",
-        "reference_1",
-        "temperature_1",
-        "reference_2",
-    ]
-    outputs = ["temperature_2"]
-    model = learn_offline(
-        train,
-        learner,
-        inputs,
-        outputs,
-        input_transform=input_transform,
-    )
-
-    logger.info("Evaluating model")
-    report = evaluate(
-        model,
-        test,
-        inputs,
-        outputs,
-        [MeanAbsoluteError(), MeanSquaredError()],
-    )
-    print(report)
+    states = boiler.simulate(1000)
+    plt.plot(states)
+    plt.show()
 
 
 if __name__ == "__main__":

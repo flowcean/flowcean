@@ -18,6 +18,7 @@ dependencies = [
   "polars",
   "ruamel.yaml",
   "typing-extensions",
+  "matplotlib",
 ]
 
 [project.urls]
