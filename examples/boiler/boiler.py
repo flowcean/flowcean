@@ -1,21 +1,39 @@
+import copy
 import random
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-from typing import override
+from typing import Self, override
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.integrate import solve_ivp
 
 
-class Mode(ABC):
+class State(ABC):
     @abstractmethod
-    def state(self) -> NDArray[np.float64]:
+    def as_numpy(self) -> NDArray[np.float64]:
         pass
 
+    @classmethod
     @abstractmethod
-    def from_state(self, state: NDArray[np.float64]) -> None:
+    def from_numpy(cls, state: NDArray[np.float64]) -> Self:
         pass
+
+
+class DifferentialMode[X: State, Input](ABC):
+    t: float
+
+    def __init__(self, t: float) -> None:
+        self.t = t
+
+    def step(self, state: X, dt: float) -> X:
+        solution = solve_ivp(
+            self.differential_flow,
+            t_span=[self.t, self.t + dt],
+            y0=state.as_numpy(),
+        )
+        self.t = solution.t[-1]
+        return state.from_numpy(solution.y[:, -1])
 
     @abstractmethod
     def differential_flow(
@@ -26,29 +44,32 @@ class Mode(ABC):
         pass
 
     @abstractmethod
-    def transition(self) -> "Mode":
+    def transition(self, state: X, i: Input) -> "DifferentialMode[X, Input]":
         pass
 
 
-class Heating(Mode):
+class Temperature(State):
     temperature: float
-    timeout: float
+
+    def __init__(self, temperature: float) -> None:
+        self.temperature = temperature
+
+    @override
+    def as_numpy(self) -> NDArray[np.float64]:
+        return np.array([self.temperature])
+
+    @override
+    @classmethod
+    def from_numpy(cls, state: NDArray[np.float64]) -> Self:
+        return cls(state[0])
+
+
+type TargetTemperature = float
+
+
+class Heating(DifferentialMode[Temperature, TargetTemperature]):
     heating_rate: float = 0.5
     maximum_timeout: float = 1.0
-    target_temperature: float = 5.0
-
-    def __init__(self, temperature: float, timeout: float) -> None:
-        self.temperature = temperature
-        self.timeout = timeout
-
-    @override
-    def state(self) -> NDArray[np.float64]:
-        return np.array([self.temperature, self.timeout])
-
-    @override
-    def from_state(self, state: NDArray[np.float64]) -> None:
-        self.temperature = state[0]
-        self.timeout = state[1]
 
     @override
     def differential_flow(
@@ -57,37 +78,22 @@ class Heating(Mode):
         state: NDArray[np.float64],
     ) -> NDArray[np.float64]:
         _ = t
-        return np.array([self.heating_rate, 1])
+        return np.array([self.heating_rate])
 
     @override
-    def transition(self) -> Mode:
-        if (
-            self.temperature > self.target_temperature
-            or self.timeout > self.maximum_timeout
-        ):
-            return Cooling(self.temperature, 0.0)
+    def transition(
+        self,
+        state: Temperature,
+        i: TargetTemperature,
+    ) -> DifferentialMode[Temperature, TargetTemperature]:
+        if state.temperature > i or self.t > self.maximum_timeout:
+            return Cooling(t=0.0)
         return self
 
 
-class Cooling(Mode):
-    temperature: float
-    timeout: float
+class Cooling(DifferentialMode[Temperature, TargetTemperature]):
     cooling_rate: float = 0.1
     minimum_timeout: float = 1.0
-    target_temperature: float = 5.0
-
-    def __init__(self, temperature: float, timeout: float) -> None:
-        self.temperature = temperature
-        self.timeout = timeout
-
-    @override
-    def state(self) -> NDArray[np.float64]:
-        return np.array([self.temperature, self.timeout])
-
-    @override
-    def from_state(self, state: NDArray[np.float64]) -> None:
-        self.temperature = state[0]
-        self.timeout = state[1]
 
     @override
     def differential_flow(
@@ -96,54 +102,38 @@ class Cooling(Mode):
         state: NDArray[np.float64],
     ) -> NDArray[np.float64]:
         _ = t
-        return np.array([-self.cooling_rate, 1])
+        return np.array([-self.cooling_rate])
 
     @override
-    def transition(self) -> Mode:
-        if (
-            self.temperature < self.target_temperature
-            and self.timeout > self.minimum_timeout
-        ):
-            return Heating(self.temperature, 0.0)
+    def transition(
+        self,
+        state: Temperature,
+        i: TargetTemperature,
+    ) -> DifferentialMode[Temperature, TargetTemperature]:
+        if state.temperature < i and self.t > self.minimum_timeout:
+            return Heating(t=0.0)
         return self
 
 
-class Boiler:
-    mode: Mode
-    sampling_time: float
-    t: float = 0.0
+def simulate[X: State, Input](
+    initial_state: X,
+    initial_mode: DifferentialMode[X, Input],
+    inputs: Iterator[Input],
+    sampling_time: float,
+) -> list[X]:
+    mode = initial_mode
+    state = initial_state
+    states = []
 
-    def __init__(
-        self,
-        initial_mode: Mode,
-        sampling_time: float,
-    ) -> None:
-        self.mode = initial_mode
-        self.sampling_time = sampling_time
+    for i in inputs:
+        state = mode.step(state, sampling_time)
+        mode = mode.transition(state, i)
+        states.append(copy.deepcopy(state))
 
-    def step(self, dt: float) -> None:
-        time_span = [self.t, self.t + dt]
-        solution = solve_ivp(
-            self.mode.differential_flow,
-            time_span,
-            self.mode.state(),
-        )
-        self.mode.from_state(solution.y[:, -1])
-        self.t += dt
-
-        self.mode = self.mode.transition()
-
-    def simulate(self, n: int) -> list[NDArray[np.float64]]:
-        states = [self.mode.state()]
-
-        for _ in range(n):
-            self.step(self.sampling_time)
-            states.append(self.mode.state())
-
-        return states
+    return states
 
 
-def random_references(
+def randomly_changing_values(
     n: int,
     change_probability: float,
     minimum: float,
