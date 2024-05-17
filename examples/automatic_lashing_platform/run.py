@@ -1,7 +1,7 @@
 from loader import AlpDataLoader
 
 import flowcean.cli
-from flowcean.data.train_test_split import TrainTestSplit
+from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
 from flowcean.strategies.offline import learn_offline

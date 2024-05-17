@@ -7,7 +7,7 @@ import pytest
 from polars.testing import assert_frame_equal
 
 from flowcean.core.environment import NotLoadedError
-from flowcean.data.csv import CsvDataLoader
+from flowcean.environments.csv import CsvDataLoader
 
 
 class TestCsvDataLoader(unittest.TestCase):

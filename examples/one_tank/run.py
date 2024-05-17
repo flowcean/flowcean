@@ -5,9 +5,9 @@ from typing import NamedTuple
 import numpy as np
 
 import flowcean.cli
-from flowcean.data.dataset import Dataset
-from flowcean.data.ode_environment import ODEEnvironment
-from flowcean.data.train_test_split import TrainTestSplit
+from flowcean.environments.dataset import Dataset
+from flowcean.environments.ode_environment import ODEEnvironment
+from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate

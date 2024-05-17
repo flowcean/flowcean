@@ -5,8 +5,8 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from flowcean.data.dataset import Dataset
-from flowcean.data.train_test_split import TrainTestSplit
+from flowcean.environments.dataset import Dataset
+from flowcean.environments.train_test_split import TrainTestSplit
 
 
 class TestTrainTestSplit(unittest.TestCase):

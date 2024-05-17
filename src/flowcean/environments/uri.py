@@ -6,8 +6,8 @@ import polars as pl
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError
-from flowcean.data.csv import CsvDataLoader
-from flowcean.data.parquet import ParquetDataLoader
+from flowcean.environments.csv import CsvDataLoader
+from flowcean.environments.parquet import ParquetDataLoader
 
 
 class UnsupportedFileTypeError(Exception):

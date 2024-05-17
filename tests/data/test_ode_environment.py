@@ -9,7 +9,10 @@ import pytest
 from polars.testing import assert_frame_equal
 from scipy.linalg import expm
 
-from flowcean.data.ode_environment import IntegrationError, ODEEnvironment
+from flowcean.environments.ode_environment import (
+    IntegrationError,
+    ODEEnvironment,
+)
 
 
 class TestODEEnvironment(unittest.TestCase):
