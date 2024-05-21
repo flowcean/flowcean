@@ -11,7 +11,7 @@ This document is periodically reviewed and updated based on the evolving needs o
 - **Languages:**
   The project primarily uses Python for implementation, supporting multiple programming languages within the modular pipeline.
 - **Version Control:**
-  Git is employed for code versioning, hosted on GitLab.
+  Git is employed for code versioning, hosted on GitHub.
   All changes must undergo a review process via merge requests before merging into the main branch.
 - **CI/CD:**
   Continuous Integration and Continuous Deployment pipelines are used for testing, checking, and deploying the code.
@@ -37,7 +37,7 @@ This document is periodically reviewed and updated based on the evolving needs o
 
 ## Development Process
 
-- Discuss and assign responsibilities for development changes via GitLab issues.
+- Discuss and assign responsibilities for development changes via GitHub issues.
 - Encourage pair programming when necessary.
 - Every development change should undergo a short design phase and code review.
 - Adhere to good scientific practice standards.
@@ -57,7 +57,7 @@ This document is periodically reviewed and updated based on the evolving needs o
   - The author is resposible to address the comments and answer questions.
   - During dicussion, only the person who opened the discussion is allowed to resolve the discussion. This reduces the risk of misscommunication and maintains accountability. Only the author of the comment is able to decide whether a discussion is resolved.
   - The merge request must only be merged as soon as all comments are resolved and the CI pipeline passes.
-- Team communication is mainly via GitLab comments and regular software meetings.
+- Team communication is mainly via GitHub comments and regular software meetings.
 - Open issues for bugs, open tasks, or discussions to archive the decision and design process of the project.
 
 ## Testing
