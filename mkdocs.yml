@@ -1,4 +1,7 @@
 site_name: Flowcean
+repo_url: https://github.com/flowcean/flowcean
+repo_name: flowcean/flowcean
+
 theme:
   name: "material"
   features:
@@ -25,6 +28,8 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to system preference
+  icon:
+    repo: fontawesome/brands/github
 
 plugins:
   - mkdocstrings:
