@@ -1,6 +1,6 @@
 # Flowcean Modules
 
-One of Flowcean's core features is to allow you to combine preprocessing, learning, evaluation, and postprocessing in whichever way you like!
+One of Flowcean's core features is to allow you to combine preprocessing, learning, evaluation, and postprocessing in whichever way you like.
 This is achieved by organizing functionalities in modules as shown in th figure below.
 
 ![Flowcean Modules](../assets/flowcean_modules.svg)

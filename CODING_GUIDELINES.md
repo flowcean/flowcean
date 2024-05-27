@@ -54,8 +54,8 @@ This document is periodically reviewed and updated based on the evolving needs o
   - All non-authors are implicitly tasked to review MRs
   - If there are multiple authors involved in one MR, approval by a non-author is not mandatory.
   - A review should check that the proposed changes comply to our coding guidelines, and carefully evaluate whether the changes are useful and intended.
-  - The author is resposible to address the comments and answer questions.
-  - During dicussion, only the person who opened the discussion is allowed to resolve the discussion. This reduces the risk of misscommunication and maintains accountability. Only the author of the comment is able to decide whether a discussion is resolved.
+  - The author is responsible to address the comments and answer questions.
+  - During discussion, only the person who opened the discussion is allowed to resolve the discussion. This reduces the risk of misscommunication and maintains accountability. Only the author of the comment is able to decide whether a discussion is resolved.
   - The merge request must only be merged as soon as all comments are resolved and the CI pipeline passes.
 - Team communication is mainly via GitHub comments and regular software meetings.
 - Open issues for bugs, open tasks, or discussions to archive the decision and design process of the project.

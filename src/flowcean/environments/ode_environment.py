@@ -29,7 +29,7 @@ class ODEEnvironment(IncrementalEnvironment):
     $$
 
     where $f$ is the differential function, $\vec{x}$ the current state,
-    $\dot{\vec{x}}$ it's derivativ and $\vec{y}$ is the output calculated by
+    $\dot{\vec{x}}$ it's derivative and $\vec{y}$ is the output calculated by
     the output function $g$.
 
     Args:

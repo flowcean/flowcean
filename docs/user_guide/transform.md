@@ -13,4 +13,4 @@ These transformations are essential for preparing data for machine learning task
 In AGenC, we use the generalized term _transform_ for all types of _pre-processing of data_, _feature engineering_, and _data augmentation_, as they all involve the same fundamental concept of transforming data to get a modified dataset.
 
 AGenC provides a flexible and unified interface to apply transforms to data.
-The framework allows to combine these transforming steps steps as needed.
+The framework allows to combine these transforming steps as needed.

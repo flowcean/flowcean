@@ -7,7 +7,7 @@ Flowcean provides standard learning strategies implementing so-called learning p
 Offline learning strategies involve processing a fixed
 batch of data at once, updating model parameters in one go. This approach is commonly
 used by methods such as supervised learning, where the learner gains knowledge from a pre-
-collected dataset. In the ML community this is also refered to as batch learning. Within Flowcean this is called **Offline Learning**.  
+collected dataset. In the ML community this is also referred to as batch learning. Within Flowcean this is called **Offline Learning**.  
 
 On the other hand, online learning takes place incrementally, with the learner updating the
 model continuously. In each incremental step, the learner processes small subsets of available
