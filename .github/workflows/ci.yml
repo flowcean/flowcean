@@ -2,10 +2,13 @@ name: CI
 on: 
   pull_request:
   merge_group:
+    types: [checks_requested]
+env:
+  HATCH_DATA_DIR: ${{ GITHUB_WORKSPACE }}/../hatch_data
 
 jobs:
-  format-and-lint:
-    name: Check Formatting and Lint
+  formatting:
+    name: Check Formatting
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -14,7 +17,15 @@ jobs:
       - name: Check Formatting
         run: |
           hatch fmt --check
-      - name: Check types
+
+  types:
+    name: Check Types
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Hatch
+        uses: pypa/hatch@install
+      - name: Check Types
         run: |
           hatch --verbose run types:check
 
@@ -27,7 +38,7 @@ jobs:
         uses: pypa/hatch@install
       - name: Run Tests
         run: |
-          hatch --verbose run tests:report-xml
+          hatch --verbose test
 
   examples:
     name: Run Examples
@@ -50,7 +61,7 @@ jobs:
       - name: DVC pull
         run: |
           dvc pull --verbose --recursive examples/${{ matrix.example }}
-      - name: Run Example
+      - name: Run Example [${{ matrix.example }}]
         run: |
           hatch --verbose run examples:${{ matrix.example }}
 

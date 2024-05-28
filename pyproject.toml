@@ -110,6 +110,11 @@ features = [
   "all",
 ]
 
+[tool.hatch.envs.hatch-test]
+features = [
+  "all",
+]
+
 [tool.hatch.envs.hatch-static-analysis]
 config-path = "ruff.toml"
 
