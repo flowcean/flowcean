@@ -50,6 +50,10 @@ jobs:
       CUDA_VISIBLE_DEVICES: ""
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: Install Hatch
         uses: pypa/hatch@install
       - name: Install and Setup DVC
@@ -57,7 +61,7 @@ jobs:
           pip install dvc dvc-webdav
           dvc --version
           dvc remote modify --local tuhh-cloud password ${{ secrets.TUHH_CLOUD_DVC_SHARE_PASSWORD }}
-          dvc config cache.dir ../dvc_cache
+          dvc config cache.dir $GITHUB_WORKSPACE/../dvc_cache
       - name: DVC pull
         run: |
           dvc pull --verbose --recursive examples/${{ matrix.example }}
