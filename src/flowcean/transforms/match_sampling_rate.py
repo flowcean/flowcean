@@ -12,17 +12,9 @@ class MatchSamplingRate(Transform):
     """Matches the sampling rate of all time series in the DataFrame.
 
     Interpolates the time series to match the sampling rate of the reference
-    time series.
-
-    Args:
-        reference_timestamps (str): Timestamps of the reference feature.
-        feature_columns_with_timestamps (dict[str,str]): Names of the features
-        that are getting interpolated (keys) with their respective original
-        timestamp columns (values).
-
-    The below example shows the usage of a `MatchSamplingRate` transform in an
-    `experiment.yaml` file. Assuming the loaded data is represented by the
-    table:
+    time series. The below example shows the usage of a `MatchSamplingRate`
+    transform in an `experiment.yaml` file. Assuming the loaded data is
+    represented by the table:
 
     | time_feature_a | feature_a | time_feature_b | feature_b | constant |
     | -------------- | --------- | -------------- | --------- | -------- |
@@ -62,6 +54,14 @@ class MatchSamplingRate(Transform):
         reference_timestamps: str,
         feature_columns_with_timestamps: dict[str, str],
     ) -> None:
+        """Initialize the MatchSamplingRate transform.
+
+        Args:
+            reference_timestamps: Timestamps of the reference feature.
+            feature_columns_with_timestamps: Names of the features that are
+                getting interpolated with their respective original timestamp
+                feature names.
+        """
         self.reference_timestamps = reference_timestamps
         self.feature_columns_with_timestamps = feature_columns_with_timestamps
 
