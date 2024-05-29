@@ -11,17 +11,17 @@ from scipy.linalg import expm
 
 from flowcean.environments.ode_environment import (
     IntegrationError,
-    ODEEnvironment,
+    OdeEnvironment,
 )
 
 
-class TestODEEnvironment(unittest.TestCase):
+class TestOdeEnvironment(unittest.TestCase):
     def test_length(self) -> None:
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda _, x: np.array([-1 / 2 * x[0]]),
             np.array([1]),
         )
-        # For the ODEEnvironment this call does nothing, but by convention
+        # For the OdeEnvironment this call does nothing, but by convention
         # `load` should still be called
         environment.load()
         loaded_data = environment.take(10)
@@ -34,7 +34,7 @@ class TestODEEnvironment(unittest.TestCase):
             },
         )
 
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda _, x: np.array([-1 / 2 * x[0]]),
             np.array([1]),
         )
@@ -56,7 +56,7 @@ class TestODEEnvironment(unittest.TestCase):
             },
         )
 
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda t, x: np.array([t / x[0]]),
             np.array([1]),
         )
@@ -77,7 +77,7 @@ class TestODEEnvironment(unittest.TestCase):
                 "result": [np.exp(-1 / 2 * t) for t in range(10)],
             },
         )
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda _, x: np.array([-1 / 2 * x[0]]),
             np.array([1]),
             output_names=["result"],
@@ -100,7 +100,7 @@ class TestODEEnvironment(unittest.TestCase):
                 "y": [np.exp(-1 / 2 * t) * 2 for t in range(10)],
             },
         )
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda _, x: np.array([-1 / 2 * x[0]]),
             np.array([1]),
             g=lambda t, x: np.array([t, x[0] * 2]),
@@ -132,7 +132,7 @@ class TestODEEnvironment(unittest.TestCase):
             schema=["y_0", "y_1"],
         )
 
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda _, x: np.matmul(A, x),
             x0,
             implicit_integration=True,
@@ -149,7 +149,7 @@ class TestODEEnvironment(unittest.TestCase):
         )
 
     def test_integration_error(self) -> None:
-        environment = ODEEnvironment(
+        environment = OdeEnvironment(
             lambda _, x: -np.array(np.sqrt(x[0])),
             np.array([1]),
         )
