@@ -13,8 +13,8 @@ First step when using Flowcean is to think about your problem at hand and specif
 According to these questions flowcean offers different learning environments (offline, incremental and active).
 To decide what kind approach you need see (link).
 
-In this examle we a simulation that requires a floating point value as input and returns a value as output (randomly chosen in this case).
-The objective of the learning process is to to predict the output based on the simulation's input value.
+In this example we a simulation that requires a floating point value as input and returns a value as output (randomly chosen in this case).
+The objective of the learning process is to predict the output based on the simulation's input value.
 
 The best fitting flowcean environment for this simulation is an ActiveOnlineEnvironment.
 This type of environment requires a learning algorithm that is able to perform active learning e.g.
@@ -56,7 +56,7 @@ We will come to this.
 
 The last piece we need is a learning strategy.
 For this example we chose the active learning strategy as we have a simulation as our data source.
-The strategy is implemented as a modell.
+The strategy is implemented as a model.
 
 ```python
 from flowcean.strategies.active import learn_active
@@ -138,7 +138,7 @@ The *last_action* will store the current input of the simulation and is used to 
 Note that those definitions are only used for the example environment described earlier.
 
 Your actual environment object might need more variables.
-Flowcean allows yout to specify your environment according to the characteristics of your data source.
+Flowcean allows you to specify your environment according to the characteristics of your data source.
 
 Next, we need to define the function to provide inputs for the simulation.
 
@@ -163,7 +163,7 @@ To step the simulation, we need to define a function as well:
 
 Here, we would call the actual simulation object to perform calculations based on the inputs provided earlier.
 In this example, we will simply get a new *state* value and decrease the simulation counter.
-In case we reached the maximum number of steps, we will raise a `StopLearning` exeption to stop the learning process.
+In case we reached the maximum number of steps, we will raise a `StopLearning` exception to stop the learning process.
 
 The last crucial function to implement is the `observe` function.
 
@@ -246,7 +246,7 @@ class MyEnvironment(ActiveOnlineEnvironment[Action, ReinforcementObservation]):
 ### Writing your own learning algorithm
 
 In Flowcean, the learning approach is based on mainly two classes — *learner* and *model*.
-While the actual learning is implemented in the *learner* class, the modell can be seen as the result of the learning exp.
+While the actual learning is implemented in the *learner* class, the model can be seen as the result of the learning exp.
 a function to predict output values based a given input.
 The model itself can be stored and loaded for later applications and use cases.
 
@@ -348,8 +348,8 @@ class MyModel(Model):
         )
 ```
 
-This is the actual application of the modell.
-The `predict` funtion returns a data frame based on the undelying function, learnend by the learner.
+This is the actual application of the model.
+The `predict` function returns a data frame based on the underlying function, learnend by the learner.
 
 
 ```python 

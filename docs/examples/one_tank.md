@@ -103,7 +103,7 @@ train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 ```
 
 With the training data generated, fully transformed and split it's time to use learning algorithms to learn the prediction function from the beginning of this section.
-We use two different learners which both belong the the category of [offline learners](../user_guide/learning_strategies.md).
+We use two different learners which both belong the category of [offline learners](../user_guide/learning_strategies.md).
 
 First, a [regression tree](../reference/flowcean/learners/regression_tree.md) is used to learn a model.
 The implementation of this learner is part of the scikit-learn library.

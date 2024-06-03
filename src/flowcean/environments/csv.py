@@ -14,23 +14,23 @@ class CsvDataLoader(OfflineEnvironment):
     """DataLoader for CSV files."""
 
     path: Path
-    seperator: str
+    separator: str
     data: pl.DataFrame | None = None
 
-    def __init__(self, path: str | Path, seperator: str = ",") -> None:
+    def __init__(self, path: str | Path, separator: str = ",") -> None:
         """Initialize the CsvDataLoader.
 
         Args:
             path: Path to the CSV file.
-            seperator: Value seperator. Defaults to ",".
+            separator: Value separator. Defaults to ",".
         """
         self.path = Path(path)
-        self.seperator = seperator
+        self.separator = separator
 
     @override
     def load(self) -> Self:
         logger.info("Loading data from %s", self.path)
-        self.data = pl.read_csv(self.path, separator=self.seperator)
+        self.data = pl.read_csv(self.path, separator=self.separator)
         self.data.columns = [
             column_name.strip() for column_name in self.data.columns
         ]

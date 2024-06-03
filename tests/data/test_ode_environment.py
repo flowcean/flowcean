@@ -21,7 +21,7 @@ class TestODEEnvironment(unittest.TestCase):
             lambda _, x: np.array([-1 / 2 * x[0]]),
             np.array([1]),
         )
-        # For the ODEEnviornment this call does nothing, but by convention
+        # For the ODEEnvironment this call does nothing, but by convention
         # `load` should still be called
         environment.load()
         loaded_data = environment.take(10)
