@@ -99,4 +99,4 @@ jobs:
           hatch --verbose env create docs
       - name: Build Documentation
         run: |
-          hatch --verbose run docs:build
+          hatch --verbose run docs:build --strict

@@ -45,7 +45,7 @@ $$ x_n = f\left(V_n, x_{n-1}, V_{n-1}, x_{n-2}, V_{n-2}\right). $$
 To do this, we first need data to learn the functions representation in Flowcean.
 Normally this data would be recorded from a real CPS and imported into the framework as a CSV, ROS bag or something similar.
 However, since we know the differential equation describing the system behavior, we can also use this equation to generate data.
-We can do this by using an [`ODEEnvironment`](../reference/flowcean/data/ode_environment.md) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/environment/incremental.md) within the framework.
+We can do this by using an [`ODEEnvironment`](../reference/flowcean/environments/ode_environment.md) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/environment/incremental.md) within the framework.
 
 ```python
 parameters = {
@@ -79,7 +79,7 @@ The "measured" output of the environment has the form
    $x[N]$   |  $V[N]$
 
 Since the learners we will use later only support learning on a fixed amount of data (called "[offline learners](../user_guide/learning_strategies.md)" in the framework), we need to convert the incremental dataset into a fixed size dataset.
-This can be done by calling the [`take(N)`](../reference/flowcean/core/environment/incremental.md#flowcean.core.environment.incremental.IncrementalEnvironment.take) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`Dataset`](../reference/flowcean/data/dataset.md).
+This can be done by calling the [`take(N)`](../reference/flowcean/core/environment/incremental.md#flowcean.core.environment.incremental.IncrementalEnvironment.take) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`Dataset`](../reference/flowcean/environments/dataset.md).
 
 ```python
 data = Dataset(data_incremental.load().take(250))
@@ -95,7 +95,7 @@ data = data.with_transform(SlidingWindow(window_size=3))
 ```
 
 Now that the data is in the correct format, it can be split into a test set with 80% of the samples and a training set with the remaining 20%.
-This is done by using a [`TrainTestSplit`](../reference/flowcean/data/train_test_split.md) operation and helps with evaluating the learned models performance after training.
+This is done by using a [`TrainTestSplit`](../reference/flowcean/environments/train_test_split.md) operation and helps with evaluating the learned models performance after training.
 To make the learning less biased, the samples are shuffled before splitting.
 
 ```python
