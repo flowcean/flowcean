@@ -85,6 +85,7 @@ watch:
 
 nav:
   - Flowcean: index.md
+  - Research Project: agenc/
   - Getting Started:
     - Preparation: getting_started/preparation.md
     - Installation: getting_started/installation.md
