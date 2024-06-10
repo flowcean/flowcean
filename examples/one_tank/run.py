@@ -42,6 +42,8 @@ class OneTank(OdeSystem[TankState]):
 
     This class represents a one tank system. The system is defined by a
     differential flow function $f$ that governs the evolution of the state $x$.
+
+    This example is based on https://de.mathworks.com/help/slcontrol/ug/watertank-simulink-model.html.
     """
 
     def __init__(
@@ -78,8 +80,6 @@ class OneTank(OdeSystem[TankState]):
 
 def main() -> None:
     flowcean.cli.initialize_logging()
-
-    # This example is based on https://de.mathworks.com/help/slcontrol/ug/watertank-simulink-model.html.
 
     system = OneTank(
         area=5,
