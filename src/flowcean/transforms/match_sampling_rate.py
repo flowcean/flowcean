@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import polars as pl
 from numpy import interp
 
@@ -27,13 +28,17 @@ class MatchSamplingRate(Transform):
     `time_feature_a` and `feature_a`.
 
     ```
-        transforms:
-            - classpath: agenc.transforms.MatchSamplingRate
-                arguments:
-                    reference_timestamps: time_feature_a
-                    feature_columns_with_timestamps:
-                        feature_b: time_feature_b
-            - ...
+        ...
+        environment.load()
+        data = environment.get_data()
+        transform = MatchSamplingRate(
+            reference_timestamps="time_feature_a",
+            feature_columns_with_timestamps={
+                "feature_b": "time_feature_b"
+            },
+        )
+        transformed_data = transform.transform(data)
+        ...
     ```
 
     The resulting Dataframe after the transform is:
@@ -70,12 +75,25 @@ class MatchSamplingRate(Transform):
 
         for i in range(len(data)):
             reference_timestamps = data[self.reference_timestamps][i]
+            reference_timestamps_np = reference_timestamps.to_numpy()
+            if np.issubdtype(reference_timestamps_np.dtype, np.datetime64):
+                reference_timestamps = (
+                    reference_timestamps_np.astype("datetime64[us]").astype(
+                        np.int64
+                    )
+                    / 1e6
+                )
             for (
                 feature,
                 timestamp,
             ) in self.feature_columns_with_timestamps.items():
                 timestamps = data[timestamp][i].to_numpy()
                 feature_data = data[feature][i].to_numpy()
+                if np.issubdtype(timestamps.dtype, np.datetime64):
+                    timestamps = (
+                        timestamps.astype("datetime64[us]").astype(np.int64)
+                        / 1e6
+                    )
                 resampled_timeseries = interp(
                     reference_timestamps,
                     timestamps,

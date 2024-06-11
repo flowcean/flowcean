@@ -44,6 +44,10 @@ grpc = [
   "docker",
   "protobuf",
 ]
+ros = [
+  "rosbags",
+  "rosbags-dataframe",
+]
 
 [tool.mypy]
 strict = true

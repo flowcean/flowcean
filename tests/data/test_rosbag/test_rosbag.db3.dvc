@@ -1,0 +1,5 @@
+outs:
+- md5: 8367623f436eb5cd811b85fc008de10d
+  size: 396345344
+  hash: md5
+  path: test_rosbag.db3
