@@ -19,9 +19,6 @@ class TestRosbagEnvironment(unittest.TestCase):
                     "pose.pose.position.y",
                 ],
             },
-            custom_msgs_path=Path(
-                "src/flowcean/environments/ros_msgs/nav2_msgs/msg"
-            ),
         )
         environment.load()
         data = environment.get_data()

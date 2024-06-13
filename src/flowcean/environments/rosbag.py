@@ -1,6 +1,6 @@
 from os import listdir
 from pathlib import Path
-from typing import override
+from typing import Self, override
 
 import polars as pl
 from rosbags.dataframe import get_dataframe
@@ -32,17 +32,17 @@ class RosbagEnvironment(OfflineEnvironment):
         Args:
             path: Path to the rosbag.
             topics: Dictionary of topics to load. The keys are the topic names
-            and the values are lists of keys inside each message that shall be
-            extracted.
+                and the values are lists of keys inside each message that
+                shall be extracted.
             custom_msgs_path: Path to folder that contains custom ros message
-            descriptions.
+                descriptions.
         """
         self.path = Path(path)
         self.topics = topics
-        self.data = None
+        self.data = pl.DataFrame()
+        self.typestore = get_typestore(Stores.ROS2_HUMBLE)
 
         if custom_msgs_path:
-            self.typestore = get_typestore(Stores.ROS2_HUMBLE)
             add_types = {}
             for pathstr in listdir(custom_msgs_path):
                 msgpath = custom_msgs_path / Path(pathstr)
@@ -53,7 +53,7 @@ class RosbagEnvironment(OfflineEnvironment):
             self.typestore.register(add_types)
 
     @override
-    def load(self) -> None:
+    def load(self) -> Self:
         with AnyReader(
             [self.path], default_typestore=self.typestore
         ) as reader:
@@ -77,6 +77,7 @@ class RosbagEnvironment(OfflineEnvironment):
                     how="horizontal",
                 )
             self.data = joined_df
+        return self
 
     @override
     def get_data(self) -> pl.DataFrame:
