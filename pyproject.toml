@@ -18,6 +18,8 @@ dependencies = [
   "polars",
   "ruamel.yaml",
   "typing-extensions",
+  "rosbags",
+  "rosbags-dataframe",
 ]
 
 [project.urls]
@@ -30,6 +32,7 @@ all = [
   "flowcean[sklearn]",
   "flowcean[lightning]",
   "flowcean[grpc]",
+  "flowcean[ros]",
 ]
 
 sklearn = [
