@@ -6,7 +6,7 @@ from flowcean.environments.rosbag import RosbagEnvironment
 
 class TestRosbagEnvironment(unittest.TestCase):
     def test_rosbag_loader_multiple_topics(self) -> None:
-        path = Path("tests/data/test_rosbag")
+        path = Path("examples/ros_offline/test_rosbag")
         environment = RosbagEnvironment(
             path=path,
             topics={
