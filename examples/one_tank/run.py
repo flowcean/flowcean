@@ -48,9 +48,12 @@ class OneTank(OdeSystem[TankState]):
 
     def __init__(
         self,
+        *,
         area: float,
         outflow_rate: float,
         inflow_rate: float,
+        initial_t: float = 0,
+        initial_state: TankState,
     ) -> None:
         """Initialize the one tank system.
 
@@ -58,7 +61,13 @@ class OneTank(OdeSystem[TankState]):
             area: Area of the tank.
             outflow_rate: Outflow rate.
             inflow_rate: Inflow rate.
+            initial_t: Initial time (default: 0).
+            initial_state: Initial state.
         """
+        super().__init__(
+            initial_t,
+            initial_state,
+        )
         self.area = area
         self.outflow_rate = outflow_rate
         self.inflow_rate = inflow_rate
@@ -85,15 +94,15 @@ def main() -> None:
         area=5,
         outflow_rate=0.5,
         inflow_rate=2,
+        initial_state=TankState(water_level=1),
     )
-    x0 = TankState(water_level=1)
 
     data_incremental = OdeEnvironment(
         system,
-        x0,
         dt=0.1,
-        map_to_dataframe=lambda xs: pl.DataFrame(
+        map_to_dataframe=lambda ts, xs: pl.DataFrame(
             {
+                "t": ts,
                 "h": [x.water_level for x in xs],
             },
         ),
@@ -118,7 +127,7 @@ def main() -> None:
                 output_size=len(outputs),
                 hidden_dimensions=[10, 10],
             ),
-            max_epochs=100,
+            max_epochs=10,
         ),
     ]:
         t_start = datetime.now(tz=UTC)

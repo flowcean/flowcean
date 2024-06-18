@@ -13,10 +13,10 @@ from typing import Self, override
 import polars as pl
 
 from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.environments.ode_environment import OdeSystem, StateLike
+from flowcean.environments.ode_environment import OdeSystem, State
 
 
-class DifferentialMode[Input](OdeSystem):
+class DifferentialMode[X: State, Input](OdeSystem[X]):
     """Differential mode of a hybrid system.
 
     This class represents a mode of a hybrid system by extending an OdeSystem
@@ -27,7 +27,7 @@ class DifferentialMode[Input](OdeSystem):
     def transition(
         self,
         i: Input,
-    ) -> "DifferentialMode[Input]":
+    ) -> "DifferentialMode[X, Input]":
         """Transition to the next mode.
 
         Determine the next mode based on the current input. This method should
@@ -41,7 +41,7 @@ class DifferentialMode[Input](OdeSystem):
         """
 
 
-class HybridSystem[Input](IncrementalEnvironment):
+class HybridSystem[X: State, Input](IncrementalEnvironment):
     """Hybrid system environment.
 
     This environment generates samples by simulating a hybrid system. The
@@ -51,12 +51,10 @@ class HybridSystem[Input](IncrementalEnvironment):
 
     def __init__(
         self,
-        initial_mode: DifferentialMode[Input],
-        initial_state: StateLike,
-        inputs: Iterator[Input],
-        sampling_time: float,
+        initial_mode: DifferentialMode[X, Input],
+        inputs: Iterator[tuple[float, Input]],
         map_to_dataframe: Callable[
-            [Sequence[Input], Sequence[StateLike]],
+            [Sequence[float], Sequence[Input], Sequence[X]],
             pl.DataFrame,
         ],
     ) -> None:
@@ -64,13 +62,13 @@ class HybridSystem[Input](IncrementalEnvironment):
 
         Args:
             initial_mode: Initial mode of the system.
-            inputs: Sequence of inputs.
-            sampling_time: Time between two input samples.
-            map_to_dataframe: Function to map inputs and states to a DataFrame.
+            initial_state: Initial state of the system.
+            inputs: Timeseries of inputs (time, input).
+            map_to_dataframe: Function to map times, inputs and states to a
+                DataFrame.
         """
-        self.mode = initial_mode
+        self.initial_mode = initial_mode
         self.inputs = inputs
-        self.sampling_time = sampling_time
         self.map_to_dataframe = map_to_dataframe
 
     @override
@@ -79,7 +77,11 @@ class HybridSystem[Input](IncrementalEnvironment):
 
     @override
     def __iter__(self) -> Iterator[pl.DataFrame]:
-        for i in self.inputs:
-            ts, states = self.mode.step(self.sampling_time)
-            self.mode = self.mode.transition(i)
+        mode = self.initial_mode
+        last_t = 0.0
+        for t, i in self.inputs:
+            dt = t - last_t
+            last_t = t
+            ts, states = mode.step(dt)
+            mode = mode.transition(i)
             yield self.map_to_dataframe(ts, [i] * len(ts), states)

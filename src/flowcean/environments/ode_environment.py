@@ -61,7 +61,30 @@ class OdeSystem[X: State](ABC):
         y &= g(x)
     \end{aligned}
     $$
+
+    The system can be integrated to obtain the state at a future time.
+
+    Attributes:
+        t: Current time.
+        state: Current state.
     """
+
+    t: float
+    state: X
+
+    def __init__(
+        self,
+        t: float,
+        state: X,
+    ) -> None:
+        """Initialize the system.
+
+        Args:
+            t: Initial time.
+            state: Initial state.
+        """
+        self.t = t
+        self.state = state
 
     @abstractmethod
     def flow(
@@ -83,8 +106,6 @@ class OdeSystem[X: State](ABC):
 
     def step(
         self,
-        t: float,
-        state: X,
         dt: float,
     ) -> tuple[Sequence[float], Sequence[X]]:
         """Step the mode forward in time.
@@ -100,16 +121,21 @@ class OdeSystem[X: State](ABC):
         Returns:
             Tuple of times and states of the integration.
         """
-        y0 = state.as_numpy() if isinstance(state, State) else state
+        y0 = self.state.as_numpy()
         solution = solve_ivp(
             self.flow,
-            t_span=[t, t + dt],
+            t_span=[self.t, self.t + dt],
             y0=y0,
         )
         if not solution.success:
             raise IntegrationError
+
         ts = cast(Sequence[float], solution.t[1:])
-        states = [state.from_numpy(y) for y in solution.y.T[1:]]
+        states = [self.state.from_numpy(y) for y in solution.y.T[1:]]
+
+        self.t = ts[-1]
+        self.state = states[-1]
+
         return ts, states
 
 
@@ -117,16 +143,14 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
     def __init__(
         self,
         system: OdeSystem[X],
-        initial_state: X,
         *,
         dt: float = 1,
         map_to_dataframe: Callable[
-            [Sequence[X]],
+            [Sequence[float], Sequence[X]],
             pl.DataFrame,
         ],
     ) -> None:
         self.system = system
-        self.initial_state = initial_state
         self.dt = dt
         self.map_to_dataframe = map_to_dataframe
 
@@ -134,20 +158,6 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
         return self
 
     def __iter__(self) -> Iterator[pl.DataFrame]:
-        t = 0.0
-        state = self.initial_state
         while True:
-            ts, states = self.system.step(t, state, self.dt)
-            yield pl.concat(
-                [
-                    pl.DataFrame(
-                        {
-                            "t": ts,
-                        },
-                    ),
-                    self.map_to_dataframe(states),
-                ],
-                how="horizontal",
-            )
-            t = ts[-1]
-            state = states[-1]
+            ts, states = self.system.step(self.dt)
+            yield self.map_to_dataframe(ts, states)

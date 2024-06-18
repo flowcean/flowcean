@@ -2,19 +2,24 @@
 
 import random
 from collections.abc import Iterator
-from itertools import islice
 from typing import Self, override
 
 import numpy as np
 import polars as pl
-from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 
+from flowcean.cli.logging import initialize_logging
 from flowcean.environments.hybrid_system import (
     DifferentialMode,
     HybridSystem,
     State,
 )
+from flowcean.environments.train_test_split import TrainTestSplit
+from flowcean.learners.regression_tree import RegressionTree
+from flowcean.metrics.evaluate import evaluate
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
+from flowcean.strategies.offline import learn_offline
+from flowcean.transforms.sliding_window import SlidingWindow
 
 
 class Temperature(State):
@@ -41,7 +46,7 @@ class Heating(DifferentialMode[Temperature, TargetTemperature]):
     maximum_timeout: float = 1.0
 
     @override
-    def differential_flow(
+    def flow(
         self,
         t: float,
         state: NDArray[np.float64],
@@ -64,7 +69,7 @@ class Cooling(DifferentialMode[Temperature, TargetTemperature]):
     minimum_timeout: float = 1.0
 
     @override
-    def differential_flow(
+    def flow(
         self,
         t: float,
         state: NDArray[np.float64],
@@ -95,18 +100,22 @@ def randomly_changing_values(
 
 
 def main() -> None:
-    target_temperatures = islice(
-        randomly_changing_values(
-            change_probability=0.002,
-            minimum=30.0,
-            maximum=60.0,
-        ),
-        1000,
+    initialize_logging()
+
+    target_temperatures = (
+        (0.1 * i, temperature)
+        for i, temperature in enumerate(
+            randomly_changing_values(
+                change_probability=0.002,
+                minimum=30.0,
+                maximum=60.0,
+            )
+        )
     )
+
     environment = HybridSystem(
         initial_mode=Heating(t=0.0, state=Temperature(30)),
-        inputs=target_temperatures.__iter__(),
-        sampling_time=0.1,
+        inputs=target_temperatures,
         map_to_dataframe=lambda times, inputs, modes: pl.DataFrame(
             {
                 "time": times,
@@ -116,10 +125,36 @@ def main() -> None:
         ),
     ).load()
 
-    data = pl.concat(environment)
-    print(data)
-    plt.plot(data)
-    plt.show()
+    data = environment.collect(10_000)
+    train, test = TrainTestSplit(ratio=0.8).split(data)
+
+    train = train.with_transform(
+        SlidingWindow(window_size=10),
+    )
+    test = test.with_transform(
+        SlidingWindow(window_size=10),
+    )
+
+    learner = RegressionTree(max_depth=5)
+
+    inputs = [f"temperature_{i}" for i in range(10)] + [
+        f"target_{i}" for i in range(9)
+    ]
+    outputs = ["temperature_9"]
+    model = learn_offline(
+        train,
+        learner,
+        inputs,
+        outputs,
+    )
+    report = evaluate(
+        model,
+        test,
+        inputs,
+        outputs,
+        [MeanAbsoluteError(), MeanSquaredError()],
+    )
+    print(report)
 
 
 if __name__ == "__main__":
