@@ -114,8 +114,6 @@ class OdeSystem[X: State](ABC):
         for a time step of dt.
 
         Args:
-            t: Current time.
-            state: Current state.
             dt: Time step.
 
         Returns:

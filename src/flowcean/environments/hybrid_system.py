@@ -62,7 +62,6 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
 
         Args:
             initial_mode: Initial mode of the system.
-            initial_state: Initial state of the system.
             inputs: Timeseries of inputs (time, input).
             map_to_dataframe: Function to map times, inputs and states to a
                 DataFrame.
