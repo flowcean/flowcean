@@ -4,6 +4,8 @@ repo_name: flowcean/flowcean
 
 theme:
   name: "material"
+  logo: assets/logo.png
+  favicon: assets/favicon.png
   features:
     - content.code.copy
     - navigation.tabs
