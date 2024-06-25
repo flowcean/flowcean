@@ -9,6 +9,10 @@ from rosbags.typesys import Stores, get_types_from_msg, get_typestore
 
 from flowcean.core.environment import OfflineEnvironment
 
+pl.Config.set_tbl_rows(100)
+pl.Config.set_fmt_str_lengths(100)
+pl.Config.set_fmt_table_cell_list_len(100)
+
 
 class RosbagEnvironment(OfflineEnvironment):
     """Environment for rosbags."""
@@ -49,28 +53,27 @@ class RosbagEnvironment(OfflineEnvironment):
         with AnyReader(
             [self.path], default_typestore=self.typestore
         ) as reader:
-            joined_df = pl.DataFrame()
-            for topic, keys in self.topics.items():
-                df = pl.from_pandas(
-                    get_dataframe(reader, topic, keys),
-                    include_index=True,
-                )
-                df = df.rename({"None": "time"})
-                df = df.rename(
-                    lambda column_name, topic=topic: str(
-                        f"{topic[1:]}." + column_name
+            self.data = pl.concat(
+                [
+                    (
+                        pl.from_pandas(
+                            get_dataframe(reader, topic, keys),
+                            include_index=True,
+                        )
+                        .rename({"None": "time"})
+                        .select(pl.struct([pl.all()]).implode().alias(topic))
                     )
-                )
-                time_series = [print(row) for row in df.iter_rows()]
-                joined_df = pl.concat(
-                    [joined_df, df],
-                    how="horizontal",
-                )
-            self.data = joined_df
+                    for topic, keys in self.topics.items()
+                ],
+                how="horizontal",
+            )
         return self
 
     @override
     def get_data(self) -> pl.DataFrame:
+        if self.data is None:
+            msg = "data not loaded yet"
+            raise ValueError(msg)
         return self.data
 
     @staticmethod
