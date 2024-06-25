@@ -1,0 +1,9 @@
+outs:
+- hash: md5
+  path: example_rosbag
+  files:
+  - relpath: example_rosbag.db3
+    md5: 54db3e7dae1a6d63fb2c67a583dd23d1
+  - relpath: metadata.yaml
+    md5: b7d54bcc1d5425052ffb9025ac5d4b3e
+    size: 41041
