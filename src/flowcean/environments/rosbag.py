@@ -31,10 +31,10 @@ class RosbagEnvironment(OfflineEnvironment):
         """
         self.path = Path(path)
         self.topics = topics
-        self.data = pl.DataFrame()
+        self.data = None
         self.typestore = get_typestore(Stores.ROS2_HUMBLE)
 
-        if custom_msgs_path:
+        if custom_msgs_path is not None:
             add_types = {}
             for pathstr in listdir(custom_msgs_path):
                 msgpath = custom_msgs_path / Path(pathstr)
@@ -62,7 +62,7 @@ class RosbagEnvironment(OfflineEnvironment):
                     )
                 )
                 df = pl.DataFrame(
-                    {col: [df[col].to_list()] for col in df.columns}
+                    {col: [pl.struct(df[col])] for col in df.columns}
                 )
                 joined_df = pl.concat(
                     [joined_df, df],
@@ -80,7 +80,7 @@ class RosbagEnvironment(OfflineEnvironment):
         """Guess message type name from path.
 
         Example usage:
-        path = Path("/home/user/project/src/package/subpackage/file.py")
+        path = Path("/home/user/project/src/package/subpackage/file.msg")
         print(guess_msgtype(path))  # Output: package/subpackage/msg/file
         """
         name = path.relative_to(path.parents[2]).with_suffix("")
