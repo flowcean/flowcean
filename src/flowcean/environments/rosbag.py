@@ -10,14 +10,6 @@ from rosbags.typesys import Stores, get_types_from_msg, get_typestore
 from flowcean.core.environment import OfflineEnvironment
 
 
-def guess_msgtype(path: Path) -> str:
-    """Guess message type name from path."""
-    name = path.relative_to(path.parents[2]).with_suffix("")
-    if "msg" not in name.parts:
-        name = name.parent / "msg" / name.name
-    return str(name)
-
-
 class RosbagEnvironment(OfflineEnvironment):
     """Environment for rosbags."""
 
@@ -48,7 +40,7 @@ class RosbagEnvironment(OfflineEnvironment):
                 msgpath = custom_msgs_path / Path(pathstr)
                 msgdef = msgpath.read_text(encoding="utf-8")
                 add_types.update(
-                    get_types_from_msg(msgdef, guess_msgtype(msgpath))
+                    get_types_from_msg(msgdef, self.guess_msgtype(msgpath))
                 )
             self.typestore.register(add_types)
 
@@ -82,3 +74,16 @@ class RosbagEnvironment(OfflineEnvironment):
     @override
     def get_data(self) -> pl.DataFrame:
         return self.data
+
+    @staticmethod
+    def guess_msgtype(path: Path) -> str:
+        """Guess message type name from path.
+
+        Example usage:
+        path = Path("/home/user/project/src/package/subpackage/file.py")
+        print(guess_msgtype(path))  # Output: package/subpackage/msg/file
+        """
+        name = path.relative_to(path.parents[2]).with_suffix("")
+        if "msg" not in name.parts:
+            name = name.parent / "msg" / name.name
+        return str(name)
