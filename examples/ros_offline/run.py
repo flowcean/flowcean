@@ -15,6 +15,7 @@ def main() -> None:
     environment = RosbagEnvironment(
         path=path,
         topics={
+            "/j100_0000/particle_cloud": ["particle"],
             "/j100_0000/amcl_pose": [
                 "pose.pose.position.x",
                 "pose.pose.position.y",

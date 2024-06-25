@@ -61,9 +61,7 @@ class RosbagEnvironment(OfflineEnvironment):
                         f"{topic[1:]}." + column_name
                     )
                 )
-                df = pl.DataFrame(
-                    {col: [pl.struct(df[col])] for col in df.columns}
-                )
+                time_series = [print(row) for row in df.iter_rows()]
                 joined_df = pl.concat(
                     [joined_df, df],
                     how="horizontal",

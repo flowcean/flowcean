@@ -1,6 +1,11 @@
 [core]
     analytics = false
-    remote = tuhh-cloud
+    remote = test-s3
 ['remote "tuhh-cloud"']
     url = webdavs://cloud.tuhh.de/public.php/webdav
     user = Q9WX2KGsC2oSQMD
+['remote "test-s3"']
+    url = s3://flowcean-dvc
+    endpointurl = http://192.168.1.226:9000
+    access_key_id = K6w5UbYW4Z0hANNUtGlC
+    secret_access_key = zUWBjuv8U9CXvKYdcFPBrKmwhTGnGfYeUWqyi2uN
