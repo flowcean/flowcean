@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, override
 
-from .base import NotLoadedError
+from flowcean.core.environment.base import NotLoadedError
+
 from .incremental import IncrementalEnvironment
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterator
 
     import polars as pl
 
@@ -29,7 +30,6 @@ class StreamingOfflineData(IncrementalEnvironment):
 
     environment: OfflineEnvironment
     batch_size: int
-    index: int
     data: pl.DataFrame | None
 
     def __init__(
@@ -45,7 +45,6 @@ class StreamingOfflineData(IncrementalEnvironment):
         """
         self.environment = environment
         self.batch_size = batch_size
-        self.index = 0
         self.data = None
 
     @override
@@ -55,7 +54,7 @@ class StreamingOfflineData(IncrementalEnvironment):
         return self
 
     @override
-    def get_next_data(self) -> Generator[pl.DataFrame, None, None]:
+    def __iter__(self) -> Iterator[pl.DataFrame]:
         if self.data is None:
             raise NotLoadedError
         for i in range(0, len(self.data), self.batch_size):

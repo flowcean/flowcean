@@ -32,7 +32,7 @@ def learn_incremental(
         The model learned from the environment.
     """
     model = None
-    for data in environment.get_next_data():
+    for data in environment:
         input_features = data.select(inputs)
         output_features = data.select(outputs)
 

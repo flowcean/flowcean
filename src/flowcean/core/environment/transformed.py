@@ -7,7 +7,7 @@ from .incremental import IncrementalEnvironment
 from .offline import OfflineEnvironment
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterator
 
     import polars as pl
 
@@ -69,7 +69,7 @@ class TransformedEnvironment(
         return self.transform.transform(data)
 
     @override
-    def get_next_data(
+    def __iter__(
         self: TransformedEnvironment[T_IncrementalEnvironment],
-    ) -> Generator[pl.DataFrame, None, None]:
-        return self.environment.get_next_data()
+    ) -> Iterator[pl.DataFrame]:
+        return self.environment.__iter__()
