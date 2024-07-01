@@ -43,7 +43,7 @@ type TargetTemperature = float
 
 class Heating(DifferentialMode[Temperature, TargetTemperature]):
     heating_rate: float = 0.5
-    maximum_timeout: float = 1.0
+    overheat_timeout: float = 1.0
 
     @override
     def flow(
@@ -59,14 +59,14 @@ class Heating(DifferentialMode[Temperature, TargetTemperature]):
         self,
         i: TargetTemperature,
     ) -> DifferentialMode[Temperature, TargetTemperature]:
-        if self.state.temperature > i or self.t > self.maximum_timeout:
+        if self.state.temperature > i or self.t > self.overheat_timeout:
             return Cooling(t=0.0, state=self.state)
         return self
 
 
 class Cooling(DifferentialMode[Temperature, TargetTemperature]):
     cooling_rate: float = 0.1
-    minimum_timeout: float = 1.0
+    cooldown_timeout: float = 1.0
 
     @override
     def flow(
@@ -82,7 +82,7 @@ class Cooling(DifferentialMode[Temperature, TargetTemperature]):
         self,
         i: TargetTemperature,
     ) -> DifferentialMode[Temperature, TargetTemperature]:
-        if self.state.temperature < i and self.t > self.minimum_timeout:
+        if self.state.temperature < i and self.t > self.cooldown_timeout:
             return Heating(t=0.0, state=self.state)
         return self
 
