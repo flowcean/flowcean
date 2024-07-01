@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from typing import Self, cast
+from typing import Self, cast, override
 
 import numpy as np
 import polars as pl
@@ -50,7 +50,7 @@ class State(ABC):
 
 
 class OdeSystem[X: State](ABC):
-    r"""System governed by a ordinary differential equation.
+    r"""System governed by an ordinary differential equation.
 
     This class represents a continuous system. The system is defined by a
     differential flow function $f$ that governs the evolution of the state $x$.
@@ -58,7 +58,6 @@ class OdeSystem[X: State](ABC):
     $$
     \begin{aligned}
         \dot{x} &= f(t, x) \\
-        y &= g(x)
     \end{aligned}
     $$
 
@@ -138,6 +137,11 @@ class OdeSystem[X: State](ABC):
 
 
 class OdeEnvironment[X: State](IncrementalEnvironment):
+    """Environment governed by an ordinary differential equation.
+
+    This environment integrates an OdeSystem to generate a sequence of states.
+    """
+
     def __init__(
         self,
         system: OdeSystem[X],
@@ -148,13 +152,22 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
             pl.DataFrame,
         ],
     ) -> None:
+        """Initialize the environment.
+
+        Args:
+            system: ODE system.
+            dt: Time step.
+            map_to_dataframe: Function to map states to a DataFrame.
+        """
         self.system = system
         self.dt = dt
         self.map_to_dataframe = map_to_dataframe
 
+    @override
     def load(self) -> Self:
         return self
 
+    @override
     def __iter__(self) -> Iterator[pl.DataFrame]:
         while True:
             ts, states = self.system.step(self.dt)
