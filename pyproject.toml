@@ -30,6 +30,7 @@ all = [
   "flowcean[sklearn]",
   "flowcean[lightning]",
   "flowcean[grpc]",
+  "flowcean[ros]",
 ]
 
 sklearn = [
@@ -43,6 +44,10 @@ grpc = [
   "grpcio",
   "docker",
   "protobuf",
+]
+ros = [
+  "rosbags",
+  "rosbags-dataframe",
 ]
 
 [tool.mypy]
