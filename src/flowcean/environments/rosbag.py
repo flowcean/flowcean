@@ -89,7 +89,7 @@ def read_timeseries(
     Returns:
         Timeseries DataFrame.
     """
-    rosbag = pl.from_pandas(
+    data = pl.from_pandas(
         get_dataframe(reader, topic, keys).reset_index(names="time"),
     )
     nest_into_timeseries = pl.struct(
@@ -98,4 +98,4 @@ def read_timeseries(
             pl.struct(pl.exclude("time")).alias("value"),
         ]
     )
-    return rosbag.select(nest_into_timeseries.implode().alias(topic))
+    return data.select(nest_into_timeseries.implode().alias(topic))
