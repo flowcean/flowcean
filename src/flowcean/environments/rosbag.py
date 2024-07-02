@@ -79,6 +79,16 @@ def read_timeseries(
     topic: str,
     keys: Sequence[str],
 ) -> pl.DataFrame:
+    """Read a timeseries from a rosbag topic.
+
+    Args:
+        reader: Rosbag reader.
+        topic: Topic name.
+        keys: Keys to read from the topic.
+
+    Returns:
+        Timeseries DataFrame.
+    """
     rosbag = pl.from_pandas(
         get_dataframe(reader, topic, keys).reset_index(names="time"),
     )
