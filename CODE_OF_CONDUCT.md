@@ -50,7 +50,7 @@ This document is periodically reviewed and updated based on the evolving needs o
 - Follow a code review process with a different, non-author reviewer:
   - The author opens a new merge request to change code
   - The merge request should come with a short title and a useful description to explain the change to the reviewer.
-  - A non-author should review the code and request changes, or approve the request.
+  - A non-author should review the code and request changes, or approve the request if no changes are requested, i.e., no further conversations are open or needed.
   - All non-authors are implicitly tasked to review MRs
   - If there are multiple authors involved in one MR, approval by a non-author is not mandatory.
   - A review should check that the proposed changes comply to our coding guidelines, and carefully evaluate whether the changes are useful and intended.
