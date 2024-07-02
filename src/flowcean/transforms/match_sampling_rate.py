@@ -14,18 +14,21 @@ class MatchSamplingRate(Transform):
 
     Interpolates the time series to match the sampling rate of the reference
     time series. The below example shows the usage of a `MatchSamplingRate`
-    transform in an `experiment.yaml` file. Assuming the loaded data is
+    transform in a `run.py` file. Assuming the loaded data is
     represented by the table:
 
-    | time_feature_a | feature_a | time_feature_b | feature_b | constant |
-    | -------------- | --------- | -------------- | --------- | -------- |
-    | [0, 1, 2]      | [2, 1, 7] | [0, 2]         | [10, 20]  | 1        |
-    | [0, 1, 2]      | [4, 1, 0] | [0, 2]         | [20, 40]  | 2        |
+    | feature_a                          | feature_b                            | const |
+    | ---                                | ---                                  | ---   |
+    | list[struct[time, value]           | list[struct[time, value]             | int   |
+    | -----------------------------------| -------------------------------------| ----- |
+    | [{2024-06-25 12:26:01.0,[1.2,1.0]},| [{2024-06-25 12:26:00.0,[10.0,1.0]}, | 1     |
+    |  {2024-06-25 12:26:02.0,[2.4,1.2]},|  {2024-06-25 12:26:05.0,[5.0, 1.0]}] |       |
+    |  {2024-06-25 12:26:03.0,[3.6,1.4]},|                                      |       |
+    |  {2024-06-25 12:26:04.0,[4.8,1.6]}]|                                      |       |
 
     The following transform can be used to match the sampling rate
-    of the time series described by `time_feature_b` and
-    `feature_b` to the sampling rate of the time series described by
-    `time_feature_a` and `feature_a`.
+    of the time series `feature_b` to the sampling rate
+    of the time series `feature_a`.
 
     ```
         ...
@@ -52,7 +55,7 @@ class MatchSamplingRate(Transform):
 
     Note that the used feature `time_feature_b` is still
     present in the DataFrame. To remove it use the `select` transform.
-    """
+    """  # noqa: E501
 
     def __init__(
         self,

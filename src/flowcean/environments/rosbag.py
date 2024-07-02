@@ -22,6 +22,7 @@ class RosbagEnvironment(OfflineEnvironment):
         path: str | Path,
         topics: dict[str, list[str]],
         custom_msgs_path: str | Path | None = None,
+        store: Stores = Stores.ROS2_HUMBLE,
     ) -> None:
         """Initialize the RosbagEnvironment.
 
@@ -30,13 +31,14 @@ class RosbagEnvironment(OfflineEnvironment):
             topics: Dictionary of topics to load. The keys are the topic names
                 and the values are lists of keys inside each message that
                 shall be extracted.
-            custom_msgs_path: Path to folder that contains custom ros message
+            custom_msgs_path: Path to folder that contains custom ROS message
                 descriptions.
+            store: Typestore to use for message parsing.
         """
         self.path = Path(path)
         self.topics = topics
         self.data = None
-        self.typestore = get_typestore(Stores.ROS2_HUMBLE)
+        self.typestore = get_typestore(store)
 
         if custom_msgs_path is not None:
             add_types = {}

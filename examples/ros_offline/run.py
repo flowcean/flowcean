@@ -2,8 +2,8 @@ import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import polars.selectors as cs
 import polars as pl
+import polars.selectors as cs
 
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagEnvironment
@@ -31,11 +31,13 @@ def main() -> None:
     environment.load()
     data = environment.get_data()
 
-    acml = (
+    print(data)
+    amcl = (
         data.select(pl.col("/j100_0000/amcl_pose").explode())
         .unnest(cs.all())
         .rename(lambda name: "amcl_" + name if name != "time" else name)
     )
+
     ground_truth = (
         data.select(pl.col("/j100_0000/odometry").explode())
         .unnest(cs.all())
@@ -44,7 +46,7 @@ def main() -> None:
         )
     )
     result = (
-        pl.concat([acml, ground_truth], how="diagonal")
+        pl.concat([amcl, ground_truth], how="diagonal")
         .sort("time")
         .with_columns(
             pl.col(
@@ -56,6 +58,8 @@ def main() -> None:
         )
         .drop_nulls()
     )
+    print(amcl)
+    print(ground_truth)
     print(result)
     # return
     plt.scatter(
