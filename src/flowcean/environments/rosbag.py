@@ -1,5 +1,6 @@
 """Loading data from rosbag topics."""
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Self, override
 
@@ -59,19 +60,11 @@ class RosbagLoader(OfflineEnvironment):
     @override
     def load(self) -> Self:
         with AnyReader([self.path]) as reader:
-            self.data = pl.concat(
-                [
-                    (
-                        pl.from_pandas(
-                            get_dataframe(reader, topic, keys).reset_index(
-                                names="time"
-                            ),
-                        ).select(pl.struct([pl.all()]).implode().alias(topic))
-                    )
-                    for topic, keys in self.topics.items()
-                ],
-                how="horizontal",
-            )
+            features = [
+                read_timeseries(reader, topic, keys)
+                for topic, keys in self.topics.items()
+            ]
+            self.data = pl.concat(features, how="horizontal")
         return self
 
     @override
@@ -79,3 +72,20 @@ class RosbagLoader(OfflineEnvironment):
         if self.data is None:
             raise NotLoadedError
         return self.data
+
+
+def read_timeseries(
+    reader: AnyReader,
+    topic: str,
+    keys: Sequence[str],
+) -> pl.DataFrame:
+    rosbag = pl.from_pandas(
+        get_dataframe(reader, topic, keys).reset_index(names="time"),
+    )
+    nest_into_timeseries = pl.struct(
+        [
+            pl.col("time"),
+            pl.struct(pl.exclude("time")).alias("value"),
+        ]
+    )
+    return rosbag.select(nest_into_timeseries.implode().alias(topic))

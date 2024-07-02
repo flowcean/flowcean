@@ -25,11 +25,13 @@ def main() -> None:
         },
     )
     environment.load()
+    data = environment.get_data()
+    print(data)
     data = (
-        environment.get_data()
-        .select("/j100_0000/amcl_pose")
+        data.select("/j100_0000/amcl_pose")
         .explode(cs.all())
         .unnest(cs.all())
+        .unnest("value")
     )
     print(data)
 
