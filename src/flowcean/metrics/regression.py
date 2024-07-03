@@ -3,10 +3,10 @@ from typing import Any, override
 import polars as pl
 from sklearn import metrics
 
-from flowcean.core import Metric
+from flowcean.core import OfflineMetric
 
 
-class MaxError(Metric):
+class MaxError(OfflineMetric):
     """Max error regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.max_error.html).
@@ -17,7 +17,7 @@ class MaxError(Metric):
         return metrics.max_error(true, predicted)
 
 
-class MeanAbsoluteError(Metric):
+class MeanAbsoluteError(OfflineMetric):
     """Mean absolute error (MAE) regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html).
@@ -28,7 +28,7 @@ class MeanAbsoluteError(Metric):
         return metrics.mean_absolute_error(true, predicted)
 
 
-class MeanSquaredError(Metric):
+class MeanSquaredError(OfflineMetric):
     """Mean squared error (MSE) regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html).
@@ -39,7 +39,7 @@ class MeanSquaredError(Metric):
         return metrics.mean_squared_error(true, predicted)
 
 
-class R2Score(Metric):
+class R2Score(OfflineMetric):
     """R^2 (coefficient of determination) regression score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html).

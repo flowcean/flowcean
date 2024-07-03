@@ -4,7 +4,7 @@ from typing import Any
 import polars as pl
 
 
-class Metric(ABC):
+class OfflineMetric(ABC):
     """Base class for metrics."""
 
     @property

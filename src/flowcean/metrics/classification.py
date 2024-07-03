@@ -3,10 +3,10 @@ from typing import Any, override
 import polars as pl
 from sklearn import metrics
 
-from flowcean.core import Metric
+from flowcean.core import OfflineMetric
 
 
-class Accuracy(Metric):
+class Accuracy(OfflineMetric):
     """Accuracy classification score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html).
@@ -17,7 +17,7 @@ class Accuracy(Metric):
         return metrics.accuracy_score(true, predicted)
 
 
-class ClassificationReport(Metric):
+class ClassificationReport(OfflineMetric):
     """Build a text report showing the main classification metrics.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html).
@@ -28,7 +28,7 @@ class ClassificationReport(Metric):
         return metrics.classification_report(true, predicted)
 
 
-class FBetaScore(Metric):
+class FBetaScore(OfflineMetric):
     """F-beta score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html).
@@ -42,7 +42,7 @@ class FBetaScore(Metric):
         return metrics.fbeta_score(true, predicted, beta=self.beta)
 
 
-class PrecisionScore(Metric):
+class PrecisionScore(OfflineMetric):
     """Precision classification score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html).
@@ -53,7 +53,7 @@ class PrecisionScore(Metric):
         return metrics.precision_score(true, predicted)
 
 
-class Recall(Metric):
+class Recall(OfflineMetric):
     """Recall classification score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html).

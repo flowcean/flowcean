@@ -8,7 +8,7 @@ __all__ = [
     "PrecisionScore",
     "R2Score",
     "Recall",
-    "evaluate",
+    "Report",
 ]
 
 from .classification import (
@@ -18,5 +18,5 @@ from .classification import (
     PrecisionScore,
     Recall,
 )
-from .evaluate import evaluate
 from .regression import MaxError, MeanAbsoluteError, MeanSquaredError, R2Score
+from .report import Report

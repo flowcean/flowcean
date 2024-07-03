@@ -4,10 +4,10 @@ __all__ = [
     "Chain",
     "Environment",
     "IncrementalEnvironment",
-    "Metric",
     "Model",
     "ModelWithTransform",
     "OfflineEnvironment",
+    "OfflineMetric",
     "SupervisedIncrementalLearner",
     "SupervisedLearner",
     "Transform",
@@ -31,6 +31,6 @@ from .learner import (
     UnsupervisedIncrementalLearner,
     UnsupervisedLearner,
 )
-from .metric import Metric
+from .metric import OfflineMetric
 from .model import Model, ModelWithTransform
 from .transform import Transform

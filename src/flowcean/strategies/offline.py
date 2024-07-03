@@ -1,13 +1,11 @@
 import logging
 
-from flowcean.core import (
-    Model,
-    ModelWithTransform,
-    OfflineEnvironment,
-    SupervisedLearner,
-    Transform,
-    UnsupervisedLearner,
-)
+from flowcean.core.environment.offline import OfflineEnvironment
+from flowcean.core.learner import SupervisedLearner, UnsupervisedLearner
+from flowcean.core.metric import OfflineMetric
+from flowcean.core.model import Model, ModelWithTransform
+from flowcean.core.transform import Transform
+from flowcean.metrics.report import Report
 
 logger = logging.getLogger(__name__)
 
@@ -52,3 +50,22 @@ def learn_offline(
     if input_transform is not None:
         return ModelWithTransform(model=model, transform=input_transform)
     return model
+
+
+def evaluate_offline(
+    model: Model,
+    environment: OfflineEnvironment,
+    inputs: list[str],
+    outputs: list[str],
+    metrics: list[OfflineMetric],
+) -> Report:
+    data = environment.get_data()
+    input_features = data.select(inputs)
+    output_features = data.select(outputs)
+    predictions = model.predict(input_features)
+    return Report(
+        {
+            metric.name: metric(output_features, predictions)
+            for metric in metrics
+        },
+    )
