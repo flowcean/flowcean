@@ -153,10 +153,10 @@ Flowcean ships with a couple of different [metrics](../reference/flowcean/metric
 Depending on the underlying problem, different metrics can be reasonable to apply.
 For this example the [`MeanAbsoluteError`](../reference/flowcean/metrics/index.md#flowcean.metrics.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/metrics/index.md#flowcean.metrics.MeanSquaredError) error are used.
 These metrics are useful when the output of the learned function is a (more or less) continuous value and the deviation from the actual value is of interest.
-The helper method [`evaluate`](../reference/flowcean/metrics/evaluate.md) allows for easy evaluation of multiple metrics for a learned model.
+The helper method [`evaluate_offline`](../reference/flowcean/strategies/offline.md) allows for easy evaluation of multiple metrics for a learned model.
 
 ```python
-regression_report = evaluate(
+regression_report = evaluate_offline(
     regression_model,
     test,
     inputs,
@@ -164,7 +164,7 @@ regression_report = evaluate(
     [MeanAbsoluteError(), MeanSquaredError()],
 )
 
-perceptron_report = evaluate(
+perceptron_report = evaluate_offline(
     perceptron_model,
     test,
     inputs,

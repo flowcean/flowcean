@@ -6,8 +6,9 @@ import flowcean.cli
 from flowcean.environments.dataset import Dataset
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.linear_regression import LinearRegression
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.incremental import learn_incremental
+from flowcean.strategies.offline import evaluate_offline
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def main() -> None:
         outputs,
     )
 
-    report = evaluate(
+    report = evaluate_offline(
         model,
         test,
         inputs,

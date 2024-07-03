@@ -16,8 +16,8 @@ from flowcean.environments.ode_environment import (
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from flowcean.strategies.offline import learn_offline
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms.sliding_window import SlidingWindow
 
 logger = logging.getLogger(__name__)
@@ -140,7 +140,7 @@ def main() -> None:
         delta_t = datetime.now(tz=UTC) - t_start
         print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
-        report = evaluate(
+        report = evaluate_offline(
             model,
             test,
             inputs,

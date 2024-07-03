@@ -4,8 +4,8 @@ import flowcean.cli
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from flowcean.strategies.offline import learn_offline
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms import Select, Standardize
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def main() -> None:
         input_transform=transform,
     )
 
-    report = evaluate(
+    report = evaluate_offline(
         model,
         test,
         inputs,

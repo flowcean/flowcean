@@ -3,8 +3,8 @@ from loader import AlpDataLoader
 import flowcean.cli
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from flowcean.strategies.offline import learn_offline
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms.select import Select
 
 
@@ -37,7 +37,7 @@ def main() -> None:
         outputs,
     )
 
-    report = evaluate(
+    report = evaluate_offline(
         model,
         test,
         inputs,

@@ -42,7 +42,7 @@ In this case, the environment is a *DataSet* which is a type of [OfflineEnvironm
 Its [learner](https://www3.tuhh.de/agenc/user_guide/model/) is a linear regression algorithm.
 It uses an incremental [Learning Strategy](https://www3.tuhh.de/agenc/user_guide/learning_strategies/).
 In this example, no model is saved or loaded.
-The evaluation procedure is defined by the `evaluation()` function.
+The evaluation strategy is defined by the `evaluate_offline()` function.
 
 ```python
 import logging
@@ -52,8 +52,9 @@ import polars as pl
 from flowcean.environments.dataset import Dataset
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.linear_regression import LinearRegression
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.incremental import learn_incremental
+from flowcean.strategies.offline import evaluate_offline
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ def main() -> None:
         outputs,
     )
 
-    report = evaluate(
+    report = evaluate_offline(
         model,
         test,
         inputs,
