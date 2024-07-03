@@ -49,14 +49,3 @@ class OfflineEnvironment(Environment):
         from .stack import StackEnvironment
 
         return StackEnvironment(self, other)
-
-    def __and__(self, other: OfflineEnvironment) -> OfflineEnvironment:
-        """Combine this environment with another one vertically.
-
-        Args:
-            other: The environment to append vertically.
-
-        Returns:
-            The combined environment.
-        """
-        return self.stack(other)
