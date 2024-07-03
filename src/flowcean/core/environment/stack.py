@@ -1,4 +1,3 @@
-from functools import reduce
 from typing import Self
 
 import polars as pl
@@ -29,8 +28,6 @@ class StackEnvironment(OfflineEnvironment):
         Returns:
             The loaded dataset.
         """
-        dfs = [env.get_data() for env in self.environments]
-        return reduce(
-            lambda x, y: x.vstack(y),
-            dfs,
+        return pl.concat(
+            [env.get_data() for env in self.environments], how="vertical"
         )
