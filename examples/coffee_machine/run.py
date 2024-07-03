@@ -2,8 +2,8 @@ import flowcean.cli
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
 from flowcean.learners.grpc.learner import GrpcLearner
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError, evaluate
-from flowcean.strategies.offline import learn_offline
+from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.strategies.offline import evaluate_offline, learn_offline
 
 
 def main() -> None:
@@ -26,7 +26,7 @@ def main() -> None:
         outputs,
     )
 
-    report = evaluate(
+    report = evaluate_offline(
         model,
         test,
         inputs,

@@ -16,9 +16,8 @@ from flowcean.environments.hybrid_system import (
 )
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics.evaluate import evaluate
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.offline import learn_offline
+from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms.sliding_window import SlidingWindow
 
 
@@ -147,7 +146,7 @@ def main() -> None:
         inputs,
         outputs,
     )
-    report = evaluate(
+    report = evaluate_offline(
         model,
         test,
         inputs,
