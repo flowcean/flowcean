@@ -35,3 +35,17 @@ class OfflineEnvironment(Environment):
             A streaming offline data.
         """
         return StreamingOfflineData(self, batch_size)
+
+    def stack(self, other: OfflineEnvironment) -> OfflineEnvironment:
+        """Combine this environment with another one vertically.
+
+        Args:
+            other: The environment to append vertically.
+
+        Returns:
+            The combined environment.
+        """
+        # Necessary to prevent circular imports
+        from .stack import StackEnvironment
+
+        return StackEnvironment(self, other)
