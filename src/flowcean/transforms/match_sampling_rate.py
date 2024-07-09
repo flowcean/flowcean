@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import polars as pl
 from numpy import interp
 
@@ -13,27 +14,34 @@ class MatchSamplingRate(Transform):
 
     Interpolates the time series to match the sampling rate of the reference
     time series. The below example shows the usage of a `MatchSamplingRate`
-    transform in an `experiment.yaml` file. Assuming the loaded data is
+    transform in a `run.py` file. Assuming the loaded data is
     represented by the table:
 
-    | time_feature_a | feature_a | time_feature_b | feature_b | constant |
-    | -------------- | --------- | -------------- | --------- | -------- |
-    | [0, 1, 2]      | [2, 1, 7] | [0, 2]         | [10, 20]  | 1        |
-    | [0, 1, 2]      | [4, 1, 0] | [0, 2]         | [20, 40]  | 2        |
+    | feature_a                          | feature_b                          | const |
+    | ---                                | ---                                | ---   |
+    | list[struct[datetime[us],struct[]] | list[struct[datetime[us],struct[]] | int   |
+    | -----------------------------------| -----------------------------------| ----- |
+    | [{2024-06-25 12:26:01.0,{1.2}]},   | [{2024-06-25 12:26:00.0,{1.0}}, | 1     |
+    |  {2024-06-25 12:26:02.0,{2.4}]},   |  {2024-06-25 12:26:05.0,{2}}] |       |
+    |  {2024-06-25 12:26:03.0,{3.6}]},   |                                      |       |
+    |  {2024-06-25 12:26:04.0,{4.8}]}]   |                                      |       |
 
     The following transform can be used to match the sampling rate
-    of the time series described by `time_feature_b` and
-    `feature_b` to the sampling rate of the time series described by
-    `time_feature_a` and `feature_a`.
+    of the time series `feature_b` to the sampling rate
+    of the time series `feature_a`.
 
     ```
-        transforms:
-            - classpath: agenc.transforms.MatchSamplingRate
-                arguments:
-                    reference_timestamps: time_feature_a
-                    feature_columns_with_timestamps:
-                        feature_b: time_feature_b
-            - ...
+        ...
+        environment.load()
+        data = environment.get_data()
+        transform = MatchSamplingRate(
+            reference_timestamps="time_feature_a",
+            feature_columns_with_timestamps={
+                "feature_b": "time_feature_b"
+            },
+        )
+        transformed_data = transform.transform(data)
+        ...
     ```
 
     The resulting Dataframe after the transform is:
@@ -47,7 +55,7 @@ class MatchSamplingRate(Transform):
 
     Note that the used feature `time_feature_b` is still
     present in the DataFrame. To remove it use the `select` transform.
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -70,12 +78,25 @@ class MatchSamplingRate(Transform):
 
         for i in range(len(data)):
             reference_timestamps = data[self.reference_timestamps][i]
+            reference_timestamps_np = reference_timestamps.to_numpy()
+            if np.issubdtype(reference_timestamps_np.dtype, np.datetime64):
+                reference_timestamps = (
+                    reference_timestamps_np.astype("datetime64[us]").astype(
+                        np.int64
+                    )
+                    / 1e6
+                )
             for (
                 feature,
                 timestamp,
             ) in self.feature_columns_with_timestamps.items():
                 timestamps = data[timestamp][i].to_numpy()
                 feature_data = data[feature][i].to_numpy()
+                if np.issubdtype(timestamps.dtype, np.datetime64):
+                    timestamps = (
+                        timestamps.astype("datetime64[us]").astype(np.int64)
+                        / 1e6
+                    )
                 resampled_timeseries = interp(
                     reference_timestamps,
                     timestamps,
