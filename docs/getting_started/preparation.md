@@ -6,9 +6,8 @@ This section will cover the essential steps with hints for the more advanced use
 ## Git
 
 Git is a version control system, which you will need if you want to work with the source code of Flowcean or with any other source code.
-However, it is not essential for Flowcean but recommended anyways. 
-
-**TODO** Am I missing something? 
+By now, Flowcean does not have a release on PyPi, i.e., you have to download the source code to use it.
+The recommended way is to use git for this.
 
 ### Install on Windows
 
@@ -17,13 +16,13 @@ Double-click on the installation file and keep the settings to their defaults (u
 
 After the installation, open a Powershell and you should be able to type `git` into it and see the help page:
 
-```bash
+```PS
 > git 
-Verwendung: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
-           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
-           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-           [--config-env=<name>=<envvar>] <command> [<args>]
+Usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+        [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+        [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+        [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+        [--config-env=<name>=<envvar>] <command> [<args>]
 ```
 **TODO** Show results from an actual power shell
 
