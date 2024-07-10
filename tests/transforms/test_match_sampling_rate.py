@@ -64,7 +64,6 @@ class TestMatchSamplingRate(unittest.TestCase):
                 "const": [1],
             }
         )
-        print(f"original df: {data_frame}")
 
         transformed_data = transform.transform(data_frame)
 
@@ -104,38 +103,32 @@ class TestMatchSamplingRate(unittest.TestCase):
                             "time": datetime(
                                 2024, 6, 25, 12, 26, 1, 0, tzinfo=UTC
                             ),
-                            "value": {"x": 1.2},
+                            "value": {"feature_b_x": 1.2},
                         },
                         {
                             "time": datetime(
                                 2024, 6, 25, 12, 26, 2, 0, tzinfo=UTC
                             ),
-                            "value": {"x": 1.4},
+                            "value": {"feature_b_x": 1.4},
                         },
                         {
                             "time": datetime(
                                 2024, 6, 25, 12, 26, 3, 0, tzinfo=UTC
                             ),
-                            "value": {"x": 1.6},
+                            "value": {"feature_b_x": 1.6},
                         },
                         {
                             "time": datetime(
                                 2024, 6, 25, 12, 26, 4, 0, tzinfo=UTC
                             ),
-                            "value": {"x": 1.8},
+                            "value": {"feature_b_x": 1.8},
                         },
                     ]
                 ],
                 "const": [1],
             }
         )
-        print(
-            f"expected df: {expected_data.explode("feature_a", "feature_b")}"
-        )
-        print(
-            f"transformed df: {transformed_data.explode("feature_a", "feature_b")}"
-        )
-        assert transformed_data.frame_equal(expected_data)
+        assert transformed_data.equals(expected_data)
 
 
 if __name__ == "__main__":
