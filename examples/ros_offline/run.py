@@ -4,6 +4,7 @@ import polars.selectors as cs
 
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
+from flowcean.transforms import MatchSamplingRate
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +28,17 @@ def main() -> None:
     environment.load()
     data = environment.get_data()
     print(data)
-    data = (
-        data.select("/j100_0000/amcl_pose")
-        .explode(cs.all())
-        .unnest(cs.all())
-        .unnest("value")
+    transform = MatchSamplingRate(
+        reference_feature="/j100_0000/amcl_pose",
+        feature_columns={
+            "/j100_0000/odometry": "linear",
+        },
     )
-    print(data)
+    transformed_data = transform.transform(
+        data.select("/j100_0000/amcl_pose", "/j100_0000/odometry")
+    )
+
+    print(transformed_data)
 
 
 if __name__ == "__main__":
