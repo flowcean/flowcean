@@ -28,7 +28,7 @@ classDiagram
   }
   class IncrementalEnvironment{
     Loads data in an iterative way. 
-    + get_next_data() -> DataFrame
+    + collect() -> DataFrame
   }
   class OfflineEnvironment{
     Loads data only once and in an non-interactive way. 
