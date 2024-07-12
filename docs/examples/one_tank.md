@@ -47,29 +47,91 @@ Normally this data would be recorded from a real CPS and imported into the frame
 However, since we know the differential equation describing the system behavior, we can also use this equation to generate data.
 We can do this by using an [`ODEEnvironment`](../reference/flowcean/environments/ode_environment.md) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/environment/incremental.md) within the framework.
 
-```python
-parameters = {
-    "A": 5,
-    "a": 0.5,
-    "b": 2,
-}
-V = lambda t: np.max([0, np.sin(2 * np.pi * 1 / 10 * t)])
+To do so, a special `OneTank` class is created which inherits from the general flowcean `OdeSystem` class.
 
-data_incremental = ODEEnvironment(
-    lambda t, x, parameters=parameters: np.array(
-        [
-            (parameters["b"] * V(t) - parameters["a"] * np.sqrt(x[0]))
-            / parameters["A"],
-        ],
-    ),
-    x0,
-    g=lambda t, x: np.array([x[0], V(t)]),
-    tstep=tstep,
-    output_names=["x", "V"],
-)
+```python
+class OneTank(OdeSystem[TankState]):
+    def __init__(
+        self,
+        *,
+        area: float,
+        outflow_rate: float,
+        inflow_rate: float,
+        initial_t: float = 0,
+        initial_state: TankState,
+    ) -> None:
+        super().__init__(
+            initial_t,
+            initial_state,
+        )
+        self.area = area
+        self.outflow_rate = outflow_rate
+        self.inflow_rate = inflow_rate
+
+    @override
+    def flow(
+        self,
+        t: float,
+        state: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
+        pump_voltage = np.max([0, np.sin(2 * np.pi * 1 / 10 * t)])
+        tank = TankState.from_numpy(state)
+        d_level = (
+            self.inflow_rate * pump_voltage
+            - self.outflow_rate * np.sqrt(tank.water_level)
+        ) / self.area
+        return np.array([d_level])
 ```
 
-The "measured" output of the environment has the form
+The `OneTank` class describes the differential equation in the `flow` as well as all parameters needed to evaluate it.
+The type parameter `TankState` is used to map the general numpy array holding the current state of the simulation to a more tangible representation.
+It can also be used for systems which multiple states where the behavior might change when certain conditions are met.
+For this example with only a single state the `TankState` class simplify maps the water level in the tank to the first entry in the state vector
+
+```python
+class TankState(State):
+    water_level: float
+
+    @override
+    def as_numpy(self) -> NDArray[np.float64]:
+        return np.array([self.water_level])
+
+    @classmethod
+    @override
+    def from_numpy(cls, state: NDArray[np.float64]) -> Self:
+        return cls(state[0])
+```
+
+The ode system can now be constructed by creating an instance of the `OneTank' class with the parameters given above
+
+```python
+    system = OneTank(
+        area=5,
+        outflow_rate=0.5,
+        inflow_rate=2,
+        initial_state=TankState(water_level=1),
+    )
+```
+
+From the system, an `OdeEnvironment` can be constructed
+
+```python
+    data_incremental = OdeEnvironment(
+        system,
+        dt=0.1,
+        map_to_dataframe=lambda ts, xs: pl.DataFrame(
+            {
+                "t": ts,
+                "h": [x.water_level for x in xs],
+            },
+        ),
+    ).load()
+```
+
+Beside the ode the time resolution `dt` and a mapping function are passed to the constructor.
+The mapping function describes how the generated solutions for different points in time can be mapped into a data frame for further processing within Flowcean.
+
+The generated output of the `OdeEnvironment` environment has the form
 
    $x$      |  $V$
   ----------|-----------
