@@ -85,8 +85,8 @@ class OneTank(OdeSystem[TankState]):
 
 The `OneTank` class describes the differential equation in the `flow` as well as all parameters needed to evaluate it.
 The type parameter `TankState` is used to map the general numpy array holding the current state of the simulation to a more tangible representation.
-It can also be used for systems which multiple states where the behavior might change when certain conditions are met.
-For this example with only a single state the `TankState` class simplify maps the water level in the tank to the first entry in the state vector
+The state of an `ODESystem` can also be used for systems with multiple states, where the behavior might change when certain conditions are met.
+For this example with only a single state the `TankState` class simply maps the water level in the tank to the first entry in the state vector
 
 ```python
 class TankState(State):
@@ -102,7 +102,7 @@ class TankState(State):
         return cls(state[0])
 ```
 
-The ode system can now be constructed by creating an instance of the `OneTank' class with the parameters given above
+The `ODESystem` can now be constructed by creating an instance of the `OneTank` class with the parameters given above
 
 ```python
     system = OneTank(
@@ -128,7 +128,7 @@ From the system, an `OdeEnvironment` can be constructed
     ).load()
 ```
 
-Beside the ode the time resolution `dt` and a mapping function are passed to the constructor.
+Beside the ODE, the time resolution `dt` and the mapping function `map_to_dataframe` are passed to the constructor.
 The mapping function describes how the generated solutions for different points in time can be mapped into a data frame for further processing within Flowcean.
 
 The generated output of the `OdeEnvironment` environment has the form
