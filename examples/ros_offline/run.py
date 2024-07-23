@@ -29,8 +29,8 @@ def main() -> None:
     data = environment.get_data()
     print(data)
     transform = MatchSamplingRate(
-        reference_feature="/j100_0000/amcl_pose",
-        feature_columns={
+        reference_feature_name="/j100_0000/amcl_pose",
+        feature_interpolation_map={
             "/j100_0000/odometry": "linear",
         },
     )
