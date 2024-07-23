@@ -31,19 +31,19 @@ Usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
 Git is shipped with the package manager of all common distributions and you can install it from the command line.
 See [here](https://git-scm.com/download/linux) to get the command for your distribution, e.g.:
 
-=== "Debian/Ubuntu"
+*Debian/Ubuntu*
 
     ```sh
     sudo apt-get install git
     ```
 
-=== "Arch Linux"
+*Arch Linux*
 
     ```sh
     sudo pacman -S git
     ```
 
-=== "Fedora"
+*Fedora*
 
     ```sh
     sudo dnf install git
@@ -52,6 +52,10 @@ See [here](https://git-scm.com/download/linux) to get the command for your distr
 ## Python
 
 Flowcean is written in Python and requires at least version 3.12.
+
+You can let [hatch](https://hatch.pypa.io/latest/install/) take care of the installation of the required Python version and virtual environments.
+In that case, we assume you know how to work with hatch and simply refer to the [documentation](https://hatch.pypa.io/latest/intro/). The remainder of this page assumes that you don't use hatch and goes the "plain" Python route.
+
 To check the version of your Python installation, open a Powershell or command line and type
 
 ```bash
