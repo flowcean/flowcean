@@ -111,7 +111,7 @@ In almost all cases it is strongly recommended to use a virtual environment when
 Although creating a virtual environment is rather simple, there are a few things to consider.
 It is advisable that you create the virtual environment at a place, where you can find it again.
 Most commonly, this is directly in the project folder or a "central" place in your home directory (,e.g., `~/.venvs` or `C:\Users\%USER%\.venvs`).
-Choosing a unique name for the virtual environment can be helpfull if you choose the second option.
+Choosing a unique name for the virtual environment can be helpful if you choose the second option.
 
 But let's assume you want to create the virtual environment in your project folder.
 And let's assume we have to create this project folder first:
