@@ -4,7 +4,7 @@ First, you have to download the source code of Flowcean (a package at PyPi will 
 You can either use Git as recommended in the [Preparation](preparation.md) or download it as zip file from [Github](https://github.com/flowcean/flowcean).
 
 If you followed the previous guide, you should have a folder `MyProject` which contains the virtual environment `myvenv`.
-Put the downloaded sources into the folder `MyProject` or exectute from within that folder:
+Put the downloaded sources into the folder `MyProject` or execute from within that folder:
 
 ```bash
 git clone https://github.com/flowcean/flowcean.git
