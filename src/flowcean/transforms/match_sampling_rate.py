@@ -187,6 +187,9 @@ def interpolate_feature(
             )
             .select(pl.all().implode())
         )
+    else:
+        msg = f"Interpolation method {interpolation_method} not supported."
+        raise NotImplementedError(msg)
     return result
 
 
