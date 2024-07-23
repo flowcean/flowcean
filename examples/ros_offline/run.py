@@ -1,7 +1,5 @@
 import logging
 
-import polars.selectors as cs
-
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
 from flowcean.transforms import MatchSamplingRate
