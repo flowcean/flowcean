@@ -31,10 +31,23 @@ Usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
 Git is shipped with the package manager of all common distributions and you can install it from the command line.
 See [here](https://git-scm.com/download/linux) to get the command for your distribution, e.g.:
 
-```bash
-sudo apt-get install git  # On Debian/Ubuntu
-sudo pacman -S git  # On Arch linux
-```
+=== "Debian/Ubuntu"
+
+    ```sh
+    sudo apt-get install git
+    ```
+
+=== "Arch Linux"
+
+    ```sh
+    sudo pacman -S git
+    ```
+
+=== "Fedora"
+
+    ```sh
+    sudo dnf install git
+    ```
 
 ## Python
 
