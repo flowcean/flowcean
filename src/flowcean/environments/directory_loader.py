@@ -16,4 +16,6 @@ def load_directory(
         if (item.is_file() and include_files) or (
             item.is_dir() and include_folders
         ):
-            yield load_function(item)
+            environment = load_function(item)
+            if environment is not None:
+                yield environment
