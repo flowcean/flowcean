@@ -95,7 +95,7 @@ def is_timeseries_column(df: pl.DataFrame, column_name: str) -> bool:
     if data_type.base_type() != pl.List:
         return False
 
-    inner_type = cast(pl.List, data_type).inner
+    inner_type: pl.DataType = cast(pl.DataType, cast(pl.List, data_type).inner)
     if inner_type.base_type() != pl.Struct:
         return False
 
