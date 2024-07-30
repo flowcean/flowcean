@@ -23,8 +23,9 @@ Usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
         [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
         [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
         [--config-env=<name>=<envvar>] <command> [<args>]
+        ...
 ```
-**TODO** Show results from an actual power shell
+
 
 ### Install on Linux
 
@@ -67,7 +68,7 @@ If the result looks like `Python 3.12.x` (where `x` might be any number), then y
 
 ### Install on Windows
 
-Nowadays, Windows offers to options for development.
+Nowadays, Windows offers two options for development.
 First, you can use plain Windows, e.g., using the Powershell.
 Second, there is the Windows Subsystem for Linux (WSL), which uses an integrated virtual machine for linux.
 Although we would recommend going the second route, this might not be applicable for everyone.
@@ -119,8 +120,12 @@ sudo apt update && sudo apt install python3.12
 **TODO** Check if this works for "newer" versions
 
 Please check your distributions documentation for installation instructions if you're not on Debian/Ubuntu.
+ 
+```bash
+> python3.12 --version
+Python 3.12.x
+```
 
-Finally, you should be able to successfully check the installation as [described above](#python). 
 
 ## Virtual Environment
 
