@@ -7,7 +7,7 @@ from flowcean.core.environment.stack import StackEnvironment
 from flowcean.environments.dataset import Dataset
 
 
-class TestParquetDataLoader(unittest.TestCase):
+class TestStack(unittest.TestCase):
     def test_stack_environment(self) -> None:
         dataset1 = Dataset(
             pl.DataFrame(
