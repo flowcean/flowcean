@@ -32,6 +32,13 @@ class Flatten(Transform):
     """
 
     def __init__(self, features: Iterable[str] | None = None) -> None:
+        """Initilize the flatten transform.
+
+        Args:
+            features: The features to flatten. If not provided or set to None,
+                all possible features from the given dataframe will be
+                flattened.
+        """
         self.features = features
 
     @override
