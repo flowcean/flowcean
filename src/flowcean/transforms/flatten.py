@@ -1,10 +1,11 @@
 import logging
 from collections.abc import Iterable
-from typing import cast, override
+from typing import override
 
 import polars as pl
 
 from flowcean.core import Transform
+from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +51,13 @@ class Flatten(Transform):
             else [
                 column_name
                 for column_name in data.columns
-                if is_timeseries_column(data, column_name)
+                if is_timeseries_feature(data, column_name)
             ]
         )
 
         for feature in feature_names:
             # Check if the feature really is a time series
-            if not is_timeseries_column(data, feature):
+            if not is_timeseries_feature(data, feature):
                 msg = f"Feature '{feature}' is no time series"
                 raise NoTimeSeriesFeatureError(msg)
 
@@ -94,17 +95,3 @@ class FeatureLengthVaryError(Exception):
 
 class NoTimeSeriesFeatureError(Exception):
     """Feature is no time series."""
-
-
-def is_timeseries_column(df: pl.DataFrame, column_name: str) -> bool:
-    data_type = df.select(column_name).dtypes[0]
-
-    if data_type.base_type() != pl.List:
-        return False
-
-    inner_type: pl.DataType = cast(pl.DataType, cast(pl.List, data_type).inner)
-    if inner_type.base_type() != pl.Struct:
-        return False
-
-    field_names = [field.name for field in cast(pl.Struct, inner_type).fields]
-    return "time" in field_names and "value" in field_names
