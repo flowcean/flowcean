@@ -1,7 +1,9 @@
 import logging
-from typing import cast, override
+import math
+from typing import Any, cast, override
 
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 
 from flowcean.core import Transform
@@ -45,23 +47,43 @@ class Resample(Transform):
                 pl.col(feature).list.eval(pl.first().struct.field("value"))
             ).to_numpy()
 
-            # Create the new time vector
-            t_interp = np.arange(time[0], time[-1], dt)
-
-            # Interpolate the value vector to match the new time vector
-            value_interp = np.interp(t_interp, time, value)
-
-            # Build a new feature from the interpolate data.
-            # Because the new column has also the name "feature", the old
-            # feature will be overriden
             data = data.with_columns(
-                pl.DataFrame({"time": t_interp, "value": value_interp})
-                .to_struct()
-                .implode()
-                .alias(feature)
+                pl.DataFrame(
+                    {
+                        feature: [
+                            resample_data(
+                                time[row_index, :][0],
+                                value[row_index, :][0],
+                                dt,
+                            )
+                            for row_index in range(len(data))
+                        ]
+                    }
+                )
             )
-
         return data
+
+
+def resample_data(
+    time: npt.NDArray[np.float64],
+    value: npt.NDArray[np.float64],
+    dt: float,
+) -> Any:
+    # Create the new time vector
+    time_start = cast(float, time[0])
+    time_end = cast(float, time[-1])
+    t_interp = np.linspace(
+        time_start, time_end, int(math.ceil(time_end - time_start) / dt) + 1
+    )
+
+    # Interpolate the value vector to match the new time vector
+    value_interp = np.interp(t_interp, time, value)
+    return (
+        pl.DataFrame({"time": t_interp, "value": value_interp})
+        .to_struct()
+        .implode()
+        .item()
+    )
 
 
 def is_timeseries_column(df: pl.DataFrame, column_name: str) -> bool:
