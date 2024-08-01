@@ -35,7 +35,8 @@ graph LR
   Model)
 ```
 
-More information on learning strategies can be found [here](https://www3.tuhh.de/agenc/user_guide/learning_strategies/). How the evaluation of models is done in Flowcean, is explained [here](https://www3.tuhh.de/agenc/user_guide/evaluation/).
+More information on learning strategies can be found [here](https://www3.tuhh.de/agenc/user_guide/learning_strategies/).
+How the evaluation of models is done in Flowcean, is explained [here](https://www3.tuhh.de/agenc/user_guide/evaluation/).
 
 Below, is a basic code implementation of an environment definition.
 In this case, the environment is a *DataSet* which is a type of [OfflineEnvironment](https://www3.tuhh.de/agenc/reference/flowcean/core/environment/offline/).

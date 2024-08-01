@@ -253,14 +253,14 @@ Afterwards you can either use `hatch` or run the examples from source.
 ### Hatch
 
 The easiest way to run this example is using `hatch`.
-Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before install it or any of it's dependencies.
+Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before installing it or any of its dependencies.
 Now you can run the example using
 
 ```sh
 hatch run examples:one_tank
 ```
 
-This command will take care to install any required dependencies in a separate environment.
+This command will take care of installing any required dependencies in a separate environment.
 After a short moment you should see the learning results from both methods and the achieved metric values.
 
 ### From source
