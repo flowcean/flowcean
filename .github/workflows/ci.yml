@@ -44,7 +44,7 @@ jobs:
     name: Run Examples
     strategy:
       matrix:
-        example: ["boiler", "failure_time_prediction", "linear_data"]
+        example: ["boiler", "failure_time_prediction", "linear_data", "one_tank"]
     runs-on: self-hosted
     env:
       CUDA_VISIBLE_DEVICES: ""
