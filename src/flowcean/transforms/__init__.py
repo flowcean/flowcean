@@ -4,6 +4,7 @@ __all__ = [
     "Flatten",
     "NoTimeSeriesFeatureError",
     "MatchSamplingRate",
+    "OneHot",
     "Rechunk",
     "Rename",
     "Resample",
@@ -21,6 +22,7 @@ from flowcean.transforms.flatten import (
     NoTimeSeriesFeatureError,
 )
 from flowcean.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.transforms.one_hot import OneHot
 from flowcean.transforms.rechunk import Rechunk
 from flowcean.transforms.rename import Rename
 from flowcean.transforms.resample import Resample
