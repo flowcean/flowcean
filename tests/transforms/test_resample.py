@@ -81,6 +81,80 @@ class ResampleTransform(unittest.TestCase):
             ),
         )
 
+    def test_different_sample_rates(self) -> None:
+        transform = Resample({"feature_a": 1.0, "feature_b": 2.0})
+        data_frame = pl.DataFrame(
+            {
+                "feature_a": [
+                    [
+                        {
+                            "time": 0,
+                            "value": 1,
+                        },
+                        {
+                            "time": 2,
+                            "value": 2,
+                        },
+                    ],
+                ],
+                "feature_b": [
+                    [
+                        {
+                            "time": 0,
+                            "value": 0,
+                        },
+                        {
+                            "time": 1,
+                            "value": 1,
+                        },
+                        {
+                            "time": 2,
+                            "value": 2,
+                        },
+                    ],
+                ],
+                "scalar": [42],
+            }
+        )
+        transformed_data = transform.transform(data_frame)
+
+        assert_frame_equal(
+            transformed_data,
+            pl.DataFrame(
+                {
+                    "feature_a": [
+                        [
+                            {
+                                "time": 0.0,
+                                "value": 1.0,
+                            },
+                            {
+                                "time": 1.0,
+                                "value": 1.5,
+                            },
+                            {
+                                "time": 2.0,
+                                "value": 2.0,
+                            },
+                        ],
+                    ],
+                    "feature_b": [
+                        [
+                            {
+                                "time": 0.0,
+                                "value": 0.0,
+                            },
+                            {
+                                "time": 2.0,
+                                "value": 2.0,
+                            },
+                        ],
+                    ],
+                    "scalar": [42],
+                }
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
