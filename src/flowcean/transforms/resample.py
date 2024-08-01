@@ -5,6 +5,7 @@ from typing import Any, cast, override
 import numpy as np
 import numpy.typing as npt
 import polars as pl
+from scipy.interpolate import CubicSpline
 
 from flowcean.core import Transform
 
@@ -14,16 +15,24 @@ logger = logging.getLogger(__name__)
 class Resample(Transform):
     """Resample time series features to a given sampling rate."""
 
-    def __init__(self, sampling_rate: float | dict[str, float]) -> None:
+    def __init__(
+        self,
+        sampling_rate: float | dict[str, float],
+        *,
+        use_cubic_interpolation: bool = False,
+    ) -> None:
         """Initializes the Resample transform.
 
         Args:
             sampling_rate: Target sampling rate for time series features. If a
-            float is provided, all possible time series features will be
-            resampled. Alternatively, a dictionary can be provided where the
-            key is the feature and the value is the target sample rate.
+                float is provided, all possible time series features will be
+                resampled. Alternatively, a dictionary can be provided where
+                the key is the feature and the value is the target sample rate.
+            use_cubic_interpolation: Use cubic instead of a linear
+                interpolation.
         """
         self.sampling_rate = sampling_rate
+        self.use_cubic_interpolation = use_cubic_interpolation
 
     @override
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
@@ -51,7 +60,7 @@ class Resample(Transform):
                 pl.DataFrame(
                     {
                         feature: [
-                            resample_data(
+                            self.resample_data(
                                 time[row_index, :][0],
                                 value[row_index, :][0],
                                 dt,
@@ -63,27 +72,35 @@ class Resample(Transform):
             )
         return data
 
+    def resample_data(
+        self,
+        time: npt.NDArray[np.float64],
+        value: npt.NDArray[np.float64],
+        dt: float,
+    ) -> Any:
+        # Create the new time vector
+        time_start = cast(float, time[0])
+        time_end = cast(float, time[-1])
+        t_interp = np.linspace(
+            time_start,
+            time_end,
+            int(math.ceil(time_end - time_start) / dt) + 1,
+        )
 
-def resample_data(
-    time: npt.NDArray[np.float64],
-    value: npt.NDArray[np.float64],
-    dt: float,
-) -> Any:
-    # Create the new time vector
-    time_start = cast(float, time[0])
-    time_end = cast(float, time[-1])
-    t_interp = np.linspace(
-        time_start, time_end, int(math.ceil(time_end - time_start) / dt) + 1
-    )
+        # Interpolate the value vector to match the new time vector
+        value_interp = None
+        if self.use_cubic_interpolation:
+            interpolator = CubicSpline(time, value)
+            value_interp = interpolator(t_interp)
+        else:
+            value_interp = np.interp(t_interp, time, value)
 
-    # Interpolate the value vector to match the new time vector
-    value_interp = np.interp(t_interp, time, value)
-    return (
-        pl.DataFrame({"time": t_interp, "value": value_interp})
-        .to_struct()
-        .implode()
-        .item()
-    )
+        return (
+            pl.DataFrame({"time": t_interp, "value": value_interp})
+            .to_struct()
+            .implode()
+            .item()
+        )
 
 
 def is_timeseries_column(df: pl.DataFrame, column_name: str) -> bool:
