@@ -22,8 +22,8 @@ dependencies = [
 
 [project.urls]
 Documentation = "https://www3.tuhh.de/agenc/"
-Issues = "https://collaborating.tuhh.de/w-6/forschung/agenc/agenc/-/issues"
-Source = "https://collaborating.tuhh.de/w-6/forschung/agenc/agenc"
+Issues = "https://github.com/flowcean/flowcean/issues"
+Source = "https://github.com/flowcean/flowcean"
 
 [project.optional-dependencies]
 all = [
