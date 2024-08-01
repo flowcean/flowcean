@@ -8,6 +8,7 @@ import polars as pl
 from scipy.interpolate import CubicSpline
 
 from flowcean.core import Transform
+from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class Resample(Transform):
             {
                 column_name: self.sampling_rate
                 for column_name in data.columns
-                if is_timeseries_column(data, column_name)
+                if is_timeseries_feature(data, column_name)
             }
             if isinstance(self.sampling_rate, float)
             else cast(dict[str, float], self.sampling_rate)
@@ -101,17 +102,3 @@ class Resample(Transform):
             .implode()
             .item()
         )
-
-
-def is_timeseries_column(df: pl.DataFrame, column_name: str) -> bool:
-    data_type = df.select(column_name).dtypes[0]
-
-    if data_type.base_type() != pl.List:
-        return False
-
-    inner_type: pl.DataType = cast(pl.DataType, cast(pl.List, data_type).inner)
-    if inner_type.base_type() != pl.Struct:
-        return False
-
-    field_names = [field.name for field in cast(pl.Struct, inner_type).fields]
-    return "time" in field_names and "value" in field_names
