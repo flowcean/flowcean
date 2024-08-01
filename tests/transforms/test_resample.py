@@ -45,34 +45,34 @@ class ResampleTransform(unittest.TestCase):
                     "feature_a": [
                         [
                             {
-                                "time": 0,
-                                "value": 1,
+                                "time": 0.0,
+                                "value": 1.0,
                             },
                             {
-                                "time": 1,
+                                "time": 1.0,
                                 "value": 1.5,
                             },
                             {
-                                "time": 2,
-                                "value": 2,
+                                "time": 2.0,
+                                "value": 2.0,
                             },
                         ],
                         [
                             {
-                                "time": 0,
-                                "value": 0,
+                                "time": 0.0,
+                                "value": 0.0,
                             },
                             {
-                                "time": 1,
-                                "value": 1,
+                                "time": 1.0,
+                                "value": 1.0,
                             },
                             {
-                                "time": 2,
-                                "value": 2,
+                                "time": 2.0,
+                                "value": 2.0,
                             },
                             {
-                                "time": 3,
-                                "value": 3,
+                                "time": 3.0,
+                                "value": 3.0,
                             },
                         ],
                     ],
