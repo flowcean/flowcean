@@ -44,7 +44,7 @@ class SlidingWindow(Transform):
         return (
             data.with_row_count()
             .select(pl.col("row_nr").cast(pl.Int32), pl.exclude("row_nr"))
-            .groupby_rolling(
+            .rolling(
                 "row_nr",
                 period=f"{self.window_size}i",
                 closed="right",
