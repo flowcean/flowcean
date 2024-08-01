@@ -67,7 +67,6 @@ class OfflineEnvironment(Environment):
 
         # Get the underlaying dataframe
         data = self.get_data()
-        result_data = pl.DataFrame()
         # Create the time feature mapping
         if isinstance(time_feature, str):
             time_feature = {
@@ -76,24 +75,17 @@ class OfflineEnvironment(Environment):
                 if feature_name != time_feature
             }
 
-        # Convert each feature into a time series
-        for value_feature, t_feature in time_feature.items():
-            result_data = result_data.with_columns(
-                data.select(
-                    [
-                        t_feature,
-                        value_feature,
-                    ]
-                )
-                .rename(
-                    {
-                        t_feature: "time",
-                        value_feature: "value",
-                    }
-                )
-                .to_struct()
-                .implode()
-                .alias(value_feature)
+        # Convert the features into a time series
+        return Dataset(
+            data.select(
+                [
+                    pl.struct(
+                        pl.col(t_feature).alias("time"),
+                        pl.col(value_feature).alias("value"),
+                    )
+                    .implode()
+                    .alias(value_feature)
+                    for value_feature, t_feature in time_feature.items()
+                ]
             )
-
-        return Dataset(result_data)
+        )
