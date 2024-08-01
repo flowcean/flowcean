@@ -48,10 +48,24 @@ class OfflineEnvironment(Environment):
 
         return StackEnvironment(self, other)
 
+    def extend(self, other: OfflineEnvironment) -> OfflineEnvironment:
+        """Combine this environment with another one horizontally.
+
+        Args:
+            other: The environment to combine horizontally.
+
+        Returns:
+            The combined environment.
+        """
+        # Necessary to prevent circular imports
+        from .combine import CombineEnvironment
+
+        return CombineEnvironment(self, other)
+
     def to_time_series(
         self, time_feature: str | dict[str, str]
     ) -> OfflineEnvironment:
-        """Convert this envrionment to a time series.
+        """Convert this environment to a time series.
 
         Args:
             time_feature: The feature in this environment that represents the
@@ -60,12 +74,12 @@ class OfflineEnvironment(Environment):
                 and the values are the corresponding time vector feature names.
 
         Returns:
-            A OfflineEnvrionment with exactly one sample containg the source
+            A OfflineEnvironment with exactly one sample containing the source
             environment as a time series.
         """
         from flowcean.environments.dataset import Dataset
 
-        # Get the underlaying dataframe
+        # Get the underlying dataframe
         data = self.get_data()
         # Create the time feature mapping
         if isinstance(time_feature, str):
