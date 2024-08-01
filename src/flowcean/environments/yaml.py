@@ -6,6 +6,7 @@ from ruamel.yaml import YAML
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError
+from flowcean.environments.directory_loader import LoaderFunction
 
 
 class YamlDataLoader(OfflineEnvironment):
@@ -25,3 +26,7 @@ class YamlDataLoader(OfflineEnvironment):
         if self.data is None:
             raise NotLoadedError
         return self.data
+
+    @staticmethod
+    def loader() -> LoaderFunction:
+        return lambda p: YamlDataLoader(p).load()

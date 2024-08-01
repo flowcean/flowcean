@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Callable
 from pathlib import Path
 from typing import Self, override
 
@@ -7,6 +6,7 @@ import polars as pl
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError
+from flowcean.environments.directory_loader import LoaderFunction
 
 logger = logging.getLogger(__name__)
 
@@ -44,5 +44,5 @@ class CsvDataLoader(OfflineEnvironment):
         return self.data
 
     @staticmethod
-    def loader() -> Callable[[Path], OfflineEnvironment]:
+    def loader() -> LoaderFunction:
         return lambda p: CsvDataLoader(p).load()

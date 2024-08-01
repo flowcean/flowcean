@@ -6,6 +6,7 @@ import polars as pl
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError
+from flowcean.environments.directory_loader import LoaderFunction
 
 
 class JsonDataLoader(OfflineEnvironment):
@@ -27,3 +28,7 @@ class JsonDataLoader(OfflineEnvironment):
         if self.data is None:
             raise NotLoadedError
         return self.data
+
+    @staticmethod
+    def loader() -> LoaderFunction:
+        return lambda p: JsonDataLoader(p).load()

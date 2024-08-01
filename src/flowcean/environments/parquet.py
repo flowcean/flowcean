@@ -5,6 +5,7 @@ import polars as pl
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment import NotLoadedError
+from flowcean.environments.directory_loader import LoaderFunction
 
 
 class ParquetDataLoader(OfflineEnvironment):
@@ -31,3 +32,7 @@ class ParquetDataLoader(OfflineEnvironment):
         if self.data is None:
             raise NotLoadedError
         return self.data
+
+    @staticmethod
+    def loader() -> LoaderFunction:
+        return lambda p: ParquetDataLoader(p).load()
