@@ -1,7 +1,8 @@
 import logging
+from typing import override
 
 import polars as pl
-from numpy import interp
+import polars.selectors as cs
 
 from flowcean.core import Transform
 
@@ -13,99 +14,187 @@ class MatchSamplingRate(Transform):
 
     Interpolates the time series to match the sampling rate of the reference
     time series. The below example shows the usage of a `MatchSamplingRate`
-    transform in an `experiment.yaml` file. Assuming the loaded data is
+    transform in a `run.py` file. Assuming the loaded data is
     represented by the table:
 
-    | time_feature_a | feature_a | time_feature_b | feature_b | constant |
-    | -------------- | --------- | -------------- | --------- | -------- |
-    | [0, 1, 2]      | [2, 1, 7] | [0, 2]         | [10, 20]  | 1        |
-    | [0, 1, 2]      | [4, 1, 0] | [0, 2]         | [20, 40]  | 2        |
+    | feature_a                   | feature_b                   | const |
+    | ---                         | ---                         | ---   |
+    | list[struct[time,struct[]]] | list[struct[time,struct[]]] | int   |
+    | --------------------------- | --------------------------- | ----- |
+    | [{12:26:01.0, {1.2}},       | [{12:26:00.0, {1.0}},       | 1     |
+    |  {12:26:02.0, {2.4}},       |  {12:26:05.0, {2.0}}]       |       |
+    |  {12:26:03.0, {3.6}},       |                             |       |
+    |  {12:26:04.0, {4.8}}]       |                             |       |
 
     The following transform can be used to match the sampling rate
-    of the time series described by `time_feature_b` and
-    `feature_b` to the sampling rate of the time series described by
-    `time_feature_a` and `feature_a`.
+    of the time series `feature_b` to the sampling rate
+    of the time series `feature_a`.
 
     ```
-        transforms:
-            - classpath: agenc.transforms.MatchSamplingRate
-                arguments:
-                    reference_timestamps: time_feature_a
-                    feature_columns_with_timestamps:
-                        feature_b: time_feature_b
-            - ...
+        ...
+        environment.load()
+        data = environment.get_data()
+        transform = MatchSamplingRate(
+            reference_feature_name="feature_a",
+            feature_interpolation_map={
+                "feature_b": "linear",
+            },
+        )
+        transformed_data = transform.transform(data)
+        ...
     ```
 
     The resulting Dataframe after the transform is:
 
-    | time_feature_a | feature_a   | time_feature_b | feature_b    | constant |
-    | -------------- | ----------- | -------------- | ------------ | -------- |
-    | [0, 1, 2]      | [2, 1, 7]   | [0, 1, 2]       | [10, 15, 20]    | 1    |
-    | [0, 1, 2]      | [4, 1, 0]   | [0, 1, 2]       | [20, 30, 40]    | 2    |
+    | feature_a                   | feature_b                   | const |
+    | ---                         | ---                         | ---   |
+    | list[struct[time,struct[]]] | list[struct[time,struct[]]] | int   |
+    | --------------------------- | --------------------------- | ----- |
+    | [{12:26:00.0, {1.2}},       | [{12:26:00.0, {1.2}},       | 1     |
+    |  {12:26:01.0, {2.4}},       |  {12:26:01.0, {1.4}},       |       |
+    |  {12:26:02.0, {3.6}},       |  {12:26:02.0, {1.6}},       |       |
+    |  {12:26:03.0, {4.8}}]       |  {12:26:03.0, {1.8}}]       |       |
 
-
-
-    Note that the used feature `time_feature_b` is still
-    present in the DataFrame. To remove it use the `select` transform.
     """
 
     def __init__(
         self,
-        reference_timestamps: str,
-        feature_columns_with_timestamps: dict[str, str],
+        reference_feature_name: str,
+        feature_interpolation_map: dict[str, str],
     ) -> None:
-        """Initialize the MatchSamplingRate transform.
+        """Initialize the transform.
 
         Args:
-            reference_timestamps: Timestamps of the reference feature.
-            feature_columns_with_timestamps: Names of the features that are
-                getting interpolated with their respective original timestamp
-                feature names.
+            reference_feature_name: Reference timeseries feature.
+            feature_interpolation_map: Key-value pairs of the timeseries
+                features that are targeted in interpolation columns and the
+                interpolation method to use. At the moment, the interpolation
+                method can only be 'linear'.
         """
-        self.reference_timestamps = reference_timestamps
-        self.feature_columns_with_timestamps = feature_columns_with_timestamps
+        self.reference_feature_name = reference_feature_name
+        self.feature_interpolation_map = feature_interpolation_map
 
+    @override
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
-        logger.debug("Matching sampling rate of time series.")
+        # preserve all constant columns that are not timeseries data
+        non_timeseries_features = data.select(
+            pl.exclude(
+                *self.feature_interpolation_map.keys(),
+                self.reference_feature_name,
+            )
+        )
+        debug_msg = (
+            "Interpolating timeseries features: "
+            + str(self.feature_interpolation_map.keys())
+            + " using the timestamps of the reference feature "
+            + self.reference_feature_name
+        )
+        logger.debug(debug_msg)
 
-        for i in range(len(data)):
-            reference_timestamps = data[self.reference_timestamps][i]
-            for (
-                feature,
-                timestamp,
-            ) in self.feature_columns_with_timestamps.items():
-                timestamps = data[timestamp][i].to_numpy()
-                feature_data = data[feature][i].to_numpy()
-                resampled_timeseries = interp(
-                    reference_timestamps,
-                    timestamps,
-                    feature_data,
-                ).tolist()
-                data = (
-                    data.lazy()
-                    .with_row_index()
-                    .with_columns(
-                        pl.when(pl.col("index") == i)
-                        .then(resampled_timeseries)
-                        .otherwise(pl.col(feature))
-                        .alias(feature)
-                    )
-                    .drop("index")
-                    .collect()
+        if self.reference_feature_name not in data.columns:
+            msg = f"{self.reference_feature_name} not in the DataFrame."
+            raise FeatureNotFoundError(msg)
+
+        features = list(self.feature_interpolation_map.keys())
+        reference_feature = (
+            data.select(pl.col(self.reference_feature_name).explode())
+            .unnest(cs.all())
+            .rename(
+                lambda name: self.reference_feature_name + "_" + name
+                if name != "time"
+                else name
+            )
+        )
+        result = pl.concat(
+            [
+                interpolate_feature(
+                    feature,
+                    data,
+                    reference_feature,
+                    self.feature_interpolation_map[feature],
                 )
-                reference_timestamps = pl.Series(
-                    reference_timestamps
-                ).to_list()
-                data = (
-                    data.lazy()
-                    .with_row_index()
-                    .with_columns(
-                        pl.when(pl.col("index") == i)
-                        .then(reference_timestamps)
-                        .otherwise(pl.col(timestamp))
-                        .alias(timestamp)
-                    )
-                    .drop("index")
-                    .collect()
+                for feature in features
+            ],
+            how="horizontal",
+        )
+
+        return pl.concat(
+            [
+                data.select(self.reference_feature_name),
+                result,
+                data.select(non_timeseries_features),
+            ],
+            how="horizontal",
+        )
+
+
+def interpolate_feature(
+    target_feature_name: str,
+    data: pl.DataFrame,
+    reference_feature: pl.DataFrame,
+    interpolation_method: str,
+) -> pl.DataFrame:
+    """Interpolate a single time series feature.
+
+    Args:
+        target_feature_name: Timeseries feature to interpolate.
+        data: Input DataFrame.
+        reference_feature: Reference timeseries feature.
+        interpolation_method: Interpolation method to use.
+
+    Returns:
+        Interpolated timeseries feature.
+
+    """
+    logger.debug("Interpolating feature %s", target_feature_name)
+    if interpolation_method == "linear":
+        feature_df = (
+            data.select(pl.col(target_feature_name).explode())
+            .unnest(cs.all())
+            .unnest("value")
+            .rename(
+                lambda name: target_feature_name + "_" + name
+                if name != "time"
+                else name
+            )
+        )
+        result = (
+            (
+                pl.concat(
+                    [reference_feature, feature_df],
+                    how="diagonal",
                 )
-        return data
+                .sort("time")
+                .with_columns(
+                    pl.col(feature_df.drop("time").columns).interpolate()
+                )
+                .drop_nulls()
+            )
+            .select(feature_df.columns)
+            .select(
+                [
+                    pl.struct(
+                        pl.col("time"),
+                        pl.struct(
+                            {
+                                col: pl.col(col)
+                                for col in feature_df.columns
+                                if col != "time"
+                            }
+                        ).alias("value"),
+                    ).alias(target_feature_name)
+                ]
+            )
+            .select(pl.all().implode())
+        )
+    else:
+        msg = f"Interpolation method {interpolation_method} not supported."
+        raise NotImplementedError(msg)
+    return result
+
+
+class FeatureNotFoundError(Exception):
+    """Feature not found in the DataFrame.
+
+    This exception is raised when a feature is not found in the DataFrame.
+    """

@@ -1,9 +1,8 @@
 import logging
 
-import polars.selectors as cs
-
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
+from flowcean.transforms import EuclideanDistance, MatchSamplingRate
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +25,24 @@ def main() -> None:
     )
     environment.load()
     data = environment.get_data()
-    print(data)
-    data = (
-        data.select("/j100_0000/amcl_pose")
-        .explode(cs.all())
-        .unnest(cs.all())
-        .unnest("value")
+    print(f"original data: {data}")
+    transform = MatchSamplingRate(
+        reference_feature_name="/j100_0000/amcl_pose",
+        feature_interpolation_map={
+            "/j100_0000/odometry": "linear",
+        },
+    ) | EuclideanDistance(
+        feature_a_name="/j100_0000/amcl_pose",
+        feature_b_name="/j100_0000/odometry",
+        output_feature_name="position_error",
     )
-    print(data)
+    transformed_data = transform.transform(data)
+
+    print(
+        transformed_data.explode(
+            "/j100_0000/amcl_pose", "/j100_0000/odometry", "position_error"
+        )
+    )
 
 
 if __name__ == "__main__":
