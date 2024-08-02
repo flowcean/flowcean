@@ -1,9 +1,8 @@
 import logging
 import math
-from typing import Any, cast, override
+from typing import cast, override
 
 import numpy as np
-import numpy.typing as npt
 import polars as pl
 from scipy.interpolate import CubicSpline
 
@@ -48,40 +47,41 @@ class Resample(Transform):
         )
 
         for feature, dt in sampling_mapping.items():
-            # Select the time and the value vector
-            time = data.select(
-                pl.col(feature).list.eval(pl.first().struct.field("time"))
-            ).to_numpy()
-
-            value = data.select(
-                pl.col(feature).list.eval(pl.first().struct.field("value"))
-            ).to_numpy()
-
             data = data.with_columns(
-                pl.DataFrame(
-                    {
-                        feature: [
-                            self.resample_data(
-                                time[row_index, :][0],
-                                value[row_index, :][0],
-                                dt,
-                            )
-                            for row_index in range(len(data))
-                        ]
-                    }
+                pl.struct(
+                    pl.col(feature)
+                    .list.eval(pl.first().struct.field("time"))
+                    .alias("time"),
+                    pl.col(feature)
+                    .list.eval(pl.first().struct.field("value"))
+                    .alias("value"),
                 )
+                .map_elements(
+                    lambda series, dt=dt: self.resample_data(
+                        series,
+                        dt,
+                    ),
+                    return_dtype=pl.List(
+                        pl.Struct(
+                            {
+                                "time": pl.Float64,
+                                "value": pl.Float64,
+                            }
+                        )
+                    ),
+                )
+                .alias(feature)
             )
         return data
 
     def resample_data(
-        self,
-        time: npt.NDArray[np.float64],
-        value: npt.NDArray[np.float64],
-        dt: float,
-    ) -> Any:
-        # Create the new time vector
-        time_start = cast(float, time[0])
-        time_end = cast(float, time[-1])
+        self, data: dict[str, list[float]], dt: float
+    ) -> pl.Series:
+        time = data["time"]
+        value = data["value"]
+
+        time_start = time[0]
+        time_end = time[-1]
         t_interp = np.linspace(
             time_start,
             time_end,
