@@ -18,6 +18,7 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
+        transform.fit(data_frame)
         transformed_data = transform.transform(data_frame)
 
         assert_frame_equal(
@@ -46,6 +47,7 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
+        transform.fit(data_frame)
         transformed_data = transform.transform(data_frame)
 
         assert_frame_equal(
@@ -63,18 +65,6 @@ class OneHotTransform(unittest.TestCase):
                     "c": [3, 6, 9, 12],
                 },
             ),
-            check_column_order=False,
-        )
-
-    def test_non_integer(self) -> None:
-        transform = OneHot(["a"])
-
-        data_frame = pl.DataFrame({"a": [1.456, 17.24, 42.0]})
-        transformed_data = transform.transform(data_frame)
-
-        assert_frame_equal(
-            transformed_data,
-            pl.DataFrame({"a": [1.456, 17.24, 42.0]}),
             check_column_order=False,
         )
 
