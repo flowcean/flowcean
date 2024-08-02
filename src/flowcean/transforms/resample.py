@@ -19,7 +19,7 @@ class Resample(Transform):
         self,
         sampling_rate: float | dict[str, float],
         *,
-        use_cubic_interpolation: bool = False,
+        interpolation_method: str = "linear",
     ) -> None:
         """Initializes the Resample transform.
 
@@ -28,11 +28,12 @@ class Resample(Transform):
                 float is provided, all possible time series features will be
                 resampled. Alternatively, a dictionary can be provided where
                 the key is the feature and the value is the target sample rate.
-            use_cubic_interpolation: Use cubic instead of a linear
-                interpolation.
+            interpolation_method: The interpolation method to use. Supported
+                are "linear" and "cubic", with the default being
+                "linear".
         """
         self.sampling_rate = sampling_rate
-        self.use_cubic_interpolation = use_cubic_interpolation
+        self.interpolation_method = interpolation_method
 
     @override
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
@@ -90,12 +91,16 @@ class Resample(Transform):
 
         # Interpolate the value vector to match the new time vector
         value_interp = None
-        if self.use_cubic_interpolation:
+        if self.interpolation_method == "linear":
+            value_interp = np.interp(t_interp, time, value)
+        elif self.interpolation_method == "cubic":
             interpolator = CubicSpline(time, value)
             value_interp = interpolator(t_interp)
         else:
-            value_interp = np.interp(t_interp, time, value)
-
+            logger.warning(
+                "Unknown interpolation method %s. Defaulting to linear",
+                self.interpolation_method,
+            )
         return (
             pl.DataFrame({"time": t_interp, "value": value_interp})
             .to_struct()
