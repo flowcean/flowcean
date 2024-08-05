@@ -31,28 +31,28 @@ class FilterTransform(unittest.TestCase):
             }
         )
 
-        transformed_data = transform.transform(data_frame)
+        transformed_values = transform.transform(data_frame)
         # Because the filter introduces a delay into the signal (group delay),
         # we cannot simply compare the transformed data to a given data frame.
         # Instead, the error between the expected and actual data is
         # calculated. If it's within limits, the filter has worked.
 
         # Get the transformed values
-        transformed_data = (
-            transformed_data.select(
+        transformed_values = (
+            transformed_values.select(
                 pl.col("feature_a").list.eval(pl.first().struct.field("value"))
             )
             .item()
             .to_numpy()
         )
 
-        expected_data = np.array(
+        expected_values = np.array(
             [np.sin(2 * np.pi * 5 * t) for t in time_vector]
         )
 
         mean_square_error = np.sum(
-            np.power(expected_data - transformed_data, 2)
-        ) / len(expected_data)
+            np.power(expected_values - transformed_values, 2)
+        ) / len(expected_values)
 
         assert mean_square_error <= 0.1
 
@@ -80,28 +80,28 @@ class FilterTransform(unittest.TestCase):
             }
         )
 
-        transformed_data = transform.transform(data_frame)
+        transformed_values = transform.transform(data_frame)
         # Because the filter introduces a delay into the signal (group delay),
         # we cannot simply compare the transformed data to a given data frame.
         # Instead, the error between the expected and actual data is
         # calculated. If it's within limits, the filter has worked.
 
         # Get the transformed values
-        transformed_data = (
-            transformed_data.select(
+        transformed_values = (
+            transformed_values.select(
                 pl.col("feature_a").list.eval(pl.first().struct.field("value"))
             )
             .item()
             .to_numpy()
         )
 
-        expected_data = np.array(
+        expected_values = np.array(
             [np.sin(2 * np.pi * 80 * t) for t in time_vector]
         )
 
         mean_square_error = np.sum(
-            np.power(expected_data - transformed_data, 2)
-        ) / len(expected_data)
+            np.power(expected_values - transformed_values, 2)
+        ) / len(expected_values)
 
         assert mean_square_error <= 0.1
 
