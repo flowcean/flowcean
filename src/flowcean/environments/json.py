@@ -19,7 +19,15 @@ class JsonDataLoader(OfflineEnvironment):
     def load(self) -> Self:
         with self.path.open() as file:
             json_content = json.load(file)
-        self.data = pl.DataFrame(json_content)
+
+        # Check if any of the entries in the dict is *not* a list and treat the
+        # whole dict as a single entry in that case
+        if isinstance(json_content, dict) and any(
+            not isinstance(value, list) for value in json_content.values()
+        ):
+            self.data = pl.DataFrame([json_content])
+        else:
+            self.data = pl.DataFrame(json_content)
         return self
 
     @override
