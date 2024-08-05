@@ -1,6 +1,6 @@
 import logging
 import math
-from typing import cast, override
+from typing import Literal, cast, override
 
 import numpy as np
 import polars as pl
@@ -11,6 +11,8 @@ from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
+type InterpolationMethod = Literal["linear", "cubic"]
+
 
 class Resample(Transform):
     """Resample time series features to a given sampling rate."""
@@ -19,7 +21,7 @@ class Resample(Transform):
         self,
         sampling_rate: float | dict[str, float],
         *,
-        interpolation_method: str = "linear",
+        interpolation_method: InterpolationMethod = "linear",
     ) -> None:
         """Initializes the Resample transform.
 
