@@ -32,10 +32,10 @@ class FilterTransform(unittest.TestCase):
         )
 
         transformed_data = transform.transform(data_frame)
-        # As the filter introduces a delay to the signal (group-delay), we
-        # cannot simply compare the transformed data to a given dataframe.
-        # Instead the error between the expected and the real data is computed.
-        # If that's within limits, the filter did work.
+        # Because the filter introduces a delay into the signal (group delay),
+        # we cannot simply compare the transformed data to a given data frame.
+        # Instead, the error between the expected and actual data is
+        # calculated. If it's within limits, the filter has worked.
 
         # Get the transformed values
         transformed_data = (
@@ -81,10 +81,10 @@ class FilterTransform(unittest.TestCase):
         )
 
         transformed_data = transform.transform(data_frame)
-        # As the filter introduces a delay to the signal (group-delay), we
-        # cannot simply compare the transformed data to a given dataframe.
-        # Instead the error between the expected and the real data is computed.
-        # If that's within limits, the filter did work.
+        # Because the filter introduces a delay into the signal (group delay),
+        # we cannot simply compare the transformed data to a given data frame.
+        # Instead, the error between the expected and actual data is
+        # calculated. If it's within limits, the filter has worked.
 
         # Get the transformed values
         transformed_data = (
