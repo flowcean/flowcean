@@ -40,14 +40,28 @@ class OneHot(Transform, UnsupervisedLearner):
 
     categories: dict[str, dict[str, Any]]
 
-    def __init__(self, features: Iterable[str]) -> None:
+    def __init__(
+        self,
+        features: Iterable[str],
+        *,
+        categories: dict[str, list[Any]] | None = None,
+    ) -> None:
         """Initializes the One-Hot transform.
 
         Args:
             features: The features to transform.
+            categories: Dictionary of features and a list of categorical values
+                to encode for each. If set to None, the categories must be
+                determined by calling `fit` with a sufficient sample of data.
         """
         self.features = features
-        self.categories = {}
+        if categories is None:
+            self.categories = {}
+        else:
+            self.categories = {
+                feature: {f"{feature}_{value}": value for value in values}
+                for feature, values in categories.items()
+            }
 
     @override
     def fit(self, data: pl.DataFrame) -> None:
@@ -57,7 +71,7 @@ class OneHot(Transform, UnsupervisedLearner):
                 logger.warning(
                     (
                         "Feature %s is of type float. Applying a one-hot",
-                        "transform may produce undesired results.",
+                        "transform to it may produce undesired results.",
                         "Check your datatypes and transforms.",
                     ),
                     feature,
@@ -69,6 +83,8 @@ class OneHot(Transform, UnsupervisedLearner):
 
     @override
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+        if len(self.categories) == 0:
+            raise NoCategoriesError
         for feature in self.features:
             data = data.with_columns(
                 [
@@ -78,3 +94,7 @@ class OneHot(Transform, UnsupervisedLearner):
             ).drop(feature)
 
         return data
+
+
+class NoCategoriesError(Exception):
+    pass
