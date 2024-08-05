@@ -33,12 +33,12 @@ def load_directory(
     """
     return filter(
         lambda env: env is not None,
-        map(
-            load_function,
-            filter(
+        (
+            load_function(p).load()
+            for p in filter(
                 lambda item: (item.is_file() and include_files)
                 or (item.is_dir() and include_folders),
                 Path(path).glob(pattern),
-            ),
+            )
         ),
     )
