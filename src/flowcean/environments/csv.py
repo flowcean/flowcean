@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Callable
 from pathlib import Path
 from typing import Self, override
 
@@ -42,7 +41,3 @@ class CsvDataLoader(OfflineEnvironment):
         if self.data is None:
             raise NotLoadedError
         return self.data
-
-    @staticmethod
-    def loader() -> Callable[[Path], OfflineEnvironment]:
-        return lambda p: CsvDataLoader(p).load()
