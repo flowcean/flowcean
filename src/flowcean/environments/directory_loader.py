@@ -31,10 +31,14 @@ def load_directory(
         include_folders: Specify whether to pass folders to the
             `load_function`.
     """
-    for item in Path(path).glob(pattern):
-        if (item.is_file() and include_files) or (
-            item.is_dir() and include_folders
-        ):
-            environment = load_function(item)
-            if environment is not None:
-                yield environment
+    return filter(
+        lambda env: env is not None,
+        map(
+            load_function,
+            filter(
+                lambda item: (item.is_file() and include_files)
+                or (item.is_dir() and include_folders),
+                Path(path).glob(pattern),
+            ),
+        ),
+    )
