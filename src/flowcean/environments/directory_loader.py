@@ -7,7 +7,7 @@ LoaderFunction = Callable[[Path], OfflineEnvironment]
 
 
 def load_directory(
-    path: Path,
+    path: Path | str,
     load_function: LoaderFunction,
     *,
     pattern: str = "*",
@@ -31,7 +31,7 @@ def load_directory(
         include_folders: Specify whether to pass folders to the
             `load_function`.
     """
-    for item in path.glob(pattern):
+    for item in Path(path).glob(pattern):
         if (item.is_file() and include_files) or (
             item.is_dir() and include_folders
         ):
