@@ -1,5 +1,7 @@
 __all__ = [
     "Explode",
+    "Filter",
+    "FilterType",
     "FeatureLengthVaryError",
     "Flatten",
     "NoTimeSeriesFeatureError",
@@ -15,6 +17,10 @@ __all__ = [
 ]
 
 from flowcean.transforms.explode import Explode
+from flowcean.transforms.filter import (
+    Filter,
+    FilterType,
+)
 from flowcean.transforms.flatten import (
     FeatureLengthVaryError,
     Flatten,
