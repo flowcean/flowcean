@@ -3,7 +3,7 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core.environment import CombineEnvironment
+from flowcean.core.environment import JoinedEnvironment
 from flowcean.environments.dataset import Dataset
 
 
@@ -25,7 +25,7 @@ class TestCombine(unittest.TestCase):
             )
         )
 
-        combine = CombineEnvironment(dataset1, dataset2)
+        combine = JoinedEnvironment(dataset1, dataset2)
 
         assert_frame_equal(
             combine.get_data(),
@@ -54,7 +54,7 @@ class TestCombine(unittest.TestCase):
             )
         )
 
-        combine = dataset1.extend(dataset2)
+        combine = dataset1.join(dataset2)
 
         assert_frame_equal(
             combine.get_data(),

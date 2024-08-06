@@ -1,9 +1,9 @@
 __all__ = [
     "ActiveEnvironment",
     "Environment",
-    "CombineEnvironment",
     "IncrementalEnvironment",
     "NotLoadedError",
+    "JoinedEnvironment",
     "OfflineEnvironment",
     "StackEnvironment",
     "StreamingOfflineData",
@@ -13,8 +13,8 @@ __all__ = [
 
 from .active import ActiveEnvironment
 from .base import Environment, NotLoadedError
-from .combine import CombineEnvironment
 from .incremental import IncrementalEnvironment
+from .joined import JoinedEnvironment
 from .offline import OfflineEnvironment
 from .stack import StackEnvironment
 from .streaming import StreamingOfflineData

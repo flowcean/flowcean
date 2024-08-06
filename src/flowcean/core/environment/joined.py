@@ -5,10 +5,10 @@ import polars as pl
 from .offline import OfflineEnvironment
 
 
-class CombineEnvironment(OfflineEnvironment):
-    """Combines the features from multiple OfflineEnvironments.
+class JoinedEnvironment(OfflineEnvironment):
+    """Joins the features from multiple OfflineEnvironments.
 
-    This environment combines the features of multiple OfflineEnvironments
+    This environment joins the features of multiple OfflineEnvironments
     into a single one by concatenating them horizontally. All environments must
     have the same amount of samples. If multiple environments share a feature,
     only the feature from the last environment will be used.

@@ -48,19 +48,19 @@ class OfflineEnvironment(Environment):
 
         return StackEnvironment(self, other)
 
-    def extend(self, other: OfflineEnvironment) -> OfflineEnvironment:
-        """Combine this environment with another one horizontally.
+    def join(self, other: OfflineEnvironment) -> OfflineEnvironment:
+        """Joins this environment with another one horizontally.
 
         Args:
-            other: The environment to combine horizontally.
+            other: The environment to join horizontally.
 
         Returns:
-            The combined environment.
+            The joined environment.
         """
         # Necessary to prevent circular imports
-        from .combine import CombineEnvironment
+        from .joined import JoinedEnvironment
 
-        return CombineEnvironment(self, other)
+        return JoinedEnvironment(self, other)
 
     def to_time_series(
         self, time_feature: str | dict[str, str]
