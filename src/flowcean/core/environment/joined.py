@@ -15,7 +15,7 @@ class JoinedEnvironment(OfflineEnvironment):
     """
 
     def __init__(self, *environments: OfflineEnvironment) -> None:
-        """Initilize the extend environment.
+        """Initialize the extend environment.
 
         Args:
             *environments: List of offline environments whose features should
