@@ -22,14 +22,13 @@ def build_environments_from_directory(
     which creates the environment.
 
     Args:
-        path: The path to the directory from which environments are loaded.
-        builder: Function handle to a function building an environment
-            from a path and returning it.
+        path: The path to the directory from which environments are created.
+        builder: A function building an environment from a path and returning
+            it.
         pattern: A glob pattern. Matching files and folders will be passed to
-            `load_function`.
-        include_files: Specify whether to pass files to the `load_function`.
-        include_folders: Specify whether to pass folders to the
-            `load_function`.
+            `builder`.
+        include_files: Specify whether to pass files to `builder`.
+        include_folders: Specify whether to pass folders to `builder`.
     """
     for p in Path(path).glob(pattern):
         if (p.is_file() and include_files) or (p.is_dir() and include_folders):
