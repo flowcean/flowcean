@@ -5,6 +5,7 @@ from itertools import islice
 from typing import TYPE_CHECKING
 
 import polars as pl
+from tqdm import tqdm
 
 if TYPE_CHECKING:
     from flowcean.environments.dataset import Dataset
@@ -32,7 +33,8 @@ class IncrementalEnvironment(Environment, Iterable[pl.DataFrame]):
         from flowcean.environments.dataset import Dataset
 
         data = pl.DataFrame()
-        for sample in islice(self, n):
+        samples = islice(self, n)
+        for sample in tqdm(samples, desc="Collecting samples", total=n):
             data = data.vstack(sample)
 
         return Dataset(data)
