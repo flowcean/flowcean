@@ -31,14 +31,11 @@ def build_environments_from_directory(
         include_folders: Specify whether to pass folders to the
             `load_function`.
     """
-    return filter(
-        lambda env: env is not None,
-        (
-            builder(p)
-            for p in filter(
-                lambda item: (item.is_file() and include_files)
-                or (item.is_dir() and include_folders),
-                Path(path).glob(pattern),
-            )
-        ),
-    )
+    return [
+        builder(p)
+        for p in filter(
+            lambda item: (item.is_file() and include_files)
+            or (item.is_dir() and include_folders),
+            Path(path).glob(pattern),
+        )
+    ]
