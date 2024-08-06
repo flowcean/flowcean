@@ -5,7 +5,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 import flowcean.cli
-from flowcean.core.environment import StackEnvironment
+from flowcean.core.environment import ChainEnvironment
 from flowcean.environments.json import JsonDataLoader
 from flowcean.environments.parquet import ParquetDataLoader
 from flowcean.environments.train_test_split import TrainTestSplit
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     flowcean.cli.initialize_logging()
     time_start = time.time()
-    data = StackEnvironment(
+    data = ChainEnvironment(
         *[
             ParquetDataLoader(path)
             .load()

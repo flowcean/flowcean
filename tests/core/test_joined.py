@@ -37,7 +37,7 @@ class TestCombine(unittest.TestCase):
             ),
         )
 
-    def test_stack_method(self) -> None:
+    def test_join_method(self) -> None:
         dataset1 = Dataset(
             pl.DataFrame(
                 {

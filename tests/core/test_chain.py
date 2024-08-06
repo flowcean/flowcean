@@ -3,12 +3,12 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core.environment.stack import StackEnvironment
+from flowcean.core.environment.chain import ChainEnvironment
 from flowcean.environments.dataset import Dataset
 
 
-class TestStack(unittest.TestCase):
-    def test_stack_environment(self) -> None:
+class TestChain(unittest.TestCase):
+    def test_chain_environment(self) -> None:
         dataset1 = Dataset(
             pl.DataFrame(
                 {
@@ -27,10 +27,10 @@ class TestStack(unittest.TestCase):
             )
         )
 
-        stack = StackEnvironment(dataset1, dataset2)
+        chain = ChainEnvironment(dataset1, dataset2)
 
         assert_frame_equal(
-            stack.get_data(),
+            chain.get_data(),
             pl.DataFrame(
                 {
                     "A": [1, 2, 3, 4],
@@ -39,7 +39,7 @@ class TestStack(unittest.TestCase):
             ),
         )
 
-    def test_stack_method(self) -> None:
+    def test_chain_method(self) -> None:
         dataset1 = Dataset(
             pl.DataFrame(
                 {
@@ -58,10 +58,10 @@ class TestStack(unittest.TestCase):
             )
         )
 
-        stack = dataset1.stack(dataset2)
+        chain = dataset1.chain(dataset2)
 
         assert_frame_equal(
-            stack.get_data(),
+            chain.get_data(),
             pl.DataFrame(
                 {
                     "A": [1, 2, 3, 4],
