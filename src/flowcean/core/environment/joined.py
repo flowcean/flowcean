@@ -10,7 +10,7 @@ class JoinedEnvironment(OfflineEnvironment):
 
     This environment joins the features of multiple OfflineEnvironments
     into a single one by concatenating them horizontally. All environments must
-    have the same amount of samples. If multiple environments share a feature,
+    have the same number of samples. If multiple environments share a feature,
     only the feature from the last environment will be used.
     """
 
