@@ -11,42 +11,28 @@ class SlidingWindowTransform(unittest.TestCase):
         transform = SlidingWindow(window_size=3)
 
         data_frame = pl.DataFrame(
-            [
-                {"a": 1, "b": 2, "c": 3},
-                {"a": 4, "b": 5, "c": 6},
-                {"a": 7, "b": 8, "c": 9},
-                {"a": 10, "b": 11, "c": 12},
-            ],
+            {
+                "a": [1, 2, 3, 4],
+                "b": [10, 20, 30, 40],
+                "c": [100, 200, 300, 400],
+            }
         )
         transformed_data = transform.transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
             pl.DataFrame(
-                [
-                    {
-                        "a_0": 1,
-                        "a_1": 4,
-                        "a_2": 7,
-                        "b_0": 2,
-                        "b_1": 5,
-                        "b_2": 8,
-                        "c_0": 3,
-                        "c_1": 6,
-                        "c_2": 9,
-                    },
-                    {
-                        "a_0": 4,
-                        "a_1": 7,
-                        "a_2": 10,
-                        "b_0": 5,
-                        "b_1": 8,
-                        "b_2": 11,
-                        "c_0": 6,
-                        "c_1": 9,
-                        "c_2": 12,
-                    },
-                ],
+                {
+                    "a_0": [1, 2],
+                    "b_0": [10, 20],
+                    "c_0": [100, 200],
+                    "a_1": [2, 3],
+                    "b_1": [20, 30],
+                    "c_1": [200, 300],
+                    "a_2": [3, 4],
+                    "b_2": [30, 40],
+                    "c_2": [300, 400],
+                }
             ),
         )
 
