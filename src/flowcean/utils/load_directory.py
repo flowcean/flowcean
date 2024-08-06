@@ -34,7 +34,7 @@ def load_directory(
     return filter(
         lambda env: env is not None,
         (
-            load_function(p).load()
+            load_function(p)
             for p in filter(
                 lambda item: (item.is_file() and include_files)
                 or (item.is_dir() and include_folders),
