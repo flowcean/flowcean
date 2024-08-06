@@ -3,12 +3,12 @@ from pathlib import Path
 
 from flowcean.core.environment.offline import OfflineEnvironment
 
-LoaderFunction = Callable[[Path], OfflineEnvironment]
+EnvironmentLoader = Callable[[Path], OfflineEnvironment]
 
 
 def load_directory(
     path: Path | str,
-    load_function: LoaderFunction,
+    load_function: EnvironmentLoader,
     *,
     pattern: str = "*",
     include_files: bool = True,
