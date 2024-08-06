@@ -3,27 +3,27 @@ from pathlib import Path
 
 from flowcean.core.environment.offline import OfflineEnvironment
 
-EnvironmentLoader = Callable[[Path], OfflineEnvironment]
+EnvironmentBuilder = Callable[[Path], OfflineEnvironment]
 
 
-def load_directory(
+def build_environments_from_directory(
     path: Path | str,
-    load_function: EnvironmentLoader,
+    builder: EnvironmentBuilder,
     *,
     pattern: str = "*",
     include_files: bool = True,
     include_folders: bool = True,
 ) -> Iterable[OfflineEnvironment]:
-    """Load environments from a directory.
+    """Build environments from a directory.
 
-    This helper function can be used to load environments from multiple files
+    This helper function can be used to build environments from multiple files
     or folders. First all files and folders in the `path` matching the
-    `pattern` are selected. These are then passed to the `load_function`
-    which in turn creates the actual environment.
+    `pattern` are selected. These are then passed to the `builder` function
+    which creates the environment.
 
     Args:
         path: The path to the directory from which environments are loaded.
-        load_function: Function handle to a function loading an environment
+        builder: Function handle to a function building an environment
             from a path and returning it.
         pattern: A glob pattern. Matching files and folders will be passed to
             `load_function`.
@@ -34,7 +34,7 @@ def load_directory(
     return filter(
         lambda env: env is not None,
         (
-            load_function(p)
+            builder(p)
             for p in filter(
                 lambda item: (item.is_file() and include_files)
                 or (item.is_dir() and include_folders),
