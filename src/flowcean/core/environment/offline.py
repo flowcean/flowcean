@@ -34,7 +34,7 @@ class OfflineEnvironment(Environment):
         """
         return StreamingOfflineData(self, batch_size)
 
-    def stack(self, other: OfflineEnvironment) -> OfflineEnvironment:
+    def chain(self, other: OfflineEnvironment) -> OfflineEnvironment:
         """Combine this environment with another one vertically.
 
         Args:
@@ -43,10 +43,10 @@ class OfflineEnvironment(Environment):
         Returns:
             The combined environment.
         """
-        # Necessary to prevent circular imports
-        from .stack import StackEnvironment
+        # prevent circular imports
+        from .chain import ChainEnvironment
 
-        return StackEnvironment(self, other)
+        return ChainEnvironment(self, other)
 
     def join(self, other: OfflineEnvironment) -> OfflineEnvironment:
         """Joins this environment with another one horizontally.
@@ -57,7 +57,7 @@ class OfflineEnvironment(Environment):
         Returns:
             The joined environment.
         """
-        # Necessary to prevent circular imports
+        # prevent circular imports
         from .joined import JoinedEnvironment
 
         return JoinedEnvironment(self, other)
