@@ -1,4 +1,5 @@
 __all__ = [
+    "Collect",
     "Explode",
     "Flatten",
     "FeatureLengthVaryError",
@@ -13,6 +14,7 @@ __all__ = [
     "ToLazy",
 ]
 
+from .collect import Collect
 from .explode import Explode
 from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
 from .match_sampling_rate import MatchSamplingRate
