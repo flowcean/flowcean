@@ -10,6 +10,7 @@ __all__ = [
     "SlidingWindow",
     "Standardize",
     "TimeWindow",
+    "ToLazy",
 ]
 
 from .explode import Explode
@@ -21,3 +22,4 @@ from .select import Select
 from .sliding_window import SlidingWindow
 from .standardize import Standardize
 from .time_window import TimeWindow
+from .to_lazy import ToLazy
