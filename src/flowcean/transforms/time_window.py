@@ -44,7 +44,7 @@ class TimeWindow(Transform):
             if self.features is not None
             else [
                 feature
-                for feature in data.collect_schema().names()
+                for feature in data.columns
                 if is_timeseries_feature(data, feature)
             ]
         ):
