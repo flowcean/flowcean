@@ -16,7 +16,7 @@ class OfflineEnvironment(Environment):
     """
 
     @abstractmethod
-    def get_data(self) -> pl.DataFrame:
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
         """Get data from the environment.
 
         Returns:
