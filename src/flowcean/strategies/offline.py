@@ -1,5 +1,7 @@
 import logging
 
+import polars as pl
+
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner, UnsupervisedLearner
 from flowcean.core.metric import OfflineMetric
@@ -45,7 +47,14 @@ def learn_offline(
         input_features = input_transform.transform(input_features)
 
     logger.info("Learning model")
-    model = learner.learn(input_features, output_features)
+    model = learner.learn(
+        input_features
+        if isinstance(input_features, pl.DataFrame)
+        else input_features.collect(),
+        output_features
+        if isinstance(output_features, pl.DataFrame)
+        else output_features.collect(),
+    )
 
     if input_transform is not None:
         return ModelWithTransform(model=model, transform=input_transform)
