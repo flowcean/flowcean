@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
+
+import polars as pl
 
 from flowcean.core.learner import (
     UnsupervisedIncrementalLearner,
@@ -8,9 +10,6 @@ from flowcean.core.learner import (
 )
 
 from .transform import Transform
-
-if TYPE_CHECKING:
-    import polars as pl
 
 
 class Chain(Transform, UnsupervisedLearner, UnsupervisedIncrementalLearner):
@@ -30,7 +29,9 @@ class Chain(Transform, UnsupervisedLearner, UnsupervisedIncrementalLearner):
         self.transforms = transforms
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         for transform in self.transforms:
             data = transform.transform(data)
         return data
@@ -46,14 +47,20 @@ class Chain(Transform, UnsupervisedLearner, UnsupervisedIncrementalLearner):
 
     @override
     def fit(self, data: pl.DataFrame) -> None:
+        data_internal: pl.DataFrame | pl.LazyFrame = data
         for transform in self.transforms:
             if isinstance(transform, UnsupervisedLearner):
-                transform.fit(data)
-            data = transform.transform(data)
+                if isinstance(data_internal, pl.LazyFrame):
+                    data_internal = data_internal.collect()
+                transform.fit(data_internal)
+            data_internal = transform.transform(data_internal)
 
     @override
     def fit_incremental(self, data: pl.DataFrame) -> None:
+        data_internal: pl.DataFrame | pl.LazyFrame = data
         for transform in self.transforms:
             if isinstance(transform, UnsupervisedIncrementalLearner):
-                transform.fit_incremental(data)
-            data = transform.transform(data)
+                if isinstance(data_internal, pl.LazyFrame):
+                    data_internal = data_internal.collect()
+                transform.fit_incremental(data_internal)
+            data_internal = transform.transform(data_internal)
