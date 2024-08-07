@@ -65,7 +65,11 @@ class MatchSamplingRate(Transform):
         self.reference_timestamps = reference_timestamps
         self.feature_columns_with_timestamps = feature_columns_with_timestamps
 
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
+        # Materialize the dataframe if it was lazy
+        data = data if isinstance(data, pl.DataFrame) else data.collect()
         logger.debug("Matching sampling rate of time series.")
 
         for i in range(len(data)):
