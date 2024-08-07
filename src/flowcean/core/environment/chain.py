@@ -1,4 +1,4 @@
-from typing import Self, override
+from typing import Self, cast, override
 
 import polars as pl
 
@@ -25,7 +25,11 @@ class ChainEnvironment(OfflineEnvironment):
         return self
 
     @override
-    def get_data(self) -> pl.DataFrame:
-        return pl.concat(
-            [env.get_data() for env in self.environments], how="vertical"
-        )
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
+        data = [env.get_data() for env in self.environments]
+        if any(isinstance(data_frame, pl.LazyFrame) for data_frame in data):
+            return pl.concat(
+                (data_frame.lazy() for data_frame in data),
+                how="vertical",
+            )
+        return pl.concat(cast(list[pl.DataFrame], data), how="vertical")

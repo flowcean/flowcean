@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, cast
 
 import polars as pl
 
@@ -29,12 +29,16 @@ class JoinedEnvironment(OfflineEnvironment):
             env.load()
         return self
 
-    def get_data(self) -> pl.DataFrame:
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
         """Get data from the environment.
 
         Returns:
             The loaded dataset.
         """
-        return pl.concat(
-            [env.get_data() for env in self.environments], how="horizontal"
-        )
+        data = [env.get_data() for env in self.environments]
+        if any(isinstance(data_frame, pl.LazyFrame) for data_frame in data):
+            return pl.concat(
+                (data_frame.lazy() for data_frame in data),
+                how="horizontal",
+            )
+        return pl.concat(cast(list[pl.DataFrame], data), how="horizontal")
