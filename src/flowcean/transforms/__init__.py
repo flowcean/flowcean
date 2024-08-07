@@ -9,6 +9,7 @@ __all__ = [
     "Select",
     "SlidingWindow",
     "Standardize",
+    "TimeWindow",
 ]
 
 from .explode import Explode
@@ -19,3 +20,4 @@ from .resample import Resample
 from .select import Select
 from .sliding_window import SlidingWindow
 from .standardize import Standardize
+from .time_window import TimeWindow

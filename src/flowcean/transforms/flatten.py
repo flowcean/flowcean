@@ -24,7 +24,7 @@ class Flatten(Transform):
     {[0, 0], [1, 1], [2, 2]} | 42 | 43
     {[0, 3], [1, 4], [2, 5]} | 44 | 45
 
-    gets flattend into the dataset
+    gets flattened into the dataset
 
     series_data_0 | series_data_1 | series_data_2 | A  | B
     --------------|---------------|---------------|----|----
@@ -33,7 +33,7 @@ class Flatten(Transform):
     """
 
     def __init__(self, features: Iterable[str] | None = None) -> None:
-        """Initilize the flatten transform.
+        """Initialize the flatten transform.
 
         Args:
             features: The features to flatten. If not provided or set to None,
