@@ -52,7 +52,7 @@ class Flatten(Transform):
             if self.features is not None
             else [
                 column_name
-                for column_name in data.columns
+                for column_name in data.collect_schema().names()
                 if is_timeseries_feature(data, column_name)
             ]
         )

@@ -85,7 +85,7 @@ class OfflineEnvironment(Environment):
         if isinstance(time_feature, str):
             time_feature = {
                 feature_name: time_feature
-                for feature_name in data.columns
+                for feature_name in data.collect_schema().names()
                 if feature_name != time_feature
             }
 

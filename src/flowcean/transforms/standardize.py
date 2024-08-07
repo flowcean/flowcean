@@ -49,7 +49,7 @@ class Standardize(Transform, UnsupervisedLearner):
             [
                 (pl.col(c) - (self.mean.get(c) or 0.0))
                 / (self.std.get(c) or 1.0)
-                for c in data.columns
+                for c in data.collect_schema().names()
             ],
         )
 
