@@ -18,24 +18,24 @@ class TimeWindow(Transform):
         self,
         *,
         features: Iterable[str] | None = None,
-        t_start: float = 0.0,
-        t_end: float = math.inf,
+        time_start: float = 0.0,
+        time_end: float = math.inf,
     ) -> None:
         """Initializes the TimeWindow transform.
 
         Args:
-            features: The features to limit. If `None`, all applicable features
-                are limited.
-            t_start: Window start time. Defaults to zero. All data before this
-                time will be removed from the time series when applying the
-                transform.
-            t_end: Window end time. Defaults to infinite. All data after this
-                time will be removed from the time series when applying the
-                transform.
+            features: The features to apply this transformation to. If `None`,
+                all applicable features will be affected.
+            time_start: Window start time. Defaults to zero. All data before
+                this time will be removed from the time series when applying
+                the transform.
+            time_end: Window end time. Defaults to infinite. All data after
+                this time will be removed from the time series when applying
+                the transform.
         """
         self.features = features
-        self.t_start = t_start
-        self.t_end = t_end
+        self.t_start = time_start
+        self.t_end = time_end
 
     @override
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:

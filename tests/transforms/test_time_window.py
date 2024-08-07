@@ -8,7 +8,7 @@ from flowcean.transforms import TimeWindow
 
 class TimeWindowTransform(unittest.TestCase):
     def test_simple(self) -> None:
-        transform = TimeWindow(t_start=1.0, t_end=2.0)
+        transform = TimeWindow(time_start=1.0, time_end=2.0)
         data_frame = pl.DataFrame(
             {
                 "feature_a": [
