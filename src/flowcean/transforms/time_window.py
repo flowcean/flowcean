@@ -38,7 +38,9 @@ class TimeWindow(Transform):
         self.t_end = time_end
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         for feature in (
             self.features
             if self.features is not None
