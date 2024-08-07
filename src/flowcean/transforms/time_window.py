@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class TimeWindow(Transform):
-    """Limit time series to a certain windows."""
+    """Limit time series to a certain time window."""
 
     def __init__(
         self,
