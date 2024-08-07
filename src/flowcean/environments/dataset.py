@@ -6,9 +6,9 @@ from flowcean.core import OfflineEnvironment
 
 
 class Dataset(OfflineEnvironment):
-    data: pl.DataFrame
+    data: pl.DataFrame | pl.LazyFrame
 
-    def __init__(self, data: pl.DataFrame) -> None:
+    def __init__(self, data: pl.DataFrame | pl.LazyFrame) -> None:
         self.data = data
 
     @override
@@ -16,11 +16,15 @@ class Dataset(OfflineEnvironment):
         return self
 
     @override
-    def get_data(self) -> pl.DataFrame:
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
         return self.data
 
     def __len__(self) -> int:
+        if isinstance(self.data, pl.LazyFrame):
+            self.data = self.data.collect()
         return len(self.data)
 
     def __getitem__(self, key: int) -> tuple[Any, ...]:
+        if isinstance(self.data, pl.LazyFrame):
+            self.data = self.data.collect()
         return self.data.row(key)

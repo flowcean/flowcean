@@ -11,7 +11,7 @@ class ParquetDataLoader(OfflineEnvironment):
     """DataLoader for Parquet files."""
 
     path: Path
-    data: pl.DataFrame | None = None
+    data: pl.LazyFrame | None = None
 
     def __init__(self, path: str | Path) -> None:
         """Initialize the ParquetDataLoader.
@@ -23,11 +23,11 @@ class ParquetDataLoader(OfflineEnvironment):
 
     @override
     def load(self) -> Self:
-        self.data = pl.read_parquet(self.path)
+        self.data = pl.scan_parquet(self.path)
         return self
 
     @override
-    def get_data(self) -> pl.DataFrame:
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
         if self.data is None:
             raise NotLoadedError
         return self.data

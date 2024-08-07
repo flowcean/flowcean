@@ -23,7 +23,7 @@ class JsonDataLoader(OfflineEnvironment):
         return self
 
     @override
-    def get_data(self) -> pl.DataFrame:
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
         if self.data is None:
             raise NotLoadedError
         return self.data
