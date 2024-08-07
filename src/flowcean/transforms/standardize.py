@@ -38,7 +38,9 @@ class Standardize(Transform, UnsupervisedLearner):
         self.counts = len(data)
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         if self.mean is None or self.std is None:
             message = "Standardize transform has not been fitted"
             raise RuntimeError(message)

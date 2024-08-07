@@ -64,7 +64,9 @@ class Transform(ABC):
     """Base class for all transforms."""
 
     @abstractmethod
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         """Transform the data.
 
         Args:
