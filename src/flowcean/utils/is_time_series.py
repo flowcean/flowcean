@@ -6,8 +6,7 @@ import polars as pl
 def is_timeseries_feature(
     df: pl.DataFrame | pl.LazyFrame, column_name: str
 ) -> bool:
-    schema = df.schema if isinstance(df, pl.DataFrame) else df.collect_schema()
-    data_type = schema[column_name]
+    data_type = df.collect_schema()[column_name]
 
     if data_type.base_type() != pl.List:
         return False
