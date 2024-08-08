@@ -37,7 +37,17 @@ def learn_offline(
     data = environment.get_data()
     logger.info("Selecting input and output features")
     input_features = data.select(inputs)
+    input_features = (
+        input_features
+        if isinstance(input_features, pl.DataFrame)
+        else input_features.collect()
+    )
     output_features = data.select(outputs)
+    output_features = (
+        output_features
+        if isinstance(output_features, pl.DataFrame)
+        else output_features.collect()
+    )
 
     if input_transform is not None:
         if isinstance(input_transform, UnsupervisedLearner):
@@ -70,7 +80,17 @@ def evaluate_offline(
 ) -> Report:
     data = environment.get_data()
     input_features = data.select(inputs)
+    input_features = (
+        input_features
+        if isinstance(input_features, pl.DataFrame)
+        else input_features.collect()
+    )
     output_features = data.select(outputs)
+    output_features = (
+        output_features
+        if isinstance(output_features, pl.DataFrame)
+        else output_features.collect()
+    )
     predictions = model.predict(input_features)
     return Report(
         {
