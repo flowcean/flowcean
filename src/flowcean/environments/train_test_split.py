@@ -17,12 +17,24 @@ logger = logging.getLogger(__name__)
 
 
 class TrainTestSplit:
+    """Split environments into a train and a test dataset."""
+
     def __init__(
         self,
         ratio: float,
         *,
         shuffle: bool = False,
     ) -> None:
+        """Initialize the TrainTestSplit.
+
+        Args:
+            ratio: Split ratio between train and test set. If N is the total
+                number of samples in the environment, N*ratio samples will be
+                assigned to the training set, while N*(1-ratio) samples will be
+                assigned to the test set.
+            shuffle: If true, the samples from the environment are shuffled
+                before being split.
+        """
         if ratio < 0 or ratio > 1:
             message = "ratio must be between 0 and 1"
             raise ValueError(message)
