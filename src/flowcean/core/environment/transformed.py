@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, Self, TypeVar, override
 
+import polars as pl
+
 from .base import Environment
 from .incremental import IncrementalEnvironment
 from .offline import OfflineEnvironment
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-
-    import polars as pl
 
     from flowcean.core import Transform
 
@@ -65,8 +65,8 @@ class TransformedEnvironment(
     def get_data(
         self: TransformedEnvironment[T_OfflineEnvironment],
     ) -> pl.DataFrame:
-        data = self.environment.get_data()
-        return self.transform.transform(data)
+        data = self.transform.transform(self.environment.get_data())
+        return data if isinstance(data, pl.DataFrame) else data.collect()
 
     @override
     def __iter__(

@@ -43,14 +43,16 @@ class Flatten(Transform):
         self.features = features
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         # Loop over the features we want to explode
         feature_names = (
             self.features
             if self.features is not None
             else [
                 column_name
-                for column_name in data.columns
+                for column_name in data.collect_schema().names()
                 if is_timeseries_feature(data, column_name)
             ]
         )
@@ -68,6 +70,8 @@ class Flatten(Transform):
                 .list.eval(pl.first().struct.field("value"))
                 .list.len()
             ).unique()
+            if isinstance(row_lengths, pl.LazyFrame):
+                row_lengths = row_lengths.collect()
 
             # Check if all rows have the same length
             if row_lengths.count().item(0, 0) > 1:

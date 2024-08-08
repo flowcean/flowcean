@@ -38,11 +38,13 @@ class Resample(Transform):
         self.interpolation_method = interpolation_method
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         sampling_mapping = (
             {
                 column_name: self.sampling_rate
-                for column_name in data.columns
+                for column_name in data.collect_schema().names()
                 if is_timeseries_feature(data, column_name)
             }
             if isinstance(self.sampling_rate, float)

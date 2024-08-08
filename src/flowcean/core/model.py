@@ -51,7 +51,11 @@ class ModelWithTransform(Model):
         input_features: pl.DataFrame,
     ) -> pl.DataFrame:
         transformed = self.transform.transform(input_features)
-        return self.model.predict(transformed)
+        return self.model.predict(
+            transformed
+            if isinstance(transformed, pl.DataFrame)
+            else transformed.collect()
+        )
 
     @override
     def save(self, path: Path) -> None:

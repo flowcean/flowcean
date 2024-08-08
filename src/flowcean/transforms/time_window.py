@@ -38,13 +38,15 @@ class TimeWindow(Transform):
         self.t_end = time_end
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self, data: pl.DataFrame | pl.LazyFrame
+    ) -> pl.DataFrame | pl.LazyFrame:
         for feature in (
             self.features
             if self.features is not None
             else [
                 feature
-                for feature in data.columns
+                for feature in data.collect_schema().names()
                 if is_timeseries_feature(data, feature)
             ]
         ):
