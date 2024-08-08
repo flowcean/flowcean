@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, override
 
+import polars as pl
+
 from flowcean.core.environment.base import NotLoadedError
 
 from .incremental import IncrementalEnvironment
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-
-    import polars as pl
 
     from .offline import OfflineEnvironment
 
@@ -50,7 +50,8 @@ class StreamingOfflineData(IncrementalEnvironment):
     @override
     def load(self) -> Self:
         self.environment.load()
-        self.data = self.environment.get_data()
+        data = self.environment.get_data()
+        self.data = data if isinstance(data, pl.DataFrame) else data.collect()
         return self
 
     @override

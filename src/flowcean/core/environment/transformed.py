@@ -64,9 +64,8 @@ class TransformedEnvironment(
     @override
     def get_data(
         self: TransformedEnvironment[T_OfflineEnvironment],
-    ) -> pl.DataFrame:
-        data = self.environment.get_data()
-        return self.transform.transform(data)
+    ) -> pl.DataFrame | pl.LazyFrame:
+        return self.transform.transform(self.environment.get_data())
 
     @override
     def __iter__(

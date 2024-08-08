@@ -4,12 +4,12 @@ import logging
 from itertools import accumulate
 from typing import TYPE_CHECKING
 
+import polars as pl
+
 from .dataset import Dataset
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-    import polars as pl
 
     from flowcean.core import OfflineEnvironment
 
@@ -17,12 +17,24 @@ logger = logging.getLogger(__name__)
 
 
 class TrainTestSplit:
+    """Split environments into a train and a test dataset."""
+
     def __init__(
         self,
         ratio: float,
         *,
         shuffle: bool = False,
     ) -> None:
+        """Initialize the TrainTestSplit.
+
+        Args:
+            ratio: Split ratio between train and test set. If N is the total
+                number of samples in the environment, N*ratio samples will be
+                assigned to the training set, while N*(1-ratio) samples will be
+                assigned to the test set.
+            shuffle: If true, the samples from the environment are shuffled
+                before being split.
+        """
         if ratio < 0 or ratio > 1:
             message = "ratio must be between 0 and 1"
             raise ValueError(message)
@@ -33,8 +45,24 @@ class TrainTestSplit:
         self,
         environment: OfflineEnvironment,
     ) -> tuple[Dataset, Dataset]:
+        """Split the provided environment into a train and test environment.
+
+        Split the provided environment into a train and a test environment
+        according to the ratio specified when this TrainTestSplit object was
+        created. To perform the split, the environment will be materialized so
+        that any outstanding transformations are applied.
+
+        Args:
+            environment: Environment to split.
+
+        Returns:
+            A tuple of two datasets that are split according to the ratio where
+            the first dataset is used for training and the later dataset is
+            used for testing.
+        """
         logger.info("Splitting data into train and test sets")
         data = environment.get_data()
+        data = data if isinstance(data, pl.DataFrame) else data.collect()
         pivot = int(len(data) * self.ratio)
         splits = _split(
             data,

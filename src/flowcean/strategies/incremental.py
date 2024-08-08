@@ -1,3 +1,5 @@
+import polars as pl
+
 from flowcean.core import (
     IncrementalEnvironment,
     Model,
@@ -38,10 +40,22 @@ def learn_incremental(
 
         if input_transform is not None:
             if isinstance(input_transform, UnsupervisedIncrementalLearner):
+                input_features = (
+                    input_features
+                    if isinstance(input_features, pl.DataFrame)
+                    else input_features.collect()
+                )
                 input_transform.fit_incremental(input_features)
             input_features = input_transform.transform(input_features)
 
-        model = learner.learn_incremental(input_features, output_features)
+        model = learner.learn_incremental(
+            input_features
+            if isinstance(input_features, pl.DataFrame)
+            else input_features.collect(),
+            output_features
+            if isinstance(output_features, pl.DataFrame)
+            else output_features.collect(),
+        )
 
     if model is None:
         message = "No data found in environment."

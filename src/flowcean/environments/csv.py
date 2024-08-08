@@ -15,7 +15,7 @@ class CsvDataLoader(OfflineEnvironment):
 
     path: Path
     separator: str
-    data: pl.DataFrame | None = None
+    data: pl.LazyFrame | None = None
 
     def __init__(self, path: str | Path, separator: str = ",") -> None:
         """Initialize the CsvDataLoader.
@@ -30,14 +30,17 @@ class CsvDataLoader(OfflineEnvironment):
     @override
     def load(self) -> Self:
         logger.info("Loading data from %s", self.path)
-        self.data = pl.read_csv(self.path, separator=self.separator)
-        self.data.columns = [
-            column_name.strip() for column_name in self.data.columns
-        ]
+        self.data = pl.scan_csv(self.path, separator=self.separator)
+        self.data = self.data.rename(
+            {
+                column_name: column_name.strip()
+                for column_name in self.data.collect_schema().names()
+            }
+        )
         return self
 
     @override
-    def get_data(self) -> pl.DataFrame:
+    def get_data(self) -> pl.DataFrame | pl.LazyFrame:
         if self.data is None:
             raise NotLoadedError
         return self.data
