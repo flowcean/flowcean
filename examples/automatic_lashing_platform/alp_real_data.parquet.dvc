@@ -1,0 +1,5 @@
+outs:
+- md5: b767ae5f231c278eef96c81a90a728fa
+  size: 338519
+  hash: md5
+  path: alp_real_data.parquet
