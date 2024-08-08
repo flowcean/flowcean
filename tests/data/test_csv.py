@@ -27,7 +27,7 @@ class TestCsvDataLoader(unittest.TestCase):
                 dataloader.get_data()
             dataloader.load()
             loaded_data = dataloader.get_data()
-            assert_frame_equal(loaded_data, data)
+            assert_frame_equal(loaded_data, data.lazy())
 
 
 if __name__ == "__main__":
