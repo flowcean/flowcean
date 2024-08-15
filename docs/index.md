@@ -42,6 +42,6 @@ For a more detailed guide on setting up your first project, visit our [Getting S
 
 ## Citation
 
-If you use Flowcean in your research or project, please cite the following references:
+If you use Flowcean in your research or project, please consider citing the following references:
 
 - [List of references here]
