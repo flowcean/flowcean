@@ -1,16 +1,15 @@
 import logging
 from collections.abc import Iterable
-from typing import Any, override
+from typing import Any, Self, override
 
 import polars as pl
 
 from flowcean.core import Transform
-from flowcean.core.learner import UnsupervisedLearner
 
 logger = logging.getLogger(__name__)
 
 
-class OneHot(Transform, UnsupervisedLearner):
+class OneHot(Transform):
     """Transforms integer features into a set of binary one-hot features.
 
     Transforms integer features into a set of binary one-hot features. The
@@ -38,35 +37,49 @@ class OneHot(Transform, UnsupervisedLearner):
      0        | 0         | 0         | 1
     """
 
-    categories: dict[str, dict[str, Any]]
+    feature_categrorie_mapping: dict[str, dict[str, Any]]
 
     def __init__(
         self,
-        features: Iterable[str],
-        *,
-        categories: dict[str, list[Any]] | None = None,
+        feature_categories: dict[str, list[Any]],
     ) -> None:
         """Initializes the One-Hot transform.
 
         Args:
-            features: The features to transform.
-            categories: Dictionary of features and a list of categorical values
-                to encode for each. If set to None, the categories must be
-                determined by calling `fit` with a sufficient sample of data.
+            feature_categories: Dictionary of features and a list of
+                categorical values to encode for each. If set to None, the
+                categories must be determined by calling `fit` with a
+                sufficient sample of data.
         """
-        self.features = features
-        if categories is None:
-            self.categories = {}
-        else:
-            self.categories = {
-                feature: {f"{feature}_{value}": value for value in values}
-                for feature, values in categories.items()
-            }
+        self.feature_categrorie_mapping = {
+            feature: {f"{feature}_{value}": value for value in values}
+            for feature, values in feature_categories.items()
+        }
 
     @override
-    def fit(self, data: pl.DataFrame) -> None:
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+        if len(self.feature_categrorie_mapping) == 0:
+            raise NoCategoriesError
+        for (
+            feature,
+            category_mappings,
+        ) in self.feature_categrorie_mapping.items():
+            data = data.with_columns(
+                [
+                    pl.col(feature).eq(value).cast(pl.Int64).alias(name)
+                    for name, value in category_mappings.items()
+                ]
+            ).drop(feature)
+
+        return data
+
+    @classmethod
+    def from_dataframe(
+        cls, data: pl.DataFrame, features: Iterable[str]
+    ) -> Self:
         # Derive categories from the data frame
-        for feature in self.features:
+        feature_categories: dict[str, list[Any]] = {}
+        for feature in features:
             if data.schema[feature].is_float():
                 logger.warning(
                     (
@@ -76,24 +89,10 @@ class OneHot(Transform, UnsupervisedLearner):
                     ),
                     feature,
                 )
-            self.categories[feature] = {
-                f"{feature}_{value}": value
-                for value in data.select(pl.col(feature).unique()).to_series()
-            }
-
-    @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
-        if len(self.categories) == 0:
-            raise NoCategoriesError
-        for feature in self.features:
-            data = data.with_columns(
-                [
-                    pl.col(feature).eq(value).cast(pl.Int64).alias(name)
-                    for name, value in self.categories[feature].items()
-                ]
-            ).drop(feature)
-
-        return data
+            feature_categories[feature] = (
+                data.select(pl.col(feature).unique()).to_series().to_list()
+            )
+        return cls(feature_categories)
 
 
 class NoCategoriesError(Exception):
