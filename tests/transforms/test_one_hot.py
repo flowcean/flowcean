@@ -8,8 +8,6 @@ from flowcean.transforms import OneHot
 
 class OneHotTransform(unittest.TestCase):
     def test_single(self) -> None:
-        transform = OneHot(["a"])
-
         data_frame = pl.DataFrame(
             [
                 {"a": 1, "b": 2, "c": 3},
@@ -18,7 +16,7 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transform.fit(data_frame)
+        transform = OneHot.from_dataframe(data_frame, ["a"])
         transformed_data = transform.transform(data_frame)
 
         assert_frame_equal(
@@ -37,8 +35,6 @@ class OneHotTransform(unittest.TestCase):
         )
 
     def test_multiple(self) -> None:
-        transform = OneHot(["a", "b"])
-
         data_frame = pl.DataFrame(
             [
                 {"a": 1, "b": 2, "c": 3},
@@ -47,7 +43,7 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transform.fit(data_frame)
+        transform = OneHot.from_dataframe(data_frame, ["a", "b"])
         transformed_data = transform.transform(data_frame)
 
         assert_frame_equal(
