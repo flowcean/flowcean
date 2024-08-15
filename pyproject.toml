@@ -5,9 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "flowcean"
 dynamic = ["version"]
-description = "automatic generation of models for cyber-physical systems."
+description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
 requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+]
 keywords = []
 authors = [
   { name = "The AGenC Team", email = "agenc.team@tuhh.de" }
@@ -102,6 +107,13 @@ exclude_also = [
 
 [tool.hatch.version]
 path = "src/flowcean/__about__.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  ".dvc",
+  "examples/",
+  "java/",
+]
 
 [tool.hatch.env]
 requires = [
