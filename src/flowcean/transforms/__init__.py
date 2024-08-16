@@ -5,6 +5,7 @@ __all__ = [
     "NoTimeSeriesFeatureError",
     "MatchSamplingRate",
     "Rechunk",
+    "Rename",
     "Resample",
     "Select",
     "SlidingWindow",
@@ -16,6 +17,7 @@ from .explode import Explode
 from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
 from .match_sampling_rate import MatchSamplingRate
 from .rechunk import Rechunk
+from .rename import Rename
 from .resample import Resample
 from .select import Select
 from .sliding_window import SlidingWindow
