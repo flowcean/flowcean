@@ -65,7 +65,7 @@ class Transform(ABC):
 
     @abstractmethod
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
-        """Transform the data.
+        """Transform data with this transform.
 
         Args:
             data: The data to transform.
@@ -73,6 +73,17 @@ class Transform(ABC):
         Returns:
             The transformed data.
         """
+
+    def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
+        """Transform data with this transform.
+
+        Args:
+            data: The data to transform.
+
+        Returns:
+            The transformed data.
+        """
+        return self.transform(data)
 
     def __or__(self, other: Transform) -> Chain:
         """Pipe this transform into another transform.
