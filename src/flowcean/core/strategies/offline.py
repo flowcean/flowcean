@@ -84,6 +84,7 @@ def evaluate_offline(
     inputs: list[str],
     outputs: list[str],
     metrics: list[OfflineMetric],
+    eval_transform: Transform | None = None,
 ) -> Report:
     """Evaluate a model on an offline environment.
 
@@ -96,6 +97,8 @@ def evaluate_offline(
         inputs: The input feature names.
         outputs: The output feature names.
         metrics: The metrics to evaluate the model with.
+        eval_transform: Evaluation transform to apply to the predictions and
+            the true outputs.
 
     Returns:
         The evaluation report.
@@ -103,7 +106,10 @@ def evaluate_offline(
     data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
-    predictions = model.predict(input_features)
+    predictions = model.predict(input_features.collect(streaming=True))
+    if eval_transform is not None:
+        predictions = eval_transform(predictions.lazy())
+        output_features = eval_transform(output_features)
     return Report(
         {
             metric.name: metric(output_features, predictions.lazy())
