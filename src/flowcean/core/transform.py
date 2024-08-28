@@ -52,12 +52,12 @@ transformed_data = transforms(dataset)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 if TYPE_CHECKING:
-    import polars as pl
+    from collections.abc import Sequence
 
-    from .chain import Chain
+    import polars as pl
 
 
 class Transform(ABC):
@@ -105,11 +105,9 @@ class Transform(ABC):
         Returns:
             A new Chain transform.
         """
-        from .chain import Chain
-
         return Chain(self, *other)
 
-    def __rshift__(
+    def __or__(
         self,
         other: Transform,
     ) -> Chain:
@@ -130,3 +128,39 @@ class Transform(ABC):
             A new Chain transform.
         """
         return self.chain(other)
+
+
+class Chain(
+    Transform,
+    # UnsupervisedLearner,
+    # UnsupervisedIncrementalLearner,
+):
+    """A transform that is a chain of other transforms."""
+
+    transforms: Sequence[Transform]
+
+    def __init__(
+        self,
+        *transforms: Transform,
+    ) -> None:
+        self.transforms = transforms
+
+    @override
+    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+        for transform in self.transforms:
+            data = transform.transform(data)
+        return data
+
+    # @override
+    # def fit(self, data: pl.DataFrame) -> None:
+    #     for transform in self.transforms:
+    #         if isinstance(transform, UnsupervisedLearner):
+    #             transform.fit(data)
+    #         data = transform.transform(data)
+    #
+    # @override
+    # def fit_incremental(self, data: pl.DataFrame) -> None:
+    #     for transform in self.transforms:
+    #         if isinstance(transform, UnsupervisedIncrementalLearner):
+    #             transform.fit_incremental(data)
+    #         data = transform.transform(data)
