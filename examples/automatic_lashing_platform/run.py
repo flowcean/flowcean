@@ -2,17 +2,14 @@ import logging
 import time
 from pathlib import Path
 
-from tqdm import tqdm
-
 import flowcean.cli
-from flowcean.core.environment import ChainEnvironment
-from flowcean.environments.json import JsonDataLoader
 from flowcean.environments.parquet import ParquetDataLoader
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms import Flatten, Resample, Select
+from flowcean.transforms.rechunk import Rechunk
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +17,7 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     flowcean.cli.initialize_logging()
     time_start = time.time()
-    data = ChainEnvironment(
-        *[
-            ParquetDataLoader(path)
-            .load()
-            .to_time_series("t")
-            .join(JsonDataLoader(path.with_suffix(".json")).load())
-            for path in tqdm(
-                list(Path("./data").glob("*.parquet")),
-                desc="Loading environments",
-            )
-        ]
-    ).with_transform(
+    data = ParquetDataLoader(Path("./alp_sim_data.parquet")).with_transform(
         Select(
             [
                 "p_accumulator",
@@ -43,7 +29,9 @@ def main() -> None:
         )
         | Resample(1.0)
         | Flatten()
+        | Rechunk()
     )
+    data.load()
     time_end = time.time()
     logger.info("took %.5f s to load data", time_end - time_start)
 
