@@ -14,10 +14,12 @@ ignore = [
   "ANN102", # deprecated
   "ANN401", # dynamically typed expressions (typing.Any) are disallowed
   "D10", # missing docstrings
+  "ERA001", # commented-out code
   "N818", # Error suffix on exceptions
   "PD", # pandas
   "PLR0913", # too many arguments
   "S311", # pseudo-random number generation
+  "T201", # allow print
   "TD", # TODO rules
   "ISC001", # implicit string concatenation
   "CPY001", # missing copyright notice

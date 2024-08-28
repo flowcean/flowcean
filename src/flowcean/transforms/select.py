@@ -5,7 +5,7 @@ from typing import override
 import polars as pl
 from polars.type_aliases import IntoExpr
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 

@@ -1,17 +1,13 @@
 from pathlib import Path
-from typing import Self, override
+from typing import override
 
 import polars as pl
 
-from flowcean.core import OfflineEnvironment
-from flowcean.core.environment import NotLoadedError
+from flowcean.environments.dataset import Dataset
 
 
-class ParquetDataLoader(OfflineEnvironment):
+class ParquetDataLoader(Dataset):
     """DataLoader for Parquet files."""
-
-    path: Path
-    data: pl.DataFrame | None = None
 
     def __init__(self, path: str | Path) -> None:
         """Initialize the ParquetDataLoader.
@@ -19,15 +15,5 @@ class ParquetDataLoader(OfflineEnvironment):
         Args:
             path: Path to the Parquet file.
         """
-        self.path = Path(path)
-
-    @override
-    def load(self) -> Self:
-        self.data = pl.read_parquet(self.path)
-        return self
-
-    @override
-    def get_data(self) -> pl.DataFrame:
-        if self.data is None:
-            raise NotLoadedError
-        return self.data
+        data = pl.read_parquet(path)
+        super().__init__(data)

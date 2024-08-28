@@ -4,7 +4,8 @@ from typing import Any, override
 import polars as pl
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
-from flowcean.core import Model, SupervisedLearner
+from flowcean.core.learner import SupervisedLearner
+from flowcean.core.model import Model
 from flowcean.models.sklearn import SciKitModel
 
 logger = logging.getLogger(__name__)

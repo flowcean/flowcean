@@ -6,7 +6,7 @@ import numpy as np
 import polars as pl
 from scipy.interpolate import CubicSpline
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)

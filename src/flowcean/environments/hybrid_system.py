@@ -75,7 +75,7 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
         return self
 
     @override
-    def __iter__(self) -> Iterator[pl.DataFrame]:
+    def observe(self) -> pl.DataFrame:
         mode = self.initial_mode
         last_t = 0.0
         for t, i in self.inputs:

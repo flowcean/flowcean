@@ -65,7 +65,7 @@ class Transform(ABC):
 
     @abstractmethod
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
-        """Transform data with this transform.
+        """Apply the transform to data.
 
         Args:
             data: The data to transform.
@@ -75,7 +75,7 @@ class Transform(ABC):
         """
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
-        """Transform data with this transform.
+        """Apply the transform to data.
 
         Args:
             data: The data to transform.
@@ -85,23 +85,48 @@ class Transform(ABC):
         """
         return self.transform(data)
 
-    def __or__(self, other: Transform) -> Chain:
-        """Pipe this transform into another transform.
+    def chain(
+        self,
+        *other: Transform,
+    ) -> Chain:
+        """Chain this transform with other transforms.
 
         This can be used to chain multiple transforms together.
         Chained transforms are applied left to right.
 
         Example:
             ```python
-            chained_transform = TransformA() | TransformB()
+            chained_transform = TransformA().chain(TransformB())
             ```
 
         Args:
-            other: The transform to pipe into.
+            other: The transforms to chain.
 
         Returns:
             A new Chain transform.
         """
         from .chain import Chain
 
-        return Chain(self, other)
+        return Chain(self, *other)
+
+    def __rshift__(
+        self,
+        other: Transform,
+    ) -> Chain:
+        """Chain this transform with another transform.
+
+        This can be used to chain multiple transforms together.
+        Chained transforms are applied left to right.
+
+        Example:
+            ```python
+            chained_transform = TransformA() >> TransformB()
+            ```
+
+        Args:
+            other: The transform to chain.
+
+        Returns:
+            A new Chain transform.
+        """
+        return self.chain(other)

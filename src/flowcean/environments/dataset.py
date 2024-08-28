@@ -1,8 +1,11 @@
-from typing import Any, Self, override
+from __future__ import annotations
 
-import polars as pl
+from typing import TYPE_CHECKING, override
 
-from flowcean.core import OfflineEnvironment
+from flowcean.core.environment.offline import OfflineEnvironment
+
+if TYPE_CHECKING:
+    import polars as pl
 
 
 class Dataset(OfflineEnvironment):
@@ -12,15 +15,8 @@ class Dataset(OfflineEnvironment):
         self.data = data
 
     @override
-    def load(self) -> Self:
-        return self
-
-    @override
-    def get_data(self) -> pl.DataFrame:
+    def observe(self) -> pl.DataFrame:
         return self.data
 
     def __len__(self) -> int:
         return len(self.data)
-
-    def __getitem__(self, key: int) -> tuple[Any, ...]:
-        return self.data.row(key)

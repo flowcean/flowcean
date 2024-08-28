@@ -1,3 +1,6 @@
+from abc import abstractmethod
+from collections.abc import Sequence
+from typing import Self
 from flowcean.core import (
     IncrementalEnvironment,
     Model,
@@ -8,8 +11,14 @@ from flowcean.core import (
 )
 
 
-def learn_incremental(
-    environment: IncrementalEnvironment,
+class WithFeatures:
+    @abstractmethod
+    def select(self, features: Sequence[str]) -> Self:
+        pass
+
+
+def learn_incremental[Observation: WithFeatures](
+    environment: IncrementalEnvironment[Observation],
     learner: SupervisedIncrementalLearner,
     inputs: list[str],
     outputs: list[str],

@@ -22,10 +22,10 @@ class ReinforcementObservation:
     sensor: float
 
 
-class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
+class MyEnvironment(ActiveEnvironment):
     state: float
     max_value: float
-    last_action: Action | None
+    last_action: pl.DataFrame | None
     max_num_iterations: int
 
     def __init__(
@@ -44,7 +44,7 @@ class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
         return self
 
     @override
-    def act(self, action: Action) -> None:
+    def act(self, action: pl.DataFrame) -> None:
         self.last_action = action
 
     @override
@@ -55,7 +55,7 @@ class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
             raise StopLearning
 
     @override
-    def observe(self) -> ReinforcementObservation:
+    def observe(self) -> pl.DataFrame:
         return ReinforcementObservation(
             reward=self._calculate_reward(),
             sensor=self.state,

@@ -1,10 +1,10 @@
 import logging
 
-from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner, UnsupervisedLearner
 from flowcean.core.metric import OfflineMetric
 from flowcean.core.model import Model, ModelWithTransform
 from flowcean.core.transform import Transform
+from flowcean.environments.dataset import OfflineEnvironment
 from flowcean.metrics.report import Report
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def learn_offline(
         The model learned from the environment.
     """
     logger.info("Learning with offline strategy")
-    data = environment.get_data()
+    data = environment.observe()
     logger.info("Selecting input and output features")
     input_features = data.select(inputs)
     output_features = data.select(outputs)
@@ -59,7 +59,7 @@ def evaluate_offline(
     outputs: list[str],
     metrics: list[OfflineMetric],
 ) -> Report:
-    data = environment.get_data()
+    data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
     predictions = model.predict(input_features)
