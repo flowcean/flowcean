@@ -122,7 +122,7 @@ def main() -> None:
                 "temperature": [mode.temperature for mode in modes],
             }
         ),
-    ).load()
+    )
 
     data = environment.collect(10_000)
     train, test = TrainTestSplit(ratio=0.8).split(data)

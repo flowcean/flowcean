@@ -64,7 +64,7 @@ class Transform(ABC):
     """Base class for all transforms."""
 
     @abstractmethod
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         """Apply the transform to data.
 
         Args:
@@ -83,12 +83,12 @@ class Transform(ABC):
         Returns:
             The transformed data.
         """
-        return self.transform(data)
+        return self.apply(data)
 
     def chain(
         self,
-        *other: Transform,
-    ) -> Chain:
+        other: Transform,
+    ) -> Transform:
         """Chain this transform with other transforms.
 
         This can be used to chain multiple transforms together.
@@ -105,12 +105,12 @@ class Transform(ABC):
         Returns:
             A new Chain transform.
         """
-        return Chain(self, *other)
+        return ChainedTransforms(self, other)
 
     def __or__(
         self,
         other: Transform,
-    ) -> Chain:
+    ) -> Transform:
         """Chain this transform with another transform.
 
         This can be used to chain multiple transforms together.
@@ -130,11 +130,27 @@ class Transform(ABC):
         return self.chain(other)
 
 
-class Chain(
-    Transform,
-    # UnsupervisedLearner,
-    # UnsupervisedIncrementalLearner,
-):
+class FitOnce(ABC):
+    @abstractmethod
+    def fit(self, data: pl.DataFrame) -> None:
+        """Fit to the data.
+
+        Args:
+            data: The data to fit to.
+        """
+
+
+class FitIncremetally(ABC):
+    @abstractmethod
+    def fit_incremental(self, data: pl.DataFrame) -> None:
+        """Fit to the data incrementally.
+
+        Args:
+            data: The data to fit to.
+        """
+
+
+class ChainedTransforms(Transform, FitOnce, FitIncremetally):
     """A transform that is a chain of other transforms."""
 
     transforms: Sequence[Transform]
@@ -146,21 +162,44 @@ class Chain(
         self.transforms = transforms
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         for transform in self.transforms:
-            data = transform.transform(data)
+            data = transform.apply(data)
         return data
 
-    # @override
-    # def fit(self, data: pl.DataFrame) -> None:
-    #     for transform in self.transforms:
-    #         if isinstance(transform, UnsupervisedLearner):
-    #             transform.fit(data)
-    #         data = transform.transform(data)
-    #
-    # @override
-    # def fit_incremental(self, data: pl.DataFrame) -> None:
-    #     for transform in self.transforms:
-    #         if isinstance(transform, UnsupervisedIncrementalLearner):
-    #             transform.fit_incremental(data)
-    #         data = transform.transform(data)
+    @override
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        return ChainedTransforms(*self.transforms, other)
+
+    @override
+    def fit(self, data: pl.DataFrame) -> None:
+        for transform in self.transforms:
+            if isinstance(transform, FitOnce):
+                transform.fit(data)
+            data = transform.apply(data)
+
+    @override
+    def fit_incremental(self, data: pl.DataFrame) -> None:
+        for transform in self.transforms:
+            if isinstance(transform, FitIncremetally):
+                transform.fit_incremental(data)
+            data = transform.apply(data)
+
+
+class Identity(Transform):
+    def __init__(self) -> None:
+        super().__init__()
+
+    @override
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+        return data
+
+    @override
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        return other

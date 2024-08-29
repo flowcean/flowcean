@@ -1,9 +1,10 @@
 import logging
+from typing import cast
 
-from flowcean.core.learner import SupervisedLearner, UnsupervisedLearner
+from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import OfflineMetric
 from flowcean.core.model import Model, ModelWithTransform
-from flowcean.core.transform import Transform
+from flowcean.core.transform import FitIncremetally, FitOnce, Transform
 from flowcean.environments.dataset import OfflineEnvironment
 from flowcean.metrics.report import Report
 
@@ -15,6 +16,7 @@ def learn_offline(
     learner: SupervisedLearner,
     inputs: list[str],
     outputs: list[str],
+    *,
     input_transform: Transform | None = None,
 ) -> Model:
     """Learn from an offline environment.
@@ -27,6 +29,7 @@ def learn_offline(
         inputs: The input feature names.
         outputs: The output feature names.
         input_transform: The transform to apply to the input features.
+            Will be part of the final model.
 
     Returns:
         The model learned from the environment.
@@ -37,19 +40,20 @@ def learn_offline(
     input_features = data.select(inputs)
     output_features = data.select(outputs)
 
-    if input_transform is not None:
-        if isinstance(input_transform, UnsupervisedLearner):
-            logger.info("Learning input transform")
-            input_transform.fit(input_features)
-        logger.info("Applying input transform")
-        input_features = input_transform.transform(input_features)
+    if isinstance(input_transform, FitOnce):
+        cast(FitOnce, input_transform).fit(input_features)
+
+    if isinstance(input_transform, FitIncremetally):
+        cast(FitIncremetally, input_transform).fit_incremental(input_features)
 
     logger.info("Learning model")
     model = learner.learn(input_features, output_features)
-
-    if input_transform is not None:
-        return ModelWithTransform(model=model, transform=input_transform)
-    return model
+    if input_transform is None:
+        return model
+    return ModelWithTransform(
+        model,
+        input_transform,
+    )
 
 
 def evaluate_offline(

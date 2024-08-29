@@ -7,7 +7,7 @@ import polars as pl
 from numpy.typing import NDArray
 from scipy.integrate import solve_ivp
 
-from flowcean.core.environment import IncrementalEnvironment
+from flowcean.core.environment.incremental import IncrementalEnvironment
 
 
 class IntegrationError(Exception):
@@ -162,10 +162,6 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
         self.system = system
         self.dt = dt
         self.map_to_dataframe = map_to_dataframe
-
-    @override
-    def load(self) -> Self:
-        return self
 
     @override
     def __iter__(self) -> Iterator[pl.DataFrame]:

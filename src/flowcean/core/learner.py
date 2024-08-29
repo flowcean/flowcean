@@ -1,33 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import override
 
 import polars as pl
 
-from .model import Model
+from flowcean.core.transform import FitOnce, Transform
 
-
-class UnsupervisedLearner(ABC):
-    """Base class for unsupervised learners."""
-
-    @abstractmethod
-    def fit(self, data: pl.DataFrame) -> None:
-        """Fit to the data.
-
-        Args:
-            data: The data to fit to.
-        """
-
-
-class UnsupervisedIncrementalLearner(ABC):
-    """Base class for unsupervised incremental learners."""
-
-    @abstractmethod
-    def fit_incremental(self, data: pl.DataFrame) -> None:
-        """Fit to the data incrementally.
-
-        Args:
-            data: The data to fit to.
-        """
+from .model import Model, ModelWithTransform
 
 
 class SupervisedLearner(ABC):
@@ -53,6 +31,31 @@ class SupervisedLearner(ABC):
         """
 
 
+class SupervisedLearnerWithTransforms(SupervisedLearner):
+    pre_transform: Transform
+    learner: SupervisedLearner
+
+    def __init__(
+        self,
+        pre_transform: Transform,
+        learner: SupervisedLearner,
+    ) -> None:
+        self.pre_transform = pre_transform
+        self.learner = learner
+
+    @override
+    def learn(
+        self,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
+    ) -> Model:
+        if isinstance(self.pre_transform, FitOnce):
+            self.pre_transform.fit(inputs)
+        inputs = self.pre_transform.apply(inputs)
+        inner_model = self.learner.learn(inputs, outputs)
+        return ModelWithTransform(inner_model, self.pre_transform)
+
+
 class SupervisedIncrementalLearner(ABC):
     @abstractmethod
     def learn_incremental(
@@ -71,11 +74,7 @@ class SupervisedIncrementalLearner(ABC):
         """
 
 
-Action = TypeVar("Action")
-Observation = TypeVar("Observation")
-
-
-class ActiveLearner(ABC, Generic[Action, Observation]):
+class ActiveLearner[Action, Observation](ABC):
     @abstractmethod
     def learn_active(
         self,

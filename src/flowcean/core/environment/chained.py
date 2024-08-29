@@ -15,9 +15,10 @@ class ChainedOfflineEnvironments(IncrementalEnvironment):
     def __init__(self, environments: Iterable[OfflineEnvironment]) -> None:
         self.environments = iter(environments)
         self.element = next(self.environments)
+        super().__init__()
 
     @override
-    def observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.DataFrame:
         return self.element.observe()
 
     @override

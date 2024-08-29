@@ -8,7 +8,7 @@ the next mode based on a current input.
 
 from abc import abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from typing import Self, override
+from typing import override
 
 import polars as pl
 
@@ -66,21 +66,20 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
             map_to_dataframe: Function to map times, inputs and states to a
                 DataFrame.
         """
-        self.initial_mode = initial_mode
+        self.mode = initial_mode
         self.inputs = inputs
         self.map_to_dataframe = map_to_dataframe
-
-    @override
-    def load(self) -> Self:
-        return self
+        self.last_t = 0.0
 
     @override
     def observe(self) -> pl.DataFrame:
-        mode = self.initial_mode
-        last_t = 0.0
-        for t, i in self.inputs:
-            dt = t - last_t
-            last_t = t
-            ts, states = mode.step(dt)
-            mode = mode.transition(i)
-            yield self.map_to_dataframe(ts, [i] * len(ts), states)
+        return self.data
+
+    @override
+    def step(self) -> None:
+        t, i = next(self.inputs)
+        dt = t - self.last_t
+        self.last_t = t
+        ts, states = self.mode.step(dt)
+        self.mode = self.mode.transition(i)
+        self.data = self.map_to_dataframe(ts, [i] * len(ts), states)

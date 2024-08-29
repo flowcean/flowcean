@@ -43,7 +43,7 @@ class Flatten(Transform):
         self.features = features
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         # Loop over the features we want to explode
         feature_names = (
             self.features

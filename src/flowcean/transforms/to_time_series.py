@@ -13,7 +13,7 @@ class ToTimeSeries(Transform):
         self.time_feature = time_feature
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         if isinstance(self.time_feature, str):
             time_feature = {
                 feature_name: self.time_feature

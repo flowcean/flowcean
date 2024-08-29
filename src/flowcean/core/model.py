@@ -50,7 +50,7 @@ class ModelWithTransform(Model):
         self,
         input_features: pl.DataFrame,
     ) -> pl.DataFrame:
-        transformed = self.transform.transform(input_features)
+        transformed = self.transform.apply(input_features)
         return self.model.predict(transformed)
 
     @override

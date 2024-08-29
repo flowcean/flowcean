@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import override
 
 import polars as pl
 

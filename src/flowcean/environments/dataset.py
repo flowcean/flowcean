@@ -15,9 +15,10 @@ class Dataset(OfflineEnvironment):
 
     def __init__(self, data: pl.DataFrame) -> None:
         self.data = data
+        super().__init__()
 
     @override
-    def observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.DataFrame:
         return self.data
 
     def __len__(self) -> int:
