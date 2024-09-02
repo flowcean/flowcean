@@ -11,7 +11,7 @@ Whether you are developing solutions for smart grids, autonomous vehicles, or in
 
 ## What is Flowcean?
 
-Flowcean is engineered to simplify and accelerate the process of creating, deploying, and managing models for cyber-physical systems.
+Flowcean is designed to simplify and accelerate the process of creating, deploying, and managing models for cyber-physical systems.
 Here’s what Flowcean can do:
 
 - **Automatic Model Generation**: Flowcean automates the creation of models tailored to cyber-physical systems, allowing you to focus on refining performance rather than starting from scratch.
@@ -44,4 +44,4 @@ For a more detailed guide on setting up your first project, visit our [Getting S
 
 If you use Flowcean in your research or project, please consider citing the following references:
 
-- [List of references here]
+- Towards the Automatic Generation of Models for Prediction, Monitoring, and Testing of Cyber-Physical Systems, 28th IEEE International Conference on Emerging Technologies and Factory Automation (ETFA 2023), Sinaia, 12.09. – 15.09.2023 
