@@ -1,2 +1,4 @@
 midas-mosaik[base]>=2.0.0a3
 midas-palaestrai>=3.5.3a2
+palaestrai-agents
+palaestrai@git+https://gitlab.com/arl2/palaestrai.git@agenc_compatibility#egg=palaestrai
