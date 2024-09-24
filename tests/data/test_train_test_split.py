@@ -24,16 +24,16 @@ class TestTrainTestSplit(unittest.TestCase):
             TrainTestSplit(ratio=1.5, shuffle=False)
 
     def test_split_shuffle(self) -> None:
+        initialize_random(42)
         dataset = Dataset(pl.DataFrame({"a": [1, 2, 3, 4, 5, 6]}))
         train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(dataset)
 
-        expected_train = pl.DataFrame({"a": [6, 3, 1, 2]})
+        expected_train = pl.DataFrame({"a": [5, 6, 1, 2]})
         assert_frame_equal(expected_train, train.get_data())
 
-        expected_test = pl.DataFrame({"a": [5, 4]})
+        expected_test = pl.DataFrame({"a": [3, 4]})
         assert_frame_equal(expected_test, test.get_data())
 
 
 if __name__ == "__main__":
-    initialize_random(42)
     unittest.main()
