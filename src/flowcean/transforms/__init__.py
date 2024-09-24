@@ -1,5 +1,6 @@
 __all__ = [
     "Explode",
+    "Filter",
     "Flatten",
     "FeatureLengthVaryError",
     "NoTimeSeriesFeatureError",
@@ -14,6 +15,7 @@ __all__ = [
 ]
 
 from .explode import Explode
+from .filter import Filter
 from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
 from .match_sampling_rate import MatchSamplingRate
 from .rechunk import Rechunk
