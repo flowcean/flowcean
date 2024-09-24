@@ -4,7 +4,7 @@ import logging
 from itertools import accumulate
 from typing import TYPE_CHECKING
 
-from sympy import N
+from flowcean.utils.random import get_seed
 
 from .dataset import Dataset
 
@@ -24,14 +24,12 @@ class TrainTestSplit:
         ratio: float,
         *,
         shuffle: bool = False,
-        seed: int | None = None,
     ) -> None:
         if ratio < 0 or ratio > 1:
             message = "ratio must be between 0 and 1"
             raise ValueError(message)
         self.ratio = ratio
         self.shuffle = shuffle
-        self.seed = seed
 
     def split(
         self,
@@ -44,7 +42,7 @@ class TrainTestSplit:
             data,
             lengths=[pivot, len(data) - pivot],
             shuffle=self.shuffle,
-            seed=self.seed,
+            seed=get_seed(),
         )
         return Dataset(splits[0]), Dataset(splits[1])
 

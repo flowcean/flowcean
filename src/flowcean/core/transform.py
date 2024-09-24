@@ -64,18 +64,6 @@ class Transform(ABC):
     """Base class for all transforms."""
 
     @abstractmethod
-    def __init__(self, seed: int | None) -> None:
-        """Initialize the transform with a seed.
-
-        Args:
-            seed: The seed to initialize the transform with.
-
-        Returns:
-            The initialized transform
-        """
-        self.seed = seed
-
-    @abstractmethod
     def transform(self, data: pl.DataFrame) -> pl.DataFrame:
         """Transform data with this transform.
 
