@@ -8,6 +8,7 @@ import queue
 from datetime import datetime, timedelta
 
 import mosaik_api_v3
+from mosaik.exceptions import SimulationError
 
 LOG = logging.getLogger("flowcean_mosaik.simulator")
 
@@ -59,6 +60,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self._env = None
         self._sim_time = 0
         self._now_dt = None
+        self._timeout = 5
 
     def init(self, sid: str, **sim_params: dict) -> dict:
         """Initialize this simulator.
@@ -180,12 +182,25 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         """
         data = {}
         success = False
+        to_ctr = self._timeout
         while not success:
             try:
                 actuator_data = self.actuator_queue.get(block=True, timeout=3)
                 success = True
             except queue.Empty:
-                LOG.exception("Failed to get actuator data from queue")
+                to_ctr -= 1
+                if to_ctr <= 0:
+                    raise SimulationError(
+                        "No actuators after %.1f seconds. Stopping mosaik"
+                        % (to_ctr * 3)
+                    )
+                else:
+                    msg = (
+                        f"At step {self._sim_time}: Failed to get actuator "
+                        "data from queue (queue is empty). Timeout in "
+                        f"{to_ctr * 3}"
+                    )
+                    LOG.warning(msg)
         for uid, value in actuator_data.items():
             self.models[self.uid_dict[uid]]["value"] = value
 
