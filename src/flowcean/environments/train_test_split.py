@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     import polars as pl
 
-    from flowcean.core import OfflineEnvironment
+    from flowcean.core.environment.offline import OfflineEnvironment
 
 logger = logging.getLogger(__name__)
 
