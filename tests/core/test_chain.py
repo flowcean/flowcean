@@ -106,16 +106,14 @@ class TestChain(unittest.TestCase):
 
         assert_frame_equal(
             chain.collect().observe(),
-            pl.DataFrame({
-                "A": [1,2,3,4],
-                ""
-            }),
+            pl.DataFrame(
+                {
+                    "A": [1, 2, 3, 4],
+                    "B": [5, 6, 7, 8],
+                }
+            ),
         )
-        chain.step()
-        assert_frame_equal(
-            chain.observe(),
-            dataset2.observe(),
-        )
+
 
 if __name__ == "__main__":
     unittest.main()

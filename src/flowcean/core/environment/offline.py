@@ -38,6 +38,7 @@ class JoinedOfflineEnvironment(OfflineEnvironment):
 
     def __init__(self, environments: Iterable[OfflineEnvironment]) -> None:
         self.environments = environments
+        super().__init__()
 
     @override
     def _observe(self) -> pl.DataFrame:
