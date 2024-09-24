@@ -101,7 +101,7 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         description, instance = load_funcs(
             self._module, self._description_func, self._instance_func
         )
-        sensor_description, actuator_description = description(
+        sensor_description, actuator_description, world_state = description(
             self._mosaik_params
         )
 

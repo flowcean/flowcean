@@ -1,0 +1,2 @@
+midas-mosaik[base]>=2.0.0a3
+midas-palaestrai>=3.5.3a2
