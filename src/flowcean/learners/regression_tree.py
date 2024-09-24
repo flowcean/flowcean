@@ -25,6 +25,13 @@ class RegressionTree(SupervisedLearner):
         dot_graph_export_path: None | str = None,
         **kwargs: Any,
     ) -> None:
+        """Initialize the regression tree learner.
+
+        Args:
+            *args: Positional arguments to pass to the DecisionTreeRegressor.
+            dot_graph_export_path: Path to export the decision tree graph to.
+            **kwargs: Keyword arguments to pass to the DecisionTreeRegressor.
+        """
         self.regressor = DecisionTreeRegressor(*args, **kwargs)
         self.dot_graph_export_path = dot_graph_export_path
 

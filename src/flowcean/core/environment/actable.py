@@ -6,9 +6,7 @@ from abc import ABC, abstractmethod
 class Actable[Action](ABC):
     """Base class for active environments.
 
-    An active environment loads data in an interactive way, e.g., from a
-    simulation or real system. The environment requires actions to be taken to
-    advance. Data can be retrieved by observing the environment.
+    Active environments require actions to be taken to advance.
     """
 
     @abstractmethod

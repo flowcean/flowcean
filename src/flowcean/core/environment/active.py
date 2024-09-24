@@ -22,4 +22,5 @@ class ActiveEnvironment(
     """
 
     def __init__(self) -> None:
+        """Initialize the active environment."""
         super().__init__()

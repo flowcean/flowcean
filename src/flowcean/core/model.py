@@ -9,6 +9,11 @@ from .transform import Transform
 
 
 class Model(ABC):
+    """Base class for models.
+
+    A model is used to predict outputs for given inputs.
+    """
+
     @abstractmethod
     def predict(
         self,
@@ -42,6 +47,13 @@ class Model(ABC):
 
 @dataclass
 class ModelWithTransform(Model):
+    """Model that carries a transform.
+
+    Attributes:
+        model: Model
+        transform: Transform
+    """
+
     model: Model
     transform: Transform
 

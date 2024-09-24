@@ -11,9 +11,22 @@ from flowcean.core.environment.offline import OfflineEnvironment
 
 
 class Dataset(OfflineEnvironment):
+    """A dataset environment.
+
+    This environment represents static tabular datasets.
+
+    Attributes:
+        data: The data to represent.
+    """
+
     data: pl.DataFrame
 
     def __init__(self, data: pl.DataFrame) -> None:
+        """Initialize the dataset environment.
+
+        Args:
+            data: The data to represent.
+        """
         self.data = data
         super().__init__()
 
@@ -22,6 +35,7 @@ class Dataset(OfflineEnvironment):
         return self.data
 
     def __len__(self) -> int:
+        """Return the number of samples in the dataset."""
         return len(self.data)
 
 
@@ -31,6 +45,17 @@ def collect(
     *,
     progress_bar: bool | dict[str, Any] = True,
 ) -> Dataset:
+    """Collect data from an environment.
+
+    Args:
+        environment: The environment to collect data from.
+        n: Number of samples to collect. If None, all samples are collected.
+        progress_bar: Whether to show a progress bar. If a dictionary is
+            provided, it will be passed to the progress bar.
+
+    Returns:
+        The collected dataset.
+    """
     from flowcean.environments.dataset import Dataset
 
     samples = islice(environment, n)

@@ -4,11 +4,10 @@ from abc import ABC, abstractmethod
 
 
 class Stepable(ABC):
-    """Base class for incremental environments.
+    """Base class for stepable environments.
 
-    An incremental environment loads data in a semi-interactive way, e.g.,
-    stream, a sensor, etc. Data can be retrieved multiple times, but the
-    environment cannot be controlled.
+    Stepable environments are environments that can be advanced by a step.
+    Usually, this is combined with an observable to provide a stream of data.
     """
 
     @abstractmethod
@@ -17,4 +16,8 @@ class Stepable(ABC):
 
 
 class Finished(Exception):
-    pass
+    """Exception raised when the environment is finished.
+
+    This exception is raised when the environment is finished, and no more data
+    can be retrieved.
+    """

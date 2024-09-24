@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import override
 
 import polars as pl
 
-from flowcean.core.transform import FitOnce, Transform
-
-from .model import Model, ModelWithTransform
+from .model import Model
 
 
 class SupervisedLearner(ABC):
@@ -31,32 +28,13 @@ class SupervisedLearner(ABC):
         """
 
 
-class SupervisedLearnerWithTransforms(SupervisedLearner):
-    pre_transform: Transform
-    learner: SupervisedLearner
-
-    def __init__(
-        self,
-        pre_transform: Transform,
-        learner: SupervisedLearner,
-    ) -> None:
-        self.pre_transform = pre_transform
-        self.learner = learner
-
-    @override
-    def learn(
-        self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
-    ) -> Model:
-        if isinstance(self.pre_transform, FitOnce):
-            self.pre_transform.fit(inputs)
-        inputs = self.pre_transform.apply(inputs)
-        inner_model = self.learner.learn(inputs, outputs)
-        return ModelWithTransform(inner_model, self.pre_transform)
-
-
 class SupervisedIncrementalLearner(ABC):
+    """Base class for incremental supervised learners.
+
+    An incremental supervised learner learns from input-output pairs
+    incrementally.
+    """
+
     @abstractmethod
     def learn_incremental(
         self,
@@ -75,6 +53,11 @@ class SupervisedIncrementalLearner(ABC):
 
 
 class ActiveLearner[Action, Observation](ABC):
+    """Base class for active learners.
+
+    Active learners require actions to be taken to learn.
+    """
+
     @abstractmethod
     def learn_active(
         self,

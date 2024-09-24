@@ -13,7 +13,7 @@ ignore = [
   "ANN101", # deprecated
   "ANN102", # deprecated
   "ANN401", # dynamically typed expressions (typing.Any) are disallowed
-  "D10", # missing docstrings
+  "D100", # missing docstrings
   "ERA001", # commented-out code
   "N818", # Error suffix on exceptions
   "PD", # pandas

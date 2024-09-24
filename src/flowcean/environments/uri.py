@@ -7,7 +7,14 @@ from flowcean.environments.parquet import ParquetDataLoader
 
 
 class UnsupportedFileTypeError(Exception):
+    """Exception raised when a file type is not supported."""
+
     def __init__(self, suffix: str) -> None:
+        """Initialize the UnsupportedFileTypeError.
+
+        Args:
+            suffix: File type suffix.
+        """
         super().__init__(f"file type `{suffix}` is not supported")
 
 
@@ -32,7 +39,14 @@ class UriDataLoader(Dataset):
 
 
 class InvalidUriSchemeError(Exception):
+    """Exception raised when an URI scheme is invalid."""
+
     def __init__(self, scheme: str) -> None:
+        """Initialize the InvalidUriSchemeError.
+
+        Args:
+            scheme: Invalid URI scheme.
+        """
         super().__init__(
             f"only file URIs can be converted to a path, but got `{scheme}`",
         )

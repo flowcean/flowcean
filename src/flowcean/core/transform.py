@@ -111,14 +111,11 @@ class Transform(ABC):
         self,
         other: Transform,
     ) -> Transform:
-        """Chain this transform with another transform.
-
-        This can be used to chain multiple transforms together.
-        Chained transforms are applied left to right.
+        """Shorthand for chaining transforms.
 
         Example:
             ```python
-            chained_transform = TransformA() >> TransformB()
+            chained_transform = TransformA() | TransformB()
             ```
 
         Args:
@@ -131,6 +128,8 @@ class Transform(ABC):
 
 
 class FitOnce(ABC):
+    """A mixin for transforms that need to be fitted to data once."""
+
     @abstractmethod
     def fit(self, data: pl.DataFrame) -> None:
         """Fit to the data.
@@ -141,6 +140,8 @@ class FitOnce(ABC):
 
 
 class FitIncremetally(ABC):
+    """A mixin for transforms that need to be fitted to data incrementally."""
+
     @abstractmethod
     def fit_incremental(self, data: pl.DataFrame) -> None:
         """Fit to the data incrementally.
@@ -159,6 +160,11 @@ class ChainedTransforms(Transform, FitOnce, FitIncremetally):
         self,
         *transforms: Transform,
     ) -> None:
+        """Initialize the chained transforms.
+
+        Args:
+            transforms: The transforms to chain.
+        """
         self.transforms = transforms
 
     @override
@@ -190,7 +196,10 @@ class ChainedTransforms(Transform, FitOnce, FitIncremetally):
 
 
 class Identity(Transform):
+    """A transform that does nothing."""
+
     def __init__(self) -> None:
+        """Initialize the identity transform."""
         super().__init__()
 
     @override

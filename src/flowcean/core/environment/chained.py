@@ -9,21 +9,33 @@ from flowcean.core.environment.stepable import Finished
 
 
 class ChainedOfflineEnvironments(IncrementalEnvironment):
-    environments: Iterator[OfflineEnvironment]
-    element: OfflineEnvironment
+    """Chained offline environments.
+
+    This environment chains multiple offline environments together. The
+    environment will first observe the data from the first environment and then
+    the data from the other environments.
+    """
+
+    _environments: Iterator[OfflineEnvironment]
+    _element: OfflineEnvironment
 
     def __init__(self, environments: Iterable[OfflineEnvironment]) -> None:
-        self.environments = iter(environments)
-        self.element = next(self.environments)
+        """Initialize the chained offline environments.
+
+        Args:
+            environments: The offline environments to chain.
+        """
+        self._environments = iter(environments)
+        self._element = next(self._environments)
         super().__init__()
 
     @override
     def _observe(self) -> pl.DataFrame:
-        return self.element.observe()
+        return self._element.observe()
 
     @override
     def step(self) -> None:
         try:
-            self.element = next(self.environments)
+            self._element = next(self._environments)
         except StopIteration:
             raise Finished from StopIteration
