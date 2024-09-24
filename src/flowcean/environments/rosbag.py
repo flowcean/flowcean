@@ -2,17 +2,15 @@
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Self, override
 
 import polars as pl
 from rosbags.dataframe import get_dataframe
 from rosbags.highlevel import AnyReader
 
-from flowcean.core.environment import OfflineEnvironment
-from flowcean.core.environment.base import NotLoadedError
+from flowcean.environments.dataset import Dataset
 
 
-class RosbagLoader(OfflineEnvironment):
+class RosbagLoader(Dataset):
     """Environment to load data from a rosbag file.
 
     The RosbagEnvironment is used to load data from a rosbag file. The
@@ -53,25 +51,12 @@ class RosbagLoader(OfflineEnvironment):
             path: Path to the rosbag.
             topics: Dictionary of topics to load (`topic: [keys]`).
         """
-        self.path = Path(path)
-        self.topics = topics
-        self.data = None
-
-    @override
-    def load(self) -> Self:
-        with AnyReader([self.path]) as reader:
+        with AnyReader([Path(path)]) as reader:
             features = [
                 read_timeseries(reader, topic, keys)
-                for topic, keys in self.topics.items()
+                for topic, keys in topics.items()
             ]
-            self.data = pl.concat(features, how="horizontal")
-        return self
-
-    @override
-    def get_data(self) -> pl.DataFrame:
-        if self.data is None:
-            raise NotLoadedError
-        return self.data
+        super().__init__(pl.concat(features, how="horizontal"))
 
 
 def read_timeseries(

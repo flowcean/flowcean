@@ -66,6 +66,7 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
             map_to_dataframe: Function to map times, inputs and states to a
                 DataFrame.
         """
+        super().__init__()
         self.mode = initial_mode
         self.inputs = inputs
         self.map_to_dataframe = map_to_dataframe

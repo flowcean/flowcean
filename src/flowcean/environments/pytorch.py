@@ -9,6 +9,7 @@ class TorchDataset(Dataset[tuple[Tensor, Tensor]]):
         inputs: pl.DataFrame,
         outputs: pl.DataFrame | None = None,
     ) -> None:
+        super().__init__()
         self.inputs = inputs
         self.outputs = outputs
 

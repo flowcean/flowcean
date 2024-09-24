@@ -4,7 +4,7 @@ import polars as pl
 import torch
 from torch import nn
 
-from flowcean.core import SupervisedIncrementalLearner
+from flowcean.core.learner import SupervisedIncrementalLearner
 from flowcean.models.pytorch import PyTorchModel
 
 

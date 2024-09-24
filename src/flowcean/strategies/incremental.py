@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Sequence
 from typing import Self
+
 from flowcean.core import (
     IncrementalEnvironment,
     Model,
