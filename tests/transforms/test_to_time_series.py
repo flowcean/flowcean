@@ -4,6 +4,7 @@ import polars as pl
 from polars.testing import assert_frame_equal
 
 from flowcean.environments.dataset import Dataset
+from flowcean.transforms.to_time_series import ToTimeSeries
 
 
 class TestToTimeSeries(unittest.TestCase):
@@ -18,10 +19,12 @@ class TestToTimeSeries(unittest.TestCase):
             )
         )
 
-        time_series_dataset = dataset.to_time_series("time_feature")
+        time_series_dataset = dataset.with_transform(
+            ToTimeSeries("time_feature")
+        )
 
         assert_frame_equal(
-            time_series_dataset.get_data(),
+            time_series_dataset.observe(),
             pl.DataFrame(
                 {
                     "feature_a": [
