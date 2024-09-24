@@ -13,7 +13,6 @@ ignore = [
   "ANN101", # deprecated
   "ANN102", # deprecated
   "ANN401", # dynamically typed expressions (typing.Any) are disallowed
-  "D100", # missing docstrings
   "ERA001", # commented-out code
   "N818", # Error suffix on exceptions
   "PD", # pandas
@@ -29,14 +28,17 @@ ignore = [
 
 [lint.per-file-ignores]
 "**/examples/**/*" = [
+  "D10", # missing docstrings
   "INP001", # implicit namespace packages
   "T", # print
 ]
 "**/scripts/*" = [
+  "D10", # missing docstrings
   "INP001", # implicit namespace packages
   "T", # print
 ]
 "**/tests/**/*" = [
+  "D10", # missing docstrings
   "PLC1901", # compare to empty string
   "PLR2004", # magic value comparison
   "PLR6301", # no self use in methods
