@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Sequence
 from typing import Self, cast, override
 
 import numpy as np
@@ -142,6 +142,9 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
     This environment integrates an OdeSystem to generate a sequence of states.
     """
 
+    ts: Sequence[float]
+    states: Sequence[X]
+
     def __init__(
         self,
         system: OdeSystem[X],
@@ -159,12 +162,17 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
             dt: Time step.
             map_to_dataframe: Function to map states to a DataFrame.
         """
+        super().__init__()
         self.system = system
         self.dt = dt
         self.map_to_dataframe = map_to_dataframe
+        self.ts = [self.system.t]
+        self.states = [self.system.state]
 
     @override
-    def __iter__(self) -> Iterator[pl.DataFrame]:
-        while True:
-            ts, states = self.system.step(self.dt)
-            yield self.map_to_dataframe(ts, states)
+    def step(self) -> None:
+        self.ts, self.states = self.system.step(self.dt)
+
+    @override
+    def _observe(self) -> pl.DataFrame:
+        return self.map_to_dataframe(self.ts, self.states)
