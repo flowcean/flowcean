@@ -68,6 +68,7 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         sync_port: int = 58976,
         silent: bool = False,
         params: dict[str, Any] | None = None,
+
     ) -> None:
         self.rng: RandomState = RandomState(seed)
 
@@ -93,6 +94,10 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.sim_proc: Process
 
         self._data_for_simulation: dict | None = None
+
+        self.sensors = None
+        self.rewards = None
+        self._data_from_simulation = None
 
     def load(self) -> Self:
         self.sensor_queue = queue.Queue(1)
