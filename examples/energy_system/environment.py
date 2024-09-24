@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import queue
 import sys
 import threading
@@ -7,7 +8,8 @@ from copy import copy
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
-from multiprocessing import Process
+
+# from multiprocessing import Process
 from statistics import mean, median, stdev
 from typing import Any, Self
 
@@ -68,10 +70,11 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         sync_port: int = 58976,
         silent: bool = False,
         params: dict[str, Any] | None = None,
-
     ) -> None:
+        self.uid = "MosaikEnvironment_flowcean_edition"
         self.rng: RandomState = RandomState(seed)
 
+        multiprocessing.set_start_method("spawn")
         self.sensor_queue: queue.Queue
         self.actuator_queue: queue.Queue
 
@@ -91,7 +94,7 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
             "silent": silent,
         }
         self.sync_task: threading.Thread
-        self.sim_proc: Process
+        self.sim_proc: multiprocessing.Process
 
         self._data_for_simulation: dict | None = None
 
@@ -103,13 +106,14 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.sensor_queue = queue.Queue(1)
         self.actuator_queue = queue.Queue(1)
 
+        LOG.debug(f"{log_(self)} loading sensors and actuators ...")
         description, instance = load_funcs(
             self._module, self._description_func, self._instance_func
         )
         sensor_description, actuator_description, world_state = description(
             self._mosaik_params
         )
-
+        LOG.debug(f"{log_(self)} starting SyncSimulator ...")
         self.sync_task = threading.Thread(
             target=_start_simulator,
             args=[
@@ -120,7 +124,9 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
             ],
         )
         self.sync_task.start()
-        self.sim_proc = Process(
+
+        LOG.debug(f"{log_(self)} starting Co-Simulation ...")
+        self.sim_proc = multiprocessing.Process(
             target=_start_world,
             args=(
                 instance,
@@ -134,6 +140,8 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.sim_proc.start()
         self.sensors, self.sen_map = create_sensors(sensor_description)
         self.actuators, self.act_map = create_actuators(actuator_description)
+        LOG.info(f"{log_(self)} finished setup. Co-simulation is now running.")
+
         return self
 
     def act(self, action: Actions) -> None:
@@ -161,6 +169,10 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.rewards = None
 
     def observe(self) -> Observations:
+        if self._data_for_simulation is None:
+            self._data_for_simulation = {}
+            self.step()
+
         if self.sensors is not None and self.rewards is not None:
             return Observations(sensors=self.sensors, rewards=self.rewards)
 
@@ -343,23 +355,23 @@ def _start_world(
     meta_params = params["meta_params"]
 
     world, entities = get_world(params)
-    world.sim_config["ARLSyncSimulator"] = {"connect": f"{host}:{port}"}
+    world.sim_config["SyncSimulator"] = {"connect": f"{host}:{port}"}
     arlsim = world.start(
-        "ARLSyncSimulator",
-        step_size=meta_params["arl_sync_freq"],
+        "SyncSimulator",
+        step_size=meta_params["sync_freq"],
         start_date=meta_params.get("start_date", None),
     )
 
     for sensor in sensors:
         sid, eid, attr = sensor["uid"].split(".")
         full_id = f"{sid}.{eid}"
-        sensor_model = arlsim.ARL_Sensor(uid=sensor["uid"])
+        sensor_model = arlsim.Sensor(uid=sensor["uid"])
         world.connect(entities[full_id], sensor_model, (attr, "reading"))
 
     for actuator in actuators:
         sid, eid, attr = actuator["uid"].split(".")
         full_id = f"{sid}.{eid}"
-        actuator_model = arlsim.ARL_Actuator(uid=actuator["uid"])
+        actuator_model = arlsim.Actuator(uid=actuator["uid"])
         world.connect(
             actuator_model,
             entities[full_id],
@@ -368,8 +380,8 @@ def _start_world(
             initial_data={"setpoint": None},
         )
 
-    logger.disable("mosaik")
-    logger.disable("mosaik_api_v3")
+    # logger.disable("mosaik")
+    # logger.disable("mosaik_api_v3")
 
     world.run(
         until=meta_params["end"], print_progress=not meta_params["silent"]
@@ -433,3 +445,7 @@ def create_actuators(actuator_defs: list) -> list[Actuator]:
             raise
         actuator_map[uid] = copy(actuators[-1])
     return actuators, actuator_map
+
+
+def log_(env):
+    return f"MosaikEnvironment (id={id(env)}, uid={env.uid})"
