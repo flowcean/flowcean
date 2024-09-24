@@ -2,7 +2,6 @@ import logging
 from typing import Any, override
 
 import polars as pl
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
 from flowcean.core.learner import SupervisedLearner
@@ -18,7 +17,7 @@ class RegressionTree(SupervisedLearner):
     Reference: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html
     """
 
-    regressor: RandomForestRegressor
+    regressor: DecisionTreeRegressor
 
     def __init__(
         self,
@@ -26,7 +25,7 @@ class RegressionTree(SupervisedLearner):
         dot_graph_export_path: None | str = None,
         **kwargs: Any,
     ) -> None:
-        self.regressor = RandomForestRegressor(*args, **kwargs)
+        self.regressor = DecisionTreeRegressor(*args, **kwargs)
         self.dot_graph_export_path = dot_graph_export_path
 
     @override
