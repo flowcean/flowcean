@@ -18,7 +18,7 @@ from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms.sliding_window import SlidingWindow
+from flowcean.transforms._sliding_window import SlidingWindow
 
 logger = logging.getLogger(__name__)
 

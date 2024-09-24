@@ -7,9 +7,9 @@ from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms.flatten import Flatten
-from flowcean.transforms.resample import Resample
-from flowcean.transforms.select import Select
+from flowcean.transforms._flatten import Flatten
+from flowcean.transforms._resample import Resample
+from flowcean.transforms._select import Select
 
 logger = logging.getLogger(__name__)
 

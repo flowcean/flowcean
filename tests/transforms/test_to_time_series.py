@@ -4,7 +4,7 @@ import polars as pl
 from polars.testing import assert_frame_equal
 
 from flowcean.environments.dataset import Dataset
-from flowcean.transforms.to_time_series import ToTimeSeries
+from flowcean.transforms._to_time_series import ToTimeSeries
 
 
 class TestToTimeSeries(unittest.TestCase):
