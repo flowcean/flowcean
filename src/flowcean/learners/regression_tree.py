@@ -22,9 +22,13 @@ class RegressionTree(SupervisedLearner):
         self,
         *args: Any,
         dot_graph_export_path: None | str = None,
+        seed: int | None = None,
         **kwargs: Any,
     ) -> None:
-        self.regressor = DecisionTreeRegressor(*args, **kwargs)
+        super().__init__(seed)
+        self.regressor = DecisionTreeRegressor(
+            *args, **kwargs, random_state=self.seed
+        )
         self.dot_graph_export_path = dot_graph_export_path
 
     @override

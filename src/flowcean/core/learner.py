@@ -37,6 +37,15 @@ class SupervisedLearner(ABC):
     """
 
     @abstractmethod
+    def __init__(self, seed: int | None) -> None:
+        """Initialize the learner with a seed.
+
+        Args:
+            seed: The seed to initialize the learner with.
+        """
+        self.seed = seed
+
+    @abstractmethod
     def learn(
         self,
         inputs: pl.DataFrame,

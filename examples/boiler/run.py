@@ -100,6 +100,7 @@ def randomly_changing_values(
 
 def main() -> None:
     initialize_logging()
+    random.seed(0)
 
     target_temperatures = (
         (0.1 * i, temperature)
@@ -125,7 +126,7 @@ def main() -> None:
     ).load()
 
     data = environment.collect(10_000)
-    train, test = TrainTestSplit(ratio=0.8).split(data)
+    train, test = TrainTestSplit(ratio=0.8, seed=1).split(data)
 
     train = train.with_transform(
         SlidingWindow(window_size=10),
@@ -134,7 +135,7 @@ def main() -> None:
         SlidingWindow(window_size=10),
     )
 
-    learner = RegressionTree(max_depth=5)
+    learner = RegressionTree(max_depth=5, seed=1)
 
     inputs = [f"temperature_{i}" for i in range(10)] + [
         f"target_{i}" for i in range(9)

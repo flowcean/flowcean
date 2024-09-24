@@ -16,6 +16,15 @@ class OfflineEnvironment(Environment):
     """
 
     @abstractmethod
+    def __init__(self, seed: int | None) -> None:
+        """Initialize the environment with a seed.
+
+        Args:
+            seed: The seed to initialize the environment with.
+        """
+        super().__init__(seed)
+
+    @abstractmethod
     def get_data(self) -> pl.DataFrame:
         """Get data from the environment.
 

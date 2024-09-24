@@ -17,6 +17,15 @@ class Environment(ABC):
     """
 
     @abstractmethod
+    def __init__(self, seed: int | None) -> None:
+        """Initialize the environment with a seed.
+
+        Args:
+            seed: The seed to initialize the environment with.
+        """
+        self.seed = seed
+
+    @abstractmethod
     def load(self) -> Self:
         """Load the environment.
 
