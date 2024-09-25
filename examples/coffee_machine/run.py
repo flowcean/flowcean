@@ -2,7 +2,7 @@ import flowcean.cli
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
 from flowcean.learners.grpc.learner import GrpcLearner
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 
 
@@ -10,7 +10,6 @@ def main() -> None:
     flowcean.cli.initialize_logging()
 
     data = UriDataLoader(uri="file:./data/coffee_data.csv")
-    data.load()
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
     learner = GrpcLearner.run_docker(

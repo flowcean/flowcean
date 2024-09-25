@@ -16,7 +16,7 @@ from flowcean.environments.ode_environment import (
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms._sliding_window import SlidingWindow
 
@@ -106,12 +106,11 @@ def main() -> None:
                 "h": [x.water_level for x in xs],
             },
         ),
-    ).load()
+    )
 
     data = data_incremental.collect(250).with_transform(
         SlidingWindow(window_size=3),
     )
-    data = data.load()
 
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 

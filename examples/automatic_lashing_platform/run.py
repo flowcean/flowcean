@@ -5,7 +5,7 @@ import flowcean.cli
 from flowcean.environments.parquet import ParquetDataLoader
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms._flatten import Flatten
 from flowcean.transforms._resample import Resample
