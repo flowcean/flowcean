@@ -289,51 +289,51 @@ public final class LearnerOuterClass {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
         getInputsList();
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataRow getInputs(int index);
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getInputs(int index);
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
     int getInputsCount();
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
         getInputsOrBuilderList();
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getInputsOrBuilder(
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getInputsOrBuilder(
         int index);
 
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
         getOutputsList();
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataRow getOutputs(int index);
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getOutputs(int index);
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
     int getOutputsCount();
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
         getOutputsOrBuilderList();
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getOutputsOrBuilder(
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getOutputsOrBuilder(
         int index);
   }
   /**
@@ -360,6 +360,73 @@ public final class LearnerOuterClass {
       return new DataPackage();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private DataPackage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                inputs_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              inputs_.add(
+                  input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.parser(), extensionRegistry));
+              break;
+            }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000002) != 0)) {
+                outputs_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              outputs_.add(
+                  input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.parser(), extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          inputs_ = java.util.Collections.unmodifiableList(inputs_);
+        }
+        if (((mutable_bitField0_ & 0x00000002) != 0)) {
+          outputs_ = java.util.Collections.unmodifiableList(outputs_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataPackage_descriptor;
@@ -374,83 +441,81 @@ public final class LearnerOuterClass {
     }
 
     public static final int INPUTS_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> inputs_;
+    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> inputs_;
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> getInputsList() {
+    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> getInputsList() {
       return inputs_;
     }
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
         getInputsOrBuilderList() {
       return inputs_;
     }
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
     public int getInputsCount() {
       return inputs_.size();
     }
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getInputs(int index) {
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getInputs(int index) {
       return inputs_.get(index);
     }
     /**
-     * <code>repeated .DataRow inputs = 1;</code>
+     * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getInputsOrBuilder(
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getInputsOrBuilder(
         int index) {
       return inputs_.get(index);
     }
 
     public static final int OUTPUTS_FIELD_NUMBER = 2;
-    @SuppressWarnings("serial")
-    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> outputs_;
+    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> outputs_;
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
-    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> getOutputsList() {
+    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> getOutputsList() {
       return outputs_;
     }
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
         getOutputsOrBuilderList() {
       return outputs_;
     }
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
     public int getOutputsCount() {
       return outputs_.size();
     }
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getOutputs(int index) {
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getOutputs(int index) {
       return outputs_.get(index);
     }
     /**
-     * <code>repeated .DataRow outputs = 2;</code>
+     * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getOutputsOrBuilder(
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getOutputsOrBuilder(
         int index) {
       return outputs_.get(index);
     }
@@ -475,7 +540,7 @@ public final class LearnerOuterClass {
       for (int i = 0; i < outputs_.size(); i++) {
         output.writeMessage(2, outputs_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -492,7 +557,7 @@ public final class LearnerOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, outputs_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -511,7 +576,7 @@ public final class LearnerOuterClass {
           .equals(other.getInputsList())) return false;
       if (!getOutputsList()
           .equals(other.getOutputsList())) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -530,7 +595,7 @@ public final class LearnerOuterClass {
         hash = (37 * hash) + OUTPUTS_FIELD_NUMBER;
         hash = (53 * hash) + getOutputsList().hashCode();
       }
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
@@ -579,13 +644,11 @@ public final class LearnerOuterClass {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.DataPackage parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.DataPackage parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -649,32 +712,36 @@ public final class LearnerOuterClass {
 
       // Construct using io.flowcean.learner.grpc.LearnerOuterClass.DataPackage.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getInputsFieldBuilder();
+          getOutputsFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        bitField0_ = 0;
         if (inputsBuilder_ == null) {
           inputs_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          inputs_ = null;
           inputsBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000001);
         if (outputsBuilder_ == null) {
           outputs_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
         } else {
-          outputs_ = null;
           outputsBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -701,13 +768,7 @@ public final class LearnerOuterClass {
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.DataPackage buildPartial() {
         io.flowcean.learner.grpc.LearnerOuterClass.DataPackage result = new io.flowcean.learner.grpc.LearnerOuterClass.DataPackage(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.DataPackage result) {
+        int from_bitField0_ = bitField0_;
         if (inputsBuilder_ == null) {
           if (((bitField0_ & 0x00000001) != 0)) {
             inputs_ = java.util.Collections.unmodifiableList(inputs_);
@@ -726,10 +787,8 @@ public final class LearnerOuterClass {
         } else {
           result.outputs_ = outputsBuilder_.build();
         }
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.DataPackage result) {
-        int from_bitField0_ = bitField0_;
+        onBuilt();
+        return result;
       }
 
       @java.lang.Override
@@ -828,7 +887,7 @@ public final class LearnerOuterClass {
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -843,76 +902,37 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.DataPackage parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 10: {
-                io.flowcean.learner.grpc.LearnerOuterClass.DataRow m =
-                    input.readMessage(
-                        io.flowcean.learner.grpc.LearnerOuterClass.DataRow.parser(),
-                        extensionRegistry);
-                if (inputsBuilder_ == null) {
-                  ensureInputsIsMutable();
-                  inputs_.add(m);
-                } else {
-                  inputsBuilder_.addMessage(m);
-                }
-                break;
-              } // case 10
-              case 18: {
-                io.flowcean.learner.grpc.LearnerOuterClass.DataRow m =
-                    input.readMessage(
-                        io.flowcean.learner.grpc.LearnerOuterClass.DataRow.parser(),
-                        extensionRegistry);
-                if (outputsBuilder_ == null) {
-                  ensureOutputsIsMutable();
-                  outputs_.add(m);
-                } else {
-                  outputsBuilder_.addMessage(m);
-                }
-                break;
-              } // case 18
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.DataPackage) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
       private int bitField0_;
 
-      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> inputs_ =
+      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> inputs_ =
         java.util.Collections.emptyList();
       private void ensureInputsIsMutable() {
         if (!((bitField0_ & 0x00000001) != 0)) {
-          inputs_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.DataRow>(inputs_);
+          inputs_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>(inputs_);
           bitField0_ |= 0x00000001;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> inputsBuilder_;
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> inputsBuilder_;
 
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> getInputsList() {
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> getInputsList() {
         if (inputsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(inputs_);
         } else {
@@ -920,7 +940,7 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public int getInputsCount() {
         if (inputsBuilder_ == null) {
@@ -930,9 +950,9 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getInputs(int index) {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getInputs(int index) {
         if (inputsBuilder_ == null) {
           return inputs_.get(index);
         } else {
@@ -940,10 +960,10 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder setInputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (inputsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -957,10 +977,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder setInputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (inputsBuilder_ == null) {
           ensureInputsIsMutable();
           inputs_.set(index, builderForValue.build());
@@ -971,9 +991,9 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public Builder addInputs(io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+      public Builder addInputs(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (inputsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -987,10 +1007,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder addInputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (inputsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1004,10 +1024,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder addInputs(
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (inputsBuilder_ == null) {
           ensureInputsIsMutable();
           inputs_.add(builderForValue.build());
@@ -1018,10 +1038,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder addInputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (inputsBuilder_ == null) {
           ensureInputsIsMutable();
           inputs_.add(index, builderForValue.build());
@@ -1032,10 +1052,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder addAllInputs(
-          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRow> values) {
+          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> values) {
         if (inputsBuilder_ == null) {
           ensureInputsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -1047,7 +1067,7 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder clearInputs() {
         if (inputsBuilder_ == null) {
@@ -1060,7 +1080,7 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
       public Builder removeInputs(int index) {
         if (inputsBuilder_ == null) {
@@ -1073,16 +1093,16 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder getInputsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder getInputsBuilder(
           int index) {
         return getInputsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getInputsOrBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getInputsOrBuilder(
           int index) {
         if (inputsBuilder_ == null) {
           return inputs_.get(index);  } else {
@@ -1090,9 +1110,9 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
            getInputsOrBuilderList() {
         if (inputsBuilder_ != null) {
           return inputsBuilder_.getMessageOrBuilderList();
@@ -1101,33 +1121,33 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder addInputsBuilder() {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder addInputsBuilder() {
         return getInputsFieldBuilder().addBuilder(
-            io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance());
+            io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder addInputsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder addInputsBuilder(
           int index) {
         return getInputsFieldBuilder().addBuilder(
-            index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance());
+            index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataRow inputs = 1;</code>
+       * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
            getInputsBuilderList() {
         return getInputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
           getInputsFieldBuilder() {
         if (inputsBuilder_ == null) {
           inputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>(
+              io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>(
                   inputs_,
                   ((bitField0_ & 0x00000001) != 0),
                   getParentForChildren(),
@@ -1137,22 +1157,22 @@ public final class LearnerOuterClass {
         return inputsBuilder_;
       }
 
-      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> outputs_ =
+      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> outputs_ =
         java.util.Collections.emptyList();
       private void ensureOutputsIsMutable() {
         if (!((bitField0_ & 0x00000002) != 0)) {
-          outputs_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.DataRow>(outputs_);
+          outputs_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>(outputs_);
           bitField0_ |= 0x00000002;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> outputsBuilder_;
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> outputsBuilder_;
 
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> getOutputsList() {
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> getOutputsList() {
         if (outputsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(outputs_);
         } else {
@@ -1160,7 +1180,7 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public int getOutputsCount() {
         if (outputsBuilder_ == null) {
@@ -1170,9 +1190,9 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getOutputs(int index) {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getOutputs(int index) {
         if (outputsBuilder_ == null) {
           return outputs_.get(index);
         } else {
@@ -1180,10 +1200,10 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder setOutputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (outputsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1197,10 +1217,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder setOutputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (outputsBuilder_ == null) {
           ensureOutputsIsMutable();
           outputs_.set(index, builderForValue.build());
@@ -1211,9 +1231,9 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public Builder addOutputs(io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+      public Builder addOutputs(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (outputsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1227,10 +1247,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder addOutputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (outputsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -1244,10 +1264,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder addOutputs(
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (outputsBuilder_ == null) {
           ensureOutputsIsMutable();
           outputs_.add(builderForValue.build());
@@ -1258,10 +1278,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder addOutputs(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (outputsBuilder_ == null) {
           ensureOutputsIsMutable();
           outputs_.add(index, builderForValue.build());
@@ -1272,10 +1292,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder addAllOutputs(
-          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRow> values) {
+          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> values) {
         if (outputsBuilder_ == null) {
           ensureOutputsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -1287,7 +1307,7 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder clearOutputs() {
         if (outputsBuilder_ == null) {
@@ -1300,7 +1320,7 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
       public Builder removeOutputs(int index) {
         if (outputsBuilder_ == null) {
@@ -1313,16 +1333,16 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder getOutputsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder getOutputsBuilder(
           int index) {
         return getOutputsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getOutputsOrBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getOutputsOrBuilder(
           int index) {
         if (outputsBuilder_ == null) {
           return outputs_.get(index);  } else {
@@ -1330,9 +1350,9 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
            getOutputsOrBuilderList() {
         if (outputsBuilder_ != null) {
           return outputsBuilder_.getMessageOrBuilderList();
@@ -1341,33 +1361,33 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder addOutputsBuilder() {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder addOutputsBuilder() {
         return getOutputsFieldBuilder().addBuilder(
-            io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance());
+            io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder addOutputsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder addOutputsBuilder(
           int index) {
         return getOutputsFieldBuilder().addBuilder(
-            index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance());
+            index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataRow outputs = 2;</code>
+       * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
            getOutputsBuilderList() {
         return getOutputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
           getOutputsFieldBuilder() {
         if (outputsBuilder_ == null) {
           outputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>(
+              io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>(
                   outputs_,
                   ((bitField0_ & 0x00000002) != 0),
                   getParentForChildren(),
@@ -1409,18 +1429,7 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new DataPackage(input, extensionRegistry);
       }
     };
 
@@ -1445,27 +1454,27 @@ public final class LearnerOuterClass {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
         getPredictionsList();
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataRow getPredictions(int index);
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getPredictions(int index);
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
     int getPredictionsCount();
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
         getPredictionsOrBuilderList();
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getPredictionsOrBuilder(
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getPredictionsOrBuilder(
         int index);
 
     /**
@@ -1506,6 +1515,74 @@ public final class LearnerOuterClass {
       return new Prediction();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Prediction(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                predictions_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              predictions_.add(
+                  input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.parser(), extensionRegistry));
+              break;
+            }
+            case 18: {
+              io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder subBuilder = null;
+              if (status_ != null) {
+                subBuilder = status_.toBuilder();
+              }
+              status_ = input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(status_);
+                status_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          predictions_ = java.util.Collections.unmodifiableList(predictions_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_Prediction_descriptor;
@@ -1520,42 +1597,41 @@ public final class LearnerOuterClass {
     }
 
     public static final int PREDICTIONS_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> predictions_;
+    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> predictions_;
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> getPredictionsList() {
+    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> getPredictionsList() {
       return predictions_;
     }
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
         getPredictionsOrBuilderList() {
       return predictions_;
     }
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
     public int getPredictionsCount() {
       return predictions_.size();
     }
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getPredictions(int index) {
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getPredictions(int index) {
       return predictions_.get(index);
     }
     /**
-     * <code>repeated .DataRow predictions = 1;</code>
+     * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getPredictionsOrBuilder(
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getPredictionsOrBuilder(
         int index) {
       return predictions_.get(index);
     }
@@ -1583,7 +1659,7 @@ public final class LearnerOuterClass {
      */
     @java.lang.Override
     public io.flowcean.learner.grpc.LearnerOuterClass.StatusMessageOrBuilder getStatusOrBuilder() {
-      return status_ == null ? io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.getDefaultInstance() : status_;
+      return getStatus();
     }
 
     private byte memoizedIsInitialized = -1;
@@ -1606,7 +1682,7 @@ public final class LearnerOuterClass {
       if (status_ != null) {
         output.writeMessage(2, getStatus());
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -1623,7 +1699,7 @@ public final class LearnerOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, getStatus());
       }
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -1645,7 +1721,7 @@ public final class LearnerOuterClass {
         if (!getStatus()
             .equals(other.getStatus())) return false;
       }
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -1664,7 +1740,7 @@ public final class LearnerOuterClass {
         hash = (37 * hash) + STATUS_FIELD_NUMBER;
         hash = (53 * hash) + getStatus().hashCode();
       }
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
@@ -1713,13 +1789,11 @@ public final class LearnerOuterClass {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.Prediction parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.Prediction parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1783,28 +1857,33 @@ public final class LearnerOuterClass {
 
       // Construct using io.flowcean.learner.grpc.LearnerOuterClass.Prediction.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getPredictionsFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        bitField0_ = 0;
         if (predictionsBuilder_ == null) {
           predictions_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          predictions_ = null;
           predictionsBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        status_ = null;
-        if (statusBuilder_ != null) {
-          statusBuilder_.dispose();
+        if (statusBuilder_ == null) {
+          status_ = null;
+        } else {
+          status_ = null;
           statusBuilder_ = null;
         }
         return this;
@@ -1833,13 +1912,7 @@ public final class LearnerOuterClass {
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.Prediction buildPartial() {
         io.flowcean.learner.grpc.LearnerOuterClass.Prediction result = new io.flowcean.learner.grpc.LearnerOuterClass.Prediction(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.Prediction result) {
+        int from_bitField0_ = bitField0_;
         if (predictionsBuilder_ == null) {
           if (((bitField0_ & 0x00000001) != 0)) {
             predictions_ = java.util.Collections.unmodifiableList(predictions_);
@@ -1849,15 +1922,13 @@ public final class LearnerOuterClass {
         } else {
           result.predictions_ = predictionsBuilder_.build();
         }
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.Prediction result) {
-        int from_bitField0_ = bitField0_;
-        if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.status_ = statusBuilder_ == null
-              ? status_
-              : statusBuilder_.build();
+        if (statusBuilder_ == null) {
+          result.status_ = status_;
+        } else {
+          result.status_ = statusBuilder_.build();
         }
+        onBuilt();
+        return result;
       }
 
       @java.lang.Override
@@ -1933,7 +2004,7 @@ public final class LearnerOuterClass {
         if (other.hasStatus()) {
           mergeStatus(other.getStatus());
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -1948,70 +2019,37 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.Prediction parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 10: {
-                io.flowcean.learner.grpc.LearnerOuterClass.DataRow m =
-                    input.readMessage(
-                        io.flowcean.learner.grpc.LearnerOuterClass.DataRow.parser(),
-                        extensionRegistry);
-                if (predictionsBuilder_ == null) {
-                  ensurePredictionsIsMutable();
-                  predictions_.add(m);
-                } else {
-                  predictionsBuilder_.addMessage(m);
-                }
-                break;
-              } // case 10
-              case 18: {
-                input.readMessage(
-                    getStatusFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                bitField0_ |= 0x00000002;
-                break;
-              } // case 18
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.Prediction) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
       private int bitField0_;
 
-      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> predictions_ =
+      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> predictions_ =
         java.util.Collections.emptyList();
       private void ensurePredictionsIsMutable() {
         if (!((bitField0_ & 0x00000001) != 0)) {
-          predictions_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.DataRow>(predictions_);
+          predictions_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>(predictions_);
           bitField0_ |= 0x00000001;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> predictionsBuilder_;
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> predictionsBuilder_;
 
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow> getPredictionsList() {
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> getPredictionsList() {
         if (predictionsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(predictions_);
         } else {
@@ -2019,7 +2057,7 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public int getPredictionsCount() {
         if (predictionsBuilder_ == null) {
@@ -2029,9 +2067,9 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getPredictions(int index) {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getPredictions(int index) {
         if (predictionsBuilder_ == null) {
           return predictions_.get(index);
         } else {
@@ -2039,10 +2077,10 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder setPredictions(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (predictionsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -2056,10 +2094,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder setPredictions(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (predictionsBuilder_ == null) {
           ensurePredictionsIsMutable();
           predictions_.set(index, builderForValue.build());
@@ -2070,9 +2108,9 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public Builder addPredictions(io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+      public Builder addPredictions(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (predictionsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -2086,10 +2124,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder addPredictions(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow value) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries value) {
         if (predictionsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -2103,10 +2141,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder addPredictions(
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (predictionsBuilder_ == null) {
           ensurePredictionsIsMutable();
           predictions_.add(builderForValue.build());
@@ -2117,10 +2155,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder addPredictions(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder builderForValue) {
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder builderForValue) {
         if (predictionsBuilder_ == null) {
           ensurePredictionsIsMutable();
           predictions_.add(index, builderForValue.build());
@@ -2131,10 +2169,10 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder addAllPredictions(
-          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRow> values) {
+          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> values) {
         if (predictionsBuilder_ == null) {
           ensurePredictionsIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -2146,7 +2184,7 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder clearPredictions() {
         if (predictionsBuilder_ == null) {
@@ -2159,7 +2197,7 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
       public Builder removePredictions(int index) {
         if (predictionsBuilder_ == null) {
@@ -2172,16 +2210,16 @@ public final class LearnerOuterClass {
         return this;
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder getPredictionsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder getPredictionsBuilder(
           int index) {
         return getPredictionsFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder getPredictionsOrBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder getPredictionsOrBuilder(
           int index) {
         if (predictionsBuilder_ == null) {
           return predictions_.get(index);  } else {
@@ -2189,9 +2227,9 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
            getPredictionsOrBuilderList() {
         if (predictionsBuilder_ != null) {
           return predictionsBuilder_.getMessageOrBuilderList();
@@ -2200,33 +2238,33 @@ public final class LearnerOuterClass {
         }
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder addPredictionsBuilder() {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder addPredictionsBuilder() {
         return getPredictionsFieldBuilder().addBuilder(
-            io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance());
+            io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder addPredictionsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder addPredictionsBuilder(
           int index) {
         return getPredictionsFieldBuilder().addBuilder(
-            index, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance());
+            index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataRow predictions = 1;</code>
+       * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
            getPredictionsBuilderList() {
         return getPredictionsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
           getPredictionsFieldBuilder() {
         if (predictionsBuilder_ == null) {
           predictionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>(
+              io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>(
                   predictions_,
                   ((bitField0_ & 0x00000001) != 0),
                   getParentForChildren(),
@@ -2244,7 +2282,7 @@ public final class LearnerOuterClass {
        * @return Whether the status field is set.
        */
       public boolean hasStatus() {
-        return ((bitField0_ & 0x00000002) != 0);
+        return statusBuilder_ != null || status_ != null;
       }
       /**
        * <code>.StatusMessage status = 2;</code>
@@ -2266,11 +2304,11 @@ public final class LearnerOuterClass {
             throw new NullPointerException();
           }
           status_ = value;
+          onChanged();
         } else {
           statusBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000002;
-        onChanged();
+
         return this;
       }
       /**
@@ -2280,11 +2318,11 @@ public final class LearnerOuterClass {
           io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder builderForValue) {
         if (statusBuilder_ == null) {
           status_ = builderForValue.build();
+          onChanged();
         } else {
           statusBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000002;
-        onChanged();
+
         return this;
       }
       /**
@@ -2292,38 +2330,38 @@ public final class LearnerOuterClass {
        */
       public Builder mergeStatus(io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage value) {
         if (statusBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) != 0) &&
-            status_ != null &&
-            status_ != io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.getDefaultInstance()) {
-            getStatusBuilder().mergeFrom(value);
+          if (status_ != null) {
+            status_ =
+              io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.newBuilder(status_).mergeFrom(value).buildPartial();
           } else {
             status_ = value;
           }
+          onChanged();
         } else {
           statusBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000002;
-        onChanged();
+
         return this;
       }
       /**
        * <code>.StatusMessage status = 2;</code>
        */
       public Builder clearStatus() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        status_ = null;
-        if (statusBuilder_ != null) {
-          statusBuilder_.dispose();
+        if (statusBuilder_ == null) {
+          status_ = null;
+          onChanged();
+        } else {
+          status_ = null;
           statusBuilder_ = null;
         }
-        onChanged();
+
         return this;
       }
       /**
        * <code>.StatusMessage status = 2;</code>
        */
       public io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder getStatusBuilder() {
-        bitField0_ |= 0x00000002;
+        
         onChanged();
         return getStatusFieldBuilder().getBuilder();
       }
@@ -2387,18 +2425,7 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new Prediction(input, extensionRegistry);
       }
     };
 
@@ -2418,109 +2445,163 @@ public final class LearnerOuterClass {
 
   }
 
-  public interface DataRowOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:DataRow)
+  public interface TimeSeriesOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:TimeSeries)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField> 
-        getFieldsList();
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> 
+        getSamplesList();
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataField getFields(int index);
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSample getSamples(int index);
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
-    int getFieldsCount();
+    int getSamplesCount();
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
-        getFieldsOrBuilderList();
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+        getSamplesOrBuilderList();
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder getFieldsOrBuilder(
+    io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder getSamplesOrBuilder(
         int index);
   }
   /**
-   * Protobuf type {@code DataRow}
+   * Protobuf type {@code TimeSeries}
    */
-  public static final class DataRow extends
+  public static final class TimeSeries extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:DataRow)
-      DataRowOrBuilder {
+      // @@protoc_insertion_point(message_implements:TimeSeries)
+      TimeSeriesOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use DataRow.newBuilder() to construct.
-    private DataRow(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use TimeSeries.newBuilder() to construct.
+    private TimeSeries(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private DataRow() {
-      fields_ = java.util.Collections.emptyList();
+    private TimeSeries() {
+      samples_ = java.util.Collections.emptyList();
     }
 
     @java.lang.Override
     @SuppressWarnings({"unused"})
     protected java.lang.Object newInstance(
         UnusedPrivateParameter unused) {
-      return new DataRow();
+      return new TimeSeries();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TimeSeries(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                samples_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              samples_.add(
+                  input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.parser(), extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          samples_ = java.util.Collections.unmodifiableList(samples_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataRow_descriptor;
+      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSeries_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataRow_fieldAccessorTable
+      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSeries_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              io.flowcean.learner.grpc.LearnerOuterClass.DataRow.class, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder.class);
+              io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.class, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder.class);
     }
 
-    public static final int FIELDS_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField> fields_;
+    public static final int SAMPLES_FIELD_NUMBER = 1;
+    private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> samples_;
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField> getFieldsList() {
-      return fields_;
+    public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> getSamplesList() {
+      return samples_;
     }
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
-        getFieldsOrBuilderList() {
-      return fields_;
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+        getSamplesOrBuilderList() {
+      return samples_;
     }
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-    public int getFieldsCount() {
-      return fields_.size();
+    public int getSamplesCount() {
+      return samples_.size();
     }
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataField getFields(int index) {
-      return fields_.get(index);
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample getSamples(int index) {
+      return samples_.get(index);
     }
     /**
-     * <code>repeated .DataField fields = 1;</code>
+     * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder getFieldsOrBuilder(
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder getSamplesOrBuilder(
         int index) {
-      return fields_.get(index);
+      return samples_.get(index);
     }
 
     private byte memoizedIsInitialized = -1;
@@ -2537,10 +2618,10 @@ public final class LearnerOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      for (int i = 0; i < fields_.size(); i++) {
-        output.writeMessage(1, fields_.get(i));
+      for (int i = 0; i < samples_.size(); i++) {
+        output.writeMessage(1, samples_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -2549,11 +2630,11 @@ public final class LearnerOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      for (int i = 0; i < fields_.size(); i++) {
+      for (int i = 0; i < samples_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, fields_.get(i));
+          .computeMessageSize(1, samples_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -2563,14 +2644,14 @@ public final class LearnerOuterClass {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.DataRow)) {
+      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries)) {
         return super.equals(obj);
       }
-      io.flowcean.learner.grpc.LearnerOuterClass.DataRow other = (io.flowcean.learner.grpc.LearnerOuterClass.DataRow) obj;
+      io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries other = (io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries) obj;
 
-      if (!getFieldsList()
-          .equals(other.getFieldsList())) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!getSamplesList()
+          .equals(other.getSamplesList())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -2581,80 +2662,78 @@ public final class LearnerOuterClass {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      if (getFieldsCount() > 0) {
-        hash = (37 * hash) + FIELDS_FIELD_NUMBER;
-        hash = (53 * hash) + getFieldsList().hashCode();
+      if (getSamplesCount() > 0) {
+        hash = (37 * hash) + SAMPLES_FIELD_NUMBER;
+        hash = (53 * hash) + getSamplesList().hashCode();
       }
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
 
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(byte[] data)
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(java.io.InputStream input)
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseDelimitedFrom(java.io.InputStream input)
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseDelimitedFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow parseFrom(
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2667,7 +2746,7 @@ public final class LearnerOuterClass {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.DataRow prototype) {
+    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -2683,63 +2762,67 @@ public final class LearnerOuterClass {
       return builder;
     }
     /**
-     * Protobuf type {@code DataRow}
+     * Protobuf type {@code TimeSeries}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:DataRow)
-        io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder {
+        // @@protoc_insertion_point(builder_implements:TimeSeries)
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataRow_descriptor;
+        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSeries_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataRow_fieldAccessorTable
+        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSeries_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                io.flowcean.learner.grpc.LearnerOuterClass.DataRow.class, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder.class);
+                io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.class, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder.class);
       }
 
-      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.DataRow.newBuilder()
+      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getSamplesFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        bitField0_ = 0;
-        if (fieldsBuilder_ == null) {
-          fields_ = java.util.Collections.emptyList();
+        if (samplesBuilder_ == null) {
+          samples_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          fields_ = null;
-          fieldsBuilder_.clear();
+          samplesBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataRow_descriptor;
+        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSeries_descriptor;
       }
 
       @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getDefaultInstanceForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance();
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getDefaultInstanceForType() {
+        return io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance();
       }
 
       @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow build() {
-        io.flowcean.learner.grpc.LearnerOuterClass.DataRow result = buildPartial();
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries build() {
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -2747,28 +2830,20 @@ public final class LearnerOuterClass {
       }
 
       @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataRow buildPartial() {
-        io.flowcean.learner.grpc.LearnerOuterClass.DataRow result = new io.flowcean.learner.grpc.LearnerOuterClass.DataRow(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.DataRow result) {
-        if (fieldsBuilder_ == null) {
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries buildPartial() {
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries result = new io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries(this);
+        int from_bitField0_ = bitField0_;
+        if (samplesBuilder_ == null) {
           if (((bitField0_ & 0x00000001) != 0)) {
-            fields_ = java.util.Collections.unmodifiableList(fields_);
+            samples_ = java.util.Collections.unmodifiableList(samples_);
             bitField0_ = (bitField0_ & ~0x00000001);
           }
-          result.fields_ = fields_;
+          result.samples_ = samples_;
         } else {
-          result.fields_ = fieldsBuilder_.build();
+          result.samples_ = samplesBuilder_.build();
         }
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.DataRow result) {
-        int from_bitField0_ = bitField0_;
+        onBuilt();
+        return result;
       }
 
       @java.lang.Override
@@ -2805,43 +2880,43 @@ public final class LearnerOuterClass {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.DataRow) {
-          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.DataRow)other);
+        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries) {
+          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.DataRow other) {
-        if (other == io.flowcean.learner.grpc.LearnerOuterClass.DataRow.getDefaultInstance()) return this;
-        if (fieldsBuilder_ == null) {
-          if (!other.fields_.isEmpty()) {
-            if (fields_.isEmpty()) {
-              fields_ = other.fields_;
+      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries other) {
+        if (other == io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.getDefaultInstance()) return this;
+        if (samplesBuilder_ == null) {
+          if (!other.samples_.isEmpty()) {
+            if (samples_.isEmpty()) {
+              samples_ = other.samples_;
               bitField0_ = (bitField0_ & ~0x00000001);
             } else {
-              ensureFieldsIsMutable();
-              fields_.addAll(other.fields_);
+              ensureSamplesIsMutable();
+              samples_.addAll(other.samples_);
             }
             onChanged();
           }
         } else {
-          if (!other.fields_.isEmpty()) {
-            if (fieldsBuilder_.isEmpty()) {
-              fieldsBuilder_.dispose();
-              fieldsBuilder_ = null;
-              fields_ = other.fields_;
+          if (!other.samples_.isEmpty()) {
+            if (samplesBuilder_.isEmpty()) {
+              samplesBuilder_.dispose();
+              samplesBuilder_ = null;
+              samples_ = other.samples_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              fieldsBuilder_ = 
+              samplesBuilder_ = 
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getFieldsFieldBuilder() : null;
+                   getSamplesFieldBuilder() : null;
             } else {
-              fieldsBuilder_.addAllMessages(other.fields_);
+              samplesBuilder_.addAllMessages(other.samples_);
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -2856,285 +2931,259 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 10: {
-                io.flowcean.learner.grpc.LearnerOuterClass.DataField m =
-                    input.readMessage(
-                        io.flowcean.learner.grpc.LearnerOuterClass.DataField.parser(),
-                        extensionRegistry);
-                if (fieldsBuilder_ == null) {
-                  ensureFieldsIsMutable();
-                  fields_.add(m);
-                } else {
-                  fieldsBuilder_.addMessage(m);
-                }
-                break;
-              } // case 10
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
       private int bitField0_;
 
-      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField> fields_ =
+      private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> samples_ =
         java.util.Collections.emptyList();
-      private void ensureFieldsIsMutable() {
+      private void ensureSamplesIsMutable() {
         if (!((bitField0_ & 0x00000001) != 0)) {
-          fields_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.DataField>(fields_);
+          samples_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample>(samples_);
           bitField0_ |= 0x00000001;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> fieldsBuilder_;
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> samplesBuilder_;
 
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField> getFieldsList() {
-        if (fieldsBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(fields_);
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> getSamplesList() {
+        if (samplesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(samples_);
         } else {
-          return fieldsBuilder_.getMessageList();
+          return samplesBuilder_.getMessageList();
         }
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public int getFieldsCount() {
-        if (fieldsBuilder_ == null) {
-          return fields_.size();
+      public int getSamplesCount() {
+        if (samplesBuilder_ == null) {
+          return samples_.size();
         } else {
-          return fieldsBuilder_.getCount();
+          return samplesBuilder_.getCount();
         }
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataField getFields(int index) {
-        if (fieldsBuilder_ == null) {
-          return fields_.get(index);
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample getSamples(int index) {
+        if (samplesBuilder_ == null) {
+          return samples_.get(index);
         } else {
-          return fieldsBuilder_.getMessage(index);
+          return samplesBuilder_.getMessage(index);
         }
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder setFields(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataField value) {
-        if (fieldsBuilder_ == null) {
+      public Builder setSamples(
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample value) {
+        if (samplesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureFieldsIsMutable();
-          fields_.set(index, value);
+          ensureSamplesIsMutable();
+          samples_.set(index, value);
           onChanged();
         } else {
-          fieldsBuilder_.setMessage(index, value);
+          samplesBuilder_.setMessage(index, value);
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder setFields(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder builderForValue) {
-        if (fieldsBuilder_ == null) {
-          ensureFieldsIsMutable();
-          fields_.set(index, builderForValue.build());
+      public Builder setSamples(
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder builderForValue) {
+        if (samplesBuilder_ == null) {
+          ensureSamplesIsMutable();
+          samples_.set(index, builderForValue.build());
           onChanged();
         } else {
-          fieldsBuilder_.setMessage(index, builderForValue.build());
+          samplesBuilder_.setMessage(index, builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder addFields(io.flowcean.learner.grpc.LearnerOuterClass.DataField value) {
-        if (fieldsBuilder_ == null) {
+      public Builder addSamples(io.flowcean.learner.grpc.LearnerOuterClass.TimeSample value) {
+        if (samplesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureFieldsIsMutable();
-          fields_.add(value);
+          ensureSamplesIsMutable();
+          samples_.add(value);
           onChanged();
         } else {
-          fieldsBuilder_.addMessage(value);
+          samplesBuilder_.addMessage(value);
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder addFields(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataField value) {
-        if (fieldsBuilder_ == null) {
+      public Builder addSamples(
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample value) {
+        if (samplesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureFieldsIsMutable();
-          fields_.add(index, value);
+          ensureSamplesIsMutable();
+          samples_.add(index, value);
           onChanged();
         } else {
-          fieldsBuilder_.addMessage(index, value);
+          samplesBuilder_.addMessage(index, value);
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder addFields(
-          io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder builderForValue) {
-        if (fieldsBuilder_ == null) {
-          ensureFieldsIsMutable();
-          fields_.add(builderForValue.build());
+      public Builder addSamples(
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder builderForValue) {
+        if (samplesBuilder_ == null) {
+          ensureSamplesIsMutable();
+          samples_.add(builderForValue.build());
           onChanged();
         } else {
-          fieldsBuilder_.addMessage(builderForValue.build());
+          samplesBuilder_.addMessage(builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder addFields(
-          int index, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder builderForValue) {
-        if (fieldsBuilder_ == null) {
-          ensureFieldsIsMutable();
-          fields_.add(index, builderForValue.build());
+      public Builder addSamples(
+          int index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder builderForValue) {
+        if (samplesBuilder_ == null) {
+          ensureSamplesIsMutable();
+          samples_.add(index, builderForValue.build());
           onChanged();
         } else {
-          fieldsBuilder_.addMessage(index, builderForValue.build());
+          samplesBuilder_.addMessage(index, builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder addAllFields(
-          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataField> values) {
-        if (fieldsBuilder_ == null) {
-          ensureFieldsIsMutable();
+      public Builder addAllSamples(
+          java.lang.Iterable<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> values) {
+        if (samplesBuilder_ == null) {
+          ensureSamplesIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, fields_);
+              values, samples_);
           onChanged();
         } else {
-          fieldsBuilder_.addAllMessages(values);
+          samplesBuilder_.addAllMessages(values);
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder clearFields() {
-        if (fieldsBuilder_ == null) {
-          fields_ = java.util.Collections.emptyList();
+      public Builder clearSamples() {
+        if (samplesBuilder_ == null) {
+          samples_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
           onChanged();
         } else {
-          fieldsBuilder_.clear();
+          samplesBuilder_.clear();
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public Builder removeFields(int index) {
-        if (fieldsBuilder_ == null) {
-          ensureFieldsIsMutable();
-          fields_.remove(index);
+      public Builder removeSamples(int index) {
+        if (samplesBuilder_ == null) {
+          ensureSamplesIsMutable();
+          samples_.remove(index);
           onChanged();
         } else {
-          fieldsBuilder_.remove(index);
+          samplesBuilder_.remove(index);
         }
         return this;
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder getFieldsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder getSamplesBuilder(
           int index) {
-        return getFieldsFieldBuilder().getBuilder(index);
+        return getSamplesFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder getFieldsOrBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder getSamplesOrBuilder(
           int index) {
-        if (fieldsBuilder_ == null) {
-          return fields_.get(index);  } else {
-          return fieldsBuilder_.getMessageOrBuilder(index);
+        if (samplesBuilder_ == null) {
+          return samples_.get(index);  } else {
+          return samplesBuilder_.getMessageOrBuilder(index);
         }
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
-           getFieldsOrBuilderList() {
-        if (fieldsBuilder_ != null) {
-          return fieldsBuilder_.getMessageOrBuilderList();
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+           getSamplesOrBuilderList() {
+        if (samplesBuilder_ != null) {
+          return samplesBuilder_.getMessageOrBuilderList();
         } else {
-          return java.util.Collections.unmodifiableList(fields_);
+          return java.util.Collections.unmodifiableList(samples_);
         }
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder addFieldsBuilder() {
-        return getFieldsFieldBuilder().addBuilder(
-            io.flowcean.learner.grpc.LearnerOuterClass.DataField.getDefaultInstance());
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder addSamplesBuilder() {
+        return getSamplesFieldBuilder().addBuilder(
+            io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder addFieldsBuilder(
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder addSamplesBuilder(
           int index) {
-        return getFieldsFieldBuilder().addBuilder(
-            index, io.flowcean.learner.grpc.LearnerOuterClass.DataField.getDefaultInstance());
+        return getSamplesFieldBuilder().addBuilder(
+            index, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.getDefaultInstance());
       }
       /**
-       * <code>repeated .DataField fields = 1;</code>
+       * <code>repeated .TimeSample samples = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder> 
-           getFieldsBuilderList() {
-        return getFieldsFieldBuilder().getBuilderList();
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder> 
+           getSamplesBuilderList() {
+        return getSamplesFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
-          getFieldsFieldBuilder() {
-        if (fieldsBuilder_ == null) {
-          fieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>(
-                  fields_,
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+          getSamplesFieldBuilder() {
+        if (samplesBuilder_ == null) {
+          samplesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>(
+                  samples_,
                   ((bitField0_ & 0x00000001) != 0),
                   getParentForChildren(),
                   isClean());
-          fields_ = null;
+          samples_ = null;
         }
-        return fieldsBuilder_;
+        return samplesBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -3149,52 +3198,734 @@ public final class LearnerOuterClass {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:DataRow)
+      // @@protoc_insertion_point(builder_scope:TimeSeries)
     }
 
-    // @@protoc_insertion_point(class_scope:DataRow)
-    private static final io.flowcean.learner.grpc.LearnerOuterClass.DataRow DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:TimeSeries)
+    private static final io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.DataRow();
+      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries();
     }
 
-    public static io.flowcean.learner.grpc.LearnerOuterClass.DataRow getDefaultInstance() {
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<DataRow>
-        PARSER = new com.google.protobuf.AbstractParser<DataRow>() {
+    private static final com.google.protobuf.Parser<TimeSeries>
+        PARSER = new com.google.protobuf.AbstractParser<TimeSeries>() {
       @java.lang.Override
-      public DataRow parsePartialFrom(
+      public TimeSeries parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new TimeSeries(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<DataRow> parser() {
+    public static com.google.protobuf.Parser<TimeSeries> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<DataRow> getParserForType() {
+    public com.google.protobuf.Parser<TimeSeries> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.DataRow getDefaultInstanceForType() {
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TimeSampleOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:TimeSample)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>double time = 1;</code>
+     * @return The time.
+     */
+    double getTime();
+
+    /**
+     * <code>.DataField value = 2;</code>
+     * @return Whether the value field is set.
+     */
+    boolean hasValue();
+    /**
+     * <code>.DataField value = 2;</code>
+     * @return The value.
+     */
+    io.flowcean.learner.grpc.LearnerOuterClass.DataField getValue();
+    /**
+     * <code>.DataField value = 2;</code>
+     */
+    io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder getValueOrBuilder();
+  }
+  /**
+   * Protobuf type {@code TimeSample}
+   */
+  public static final class TimeSample extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:TimeSample)
+      TimeSampleOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TimeSample.newBuilder() to construct.
+    private TimeSample(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TimeSample() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new TimeSample();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TimeSample(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 9: {
+
+              time_ = input.readDouble();
+              break;
+            }
+            case 18: {
+              io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder subBuilder = null;
+              if (value_ != null) {
+                subBuilder = value_.toBuilder();
+              }
+              value_ = input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.DataField.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(value_);
+                value_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSample_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSample_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.class, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder.class);
+    }
+
+    public static final int TIME_FIELD_NUMBER = 1;
+    private double time_;
+    /**
+     * <code>double time = 1;</code>
+     * @return The time.
+     */
+    @java.lang.Override
+    public double getTime() {
+      return time_;
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 2;
+    private io.flowcean.learner.grpc.LearnerOuterClass.DataField value_;
+    /**
+     * <code>.DataField value = 2;</code>
+     * @return Whether the value field is set.
+     */
+    @java.lang.Override
+    public boolean hasValue() {
+      return value_ != null;
+    }
+    /**
+     * <code>.DataField value = 2;</code>
+     * @return The value.
+     */
+    @java.lang.Override
+    public io.flowcean.learner.grpc.LearnerOuterClass.DataField getValue() {
+      return value_ == null ? io.flowcean.learner.grpc.LearnerOuterClass.DataField.getDefaultInstance() : value_;
+    }
+    /**
+     * <code>.DataField value = 2;</code>
+     */
+    @java.lang.Override
+    public io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder getValueOrBuilder() {
+      return getValue();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (time_ != 0D) {
+        output.writeDouble(1, time_);
+      }
+      if (value_ != null) {
+        output.writeMessage(2, getValue());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (time_ != 0D) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeDoubleSize(1, time_);
+      }
+      if (value_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getValue());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.TimeSample)) {
+        return super.equals(obj);
+      }
+      io.flowcean.learner.grpc.LearnerOuterClass.TimeSample other = (io.flowcean.learner.grpc.LearnerOuterClass.TimeSample) obj;
+
+      if (java.lang.Double.doubleToLongBits(getTime())
+          != java.lang.Double.doubleToLongBits(
+              other.getTime())) return false;
+      if (hasValue() != other.hasValue()) return false;
+      if (hasValue()) {
+        if (!getValue()
+            .equals(other.getValue())) return false;
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TIME_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          java.lang.Double.doubleToLongBits(getTime()));
+      if (hasValue()) {
+        hash = (37 * hash) + VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getValue().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.TimeSample prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code TimeSample}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:TimeSample)
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSample_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSample_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.class, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder.class);
+      }
+
+      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        time_ = 0D;
+
+        if (valueBuilder_ == null) {
+          value_ = null;
+        } else {
+          value_ = null;
+          valueBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_TimeSample_descriptor;
+      }
+
+      @java.lang.Override
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample getDefaultInstanceForType() {
+        return io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample build() {
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSample result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample buildPartial() {
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSample result = new io.flowcean.learner.grpc.LearnerOuterClass.TimeSample(this);
+        result.time_ = time_;
+        if (valueBuilder_ == null) {
+          result.value_ = value_;
+        } else {
+          result.value_ = valueBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.TimeSample) {
+          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.TimeSample)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.TimeSample other) {
+        if (other == io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.getDefaultInstance()) return this;
+        if (other.getTime() != 0D) {
+          setTime(other.getTime());
+        }
+        if (other.hasValue()) {
+          mergeValue(other.getValue());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.flowcean.learner.grpc.LearnerOuterClass.TimeSample parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.TimeSample) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private double time_ ;
+      /**
+       * <code>double time = 1;</code>
+       * @return The time.
+       */
+      @java.lang.Override
+      public double getTime() {
+        return time_;
+      }
+      /**
+       * <code>double time = 1;</code>
+       * @param value The time to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTime(double value) {
+        
+        time_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>double time = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTime() {
+        
+        time_ = 0D;
+        onChanged();
+        return this;
+      }
+
+      private io.flowcean.learner.grpc.LearnerOuterClass.DataField value_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> valueBuilder_;
+      /**
+       * <code>.DataField value = 2;</code>
+       * @return Whether the value field is set.
+       */
+      public boolean hasValue() {
+        return valueBuilder_ != null || value_ != null;
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       * @return The value.
+       */
+      public io.flowcean.learner.grpc.LearnerOuterClass.DataField getValue() {
+        if (valueBuilder_ == null) {
+          return value_ == null ? io.flowcean.learner.grpc.LearnerOuterClass.DataField.getDefaultInstance() : value_;
+        } else {
+          return valueBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      public Builder setValue(io.flowcean.learner.grpc.LearnerOuterClass.DataField value) {
+        if (valueBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          value_ = value;
+          onChanged();
+        } else {
+          valueBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      public Builder setValue(
+          io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder builderForValue) {
+        if (valueBuilder_ == null) {
+          value_ = builderForValue.build();
+          onChanged();
+        } else {
+          valueBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      public Builder mergeValue(io.flowcean.learner.grpc.LearnerOuterClass.DataField value) {
+        if (valueBuilder_ == null) {
+          if (value_ != null) {
+            value_ =
+              io.flowcean.learner.grpc.LearnerOuterClass.DataField.newBuilder(value_).mergeFrom(value).buildPartial();
+          } else {
+            value_ = value;
+          }
+          onChanged();
+        } else {
+          valueBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      public Builder clearValue() {
+        if (valueBuilder_ == null) {
+          value_ = null;
+          onChanged();
+        } else {
+          value_ = null;
+          valueBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      public io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder getValueBuilder() {
+        
+        onChanged();
+        return getValueFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      public io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder getValueOrBuilder() {
+        if (valueBuilder_ != null) {
+          return valueBuilder_.getMessageOrBuilder();
+        } else {
+          return value_ == null ?
+              io.flowcean.learner.grpc.LearnerOuterClass.DataField.getDefaultInstance() : value_;
+        }
+      }
+      /**
+       * <code>.DataField value = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
+          getValueFieldBuilder() {
+        if (valueBuilder_ == null) {
+          valueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>(
+                  getValue(),
+                  getParentForChildren(),
+                  isClean());
+          value_ = null;
+        }
+        return valueBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:TimeSample)
+    }
+
+    // @@protoc_insertion_point(class_scope:TimeSample)
+    private static final io.flowcean.learner.grpc.LearnerOuterClass.TimeSample DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.TimeSample();
+    }
+
+    public static io.flowcean.learner.grpc.LearnerOuterClass.TimeSample getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TimeSample>
+        PARSER = new com.google.protobuf.AbstractParser<TimeSample>() {
+      @java.lang.Override
+      public TimeSample parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TimeSample(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TimeSample> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TimeSample> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.flowcean.learner.grpc.LearnerOuterClass.TimeSample getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -3206,20 +3937,10 @@ public final class LearnerOuterClass {
 
     /**
      * <code>int32 int = 1;</code>
-     * @return Whether the int field is set.
-     */
-    boolean hasInt();
-    /**
-     * <code>int32 int = 1;</code>
      * @return The int.
      */
     int getInt();
 
-    /**
-     * <code>double double = 2;</code>
-     * @return Whether the double field is set.
-     */
-    boolean hasDouble();
     /**
      * <code>double double = 2;</code>
      * @return The double.
@@ -3227,66 +3948,18 @@ public final class LearnerOuterClass {
     double getDouble();
 
     /**
-     * <code>.VectorInt vector_int = 3;</code>
-     * @return Whether the vectorInt field is set.
+     * <code>string string = 3;</code>
+     * @return The string.
      */
-    boolean hasVectorInt();
+    java.lang.String getString();
     /**
-     * <code>.VectorInt vector_int = 3;</code>
-     * @return The vectorInt.
+     * <code>string string = 3;</code>
+     * @return The bytes for string.
      */
-    io.flowcean.learner.grpc.LearnerOuterClass.VectorInt getVectorInt();
-    /**
-     * <code>.VectorInt vector_int = 3;</code>
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder getVectorIntOrBuilder();
+    com.google.protobuf.ByteString
+        getStringBytes();
 
-    /**
-     * <code>.VectorDouble vector_double = 4;</code>
-     * @return Whether the vectorDouble field is set.
-     */
-    boolean hasVectorDouble();
-    /**
-     * <code>.VectorDouble vector_double = 4;</code>
-     * @return The vectorDouble.
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble getVectorDouble();
-    /**
-     * <code>.VectorDouble vector_double = 4;</code>
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder getVectorDoubleOrBuilder();
-
-    /**
-     * <code>.MatrixInt matrix_int = 5;</code>
-     * @return Whether the matrixInt field is set.
-     */
-    boolean hasMatrixInt();
-    /**
-     * <code>.MatrixInt matrix_int = 5;</code>
-     * @return The matrixInt.
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt getMatrixInt();
-    /**
-     * <code>.MatrixInt matrix_int = 5;</code>
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder getMatrixIntOrBuilder();
-
-    /**
-     * <code>.MatrixDouble matrix_double = 6;</code>
-     * @return Whether the matrixDouble field is set.
-     */
-    boolean hasMatrixDouble();
-    /**
-     * <code>.MatrixDouble matrix_double = 6;</code>
-     * @return The matrixDouble.
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getMatrixDouble();
-    /**
-     * <code>.MatrixDouble matrix_double = 6;</code>
-     */
-    io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder getMatrixDoubleOrBuilder();
-
-    io.flowcean.learner.grpc.LearnerOuterClass.DataField.FieldCase getFieldCase();
+    public io.flowcean.learner.grpc.LearnerOuterClass.DataField.FieldCase getFieldCase();
   }
   /**
    * Protobuf type {@code DataField}
@@ -3310,6 +3983,64 @@ public final class LearnerOuterClass {
       return new DataField();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private DataField(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              fieldCase_ = 1;
+              field_ = input.readInt32();
+              break;
+            }
+            case 17: {
+              fieldCase_ = 2;
+              field_ = input.readDouble();
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+              fieldCase_ = 3;
+              field_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_DataField_descriptor;
@@ -3324,17 +4055,13 @@ public final class LearnerOuterClass {
     }
 
     private int fieldCase_ = 0;
-    @SuppressWarnings("serial")
     private java.lang.Object field_;
     public enum FieldCase
         implements com.google.protobuf.Internal.EnumLite,
             com.google.protobuf.AbstractMessage.InternalOneOfEnum {
       INT(1),
       DOUBLE(2),
-      VECTOR_INT(3),
-      VECTOR_DOUBLE(4),
-      MATRIX_INT(5),
-      MATRIX_DOUBLE(6),
+      STRING(3),
       FIELD_NOT_SET(0);
       private final int value;
       private FieldCase(int value) {
@@ -3354,10 +4081,7 @@ public final class LearnerOuterClass {
         switch (value) {
           case 1: return INT;
           case 2: return DOUBLE;
-          case 3: return VECTOR_INT;
-          case 4: return VECTOR_DOUBLE;
-          case 5: return MATRIX_INT;
-          case 6: return MATRIX_DOUBLE;
+          case 3: return STRING;
           case 0: return FIELD_NOT_SET;
           default: return null;
         }
@@ -3376,14 +4100,6 @@ public final class LearnerOuterClass {
     public static final int INT_FIELD_NUMBER = 1;
     /**
      * <code>int32 int = 1;</code>
-     * @return Whether the int field is set.
-     */
-    @java.lang.Override
-    public boolean hasInt() {
-      return fieldCase_ == 1;
-    }
-    /**
-     * <code>int32 int = 1;</code>
      * @return The int.
      */
     @java.lang.Override
@@ -3397,14 +4113,6 @@ public final class LearnerOuterClass {
     public static final int DOUBLE_FIELD_NUMBER = 2;
     /**
      * <code>double double = 2;</code>
-     * @return Whether the double field is set.
-     */
-    @java.lang.Override
-    public boolean hasDouble() {
-      return fieldCase_ == 2;
-    }
-    /**
-     * <code>double double = 2;</code>
      * @return The double.
      */
     @java.lang.Override
@@ -3415,128 +4123,49 @@ public final class LearnerOuterClass {
       return 0D;
     }
 
-    public static final int VECTOR_INT_FIELD_NUMBER = 3;
+    public static final int STRING_FIELD_NUMBER = 3;
     /**
-     * <code>.VectorInt vector_int = 3;</code>
-     * @return Whether the vectorInt field is set.
+     * <code>string string = 3;</code>
+     * @return The string.
      */
-    @java.lang.Override
-    public boolean hasVectorInt() {
-      return fieldCase_ == 3;
-    }
-    /**
-     * <code>.VectorInt vector_int = 3;</code>
-     * @return The vectorInt.
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt getVectorInt() {
+    public java.lang.String getString() {
+      java.lang.Object ref = "";
       if (fieldCase_ == 3) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_;
+        ref = field_;
       }
-      return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (fieldCase_ == 3) {
+          field_ = s;
+        }
+        return s;
+      }
     }
     /**
-     * <code>.VectorInt vector_int = 3;</code>
+     * <code>string string = 3;</code>
+     * @return The bytes for string.
      */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder getVectorIntOrBuilder() {
+    public com.google.protobuf.ByteString
+        getStringBytes() {
+      java.lang.Object ref = "";
       if (fieldCase_ == 3) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_;
+        ref = field_;
       }
-      return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
-    }
-
-    public static final int VECTOR_DOUBLE_FIELD_NUMBER = 4;
-    /**
-     * <code>.VectorDouble vector_double = 4;</code>
-     * @return Whether the vectorDouble field is set.
-     */
-    @java.lang.Override
-    public boolean hasVectorDouble() {
-      return fieldCase_ == 4;
-    }
-    /**
-     * <code>.VectorDouble vector_double = 4;</code>
-     * @return The vectorDouble.
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble getVectorDouble() {
-      if (fieldCase_ == 4) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        if (fieldCase_ == 3) {
+          field_ = b;
+        }
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
       }
-      return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-    }
-    /**
-     * <code>.VectorDouble vector_double = 4;</code>
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder getVectorDoubleOrBuilder() {
-      if (fieldCase_ == 4) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_;
-      }
-      return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-    }
-
-    public static final int MATRIX_INT_FIELD_NUMBER = 5;
-    /**
-     * <code>.MatrixInt matrix_int = 5;</code>
-     * @return Whether the matrixInt field is set.
-     */
-    @java.lang.Override
-    public boolean hasMatrixInt() {
-      return fieldCase_ == 5;
-    }
-    /**
-     * <code>.MatrixInt matrix_int = 5;</code>
-     * @return The matrixInt.
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt getMatrixInt() {
-      if (fieldCase_ == 5) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_;
-      }
-      return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-    }
-    /**
-     * <code>.MatrixInt matrix_int = 5;</code>
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder getMatrixIntOrBuilder() {
-      if (fieldCase_ == 5) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_;
-      }
-      return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-    }
-
-    public static final int MATRIX_DOUBLE_FIELD_NUMBER = 6;
-    /**
-     * <code>.MatrixDouble matrix_double = 6;</code>
-     * @return Whether the matrixDouble field is set.
-     */
-    @java.lang.Override
-    public boolean hasMatrixDouble() {
-      return fieldCase_ == 6;
-    }
-    /**
-     * <code>.MatrixDouble matrix_double = 6;</code>
-     * @return The matrixDouble.
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getMatrixDouble() {
-      if (fieldCase_ == 6) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_;
-      }
-      return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-    }
-    /**
-     * <code>.MatrixDouble matrix_double = 6;</code>
-     */
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder getMatrixDoubleOrBuilder() {
-      if (fieldCase_ == 6) {
-         return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_;
-      }
-      return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
     }
 
     private byte memoizedIsInitialized = -1;
@@ -3562,18 +4191,9 @@ public final class LearnerOuterClass {
             2, (double)((java.lang.Double) field_));
       }
       if (fieldCase_ == 3) {
-        output.writeMessage(3, (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, field_);
       }
-      if (fieldCase_ == 4) {
-        output.writeMessage(4, (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_);
-      }
-      if (fieldCase_ == 5) {
-        output.writeMessage(5, (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_);
-      }
-      if (fieldCase_ == 6) {
-        output.writeMessage(6, (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_);
-      }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -3593,22 +4213,9 @@ public final class LearnerOuterClass {
               2, (double)((java.lang.Double) field_));
       }
       if (fieldCase_ == 3) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, field_);
       }
-      if (fieldCase_ == 4) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_);
-      }
-      if (fieldCase_ == 5) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_);
-      }
-      if (fieldCase_ == 6) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_);
-      }
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -3635,25 +4242,13 @@ public final class LearnerOuterClass {
                   other.getDouble())) return false;
           break;
         case 3:
-          if (!getVectorInt()
-              .equals(other.getVectorInt())) return false;
-          break;
-        case 4:
-          if (!getVectorDouble()
-              .equals(other.getVectorDouble())) return false;
-          break;
-        case 5:
-          if (!getMatrixInt()
-              .equals(other.getMatrixInt())) return false;
-          break;
-        case 6:
-          if (!getMatrixDouble()
-              .equals(other.getMatrixDouble())) return false;
+          if (!getString()
+              .equals(other.getString())) return false;
           break;
         case 0:
         default:
       }
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -3675,25 +4270,13 @@ public final class LearnerOuterClass {
               java.lang.Double.doubleToLongBits(getDouble()));
           break;
         case 3:
-          hash = (37 * hash) + VECTOR_INT_FIELD_NUMBER;
-          hash = (53 * hash) + getVectorInt().hashCode();
-          break;
-        case 4:
-          hash = (37 * hash) + VECTOR_DOUBLE_FIELD_NUMBER;
-          hash = (53 * hash) + getVectorDouble().hashCode();
-          break;
-        case 5:
-          hash = (37 * hash) + MATRIX_INT_FIELD_NUMBER;
-          hash = (53 * hash) + getMatrixInt().hashCode();
-          break;
-        case 6:
-          hash = (37 * hash) + MATRIX_DOUBLE_FIELD_NUMBER;
-          hash = (53 * hash) + getMatrixDouble().hashCode();
+          hash = (37 * hash) + STRING_FIELD_NUMBER;
+          hash = (53 * hash) + getString().hashCode();
           break;
         case 0:
         default:
       }
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
@@ -3742,13 +4325,11 @@ public final class LearnerOuterClass {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.DataField parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.DataField parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -3812,30 +4393,22 @@ public final class LearnerOuterClass {
 
       // Construct using io.flowcean.learner.grpc.LearnerOuterClass.DataField.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        bitField0_ = 0;
-        if (vectorIntBuilder_ != null) {
-          vectorIntBuilder_.clear();
-        }
-        if (vectorDoubleBuilder_ != null) {
-          vectorDoubleBuilder_.clear();
-        }
-        if (matrixIntBuilder_ != null) {
-          matrixIntBuilder_.clear();
-        }
-        if (matrixDoubleBuilder_ != null) {
-          matrixDoubleBuilder_.clear();
-        }
         fieldCase_ = 0;
         field_ = null;
         return this;
@@ -3864,35 +4437,18 @@ public final class LearnerOuterClass {
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.DataField buildPartial() {
         io.flowcean.learner.grpc.LearnerOuterClass.DataField result = new io.flowcean.learner.grpc.LearnerOuterClass.DataField(this);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        buildPartialOneofs(result);
+        if (fieldCase_ == 1) {
+          result.field_ = field_;
+        }
+        if (fieldCase_ == 2) {
+          result.field_ = field_;
+        }
+        if (fieldCase_ == 3) {
+          result.field_ = field_;
+        }
+        result.fieldCase_ = fieldCase_;
         onBuilt();
         return result;
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.DataField result) {
-        int from_bitField0_ = bitField0_;
-      }
-
-      private void buildPartialOneofs(io.flowcean.learner.grpc.LearnerOuterClass.DataField result) {
-        result.fieldCase_ = fieldCase_;
-        result.field_ = this.field_;
-        if (fieldCase_ == 3 &&
-            vectorIntBuilder_ != null) {
-          result.field_ = vectorIntBuilder_.build();
-        }
-        if (fieldCase_ == 4 &&
-            vectorDoubleBuilder_ != null) {
-          result.field_ = vectorDoubleBuilder_.build();
-        }
-        if (fieldCase_ == 5 &&
-            matrixIntBuilder_ != null) {
-          result.field_ = matrixIntBuilder_.build();
-        }
-        if (fieldCase_ == 6 &&
-            matrixDoubleBuilder_ != null) {
-          result.field_ = matrixDoubleBuilder_.build();
-        }
       }
 
       @java.lang.Override
@@ -3948,27 +4504,17 @@ public final class LearnerOuterClass {
             setDouble(other.getDouble());
             break;
           }
-          case VECTOR_INT: {
-            mergeVectorInt(other.getVectorInt());
-            break;
-          }
-          case VECTOR_DOUBLE: {
-            mergeVectorDouble(other.getVectorDouble());
-            break;
-          }
-          case MATRIX_INT: {
-            mergeMatrixInt(other.getMatrixInt());
-            break;
-          }
-          case MATRIX_DOUBLE: {
-            mergeMatrixDouble(other.getMatrixDouble());
+          case STRING: {
+            fieldCase_ = 3;
+            field_ = other.field_;
+            onChanged();
             break;
           }
           case FIELD_NOT_SET: {
             break;
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -3983,68 +4529,17 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.DataField parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 8: {
-                field_ = input.readInt32();
-                fieldCase_ = 1;
-                break;
-              } // case 8
-              case 17: {
-                field_ = input.readDouble();
-                fieldCase_ = 2;
-                break;
-              } // case 17
-              case 26: {
-                input.readMessage(
-                    getVectorIntFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                fieldCase_ = 3;
-                break;
-              } // case 26
-              case 34: {
-                input.readMessage(
-                    getVectorDoubleFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                fieldCase_ = 4;
-                break;
-              } // case 34
-              case 42: {
-                input.readMessage(
-                    getMatrixIntFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                fieldCase_ = 5;
-                break;
-              } // case 42
-              case 50: {
-                input.readMessage(
-                    getMatrixDoubleFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                fieldCase_ = 6;
-                break;
-              } // case 50
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.DataField) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
       private int fieldCase_ = 0;
@@ -4062,15 +4557,7 @@ public final class LearnerOuterClass {
         return this;
       }
 
-      private int bitField0_;
 
-      /**
-       * <code>int32 int = 1;</code>
-       * @return Whether the int field is set.
-       */
-      public boolean hasInt() {
-        return fieldCase_ == 1;
-      }
       /**
        * <code>int32 int = 1;</code>
        * @return The int.
@@ -4087,7 +4574,6 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setInt(int value) {
-
         fieldCase_ = 1;
         field_ = value;
         onChanged();
@@ -4108,13 +4594,6 @@ public final class LearnerOuterClass {
 
       /**
        * <code>double double = 2;</code>
-       * @return Whether the double field is set.
-       */
-      public boolean hasDouble() {
-        return fieldCase_ == 2;
-      }
-      /**
-       * <code>double double = 2;</code>
        * @return The double.
        */
       public double getDouble() {
@@ -4129,7 +4608,6 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setDouble(double value) {
-
         fieldCase_ = 2;
         field_ = value;
         onChanged();
@@ -4148,572 +4626,93 @@ public final class LearnerOuterClass {
         return this;
       }
 
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorInt, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder> vectorIntBuilder_;
       /**
-       * <code>.VectorInt vector_int = 3;</code>
-       * @return Whether the vectorInt field is set.
+       * <code>string string = 3;</code>
+       * @return The string.
        */
       @java.lang.Override
-      public boolean hasVectorInt() {
-        return fieldCase_ == 3;
+      public java.lang.String getString() {
+        java.lang.Object ref = "";
+        if (fieldCase_ == 3) {
+          ref = field_;
+        }
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (fieldCase_ == 3) {
+            field_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
       }
       /**
-       * <code>.VectorInt vector_int = 3;</code>
-       * @return The vectorInt.
+       * <code>string string = 3;</code>
+       * @return The bytes for string.
        */
       @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt getVectorInt() {
-        if (vectorIntBuilder_ == null) {
+      public com.google.protobuf.ByteString
+          getStringBytes() {
+        java.lang.Object ref = "";
+        if (fieldCase_ == 3) {
+          ref = field_;
+        }
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
           if (fieldCase_ == 3) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_;
+            field_ = b;
           }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
+          return b;
         } else {
-          if (fieldCase_ == 3) {
-            return vectorIntBuilder_.getMessage();
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
+          return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>.VectorInt vector_int = 3;</code>
+       * <code>string string = 3;</code>
+       * @param value The string to set.
+       * @return This builder for chaining.
        */
-      public Builder setVectorInt(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt value) {
-        if (vectorIntBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          field_ = value;
-          onChanged();
-        } else {
-          vectorIntBuilder_.setMessage(value);
-        }
-        fieldCase_ = 3;
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public Builder setVectorInt(
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder builderForValue) {
-        if (vectorIntBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          vectorIntBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 3;
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public Builder mergeVectorInt(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt value) {
-        if (vectorIntBuilder_ == null) {
-          if (fieldCase_ == 3 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 3) {
-            vectorIntBuilder_.mergeFrom(value);
-          } else {
-            vectorIntBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 3;
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public Builder clearVectorInt() {
-        if (vectorIntBuilder_ == null) {
-          if (fieldCase_ == 3) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 3) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          vectorIntBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder getVectorIntBuilder() {
-        return getVectorIntFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder getVectorIntOrBuilder() {
-        if ((fieldCase_ == 3) && (vectorIntBuilder_ != null)) {
-          return vectorIntBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 3) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorInt, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder> 
-          getVectorIntFieldBuilder() {
-        if (vectorIntBuilder_ == null) {
-          if (!(fieldCase_ == 3)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
-          }
-          vectorIntBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.VectorInt, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_,
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        fieldCase_ = 3;
+      public Builder setString(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  fieldCase_ = 3;
+        field_ = value;
         onChanged();
-        return vectorIntBuilder_;
-      }
-
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder> vectorDoubleBuilder_;
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       * @return Whether the vectorDouble field is set.
-       */
-      @java.lang.Override
-      public boolean hasVectorDouble() {
-        return fieldCase_ == 4;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       * @return The vectorDouble.
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble getVectorDouble() {
-        if (vectorDoubleBuilder_ == null) {
-          if (fieldCase_ == 4) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-        } else {
-          if (fieldCase_ == 4) {
-            return vectorDoubleBuilder_.getMessage();
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public Builder setVectorDouble(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble value) {
-        if (vectorDoubleBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          field_ = value;
-          onChanged();
-        } else {
-          vectorDoubleBuilder_.setMessage(value);
-        }
-        fieldCase_ = 4;
         return this;
       }
       /**
-       * <code>.VectorDouble vector_double = 4;</code>
+       * <code>string string = 3;</code>
+       * @return This builder for chaining.
        */
-      public Builder setVectorDouble(
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder builderForValue) {
-        if (vectorDoubleBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          vectorDoubleBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 4;
-        return this;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public Builder mergeVectorDouble(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble value) {
-        if (vectorDoubleBuilder_ == null) {
-          if (fieldCase_ == 4 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 4) {
-            vectorDoubleBuilder_.mergeFrom(value);
-          } else {
-            vectorDoubleBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 4;
-        return this;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public Builder clearVectorDouble() {
-        if (vectorDoubleBuilder_ == null) {
-          if (fieldCase_ == 4) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 4) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          vectorDoubleBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder getVectorDoubleBuilder() {
-        return getVectorDoubleFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder getVectorDoubleOrBuilder() {
-        if ((fieldCase_ == 4) && (vectorDoubleBuilder_ != null)) {
-          return vectorDoubleBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 4) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder> 
-          getVectorDoubleFieldBuilder() {
-        if (vectorDoubleBuilder_ == null) {
-          if (!(fieldCase_ == 4)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-          }
-          vectorDoubleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_,
-                  getParentForChildren(),
-                  isClean());
+      public Builder clearString() {
+        if (fieldCase_ == 3) {
+          fieldCase_ = 0;
           field_ = null;
+          onChanged();
         }
-        fieldCase_ = 4;
+        return this;
+      }
+      /**
+       * <code>string string = 3;</code>
+       * @param value The bytes for string to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStringBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        fieldCase_ = 3;
+        field_ = value;
         onChanged();
-        return vectorDoubleBuilder_;
-      }
-
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder> matrixIntBuilder_;
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       * @return Whether the matrixInt field is set.
-       */
-      @java.lang.Override
-      public boolean hasMatrixInt() {
-        return fieldCase_ == 5;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       * @return The matrixInt.
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt getMatrixInt() {
-        if (matrixIntBuilder_ == null) {
-          if (fieldCase_ == 5) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-        } else {
-          if (fieldCase_ == 5) {
-            return matrixIntBuilder_.getMessage();
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder setMatrixInt(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt value) {
-        if (matrixIntBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          field_ = value;
-          onChanged();
-        } else {
-          matrixIntBuilder_.setMessage(value);
-        }
-        fieldCase_ = 5;
         return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder setMatrixInt(
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder builderForValue) {
-        if (matrixIntBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          matrixIntBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 5;
-        return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder mergeMatrixInt(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt value) {
-        if (matrixIntBuilder_ == null) {
-          if (fieldCase_ == 5 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 5) {
-            matrixIntBuilder_.mergeFrom(value);
-          } else {
-            matrixIntBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 5;
-        return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder clearMatrixInt() {
-        if (matrixIntBuilder_ == null) {
-          if (fieldCase_ == 5) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 5) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          matrixIntBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder getMatrixIntBuilder() {
-        return getMatrixIntFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder getMatrixIntOrBuilder() {
-        if ((fieldCase_ == 5) && (matrixIntBuilder_ != null)) {
-          return matrixIntBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 5) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder> 
-          getMatrixIntFieldBuilder() {
-        if (matrixIntBuilder_ == null) {
-          if (!(fieldCase_ == 5)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-          }
-          matrixIntBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_,
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        fieldCase_ = 5;
-        onChanged();
-        return matrixIntBuilder_;
-      }
-
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder> matrixDoubleBuilder_;
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       * @return Whether the matrixDouble field is set.
-       */
-      @java.lang.Override
-      public boolean hasMatrixDouble() {
-        return fieldCase_ == 6;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       * @return The matrixDouble.
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getMatrixDouble() {
-        if (matrixDoubleBuilder_ == null) {
-          if (fieldCase_ == 6) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-        } else {
-          if (fieldCase_ == 6) {
-            return matrixDoubleBuilder_.getMessage();
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder setMatrixDouble(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble value) {
-        if (matrixDoubleBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          field_ = value;
-          onChanged();
-        } else {
-          matrixDoubleBuilder_.setMessage(value);
-        }
-        fieldCase_ = 6;
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder setMatrixDouble(
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder builderForValue) {
-        if (matrixDoubleBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          matrixDoubleBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 6;
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder mergeMatrixDouble(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble value) {
-        if (matrixDoubleBuilder_ == null) {
-          if (fieldCase_ == 6 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 6) {
-            matrixDoubleBuilder_.mergeFrom(value);
-          } else {
-            matrixDoubleBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 6;
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder clearMatrixDouble() {
-        if (matrixDoubleBuilder_ == null) {
-          if (fieldCase_ == 6) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 6) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          matrixDoubleBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder getMatrixDoubleBuilder() {
-        return getMatrixDoubleFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder getMatrixDoubleOrBuilder() {
-        if ((fieldCase_ == 6) && (matrixDoubleBuilder_ != null)) {
-          return matrixDoubleBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 6) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder> 
-          getMatrixDoubleFieldBuilder() {
-        if (matrixDoubleBuilder_ == null) {
-          if (!(fieldCase_ == 6)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-          }
-          matrixDoubleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_,
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        fieldCase_ = 6;
-        onChanged();
-        return matrixDoubleBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -4748,18 +4747,7 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new DataField(input, extensionRegistry);
       }
     };
 
@@ -4774,2672 +4762,6 @@ public final class LearnerOuterClass {
 
     @java.lang.Override
     public io.flowcean.learner.grpc.LearnerOuterClass.DataField getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface VectorIntOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:VectorInt)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return A list containing the data.
-     */
-    java.util.List<java.lang.Integer> getDataList();
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return The count of data.
-     */
-    int getDataCount();
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    int getData(int index);
-  }
-  /**
-   * Protobuf type {@code VectorInt}
-   */
-  public static final class VectorInt extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:VectorInt)
-      VectorIntOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use VectorInt.newBuilder() to construct.
-    private VectorInt(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private VectorInt() {
-      data_ = emptyIntList();
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new VectorInt();
-    }
-
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorInt_descriptor;
-    }
-
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorInt_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.class, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder.class);
-    }
-
-    public static final int DATA_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.Internal.IntList data_;
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return A list containing the data.
-     */
-    @java.lang.Override
-    public java.util.List<java.lang.Integer>
-        getDataList() {
-      return data_;
-    }
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return The count of data.
-     */
-    public int getDataCount() {
-      return data_.size();
-    }
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    public int getData(int index) {
-      return data_.getInt(index);
-    }
-    private int dataMemoizedSerializedSize = -1;
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (getDataList().size() > 0) {
-        output.writeUInt32NoTag(10);
-        output.writeUInt32NoTag(dataMemoizedSerializedSize);
-      }
-      for (int i = 0; i < data_.size(); i++) {
-        output.writeInt32NoTag(data_.getInt(i));
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      {
-        int dataSize = 0;
-        for (int i = 0; i < data_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeInt32SizeNoTag(data_.getInt(i));
-        }
-        size += dataSize;
-        if (!getDataList().isEmpty()) {
-          size += 1;
-          size += com.google.protobuf.CodedOutputStream
-              .computeInt32SizeNoTag(dataSize);
-        }
-        dataMemoizedSerializedSize = dataSize;
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.VectorInt)) {
-        return super.equals(obj);
-      }
-      io.flowcean.learner.grpc.LearnerOuterClass.VectorInt other = (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) obj;
-
-      if (!getDataList()
-          .equals(other.getDataList())) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
-      return true;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (getDataCount() > 0) {
-        hash = (37 * hash) + DATA_FIELD_NUMBER;
-        hash = (53 * hash) + getDataList().hashCode();
-      }
-      hash = (29 * hash) + getUnknownFields().hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code VectorInt}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:VectorInt)
-        io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorInt_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorInt_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.class, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder.class);
-      }
-
-      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.newBuilder()
-      private Builder() {
-
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        bitField0_ = 0;
-        data_ = emptyIntList();
-        return this;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorInt_descriptor;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt getDefaultInstanceForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt build() {
-        io.flowcean.learner.grpc.LearnerOuterClass.VectorInt result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt buildPartial() {
-        io.flowcean.learner.grpc.LearnerOuterClass.VectorInt result = new io.flowcean.learner.grpc.LearnerOuterClass.VectorInt(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt result) {
-        if (((bitField0_ & 0x00000001) != 0)) {
-          data_.makeImmutable();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        }
-        result.data_ = data_;
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt result) {
-        int from_bitField0_ = bitField0_;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) {
-          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.VectorInt)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt other) {
-        if (other == io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance()) return this;
-        if (!other.data_.isEmpty()) {
-          if (data_.isEmpty()) {
-            data_ = other.data_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureDataIsMutable();
-            data_.addAll(other.data_);
-          }
-          onChanged();
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
-        try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 8: {
-                int v = input.readInt32();
-                ensureDataIsMutable();
-                data_.addInt(v);
-                break;
-              } // case 8
-              case 10: {
-                int length = input.readRawVarint32();
-                int limit = input.pushLimit(length);
-                ensureDataIsMutable();
-                while (input.getBytesUntilLimit() > 0) {
-                  data_.addInt(input.readInt32());
-                }
-                input.popLimit(limit);
-                break;
-              } // case 10
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.unwrapIOException();
-        } finally {
-          onChanged();
-        } // finally
-        return this;
-      }
-      private int bitField0_;
-
-      private com.google.protobuf.Internal.IntList data_ = emptyIntList();
-      private void ensureDataIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
-          data_ = mutableCopy(data_);
-          bitField0_ |= 0x00000001;
-        }
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @return A list containing the data.
-       */
-      public java.util.List<java.lang.Integer>
-          getDataList() {
-        return ((bitField0_ & 0x00000001) != 0) ?
-                 java.util.Collections.unmodifiableList(data_) : data_;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @return The count of data.
-       */
-      public int getDataCount() {
-        return data_.size();
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param index The index of the element to return.
-       * @return The data at the given index.
-       */
-      public int getData(int index) {
-        return data_.getInt(index);
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param index The index to set the value at.
-       * @param value The data to set.
-       * @return This builder for chaining.
-       */
-      public Builder setData(
-          int index, int value) {
-
-        ensureDataIsMutable();
-        data_.setInt(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param value The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addData(int value) {
-
-        ensureDataIsMutable();
-        data_.addInt(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param values The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllData(
-          java.lang.Iterable<? extends java.lang.Integer> values) {
-        ensureDataIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, data_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearData() {
-        data_ = emptyIntList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:VectorInt)
-    }
-
-    // @@protoc_insertion_point(class_scope:VectorInt)
-    private static final io.flowcean.learner.grpc.LearnerOuterClass.VectorInt DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.VectorInt();
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorInt getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<VectorInt>
-        PARSER = new com.google.protobuf.AbstractParser<VectorInt>() {
-      @java.lang.Override
-      public VectorInt parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
-      }
-    };
-
-    public static com.google.protobuf.Parser<VectorInt> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<VectorInt> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface VectorDoubleOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:VectorDouble)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return A list containing the data.
-     */
-    java.util.List<java.lang.Double> getDataList();
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return The count of data.
-     */
-    int getDataCount();
-    /**
-     * <code>repeated double data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    double getData(int index);
-  }
-  /**
-   * Protobuf type {@code VectorDouble}
-   */
-  public static final class VectorDouble extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:VectorDouble)
-      VectorDoubleOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use VectorDouble.newBuilder() to construct.
-    private VectorDouble(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private VectorDouble() {
-      data_ = emptyDoubleList();
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new VectorDouble();
-    }
-
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorDouble_descriptor;
-    }
-
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorDouble_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.class, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder.class);
-    }
-
-    public static final int DATA_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.Internal.DoubleList data_;
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return A list containing the data.
-     */
-    @java.lang.Override
-    public java.util.List<java.lang.Double>
-        getDataList() {
-      return data_;
-    }
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return The count of data.
-     */
-    public int getDataCount() {
-      return data_.size();
-    }
-    /**
-     * <code>repeated double data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    public double getData(int index) {
-      return data_.getDouble(index);
-    }
-    private int dataMemoizedSerializedSize = -1;
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (getDataList().size() > 0) {
-        output.writeUInt32NoTag(10);
-        output.writeUInt32NoTag(dataMemoizedSerializedSize);
-      }
-      for (int i = 0; i < data_.size(); i++) {
-        output.writeDoubleNoTag(data_.getDouble(i));
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      {
-        int dataSize = 0;
-        dataSize = 8 * getDataList().size();
-        size += dataSize;
-        if (!getDataList().isEmpty()) {
-          size += 1;
-          size += com.google.protobuf.CodedOutputStream
-              .computeInt32SizeNoTag(dataSize);
-        }
-        dataMemoizedSerializedSize = dataSize;
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble)) {
-        return super.equals(obj);
-      }
-      io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble other = (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) obj;
-
-      if (!getDataList()
-          .equals(other.getDataList())) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
-      return true;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (getDataCount() > 0) {
-        hash = (37 * hash) + DATA_FIELD_NUMBER;
-        hash = (53 * hash) + getDataList().hashCode();
-      }
-      hash = (29 * hash) + getUnknownFields().hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code VectorDouble}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:VectorDouble)
-        io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorDouble_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorDouble_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.class, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder.class);
-      }
-
-      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.newBuilder()
-      private Builder() {
-
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        bitField0_ = 0;
-        data_ = emptyDoubleList();
-        return this;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_VectorDouble_descriptor;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble getDefaultInstanceForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble build() {
-        io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble buildPartial() {
-        io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble result = new io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble result) {
-        if (((bitField0_ & 0x00000001) != 0)) {
-          data_.makeImmutable();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        }
-        result.data_ = data_;
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble result) {
-        int from_bitField0_ = bitField0_;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) {
-          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble other) {
-        if (other == io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance()) return this;
-        if (!other.data_.isEmpty()) {
-          if (data_.isEmpty()) {
-            data_ = other.data_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureDataIsMutable();
-            data_.addAll(other.data_);
-          }
-          onChanged();
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
-        try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 9: {
-                double v = input.readDouble();
-                ensureDataIsMutable();
-                data_.addDouble(v);
-                break;
-              } // case 9
-              case 10: {
-                int length = input.readRawVarint32();
-                int limit = input.pushLimit(length);
-                ensureDataIsMutable();
-                while (input.getBytesUntilLimit() > 0) {
-                  data_.addDouble(input.readDouble());
-                }
-                input.popLimit(limit);
-                break;
-              } // case 10
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.unwrapIOException();
-        } finally {
-          onChanged();
-        } // finally
-        return this;
-      }
-      private int bitField0_;
-
-      private com.google.protobuf.Internal.DoubleList data_ = emptyDoubleList();
-      private void ensureDataIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
-          data_ = mutableCopy(data_);
-          bitField0_ |= 0x00000001;
-        }
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @return A list containing the data.
-       */
-      public java.util.List<java.lang.Double>
-          getDataList() {
-        return ((bitField0_ & 0x00000001) != 0) ?
-                 java.util.Collections.unmodifiableList(data_) : data_;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @return The count of data.
-       */
-      public int getDataCount() {
-        return data_.size();
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param index The index of the element to return.
-       * @return The data at the given index.
-       */
-      public double getData(int index) {
-        return data_.getDouble(index);
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param index The index to set the value at.
-       * @param value The data to set.
-       * @return This builder for chaining.
-       */
-      public Builder setData(
-          int index, double value) {
-
-        ensureDataIsMutable();
-        data_.setDouble(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param value The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addData(double value) {
-
-        ensureDataIsMutable();
-        data_.addDouble(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param values The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllData(
-          java.lang.Iterable<? extends java.lang.Double> values) {
-        ensureDataIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, data_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearData() {
-        data_ = emptyDoubleList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:VectorDouble)
-    }
-
-    // @@protoc_insertion_point(class_scope:VectorDouble)
-    private static final io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble();
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<VectorDouble>
-        PARSER = new com.google.protobuf.AbstractParser<VectorDouble>() {
-      @java.lang.Override
-      public VectorDouble parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
-      }
-    };
-
-    public static com.google.protobuf.Parser<VectorDouble> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<VectorDouble> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface MatrixIntOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:MatrixInt)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return A list containing the data.
-     */
-    java.util.List<java.lang.Integer> getDataList();
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return The count of data.
-     */
-    int getDataCount();
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    int getData(int index);
-
-    /**
-     * <code>int32 row_count = 2;</code>
-     * @return The rowCount.
-     */
-    int getRowCount();
-
-    /**
-     * <code>int32 column_count = 3;</code>
-     * @return The columnCount.
-     */
-    int getColumnCount();
-  }
-  /**
-   * Protobuf type {@code MatrixInt}
-   */
-  public static final class MatrixInt extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:MatrixInt)
-      MatrixIntOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use MatrixInt.newBuilder() to construct.
-    private MatrixInt(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private MatrixInt() {
-      data_ = emptyIntList();
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new MatrixInt();
-    }
-
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixInt_descriptor;
-    }
-
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixInt_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.class, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder.class);
-    }
-
-    public static final int DATA_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.Internal.IntList data_;
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return A list containing the data.
-     */
-    @java.lang.Override
-    public java.util.List<java.lang.Integer>
-        getDataList() {
-      return data_;
-    }
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @return The count of data.
-     */
-    public int getDataCount() {
-      return data_.size();
-    }
-    /**
-     * <code>repeated int32 data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    public int getData(int index) {
-      return data_.getInt(index);
-    }
-    private int dataMemoizedSerializedSize = -1;
-
-    public static final int ROW_COUNT_FIELD_NUMBER = 2;
-    private int rowCount_ = 0;
-    /**
-     * <code>int32 row_count = 2;</code>
-     * @return The rowCount.
-     */
-    @java.lang.Override
-    public int getRowCount() {
-      return rowCount_;
-    }
-
-    public static final int COLUMN_COUNT_FIELD_NUMBER = 3;
-    private int columnCount_ = 0;
-    /**
-     * <code>int32 column_count = 3;</code>
-     * @return The columnCount.
-     */
-    @java.lang.Override
-    public int getColumnCount() {
-      return columnCount_;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (getDataList().size() > 0) {
-        output.writeUInt32NoTag(10);
-        output.writeUInt32NoTag(dataMemoizedSerializedSize);
-      }
-      for (int i = 0; i < data_.size(); i++) {
-        output.writeInt32NoTag(data_.getInt(i));
-      }
-      if (rowCount_ != 0) {
-        output.writeInt32(2, rowCount_);
-      }
-      if (columnCount_ != 0) {
-        output.writeInt32(3, columnCount_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      {
-        int dataSize = 0;
-        for (int i = 0; i < data_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeInt32SizeNoTag(data_.getInt(i));
-        }
-        size += dataSize;
-        if (!getDataList().isEmpty()) {
-          size += 1;
-          size += com.google.protobuf.CodedOutputStream
-              .computeInt32SizeNoTag(dataSize);
-        }
-        dataMemoizedSerializedSize = dataSize;
-      }
-      if (rowCount_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, rowCount_);
-      }
-      if (columnCount_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, columnCount_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt)) {
-        return super.equals(obj);
-      }
-      io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt other = (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) obj;
-
-      if (!getDataList()
-          .equals(other.getDataList())) return false;
-      if (getRowCount()
-          != other.getRowCount()) return false;
-      if (getColumnCount()
-          != other.getColumnCount()) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
-      return true;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (getDataCount() > 0) {
-        hash = (37 * hash) + DATA_FIELD_NUMBER;
-        hash = (53 * hash) + getDataList().hashCode();
-      }
-      hash = (37 * hash) + ROW_COUNT_FIELD_NUMBER;
-      hash = (53 * hash) + getRowCount();
-      hash = (37 * hash) + COLUMN_COUNT_FIELD_NUMBER;
-      hash = (53 * hash) + getColumnCount();
-      hash = (29 * hash) + getUnknownFields().hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code MatrixInt}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:MatrixInt)
-        io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixInt_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixInt_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.class, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder.class);
-      }
-
-      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.newBuilder()
-      private Builder() {
-
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        bitField0_ = 0;
-        data_ = emptyIntList();
-        rowCount_ = 0;
-        columnCount_ = 0;
-        return this;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixInt_descriptor;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt getDefaultInstanceForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt build() {
-        io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt buildPartial() {
-        io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt result = new io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt result) {
-        if (((bitField0_ & 0x00000001) != 0)) {
-          data_.makeImmutable();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        }
-        result.data_ = data_;
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt result) {
-        int from_bitField0_ = bitField0_;
-        if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.rowCount_ = rowCount_;
-        }
-        if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.columnCount_ = columnCount_;
-        }
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) {
-          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt other) {
-        if (other == io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance()) return this;
-        if (!other.data_.isEmpty()) {
-          if (data_.isEmpty()) {
-            data_ = other.data_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureDataIsMutable();
-            data_.addAll(other.data_);
-          }
-          onChanged();
-        }
-        if (other.getRowCount() != 0) {
-          setRowCount(other.getRowCount());
-        }
-        if (other.getColumnCount() != 0) {
-          setColumnCount(other.getColumnCount());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
-        try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 8: {
-                int v = input.readInt32();
-                ensureDataIsMutable();
-                data_.addInt(v);
-                break;
-              } // case 8
-              case 10: {
-                int length = input.readRawVarint32();
-                int limit = input.pushLimit(length);
-                ensureDataIsMutable();
-                while (input.getBytesUntilLimit() > 0) {
-                  data_.addInt(input.readInt32());
-                }
-                input.popLimit(limit);
-                break;
-              } // case 10
-              case 16: {
-                rowCount_ = input.readInt32();
-                bitField0_ |= 0x00000002;
-                break;
-              } // case 16
-              case 24: {
-                columnCount_ = input.readInt32();
-                bitField0_ |= 0x00000004;
-                break;
-              } // case 24
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.unwrapIOException();
-        } finally {
-          onChanged();
-        } // finally
-        return this;
-      }
-      private int bitField0_;
-
-      private com.google.protobuf.Internal.IntList data_ = emptyIntList();
-      private void ensureDataIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
-          data_ = mutableCopy(data_);
-          bitField0_ |= 0x00000001;
-        }
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @return A list containing the data.
-       */
-      public java.util.List<java.lang.Integer>
-          getDataList() {
-        return ((bitField0_ & 0x00000001) != 0) ?
-                 java.util.Collections.unmodifiableList(data_) : data_;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @return The count of data.
-       */
-      public int getDataCount() {
-        return data_.size();
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param index The index of the element to return.
-       * @return The data at the given index.
-       */
-      public int getData(int index) {
-        return data_.getInt(index);
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param index The index to set the value at.
-       * @param value The data to set.
-       * @return This builder for chaining.
-       */
-      public Builder setData(
-          int index, int value) {
-
-        ensureDataIsMutable();
-        data_.setInt(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param value The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addData(int value) {
-
-        ensureDataIsMutable();
-        data_.addInt(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @param values The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllData(
-          java.lang.Iterable<? extends java.lang.Integer> values) {
-        ensureDataIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, data_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated int32 data = 1;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearData() {
-        data_ = emptyIntList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-
-      private int rowCount_ ;
-      /**
-       * <code>int32 row_count = 2;</code>
-       * @return The rowCount.
-       */
-      @java.lang.Override
-      public int getRowCount() {
-        return rowCount_;
-      }
-      /**
-       * <code>int32 row_count = 2;</code>
-       * @param value The rowCount to set.
-       * @return This builder for chaining.
-       */
-      public Builder setRowCount(int value) {
-
-        rowCount_ = value;
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 row_count = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearRowCount() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        rowCount_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int columnCount_ ;
-      /**
-       * <code>int32 column_count = 3;</code>
-       * @return The columnCount.
-       */
-      @java.lang.Override
-      public int getColumnCount() {
-        return columnCount_;
-      }
-      /**
-       * <code>int32 column_count = 3;</code>
-       * @param value The columnCount to set.
-       * @return This builder for chaining.
-       */
-      public Builder setColumnCount(int value) {
-
-        columnCount_ = value;
-        bitField0_ |= 0x00000004;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 column_count = 3;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearColumnCount() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        columnCount_ = 0;
-        onChanged();
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:MatrixInt)
-    }
-
-    // @@protoc_insertion_point(class_scope:MatrixInt)
-    private static final io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt();
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<MatrixInt>
-        PARSER = new com.google.protobuf.AbstractParser<MatrixInt>() {
-      @java.lang.Override
-      public MatrixInt parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
-      }
-    };
-
-    public static com.google.protobuf.Parser<MatrixInt> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<MatrixInt> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface MatrixDoubleOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:MatrixDouble)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return A list containing the data.
-     */
-    java.util.List<java.lang.Double> getDataList();
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return The count of data.
-     */
-    int getDataCount();
-    /**
-     * <code>repeated double data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    double getData(int index);
-
-    /**
-     * <code>int32 row_count = 2;</code>
-     * @return The rowCount.
-     */
-    int getRowCount();
-
-    /**
-     * <code>int32 column_count = 3;</code>
-     * @return The columnCount.
-     */
-    int getColumnCount();
-  }
-  /**
-   * Protobuf type {@code MatrixDouble}
-   */
-  public static final class MatrixDouble extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:MatrixDouble)
-      MatrixDoubleOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use MatrixDouble.newBuilder() to construct.
-    private MatrixDouble(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private MatrixDouble() {
-      data_ = emptyDoubleList();
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new MatrixDouble();
-    }
-
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixDouble_descriptor;
-    }
-
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixDouble_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.class, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder.class);
-    }
-
-    public static final int DATA_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.Internal.DoubleList data_;
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return A list containing the data.
-     */
-    @java.lang.Override
-    public java.util.List<java.lang.Double>
-        getDataList() {
-      return data_;
-    }
-    /**
-     * <code>repeated double data = 1;</code>
-     * @return The count of data.
-     */
-    public int getDataCount() {
-      return data_.size();
-    }
-    /**
-     * <code>repeated double data = 1;</code>
-     * @param index The index of the element to return.
-     * @return The data at the given index.
-     */
-    public double getData(int index) {
-      return data_.getDouble(index);
-    }
-    private int dataMemoizedSerializedSize = -1;
-
-    public static final int ROW_COUNT_FIELD_NUMBER = 2;
-    private int rowCount_ = 0;
-    /**
-     * <code>int32 row_count = 2;</code>
-     * @return The rowCount.
-     */
-    @java.lang.Override
-    public int getRowCount() {
-      return rowCount_;
-    }
-
-    public static final int COLUMN_COUNT_FIELD_NUMBER = 3;
-    private int columnCount_ = 0;
-    /**
-     * <code>int32 column_count = 3;</code>
-     * @return The columnCount.
-     */
-    @java.lang.Override
-    public int getColumnCount() {
-      return columnCount_;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (getDataList().size() > 0) {
-        output.writeUInt32NoTag(10);
-        output.writeUInt32NoTag(dataMemoizedSerializedSize);
-      }
-      for (int i = 0; i < data_.size(); i++) {
-        output.writeDoubleNoTag(data_.getDouble(i));
-      }
-      if (rowCount_ != 0) {
-        output.writeInt32(2, rowCount_);
-      }
-      if (columnCount_ != 0) {
-        output.writeInt32(3, columnCount_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      {
-        int dataSize = 0;
-        dataSize = 8 * getDataList().size();
-        size += dataSize;
-        if (!getDataList().isEmpty()) {
-          size += 1;
-          size += com.google.protobuf.CodedOutputStream
-              .computeInt32SizeNoTag(dataSize);
-        }
-        dataMemoizedSerializedSize = dataSize;
-      }
-      if (rowCount_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, rowCount_);
-      }
-      if (columnCount_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, columnCount_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble)) {
-        return super.equals(obj);
-      }
-      io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble other = (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) obj;
-
-      if (!getDataList()
-          .equals(other.getDataList())) return false;
-      if (getRowCount()
-          != other.getRowCount()) return false;
-      if (getColumnCount()
-          != other.getColumnCount()) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
-      return true;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      if (getDataCount() > 0) {
-        hash = (37 * hash) + DATA_FIELD_NUMBER;
-        hash = (53 * hash) + getDataList().hashCode();
-      }
-      hash = (37 * hash) + ROW_COUNT_FIELD_NUMBER;
-      hash = (53 * hash) + getRowCount();
-      hash = (37 * hash) + COLUMN_COUNT_FIELD_NUMBER;
-      hash = (53 * hash) + getColumnCount();
-      hash = (29 * hash) + getUnknownFields().hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code MatrixDouble}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:MatrixDouble)
-        io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixDouble_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixDouble_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.class, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder.class);
-      }
-
-      // Construct using io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.newBuilder()
-      private Builder() {
-
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        bitField0_ = 0;
-        data_ = emptyDoubleList();
-        rowCount_ = 0;
-        columnCount_ = 0;
-        return this;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_MatrixDouble_descriptor;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getDefaultInstanceForType() {
-        return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble build() {
-        io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble buildPartial() {
-        io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble result = new io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble result) {
-        if (((bitField0_ & 0x00000001) != 0)) {
-          data_.makeImmutable();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        }
-        result.data_ = data_;
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble result) {
-        int from_bitField0_ = bitField0_;
-        if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.rowCount_ = rowCount_;
-        }
-        if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.columnCount_ = columnCount_;
-        }
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) {
-          return mergeFrom((io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble other) {
-        if (other == io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance()) return this;
-        if (!other.data_.isEmpty()) {
-          if (data_.isEmpty()) {
-            data_ = other.data_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureDataIsMutable();
-            data_.addAll(other.data_);
-          }
-          onChanged();
-        }
-        if (other.getRowCount() != 0) {
-          setRowCount(other.getRowCount());
-        }
-        if (other.getColumnCount() != 0) {
-          setColumnCount(other.getColumnCount());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
-        try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 9: {
-                double v = input.readDouble();
-                ensureDataIsMutable();
-                data_.addDouble(v);
-                break;
-              } // case 9
-              case 10: {
-                int length = input.readRawVarint32();
-                int limit = input.pushLimit(length);
-                ensureDataIsMutable();
-                while (input.getBytesUntilLimit() > 0) {
-                  data_.addDouble(input.readDouble());
-                }
-                input.popLimit(limit);
-                break;
-              } // case 10
-              case 16: {
-                rowCount_ = input.readInt32();
-                bitField0_ |= 0x00000002;
-                break;
-              } // case 16
-              case 24: {
-                columnCount_ = input.readInt32();
-                bitField0_ |= 0x00000004;
-                break;
-              } // case 24
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.unwrapIOException();
-        } finally {
-          onChanged();
-        } // finally
-        return this;
-      }
-      private int bitField0_;
-
-      private com.google.protobuf.Internal.DoubleList data_ = emptyDoubleList();
-      private void ensureDataIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
-          data_ = mutableCopy(data_);
-          bitField0_ |= 0x00000001;
-        }
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @return A list containing the data.
-       */
-      public java.util.List<java.lang.Double>
-          getDataList() {
-        return ((bitField0_ & 0x00000001) != 0) ?
-                 java.util.Collections.unmodifiableList(data_) : data_;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @return The count of data.
-       */
-      public int getDataCount() {
-        return data_.size();
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param index The index of the element to return.
-       * @return The data at the given index.
-       */
-      public double getData(int index) {
-        return data_.getDouble(index);
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param index The index to set the value at.
-       * @param value The data to set.
-       * @return This builder for chaining.
-       */
-      public Builder setData(
-          int index, double value) {
-
-        ensureDataIsMutable();
-        data_.setDouble(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param value The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addData(double value) {
-
-        ensureDataIsMutable();
-        data_.addDouble(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @param values The data to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllData(
-          java.lang.Iterable<? extends java.lang.Double> values) {
-        ensureDataIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, data_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double data = 1;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearData() {
-        data_ = emptyDoubleList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-
-      private int rowCount_ ;
-      /**
-       * <code>int32 row_count = 2;</code>
-       * @return The rowCount.
-       */
-      @java.lang.Override
-      public int getRowCount() {
-        return rowCount_;
-      }
-      /**
-       * <code>int32 row_count = 2;</code>
-       * @param value The rowCount to set.
-       * @return This builder for chaining.
-       */
-      public Builder setRowCount(int value) {
-
-        rowCount_ = value;
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 row_count = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearRowCount() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        rowCount_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int columnCount_ ;
-      /**
-       * <code>int32 column_count = 3;</code>
-       * @return The columnCount.
-       */
-      @java.lang.Override
-      public int getColumnCount() {
-        return columnCount_;
-      }
-      /**
-       * <code>int32 column_count = 3;</code>
-       * @param value The columnCount to set.
-       * @return This builder for chaining.
-       */
-      public Builder setColumnCount(int value) {
-
-        columnCount_ = value;
-        bitField0_ |= 0x00000004;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 column_count = 3;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearColumnCount() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        columnCount_ = 0;
-        onChanged();
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:MatrixDouble)
-    }
-
-    // @@protoc_insertion_point(class_scope:MatrixDouble)
-    private static final io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble();
-    }
-
-    public static io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<MatrixDouble>
-        PARSER = new com.google.protobuf.AbstractParser<MatrixDouble>() {
-      @java.lang.Override
-      public MatrixDouble parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
-      }
-    };
-
-    public static com.google.protobuf.Parser<MatrixDouble> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<MatrixDouble> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -7485,12 +4807,12 @@ public final class LearnerOuterClass {
         int index);
 
     /**
-     * <code>optional int32 progress = 3;</code>
+     * <code>int32 progress = 3;</code>
      * @return Whether the progress field is set.
      */
     boolean hasProgress();
     /**
-     * <code>optional int32 progress = 3;</code>
+     * <code>int32 progress = 3;</code>
      * @return The progress.
      */
     int getProgress();
@@ -7519,6 +4841,72 @@ public final class LearnerOuterClass {
       return new StatusMessage();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private StatusMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              status_ = rawValue;
+              break;
+            }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                messages_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.Message>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              messages_.add(
+                  input.readMessage(io.flowcean.learner.grpc.LearnerOuterClass.Message.parser(), extensionRegistry));
+              break;
+            }
+            case 24: {
+              bitField0_ |= 0x00000001;
+              progress_ = input.readInt32();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          messages_ = java.util.Collections.unmodifiableList(messages_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_StatusMessage_descriptor;
@@ -7534,7 +4922,7 @@ public final class LearnerOuterClass {
 
     private int bitField0_;
     public static final int STATUS_FIELD_NUMBER = 1;
-    private int status_ = 0;
+    private int status_;
     /**
      * <code>.Status status = 1;</code>
      * @return The enum numeric value on the wire for status.
@@ -7547,12 +4935,12 @@ public final class LearnerOuterClass {
      * @return The status.
      */
     @java.lang.Override public io.flowcean.learner.grpc.LearnerOuterClass.Status getStatus() {
-      io.flowcean.learner.grpc.LearnerOuterClass.Status result = io.flowcean.learner.grpc.LearnerOuterClass.Status.forNumber(status_);
+      @SuppressWarnings("deprecation")
+      io.flowcean.learner.grpc.LearnerOuterClass.Status result = io.flowcean.learner.grpc.LearnerOuterClass.Status.valueOf(status_);
       return result == null ? io.flowcean.learner.grpc.LearnerOuterClass.Status.UNRECOGNIZED : result;
     }
 
     public static final int MESSAGES_FIELD_NUMBER = 2;
-    @SuppressWarnings("serial")
     private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.Message> messages_;
     /**
      * <code>repeated .Message messages = 2;</code>
@@ -7593,9 +4981,9 @@ public final class LearnerOuterClass {
     }
 
     public static final int PROGRESS_FIELD_NUMBER = 3;
-    private int progress_ = 0;
+    private int progress_;
     /**
-     * <code>optional int32 progress = 3;</code>
+     * <code>int32 progress = 3;</code>
      * @return Whether the progress field is set.
      */
     @java.lang.Override
@@ -7603,7 +4991,7 @@ public final class LearnerOuterClass {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>optional int32 progress = 3;</code>
+     * <code>int32 progress = 3;</code>
      * @return The progress.
      */
     @java.lang.Override
@@ -7634,7 +5022,7 @@ public final class LearnerOuterClass {
       if (((bitField0_ & 0x00000001) != 0)) {
         output.writeInt32(3, progress_);
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -7655,7 +5043,7 @@ public final class LearnerOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, progress_);
       }
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -7678,7 +5066,7 @@ public final class LearnerOuterClass {
         if (getProgress()
             != other.getProgress()) return false;
       }
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -7699,7 +5087,7 @@ public final class LearnerOuterClass {
         hash = (37 * hash) + PROGRESS_FIELD_NUMBER;
         hash = (53 * hash) + getProgress();
       }
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
@@ -7748,13 +5136,11 @@ public final class LearnerOuterClass {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -7818,27 +5204,33 @@ public final class LearnerOuterClass {
 
       // Construct using io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getMessagesFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        bitField0_ = 0;
         status_ = 0;
+
         if (messagesBuilder_ == null) {
           messages_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          messages_ = null;
           messagesBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000002);
         progress_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -7865,35 +5257,25 @@ public final class LearnerOuterClass {
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage buildPartial() {
         io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage result = new io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage(this);
-        buildPartialRepeatedFields(result);
-        if (bitField0_ != 0) { buildPartial0(result); }
-        onBuilt();
-        return result;
-      }
-
-      private void buildPartialRepeatedFields(io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        result.status_ = status_;
         if (messagesBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) != 0)) {
+          if (((bitField0_ & 0x00000001) != 0)) {
             messages_ = java.util.Collections.unmodifiableList(messages_);
-            bitField0_ = (bitField0_ & ~0x00000002);
+            bitField0_ = (bitField0_ & ~0x00000001);
           }
           result.messages_ = messages_;
         } else {
           result.messages_ = messagesBuilder_.build();
         }
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage result) {
-        int from_bitField0_ = bitField0_;
-        if (((from_bitField0_ & 0x00000001) != 0)) {
-          result.status_ = status_;
-        }
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000004) != 0)) {
+        if (((from_bitField0_ & 0x00000002) != 0)) {
           result.progress_ = progress_;
           to_bitField0_ |= 0x00000001;
         }
-        result.bitField0_ |= to_bitField0_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
       }
 
       @java.lang.Override
@@ -7947,7 +5329,7 @@ public final class LearnerOuterClass {
           if (!other.messages_.isEmpty()) {
             if (messages_.isEmpty()) {
               messages_ = other.messages_;
-              bitField0_ = (bitField0_ & ~0x00000002);
+              bitField0_ = (bitField0_ & ~0x00000001);
             } else {
               ensureMessagesIsMutable();
               messages_.addAll(other.messages_);
@@ -7960,7 +5342,7 @@ public final class LearnerOuterClass {
               messagesBuilder_.dispose();
               messagesBuilder_ = null;
               messages_ = other.messages_;
-              bitField0_ = (bitField0_ & ~0x00000002);
+              bitField0_ = (bitField0_ & ~0x00000001);
               messagesBuilder_ = 
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getMessagesFieldBuilder() : null;
@@ -7972,7 +5354,7 @@ public final class LearnerOuterClass {
         if (other.hasProgress()) {
           setProgress(other.getProgress());
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -7987,53 +5369,17 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 8: {
-                status_ = input.readEnum();
-                bitField0_ |= 0x00000001;
-                break;
-              } // case 8
-              case 18: {
-                io.flowcean.learner.grpc.LearnerOuterClass.Message m =
-                    input.readMessage(
-                        io.flowcean.learner.grpc.LearnerOuterClass.Message.parser(),
-                        extensionRegistry);
-                if (messagesBuilder_ == null) {
-                  ensureMessagesIsMutable();
-                  messages_.add(m);
-                } else {
-                  messagesBuilder_.addMessage(m);
-                }
-                break;
-              } // case 18
-              case 24: {
-                progress_ = input.readInt32();
-                bitField0_ |= 0x00000004;
-                break;
-              } // case 24
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
       private int bitField0_;
@@ -8052,8 +5398,8 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setStatusValue(int value) {
+        
         status_ = value;
-        bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
@@ -8063,7 +5409,8 @@ public final class LearnerOuterClass {
        */
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.Status getStatus() {
-        io.flowcean.learner.grpc.LearnerOuterClass.Status result = io.flowcean.learner.grpc.LearnerOuterClass.Status.forNumber(status_);
+        @SuppressWarnings("deprecation")
+        io.flowcean.learner.grpc.LearnerOuterClass.Status result = io.flowcean.learner.grpc.LearnerOuterClass.Status.valueOf(status_);
         return result == null ? io.flowcean.learner.grpc.LearnerOuterClass.Status.UNRECOGNIZED : result;
       }
       /**
@@ -8075,7 +5422,7 @@ public final class LearnerOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000001;
+        
         status_ = value.getNumber();
         onChanged();
         return this;
@@ -8085,7 +5432,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearStatus() {
-        bitField0_ = (bitField0_ & ~0x00000001);
+        
         status_ = 0;
         onChanged();
         return this;
@@ -8094,9 +5441,9 @@ public final class LearnerOuterClass {
       private java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.Message> messages_ =
         java.util.Collections.emptyList();
       private void ensureMessagesIsMutable() {
-        if (!((bitField0_ & 0x00000002) != 0)) {
+        if (!((bitField0_ & 0x00000001) != 0)) {
           messages_ = new java.util.ArrayList<io.flowcean.learner.grpc.LearnerOuterClass.Message>(messages_);
-          bitField0_ |= 0x00000002;
+          bitField0_ |= 0x00000001;
          }
       }
 
@@ -8246,7 +5593,7 @@ public final class LearnerOuterClass {
       public Builder clearMessages() {
         if (messagesBuilder_ == null) {
           messages_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
+          bitField0_ = (bitField0_ & ~0x00000001);
           onChanged();
         } else {
           messagesBuilder_.clear();
@@ -8323,7 +5670,7 @@ public final class LearnerOuterClass {
           messagesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               io.flowcean.learner.grpc.LearnerOuterClass.Message, io.flowcean.learner.grpc.LearnerOuterClass.Message.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder>(
                   messages_,
-                  ((bitField0_ & 0x00000002) != 0),
+                  ((bitField0_ & 0x00000001) != 0),
                   getParentForChildren(),
                   isClean());
           messages_ = null;
@@ -8333,15 +5680,15 @@ public final class LearnerOuterClass {
 
       private int progress_ ;
       /**
-       * <code>optional int32 progress = 3;</code>
+       * <code>int32 progress = 3;</code>
        * @return Whether the progress field is set.
        */
       @java.lang.Override
       public boolean hasProgress() {
-        return ((bitField0_ & 0x00000004) != 0);
+        return ((bitField0_ & 0x00000002) != 0);
       }
       /**
-       * <code>optional int32 progress = 3;</code>
+       * <code>int32 progress = 3;</code>
        * @return The progress.
        */
       @java.lang.Override
@@ -8349,23 +5696,22 @@ public final class LearnerOuterClass {
         return progress_;
       }
       /**
-       * <code>optional int32 progress = 3;</code>
+       * <code>int32 progress = 3;</code>
        * @param value The progress to set.
        * @return This builder for chaining.
        */
       public Builder setProgress(int value) {
-
+        bitField0_ |= 0x00000002;
         progress_ = value;
-        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int32 progress = 3;</code>
+       * <code>int32 progress = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearProgress() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         progress_ = 0;
         onChanged();
         return this;
@@ -8403,18 +5749,7 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new StatusMessage(input, extensionRegistry);
       }
     };
 
@@ -8498,6 +5833,66 @@ public final class LearnerOuterClass {
       return new Message();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Message(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              logLevel_ = rawValue;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              sender_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              message_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_Message_descriptor;
@@ -8512,7 +5907,7 @@ public final class LearnerOuterClass {
     }
 
     public static final int LOG_LEVEL_FIELD_NUMBER = 1;
-    private int logLevel_ = 0;
+    private int logLevel_;
     /**
      * <code>.LogLevel log_level = 1;</code>
      * @return The enum numeric value on the wire for logLevel.
@@ -8525,13 +5920,13 @@ public final class LearnerOuterClass {
      * @return The logLevel.
      */
     @java.lang.Override public io.flowcean.learner.grpc.LearnerOuterClass.LogLevel getLogLevel() {
-      io.flowcean.learner.grpc.LearnerOuterClass.LogLevel result = io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.forNumber(logLevel_);
+      @SuppressWarnings("deprecation")
+      io.flowcean.learner.grpc.LearnerOuterClass.LogLevel result = io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.valueOf(logLevel_);
       return result == null ? io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.UNRECOGNIZED : result;
     }
 
     public static final int SENDER_FIELD_NUMBER = 2;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object sender_ = "";
+    private volatile java.lang.Object sender_;
     /**
      * <code>string sender = 2;</code>
      * @return The sender.
@@ -8569,8 +5964,7 @@ public final class LearnerOuterClass {
     }
 
     public static final int MESSAGE_FIELD_NUMBER = 3;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object message_ = "";
+    private volatile java.lang.Object message_;
     /**
      * <code>string message = 3;</code>
      * @return The message.
@@ -8624,13 +6018,13 @@ public final class LearnerOuterClass {
       if (logLevel_ != io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.LOGLEVEL_UNDEFINED.getNumber()) {
         output.writeEnum(1, logLevel_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sender_)) {
+      if (!getSenderBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, sender_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
+      if (!getMessageBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, message_);
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -8643,13 +6037,13 @@ public final class LearnerOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, logLevel_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sender_)) {
+      if (!getSenderBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, sender_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
+      if (!getMessageBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, message_);
       }
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -8669,7 +6063,7 @@ public final class LearnerOuterClass {
           .equals(other.getSender())) return false;
       if (!getMessage()
           .equals(other.getMessage())) return false;
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -8686,7 +6080,7 @@ public final class LearnerOuterClass {
       hash = (53 * hash) + getSender().hashCode();
       hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
       hash = (53 * hash) + getMessage().hashCode();
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
@@ -8735,13 +6129,11 @@ public final class LearnerOuterClass {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.Message parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.Message parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -8805,21 +6197,28 @@ public final class LearnerOuterClass {
 
       // Construct using io.flowcean.learner.grpc.LearnerOuterClass.Message.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        bitField0_ = 0;
         logLevel_ = 0;
+
         sender_ = "";
+
         message_ = "";
+
         return this;
       }
 
@@ -8846,22 +6245,11 @@ public final class LearnerOuterClass {
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.Message buildPartial() {
         io.flowcean.learner.grpc.LearnerOuterClass.Message result = new io.flowcean.learner.grpc.LearnerOuterClass.Message(this);
-        if (bitField0_ != 0) { buildPartial0(result); }
+        result.logLevel_ = logLevel_;
+        result.sender_ = sender_;
+        result.message_ = message_;
         onBuilt();
         return result;
-      }
-
-      private void buildPartial0(io.flowcean.learner.grpc.LearnerOuterClass.Message result) {
-        int from_bitField0_ = bitField0_;
-        if (((from_bitField0_ & 0x00000001) != 0)) {
-          result.logLevel_ = logLevel_;
-        }
-        if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.sender_ = sender_;
-        }
-        if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.message_ = message_;
-        }
       }
 
       @java.lang.Override
@@ -8913,15 +6301,13 @@ public final class LearnerOuterClass {
         }
         if (!other.getSender().isEmpty()) {
           sender_ = other.sender_;
-          bitField0_ |= 0x00000002;
           onChanged();
         }
         if (!other.getMessage().isEmpty()) {
           message_ = other.message_;
-          bitField0_ |= 0x00000004;
           onChanged();
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -8936,48 +6322,19 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.Message parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 8: {
-                logLevel_ = input.readEnum();
-                bitField0_ |= 0x00000001;
-                break;
-              } // case 8
-              case 18: {
-                sender_ = input.readStringRequireUtf8();
-                bitField0_ |= 0x00000002;
-                break;
-              } // case 18
-              case 26: {
-                message_ = input.readStringRequireUtf8();
-                bitField0_ |= 0x00000004;
-                break;
-              } // case 26
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.Message) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
-      private int bitField0_;
 
       private int logLevel_ = 0;
       /**
@@ -8993,8 +6350,8 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setLogLevelValue(int value) {
+        
         logLevel_ = value;
-        bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
@@ -9004,7 +6361,8 @@ public final class LearnerOuterClass {
        */
       @java.lang.Override
       public io.flowcean.learner.grpc.LearnerOuterClass.LogLevel getLogLevel() {
-        io.flowcean.learner.grpc.LearnerOuterClass.LogLevel result = io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.forNumber(logLevel_);
+        @SuppressWarnings("deprecation")
+        io.flowcean.learner.grpc.LearnerOuterClass.LogLevel result = io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.valueOf(logLevel_);
         return result == null ? io.flowcean.learner.grpc.LearnerOuterClass.LogLevel.UNRECOGNIZED : result;
       }
       /**
@@ -9016,7 +6374,7 @@ public final class LearnerOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000001;
+        
         logLevel_ = value.getNumber();
         onChanged();
         return this;
@@ -9026,7 +6384,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearLogLevel() {
-        bitField0_ = (bitField0_ & ~0x00000001);
+        
         logLevel_ = 0;
         onChanged();
         return this;
@@ -9073,9 +6431,11 @@ public final class LearnerOuterClass {
        */
       public Builder setSender(
           java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
         sender_ = value;
-        bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
@@ -9084,8 +6444,8 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearSender() {
+        
         sender_ = getDefaultInstance().getSender();
-        bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
@@ -9096,10 +6456,12 @@ public final class LearnerOuterClass {
        */
       public Builder setSenderBytes(
           com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
         sender_ = value;
-        bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
@@ -9145,9 +6507,11 @@ public final class LearnerOuterClass {
        */
       public Builder setMessage(
           java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
         message_ = value;
-        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
@@ -9156,8 +6520,8 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearMessage() {
+        
         message_ = getDefaultInstance().getMessage();
-        bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
       }
@@ -9168,10 +6532,12 @@ public final class LearnerOuterClass {
        */
       public Builder setMessageBytes(
           com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
         message_ = value;
-        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
@@ -9208,18 +6574,7 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new Message(input, extensionRegistry);
       }
     };
 
@@ -9265,6 +6620,48 @@ public final class LearnerOuterClass {
       return new Empty();
     }
 
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Empty(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return io.flowcean.learner.grpc.LearnerOuterClass.internal_static_Empty_descriptor;
@@ -9292,7 +6689,7 @@ public final class LearnerOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
     @java.lang.Override
@@ -9301,7 +6698,7 @@ public final class LearnerOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      size += getUnknownFields().getSerializedSize();
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
@@ -9316,7 +6713,7 @@ public final class LearnerOuterClass {
       }
       io.flowcean.learner.grpc.LearnerOuterClass.Empty other = (io.flowcean.learner.grpc.LearnerOuterClass.Empty) obj;
 
-      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
 
@@ -9327,7 +6724,7 @@ public final class LearnerOuterClass {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (29 * hash) + getUnknownFields().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
     }
@@ -9376,13 +6773,11 @@ public final class LearnerOuterClass {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.Empty parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-
     public static io.flowcean.learner.grpc.LearnerOuterClass.Empty parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -9446,13 +6841,18 @@ public final class LearnerOuterClass {
 
       // Construct using io.flowcean.learner.grpc.LearnerOuterClass.Empty.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
       }
       @java.lang.Override
       public Builder clear() {
@@ -9531,7 +6931,7 @@ public final class LearnerOuterClass {
 
       public Builder mergeFrom(io.flowcean.learner.grpc.LearnerOuterClass.Empty other) {
         if (other == io.flowcean.learner.grpc.LearnerOuterClass.Empty.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
@@ -9546,30 +6946,17 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
+        io.flowcean.learner.grpc.LearnerOuterClass.Empty parsedMessage = null;
         try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              default: {
-                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                  done = true; // was an endgroup tag
-                }
-                break;
-              } // default:
-            } // switch (tag)
-          } // while (!done)
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.flowcean.learner.grpc.LearnerOuterClass.Empty) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
-          onChanged();
-        } // finally
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
         return this;
       }
       @java.lang.Override
@@ -9605,18 +6992,7 @@ public final class LearnerOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        Builder builder = newBuilder();
-        try {
-          builder.mergeFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(builder.buildPartial());
-        } catch (com.google.protobuf.UninitializedMessageException e) {
-          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(e)
-              .setUnfinishedMessage(builder.buildPartial());
-        }
-        return builder.buildPartial();
+        return new Empty(input, extensionRegistry);
       }
     };
 
@@ -9647,35 +7023,20 @@ public final class LearnerOuterClass {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Prediction_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_DataRow_descriptor;
+    internal_static_TimeSeries_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_DataRow_fieldAccessorTable;
+      internal_static_TimeSeries_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_TimeSample_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_TimeSample_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_DataField_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_DataField_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_VectorInt_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_VectorInt_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_VectorDouble_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_VectorDouble_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_MatrixInt_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_MatrixInt_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_MatrixDouble_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_MatrixDouble_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_StatusMessage_descriptor;
   private static final 
@@ -9700,36 +7061,29 @@ public final class LearnerOuterClass {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rlearner.proto\"B\n\013DataPackage\022\030\n\006inputs" +
-      "\030\001 \003(\0132\010.DataRow\022\031\n\007outputs\030\002 \003(\0132\010.Data" +
-      "Row\"K\n\nPrediction\022\035\n\013predictions\030\001 \003(\0132\010" +
-      ".DataRow\022\036\n\006status\030\002 \001(\0132\016.StatusMessage" +
-      "\"%\n\007DataRow\022\032\n\006fields\030\001 \003(\0132\n.DataField\"" +
-      "\311\001\n\tDataField\022\r\n\003int\030\001 \001(\005H\000\022\020\n\006double\030\002" +
-      " \001(\001H\000\022 \n\nvector_int\030\003 \001(\0132\n.VectorIntH\000" +
-      "\022&\n\rvector_double\030\004 \001(\0132\r.VectorDoubleH\000" +
-      "\022 \n\nmatrix_int\030\005 \001(\0132\n.MatrixIntH\000\022&\n\rma" +
-      "trix_double\030\006 \001(\0132\r.MatrixDoubleH\000B\007\n\005fi" +
-      "eld\"\031\n\tVectorInt\022\014\n\004data\030\001 \003(\005\"\034\n\014Vector" +
-      "Double\022\014\n\004data\030\001 \003(\001\"B\n\tMatrixInt\022\014\n\004dat" +
-      "a\030\001 \003(\005\022\021\n\trow_count\030\002 \001(\005\022\024\n\014column_cou" +
-      "nt\030\003 \001(\005\"E\n\014MatrixDouble\022\014\n\004data\030\001 \003(\001\022\021" +
-      "\n\trow_count\030\002 \001(\005\022\024\n\014column_count\030\003 \001(\005\"" +
-      "h\n\rStatusMessage\022\027\n\006status\030\001 \001(\0162\007.Statu" +
-      "s\022\032\n\010messages\030\002 \003(\0132\010.Message\022\025\n\010progres" +
-      "s\030\003 \001(\005H\000\210\001\001B\013\n\t_progress\"H\n\007Message\022\034\n\t" +
-      "log_level\030\001 \001(\0162\t.LogLevel\022\016\n\006sender\030\002 \001" +
-      "(\t\022\017\n\007message\030\003 \001(\t\"\007\n\005Empty*Z\n\006Status\022\024" +
-      "\n\020STATUS_UNDEFINED\020\000\022\022\n\016STATUS_RUNNING\020\001" +
-      "\022\023\n\017STATUS_FINISHED\020\002\022\021\n\rSTATUS_FAILED\020\003" +
-      "*\207\001\n\010LogLevel\022\026\n\022LOGLEVEL_UNDEFINED\020\000\022\022\n" +
-      "\016LOGLEVEL_DEBUG\020\001\022\021\n\rLOGLEVEL_INFO\020\002\022\024\n\020" +
-      "LOGLEVEL_WARNING\020\003\022\022\n\016LOGLEVEL_ERROR\020\004\022\022" +
-      "\n\016LOGLEVEL_FATAL\020\0052x\n\007Learner\022)\n\005Train\022\014" +
-      ".DataPackage\032\016.StatusMessage\"\0000\001\022&\n\007Pred" +
-      "ict\022\014.DataPackage\032\013.Prediction\"\000\022\032\n\006Expo" +
-      "rt\022\006.Empty\032\006.Empty\"\000B\027\n\025io.flowcean.learner" +
-      ".grpcb\006proto3"
+      "\n\rlearner.proto\"H\n\013DataPackage\022\033\n\006inputs" +
+      "\030\001 \003(\0132\013.TimeSeries\022\034\n\007outputs\030\002 \003(\0132\013.T" +
+      "imeSeries\"N\n\nPrediction\022 \n\013predictions\030\001" +
+      " \003(\0132\013.TimeSeries\022\036\n\006status\030\002 \001(\0132\016.Stat" +
+      "usMessage\"*\n\nTimeSeries\022\034\n\007samples\030\001 \003(\013" +
+      "2\013.TimeSample\"5\n\nTimeSample\022\014\n\004time\030\001 \001(" +
+      "\001\022\031\n\005value\030\002 \001(\0132\n.DataField\"G\n\tDataFiel" +
+      "d\022\r\n\003int\030\001 \001(\005H\000\022\020\n\006double\030\002 \001(\001H\000\022\020\n\006st" +
+      "ring\030\003 \001(\tH\000B\007\n\005field\"h\n\rStatusMessage\022\027" +
+      "\n\006status\030\001 \001(\0162\007.Status\022\032\n\010messages\030\002 \003(" +
+      "\0132\010.Message\022\025\n\010progress\030\003 \001(\005H\000\210\001\001B\013\n\t_p" +
+      "rogress\"H\n\007Message\022\034\n\tlog_level\030\001 \001(\0162\t." +
+      "LogLevel\022\016\n\006sender\030\002 \001(\t\022\017\n\007message\030\003 \001(" +
+      "\t\"\007\n\005Empty*Z\n\006Status\022\024\n\020STATUS_UNDEFINED" +
+      "\020\000\022\022\n\016STATUS_RUNNING\020\001\022\023\n\017STATUS_FINISHE" +
+      "D\020\002\022\021\n\rSTATUS_FAILED\020\003*\207\001\n\010LogLevel\022\026\n\022L" +
+      "OGLEVEL_UNDEFINED\020\000\022\022\n\016LOGLEVEL_DEBUG\020\001\022" +
+      "\021\n\rLOGLEVEL_INFO\020\002\022\024\n\020LOGLEVEL_WARNING\020\003" +
+      "\022\022\n\016LOGLEVEL_ERROR\020\004\022\022\n\016LOGLEVEL_FATAL\020\005" +
+      "2x\n\007Learner\022)\n\005Train\022\014.DataPackage\032\016.Sta" +
+      "tusMessage\"\0000\001\022&\n\007Predict\022\014.DataPackage\032" +
+      "\013.Prediction\"\000\022\032\n\006Export\022\006.Empty\032\006.Empty" +
+      "\"\000B\032\n\030io.flowcean.learner.grpcb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -9747,56 +7101,38 @@ public final class LearnerOuterClass {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Prediction_descriptor,
         new java.lang.String[] { "Predictions", "Status", });
-    internal_static_DataRow_descriptor =
+    internal_static_TimeSeries_descriptor =
       getDescriptor().getMessageTypes().get(2);
-    internal_static_DataRow_fieldAccessorTable = new
+    internal_static_TimeSeries_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_DataRow_descriptor,
-        new java.lang.String[] { "Fields", });
-    internal_static_DataField_descriptor =
+        internal_static_TimeSeries_descriptor,
+        new java.lang.String[] { "Samples", });
+    internal_static_TimeSample_descriptor =
       getDescriptor().getMessageTypes().get(3);
+    internal_static_TimeSample_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_TimeSample_descriptor,
+        new java.lang.String[] { "Time", "Value", });
+    internal_static_DataField_descriptor =
+      getDescriptor().getMessageTypes().get(4);
     internal_static_DataField_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_DataField_descriptor,
-        new java.lang.String[] { "Int", "Double", "VectorInt", "VectorDouble", "MatrixInt", "MatrixDouble", "Field", });
-    internal_static_VectorInt_descriptor =
-      getDescriptor().getMessageTypes().get(4);
-    internal_static_VectorInt_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_VectorInt_descriptor,
-        new java.lang.String[] { "Data", });
-    internal_static_VectorDouble_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_VectorDouble_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_VectorDouble_descriptor,
-        new java.lang.String[] { "Data", });
-    internal_static_MatrixInt_descriptor =
-      getDescriptor().getMessageTypes().get(6);
-    internal_static_MatrixInt_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_MatrixInt_descriptor,
-        new java.lang.String[] { "Data", "RowCount", "ColumnCount", });
-    internal_static_MatrixDouble_descriptor =
-      getDescriptor().getMessageTypes().get(7);
-    internal_static_MatrixDouble_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_MatrixDouble_descriptor,
-        new java.lang.String[] { "Data", "RowCount", "ColumnCount", });
+        new java.lang.String[] { "Int", "Double", "String", "Field", });
     internal_static_StatusMessage_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_StatusMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_StatusMessage_descriptor,
         new java.lang.String[] { "Status", "Messages", "Progress", "Progress", });
     internal_static_Message_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_Message_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Message_descriptor,
         new java.lang.String[] { "LogLevel", "Sender", "Message", });
     internal_static_Empty_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_Empty_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Empty_descriptor,

@@ -15,11 +15,12 @@ from flowcean.core import Model, SupervisedLearner
 from ._generated.learner_pb2 import (
     DataField,
     DataPackage,
-    DataRow,
     LogLevel,
     Message,
     Prediction,
     Status,
+    TimeSample,
+    TimeSeries,
 )
 from ._generated.learner_pb2_grpc import LearnerStub
 
@@ -99,7 +100,7 @@ class _DockerBackend(_Backend):
             self._docker_client.close()
 
 
-class GrpcLearner(SupervisedLearner, Model):
+class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
     """Binding for an external learner using gRPC.
 
     This learner class connects to an external learner using gRPC.
@@ -179,7 +180,7 @@ class GrpcLearner(SupervisedLearner, Model):
         self,
         inputs: pl.DataFrame,
         outputs: pl.DataFrame,
-    ) -> GrpcLearner:
+    ) -> GrpcPassiveAutomataLearner:
         proto_datapackage = DataPackage(
             inputs=[_row_to_proto(row) for row in inputs.rows()],
             outputs=[_row_to_proto(row) for row in outputs.rows()],
@@ -223,16 +224,17 @@ def _log_messages(messages: Iterable[Message]) -> None:
 
 
 def _row_to_proto(
-    row: tuple[Any, ...],
-) -> DataRow:
-    return DataRow(
-        fields=[
+    row: pl.Series,
+) -> TimeSeries:
+    return TimeSeries(
+        samples=[
             (
-                DataField(int=entry)
-                if isinstance(entry, int)
-                else DataField(double=entry)
+                TimeSample(
+                    time=entry["time"],
+                    value=DataField(int=entry["value"]),
+                )
             )
-            for entry in row
+            for entry in row[0]
         ],
     )
 
@@ -240,14 +242,23 @@ def _row_to_proto(
 def _predictions_to_frame(
     predictions: Prediction,
 ) -> pl.DataFrame:
-    data = [
-        [
-            field.double if field.HasField("double") else field.int
-            for field in prediction.fields
-        ]
-        for prediction in predictions.predictions
-    ]
-    return pl.DataFrame(data)
+    series_list = []
+    for prediction in predictions.predictions:
+        time = []
+        value = []
+        for sample in prediction.samples:
+            time.append(sample.time)
+            value.append(sample.value.int)
+        df = pl.DataFrame({"time": time, "value": value})
+        df = df.select(pl.struct(pl.all()).alias("output"))
+        series_list.append(df["output"])
+    return pl.DataFrame(
+        pl.Series(
+            "output",
+            series_list,
+            pl.List(pl.Struct({"time": pl.Float64, "value": pl.Float64})),
+        )
+    )
 
 
 def _loglevel_from_proto(loglevel: LogLevel.V) -> int:

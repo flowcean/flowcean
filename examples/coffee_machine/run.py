@@ -1,23 +1,39 @@
+from pathlib import Path
+
+from tqdm import tqdm
+
 import flowcean.cli
+from flowcean.core.environment.chain import ChainEnvironment
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
-from flowcean.learners.grpc.learner import GrpcLearner
+from flowcean.learners.grpc_passive_automata.learner import (
+    GrpcPassiveAutomataLearner,
+)
 from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
+from flowcean.transforms.explode import Explode
+from flowcean.transforms.select import Select
+from flowcean.transforms.unnest import Unnest
 
 
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    data = UriDataLoader(uri="file:./data/coffee_data.csv")
-    data.load()
+    data = ChainEnvironment(
+        *[
+            UriDataLoader("file:" + path.as_posix()).load().to_time_series("t")
+            for path in tqdm(
+                list(Path("./data").glob("*.csv")),
+                desc="Loading environments",
+            )
+        ]
+    )
+    print(data.get_data().head())
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
-    learner = GrpcLearner.run_docker(
-        image="collaborating.tuhh.de:5005/w-6/agenc/agenc/java-automata-learner:latest",
-    )
-    inputs = ["^i.*$", "^o\\d$", "^o1[0-8]$"]
-    outputs = ["o19"]
+    learner = GrpcPassiveAutomataLearner.with_address(address="localhost:8080")
+    inputs = ["input"]
+    outputs = ["output"]
 
     model = learn_offline(
         train,
@@ -32,6 +48,7 @@ def main() -> None:
         inputs,
         outputs,
         [MeanAbsoluteError(), MeanSquaredError()],
+        Explode("output") | Unnest("output") | Select(["value"]),
     )
     print(report)
 
