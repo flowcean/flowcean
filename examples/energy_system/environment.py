@@ -8,14 +8,10 @@ from copy import copy
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
-
-# from multiprocessing import Process
 from statistics import mean, median, stdev
 from typing import Any, Self
 
 import mosaik_api_v3
-import numpy as np
-from loguru import logger
 from numpy.random import RandomState
 from simulator import SyncSimulator
 
@@ -23,6 +19,7 @@ from flowcean.core import ActiveEnvironment
 from flowcean.strategies.active import StopLearning
 
 LOG = logging.getLogger("mosaik_environment")
+
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S%z"
 
 
@@ -30,32 +27,35 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S%z"
 class Sensor:
     value: int | float | None
     uid: str
+    space: str
 
 
 @dataclass
 class Reward:
     value: int | float | None
     uid: str
+    space: str
 
 
 @dataclass
 class Actuator:
     value: int | float | None
     uid: str
+    space: str
 
 
 @dataclass
-class Observations:
+class Observation:
     sensors: list[Sensor]
     rewards: list[Reward]
 
 
 @dataclass
-class Actions:
+class Action:
     actuators: list[Actuator]
 
 
-class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
+class MosaikEnvironment(ActiveEnvironment[Action, Observation]):
     def __init__(
         self,
         start_date: str,
@@ -106,14 +106,14 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.sensor_queue = queue.Queue(1)
         self.actuator_queue = queue.Queue(1)
 
-        LOG.debug(f"{log_(self)} loading sensors and actuators ...")
+        LOG.debug("%s loading sensors and actuators ...", log_(self))
         description, instance = load_funcs(
             self._module, self._description_func, self._instance_func
         )
         sensor_description, actuator_description, world_state = description(
             self._mosaik_params
         )
-        LOG.debug(f"{log_(self)} starting SyncSimulator ...")
+        LOG.debug("%s starting SyncSimulator ...", log_(self))
         self.sync_task = threading.Thread(
             target=_start_simulator,
             args=[
@@ -125,7 +125,7 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         )
         self.sync_task.start()
 
-        LOG.debug(f"{log_(self)} starting Co-Simulation ...")
+        LOG.debug("%s starting Co-Simulation ...", log_(self))
         self.sim_proc = multiprocessing.Process(
             target=_start_world,
             args=(
@@ -140,11 +140,15 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.sim_proc.start()
         self.sensors, self.sen_map = create_sensors(sensor_description)
         self.actuators, self.act_map = create_actuators(actuator_description)
-        LOG.info(f"{log_(self)} finished setup. Co-simulation is now running.")
+        LOG.info(
+            "%s finished setup. Co-simulation is now starting up.", log_(self)
+        )
 
-        return self
+        return Action(actuators=self.actuators), Observation(
+            sensors=self.sensors, rewards=[]
+        )
 
-    def act(self, action: Actions) -> None:
+    def act(self, action: Action) -> None:
         self._data_for_simulation = {}
         self.actuators = action.actuators
         if self.actuators is not None and self.actuators:
@@ -168,13 +172,23 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
         self.sensors = None
         self.rewards = None
 
-    def observe(self) -> Observations:
+    def observe(self) -> Observation:
         if self._data_for_simulation is None:
-            self._data_for_simulation = {}
-            self.step()
+            try:
+                done, self._data_from_simulation = self.sensor_queue.get(
+                    block=True, timeout=10
+                )
+            except queue.Empty:
+                LOG.info(
+                    "%s Unable to observe without stepping first. Performing "
+                    "simulation step now",
+                    log_(self),
+                )
+                self._data_for_simulation = {}
+                self.step()
 
         if self.sensors is not None and self.rewards is not None:
-            return Observations(sensors=self.sensors, rewards=self.rewards)
+            return Observation(sensors=self.sensors, rewards=self.rewards)
 
         self.sensors = []
         for uid, value in self._data_from_simulation.items():
@@ -186,19 +200,21 @@ class MosaikEnvironment(ActiveEnvironment[Actions, Observations]):
             new_sensor = copy(self.sen_map[uid])
             new_sensor.value = value
             self.sensors.append(new_sensor)
-        self.rewards = calculate_reward(self.sensors, self.actuators)
+        self.rewards = calculate_reward(self.sensors)
 
-        return Observations(sensors=self.sensors, rewards=self.rewards)
+        return Observation(sensors=self.sensors, rewards=self.rewards)
 
 
 def calculate_reward(sensors: list) -> list:
+    vspace = "Box(low=0.0, high=1.5, shape=(), dtype=np.float32)"
+    lspace = "Box(low=0.0, high=200.0, shape=(), dtype=np.float32)"
     voltages = sorted([s.value for s in sensors if "vm_pu" in s.uid])
     voltage_rewards = [
-        Reward(value=voltages[0], uid="vm_pu-min"),
-        Reward(value=voltages[-1], uid="vm_pu-max"),
-        Reward(value=median(voltages), uid="vm_pu-median"),
-        Reward(value=mean(voltages), uid="vm_pu-mean"),
-        Reward(value=stdev(voltages), uid="vm_pu-std"),
+        Reward(value=voltages[0], uid="vm_pu-min", space=vspace),
+        Reward(value=voltages[-1], uid="vm_pu-max", space=vspace),
+        Reward(value=median(voltages), uid="vm_pu-median", space=vspace),
+        Reward(value=mean(voltages), uid="vm_pu-mean", space=vspace),
+        Reward(value=stdev(voltages), uid="vm_pu-std", space=vspace),
     ]
 
     lineloads = sorted(
@@ -206,39 +222,12 @@ def calculate_reward(sensors: list) -> list:
     )
 
     lineload_rewards = [
-        Reward(value=lineloads[0], uid="lineload-min"),
-        Reward(value=lineloads[-1], uid="lineload-max"),
-        Reward(value=median(lineloads), uid="lineload-median"),
-        Reward(value=mean(lineloads), uid="lineload-mean"),
-        Reward(value=stdev(lineloads), uid="lineload-std"),
+        Reward(value=lineloads[0], uid="lineload-min", space=lspace),
+        Reward(value=lineloads[-1], uid="lineload-max", space=lspace),
+        Reward(value=median(lineloads), uid="lineload-median", space=lspace),
+        Reward(value=mean(lineloads), uid="lineload-mean", space=lspace),
+        Reward(value=stdev(lineloads), uid="lineload-std", space=lspace),
     ]
-
-    # in_service = np.sort(
-    #     np.array([s() for s in state if "in_service" in s.uid]), axis=None
-    # )
-    # in_service_unique, in_service_counts = np.unique(
-    #     in_service, return_counts=True
-    # )
-    # in_service_dict = dict(zip(in_service_unique, in_service_counts))
-
-    # num_in_service = in_service_dict.get(1) if (1 in in_service_dict) else 1
-
-    # num_out_of_service = (
-    #     in_service_dict.get(0) if (0 in in_service_dict) else 0
-    # )
-
-    # in_service_rewards = [
-    #     RewardInformation(
-    #         np.array(num_in_service, dtype=np.int32),
-    #         Discrete(len(in_service) + 1),
-    #         reward_id="num_in_service",
-    #     ),
-    #     RewardInformation(
-    #         np.array(num_out_of_service, dtype=np.int32),
-    #         Discrete(len(in_service) + 1),
-    #         reward_id="num_out_of_service",
-    #     ),
-    # ]
 
     return voltage_rewards + lineload_rewards
 
@@ -380,9 +369,7 @@ def _start_world(
             initial_data={"setpoint": None},
         )
 
-    # logger.disable("mosaik")
-    # logger.disable("mosaik_api_v3")
-
+    LOG.info("Co-Simulation finished configuration and will start now.")
     world.run(
         until=meta_params["end"], print_progress=not meta_params["silent"]
     )
@@ -405,7 +392,7 @@ def create_sensors(sensor_defs: list) -> list[Sensor]:
         uid = str(sensor.get("uid", sensor.get("sensor_id", "Unnamed Sensor")))
         try:
             value = sensor.get("value", None)
-            sensors.append(Sensor(value=value, uid=uid))
+            sensors.append(Sensor(value=value, uid=uid, space=sensor["space"]))
         except RuntimeError:
             LOG.exception(sensor)
             raise
@@ -439,7 +426,9 @@ def create_actuators(actuator_defs: list) -> list[Actuator]:
                 "value",
                 actuator.get("setpoint", None),
             )
-            actuators.append(Actuator(value=value, uid=uid))
+            actuators.append(
+                Actuator(value=value, uid=uid, space=actuator["space"])
+            )
         except RuntimeError:
             LOG.exception(actuator)
             raise
@@ -447,5 +436,5 @@ def create_actuators(actuator_defs: list) -> list[Actuator]:
     return actuators, actuator_map
 
 
-def log_(env):
+def log_(env: MosaikEnvironment) -> str:
     return f"MosaikEnvironment (id={id(env)}, uid={env.uid})"
