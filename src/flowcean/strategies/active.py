@@ -36,7 +36,9 @@ def learn_active(
         The model learned from the environment.
     """
     model = None
-    environment.load()
+    action, observation = environment.load()
+    learner.load(action, observation)
+
     try:
         while True:
             observations = environment.observe()
