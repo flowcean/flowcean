@@ -56,11 +56,11 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self.step_size = None
         self.models = {}
         self.uid_dict = {}
-        self.model_ctr = {"ARL_Sensor": 0, "ARL_Actuator": 0}
+        self.model_ctr = {"Sensor": 0, "Actuator": 0}
         self._env = None
         self._sim_time = 0
         self._now_dt = None
-        self._timeout = 5
+        self._timeout = 30
 
     def init(self, sid: str, **sim_params: dict) -> dict:
         """Initialize this simulator.
@@ -187,20 +187,20 @@ class SyncSimulator(mosaik_api_v3.Simulator):
             try:
                 actuator_data = self.actuator_queue.get(block=True, timeout=3)
                 success = True
-            except queue.Empty:
+            except queue.Empty as exc:
                 to_ctr -= 1
                 if to_ctr <= 0:
                     raise SimulationError(
                         "No actuators after %.1f seconds. Stopping mosaik"
                         % (to_ctr * 3)
-                    )
-                else:
-                    msg = (
-                        f"At step {self._sim_time}: Failed to get actuator "
-                        "data from queue (queue is empty). Timeout in "
-                        f"{to_ctr * 3}"
-                    )
-                    LOG.warning(msg)
+                    ) from exc
+
+                LOG.warning(
+                    "At step %d: Failed to get actuator data from queue (queue"
+                    " is empty). Timeout in %d",
+                    self._sim_time,
+                    (to_ctr * 3),
+                )
         for uid, value in actuator_data.items():
             self.models[self.uid_dict[uid]]["value"] = value
 

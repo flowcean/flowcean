@@ -28,6 +28,12 @@ def learn_active(
         The model learned from the environment.
     """
     model = None
+<<<<<<< HEAD:src/flowcean/core/strategies/active.py
+=======
+    action, observation = environment.load()
+    learner.load(action, observation)
+
+>>>>>>> a3cadc5 (Powergrid example now working. No guarantees for learning success though):src/flowcean/strategies/active.py
     try:
         while True:
             observations = environment.observe().collect(engine="streaming")
