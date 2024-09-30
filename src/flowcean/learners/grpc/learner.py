@@ -10,7 +10,8 @@ import polars as pl
 from docker import DockerClient
 from docker.models.containers import Container
 
-from flowcean.core import Model, SupervisedLearner
+from flowcean.core.learner import SupervisedLearner
+from flowcean.core.model import Model
 
 from ._generated.learner_pb2 import (
     DataField,

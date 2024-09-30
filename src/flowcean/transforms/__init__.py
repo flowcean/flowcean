@@ -1,7 +1,7 @@
 __all__ = [
     "Explode",
-    "Flatten",
     "FeatureLengthVaryError",
+    "Flatten",
     "NoTimeSeriesFeatureError",
     "MatchSamplingRate",
     "Rechunk",
@@ -11,15 +11,17 @@ __all__ = [
     "SlidingWindow",
     "Standardize",
     "TimeWindow",
+    "ToTimeSeries",
 ]
 
-from .explode import Explode
-from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
-from .match_sampling_rate import MatchSamplingRate
-from .rechunk import Rechunk
-from .rename import Rename
-from .resample import Resample
-from .select import Select
-from .sliding_window import SlidingWindow
-from .standardize import Standardize
-from .time_window import TimeWindow
+from ._explode import Explode
+from ._flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
+from ._match_sampling_rate import MatchSamplingRate
+from ._rechunk import Rechunk
+from ._rename import Rename
+from ._resample import Resample
+from ._select import Select
+from ._sliding_window import SlidingWindow
+from ._standardize import Standardize
+from ._time_window import TimeWindow
+from ._to_time_series import ToTimeSeries

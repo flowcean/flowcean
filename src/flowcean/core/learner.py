@@ -1,33 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
 
 import polars as pl
 
 from .model import Model
-
-
-class UnsupervisedLearner(ABC):
-    """Base class for unsupervised learners."""
-
-    @abstractmethod
-    def fit(self, data: pl.DataFrame) -> None:
-        """Fit to the data.
-
-        Args:
-            data: The data to fit to.
-        """
-
-
-class UnsupervisedIncrementalLearner(ABC):
-    """Base class for unsupervised incremental learners."""
-
-    @abstractmethod
-    def fit_incremental(self, data: pl.DataFrame) -> None:
-        """Fit to the data incrementally.
-
-        Args:
-            data: The data to fit to.
-        """
 
 
 class SupervisedLearner(ABC):
@@ -54,6 +29,12 @@ class SupervisedLearner(ABC):
 
 
 class SupervisedIncrementalLearner(ABC):
+    """Base class for incremental supervised learners.
+
+    An incremental supervised learner learns from input-output pairs
+    incrementally.
+    """
+
     @abstractmethod
     def learn_incremental(
         self,
@@ -71,11 +52,12 @@ class SupervisedIncrementalLearner(ABC):
         """
 
 
-Action = TypeVar("Action")
-Observation = TypeVar("Observation")
+class ActiveLearner[Action, Observation](ABC):
+    """Base class for active learners.
 
+    Active learners require actions to be taken to learn.
+    """
 
-class ActiveLearner(ABC, Generic[Action, Observation]):
     @abstractmethod
     def learn_active(
         self,

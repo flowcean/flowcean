@@ -24,8 +24,7 @@ def main() -> None:
             ],
         },
     )
-    environment.load()
-    data = environment.get_data()
+    data = environment.observe()
     print(data)
     data = (
         data.select("/j100_0000/amcl_pose")

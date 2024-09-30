@@ -11,18 +11,26 @@ if TYPE_CHECKING:
 
     import polars as pl
 
-    from flowcean.core import OfflineEnvironment
+    from flowcean.core.environment.offline import OfflineEnvironment
 
 logger = logging.getLogger(__name__)
 
 
 class TrainTestSplit:
+    """Split data into train and test sets."""
+
     def __init__(
         self,
         ratio: float,
         *,
         shuffle: bool = False,
     ) -> None:
+        """Initialize the train-test splitter.
+
+        Args:
+            ratio: The ratio of the data to put in the training set.
+            shuffle: Whether to shuffle the data before splitting.
+        """
         if ratio < 0 or ratio > 1:
             message = "ratio must be between 0 and 1"
             raise ValueError(message)
@@ -33,8 +41,13 @@ class TrainTestSplit:
         self,
         environment: OfflineEnvironment,
     ) -> tuple[Dataset, Dataset]:
+        """Split the data into train and test sets.
+
+        Args:
+            environment: The environment to split.
+        """
         logger.info("Splitting data into train and test sets")
-        data = environment.get_data()
+        data = environment.observe()
         pivot = int(len(data) * self.ratio)
         splits = _split(
             data,

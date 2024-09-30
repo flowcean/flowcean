@@ -3,10 +3,10 @@ from typing import override
 import polars as pl
 from polars.type_aliases import PythonLiteral
 
-from flowcean.core import Transform, UnsupervisedLearner
+from flowcean.core.transform import FitOnce, Transform
 
 
-class Standardize(Transform, UnsupervisedLearner):
+class Standardize(Transform, FitOnce):
     r"""Standardize features by removing the mean and scaling to unit variance.
 
     A sample $x$ is standardized as:
@@ -31,6 +31,9 @@ class Standardize(Transform, UnsupervisedLearner):
     std: dict[str, float] | None = None
     counts: int | None = None
 
+    def __init__(self) -> None:
+        super().__init__()
+
     @override
     def fit(self, data: pl.DataFrame) -> None:
         self.mean = {c: _as_float(data[c].mean()) for c in data.columns}
@@ -38,7 +41,7 @@ class Standardize(Transform, UnsupervisedLearner):
         self.counts = len(data)
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         if self.mean is None or self.std is None:
             message = "Standardize transform has not been fitted"
             raise RuntimeError(message)

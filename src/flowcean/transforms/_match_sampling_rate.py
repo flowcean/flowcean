@@ -3,7 +3,7 @@ import logging
 import polars as pl
 from numpy import interp
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class MatchSamplingRate(Transform):
         self.reference_timestamps = reference_timestamps
         self.feature_columns_with_timestamps = feature_columns_with_timestamps
 
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         logger.debug("Matching sampling rate of time series.")
 
         for i in range(len(data)):
