@@ -6,6 +6,7 @@ from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
 from flowcean.core import Model, SupervisedLearner
 from flowcean.models.sklearn import SciKitModel
+from flowcean.utils.random import get_seed
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,9 @@ class RegressionTree(SupervisedLearner):
         dot_graph_export_path: None | str = None,
         **kwargs: Any,
     ) -> None:
-        self.regressor = DecisionTreeRegressor(*args, **kwargs)
+        self.regressor = DecisionTreeRegressor(
+            *args, **kwargs, random_state=get_seed()
+        )
         self.dot_graph_export_path = dot_graph_export_path
 
     @override

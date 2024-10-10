@@ -4,6 +4,8 @@ import logging
 from itertools import accumulate
 from typing import TYPE_CHECKING
 
+from flowcean.utils.random import get_seed
+
 from .dataset import Dataset
 
 if TYPE_CHECKING:
@@ -40,6 +42,7 @@ class TrainTestSplit:
             data,
             lengths=[pivot, len(data) - pivot],
             shuffle=self.shuffle,
+            seed=get_seed(),
         )
         return Dataset(splits[0]), Dataset(splits[1])
 
@@ -49,8 +52,9 @@ def _split(
     lengths: Sequence[int],
     *,
     shuffle: bool = False,
+    seed: int | None = None,
 ) -> list[pl.DataFrame]:
-    shuffled_dataset = dataset.sample(fraction=1.0, shuffle=shuffle)
+    shuffled_dataset = dataset.sample(fraction=1.0, shuffle=shuffle, seed=seed)
 
     return [
         shuffled_dataset.slice(offset - length, length)
