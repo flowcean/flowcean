@@ -1,4 +1,6 @@
 __all__ = [
+    "EuclideanDistance",
+    "MatchSamplingRate",
     "Explode",
     "Flatten",
     "FeatureLengthVaryError",
@@ -13,6 +15,7 @@ __all__ = [
     "TimeWindow",
 ]
 
+from .euclidean_distance import EuclideanDistance
 from .explode import Explode
 from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
 from .match_sampling_rate import MatchSamplingRate

@@ -1,10 +1,6 @@
 outs:
-- hash: md5
+- md5: f613db08514312f5ca1ae2cbac88f5d0.dir
+  size: 907874049
+  nfiles: 2
+  hash: md5
   path: example_rosbag
-  files:
-  - relpath: example.db3
-    md5: e8e84102ffd80b278781b15d080741bd
-    size: 1070944256
-  - relpath: metadata.yaml
-    md5: 389f415a5a8b22ec0a18b5d7f7dcba9b
-    size: 49956
