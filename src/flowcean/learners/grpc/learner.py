@@ -10,7 +10,8 @@ import polars as pl
 from docker import DockerClient
 from docker.models.containers import Container
 
-from flowcean.core import Model, SupervisedLearner
+from flowcean.core.learner import SupervisedLearner
+from flowcean.core.model import Model
 
 from ._generated.learner_pb2 import (
     DataField,
@@ -69,7 +70,7 @@ class _DockerBackend(_Backend):
         logger.info("Starting container")
         container = self._docker_client.containers.run(
             image_name,
-            ports={f"{internal_port}/tcp": ("127.0.0.1", None)},
+            ports={f"{internal_port}/tcp": ("127.0.0.1", 0)},
             detach=True,
             remove=True,
         )
@@ -203,14 +204,17 @@ class GrpcLearner(SupervisedLearner, Model):
         return _predictions_to_frame(predictions)
 
     def __del__(self) -> None:
+        """Close the gRPC channel."""
         self.channel.close()
 
     @override
     def save(self, path: Path) -> None:
+        _ = path
         raise NotImplementedError
 
     @override
     def load(self, path: Path) -> None:
+        _ = path
         raise NotImplementedError
 
 

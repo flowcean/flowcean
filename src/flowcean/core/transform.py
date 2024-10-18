@@ -52,20 +52,20 @@ transformed_data = transforms(dataset)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 if TYPE_CHECKING:
-    import polars as pl
+    from collections.abc import Sequence
 
-    from .chain import Chain
+    import polars as pl
 
 
 class Transform(ABC):
     """Base class for all transforms."""
 
     @abstractmethod
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
-        """Transform data with this transform.
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+        """Apply the transform to data.
 
         Args:
             data: The data to transform.
@@ -75,7 +75,7 @@ class Transform(ABC):
         """
 
     def __call__(self, data: pl.DataFrame) -> pl.DataFrame:
-        """Transform data with this transform.
+        """Apply the transform to data.
 
         Args:
             data: The data to transform.
@@ -83,13 +83,35 @@ class Transform(ABC):
         Returns:
             The transformed data.
         """
-        return self.transform(data)
+        return self.apply(data)
 
-    def __or__(self, other: Transform) -> Chain:
-        """Pipe this transform into another transform.
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        """Chain this transform with other transforms.
 
         This can be used to chain multiple transforms together.
         Chained transforms are applied left to right.
+
+        Example:
+            ```python
+            chained_transform = TransformA().chain(TransformB())
+            ```
+
+        Args:
+            other: The transforms to chain.
+
+        Returns:
+            A new Chain transform.
+        """
+        return ChainedTransforms(self, other)
+
+    def __or__(
+        self,
+        other: Transform,
+    ) -> Transform:
+        """Shorthand for chaining transforms.
 
         Example:
             ```python
@@ -97,11 +119,96 @@ class Transform(ABC):
             ```
 
         Args:
-            other: The transform to pipe into.
+            other: The transform to chain.
 
         Returns:
             A new Chain transform.
         """
-        from .chain import Chain
+        return self.chain(other)
 
-        return Chain(self, other)
+
+class FitOnce(ABC):
+    """A mixin for transforms that need to be fitted to data once."""
+
+    @abstractmethod
+    def fit(self, data: pl.DataFrame) -> None:
+        """Fit to the data.
+
+        Args:
+            data: The data to fit to.
+        """
+
+
+class FitIncremetally(ABC):
+    """A mixin for transforms that need to be fitted to data incrementally."""
+
+    @abstractmethod
+    def fit_incremental(self, data: pl.DataFrame) -> None:
+        """Fit to the data incrementally.
+
+        Args:
+            data: The data to fit to.
+        """
+
+
+class ChainedTransforms(Transform, FitOnce, FitIncremetally):
+    """A transform that is a chain of other transforms."""
+
+    transforms: Sequence[Transform]
+
+    def __init__(
+        self,
+        *transforms: Transform,
+    ) -> None:
+        """Initialize the chained transforms.
+
+        Args:
+            transforms: The transforms to chain.
+        """
+        self.transforms = transforms
+
+    @override
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+        for transform in self.transforms:
+            data = transform.apply(data)
+        return data
+
+    @override
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        return ChainedTransforms(*self.transforms, other)
+
+    @override
+    def fit(self, data: pl.DataFrame) -> None:
+        for transform in self.transforms:
+            if isinstance(transform, FitOnce):
+                transform.fit(data)
+            data = transform.apply(data)
+
+    @override
+    def fit_incremental(self, data: pl.DataFrame) -> None:
+        for transform in self.transforms:
+            if isinstance(transform, FitIncremetally):
+                transform.fit_incremental(data)
+            data = transform.apply(data)
+
+
+class Identity(Transform):
+    """A transform that does nothing."""
+
+    def __init__(self) -> None:
+        """Initialize the identity transform."""
+        super().__init__()
+
+    @override
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+        return data
+
+    @override
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        return other

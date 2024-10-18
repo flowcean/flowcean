@@ -4,7 +4,8 @@ from typing import Any, override
 import polars as pl
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
-from flowcean.core import Model, SupervisedLearner
+from flowcean.core.learner import SupervisedLearner
+from flowcean.core.model import Model
 from flowcean.models.sklearn import SciKitModel
 from flowcean.utils.random import get_seed
 
@@ -25,6 +26,13 @@ class RegressionTree(SupervisedLearner):
         dot_graph_export_path: None | str = None,
         **kwargs: Any,
     ) -> None:
+        """Initialize the regression tree learner.
+
+        Args:
+            *args: Positional arguments to pass to the DecisionTreeRegressor.
+            dot_graph_export_path: Path to export the decision tree graph to.
+            **kwargs: Keyword arguments to pass to the DecisionTreeRegressor.
+        """
         self.regressor = DecisionTreeRegressor(
             *args, **kwargs, random_state=get_seed()
         )
