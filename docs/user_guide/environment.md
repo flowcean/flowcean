@@ -22,33 +22,33 @@ This is often referred to as *passive online learning*.
 This is done by receiving an *Action*.
 After an action is received the environment will evolve based on the action and the previous state.
 After a set time interval or a discrete step inside a simulation, the environment can be observed again.
-Examples are a controlled simulation or a controlled live experiment. 
+Examples are a controlled simulation or a controlled live experiment.
 
 ``` mermaid
 ---
 title: A high-level class diagram of the environment classes
---- 
+---
 classDiagram
   Environment <|-- OfflineEnvironment
   Environment <|-- IncrementalEnvironment
   Environment <|-- ActiveEnvironment
-  
+
   class Environment{
     Provides data to a learner.
     + load() -> Self
     + with_transform(transform) -> TransformedEnvironment[Self]
   }
   class IncrementalEnvironment{
-    Loads data in an iterative way. 
+    Loads data in an iterative way.
     + collect(n: int) -> DataFrame
   }
   class OfflineEnvironment{
-    Loads data only once and in an non-interactive way. 
+    Loads data only once and in an non-interactive way.
     + get_data() -> DataFrame
   }
   class ActiveEnvironment{
     Loads data in an interactive way
-    allowing to act on the environment. 
+    allowing to act on the environment.
     + act(Action)
     + step()
     + observe() -> Observation

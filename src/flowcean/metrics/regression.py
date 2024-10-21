@@ -3,7 +3,7 @@ from typing import Any, override
 import polars as pl
 from sklearn import metrics
 
-from flowcean.core import OfflineMetric
+from flowcean.core.metric import OfflineMetric
 
 
 class MaxError(OfflineMetric):

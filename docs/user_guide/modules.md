@@ -41,4 +41,3 @@ Three main strategies based on the three types of environments are explained in 
 
 The super-module *Experiment* is not a Python module, as this is the individual combination of Flowcean modules for a specific CPS application.
 Learn more about experiments in the section [Experiment](https://www3.tuhh.de/agenc/user_guide/experiment/).
-

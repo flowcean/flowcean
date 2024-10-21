@@ -17,19 +17,19 @@ The following flow chart shows the procedure inside a `run.py`.
 
 ``` mermaid
 graph LR
-  A(CLI initialize) --> B(Specify 
+  A(CLI initialize) --> B(Specify
   Environment);
   B --> C{Apply transform
   to environment?};
-  C --> |Yes| D(Specify and 
+  C --> |Yes| D(Specify and
   apply transforms);
-  D --> E(Load 
+  D --> E(Load
   Environment);
   C --> |No| E;
-  E --> F(Decide on 
+  E --> F(Decide on
   Learning Strategy);
   F --> G(Apply
-  Learning 
+  Learning
   Strategy)
   G --> H(Evaluate
   Model)

@@ -18,7 +18,7 @@ class RenameTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transformed_data = transform.transform(data_frame)
+        transformed_data = transform(data_frame)
 
         assert_frame_equal(
             transformed_data,

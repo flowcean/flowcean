@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "flowcean",
+# ]
+# ///
 
 import random
 from collections.abc import Iterator
@@ -18,7 +24,7 @@ from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms.sliding_window import SlidingWindow
+from flowcean.transforms import SlidingWindow
 from flowcean.utils.random import initialize_random
 
 
@@ -123,7 +129,7 @@ def main() -> None:
                 "temperature": [mode.temperature for mode in modes],
             }
         ),
-    ).load()
+    )
 
     data = environment.collect(10_000)
     train, test = TrainTestSplit(ratio=0.8).split(data)

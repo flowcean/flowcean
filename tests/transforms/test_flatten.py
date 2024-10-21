@@ -65,7 +65,7 @@ class FlattenTransform(unittest.TestCase):
             }
         )
 
-        transformed_data = flatten_transform.transform(data_frame)
+        transformed_data = flatten_transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
@@ -134,7 +134,7 @@ class FlattenTransform(unittest.TestCase):
             }
         )
 
-        transformed_data = flatten_transform.transform(data_frame)
+        transformed_data = flatten_transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
@@ -224,7 +224,7 @@ class FlattenTransform(unittest.TestCase):
         )
 
         with pytest.raises(NoTimeSeriesFeatureError):
-            flatten_transform.transform(data_frame)
+            flatten_transform(data_frame)
 
     def test_flatten_varying_length(self) -> None:
         flatten_transform = Flatten()
@@ -261,7 +261,7 @@ class FlattenTransform(unittest.TestCase):
         )
 
         with pytest.raises(FeatureLengthVaryError):
-            flatten_transform.transform(data_frame)
+            flatten_transform(data_frame)
 
 
 if __name__ == "__main__":

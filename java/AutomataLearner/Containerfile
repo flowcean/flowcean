@@ -11,7 +11,7 @@ RUN mvn -f $HOME/pom.xml clean compile assembly:single
 #
 # Package stage
 #
-FROM docker.io/library/eclipse-temurin:21-jre-jammy 
+FROM docker.io/library/eclipse-temurin:21-jre-jammy
 ARG JAR_FILE=/usr/app/target/*.jar
 COPY --from=build $JAR_FILE /app/app.jar
 EXPOSE 8080
