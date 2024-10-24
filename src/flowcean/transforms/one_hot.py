@@ -47,9 +47,7 @@ class OneHot(Transform):
 
         Args:
             feature_categories: Dictionary of features and a list of
-                categorical values to encode for each. If set to None, the
-                categories must be determined by calling `fit` with a
-                sufficient sample of data.
+                categorical values to encode for each.
         """
         self.feature_categrorie_mapping = {
             feature: {f"{feature}_{value}": value for value in values}
@@ -75,8 +73,18 @@ class OneHot(Transform):
 
     @classmethod
     def from_dataframe(
-        cls, data: pl.DataFrame, features: Iterable[str]
+        cls,
+        data: pl.DataFrame,
+        features: Iterable[str],
     ) -> Self:
+        """Creates a new one-hot transformation based on sample data.
+
+        Args:
+            data: A dataframe containing sample data for determining the
+                categories of the transform.
+            features: Name of the features for which the one hot transformation
+                will determine the categories.
+        """
         # Derive categories from the data frame
         feature_categories: dict[str, list[Any]] = {}
         for feature in features:
