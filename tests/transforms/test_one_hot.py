@@ -1,9 +1,11 @@
 import unittest
 
 import polars as pl
+import pytest
 from polars.testing import assert_frame_equal
 
 from flowcean.transforms import OneHot
+from flowcean.transforms.one_hot import NoMatchingCategoryError
 
 
 class OneHotTransform(unittest.TestCase):
@@ -88,6 +90,23 @@ class OneHotTransform(unittest.TestCase):
             ),
             check_column_order=False,
         )
+
+    def test_missing_category(self) -> None:
+        transform = OneHot({"a": [1, 7]})
+        data_frame = pl.DataFrame(
+            [
+                {"a": 1, "b": 2, "c": 3},
+                {"a": 4, "b": 5, "c": 6},
+                {"a": 7, "b": 8, "c": 9},
+                {"a": 10, "b": 11, "c": 12},
+            ],
+        )
+
+        with pytest.raises(NoMatchingCategoryError):
+            transform.transform(
+                data_frame,
+                check_for_missing_category=True,
+            )
 
 
 if __name__ == "__main__":

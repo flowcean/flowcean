@@ -55,7 +55,29 @@ class OneHot(Transform):
         }
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def transform(
+        self,
+        data: pl.DataFrame,
+        *,
+        check_for_missing_category: bool = False,
+    ) -> pl.DataFrame:
+        """Transform data with this one hot transformation.
+
+        Transform data with this one hot transformation and return the
+        resulting dataframe.
+
+        Args:
+            data: The data to transform.
+            check_for_missing_category: If set to true, a check is performed to
+                see if all values belong to a category. If an unknown value is
+                found, a NoMatchingCategoryError is thrown. To perform this
+                check, the dataframe must be materialised, resulting in a
+                potential performance hit. Therefore, the default value is
+                false.
+
+        Returns:
+            The transformed data.
+        """
         if len(self.feature_categrorie_mapping) == 0:
             raise NoCategoriesError
         for (
@@ -69,6 +91,18 @@ class OneHot(Transform):
                 ]
             ).drop(feature)
 
+            # Check if any of the values is not present as a category
+            if check_for_missing_category and (
+                not data.select(
+                    [
+                        pl.col(name).cast(pl.Boolean)
+                        for name in category_mappings
+                    ]
+                )
+                .select(pl.any_horizontal(pl.all()).all())
+                .item(0, 0)
+            ):
+                raise NoMatchingCategoryError
         return data
 
     @classmethod
@@ -104,4 +138,8 @@ class OneHot(Transform):
 
 
 class NoCategoriesError(Exception):
+    pass
+
+
+class NoMatchingCategoryError(Exception):
     pass
