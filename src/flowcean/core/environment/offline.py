@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from pathlib import Path
 
 import polars as pl
 
@@ -33,6 +34,17 @@ class OfflineEnvironment(Environment):
             A streaming offline data.
         """
         return StreamingOfflineData(self, batch_size)
+
+    def write_parquet(self, path: Path | str) -> None:
+        """Write the environment to a parquet file at the specified path.
+
+        Write the environment to a parquet file. Use a `ParquetDataLoader` to
+        load the data back into flowcean as an environment.
+
+        Args:
+            path: Path to the parquet file where the data is written.
+        """
+        self.get_data().write_parquet(Path(path).with_suffix(".parquet"))
 
     def chain(self, other: OfflineEnvironment) -> OfflineEnvironment:
         """Combine this environment with another one vertically.
