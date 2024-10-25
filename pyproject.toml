@@ -20,7 +20,7 @@ authors = [
 
 dependencies = [
   "numpy<2",
-  "polars",
+  "polars==1.9",
   "ruamel.yaml",
   "typing-extensions",
   "tqdm",

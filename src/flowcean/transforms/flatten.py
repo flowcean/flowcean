@@ -63,11 +63,7 @@ class Flatten(Transform):
 
             # Figure out how "long" the feature is and how many new columns
             # need to be added
-            row_lengths = data.select(
-                pl.col(feature)
-                .list.eval(pl.first().struct.field("value"))
-                .list.len()
-            ).unique()
+            row_lengths = data.select(pl.col(feature).list.len()).unique()
 
             # Check if all rows have the same length
             if row_lengths.count().item(0, 0) > 1:
@@ -79,7 +75,7 @@ class Flatten(Transform):
             data = data.with_columns(
                 [
                     pl.col(feature)
-                    .list.eval(pl.first().struct.field("value"))
+                    .list.eval(pl.element().struct.field("value"))
                     .list.get(i)
                     .alias(f"{feature}_{i}")
                     for i in range(n)
