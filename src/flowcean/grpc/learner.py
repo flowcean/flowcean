@@ -68,9 +68,9 @@ class _DockerBackend(_Backend):
             logger.info("Pulling image '%s'", image_name)
             self._docker_client.images.pull(image_name)
         logger.info("Starting container")
-        container = self._docker_client.containers.run(
+        container = self._docker_client.containers.run(  # type: ignore[type]
             image_name,
-            ports={f"{internal_port}/tcp": ("127.0.0.1", 0)},
+            ports={f"{internal_port}/tcp": ("127.0.0.1", None)},  # type: ignore[type]
             detach=True,
             remove=True,
         )
@@ -97,7 +97,7 @@ class _DockerBackend(_Backend):
             logger.info("Removing container")
             self._docker_container.remove()
         if hasattr(self, "_docker_client"):
-            self._docker_client.close()
+            self._docker_client.close()  # type: ignore[type]
 
 
 class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
@@ -122,7 +122,7 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
         """
         super().__init__()
         self._backend = backend
-        self.channel = grpc.insecure_channel(
+        self.channel = grpc.insecure_channel(  # type: ignore[type]
             self._backend.server_address,
             options=[
                 (
@@ -185,8 +185,10 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
             inputs=[_row_to_proto(row) for row in inputs.collect().rows()],
             outputs=[_row_to_proto(row) for row in outputs.collect().rows()],
         )
-        stream = self._stub.Train(proto_datapackage)
-        for status_message in stream:
+        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(
+            proto_datapackage
+        )
+        for status_message in stream: # type: ignore[type]
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 msg = "training failed"
