@@ -8,7 +8,17 @@ from flowcean.core.model import Model
 
 
 class DummyModel(Model):
+    """Dummy model that predicts zeros.
+
+    This model is useful for testing purposes.
+    """
+
     def __init__(self, output_names: list[str]) -> None:
+        """Initialize the model.
+
+        Args:
+            output_names: The names of the output features.
+        """
         self.output_names = output_names
 
     @override
@@ -30,6 +40,11 @@ class DummyModel(Model):
 
 
 class DummyLearner(SupervisedLearner):
+    """Dummy learner that learns nothing.
+
+    This learner is useful for testing purposes.
+    """
+
     @override
     def learn(
         self,

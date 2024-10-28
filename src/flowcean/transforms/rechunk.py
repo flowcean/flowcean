@@ -20,5 +20,5 @@ class Rechunk(Transform):
         super().__init__()
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         return data.rechunk()

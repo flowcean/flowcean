@@ -1,7 +1,7 @@
 __all__ = [
     "Explode",
-    "Flatten",
     "FeatureLengthVaryError",
+    "Flatten",
     "NoTimeSeriesFeatureError",
     "MatchSamplingRate",
     "Rechunk",
@@ -11,15 +11,21 @@ __all__ = [
     "SlidingWindow",
     "Standardize",
     "TimeWindow",
+    "ToTimeSeries",
 ]
 
-from .explode import Explode
-from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
-from .match_sampling_rate import MatchSamplingRate
-from .rechunk import Rechunk
-from .rename import Rename
-from .resample import Resample
-from .select import Select
-from .sliding_window import SlidingWindow
-from .standardize import Standardize
-from .time_window import TimeWindow
+from flowcean.transforms.explode import Explode
+from flowcean.transforms.flatten import (
+    FeatureLengthVaryError,
+    Flatten,
+    NoTimeSeriesFeatureError,
+)
+from flowcean.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.transforms.rechunk import Rechunk
+from flowcean.transforms.rename import Rename
+from flowcean.transforms.resample import Resample
+from flowcean.transforms.select import Select
+from flowcean.transforms.sliding_window import SlidingWindow
+from flowcean.transforms.standardize import Standardize
+from flowcean.transforms.time_window import TimeWindow
+from flowcean.transforms.to_time_series import ToTimeSeries

@@ -1,10 +1,12 @@
+#!/usr/bin/env python
+
 import logging
 
 import flowcean.cli
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms import Select, Standardize
 
@@ -24,7 +26,6 @@ def main() -> None:
             ],
         ),
     )
-    data.load()
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
     transform = Standardize()

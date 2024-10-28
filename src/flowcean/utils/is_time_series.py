@@ -3,8 +3,20 @@ from typing import cast
 import polars as pl
 
 
-def is_timeseries_feature(df: pl.DataFrame, column_name: str) -> bool:
-    data_type = df.select(column_name).dtypes[0]
+def is_timeseries_feature(df: pl.DataFrame, name: str) -> bool:
+    """Check if the given column is a time series feature.
+
+    A time series feature contains a list of structs with fields _time_ and
+    _value_.
+
+    Args:
+        df: The DataFrame to check.
+        name: The column to check.
+
+    Returns:
+        True if the column is a time series feature, False otherwise.
+    """
+    data_type = df.select(name).dtypes[0]
 
     if data_type.base_type() != pl.List:
         return False

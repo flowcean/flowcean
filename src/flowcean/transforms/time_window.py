@@ -5,7 +5,7 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class TimeWindow(Transform):
         self.t_end = time_end
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         for feature in (
             self.features
             if self.features is not None

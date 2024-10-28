@@ -3,7 +3,7 @@ __all__ = [
     "is_timeseries_feature",
 ]
 
-from .build_environments_from_directory import (
+from flowcean.utils.build_environments_from_directory import (
     build_environments_from_directory,
 )
-from .is_time_series import is_timeseries_feature
+from flowcean.utils.is_time_series import is_timeseries_feature
