@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Unnest(Transform):
-    """Decompose struct columns into separate columns for each of their fields."""
+    """Decompose struct columns into separate columns."""
 
     def __init__(self, features: IntoExpr | Iterable[IntoExpr]) -> None:
         """Initializes the Unnest transform.
