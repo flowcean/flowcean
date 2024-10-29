@@ -1,21 +1,15 @@
 import logging
 from pathlib import Path
-from typing import Self, override
 
 import polars as pl
 
-from flowcean.core import OfflineEnvironment
-from flowcean.core.environment import NotLoadedError
+from flowcean.environments.dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
 
-class CsvDataLoader(OfflineEnvironment):
+class CsvDataLoader(Dataset):
     """DataLoader for CSV files."""
-
-    path: Path
-    separator: str
-    data: pl.DataFrame | None = None
 
     def __init__(self, path: str | Path, separator: str = ",") -> None:
         """Initialize the CsvDataLoader.
@@ -24,20 +18,6 @@ class CsvDataLoader(OfflineEnvironment):
             path: Path to the CSV file.
             separator: Value separator. Defaults to ",".
         """
-        self.path = Path(path)
-        self.separator = separator
-
-    @override
-    def load(self) -> Self:
-        logger.info("Loading data from %s", self.path)
-        self.data = pl.read_csv(self.path, separator=self.separator)
-        self.data.columns = [
-            column_name.strip() for column_name in self.data.columns
-        ]
-        return self
-
-    @override
-    def get_data(self) -> pl.DataFrame:
-        if self.data is None:
-            raise NotLoadedError
-        return self.data
+        data = pl.read_csv(path, separator=separator)
+        data.columns = [column_name.strip() for column_name in data.columns]
+        super().__init__(data)

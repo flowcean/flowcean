@@ -5,10 +5,15 @@ from typing import override
 
 import polars as pl
 
-from .transform import Transform
+from flowcean.core.transform import Transform
 
 
 class Model(ABC):
+    """Base class for models.
+
+    A model is used to predict outputs for given inputs.
+    """
+
     @abstractmethod
     def predict(
         self,
@@ -42,6 +47,13 @@ class Model(ABC):
 
 @dataclass
 class ModelWithTransform(Model):
+    """Model that carries a transform.
+
+    Attributes:
+        model: Model
+        transform: Transform
+    """
+
     model: Model
     transform: Transform
 
@@ -50,7 +62,7 @@ class ModelWithTransform(Model):
         self,
         input_features: pl.DataFrame,
     ) -> pl.DataFrame:
-        transformed = self.transform.transform(input_features)
+        transformed = self.transform.apply(input_features)
         return self.model.predict(transformed)
 
     @override

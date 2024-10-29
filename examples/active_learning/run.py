@@ -1,31 +1,24 @@
 import logging
 import random
-from dataclasses import dataclass
 from math import nan
 from pathlib import Path
-from typing import Self, override
+from typing import override
 
 import polars as pl
 
 import flowcean.cli
-from flowcean.core import ActiveEnvironment, ActiveLearner, Model
+from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.learner import ActiveLearner
+from flowcean.core.model import Model
 from flowcean.strategies.active import StopLearning, learn_active
 
 logger = logging.getLogger(__name__)
 
-Action = float
 
-
-@dataclass
-class ReinforcementObservation:
-    reward: float
-    sensor: float
-
-
-class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
+class MyEnvironment(ActiveEnvironment):
     state: float
     max_value: float
-    last_action: Action | None
+    last_action: pl.DataFrame | None
     max_num_iterations: int
 
     def __init__(
@@ -40,11 +33,7 @@ class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
         self.max_num_iterations = max_num_iterations
 
     @override
-    def load(self) -> Self:
-        return self
-
-    @override
-    def act(self, action: Action) -> None:
+    def act(self, action: pl.DataFrame) -> None:
         self.last_action = action
 
     @override
@@ -55,16 +44,18 @@ class MyEnvironment(ActiveEnvironment[Action, ReinforcementObservation]):
             raise StopLearning
 
     @override
-    def observe(self) -> ReinforcementObservation:
-        return ReinforcementObservation(
-            reward=self._calculate_reward(),
-            sensor=self.state,
+    def _observe(self) -> pl.DataFrame:
+        return pl.DataFrame(
+            {
+                "reward": self._calculate_reward(),
+                "sensor": self.state,
+            }
         )
 
     def _calculate_reward(self) -> float:
         if self.last_action is None:
             return nan
-        return self.max_value - abs(self.state - self.last_action)
+        return self.max_value - abs(self.state - self.last_action["sensor"][0])
 
 
 class MyModel(Model):
@@ -85,14 +76,16 @@ class MyModel(Model):
 
     @override
     def save(self, path: Path) -> None:
+        _ = path
         raise NotImplementedError
 
     @override
     def load(self, path: Path) -> None:
+        _ = path
         raise NotImplementedError
 
 
-class MyLearner(ActiveLearner[Action, ReinforcementObservation]):
+class MyLearner(ActiveLearner):
     model: MyModel
     rewards: list[float]
 
@@ -103,18 +96,18 @@ class MyLearner(ActiveLearner[Action, ReinforcementObservation]):
     @override
     def learn_active(
         self,
-        action: Action,
-        observation: ReinforcementObservation,
+        action: pl.DataFrame,
+        observation: pl.DataFrame,
     ) -> Model:
-        _ = observation.sensor
+        _ = action
         self.model = MyModel(best_action=random.random())
-        self.rewards.append(observation.reward)
+        self.rewards.append(observation["reward"][0])
         return self.model
 
     @override
-    def propose_action(self, observation: ReinforcementObservation) -> Action:
-        sensor = observation.sensor
-        action = self.model.predict(pl.DataFrame({"sensor": [sensor]}))
+    def propose_action(self, observation: pl.DataFrame) -> pl.DataFrame:
+        sensor = observation["sensor"]
+        action = self.model.predict(pl.DataFrame({"sensor": sensor}))
         return action["action"][0]
 
 

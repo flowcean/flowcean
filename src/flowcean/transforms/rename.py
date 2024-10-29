@@ -3,7 +3,7 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
@@ -21,5 +21,5 @@ class Rename(Transform):
         self.mapping = mapping
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         return data.rename(self.mapping)

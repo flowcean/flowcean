@@ -75,12 +75,11 @@ class TestOdeEnvironment(unittest.TestCase):
             SimpleSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        environment.load()
-        loaded_data = environment.collect(10)
-        assert len(loaded_data) == 20
+        loaded_data = environment.collect(11)
+        assert len(loaded_data) == 21
 
     def test_simple_ode(self) -> None:
-        ts = [0.114893, 1.0, 1.114908, 2.0, 2.114932, 3.0, 3.114973, 4.0]
+        ts = [0.0, 0.114893, 1.0, 1.114908, 2.0, 2.114932, 3.0, 3.114973, 4.0]
         data = pl.DataFrame(
             {
                 "t": ts,
@@ -92,8 +91,7 @@ class TestOdeEnvironment(unittest.TestCase):
             SimpleSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        environment.load()
-        loaded_data = environment.collect(4).get_data()
+        loaded_data = environment.collect(5).observe()
 
         assert_frame_equal(
             data,
@@ -105,6 +103,7 @@ class TestOdeEnvironment(unittest.TestCase):
 
     def test_time_dependent_ode(self) -> None:
         ts = [
+            0.0,
             0.0001,
             0.0011,
             0.0111,
@@ -126,8 +125,7 @@ class TestOdeEnvironment(unittest.TestCase):
             TimeDependentSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        environment.load()
-        loaded_data = environment.collect(3).get_data()
+        loaded_data = environment.collect(4).observe()
 
         assert_frame_equal(
             data,
@@ -143,7 +141,6 @@ class TestOdeEnvironment(unittest.TestCase):
             NonIntegrableSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        environment.load()
         with pytest.raises(IntegrationError):
             environment.collect(10)
 

@@ -2,7 +2,7 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 
 class SlidingWindow(Transform):
@@ -39,7 +39,7 @@ class SlidingWindow(Transform):
         self.window_size = window_size
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         return data.select(
             [
                 pl.all()

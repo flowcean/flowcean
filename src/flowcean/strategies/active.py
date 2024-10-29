@@ -1,10 +1,6 @@
-from typing import TypeVar
-
-from flowcean.core import (
-    ActiveEnvironment,
-    ActiveLearner,
-    Model,
-)
+from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.learner import ActiveLearner
+from flowcean.core.model import Model
 
 
 class StopLearning(Exception):
@@ -14,13 +10,9 @@ class StopLearning(Exception):
     """
 
 
-Action = TypeVar("Action")
-Observation = TypeVar("Observation")
-
-
 def learn_active(
-    environment: ActiveEnvironment[Action, Observation],
-    learner: ActiveLearner[Action, Observation],
+    environment: ActiveEnvironment,
+    learner: ActiveLearner,
 ) -> Model:
     """Learn from an active environment.
 
@@ -36,7 +28,6 @@ def learn_active(
         The model learned from the environment.
     """
     model = None
-    environment.load()
     try:
         while True:
             observations = environment.observe()

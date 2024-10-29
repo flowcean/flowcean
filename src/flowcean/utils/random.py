@@ -10,6 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 def initialize_random(seed: int) -> None:
+    """Initialize the random number generator with the given seed.
+
+    Args:
+        seed: The seed to initialize the random number generator with.
+    """
     global rng  # noqa: PLW0603
     rng = np.random.default_rng(seed)
     random.seed(get_seed())
@@ -26,4 +31,9 @@ def initialize_random(seed: int) -> None:
 
 
 def get_seed() -> int:
+    """Generate a random seed.
+
+    Returns:
+        A random seed.
+    """
     return int(rng.integers(2**32 - 1))

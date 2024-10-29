@@ -3,10 +3,8 @@ import unittest
 from pathlib import Path
 
 import polars as pl
-import pytest
 from polars.testing import assert_frame_equal
 
-from flowcean.core.environment import NotLoadedError
 from flowcean.environments.parquet import ParquetDataLoader
 
 
@@ -23,10 +21,7 @@ class TestParquetDataLoader(unittest.TestCase):
             data.write_parquet(f.name)
             datapath = Path(f.name)
             dataloader = ParquetDataLoader(path=datapath)
-            with pytest.raises(NotLoadedError):
-                dataloader.get_data()
-            dataloader.load()
-            loaded_data = dataloader.get_data()
+            loaded_data = dataloader.observe()
             assert_frame_equal(loaded_data, data)
 
 

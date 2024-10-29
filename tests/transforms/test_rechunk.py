@@ -3,7 +3,7 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.transforms.rechunk import Rechunk
+from flowcean.transforms import Rechunk
 
 
 class RechunkTransform(unittest.TestCase):
