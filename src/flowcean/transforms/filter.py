@@ -5,7 +5,7 @@ from typing import Literal, override
 import polars as pl
 from scipy.signal import butter, sosfilt
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class Filter(Transform):
         self.order = order
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         for feature in self.features:
             data = data.with_columns(
                 pl.struct(
