@@ -19,7 +19,7 @@ class OneHotTransform(unittest.TestCase):
             ],
         )
         transform = OneHot.from_dataframe(data_frame, ["a"])
-        transformed_data = transform.transform(data_frame)
+        transformed_data = transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
@@ -46,7 +46,7 @@ class OneHotTransform(unittest.TestCase):
             ],
         )
         transform = OneHot.from_dataframe(data_frame, ["a", "b"])
-        transformed_data = transform.transform(data_frame)
+        transformed_data = transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
@@ -76,7 +76,7 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transformed_data = transform.transform(data_frame)
+        transformed_data = transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
@@ -103,7 +103,7 @@ class OneHotTransform(unittest.TestCase):
         )
 
         with pytest.raises(NoMatchingCategoryError):
-            transform.transform(
+            transform.apply(
                 data_frame,
                 check_for_missing_category=True,
             )

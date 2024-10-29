@@ -4,7 +4,7 @@ from typing import Any, Self, override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class OneHot(Transform):
         }
 
     @override
-    def transform(
+    def apply(
         self,
         data: pl.DataFrame,
         *,
