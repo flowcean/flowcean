@@ -35,17 +35,17 @@ The three learning strategies that are already implemented are visualized and ex
 ![learning_strategies](../assets/learning_strategies.svg)
 
 In general, custom learning strategies can be constructed in a similar manner.
-All learning strategies have in common that the output is a [model](https://www3.tuhh.de/agenc/user_guide/model/).
+All learning strategies have in common that the output is a [model](https://flowcean.me/user_guide/model/).
 The model can be saved and compared to other models that might be trained in the future.
 Furthermore, the model can be used to predict states of Cyber-Physical System or detect faulty behavior.
-For more information on what can be done with a model, check out the documentation on [Tools](https://www3.tuhh.de/agenc/user_guide/tools/).
+For more information on what can be done with a model, check out the documentation on [Tools](https://flowcean.me/user_guide/tools/).
 Technically, strategies are represented as modular functions inside Flowcean.
-For more information on the implementation of the learning strategies take a look at the [API](https://www3.tuhh.de/agenc/reference/flowcean/strategies/).
+For more information on the implementation of the learning strategies take a look at the [API](https://flowcean.me/reference/flowcean/strategies/).
 
 ## Offline Learning
 
 The first step of an offline learning strategy is to get the dataset from an environment.
-This environment is typically an [OfflineEnvironment](https://www3.tuhh.de/agenc/reference/flowcean/core/environment/offline/).
+This environment is typically an [OfflineEnvironment](https://flowcean.me/reference/flowcean/core/environment/offline/).
 Along with the environment the learner requires the names of the inputs and outputs.
 Transforms can be applied to the input features of the data set and the outputs.
 The last step is to learn the model using a learning algorithm.
@@ -53,7 +53,7 @@ For this, the learning algorithm receives the entire transformed dataset at once
 
 ## Incremental Learning
 
-For the incremental learning strategy, a learner is connected to an [IncrementalEnvironment](https://www3.tuhh.de/agenc/reference/flowcean/core/environment/passive_online/).
+For the incremental learning strategy, a learner is connected to an [IncrementalEnvironment](https://flowcean.me/reference/flowcean/core/environment/incremental/).
 It iteratively receives data - either in single packets or small batches.
 Along with the environment the learner requires the names of the inputs and outputs.
 Transforms can be applied to the input features of the data set and the outputs.
@@ -63,7 +63,7 @@ The learning process stops when the environment ends, i.e. when the data stream 
 
 ## Active Learning
 
-For the active learning strategy, a learner is connected to an [ActiveEnvironment](https://www3.tuhh.de/agenc/reference/flowcean/core/environment/passive_online/).
+For the active learning strategy, a learner is connected to an [ActiveEnvironment](https://flowcean.me/reference/flowcean/core/environment/active/).
 First, the environment is observed.
 Next, the learner proposes an action which should be applied to the environment.
 This is called *acting on the environment*.

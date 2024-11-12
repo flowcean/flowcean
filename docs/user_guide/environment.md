@@ -22,7 +22,7 @@ This is often referred to as *passive online learning*.
 This is done by receiving an *Action*.
 After an action is received the environment will evolve based on the action and the previous state.
 After a set time interval or a discrete step inside a simulation, the environment can be observed again.
-Examples are a controlled simulation or a controlled live experiment. 
+Examples are a controlled simulation or a controlled live experiment.
 
 ``` mermaid
 ---
@@ -55,13 +55,11 @@ classDiagram
   }
 ```
 
-
-
-It is possible to apply [Transforms](https://www3.tuhh.de/agenc/user_guide/transforms/) to an environment.
+It is possible to apply [Transforms](https://flowcean.me/user_guide/transform/) to an environment.
 This is done by applying a transformation (e.g. resampling or normalization) to the *DataFrame* that the environment provides.
 As can be seen in the class diagram, the parent class `Environment` has a method `with_transform()` which allows to specify the transforms that are applied to an environment.
 
-Depending on the environment class, different [Learning Strategies](https://www3.tuhh.de/agenc/user_guide/learning_strategies/) can be applied.
+Depending on the environment class, different [Learning Strategies](https://flowcean.me/user_guide/learning_strategies/) can be applied.
 An active learning strategy, for example, can only be applied to an `ActiveEnvironment`.
 
-For more information on the available classes and how environments are implemented in Flowcean, check out the [API](https://www3.tuhh.de/agenc/reference/flowcean/).
+For more information on the available classes and how environments are implemented in Flowcean, check out the [API](https://flowcean.me/reference/flowcean/).
