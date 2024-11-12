@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://www3.tuhh.de/agenc/"
+Documentation = "https://flowcean.me/"
 Issues = "https://github.com/flowcean/flowcean/issues"
 Source = "https://github.com/flowcean/flowcean"
 
