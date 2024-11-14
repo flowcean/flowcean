@@ -7,12 +7,10 @@ import polars as pl
 from environment import Action, Actuator, Observation, Reward, Sensor
 from harl.sac.brain import SACBrain
 from harl.sac.muscle import SACMuscle
-from palaestrai.agent import (
-    ActuatorInformation,
-    RewardInformation,
-    SensorInformation,
-)
+from palaestrai.agent.actuator_information import ActuatorInformation
 from palaestrai.agent.objective import Objective
+from palaestrai.agent.reward_information import RewardInformation
+from palaestrai.agent.sensor_information import SensorInformation
 from palaestrai.types.space import Space
 
 from flowcean.core.learner import ActiveLearner
@@ -44,7 +42,7 @@ class SACModel(Model):
             Observation(
                 sensors=[
                     Sensor(
-                        value=c.max(),
+                        value=python_literal_to_basic_value(c.max()),
                         uid=c.name,
                         space=get_space_from_uid(
                             c.name, self._observation.sensors
@@ -60,7 +58,14 @@ class SACModel(Model):
         )
 
         return pl.DataFrame(
-            {act.uid: act.value.item() for act in actuators},
+            {
+                act.uid: act.value.item()
+                for act in actuators
+                if (
+                    act.value is not None
+                    and not isinstance(act.value, int | float)
+                )
+            },
         )
 
     def update(self, update: Any) -> None:
@@ -80,9 +85,6 @@ class SACModel(Model):
 
 
 class SACLearner(ActiveLearner):
-    model: SACModel
-    rewards: list[float]
-
     def __init__(
         self,
         actuator_ids: list[str],
@@ -92,10 +94,10 @@ class SACLearner(ActiveLearner):
         self.act_ids: list[str] = actuator_ids
         self.sen_ids: list[str] = sensor_ids
         self._objective = objective
-        self.model = None
-        self.action: Action = None
-        self.observation: Observation = None
-        self.rewards = []
+        self.model: SACModel
+        self.action: Action
+        self.observation: Observation
+        self.rewards: list[list[Reward]] = []
         self.objectives = []
         self._model_id = (
             "SACModel"  # required by palaestrAI; name is arbitrary
@@ -163,13 +165,31 @@ class SACLearner(ActiveLearner):
         return Action(
             actuators=[
                 Actuator(
-                    value=c.max(),
+                    value=python_literal_to_basic_value(c.max()),
                     uid=c.name,
                     space=get_space_from_uid(c.name, self.action.actuators),
                 )
                 for c in prediction_df.iter_columns()
             ]
         )
+
+
+def python_literal_to_basic_value(value: Any) -> int | float:
+    try:
+        value = int(value)
+    except TypeError:
+        pass
+    else:
+        return value
+    try:
+        value = float(value)
+    except TypeError:
+        pass
+    else:
+        return value
+
+    msg = "Cannot convert value to basic type"
+    raise TypeError(msg)
 
 
 def filter_action(action: Action, available_ids: list[str]) -> Action:
@@ -187,19 +207,14 @@ def filter_observation(
     )
 
 
-def _convert_to_informations(
-    objects: list[Actuator] | list[Sensor] | list[Reward],
-    clazz: ActuatorInformation | SensorInformation | RewardInformation,
-) -> (
-    list[ActuatorInformation]
-    | list[SensorInformation]
-    | list[RewardInformation]
-):
+def convert_to_actuator_informations(
+    action: Action,
+) -> list[ActuatorInformation]:
     infos = []
-    for obj in objects:
+    for obj in action.actuators:
         space = Space.from_string(obj.space)
         infos.append(
-            clazz(
+            ActuatorInformation(
                 value=np.array(obj.value, dtype=space.dtype)
                 if obj.value is not None
                 else None,
@@ -210,22 +225,40 @@ def _convert_to_informations(
     return infos
 
 
-def convert_to_actuator_informations(
-    action: Action,
-) -> list[ActuatorInformation]:
-    return _convert_to_informations(action.actuators, ActuatorInformation)
-
-
 def convert_to_sensor_informations(
     observation: Observation,
 ) -> list[SensorInformation]:
-    return _convert_to_informations(observation.sensors, SensorInformation)
+    infos = []
+    for obj in observation.sensors:
+        space = Space.from_string(obj.space)
+        infos.append(
+            SensorInformation(
+                value=np.array(obj.value, dtype=space.dtype)
+                if obj.value is not None
+                else None,
+                uid=obj.uid,
+                space=space,
+            )
+        )
+    return infos
 
 
 def convert_to_reward_informations(
     observation: Observation,
 ) -> list[RewardInformation]:
-    return _convert_to_informations(observation.rewards, RewardInformation)
+    infos = []
+    for obj in observation.rewards:
+        space = Space.from_string(obj.space)
+        infos.append(
+            RewardInformation(
+                value=np.array(obj.value, dtype=space.dtype)
+                if obj.value is not None
+                else None,
+                uid=obj.uid,
+                space=space,
+            )
+        )
+    return infos
 
 
 def get_space_from_uid(

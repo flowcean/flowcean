@@ -14,8 +14,12 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
 
     environment: OfflineEnvironment
     batch_size: int
+<<<<<<< HEAD:src/flowcean/polars/environments/streaming.py
     data: pl.LazyFrame | None = None
     slice: pl.LazyFrame | None = None
+=======
+    data: pl.DataFrame  # | None = None
+>>>>>>> 6880901 (Fixed type-check errors):src/flowcean/environments/streaming.py
     i: int = 0
 
     def __init__(
