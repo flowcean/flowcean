@@ -16,7 +16,6 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
     batch_size: int
     data: pl.LazyFrame | None = None
     slice: pl.LazyFrame | None = None
-    data: pl.DataFrame  # | None = None
     i: int = 0
 
     def __init__(
