@@ -73,6 +73,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/flowcean"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "*.py",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

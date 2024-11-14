@@ -23,9 +23,6 @@ jobs:
           prune-cache: false
           cache-local-path: "${{ runner.workspace }}/.cache/uv"
 
-      - run: echo $GITHUB_WORKSPACE
-      - run: echo $RUNNER_WORKSPACE
-
       - name: Set up just
         uses: extractions/setup-just@v2
 

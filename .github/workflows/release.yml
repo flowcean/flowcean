@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+    branches: [main]
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: self-hosted
+    needs: [set-version]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.1"
+          prune-cache: false
+          cache-local-path: "${{ runner.workspace }}/.cache/uv"
+
+      - name: Export tag
+        id: vars
+        run: echo tag=${GITHUB_REF#refs/*/} >> $GITHUB_OUTPUT
+        if: ${{ github.event_name == 'release' }}
+
+      - name: Update project version
+        run: |
+          sed -i "s/^version = \".*\"/version = \"$RELEASE_VERSION\"/" pyproject.toml
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+        if: ${{ github.event_name == 'release' }}
+
+      - name: Build package
+        run: uvx --from build pyproject-build --installer uv
+
+      - name: Publish package
+        run: uvx twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
