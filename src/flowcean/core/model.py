@@ -17,7 +17,7 @@ class Model(ABC):
     @abstractmethod
     def predict(
         self,
-        input_features: pl.DataFrame,
+        input_features: pl.LazyFrame,
     ) -> pl.DataFrame:
         """Predict outputs for the given inputs.
 
@@ -60,7 +60,7 @@ class ModelWithTransform(Model):
     @override
     def predict(
         self,
-        input_features: pl.DataFrame,
+        input_features: pl.LazyFrame,
     ) -> pl.DataFrame:
         transformed = self.transform.apply(input_features)
         return self.model.predict(transformed)

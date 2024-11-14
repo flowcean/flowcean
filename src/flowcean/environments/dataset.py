@@ -19,9 +19,9 @@ class Dataset(OfflineEnvironment):
         data: The data to represent.
     """
 
-    data: pl.DataFrame
+    data: pl.LazyFrame
 
-    def __init__(self, data: pl.DataFrame) -> None:
+    def __init__(self, data: pl.LazyFrame) -> None:
         """Initialize the dataset environment.
 
         Args:
@@ -31,16 +31,18 @@ class Dataset(OfflineEnvironment):
         super().__init__()
 
     @override
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.LazyFrame:
         return self.data
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
-        return len(self.data)
+        return (
+            self.data.select(pl.len()).collect().item()
+        )  # TODO: This is potentially very slow!
 
 
 def collect(
-    environment: Iterable[pl.DataFrame] | Collection[pl.DataFrame],
+    environment: Iterable[pl.LazyFrame] | Collection[pl.LazyFrame],
     n: int | None = None,
     *,
     progress_bar: bool | dict[str, Any] = True,

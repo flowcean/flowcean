@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class IncrementalEnvironment(
     TransformedObservable,
     Stepable,
-    Iterable[pl.DataFrame],
+    Iterable[pl.LazyFrame],
 ):
     """Base class for incremental environments.
 
@@ -30,7 +30,7 @@ class IncrementalEnvironment(
         super().__init__()
 
     @override
-    def __iter__(self) -> Iterator[pl.DataFrame]:
+    def __iter__(self) -> Iterator[pl.LazyFrame]:
         yield self.observe()
         while True:
             try:

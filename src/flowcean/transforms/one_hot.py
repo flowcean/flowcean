@@ -67,8 +67,8 @@ class OneHot(Transform):
     @override
     def apply(
         self,
-        data: pl.DataFrame,
-    ) -> pl.DataFrame:
+        data: pl.LazyFrame,
+    ) -> pl.LazyFrame:
         """Transform data with this one hot transformation.
 
         Transform data with this one hot transformation and return the
@@ -101,6 +101,7 @@ class OneHot(Transform):
                     ]
                 )
                 .select(pl.any_horizontal(pl.all()).all())
+                .collect(streaming=True)
                 .item(0, 0)
             ):
                 raise NoMatchingCategoryError
@@ -109,7 +110,7 @@ class OneHot(Transform):
     @classmethod
     def from_dataframe(
         cls,
-        data: pl.DataFrame,
+        data: pl.LazyFrame,
         features: Iterable[str],
         *,
         check_for_missing_categories: bool = False,
@@ -141,7 +142,10 @@ class OneHot(Transform):
                     feature,
                 )
             feature_categories[feature] = (
-                data.select(pl.col(feature).unique()).to_series().to_list()
+                data.select(pl.col(feature).unique())
+                .collect(streaming=True)
+                .to_series()
+                .to_list()
             )
         return cls(
             feature_categories,
