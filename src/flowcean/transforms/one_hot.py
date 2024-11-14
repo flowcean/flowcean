@@ -91,7 +91,6 @@ class OneHot(Transform):
                 ]
             ).drop(feature)
 
-            # Check if any of the values is not present as a category
             if check_for_missing_category and (
                 not data.select(
                     [
