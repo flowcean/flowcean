@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
 from statistics import mean, median, stdev
-from typing import Any, Self, override
+from typing import Any, override
 
 import mosaik_api_v3
 from numpy.random import RandomState
@@ -208,9 +208,6 @@ class MosaikEnvironment(ActiveEnvironment):
         self.rewards = calculate_reward(self.sensors)
 
         return Observation(sensors=self.sensors, rewards=self.rewards)
-
-    # def transform(self, observation: Observation) -> Observation:
-    #     return observation
 
 
 def calculate_reward(sensors: list) -> list:

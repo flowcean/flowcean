@@ -52,15 +52,11 @@ class ActiveLearner(ABC):
     """
 
     @abstractmethod
-<<<<<<< HEAD
-    def learn_active(self, action: Data, observation: Data) -> Model:
-=======
     def learn_active(
         self,
         action: Any,
         observation: Any,
     ) -> Model:
->>>>>>> 6880901 (Fixed type-check errors)
         """Learn from actions and observations.
 
         Args:
@@ -72,11 +68,7 @@ class ActiveLearner(ABC):
         """
 
     @abstractmethod
-<<<<<<< HEAD
-    def propose_action(self, observation: Data) -> Data:
-=======
     def propose_action(self, observation: Any) -> Any:
->>>>>>> 6880901 (Fixed type-check errors)
         """Propose an action based on an observation.
 
         Args:
