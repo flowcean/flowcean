@@ -46,7 +46,8 @@ def main() -> None:
         data.observe()
     )
 
-    learner = GrpcPassiveAutomataLearner.with_address(address="localhost:8080")
+    #learner = GrpcPassiveAutomataLearner.with_address(address="localhost:51378")
+    learner = GrpcPassiveAutomataLearner.run_docker(image="java-automata-learner:latest", pull=False)
     inputs = ["input"]
     outputs = ["output"]
 
