@@ -6,6 +6,7 @@ Start with cloning the repository:
 
 ```bash
 git clone https://github.com/flowcean/flowcean
+cd flowcean
 ```
 
 Continue with installation of dependencies.
