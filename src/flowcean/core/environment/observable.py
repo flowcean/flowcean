@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self, override
-
-import polars as pl
+from typing import Any, Self, override
 
 from flowcean.core.transform import Identity, Transform
 
 
-class Observable[Observation](ABC):
+class Observable(ABC):
     """Base class for observations."""
 
     @abstractmethod
-    def observe(self) -> Observation:
+    def observe(self) -> Any:
         """Observe and return the observation."""
 
 
-class TransformedObservable(Observable[pl.DataFrame]):
+class TransformedObservable(Observable):
     """Base class for observations that carry a transform.
 
     Attributes:
@@ -46,7 +44,7 @@ class TransformedObservable(Observable[pl.DataFrame]):
         return self
 
     @abstractmethod
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> Any:
         """Observe and return the observation without applying the transform.
 
         This method must be implemented by subclasses.
@@ -56,7 +54,7 @@ class TransformedObservable(Observable[pl.DataFrame]):
         """
 
     @override
-    def observe(self) -> pl.DataFrame:
+    def observe(self) -> Any:
         return self.transform(self._observe())
 
     def __or__(

@@ -6,13 +6,15 @@ It is used by the :class:`.MosaikEnvironment` for synchronization.
 import logging
 import queue
 from datetime import datetime, timedelta
+from typing import Any
 
 import mosaik_api_v3
 from mosaik.exceptions import SimulationError
+from mosaik_api_v3.types import Meta
 
 LOG = logging.getLogger("flowcean_mosaik.simulator")
 
-META = {
+META: dict[str, Any] = {
     "type": "time-based",
     "models": {
         "Sensor": {
@@ -53,7 +55,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self.sensor_queue = sensor_queue
         self.actuator_queue = actuator_queue
         self.sid = None
-        self.step_size = None
+        self.step_size: int = 0
         self.models = {}
         self.uid_dict = {}
         self.model_ctr = {"Sensor": 0, "Actuator": 0}
@@ -62,7 +64,12 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self._now_dt = None
         self._timeout = 30
 
-    def init(self, sid: str, **sim_params: dict) -> dict:
+    def init(
+        self,
+        sid: str,
+        time_resolution: float = 1,  # noqa: ARG002
+        **sim_params: dict[str, Any],
+    ) -> Meta:
         """Initialize this simulator.
 
         Called exactly ones after the simulator has been started.
@@ -79,11 +86,17 @@ class SyncSimulator(mosaik_api_v3.Simulator):
 
         """
         self.sid = sid
-        self.step_size = sim_params["step_size"]
+        step_size = sim_params["step_size"]
+        if isinstance(step_size, int):
+            self.step_size = step_size
+        else:
+            msg = "Step size is not of type int."
+            raise TypeError(msg)
+
         if "start_date" in sim_params:
             try:
                 self._now_dt = datetime.strptime(
-                    sim_params["start_date"], "%Y-%m-%d %H:%M:%S%z"
+                    str(sim_params["start_date"]), "%Y-%m-%d %H:%M:%S%z"
                 )
             except ValueError:
                 print(
@@ -139,7 +152,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         """
         LOG.debug("Stepped SyncSim at step %d (advance %d)", time, max_advance)
         self._sim_time = time
-        sensors = {"simtime_ticks": self._sim_time}
+        sensors: dict[str, Any] = {"simtime_ticks": self._sim_time}
         if self._now_dt is not None:
             self._now_dt += timedelta(seconds=self.step_size)
             sensors["simtime_timestamp"] = self._now_dt.strftime(
@@ -183,6 +196,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         data = {}
         success = False
         to_ctr = self._timeout
+        actuator_data = {}
         while not success:
             try:
                 actuator_data = self.actuator_queue.get(block=True, timeout=3)
@@ -210,7 +224,9 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         return data
 
     def finalize(self) -> None:
-        sensors = {"simtime_ticks": self._sim_time + self.step_size}
+        sensors: dict[str, Any] = {
+            "simtime_ticks": self._sim_time + self.step_size
+        }
         if self._now_dt is not None:
             self._now_dt += timedelta(seconds=self.step_size)
             sensors["simtime_timestamp"] = self._now_dt.strftime(

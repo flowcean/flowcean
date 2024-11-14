@@ -9,13 +9,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
 from statistics import mean, median, stdev
-from typing import Any, Self
+from typing import Any, Self, override
 
 import mosaik_api_v3
 from numpy.random import RandomState
 from simulator import SyncSimulator
 
 from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.transform import Identity
 from flowcean.strategies.active import StopLearning
 
 LOG = logging.getLogger("mosaik_environment")
@@ -71,12 +72,11 @@ class MosaikEnvironment(ActiveEnvironment):
         silent: bool = False,
         params: dict[str, Any] | None = None,
     ) -> None:
+        self.transform = Identity()
         self.uid = "MosaikEnvironment_flowcean_edition"
         self.rng: RandomState = RandomState(seed)
 
         multiprocessing.set_start_method("spawn")
-        self.sensor_queue: queue.Queue
-        self.actuator_queue: queue.Queue
 
         self._module = module
         self._description_func = description_func
@@ -96,13 +96,13 @@ class MosaikEnvironment(ActiveEnvironment):
         self.sync_task: threading.Thread
         self.sim_proc: multiprocessing.Process
 
-        self._data_for_simulation: dict | None = None
+        self._data_for_simulation: dict = {}
 
         self.sensors = None
         self.rewards = None
-        self._data_from_simulation = None
+        self._data_from_simulation: dict = {}
+        self._data_received: bool = False
 
-    def load(self) -> Self:
         self.sensor_queue = queue.Queue(1)
         self.actuator_queue = queue.Queue(1)
 
@@ -143,8 +143,8 @@ class MosaikEnvironment(ActiveEnvironment):
         LOG.info(
             "%s finished setup. Co-simulation is now starting up.", log_(self)
         )
-
-        return Action(actuators=self.actuators), Observation(
+        self.initial_action = Action(actuators=self.actuators)
+        self.initial_observation = Observation(
             sensors=self.sensors, rewards=[]
         )
 
@@ -156,6 +156,7 @@ class MosaikEnvironment(ActiveEnvironment):
                 self._data_for_simulation[actuator.uid] = actuator.value
         else:
             LOG.warning("Simulation will step without setpoints.")
+        self._data_received = False
 
     def step(self) -> None:
         if self._data_for_simulation is None:
@@ -169,11 +170,13 @@ class MosaikEnvironment(ActiveEnvironment):
         if done or self._data_for_simulation is None:
             raise StopLearning
 
+        self._data_received = True
         self.sensors = None
         self.rewards = None
 
+    @override
     def _observe(self) -> Observation:
-        if self._data_for_simulation is None:
+        if not self._data_received:
             try:
                 done, self._data_from_simulation = self.sensor_queue.get(
                     block=True, timeout=10
@@ -185,12 +188,14 @@ class MosaikEnvironment(ActiveEnvironment):
                     log_(self),
                 )
                 self._data_for_simulation = {}
+                self._data_received = False
                 self.step()
 
         if self.sensors is not None and self.rewards is not None:
             return Observation(sensors=self.sensors, rewards=self.rewards)
 
         self.sensors = []
+        self.rewards = []
         for uid, value in self._data_from_simulation.items():
             if uid == "simtime_ticks":
                 continue
@@ -204,8 +209,8 @@ class MosaikEnvironment(ActiveEnvironment):
 
         return Observation(sensors=self.sensors, rewards=self.rewards)
 
-    def transform(self, observation: Observation) -> Observation:
-        return observation
+    # def transform(self, observation: Observation) -> Observation:
+    #     return observation
 
 
 def calculate_reward(sensors: list) -> list:
@@ -264,10 +269,13 @@ def parse_end(end: str | int) -> int:
     """
     if isinstance(end, str):
         parts = end.split("*")
-        end = 1
+        prod_end = 1.0
         for part in parts:
-            end *= float(part)
-    return int(end)
+            prod_end *= float(part)
+        converted_end = int(prod_end)
+    else:
+        converted_end = int(end)
+    return converted_end
 
 
 def load_funcs(
@@ -378,7 +386,9 @@ def _start_world(
     )
 
 
-def create_sensors(sensor_defs: list) -> list[Sensor]:
+def create_sensors(
+    sensor_defs: list,
+) -> tuple[list[Sensor], dict[str, Sensor]]:
     """Create sensors from the sensor description.
 
     The description is provided during initialization.
@@ -389,8 +399,8 @@ def create_sensors(sensor_defs: list) -> list[Sensor]:
         The *list* containing the created sensor objects.
 
     """
-    sensors = []
-    sensor_map = {}
+    sensors: list[Sensor] = []
+    sensor_map: dict[str, Sensor] = {}
     for sensor in sensor_defs:
         uid = str(sensor.get("uid", sensor.get("sensor_id", "Unnamed Sensor")))
         try:
@@ -404,7 +414,9 @@ def create_sensors(sensor_defs: list) -> list[Sensor]:
     return sensors, sensor_map
 
 
-def create_actuators(actuator_defs: list) -> list[Actuator]:
+def create_actuators(
+    actuator_defs: list,
+) -> tuple[list[Actuator], dict[str, Actuator]]:
     """Create actuators from the actuator description.
 
     The description is provided during initialization.
@@ -415,8 +427,8 @@ def create_actuators(actuator_defs: list) -> list[Actuator]:
         The *list* containing the created actuator objects.
 
     """
-    actuators = []
-    actuator_map = {}
+    actuators: list[Actuator] = []
+    actuator_map: dict[str, Actuator] = {}
     for actuator in actuator_defs:
         uid = str(
             actuator.get(

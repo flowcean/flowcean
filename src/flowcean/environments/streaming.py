@@ -15,7 +15,7 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
 
     environment: OfflineEnvironment
     batch_size: int
-    data: pl.DataFrame | None = None
+    data: pl.DataFrame  # | None = None
     i: int = 0
 
     def __init__(
