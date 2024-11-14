@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Self, override
 
@@ -55,6 +56,7 @@ class _DockerBackend(_Backend):
     _docker_client: DockerClient
     _docker_container: Container
     _server_address: str
+    _internal_port: int
 
     def __init__(
         self,
@@ -73,7 +75,7 @@ class _DockerBackend(_Backend):
             image_name,
             ports={f"{internal_port}/tcp": ("127.0.0.1", None)},  # type: ignore[type]
             detach=True,
-            remove=True,
+            remove=False,
         )
         if isinstance(container, Container):
             self._docker_container = container
@@ -81,10 +83,16 @@ class _DockerBackend(_Backend):
             message = "did not receive a container"
             raise TypeError(message)
         self._docker_container.reload()
-        ports = self._docker_container.ports
+        client = docker.APIClient(base_url="unix://var/run/docker.sock")
+        ports = client.inspect_container(self._docker_container.id)[  # type: ignore[type]
+            "NetworkSettings"
+        ][
+            "Ports"
+        ]
         host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
         host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
         self._server_address = f"{host_ip}:{host_port}"
+        time.sleep(2)
 
     @property
     @override
@@ -186,10 +194,8 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
             inputs=[_row_to_proto(row) for row in inputs.rows()],
             outputs=[_row_to_proto(row) for row in outputs.rows()],
         )
-        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(
-            proto_datapackage
-        )
-        for status_message in stream:
+        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(proto_datapackage)
+        for status_message in stream:  # type: ignore[type]
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 msg = "training failed"

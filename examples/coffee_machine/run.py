@@ -31,7 +31,8 @@ def main() -> None:
     print(data.get_data().head())
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
-    learner = GrpcPassiveAutomataLearner.with_address(address="localhost:8080")
+    #learner = GrpcPassiveAutomataLearner.with_address(address="localhost:51378")
+    learner = GrpcPassiveAutomataLearner.run_docker(image="java-automata-learner:latest", pull=False)
     inputs = ["input"]
     outputs = ["output"]
 
