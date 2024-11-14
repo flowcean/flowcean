@@ -3,7 +3,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 import flowcean.cli
-from flowcean.core.environment.chain import ChainEnvironment
+from flowcean.core.environment.chained import ChainedOfflineEnvironments
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
 from flowcean.learners.grpc_passive_automata.learner import (
@@ -13,23 +13,24 @@ from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms.explode import Explode
 from flowcean.transforms.select import Select
+from flowcean.transforms.to_time_series import ToTimeSeries
 from flowcean.transforms.unnest import Unnest
 
 
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    data = ChainEnvironment(
-        *[
-            UriDataLoader("file:" + path.as_posix()).load().to_time_series("t")
+    data = ChainedOfflineEnvironments(
+        [
+            UriDataLoader("file:" + path.as_posix()).with_transform(ToTimeSeries("t"))
             for path in tqdm(
                 list(Path("./data").glob("*.csv")),
                 desc="Loading environments",
             )
         ]
     )
-    print(data.get_data().head())
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
+    print(data.observe().head())
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data.collect())
 
     #learner = GrpcPassiveAutomataLearner.with_address(address="localhost:51378")
     learner = GrpcPassiveAutomataLearner.run_docker(image="java-automata-learner:latest", pull=False)
@@ -49,7 +50,7 @@ def main() -> None:
         inputs,
         outputs,
         [MeanAbsoluteError(), MeanSquaredError()],
-        Explode("output") | Unnest("output") | Select(["value"]),
+        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
     )
     print(report)
 
