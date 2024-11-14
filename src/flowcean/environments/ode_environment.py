@@ -175,5 +175,5 @@ class OdeEnvironment[X: State](IncrementalEnvironment):
         self.ts, self.states = self.system.step(self.dt)
 
     @override
-    def _observe(self) -> pl.DataFrame:
-        return self.map_to_dataframe(self.ts, self.states)
+    def _observe(self) -> pl.LazyFrame:
+        return self.map_to_dataframe(self.ts, self.states).lazy()

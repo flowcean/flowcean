@@ -17,7 +17,7 @@ class OfflineMetric(ABC):
         return self.__class__.__name__
 
     @abstractmethod
-    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         """Calculate the metric value for given true and predicted labels.
 
         Args:

@@ -73,7 +73,9 @@ class OfflineEnvironment(TransformedObservable):
         Args:
             path: Path to the parquet file where the data is written.
         """
-        self.observe().write_parquet(Path(path).with_suffix(".parquet"))
+        self.observe().collect(streaming=True).write_parquet(
+            Path(path).with_suffix(".parquet")
+        )
 
     def as_stream(self, batch_size: int) -> StreamingOfflineEnvironment:
         """Convert the offline environment to a streaming environment.
@@ -110,7 +112,7 @@ class JoinedOfflineEnvironment(OfflineEnvironment):
         super().__init__()
 
     @override
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.LazyFrame:
         return pl.concat(
             (environment.observe() for environment in self.environments),
             how="horizontal",

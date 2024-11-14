@@ -35,13 +35,15 @@ class Standardize(Transform, FitOnce):
         super().__init__()
 
     @override
-    def fit(self, data: pl.DataFrame) -> None:
-        self.mean = {c: _as_float(data[c].mean()) for c in data.columns}
-        self.std = {c: _as_float(data[c].std()) for c in data.columns}
-        self.counts = len(data)
+    def fit(self, data: pl.LazyFrame) -> None:
+        df = data.collect(streaming=True)
+
+        self.mean = {c: _as_float(df[c].mean()) for c in data.columns}
+        self.std = {c: _as_float(df[c].std()) for c in data.columns}
+        self.counts = len(df)
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         if self.mean is None or self.std is None:
             message = "Standardize transform has not been fitted"
             raise RuntimeError(message)

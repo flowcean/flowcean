@@ -74,8 +74,8 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
         self.data = pl.DataFrame()
 
     @override
-    def _observe(self) -> pl.DataFrame:
-        return self.data
+    def _observe(self) -> pl.LazyFrame:
+        return self.data.lazy()
 
     @override
     def step(self) -> None:

@@ -21,5 +21,5 @@ class Rename(Transform):
         self.mapping = mapping
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return data.rename(self.mapping)

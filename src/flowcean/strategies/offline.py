@@ -84,7 +84,7 @@ def evaluate_offline(
     predictions = model.predict(input_features)
     return Report(
         {
-            metric.name: metric(output_features, predictions)
+            metric.name: metric(output_features, predictions.lazy())
             for metric in metrics
         },
     )
