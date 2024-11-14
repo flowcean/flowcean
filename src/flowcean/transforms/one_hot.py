@@ -37,7 +37,7 @@ class OneHot(Transform):
      0        | 0         | 0         | 1
     """
 
-    feature_categrorie_mapping: dict[str, dict[str, Any]]
+    feature_category_mapping: dict[str, dict[str, Any]]
 
     def __init__(
         self,
@@ -49,7 +49,7 @@ class OneHot(Transform):
             feature_categories: Dictionary of features and a list of
                 categorical values to encode for each.
         """
-        self.feature_categrorie_mapping = {
+        self.feature_category_mapping = {
             feature: {f"{feature}_{value}": value for value in values}
             for feature, values in feature_categories.items()
         }
@@ -78,12 +78,12 @@ class OneHot(Transform):
         Returns:
             The transformed data.
         """
-        if len(self.feature_categrorie_mapping) == 0:
+        if len(self.feature_category_mapping) == 0:
             raise NoCategoriesError
         for (
             feature,
             category_mappings,
-        ) in self.feature_categrorie_mapping.items():
+        ) in self.feature_category_mapping.items():
             data = data.with_columns(
                 [
                     pl.col(feature).eq(value).cast(pl.Int64).alias(name)
