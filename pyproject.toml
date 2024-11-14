@@ -37,6 +37,7 @@ all = [
   "flowcean[lightning]",
   "flowcean[grpc]",
   "flowcean[ros]",
+  "flowcean[energy]",
 ]
 
 sklearn = [
@@ -54,6 +55,13 @@ grpc = [
 ros = [
   "rosbags",
   "rosbags-dataframe",
+]
+energy = [
+  "midas-mosaik[base]>=2.0.0a6",
+  "midas-palaestrai>=3.5.4a1",
+  "palaestrai-agents",
+  "palaestrai@git+https://gitlab.com/arl2/palaestrai.git@agenc_compatibility#egg=palaestrai",
+  "dask[dataframe]"
 ]
 
 [tool.mypy]
@@ -180,3 +188,6 @@ coffee_machine = "cd examples/coffee_machine && python run.py"
 failure_time_prediction = "cd examples/failure_time_prediction && python run.py"
 linear_data = "cd examples/linear_data && python run.py"
 one_tank = "cd examples/one_tank && python run.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
