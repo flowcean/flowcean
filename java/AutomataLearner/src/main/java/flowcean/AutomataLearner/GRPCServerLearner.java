@@ -3,6 +3,7 @@ package flowcean.AutomataLearner;
 import de.learnlib.algorithm.PassiveLearningAlgorithm.PassiveMealyLearner;
 import de.learnlib.algorithm.rpni.BlueFringeRPNIMealy;
 import io.flowcean.learner.grpc.LearnerGrpc;
+import io.flowcean.learner.grpc.LearnerOuterClass;
 import io.flowcean.learner.grpc.LearnerOuterClass.*;
 import io.flowcean.learner.grpc.LearnerOuterClass.Prediction.Builder;
 import net.automatalib.alphabet.Alphabet;
@@ -45,15 +46,16 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
         responseObserver.onNext(message);
 
         //1. Read data
-        List<DataRow> rawWords = data.getInputsList();
-        List<DataRow> rawOutputs = data.getOutputsList();
+        List<TimeSeries> rawWords = data.getInputsList();
+        List<TimeSeries> rawOutputs = data.getOutputsList();
 
         //2. Transform Data to Words
         List<Pair<Word<Integer>, Word<Integer>>> wordObs;
         try {
             wordObs = exportDataRowAsWords(
                     rawWords,
-                    rawOutputs);
+                    rawOutputs,
+                    true);
         } catch (MessageException e) {
             responseObserver.onNext(e.getStatusMessage());
             responseObserver.onCompleted();
@@ -99,22 +101,23 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
     public void predict(io.flowcean.learner.grpc.LearnerOuterClass.DataPackage data,
                         io.grpc.stub.StreamObserver<io.flowcean.learner.grpc.LearnerOuterClass.Prediction> responseObserver) {
         //1. Read Data
-        List<DataRow> rawWords = data.getInputsList();
-        List<DataRow> rawOutputs = data.getOutputsList();
+        List<TimeSeries> rawInputs = data.getInputsList();
+        List<TimeSeries> rawOutputs = data.getOutputsList();
 
         // 2. Transform Data to Words
         List<Pair<Word<Integer>, Word<Integer>>> wordObs;
         Builder prediction = Prediction.newBuilder();
         try {
             wordObs = exportDataRowAsWords(
-                    rawWords,
-                    rawOutputs);
+                    rawInputs,
+                    rawOutputs,
+                    false);
         } catch (MessageException e) {
             prediction.setStatus(buildMessage(
                     Status.STATUS_FAILED,
                     e.getMessage(),
                     LogLevel.LOGLEVEL_FATAL));
-            io.flowcean.learner.grpc.LearnerOuterClass.DataRow emptyObs = DataRow.newBuilder().build();
+            io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries emptyObs = TimeSeries.newBuilder().build();
             prediction.addPredictions(emptyObs);
             responseObserver.onNext(prediction.build());
             responseObserver.onCompleted();
@@ -124,10 +127,13 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
         //3. Compute Prediction
         for (Pair<Word<Integer>, Word<Integer>> pair : wordObs) {
             Word<Integer> predictedOutput = model.computeOutput(pair.getValue0());
-            int val = predictedOutput.lastSymbol();
-            List<DataField> fields = new ArrayList<>();
-            fields.add(DataField.newBuilder().setInt(val).build());
-            io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder obs = DataRow.newBuilder().addAllFields(fields);
+            List<TimeSample> samples = new ArrayList<>();
+            for(int i = 0; i < predictedOutput.size(); i++){
+                samples.add(io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.newBuilder()
+                        .setTime(i).setValue(
+                                LearnerOuterClass.DataField.newBuilder().setInt(predictedOutput.getSymbol(i))).build());
+            }
+            io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder obs = TimeSeries.newBuilder().addAllSamples(samples);
             prediction.addPredictions(obs.build());
         }
 
@@ -160,39 +166,41 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
     /**
      * Exports the GRPCPackage's data rows as input-output pairs of LearnLib's words
      *
-     * @param rawWords   Data from GRPC Package, contains the all inputs which are all entries except for the last output
-     * @param rawOutputs Data from GRPC package, contains the output, i,e,m the last output of each word, for prediction this should be empty
+     * @param rawInputs  Data from GRPC Package, contains all inputs sequences
+     * @param rawOutputs Data from GRPC package, contains all output sequences
      * @return a list of input-output pairs representing observed traces
      * @throws MessageException exception for unexpected data
      */
-    List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<DataRow> rawWords, List<DataRow> rawOutputs) throws MessageException {
-        if (rawWords.isEmpty()) {
+    List<Pair<Word<Integer>, Word<Integer>>> exportDataRowAsWords(List<TimeSeries> rawInputs, List<TimeSeries> rawOutputs, boolean withOutputs) throws MessageException {
+        if (rawInputs.isEmpty()) {
             throw new MessageException("No inputs received");
         }
-
-        boolean withOutput = !rawOutputs.isEmpty();
+        if (withOutputs && rawInputs.size() != rawOutputs.size()){
+            throw new MessageException("Inputs and outputs have unequal length");
+        }
 
         List<Pair<Word<Integer>, Word<Integer>>> wordObs = new ArrayList<>();
 
-        for (int i = 0; i < rawWords.size(); i++) {
-            DataRow row = rawWords.get(i);
+        for (int i = 0; i < rawInputs.size(); i++) {
             List<Integer> inputWord = new ArrayList<>();
             List<Integer> outputWord = new ArrayList<>();
-            for (int j = 0; j < row.getFieldsCount(); j++) {
-                if (!row.getFields(j).hasInt()) {
-                    throw new MessageException("Inputs don't have field Int");
-                }
-                //Separate alternating in- and outputs
-                if (j % 2 == 0) {
-                    inputWord.add(row.getFields(j).getInt());
-                } else {
-                    outputWord.add(row.getFields(j).getInt());
+
+            List<TimeSample> inputSamples = new ArrayList<TimeSample>(rawInputs.get(i).getSamplesList());
+            inputSamples.sort((sample1, sample2) -> {return Double.compare(sample1.getTime(),sample2.getTime());});
+            List<TimeSample> outputSamples = new ArrayList<TimeSample>();
+            if(withOutputs) {
+                outputSamples = new ArrayList<TimeSample>(rawOutputs.get(i).getSamplesList());
+                outputSamples.sort((sample1, sample2) -> {
+                    return Double.compare(sample1.getTime(), sample2.getTime());
+                });
+                if (inputSamples.size() != outputSamples.size()) {
+                    throw new MessageException("Input and output have unequal length");
                 }
             }
-            if (withOutput) {
-                outputWord.add(rawOutputs.get(i).getFields(0).getInt());
-                if (outputWord.size() != inputWord.size()) {
-                    throw new MessageException("Inputs and outputs do not have same length.");
+            for (int j = 0; j < inputSamples.size(); j++) {
+                inputWord.add(inputSamples.get(j).getValue().getInt());
+                if(withOutputs) {
+                    outputWord.add(outputSamples.get(j).getValue().getInt());
                 }
             }
             wordObs.add(new Pair<>(Word.fromList(inputWord), Word.fromList(outputWord)));

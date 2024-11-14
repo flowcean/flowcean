@@ -2,45 +2,31 @@ syntax = "proto3";
 option java_package = "io.flowcean.learner.grpc";
 
 message DataPackage {
-  repeated DataRow inputs = 1;
-  repeated DataRow outputs = 2;
+  repeated TimeSeries inputs = 1;
+  repeated TimeSeries outputs = 2;
 
 }
 
 message Prediction {
-  repeated DataRow predictions = 1;
+  repeated TimeSeries predictions = 1;
   StatusMessage status = 2;
 }
 
-message DataRow {
-  repeated DataField fields = 1;
+message TimeSeries {
+  repeated TimeSample samples = 1;
+}
+
+message TimeSample {
+  double time = 1;
+  DataField value = 2;
 }
 
 message DataField {
   oneof field {
     int32 int = 1;
     double double = 2;
-    VectorInt vector_int = 3;
-    VectorDouble vector_double = 4;
-    MatrixInt matrix_int = 5;
-    MatrixDouble matrix_double = 6;
+    string string = 3;
   }
-}
-
-message VectorInt { repeated int32 data = 1; }
-
-message VectorDouble { repeated double data = 1; }
-
-message MatrixInt {
-  repeated int32 data = 1;
-  int32 row_count = 2;
-  int32 column_count = 3;
-}
-
-message MatrixDouble {
-  repeated double data = 1;
-  int32 row_count = 2;
-  int32 column_count = 3;
 }
 
 message StatusMessage {

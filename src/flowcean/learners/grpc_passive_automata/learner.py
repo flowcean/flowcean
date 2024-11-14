@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Self, override
 
@@ -16,11 +17,12 @@ from flowcean.core.model import Model
 from ._generated.learner_pb2 import (
     DataField,
     DataPackage,
-    DataRow,
     LogLevel,
     Message,
     Prediction,
     Status,
+    TimeSample,
+    TimeSeries,
 )
 from ._generated.learner_pb2_grpc import LearnerStub
 
@@ -54,6 +56,7 @@ class _DockerBackend(_Backend):
     _docker_client: DockerClient
     _docker_container: Container
     _server_address: str
+    _internal_port: int
 
     def __init__(
         self,
@@ -68,11 +71,11 @@ class _DockerBackend(_Backend):
             logger.info("Pulling image '%s'", image_name)
             self._docker_client.images.pull(image_name)
         logger.info("Starting container")
-        container = self._docker_client.containers.run(
+        container = self._docker_client.containers.run(  # type: ignore[type]
             image_name,
-            ports={f"{internal_port}/tcp": ("127.0.0.1", 0)},
+            ports={f"{internal_port}/tcp": ("127.0.0.1", None)},  # type: ignore[type]
             detach=True,
-            remove=True,
+            remove=False,
         )
         if isinstance(container, Container):
             self._docker_container = container
@@ -80,10 +83,16 @@ class _DockerBackend(_Backend):
             message = "did not receive a container"
             raise TypeError(message)
         self._docker_container.reload()
-        ports = self._docker_container.ports
+        client = docker.APIClient(base_url="unix://var/run/docker.sock")
+        ports = client.inspect_container(self._docker_container.id)[  # type: ignore[type]
+            "NetworkSettings"
+        ][
+            "Ports"
+        ]
         host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
         host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
         self._server_address = f"{host_ip}:{host_port}"
+        time.sleep(2)
 
     @property
     @override
@@ -97,10 +106,10 @@ class _DockerBackend(_Backend):
             logger.info("Removing container")
             self._docker_container.remove()
         if hasattr(self, "_docker_client"):
-            self._docker_client.close()
+            self._docker_client.close()  # type: ignore[type]
 
 
-class GrpcLearner(SupervisedLearner, Model):
+class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
     """Binding for an external learner using gRPC.
 
     This learner class connects to an external learner using gRPC.
@@ -122,7 +131,7 @@ class GrpcLearner(SupervisedLearner, Model):
         """
         super().__init__()
         self._backend = backend
-        self.channel = grpc.insecure_channel(
+        self.channel = grpc.insecure_channel(  # type: ignore[type]
             self._backend.server_address,
             options=[
                 (
@@ -180,13 +189,13 @@ class GrpcLearner(SupervisedLearner, Model):
         self,
         inputs: pl.DataFrame,
         outputs: pl.DataFrame,
-    ) -> GrpcLearner:
+    ) -> GrpcPassiveAutomataLearner:
         proto_datapackage = DataPackage(
             inputs=[_row_to_proto(row) for row in inputs.rows()],
             outputs=[_row_to_proto(row) for row in outputs.rows()],
         )
-        stream = self._stub.Train(proto_datapackage)
-        for status_message in stream:
+        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(proto_datapackage)
+        for status_message in stream:  # type: ignore[type]
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 msg = "training failed"
@@ -228,15 +237,16 @@ def _log_messages(messages: Iterable[Message]) -> None:
 
 def _row_to_proto(
     row: tuple[Any, ...],
-) -> DataRow:
-    return DataRow(
-        fields=[
+) -> TimeSeries:
+    return TimeSeries(
+        samples=[
             (
-                DataField(int=entry)
-                if isinstance(entry, int)
-                else DataField(double=entry)
+                TimeSample(
+                    time=entry["time"],
+                    value=DataField(int=entry["value"]),
+                )
             )
-            for entry in row
+            for entry in row[0]
         ],
     )
 
@@ -244,14 +254,23 @@ def _row_to_proto(
 def _predictions_to_frame(
     predictions: Prediction,
 ) -> pl.DataFrame:
-    data = [
-        [
-            field.double if field.HasField("double") else field.int
-            for field in prediction.fields
-        ]
-        for prediction in predictions.predictions
-    ]
-    return pl.DataFrame(data)
+    series_list = []
+    for prediction in predictions.predictions:
+        time = []
+        value = []
+        for sample in prediction.samples:
+            time.append(sample.time)
+            value.append(sample.value.int)
+        df = pl.DataFrame({"time": time, "value": value})
+        df = df.select(pl.struct(pl.all()).alias("output"))
+        series_list.append(df["output"])
+    return pl.DataFrame(
+        pl.Series(
+            "output",
+            series_list,
+            pl.List(pl.Struct({"time": pl.Float64, "value": pl.Float64})),
+        )
+    )
 
 
 def _loglevel_from_proto(loglevel: LogLevel.V) -> int:

@@ -1,22 +1,41 @@
+from pathlib import Path
+
+from tqdm import tqdm
+
 import flowcean.cli
+from flowcean.core.environment.chained import ChainedOfflineEnvironments
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader
-from flowcean.learners.grpc.learner import GrpcLearner
+from flowcean.learners.grpc_passive_automata.learner import (
+    GrpcPassiveAutomataLearner,
+)
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
+from flowcean.transforms.explode import Explode
+from flowcean.transforms.select import Select
+from flowcean.transforms.to_time_series import ToTimeSeries
+from flowcean.transforms.unnest import Unnest
 
 
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    data = UriDataLoader(uri="file:./data/coffee_data.csv")
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
-
-    learner = GrpcLearner.run_docker(
-        image="collaborating.tuhh.de:5005/w-6/agenc/agenc/java-automata-learner:latest",
+    data = ChainedOfflineEnvironments(
+        [
+            UriDataLoader("file:" + path.as_posix()).with_transform(ToTimeSeries("t"))
+            for path in tqdm(
+                list(Path("./data").glob("*.csv")),
+                desc="Loading environments",
+            )
+        ]
     )
-    inputs = ["^i.*$", "^o\\d$", "^o1[0-8]$"]
-    outputs = ["o19"]
+    print(data.observe().head())
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data.collect())
+
+    #learner = GrpcPassiveAutomataLearner.with_address(address="localhost:51378")
+    learner = GrpcPassiveAutomataLearner.run_docker(image="java-automata-learner:latest", pull=False)
+    inputs = ["input"]
+    outputs = ["output"]
 
     model = learn_offline(
         train,
@@ -31,6 +50,7 @@ def main() -> None:
         inputs,
         outputs,
         [MeanAbsoluteError(), MeanSquaredError()],
+        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
     )
     print(report)
 
