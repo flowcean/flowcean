@@ -92,7 +92,7 @@ class OneHotTransform(unittest.TestCase):
         )
 
     def test_missing_category(self) -> None:
-        transform = OneHot({"a": [1, 7]})
+        transform = OneHot({"a": [1, 7]}, check_for_missing_categories=True)
         data_frame = pl.DataFrame(
             [
                 {"a": 1, "b": 2, "c": 3},
@@ -105,7 +105,6 @@ class OneHotTransform(unittest.TestCase):
         with pytest.raises(NoMatchingCategoryError):
             transform.apply(
                 data_frame,
-                check_for_missing_category=True,
             )
 
 
