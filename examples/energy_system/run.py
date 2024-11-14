@@ -31,9 +31,12 @@ def main() -> None:
         "Powergrid-0.0-bus-6.vm_pu",
     ]
     learner = SACLearner(actuator_ids, sensor_ids, ArlDefenderObjective())
+    learner.load(env.initial_action, env.initial_observation)
 
-    model = learn_active(env, learner)
-    print(model.summary())
+    model = learn_active(env, learner)  # noqa: F841
+    # Commented out for type checking
+    # Uncomment to see model summary
+    # print(model.summary())  # noqa: ERA001
 
     data = {"objective": learner.objectives}
     for row in learner.rewards:
