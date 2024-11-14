@@ -13,12 +13,12 @@ An advanced, versatile framework to streamline the automatic generation of model
 
 ## Highlights
 
-- automates the creation of models tailored to cyber-physical systems.
-- abstracts over learning frameworks
-- models for offline, incrementally, or active learning.
-- integrates custom data sources.
-- evaluate models with standard metrics.
-- written in Python, easy connection via a gRPC interface
+- 🚀 automates the creation of models tailored to cyber-physical systems.
+- 🧠 abstracts over learning frameworks
+- ✔️ models for offline, incrementally, or active learning.
+- 🗃️ integrates custom data sources.
+- 🔍 evaluate models with standard metrics.
+- 🐍 written in Python, easy connection via a gRPC interface
 
 ## Documentation
 
