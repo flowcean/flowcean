@@ -3,12 +3,12 @@ import unittest
 import numpy as np
 import polars as pl
 
-from flowcean.transforms import Filter
+from flowcean.transforms import SignalFilter
 
 
-class FilterTransform(unittest.TestCase):
+class SignalFilterTransform(unittest.TestCase):
     def test_lowpass(self) -> None:
-        transform = Filter(
+        transform = SignalFilter(
             ["feature_a"],
             "lowpass",
             filter_frequency=60,
@@ -57,7 +57,7 @@ class FilterTransform(unittest.TestCase):
         assert mean_square_error <= 0.1
 
     def test_highpass(self) -> None:
-        transform = Filter(
+        transform = SignalFilter(
             ["feature_a"],
             "highpass",
             filter_frequency=10,

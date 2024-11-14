@@ -9,10 +9,10 @@ from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
-type FilterType = Literal["lowpass", "highpass"]
+type SignalFilterType = Literal["lowpass", "highpass"]
 
 
-class Filter(Transform):
+class SignalFilter(Transform):
     """Applies a Butterworth filter to time series features.
 
     Applies a Butterworth lowpass or highpass filter to time series
@@ -24,7 +24,7 @@ class Filter(Transform):
     def __init__(
         self,
         features: Iterable[str],
-        filter_type: FilterType,
+        filter_type: SignalFilterType,
         filter_frequency: float,
         *,
         order: int = 5,
