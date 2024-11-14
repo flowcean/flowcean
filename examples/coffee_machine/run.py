@@ -32,22 +32,27 @@ def main() -> None:
 
     data = ChainedOfflineEnvironments(
         [
-            DataFrame.from_uri(uri="file:" + path.as_posix()).with_transform(
-                ToTimeSeries("t")
+            DataFrame.from_uri("file:" + path.as_posix()).with_transform(
+                ToTimeSeries("t"),
             )
             for path in tqdm(
                 list(Path("./data").glob("*.csv")),
                 desc="Loading environments",
             )
-        ]
+        ],
     )
     print(data.observe().head())
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(
-        data.observe()
+        data.observe(),
     )
 
-    #learner = GrpcPassiveAutomataLearner.with_address(address="localhost:51378")
-    learner = GrpcPassiveAutomataLearner.run_docker(image="java-automata-learner:latest", pull=False)
+    #learner = GrpcPassiveAutomataLearner.with_address(
+    #    address="localhost:51378"
+    #)
+    learner = GrpcPassiveAutomataLearner.run_docker(
+        image="java-automata-learner:latest",
+        pull=False,
+    )
     inputs = ["input"]
     outputs = ["output"]
 
@@ -64,7 +69,7 @@ def main() -> None:
         inputs,
         outputs,
         [MeanAbsoluteError(), MeanSquaredError()],
-        Explode(["output"]) | Unnest("output") | Select(["value"]),
+        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
     )
     print(report)
 
