@@ -38,28 +38,36 @@ class OneHot(Transform):
     """
 
     feature_category_mapping: dict[str, dict[str, Any]]
+    check_for_missing_categories: bool
 
     def __init__(
         self,
         feature_categories: dict[str, list[Any]],
+        *,
+        check_for_missing_categories: bool = False,
     ) -> None:
         """Initializes the One-Hot transform.
 
         Args:
             feature_categories: Dictionary of features and a list of
                 categorical values to encode for each.
+            check_for_missing_categories: If set to true, a check is performed
+                to see if all values belong to a category. If an unknown value
+                is found which does not belong to any category, a
+                NoMatchingCategoryError is thrown. To perform this check, the
+                dataframe must be materialised, resulting in a potential
+                performance decrease. Therefore it defaults to false.
         """
         self.feature_category_mapping = {
             feature: {f"{feature}_{value}": value for value in values}
             for feature, values in feature_categories.items()
         }
+        self.check_for_missing_categories = check_for_missing_categories
 
     @override
     def apply(
         self,
         data: pl.DataFrame,
-        *,
-        check_for_missing_category: bool = False,
     ) -> pl.DataFrame:
         """Transform data with this one hot transformation.
 
@@ -68,12 +76,6 @@ class OneHot(Transform):
 
         Args:
             data: The data to transform.
-            check_for_missing_category: If set to true, a check is performed to
-                see if all values belong to a category. If an unknown value is
-                found, a NoMatchingCategoryError is thrown. To perform this
-                check, the dataframe must be materialised, resulting in a
-                potential performance hit. Therefore, the default value is
-                false.
 
         Returns:
             The transformed data.
@@ -91,7 +93,7 @@ class OneHot(Transform):
                 ]
             ).drop(feature)
 
-            if check_for_missing_category and (
+            if self.check_for_missing_categories and (
                 not data.select(
                     [
                         pl.col(name).cast(pl.Boolean)
@@ -109,6 +111,8 @@ class OneHot(Transform):
         cls,
         data: pl.DataFrame,
         features: Iterable[str],
+        *,
+        check_for_missing_categories: bool = False,
     ) -> Self:
         """Creates a new one-hot transformation based on sample data.
 
@@ -117,6 +121,12 @@ class OneHot(Transform):
                 categories of the transform.
             features: Name of the features for which the one hot transformation
                 will determine the categories.
+            check_for_missing_categories: If set to true, a check is performed
+                to see if all values belong to a category. If an unknown value
+                is found which does not belong to any category, a
+                NoMatchingCategoryError is thrown. To perform this check, the
+                dataframe must be materialised, resulting in a potential
+                performance decrease. Therefore it defaults to false.
         """
         # Derive categories from the data frame
         feature_categories: dict[str, list[Any]] = {}
@@ -133,7 +143,10 @@ class OneHot(Transform):
             feature_categories[feature] = (
                 data.select(pl.col(feature).unique()).to_series().to_list()
             )
-        return cls(feature_categories)
+        return cls(
+            feature_categories,
+            check_for_missing_categories=check_for_missing_categories,
+        )
 
 
 class NoCategoriesError(Exception):
