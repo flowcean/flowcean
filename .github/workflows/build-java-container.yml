@@ -1,0 +1,46 @@
+name: Build and Push Image with Buildah
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Buildah (if not pre-installed)
+      - name: Install Buildah
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y buildah
+
+      # Step 3: Log in to GitHub Container Registry using Buildah
+      - name: Log in to GitHub Container Registry
+        env:
+          REGISTRY_URL: ghcr.io
+        run: |
+          buildah login --username "${{ github.actor }}" \
+                        --password "${{ secrets.GHCR_PAT }}" \
+                        $REGISTRY_URL
+
+      # Step 4: Build the Container Image with Buildah
+      - name: Build Container Image
+        env:
+          IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-app
+        run: |
+          buildah build --tag "${IMAGE_NAME}:latest" -f Dockerfile .
+
+      # Step 5: Push the Image to GitHub Container Registry
+      - name: Push Container Image
+        env:
+          IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-app
+        run: |
+          buildah push "${IMAGE_NAME}:latest"
+
+      # Step 6: (Optional) Log out from GitHub Container Registry
+      - name: Log out from GitHub Container Registry
+        run: buildah logout ghcr.io
