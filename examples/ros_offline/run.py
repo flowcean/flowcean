@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# /// script
+# dependencies = [
+#     "flowcean",
+# ]
+# ///
+
 import logging
 
 import polars.selectors as cs
