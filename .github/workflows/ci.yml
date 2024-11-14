@@ -1,47 +1,79 @@
 name: CI
-on: 
+on:
+  push:
+    branches:
+      - main
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
     types: [checks_requested]
-env:
-  HATCH_DATA_DIR: $GITHUB_WORKSPACE/../hatch_data
 
 jobs:
-  formatting:
-    name: Check Formatting
+  check:
+    name: Checks
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Hatch
-        uses: pypa/hatch@install
-      - name: Check Formatting
-        run: |
-          hatch fmt --check
+      - name: Check out
+        uses: actions/checkout@v4
 
-  types:
-    name: Check Types
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Hatch
-        uses: pypa/hatch@install
-      - name: Check Types
-        run: |
-          hatch --verbose run types:check
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.1"
+          prune-cache: false
+          cache-local-path: "${{ runner.workspace }}/.cache/uv"
+
+      - run: echo $GITHUB_WORKSPACE
+      - run: echo $RUNNER_WORKSPACE
+
+      - name: Set up just
+        uses: extractions/setup-just@v2
+
+      - name: Run checks
+        run: just check
 
   tests:
-    name: Run Tests
+    name: Tests
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Hatch
-        uses: pypa/hatch@install
-      - name: Run Tests
-        run: |
-          hatch --verbose test
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.1"
+          prune-cache: false
+          cache-local-path: "${{ runner.workspace }}/.cache/uv"
+
+      - name: Set up just
+        uses: extractions/setup-just@v2
+
+      - name: Run tests
+        run: just test
+
+  docs:
+    name: Documentation
+    runs-on: self-hosted
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.1"
+          prune-cache: false
+          cache-local-path: "${{ runner.workspace }}/.cache/uv"
+
+      - name: Set up just
+        uses: extractions/setup-just@v2
+
+      - name: Build docs
+        run: just docs
 
   examples:
-    name: Run Examples
+    name: Examples
     strategy:
       matrix:
         example: ["boiler", "failure_time_prediction", "linear_data", "one_tank"]
@@ -49,33 +81,29 @@ jobs:
     env:
       CUDA_VISIBLE_DEVICES: ""
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
         with:
-          python-version: 3.x
-      - name: Install Hatch
-        uses: pypa/hatch@install
-      - name: Install and Setup DVC
+          version: "0.5.1"
+          prune-cache: false
+          cache-local-path: "${{ runner.workspace }}/.cache/uv"
+
+      - name: Set up just
+        uses: extractions/setup-just@v2
+
+      - name: Set up DVC
         run: |
-          pip install dvc dvc-webdav
-          dvc --version
-          dvc remote modify --local tuhh-cloud password ${{ secrets.TUHH_CLOUD_DVC_SHARE_PASSWORD }}
-          dvc config cache.dir $GITHUB_WORKSPACE/../dvc_cache
+          uv run dvc --version
+          uv run dvc remote modify --local tuhh-cloud password ${{ secrets.TUHH_CLOUD_DVC_SHARE_PASSWORD }}
+          uv run dvc config cache.dir ${{ runner.workspace }}/.cache/dvc
+
       - name: DVC pull
         run: |
-          dvc pull --verbose --recursive examples/${{ matrix.example }}
+          uv run dvc pull --verbose --recursive examples/${{ matrix.example }}
+
       - name: Run Example [${{ matrix.example }}]
         run: |
-          hatch --verbose run examples:${{ matrix.example }}
-
-  documentation:
-    name: Build Documentation
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Hatch
-        uses: pypa/hatch@install
-      - name: Build Documentation
-        run: |
-          hatch --verbose run docs:build --strict
+          just examples-${{ matrix.example }}

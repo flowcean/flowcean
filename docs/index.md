@@ -1,5 +1,5 @@
 ---
-hide: 
+hide:
     - navigation
 ---
 
@@ -44,4 +44,4 @@ For a more detailed guide on setting up your first project, visit our [Getting S
 
 If you use Flowcean in your research or project, please consider citing the following references:
 
-- Towards the Automatic Generation of Models for Prediction, Monitoring, and Testing of Cyber-Physical Systems, 28th IEEE International Conference on Emerging Technologies and Factory Automation (ETFA 2023), Sinaia, 12.09. – 15.09.2023 
+- Towards the Automatic Generation of Models for Prediction, Monitoring, and Testing of Cyber-Physical Systems, 28th IEEE International Conference on Emerging Technologies and Factory Automation (ETFA 2023), Sinaia, 12.09. – 15.09.2023

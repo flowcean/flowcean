@@ -149,7 +149,7 @@ data = Dataset(data_incremental.load().take(250))
 
 Until now, the data is in a time series format with each row representing a sampled value at the step $n$.
 However, for our prediction of the current fill level $x[n]$, as described by the equation above, we need the current input $V[n]$ and the values of the two previous time steps as a single sample.
-To achieve this we use a [`SlidingWindow`](../reference/flowcean/transforms/sliding_window.md) transform.
+To achieve this we use a [`SlidingWindow`](../reference/flowcean/transforms/index.md#flowcean.transforms.SlidingWindow) transform.
 See the linked documentation for a more detailed explanation of how the transform works.
 
 ```python

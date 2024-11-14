@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "flowcean",
+# ]
+# ///
 
 import random
 from collections.abc import Iterator
