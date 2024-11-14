@@ -1,37 +1,54 @@
-from loader import AlpDataLoader
+#!/usr/bin/env python
+
+import logging
+import time
 
 import flowcean.cli
+from flowcean.environments.parquet import ParquetDataLoader
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms.select import Select
+from flowcean.transforms import Flatten, Resample, Select
+
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
     flowcean.cli.initialize_logging()
+    time_start = time.time()
 
-    data = AlpDataLoader(path="./data/").with_transform(
-        Select(
+    data = (
+        ParquetDataLoader("./alp_sim_data.parquet")
+        | Select(
             [
-                "^p_cylinder1_.*$",
-                "activeValveCount",
+                "p_accumulator",
                 "containerWeight",
-            ],
-        ),
+                "p_initial",
+                "activeValveCount",
+                "T",
+            ]
+        )
+        | Resample(1.0)
+        | Flatten()
     )
-    data.load()
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
+    time_end = time.time()
+    logger.info("took %.5f s to load data", time_end - time_start)
+
+    train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
+    time_end = time.time()
 
     learner = RegressionTree()
     inputs = [
-        "^p_cylinder1_.*$",
+        "^p_accumulator_.*$",
         "activeValveCount",
+        "p_initial",
+        "T",
     ]
     outputs = ["containerWeight"]
 
     model = learn_offline(
-        train,
+        train_env,
         learner,
         inputs,
         outputs,
@@ -39,7 +56,7 @@ def main() -> None:
 
     report = evaluate_offline(
         model,
-        test,
+        test_env,
         inputs,
         outputs,
         [MeanAbsoluteError(), MeanSquaredError()],

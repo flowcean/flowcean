@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -16,7 +18,7 @@ from flowcean.environments.ode_environment import (
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms.sliding_window import SlidingWindow
 
@@ -52,7 +54,7 @@ class OneTank(OdeSystem[TankState]):
         area: float,
         outflow_rate: float,
         inflow_rate: float,
-        initial_t: float = 0,
+        initial_t: float = 0.0,
         initial_state: TankState,
     ) -> None:
         """Initialize the one tank system.
@@ -78,7 +80,7 @@ class OneTank(OdeSystem[TankState]):
         t: float,
         state: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        pump_voltage = np.max([0, np.sin(2 * np.pi * 1 / 10 * t)])
+        pump_voltage = np.max([0.0, np.sin(2.0 * np.pi * 1.0 / 10.0 * t)])
         tank = TankState.from_numpy(state)
         d_level = (
             self.inflow_rate * pump_voltage
@@ -91,10 +93,10 @@ def main() -> None:
     flowcean.cli.initialize_logging()
 
     system = OneTank(
-        area=5,
+        area=5.0,
         outflow_rate=0.5,
-        inflow_rate=2,
-        initial_state=TankState(water_level=1),
+        inflow_rate=2.0,
+        initial_state=TankState(water_level=1.0),
     )
 
     data_incremental = OdeEnvironment(
@@ -106,12 +108,11 @@ def main() -> None:
                 "h": [x.water_level for x in xs],
             },
         ),
-    ).load()
+    )
 
     data = data_incremental.collect(250).with_transform(
         SlidingWindow(window_size=3),
     )
-    data = data.load()
 
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 

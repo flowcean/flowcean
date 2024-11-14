@@ -3,7 +3,7 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,6 @@ class Explode(Transform):
         self.features = features
 
     @override
-    def transform(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
         logger.debug("Exploding timeseries")
         return data.explode(self.features)

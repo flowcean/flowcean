@@ -30,20 +30,30 @@ The `preprocessing.ipynb` notebook is used to reproduce the steps and generate a
 
 The resulting file is stored at `data/processed_data.csv`.
 
-## Learning a Model
+## Run this example
 
-!!! todo
+To run this example first make sure you followed the [installation instructions](../getting_started/preparation.md) to setup python and git.
+Afterwards you can either use `hatch` or run the examples from source.
 
-    This explanation is outdated, we no longer use `experiment.yaml` but `run.py` to run experiments.
-    Update the explanation accordingly.
+### Hatch
 
-Data used in the AGenC framework needs to be supplied with additional metadata.
-The metadata of this example is located in `data/metadata.yaml`.
-The experiment is configured in `experiment.yaml`.
-This configuration specifies the respective steps in the framework, e.g. transformations and learning algorithms applied to train a model.
-Additionally, it references the `metadata.yaml` to supply the experiment with a dataset.
-Use the AGenC commandline interface to run the experiment.
+The easiest way to run this example is using `hatch`.
+Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before installing it or any of its dependencies.
+Now you can run the example using
 
-```bash
-agenc --experiment experiment.yaml
+```sh
+hatch run examples:failure_time_prediction
+```
+
+This command will take care of installing any required dependencies in a separate environment.
+After a short moment you should see the learning results and the achieved metric values.
+
+### From source
+
+Follow the [installation guide](../getting_started/installation.md) to install flowcean and it's dependencies from source.
+Afterwards you can navigate to the `examples` folder and run the examples.
+
+```sh
+cd examples/failure_time_prediction
+python run.py
 ```

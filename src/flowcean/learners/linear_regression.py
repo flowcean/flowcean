@@ -3,12 +3,15 @@ from typing import override
 import polars as pl
 import torch
 from torch import nn
+from torch.optim.sgd import SGD
 
-from flowcean.core import SupervisedIncrementalLearner
+from flowcean.core.learner import SupervisedIncrementalLearner
 from flowcean.models.pytorch import PyTorchModel
 
 
 class LinearRegression(SupervisedIncrementalLearner):
+    """Linear regression learner."""
+
     def __init__(
         self,
         input_size: int,
@@ -16,9 +19,17 @@ class LinearRegression(SupervisedIncrementalLearner):
         learning_rate: float = 1e-3,
         loss: nn.Module | None = None,
     ) -> None:
+        """Initialize the learner.
+
+        Args:
+            input_size: The size of the input.
+            output_size: The size of the output.
+            learning_rate: The learning rate.
+            loss: The loss function.
+        """
         self.model = nn.Linear(input_size, output_size)
         self.loss = loss or nn.MSELoss()
-        self.optimizer = torch.optim.SGD(
+        self.optimizer = SGD(
             self.model.parameters(),
             lr=learning_rate,
         )

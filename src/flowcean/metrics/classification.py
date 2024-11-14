@@ -3,7 +3,7 @@ from typing import Any, override
 import polars as pl
 from sklearn import metrics
 
-from flowcean.core import OfflineMetric
+from flowcean.core.metric import OfflineMetric
 
 
 class Accuracy(OfflineMetric):
@@ -35,6 +35,11 @@ class FBetaScore(OfflineMetric):
     """
 
     def __init__(self, beta: float = 1.0) -> None:
+        """Initialize the metric.
+
+        Args:
+            beta: The beta parameter.
+        """
         self.beta = beta
 
     @override

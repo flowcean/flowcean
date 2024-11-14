@@ -3,17 +3,16 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core.environment.stack import StackEnvironment
+from flowcean.core.environment.offline import JoinedOfflineEnvironment
 from flowcean.environments.dataset import Dataset
 
 
-class TestParquetDataLoader(unittest.TestCase):
-    def test_stack_environment(self) -> None:
+class TestCombine(unittest.TestCase):
+    def test_combine_environment(self) -> None:
         dataset1 = Dataset(
             pl.DataFrame(
                 {
                     "A": [1, 2],
-                    "B": [5, 6],
                 },
             )
         )
@@ -21,30 +20,20 @@ class TestParquetDataLoader(unittest.TestCase):
         dataset2 = Dataset(
             pl.DataFrame(
                 {
-                    "A": [3, 4],
-                    "B": [7, 8],
+                    "B": [3, 4],
                 },
             )
         )
 
-        stack = StackEnvironment(dataset1, dataset2)
+        combine = JoinedOfflineEnvironment([dataset1, dataset2])
 
-        assert_frame_equal(
-            stack.get_data(),
-            pl.DataFrame(
-                {
-                    "A": [1, 2, 3, 4],
-                    "B": [5, 6, 7, 8],
-                },
-            ),
-        )
+        assert isinstance(combine, JoinedOfflineEnvironment)
 
-    def test_stack_method(self) -> None:
+    def test_join_method(self) -> None:
         dataset1 = Dataset(
             pl.DataFrame(
                 {
                     "A": [1, 2],
-                    "B": [5, 6],
                 },
             )
         )
@@ -52,20 +41,39 @@ class TestParquetDataLoader(unittest.TestCase):
         dataset2 = Dataset(
             pl.DataFrame(
                 {
-                    "A": [3, 4],
-                    "B": [7, 8],
+                    "B": [3, 4],
                 },
             )
         )
 
-        stack = dataset1.stack(dataset2)
+        combine = dataset1.join(dataset2)
+        assert isinstance(combine, JoinedOfflineEnvironment)
 
-        assert_frame_equal(
-            stack.get_data(),
+    def test_join_results(self) -> None:
+        dataset1 = Dataset(
             pl.DataFrame(
                 {
-                    "A": [1, 2, 3, 4],
-                    "B": [5, 6, 7, 8],
+                    "A": [1, 2],
+                },
+            )
+        )
+
+        dataset2 = Dataset(
+            pl.DataFrame(
+                {
+                    "B": [3, 4],
+                },
+            )
+        )
+
+        combine = dataset1.join(dataset2)
+
+        assert_frame_equal(
+            combine.observe(),
+            pl.DataFrame(
+                {
+                    "A": [1, 2],
+                    "B": [3, 4],
                 },
             ),
         )

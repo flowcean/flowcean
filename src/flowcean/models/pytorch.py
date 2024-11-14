@@ -21,6 +21,14 @@ class PyTorchModel(Model):
         batch_size: int = 32,
         num_workers: int = 1,
     ) -> None:
+        """Initialize the model.
+
+        Args:
+            module: The PyTorch module.
+            output_names: The names of the output columns.
+            batch_size: The batch size to use for predictions.
+            num_workers: The number of workers to use for the DataLoader.
+        """
         self.module = module
         self.output_names = output_names
         self.batch_size = batch_size

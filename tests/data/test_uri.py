@@ -19,3 +19,7 @@ class TestFileUriToPath(unittest.TestCase):
         uri = "http://example.com/data.csv"
         with pytest.raises(InvalidUriSchemeError):
             _file_uri_to_path(uri)
+
+
+if __name__ == "__main__":
+    unittest.main()

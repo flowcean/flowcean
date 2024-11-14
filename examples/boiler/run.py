@@ -18,7 +18,8 @@ from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms.sliding_window import SlidingWindow
+from flowcean.transforms import SlidingWindow
+from flowcean.utils.random import initialize_random
 
 
 class Temperature(State):
@@ -100,7 +101,7 @@ def randomly_changing_values(
 
 def main() -> None:
     initialize_logging()
-
+    initialize_random(seed=42)
     target_temperatures = (
         (0.1 * i, temperature)
         for i, temperature in enumerate(
@@ -122,8 +123,9 @@ def main() -> None:
                 "temperature": [mode.temperature for mode in modes],
             }
         ),
-    ).load()
+    )
 
+    environment.step()
     data = environment.collect(10_000)
     train, test = TrainTestSplit(ratio=0.8).split(data)
 
@@ -134,7 +136,7 @@ def main() -> None:
         SlidingWindow(window_size=10),
     )
 
-    learner = RegressionTree(max_depth=5)
+    learner = RegressionTree(max_depth=5, dot_graph_export_path="tree.dot")
 
     inputs = [f"temperature_{i}" for i in range(10)] + [
         f"target_{i}" for i in range(9)

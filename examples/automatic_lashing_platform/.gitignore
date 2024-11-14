@@ -1,2 +1,3 @@
-models/
+/alp_real_data.parquet
+/alp_sim_data.parquet
 /data
