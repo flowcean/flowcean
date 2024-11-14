@@ -15,7 +15,7 @@ import mosaik_api_v3
 from numpy.random import RandomState
 from simulator import SyncSimulator
 
-from flowcean.core import ActiveEnvironment
+from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.strategies.active import StopLearning
 
 LOG = logging.getLogger("mosaik_environment")
@@ -55,7 +55,7 @@ class Action:
     actuators: list[Actuator]
 
 
-class MosaikEnvironment(ActiveEnvironment[Action, Observation]):
+class MosaikEnvironment(ActiveEnvironment):
     def __init__(
         self,
         start_date: str,
@@ -172,7 +172,7 @@ class MosaikEnvironment(ActiveEnvironment[Action, Observation]):
         self.sensors = None
         self.rewards = None
 
-    def observe(self) -> Observation:
+    def _observe(self) -> Observation:
         if self._data_for_simulation is None:
             try:
                 done, self._data_from_simulation = self.sensor_queue.get(
@@ -203,6 +203,9 @@ class MosaikEnvironment(ActiveEnvironment[Action, Observation]):
         self.rewards = calculate_reward(self.sensors)
 
         return Observation(sensors=self.sensors, rewards=self.rewards)
+
+    def transform(self, observation: Observation) -> Observation:
+        return observation
 
 
 def calculate_reward(sensors: list) -> list:

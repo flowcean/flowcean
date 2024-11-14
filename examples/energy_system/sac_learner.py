@@ -15,7 +15,8 @@ from palaestrai.agent import (
 from palaestrai.agent.objective import Objective
 from palaestrai.types.space import Space
 
-from flowcean.core import ActiveLearner, Model
+from flowcean.core.learner import ActiveLearner
+from flowcean.core.model import Model
 
 LOG = logging.getLogger("flowcean.sac_learner")
 
@@ -78,7 +79,7 @@ class SACModel(Model):
         return str(self.muscle._model)  # noqa: SLF001
 
 
-class SACLearner(ActiveLearner[Action, Observation]):
+class SACLearner(ActiveLearner):
     model: SACModel
     rewards: list[float]
 
