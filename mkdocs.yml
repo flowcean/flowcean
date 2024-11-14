@@ -8,6 +8,7 @@ theme:
   favicon: assets/favicon.png
   features:
     - content.code.copy
+    - content.tabs.link
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.tracking
@@ -89,7 +90,7 @@ nav:
   - Flowcean: index.md
   - Research Project: agenc/
   - Getting Started:
-    - Preparation: getting_started/preparation.md
+    - Prerequisites: getting_started/prerequisites.md
     - Installation: getting_started/installation.md
     - New Project: getting_started/new_project.md
     - Documentation: getting_started/documentation.md

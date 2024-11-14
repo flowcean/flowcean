@@ -32,17 +32,17 @@ The resulting file is stored at `data/processed_data.csv`.
 
 ## Run this example
 
-To run this example first make sure you followed the [installation instructions](../getting_started/preparation.md) to setup python and git.
-Afterwards you can either use `hatch` or run the examples from source.
+To run this example first make sure you followed the [installation instructions](../getting_started/prerequisites.md) to setup python and `just`.
+Afterwards you can either use `just` or run the examples from source.
 
-### Hatch
+### Just
 
-The easiest way to run this example is using `hatch`.
+The easiest way to run this example is using `just`.
 Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before installing it or any of its dependencies.
 Now you can run the example using
 
 ```sh
-hatch run examples:failure_time_prediction
+just examples-failure_time_prediction
 ```
 
 This command will take care of installing any required dependencies in a separate environment.

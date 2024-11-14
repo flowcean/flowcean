@@ -1,13 +1,12 @@
 ---
 hide:
-    - navigation
+  - navigation
 ---
 
 # Welcome to Flowcean
 
 **Flowcean** is an advanced, versatile framework designed to streamline the automatic generation of models for cyber-physical systems (CPS).
 Whether you are developing solutions for smart grids, autonomous vehicles, or industrial automation, Flowcean provides a higher-level abstraction to generalize the learning and modeling approach for CPS across various domains.
-
 
 ## What is Flowcean?
 
@@ -38,7 +37,7 @@ To install the framework, use the following command:
 pip install flowcean
 ```
 
-For a more detailed guide on setting up your first project, visit our [Getting Started](getting_started/installation/) page.
+For a more detailed guide on setting up your first project, visit our [Getting Started](getting_started/installation.md) page.
 
 ## Citation
 
