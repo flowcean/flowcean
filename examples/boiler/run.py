@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+# /// script
+# dependencies = [
+#     "flowcean",
+# ]
+# ///
 
 import random
 from collections.abc import Iterator
