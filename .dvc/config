@@ -7,4 +7,3 @@
 ['remote "itl-nas"']
     url = ssh://nas.flowcean.me:/agenc/dvc_data
     user = flowcean-write
-    
