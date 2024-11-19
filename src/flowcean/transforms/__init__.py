@@ -1,4 +1,5 @@
 __all__ = [
+    "Cast",
     "Explode",
     "FeatureLengthVaryError",
     "Flatten",
@@ -19,6 +20,7 @@ __all__ = [
     "ToTimeSeries",
 ]
 
+from flowcean.transforms.cast import Cast
 from flowcean.transforms.explode import Explode
 from flowcean.transforms.flatten import (
     FeatureLengthVaryError,
