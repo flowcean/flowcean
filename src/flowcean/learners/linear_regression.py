@@ -37,16 +37,12 @@ class LinearRegression(SupervisedIncrementalLearner):
     @override
     def learn_incremental(
         self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> PyTorchModel:
         self.optimizer.zero_grad()
-        features = torch.from_numpy(
-            inputs.collect(streaming=True).to_numpy(writable=True)
-        )
-        labels = torch.from_numpy(
-            outputs.collect(streaming=True).to_numpy(writable=True)
-        )
+        features = torch.from_numpy(inputs.to_numpy(writable=True))
+        labels = torch.from_numpy(outputs.to_numpy(writable=True))
         prediction = self.model(features)
         loss = self.loss(prediction, labels)
         loss.backward()

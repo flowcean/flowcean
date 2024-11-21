@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Iterable
 from itertools import islice
-from typing import Any, override
+from typing import Any, cast, override
 
 import polars as pl
 from tqdm import tqdm
@@ -43,7 +43,10 @@ class Dataset(OfflineEnvironment):
         """Return the number of samples in the dataset."""
         if self._length is None:
             # This operation is potentially very slow / costly
-            self._length = self.data.select(pl.len()).collect().item()
+            self._length = cast(
+                int,
+                self.data.select(pl.len()).collect().item(),
+            )
         return self._length
 
 

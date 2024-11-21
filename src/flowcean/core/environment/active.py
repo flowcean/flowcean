@@ -12,7 +12,7 @@ from flowcean.core.environment.stepable import Stepable
 class ActiveEnvironment(
     TransformedObservable,
     Stepable,
-    Actable[pl.LazyFrame],
+    Actable[pl.DataFrame],
 ):
     """Base class for active environments.
 
