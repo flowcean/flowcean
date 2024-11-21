@@ -27,7 +27,7 @@ class SciKitModel(Model):
     @override
     def predict(
         self,
-        input_features: pl.LazyFrame,
+        input_features: pl.DataFrame,
     ) -> pl.DataFrame:
         outputs = self.model.predict(input_features)
         return pl.DataFrame({self.output_name: outputs})
