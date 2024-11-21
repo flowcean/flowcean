@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import reduce
 from typing import Literal, override
@@ -13,49 +14,87 @@ logger = logging.getLogger(__name__)
 type FilterMode = Literal["and", "or"]
 
 
+class FilterExpr(ABC):
+    @abstractmethod
+    def get(self) -> pl.Expr:
+        """Get the polars expression for this filter."""
+
+    def __call__(self) -> pl.Expr:
+        return self.get()
+
+
+class CollectionExpr(FilterExpr):
+    expr_collection: Iterable[pl.Expr]
+
+    def __init__(
+        self, expressions: str | FilterExpr | Iterable[str | FilterExpr]
+    ) -> None:
+        if not isinstance(expressions, Iterable):
+            expressions = [expressions]
+        self.expr_collection = (
+            expression()
+            if isinstance(expression, FilterExpr)
+            else str_to_pl(expression)
+            for expression in expressions
+        )
+
+
+class And(CollectionExpr):
+    def get(self) -> pl.Expr:
+        return reduce(
+            lambda x, y: x.and_(y),
+            self.expr_collection,
+        )
+
+
+class Or(CollectionExpr):
+    def get(self) -> pl.Expr:
+        return reduce(
+            lambda x, y: x.or_(y),
+            self.expr_collection,
+        )
+
+
+class Not(FilterExpr):
+    expression: pl.Expr
+
+    def __init__(self, expression: str | FilterExpr) -> None:
+        self.expression = (
+            expression()
+            if isinstance(expression, FilterExpr)
+            else str_to_pl(expression)
+        )
+
+    def get(self) -> pl.Expr:
+        return self.expression.not_()
+
+
 class Filter(Transform):
     """Filter an environment based on one or multiple expressions."""
 
-    predicates: list[pl.Expr]
+    predicate: pl.Expr
 
     def __init__(
         self,
-        expressions: str | Iterable[str],
-        *,
-        filter_mode: FilterMode = "and",
+        expression: str | FilterExpr,
     ) -> None:
         """Initializes the Filter transform.
 
         Args:
-            expressions: String expressions used to filter the environment.
-                Records that do not match the expression are discarded.
-                Standard comparison and mathematical operations are supported
-                within the expressions. Features can be accessed by there name.
-                If multiple expressions are provided, `filter_mode' decides
-                whether one or all must be fulfilled.
-            filter_mode: Define how multiple filter expressions are to be
-                processed. If set to `and` all expressions need to be fulfilled
-                    by a record. If set to `or` one or more expressions need to
-                    be fulfilled.
+            expression: String or filter expression used to filter the
+                environment. Records that do not match the expression are
+                discarded. Standard comparison and mathematical operations are
+                supported within the expressions. Features can be accessed by
+                there name.
         """
-        if isinstance(expressions, str):
-            self.predicates = [str_to_pl(expressions)]
+        if isinstance(expression, str):
+            self.predicate = str_to_pl(expression)
         else:
-            self.predicates = [str_to_pl(expr) for expr in expressions]
-        self.filter_mode = filter_mode
+            self.predicate = expression()
 
     @override
     def apply(self, data: pl.DataFrame) -> pl.DataFrame:
-        return data.filter(
-            self.predicates
-            if len(self.predicates) == 1
-            else reduce(
-                (lambda x, y: x & y)
-                if self.filter_mode == "and"
-                else (lambda x, y: x | y),
-                self.predicates,
-            ),
-        )
+        return data.filter(self.predicate)
 
 
 def str_to_pl(expression: str) -> pl.Expr:
