@@ -76,7 +76,7 @@ class MatchSamplingRate(Transform):
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Matching sampling rate of time series.")
 
-        df = data.collect(streaming=True)  # TODO: Change me
+        df = data.collect(streaming=True)
 
         for i in range(len(df)):
             reference_timestamps = df[self.reference_timestamps][i]
