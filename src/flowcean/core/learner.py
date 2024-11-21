@@ -14,8 +14,8 @@ class SupervisedLearner(ABC):
     @abstractmethod
     def learn(
         self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> Model:
         """Learn from the data.
 
