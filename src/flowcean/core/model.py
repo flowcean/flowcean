@@ -17,7 +17,7 @@ class Model(ABC):
     @abstractmethod
     def predict(
         self,
-        input_features: pl.LazyFrame,
+        input_features: pl.DataFrame,
     ) -> pl.DataFrame:
         """Predict outputs for the given inputs.
 
@@ -60,10 +60,10 @@ class ModelWithTransform(Model):
     @override
     def predict(
         self,
-        input_features: pl.LazyFrame,
+        input_features: pl.DataFrame,
     ) -> pl.DataFrame:
-        transformed = self.transform.apply(input_features)
-        return self.model.predict(transformed)
+        transformed = self.transform.apply(input_features.lazy())
+        return self.model.predict(transformed.collect(streaming=True))
 
     @override
     def save(self, path: Path) -> None:
