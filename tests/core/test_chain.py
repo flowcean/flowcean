@@ -105,7 +105,7 @@ class TestChain(unittest.TestCase):
         chain = dataset1.chain(dataset2)
 
         assert_frame_equal(
-            chain.collect().observe(),
+            chain.collect().observe().collect(),
             pl.DataFrame(
                 {
                     "A": [1, 2, 3, 4],

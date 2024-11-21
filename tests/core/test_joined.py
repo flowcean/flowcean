@@ -69,7 +69,7 @@ class TestCombine(unittest.TestCase):
         combine = dataset1.join(dataset2)
 
         assert_frame_equal(
-            combine.observe(),
+            combine.observe().collect(),
             pl.DataFrame(
                 {
                     "A": [1, 2],

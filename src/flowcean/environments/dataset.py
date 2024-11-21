@@ -21,13 +21,13 @@ class Dataset(OfflineEnvironment):
 
     data: pl.LazyFrame
 
-    def __init__(self, data: pl.LazyFrame) -> None:
+    def __init__(self, data: pl.DataFrame | pl.LazyFrame) -> None:
         """Initialize the dataset environment.
 
         Args:
             data: The data to represent.
         """
-        self.data = data
+        self.data = data if isinstance(data, pl.LazyFrame) else data.lazy()
         super().__init__()
 
     @override
