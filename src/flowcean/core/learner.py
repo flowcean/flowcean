@@ -38,8 +38,8 @@ class SupervisedIncrementalLearner(ABC):
     @abstractmethod
     def learn_incremental(
         self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> Model:
         """Learn from the data incrementally.
 
@@ -61,8 +61,8 @@ class ActiveLearner(ABC):
     @abstractmethod
     def learn_active(
         self,
-        action: pl.LazyFrame,
-        observation: pl.LazyFrame,
+        action: pl.DataFrame,
+        observation: pl.DataFrame,
     ) -> Model:
         """Learn from actions and observations.
 
@@ -75,7 +75,7 @@ class ActiveLearner(ABC):
         """
 
     @abstractmethod
-    def propose_action(self, observation: pl.LazyFrame) -> pl.LazyFrame:
+    def propose_action(self, observation: pl.DataFrame) -> pl.DataFrame:
         """Propose an action based on an observation.
 
         Args:

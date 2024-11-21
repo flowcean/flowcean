@@ -13,7 +13,7 @@ class TestDummyLearner(unittest.TestCase):
                 "input": [1, 2, 3],
                 "output": [4, 5, 6],
             },
-        ).lazy()
+        )
         model = learner.learn(
             dataset.select("input"),
             dataset.select("output"),
