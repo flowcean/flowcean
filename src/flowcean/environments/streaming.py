@@ -16,6 +16,7 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
     environment: OfflineEnvironment
     batch_size: int
     data: pl.LazyFrame | None = None
+    slice: pl.LazyFrame | None = None
     i: int = 0
 
     def __init__(
@@ -37,16 +38,19 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
     def _observe(self) -> pl.LazyFrame:
         if self.data is None:
             self.data = self.environment.observe()
-        return self.data.slice(self.i, self.i + self.batch_size)
+        if self.slice is None:
+            self.slice = self.data.slice(self.i, self.batch_size)
+        return self.slice
 
     @override
     def step(self) -> None:
         if self.data is None:
             self.data = self.environment.observe()
-
+        self.i += self.batch_size
+        self.slice = self.data.slice(self.i, self.batch_size)
         if (
-            self.data.slice(0, 1)
-            .collect(streaming=True)
+            self.slice.slice(0, 1)
+            .collect(streaming=False)
             .select(pl.len())
             .item(0, 0)
             == 0
