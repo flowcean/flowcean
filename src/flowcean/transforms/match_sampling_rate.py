@@ -131,4 +131,4 @@ class MatchSamplingRate(Transform):
                     .drop("index")
                     .collect()
                 )
-        return data
+        return df.lazy()
