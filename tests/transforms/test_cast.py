@@ -16,8 +16,8 @@ class CastTransform(unittest.TestCase):
                 {"a": 3, "b": 4},
                 {"a": 5, "b": 6},
             ],
-        )
-        transformed_data = transform(data_frame)
+        ).lazy()
+        transformed_data = transform(data_frame).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -39,8 +39,8 @@ class CastTransform(unittest.TestCase):
                 {"a": 3, "b": 4},
                 {"a": 5, "b": 6},
             ],
-        )
-        transformed_data = transform(data_frame)
+        ).lazy()
+        transformed_data = transform(data_frame).collect()
 
         assert_frame_equal(
             transformed_data,
