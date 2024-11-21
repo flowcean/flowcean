@@ -51,13 +51,13 @@ class MyEnvironment(ActiveEnvironment):
             raise StopLearning
 
     @override
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.LazyFrame:
         return pl.DataFrame(
             {
                 "reward": self._calculate_reward(),
                 "sensor": self.state,
             }
-        )
+        ).lazy()
 
     def _calculate_reward(self) -> float:
         if self.last_action is None:

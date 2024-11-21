@@ -40,6 +40,6 @@ class Explode(Transform):
         self.features = features
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Exploding timeseries")
         return data.explode(self.features)

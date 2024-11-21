@@ -30,7 +30,9 @@ def main() -> None:
     time_end = time.time()
     logger.info("took %.5f s to load data", time_end - time_start)
 
-    data.observe().write_parquet(Path("./alp_sim_data.parquet"))
+    data.observe().collect(streaming=True).write_parquet(
+        Path("./alp_sim_data.parquet")
+    )
 
 
 if __name__ == "__main__":

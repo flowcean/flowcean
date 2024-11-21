@@ -48,7 +48,7 @@ class TimeWindowTransform(unittest.TestCase):
                 "scalar": [1, 2],
             }
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,

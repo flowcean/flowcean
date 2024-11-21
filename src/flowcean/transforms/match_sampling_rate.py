@@ -73,11 +73,13 @@ class MatchSamplingRate(Transform):
         self.reference_timestamps = reference_timestamps
         self.feature_columns_with_timestamps = feature_columns_with_timestamps
 
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Matching sampling rate of time series.")
 
-        for i in range(len(data)):
-            reference_timestamps = data[self.reference_timestamps][i]
+        df = data.collect(streaming=True)
+
+        for i in range(len(df)):
+            reference_timestamps = df[self.reference_timestamps][i]
             reference_timestamps_np = reference_timestamps.to_numpy()
             if np.issubdtype(reference_timestamps_np.dtype, np.datetime64):
                 reference_timestamps = (
@@ -90,8 +92,8 @@ class MatchSamplingRate(Transform):
                 feature,
                 timestamp,
             ) in self.feature_columns_with_timestamps.items():
-                timestamps = data[timestamp][i].to_numpy()
-                feature_data = data[feature][i].to_numpy()
+                timestamps = df[timestamp][i].to_numpy()
+                feature_data = df[feature][i].to_numpy()
                 if np.issubdtype(timestamps.dtype, np.datetime64):
                     timestamps = (
                         timestamps.astype("datetime64[us]").astype(np.int64)
@@ -102,8 +104,8 @@ class MatchSamplingRate(Transform):
                     timestamps,
                     feature_data,
                 ).tolist()
-                data = (
-                    data.lazy()
+                df = (
+                    df.lazy()
                     .with_row_index()
                     .with_columns(
                         pl.when(pl.col("index") == i)
@@ -117,8 +119,8 @@ class MatchSamplingRate(Transform):
                 reference_timestamps = pl.Series(
                     reference_timestamps
                 ).to_list()
-                data = (
-                    data.lazy()
+                df = (
+                    df.lazy()
                     .with_row_index()
                     .with_columns(
                         pl.when(pl.col("index") == i)
@@ -129,4 +131,4 @@ class MatchSamplingRate(Transform):
                     .drop("index")
                     .collect()
                 )
-        return data
+        return df.lazy()

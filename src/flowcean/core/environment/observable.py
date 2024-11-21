@@ -16,7 +16,7 @@ class Observable[Observation](ABC):
         """Observe and return the observation."""
 
 
-class TransformedObservable(Observable[pl.DataFrame]):
+class TransformedObservable(Observable[pl.LazyFrame]):
     """Base class for observations that carry a transform.
 
     Attributes:
@@ -46,7 +46,7 @@ class TransformedObservable(Observable[pl.DataFrame]):
         return self
 
     @abstractmethod
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.LazyFrame:
         """Observe and return the observation without applying the transform.
 
         This method must be implemented by subclasses.
@@ -56,7 +56,7 @@ class TransformedObservable(Observable[pl.DataFrame]):
         """
 
     @override
-    def observe(self) -> pl.DataFrame:
+    def observe(self) -> pl.LazyFrame:
         return self.transform(self._observe())
 
     def __or__(

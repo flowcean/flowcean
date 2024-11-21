@@ -37,7 +37,10 @@ def learn_incremental(
                 input_transform.fit_incremental(input_features)
             input_features = input_transform.apply(input_features)
 
-        model = learner.learn_incremental(input_features, output_features)
+        model = learner.learn_incremental(
+            input_features.collect(streaming=True),
+            output_features.collect(streaming=True),
+        )
 
     if model is None:
         message = "No data found in environment."
