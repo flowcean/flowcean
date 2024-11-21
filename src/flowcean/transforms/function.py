@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Lambda(Transform):
     """Apply a custom function to the data of an environment."""
 
-    def __init__(self, fn: Callable[[pl.DataFrame], pl.DataFrame]) -> None:
+    def __init__(self, fn: Callable[[pl.LazyFrame], pl.LazyFrame]) -> None:
         """Initializes the Lambda transform.
 
         Args:
@@ -21,5 +21,5 @@ class Lambda(Transform):
         self.fn = fn
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return self.fn(data)
