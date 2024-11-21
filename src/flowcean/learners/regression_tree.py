@@ -41,12 +41,10 @@ class RegressionTree(SupervisedLearner):
     @override
     def learn(
         self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> Model:
-        self.regressor.fit(
-            inputs.collect(streaming=True), outputs.collect(streaming=True)
-        )
+        self.regressor.fit(inputs, outputs)
         if self.dot_graph_export_path is not None:
             logger.info(
                 "Exporting decision tree graph to %s",

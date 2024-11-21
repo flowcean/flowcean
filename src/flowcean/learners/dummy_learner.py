@@ -22,11 +22,10 @@ class DummyModel(Model):
         self.output_names = output_names
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.DataFrame:
+    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         return pl.DataFrame(
             {
-                output_name: [0]
-                * input_features.collect(streaming=True).height
+                output_name: [0] * input_features.height
                 for output_name in self.output_names
             },
         )
@@ -49,7 +48,7 @@ class DummyLearner(SupervisedLearner):
     @override
     def learn(
         self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame,
     ) -> DummyModel:
         return DummyModel(outputs.collect_schema().names())
