@@ -20,6 +20,7 @@ class Dataset(OfflineEnvironment):
     """
 
     data: pl.LazyFrame
+    _length: int | None = None
 
     def __init__(self, data: pl.DataFrame | pl.LazyFrame) -> None:
         """Initialize the dataset environment.
@@ -27,7 +28,11 @@ class Dataset(OfflineEnvironment):
         Args:
             data: The data to represent.
         """
-        self.data = data if isinstance(data, pl.LazyFrame) else data.lazy()
+        if isinstance(data, pl.DataFrame):
+            self.data = data.lazy()
+            self._length = len(data)
+        else:
+            self.data = data
         super().__init__()
 
     @override
@@ -36,9 +41,10 @@ class Dataset(OfflineEnvironment):
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
-        return (
-            self.data.select(pl.len()).collect().item()
-        )  # TODO: This is potentially very slow!
+        if self._length is None:
+            # This operation is potentially very slow / costly
+            self._length = self.data.select(pl.len()).collect().item()
+        return self._length
 
 
 def collect(
