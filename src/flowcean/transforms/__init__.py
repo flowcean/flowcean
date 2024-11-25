@@ -9,6 +9,7 @@ __all__ = [
     "NoCategoriesError",
     "NoMatchingCategoryError",
     "NoTimeSeriesFeatureError",
+    "OneCold",
     "OneHot",
     "Rechunk",
     "Rename",
@@ -32,6 +33,7 @@ from flowcean.transforms.flatten import (
 )
 from flowcean.transforms.function import Lambda
 from flowcean.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.transforms.one_cold import OneCold
 from flowcean.transforms.one_hot import (
     NoCategoriesError,
     NoMatchingCategoryError,
