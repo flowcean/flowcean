@@ -31,24 +31,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ${{ env.REGISTRY }}
-      #- name: Log in to GitHub Container Registry
-      #  run: |
-      #    buildah login --username "${{ github.actor }}" --password "${{ secrets.GITHUB_TOKEN }}" ${{ env.REGISTRY }}
       - name: Build Container Image
-        run: |
-          buildah build --tag "${{ env.IMAGE_NAME }}:latest" -f Containerfile java/AutomataLearner
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: latest
+          containerfiles: |
+            ./Containerfile
+          build-args: |
+            java/AutomataLearner
+      #- name: Build Container Image
+      #  run: |
+      #    buildah build --tag "${{ env.IMAGE_NAME }}:latest" -f Containerfile java/AutomataLearner
       - name: Push Container Image
         id: push
-        run: |
-          buildah push --digestfile digest.txt "${{env.IMAGE_NAME}}:latest" docker://${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-      - shell: bash
-        id: digest-output
-        run: |
-          value=`cat digest.txt`
-          echo "digest=$value" >> "$GITHUB_OUTPUT"
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}/${{ github.repository }}
+      #- name: Push Container Image
+      #  id: push
+      #  run: |
+      #    buildah push --digestfile digest.txt "${{env.IMAGE_NAME}}:latest" docker://${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
+      #- shell: bash
+      #  id: digest-output
+      #  run: |
+      #    value=`cat digest.txt`
+      #    echo "digest=$value" >> "$GITHUB_OUTPUT"
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.digest-output.outputs.digest }}
+          #subject-digest: ${{ steps.digest-output.outputs.digest }}
+          subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
