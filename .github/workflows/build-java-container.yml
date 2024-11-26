@@ -32,6 +32,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ${{ env.REGISTRY }}
       - name: Build Container Image
+        id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
           image: ${{ env.IMAGE_NAME }}
