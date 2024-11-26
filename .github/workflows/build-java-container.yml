@@ -35,10 +35,9 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: ${{ env.IMAGE_NAME }}
-          tags: latest
+          context: java/AutomataLearner
           containerfiles: |
-            ./Containerfile
-          context: ./java/AutomataLearner
+            Containerfile
       #- name: Build Container Image
       #  run: |
       #    buildah build --tag "${{ env.IMAGE_NAME }}:latest" -f Containerfile java/AutomataLearner
