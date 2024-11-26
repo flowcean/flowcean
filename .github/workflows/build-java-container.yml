@@ -39,5 +39,5 @@ jobs:
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
-          subject-digest: 'cat digest.txt'
+          subject-digest: `cat digest.txt`
           push-to-registry: true
