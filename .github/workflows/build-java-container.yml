@@ -36,7 +36,7 @@ jobs:
         env:
           IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-app
         run: |
-          buildah build --tag "java-automata-learner:latest" -f Dockerfile java/AutomataLearner
+          buildah build --tag "java-automata-learner:latest" -f Containerfile java/AutomataLearner
       - name: Push Container Image
         env:
           IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/java-automata-learner
