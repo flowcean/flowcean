@@ -25,12 +25,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y buildah
-        - name: Log in to GitHub Container Registry
-          uses: redhat-actions/podman-login@v1
-          with:
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
-            registry: ${{ env.REGISTRY }}
+      - name: Log in to GitHub Container Registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
       #- name: Log in to GitHub Container Registry
       #  run: |
       #    buildah login --username "${{ github.actor }}" --password "${{ secrets.GITHUB_TOKEN }}" ${{ env.REGISTRY }}
