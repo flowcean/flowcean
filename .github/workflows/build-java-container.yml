@@ -37,7 +37,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           context: java/AutomataLearner
           containerfiles: |
-            Containerfile
+            ./java/AutomataLearner/Containerfile
       #- name: Build Container Image
       #  run: |
       #    buildah build --tag "${{ env.IMAGE_NAME }}:latest" -f Containerfile java/AutomataLearner
