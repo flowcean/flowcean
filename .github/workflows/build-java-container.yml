@@ -33,7 +33,7 @@ jobs:
           buildah build --tag "${{ env.IMAGE_NAME }}:latest" -f Containerfile java/AutomataLearner
       - name: Push Container Image
         run: |
-          buildah push "${{env.IMAGE_NAME}}:latest" docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          buildah push "${{env.IMAGE_NAME}}:latest" docker://${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
