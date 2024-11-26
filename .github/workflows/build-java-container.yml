@@ -31,10 +31,10 @@ jobs:
         run: |
           buildah login --username "${{ github.actor }}" \
                         --password "${{ secrets.GITHUB_TOKEN }}" \
-                        ${{ env.REGISTRY }}
+                        ${{ env.REGISTRY_URL }}
       - name: Build Container Image
         env:
-          IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-app
+          IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/java-automata-learner
         run: |
           buildah build --tag "java-automata-learner:latest" -f Containerfile java/AutomataLearner
       - name: Push Container Image
