@@ -3,6 +3,7 @@ __all__ = [
     "Drop",
     "Explode",
     "FeatureLengthVaryError",
+    "FeatureNotFoundError",
     "Filter",
     "Flatten",
     "Lambda",
@@ -33,7 +34,10 @@ from flowcean.transforms.flatten import (
     NoTimeSeriesFeatureError,
 )
 from flowcean.transforms.function import Lambda
-from flowcean.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.transforms.match_sampling_rate import (
+    FeatureNotFoundError,
+    MatchSamplingRate,
+)
 from flowcean.transforms.one_cold import OneCold
 from flowcean.transforms.one_hot import (
     NoCategoriesError,
@@ -43,10 +47,7 @@ from flowcean.transforms.one_hot import (
 from flowcean.transforms.rename import Rename
 from flowcean.transforms.resample import Resample
 from flowcean.transforms.select import Select
-from flowcean.transforms.signal_filter import (
-    SignalFilter,
-    SignalFilterType,
-)
+from flowcean.transforms.signal_filter import SignalFilter, SignalFilterType
 from flowcean.transforms.sliding_window import SlidingWindow
 from flowcean.transforms.standardize import Standardize
 from flowcean.transforms.time_window import TimeWindow
