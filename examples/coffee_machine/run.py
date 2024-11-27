@@ -22,7 +22,9 @@ def main() -> None:
 
     data = ChainedOfflineEnvironments(
         [
-            UriDataLoader("file:" + path.as_posix()).with_transform(ToTimeSeries("t"))
+            UriDataLoader("file:" + path.as_posix()).with_transform(
+                ToTimeSeries("t")
+            )
             for path in tqdm(
                 list(Path("./data").glob("*.csv")),
                 desc="Loading environments",
@@ -30,10 +32,14 @@ def main() -> None:
         ]
     )
     print(data.observe().head())
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data.collect())
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        data.collect()
+    )
 
-    #learner = GrpcPassiveAutomataLearner.with_address(address="localhost:51378")
-    learner = GrpcPassiveAutomataLearner.run_docker(image="java-automata-learner:latest", pull=False)
+    learner = GrpcPassiveAutomataLearner.run_docker(
+        image="ghcr.io/flowcean/flowcean/java-automata-learner:latest",
+        pull=True,
+    )
     inputs = ["input"]
     outputs = ["output"]
 
