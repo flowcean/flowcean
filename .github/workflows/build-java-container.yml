@@ -1,9 +1,6 @@
 name: Build and Push Java Image
 
 on:
-  push:
-      branches:
-        - update-coffee
   workflow_dispatch:
 
 env:
@@ -26,6 +23,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y buildah
       - name: Log in to GitHub Container Registry
+        id: login
         uses: redhat-actions/podman-login@v1
         with:
           username: ${{ github.actor }}
@@ -39,9 +37,6 @@ jobs:
           context: java/AutomataLearner
           containerfiles: |
             ./java/AutomataLearner/Containerfile
-      #- name: Build Container Image
-      #  run: |
-      #    buildah build --tag "${{ env.IMAGE_NAME }}:latest" -f Containerfile java/AutomataLearner
       - name: Push Container Image
         id: push
         uses: redhat-actions/push-to-registry@v2
@@ -49,19 +44,10 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.REGISTRY }}/${{ github.repository }}
-      #- name: Push Container Image
-      #  id: push
-      #  run: |
-      #    buildah push --digestfile digest.txt "${{env.IMAGE_NAME}}:latest" docker://${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-      #- shell: bash
-      #  id: digest-output
-      #  run: |
-      #    value=`cat digest.txt`
-      #    echo "digest=$value" >> "$GITHUB_OUTPUT"
       - name: Generate artifact attestation
+        id: attest
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
-          #subject-digest: ${{ steps.digest-output.outputs.digest }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
