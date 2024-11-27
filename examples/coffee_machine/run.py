@@ -46,11 +46,8 @@ def main() -> None:
         data.observe(),
     )
 
-    #learner = GrpcPassiveAutomataLearner.with_address(
-    #    address="localhost:51378"
-    #)
     learner = GrpcPassiveAutomataLearner.run_docker(
-        image="java-automata-learner:latest",
+        image="ghcr.io/flowcean/flowcean/java-automata-learner:latest",
         pull=False,
     )
     inputs = ["input"]

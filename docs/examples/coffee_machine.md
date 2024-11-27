@@ -4,11 +4,6 @@ This example shows how to train a model to predict the behavior of an automaton.
 Inspired by the work of Steffen et al.[^1], we consider a simple coffee machine.
 LearnLib[^2], a framework for automata learning written in Java, is used for the inference of the automaton.
 
-!!! todo
-
-    This explanation is outdated.
-    The automaton example has to be refined using time series data.
-
 ## Run this example
 
 ### Docker Container
@@ -16,9 +11,9 @@ LearnLib[^2], a framework for automata learning written in Java, is used for the
 The external learner written in Java is containerized for this example.
 Thus, Docker must be installed to run it.
 Follow the instructions on the [official Docker page](https://docs.docker.com/get-docker/) to install it.
-The image for this example is stored in the TUHH image registry.
+The image for this example is stored in the GitHub container registry.
 Authentication is required for this.
-Log in to the registry using `docker login collaborating.tuhh.de` and provide your credentials when asked.
+Log in to the registry by following [these instructions](https://docs.github.com/de/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authentifizieren-bei-der-container-registry).
 Afterwards run the `run.py` for this example.
 
 The required images will be automatically retrieved, and a container will be started.

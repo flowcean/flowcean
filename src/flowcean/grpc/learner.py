@@ -88,10 +88,10 @@ class _DockerBackend(_Backend):
         ][
             "Ports"
         ]
+        time.sleep(2)
         host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
         host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
         self._server_address = f"{host_ip}:{host_port}"
-        time.sleep(2)
 
     @property
     @override
