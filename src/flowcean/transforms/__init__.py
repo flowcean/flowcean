@@ -6,6 +6,7 @@ __all__ = [
     "FeatureNotFoundError",
     "Filter",
     "Flatten",
+    "NoTimeSeriesFeatureError",
     "Lambda",
     "MatchSamplingRate",
     "NoCategoriesError",
@@ -25,7 +26,6 @@ __all__ = [
 ]
 
 from flowcean.transforms.cast import Cast
-from flowcean.transforms.drop import Drop
 from flowcean.transforms.explode import Explode
 from flowcean.transforms.filter import Filter
 from flowcean.transforms.flatten import (
