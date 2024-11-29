@@ -10,10 +10,9 @@
 
 import logging
 
-import polars.selectors as cs
-
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
+from flowcean.transforms import MatchSamplingRate
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +21,13 @@ def main() -> None:
     flowcean.cli.initialize_logging()
 
     environment = RosbagLoader(
-        path="example_rosbag",
+        path="rec_20241021_152106",
         topics={
-            "/j100_0000/amcl_pose": [
-                "pose.pose.position.x",
-                "pose.pose.position.y",
+            "/momo/pose": [
+                "pose.position.x",
+                "pose.position.y",
             ],
-            "/j100_0000/odometry": [
+            "/odometry/filtered": [
                 "pose.pose.position.x",
                 "pose.pose.position.y",
             ],
@@ -36,13 +35,17 @@ def main() -> None:
     )
     data = environment.observe()
     print(data)
-    data = (
-        data.select("/j100_0000/amcl_pose")
-        .explode(cs.all())
-        .unnest(cs.all())
-        .unnest("value")
+    transform = MatchSamplingRate(
+        reference_feature_name="/momo/pose",
+        feature_interpolation_map={
+            "/odometry/filtered": "linear",
+        },
     )
-    print(data)
+    transformed_data = transform(
+        data.select("/momo/pose", "/odometry/filtered")
+    )
+
+    print(transformed_data)
 
 
 if __name__ == "__main__":
