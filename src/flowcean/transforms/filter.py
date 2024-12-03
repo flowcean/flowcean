@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import reduce
-from typing import Literal, override
+from typing import override
 
 import polars as pl
 import sympy
@@ -10,8 +10,6 @@ import sympy
 from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
-
-type FilterMode = Literal["and", "or"]
 
 
 class FilterExpr(ABC):
