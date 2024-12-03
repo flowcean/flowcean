@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class FilterExpr(ABC):
+    """Expression to be used in a Filter transform."""
+
     @abstractmethod
     def get(self) -> pl.Expr:
         """Get the polars expression for this filter."""
