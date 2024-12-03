@@ -1,13 +1,14 @@
 __all__ = [
     "Cast",
+    "Drop",
     "Explode",
     "FeatureLengthVaryError",
     "Flatten",
-    "NoTimeSeriesFeatureError",
     "Lambda",
     "MatchSamplingRate",
     "NoCategoriesError",
     "NoMatchingCategoryError",
+    "NoTimeSeriesFeatureError",
     "OneHot",
     "Rechunk",
     "Rename",
@@ -22,6 +23,7 @@ __all__ = [
 ]
 
 from flowcean.transforms.cast import Cast
+from flowcean.transforms.drop import Drop
 from flowcean.transforms.explode import Explode
 from flowcean.transforms.flatten import (
     FeatureLengthVaryError,
