@@ -47,6 +47,16 @@ class OneCold(Transform):
      transform. In that case if an unknown value is found which does not belong
      to any category, a NoMatchingCategoryError is thrown. This however has an
      impact on the performance and will slow down the transform.
+
+     If you want to enable this check, create the transform as follows:
+     ```python
+        transform = OneCold(
+            feature_categories={
+                "feature": [0, 1, 2, 5]
+            },
+            check_for_missing_categories=True
+        )
+    ```
     """
 
     feature_category_mapping: dict[str, dict[str, Any]]
