@@ -39,6 +39,14 @@ class OneCold(Transform):
      1        | 1         | 0         | 1
      1        | 0         | 1         | 1
      1        | 1         | 1         | 0
+
+     In the default configuration missing categories are ignored.
+     There respective entries will all be one. If you however want to enforce
+     that each data entry belongs to a certain category, you can set the
+     check_for_missing_categories flag to true when constructing a One-Cold
+     transform. In that case if an unknown value is found which does not belong
+     to any category, a NoMatchingCategoryError is thrown. This however has an
+     impact on the performance and will slow down the transform.
     """
 
     feature_category_mapping: dict[str, dict[str, Any]]
@@ -97,14 +105,23 @@ class OneCold(Transform):
                 ]
             ).drop(feature)
 
+            # Check only for missing categories if the user has requested it
             if self.check_for_missing_categories and (
                 not data.select(
                     [
                         pl.col(name).cast(pl.Boolean)
                         for name in category_mappings
                     ]
+                )  # Get the new crated on-cold feature columns
+                .select(
+                    # Check if all on-cold features are true
+                    # That's only the case if the category is missing
+                    pl.all_horizontal(
+                        pl.all(),
+                    ).all(),  # Combine the results for all data entries ...
                 )
-                .select(pl.all_horizontal(pl.all()).all())
+                # ... and get the final result.
+                # If it is false, there is a missing category
                 .item(0, 0)
             ):
                 raise NoMatchingCategoryError
