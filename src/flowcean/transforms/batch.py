@@ -14,6 +14,34 @@ class RowTransform(ABC):
 
 
 class BatchTransform(Transform):
+    """A BatchTransform applies a list of RowTransforms to a single feature.
+
+    Args:
+        feature (str): The feature to apply the RowTransforms to.
+        child_transforms (Iterable[RowTransform]): The RowTransforms to apply.
+
+    This transform can be used to apply a list of RowTransforms to the column
+    `feature`.
+    Assuming there are two RowTransforms `MeanTransform` and `MaxTransform`
+    that calculate the mean and max of the input list, respectively.
+    For this example, the loaded data is represented by the table:
+
+    feature    | time
+    -----------|-----
+    [1, 2, 3]  | 0
+    [4, 5, 6]  | 1
+    [7, 8, 9]  | 2
+
+    The resulting Dataframe after the transform is:
+
+    feature    | mean | max | time
+    -----------|------|------------
+    [1, 2, 3]  | 2    | 3   | 0
+    [4, 5, 6]  | 5    | 6   | 1
+    [7, 8, 9]  | 8    | 9   | 2
+
+    """
+
     def __init__(
         self, feature: str, child_transforms: Iterable[RowTransform]
     ) -> None:
