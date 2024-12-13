@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 import polars as pl
@@ -8,6 +8,11 @@ from flowcean.core.transform import Transform
 
 
 class RowTransform(ABC):
+    @abstractmethod
+    def __init__(self, name: str, transform_fn: Callable) -> None:
+        self.name = name
+        self.transform_fn = transform_fn
+
     @abstractmethod
     def apply(self, row: tuple[Any, ...]) -> pl.DataFrame:
         pass
@@ -50,14 +55,18 @@ class BatchTransform(Transform):
         self.child_transforms = child_transforms
 
     def apply(self, data: pl.DataFrame) -> pl.DataFrame:
-        selected_data = data.select(self.feature)
-        mapped_data = selected_data.map_rows(
-            lambda pc: self.map_element(pc[0])
-        )
-        return pl.DataFrame({self.feature: mapped_data})
+        feature_data = data.select(self.feature)[self.feature]
 
-    def map_element(self, pc: tuple[Any, ...]) -> pl.DataFrame:
-        return pl.concat(
-            (transform.apply(pc) for transform in self.child_transforms),
-            how="horizontal",
-        )
+        transformed_rows = [self.map_element(row) for row in feature_data]
+
+        transformed_columns = pl.DataFrame(transformed_rows)
+
+        return data.hstack(transformed_columns)
+
+    def map_element(self, element: tuple[Any, ...]) -> dict:
+        return {
+            transform.name: transform.apply(element).to_dict(as_series=False)[
+                transform.name
+            ][0]
+            for transform in self.child_transforms
+        }
