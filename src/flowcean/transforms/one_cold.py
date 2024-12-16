@@ -41,7 +41,7 @@ class OneCold(Transform):
      1        | 1         | 1         | 0
 
      In the default configuration missing categories are ignored.
-     There respective entries will all be one. If you however want to enforce
+     Their respective entries will all be one. If you however want to enforce
      that each data entry belongs to a certain category, you can set the
      check_for_missing_categories flag to true when constructing a One-Cold
      transform. In that case if an unknown value is found which does not belong
