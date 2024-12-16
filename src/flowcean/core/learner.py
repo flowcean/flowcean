@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 import polars as pl
 
@@ -61,8 +62,8 @@ class ActiveLearner(ABC):
     @abstractmethod
     def learn_active(
         self,
-        action: pl.DataFrame,
-        observation: pl.DataFrame,
+        action: Any,
+        observation: Any,
     ) -> Model:
         """Learn from actions and observations.
 
@@ -75,7 +76,7 @@ class ActiveLearner(ABC):
         """
 
     @abstractmethod
-    def propose_action(self, observation: pl.DataFrame) -> pl.DataFrame:
+    def propose_action(self, observation: Any) -> Any:
         """Propose an action based on an observation.
 
         Args:
