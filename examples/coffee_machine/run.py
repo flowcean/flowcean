@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# /// script
+# dependencies = [
+#     "flowcean",
+# ]
+# ///
+
 import flowcean.cli
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.environments.uri import UriDataLoader

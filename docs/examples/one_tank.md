@@ -23,9 +23,9 @@ In this example, the initial value is the initial level of the liquid $x(0) = x_
 
 The free parameters from the above equation are set to
 
- $A$ | $b$ |  $a$
------|-----|------
- $5$ | $2$ | $0.5$
+| $A$ | $b$ | $a$   |
+| --- | --- | ----- |
+| $5$ | $2$ | $0.5$ |
 
 The inflow is given by $V(t) = \mathrm{max}\left(0, \sin\left( 2 \pi \frac{1}{10} t \right)\right)$ and the initial condition is $x_0 = 1$.
 Using a suitable numerical solution algorithm, the equation can be solved for the level $x_n$.
@@ -40,7 +40,7 @@ The graph below shows the development of the water level $x$ from zero to ten se
 After setting up the simulation, we want to use two different learners to predict the level of the tank $x[n]$ given the current input $V[n]$ and the level and input in the previous two time steps.
 The unknown function we are looking for and that we want to learn is
 
-$$ x_n = f\left(V_n, x_{n-1}, V_{n-1}, x_{n-2}, V_{n-2}\right). $$
+$$ x*n = f\left(V_n, x*{n-1}, V*{n-1}, x*{n-2}, V\_{n-2}\right). $$
 
 To do this, we first need data to learn the functions representation in Flowcean.
 Normally this data would be recorded from a real CPS and imported into the framework as a CSV, ROS bag or something similar.
@@ -133,12 +133,12 @@ The mapping function describes how the generated solutions for different points 
 
 The generated output of the `OdeEnvironment` environment has the form
 
-   $x$      |  $V$
-  ----------|-----------
-   $x[0]$   |  $V[0]$
-   $x[1]$   |  $V[1]$
-   $\dots$  |  $\dots$
-   $x[N]$   |  $V[N]$
+| $x$     | $V$     |
+| ------- | ------- |
+| $x[0]$  | $V[0]$  |
+| $x[1]$  | $V[1]$  |
+| $\dots$ | $\dots$ |
+| $x[N]$  | $V[N]$  |
 
 Since the learners we will use later only support learning on a fixed amount of data (called "[offline learners](../user_guide/learning_strategies.md)" in the framework), we need to convert the incremental dataset into a fixed size dataset.
 This can be done by calling the [`collect(N)`](../reference/flowcean/core/environment/incremental.md#flowcean.core.environment.incremental.IncrementalEnvironment.collect) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`Dataset`](../reference/flowcean/environments/dataset.md).
@@ -149,7 +149,7 @@ data = Dataset(data_incremental.load().take(250))
 
 Until now, the data is in a time series format with each row representing a sampled value at the step $n$.
 However, for our prediction of the current fill level $x[n]$, as described by the equation above, we need the current input $V[n]$ and the values of the two previous time steps as a single sample.
-To achieve this we use a [`SlidingWindow`](../reference/flowcean/transforms/sliding_window.md) transform.
+To achieve this we use a [`SlidingWindow`](../reference/flowcean/transforms/index.md#flowcean.transforms.SlidingWindow) transform.
 See the linked documentation for a more detailed explanation of how the transform works.
 
 ```python
@@ -187,7 +187,7 @@ The `inputs` and `outputs` variables contain the names of the input and output f
 
 Secondly a [multi-layer perceptron](../reference/flowcean/learners/lightning.md) is used to create a model.
 This type of model consists of a set of neurones arranged in layers which are connected with the previous layer.
-The value of each neuron is calculated by weighting and summing up the values of the neurons in the previous layer and applying a non-linear function; in this case a [leaky ReLU function](https://en.wikipedia.org/wiki/Rectifier_(neural_networks)#Leaky_ReLU).
+The value of each neuron is calculated by weighting and summing up the values of the neurons in the previous layer and applying a non-linear function; in this case a [leaky ReLU function](<https://en.wikipedia.org/wiki/Rectifier_(neural_networks)#Leaky_ReLU>).
 The result can be read from the neurons of the last layer.
 The implementation of this learner uses the [lightning framework](https://lightning.ai/docs/pytorch/stable/) which is a high-level wrapper around the well known [PyTorch](https://pytorch.org/) library.
 
@@ -237,27 +237,27 @@ perceptron_report = evaluate_offline(
 
 For this example, the resulting metrics are about
 
- Learner typ            | Runtime              | Mean Absolute Error | Mean Squared Error
- -----------------------|----------------------|---------------------|--------------------
- Regression Tree        | $15.5\: \mathrm{ms}$ | $0.0206$            | $0.0006$
- Multi-layer Perceptron | $813\: \mathrm{ms}$  | $0.0639$            | $0.00054$
+| Learner typ            | Runtime              | Mean Absolute Error | Mean Squared Error |
+| ---------------------- | -------------------- | ------------------- | ------------------ |
+| Regression Tree        | $15.5\: \mathrm{ms}$ | $0.0206$            | $0.0006$           |
+| Multi-layer Perceptron | $813\: \mathrm{ms}$  | $0.0639$            | $0.00054$          |
 
 Depending on the size of the dataset, the way the train and test set are split and shuffled, the learners configuration and other random facts, these values may vary.
 However, it is clear, that both learners produced models with relative small errors ($\sim 2\%$ and $\sim 6\%$) which could be used for tasks such as prediction.
 
 ## Run this example
 
-To run this example first make sure you followed the [installation instructions](../getting_started/preparation.md) to setup python and git.
-Afterwards you can either use `hatch` or run the examples from source.
+To run this example first make sure you followed the [installation instructions](../getting_started/prerequisites.md) to setup python and `just`.
+Afterwards you can either use `just` or run the examples from source.
 
-### Hatch
+### Just
 
-The easiest way to run this example is using `hatch`.
+The easiest way to run this example is using `just`.
 Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before installing it or any of its dependencies.
 Now you can run the example using
 
 ```sh
-hatch run examples:one_tank
+just examples-one_tank
 ```
 
 This command will take care of installing any required dependencies in a separate environment.

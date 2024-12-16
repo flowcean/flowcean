@@ -3,12 +3,12 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.transforms import Rename
+from flowcean.transforms import Drop
 
 
-class RenameTransform(unittest.TestCase):
-    def test_rename(self) -> None:
-        transform = Rename({"a": "d", "b": "e"})
+class DropTransform(unittest.TestCase):
+    def test_simple(self) -> None:
+        transform = Drop(features=["a", "c"])
 
         data_frame = pl.DataFrame(
             [
@@ -24,13 +24,12 @@ class RenameTransform(unittest.TestCase):
             transformed_data,
             pl.DataFrame(
                 [
-                    {"d": 1, "e": 2, "c": 3},
-                    {"d": 4, "e": 5, "c": 6},
-                    {"d": 7, "e": 8, "c": 9},
-                    {"d": 10, "e": 11, "c": 12},
+                    {"b": 2},
+                    {"b": 5},
+                    {"b": 8},
+                    {"b": 11},
                 ],
             ),
-            check_column_order=False,
         )
 
 

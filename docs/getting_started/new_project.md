@@ -8,7 +8,7 @@ First step when using Flowcean is to think about your problem at hand and specif
 - What type of data can be provided?
 - Is it a dataset, a dataset, a simulation or something else?
 - Are inputs to the data required (is it interactive)?
-- What kind of learning process is required? 
+- What kind of learning process is required?
 
 According to these questions flowcean offers different learning environments (offline, incremental and active).
 To decide what kind approach you need see (link).
@@ -96,7 +96,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-``` 
+```
 
 ### Writing an environment for your data/simulation
 
@@ -196,7 +196,7 @@ Action = float
 class ReinforcementObservation:
     reward: float
     sensor: float
-    
+
 class MyEnvironment(ActiveOnlineEnvironment[Action, ReinforcementObservation]):
     state: float
     max_value: float
@@ -287,7 +287,7 @@ This specific model will return a random floating point value.
 
 The `propose_action` function returns a suggested action of the model based on a given observation of the environment for a example the sensor.
 
-```python 
+```python
 @override
     def propose_action(self, observation: ReinforcementObservation) -> Action:
         sensor = observation.sensor
@@ -327,7 +327,7 @@ The model class is implemented to create model objects based on the learner and 
 The model itself does not contain the learning algorithm.
 It contains the prediction function given by the learner to predict output values based on a given input.
 
-```python 
+```python
 from flowcean.strategies.active import StopLearning, learn_active
 
 class MyModel(Model):
@@ -336,7 +336,7 @@ class MyModel(Model):
 
 *best_action* ...
 
-```python 
+```python
 @override
     def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         return pl.DataFrame(
@@ -352,7 +352,7 @@ This is the actual application of the model.
 The `predict` function returns a data frame based on the underlying function, learnend by the learner.
 
 
-```python 
+```python
 @override
     def save(self, path: Path) -> None:
         raise NotImplementedError
@@ -360,7 +360,7 @@ The `predict` function returns a data frame based on the underlying function, le
 
 For later usage models can be saved with the `save` function.
 
-```python 
+```python
 @override
     def load(self, path: Path) -> None:
         raise NotImplementedError
