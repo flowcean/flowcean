@@ -35,7 +35,7 @@ class SimpleSystem(OdeSystem[SimpleState]):
         t: float,
         state: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        return -1 / 2 * state
+        return np.array(-1 / 2 * state, dtype=np.float64)
 
 
 class TimeDependentSystem(OdeSystem[SimpleState]):
