@@ -70,8 +70,28 @@ def main(args) -> None:
 
     if args.plot_data:
         observed_data = data.observe()
+
+        # plot_data = {}
+        # for input in inputs:	
+        #     plot_data[input] = observed_data.select(input)
+        # for output in outputs:
+        #     plot_data[output] = observed_data.select(output)
+        
+        # plt.figure()
+        # for i in range(args.plots):
+        #     plt.subplot(133)
+        #     plt.plot()    
+
+        # i = 1
+        # for row in observed_data.iter_rows():
+        #     print(row)     
+        #     if i > 9: break
+        #     i += 1
+
         # TODO: plot the data
         # code.interact(local=locals())
+        
+
         # for input in inputs:
         #     plt.plot(observed_data[input], label=input)
         # plt.show()
@@ -124,6 +144,7 @@ if __name__ == "__main__":
     )
     parser.add_argument('--print_data', action='store_true', help='Print the data from the parquet file.')
     parser.add_argument('--plot_data', action='store_true', help='Plot the data from the parquet file.')
+    parser.add_argument('--plots', type=int, default=10, help='Number of plots to show.')
     parser.add_argument('--no_training', action='store_true', help='Apply no training.')
     parser.add_argument('--lightning_learner', action='store_true', help='Use the Lightning Learner with Multilayer-Perceptron instead of Regression-Tree.')
     parser.add_argument('--learning_rate', type=float, default=0.1, help='Set the learning rate for the lightning-model. (default: 0.1)')
