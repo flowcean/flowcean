@@ -701,6 +701,7 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "scikit-learn" },
     { name = "scipy" },
+    { name = "sympy" },
     { name = "torch" },
     { name = "tqdm" },
 ]
@@ -738,6 +739,7 @@ requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.18.6" },
     { name = "scikit-learn", specifier = ">=1.5.2" },
     { name = "scipy", specifier = ">=1.14.1" },
+    { name = "sympy", specifier = ">=1.13.1" },
     { name = "torch", specifier = ">=2.5.0" },
     { name = "tqdm", specifier = ">=4.66.5" },
 ]
