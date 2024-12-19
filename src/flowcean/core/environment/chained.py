@@ -30,7 +30,7 @@ class ChainedOfflineEnvironments(IncrementalEnvironment):
         super().__init__()
 
     @override
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.LazyFrame:
         return self._element.observe()
 
     @override

@@ -24,7 +24,7 @@ class TestYamlDataLoader(unittest.TestCase):
                 f.close()
 
                 dataloader = YamlDataLoader(path=Path(f.name))
-                loaded_data = dataloader.observe()
+                loaded_data = dataloader.observe().collect()
                 assert_frame_equal(loaded_data, data)
             finally:
                 f.close()
@@ -48,7 +48,7 @@ class TestYamlDataLoader(unittest.TestCase):
                 f.close()
 
                 dataloader = YamlDataLoader(path=Path(f.name))
-                loaded_data = dataloader.observe()
+                loaded_data = dataloader.observe().collect()
                 assert_frame_equal(loaded_data, data)
             finally:
                 f.close()

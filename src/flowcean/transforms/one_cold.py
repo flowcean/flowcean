@@ -89,8 +89,8 @@ class OneCold(Transform):
     @override
     def apply(
         self,
-        data: pl.DataFrame,
-    ) -> pl.DataFrame:
+        data: pl.LazyFrame,
+    ) -> pl.LazyFrame:
         """Transform data with this one hot transformation.
 
         Transform data with this one hot transformation and return the
@@ -130,6 +130,7 @@ class OneCold(Transform):
                         pl.all(),
                     ).all(),  # Combine the results for all data entries ...
                 )
+                .collect(streaming=True)
                 # ... and get the final result.
                 # If it is false, there is a missing category
                 .item(0, 0)

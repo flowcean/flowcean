@@ -51,4 +51,4 @@ class DummyLearner(SupervisedLearner):
         inputs: pl.DataFrame,
         outputs: pl.DataFrame,
     ) -> DummyModel:
-        return DummyModel(outputs.columns)
+        return DummyModel(outputs.collect_schema().names())

@@ -17,8 +17,8 @@ class DropTransform(unittest.TestCase):
                 {"a": 7, "b": 8, "c": 9},
                 {"a": 10, "b": 11, "c": 12},
             ],
-        )
-        transformed_data = transform(data_frame)
+        ).lazy()
+        transformed_data = transform(data_frame).collect()
 
         assert_frame_equal(
             transformed_data,

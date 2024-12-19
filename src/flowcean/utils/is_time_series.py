@@ -3,7 +3,7 @@ from typing import cast
 import polars as pl
 
 
-def is_timeseries_feature(df: pl.DataFrame, name: str) -> bool:
+def is_timeseries_feature(df: pl.LazyFrame, name: str) -> bool:
     """Check if the given column is a time series feature.
 
     A time series feature contains a list of structs with fields _time_ and

@@ -16,9 +16,9 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 7, "b": 8, "c": 9},
                 {"a": 10, "b": 11, "c": 12},
             ],
-        )
+        ).lazy()
         transform = OneHot.from_dataframe(data_frame, ["a"])
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -43,9 +43,9 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 7, "b": 8, "c": 9},
                 {"a": 10, "b": 11, "c": 12},
             ],
-        )
+        ).lazy()
         transform = OneHot.from_dataframe(data_frame, ["a", "b"])
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -75,7 +75,7 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -103,8 +103,8 @@ class OneHotTransform(unittest.TestCase):
 
         with pytest.raises(NoMatchingCategoryError):
             transform.apply(
-                data_frame,
-            )
+                data_frame.lazy(),
+            ).collect()
 
 
 if __name__ == "__main__":

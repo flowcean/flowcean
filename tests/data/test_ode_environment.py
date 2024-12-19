@@ -35,7 +35,7 @@ class SimpleSystem(OdeSystem[SimpleState]):
         t: float,
         state: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        return -1 / 2 * state
+        return np.array(-1 / 2 * state, dtype=np.float64)
 
 
 class TimeDependentSystem(OdeSystem[SimpleState]):
@@ -91,7 +91,7 @@ class TestOdeEnvironment(unittest.TestCase):
             SimpleSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        loaded_data = environment.collect(5).observe()
+        loaded_data = environment.collect(5).observe().collect()
 
         assert_frame_equal(
             data,
@@ -125,7 +125,7 @@ class TestOdeEnvironment(unittest.TestCase):
             TimeDependentSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        loaded_data = environment.collect(4).observe()
+        loaded_data = environment.collect(4).observe().collect()
 
         assert_frame_equal(
             data,

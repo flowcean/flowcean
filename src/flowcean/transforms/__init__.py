@@ -11,7 +11,6 @@ __all__ = [
     "NoTimeSeriesFeatureError",
     "OneCold",
     "OneHot",
-    "Rechunk",
     "Rename",
     "Resample",
     "Select",
@@ -39,7 +38,6 @@ from flowcean.transforms.one_hot import (
     NoMatchingCategoryError,
     OneHot,
 )
-from flowcean.transforms.rechunk import Rechunk
 from flowcean.transforms.rename import Rename
 from flowcean.transforms.resample import Resample
 from flowcean.transforms.select import Select
