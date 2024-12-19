@@ -8,10 +8,9 @@
 import logging
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import numpy as np
 import polars as pl
-from utils import hough_line_transform, plot_detected_lines
+from point_distance import point_distance_transform
+from scan_points import scan_points_transform
 
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
@@ -20,23 +19,6 @@ logger = logging.getLogger(__name__)
 
 USE_CACHED_ROS_DATA = False
 UPDATE_CACHE = False
-
-
-def plot_occupancy_grid(
-    occupancy_grid: np.ndarray, width: int, height: int, resolution: int
-) -> None:
-    plt.figure(figsize=(10, 10))  # Adjust the figure size
-    plt.imshow(
-        occupancy_grid,
-        cmap="gray",
-        origin="lower",
-        extent=(0, width * resolution, 0, height * resolution),
-    )
-    plt.colorbar(label="Occupancy Value")
-    plt.xlabel("X [meters]")
-    plt.ylabel("Y [meters]")
-    plt.title("Occupancy Grid Map")
-    plt.show()
 
 
 def main() -> None:
@@ -51,6 +33,10 @@ def main() -> None:
                 "/amcl_pose": [
                     "pose.pose.position.x",
                     "pose.pose.position.y",
+                    "pose.pose.orientation.x",
+                    "pose.pose.orientation.y",
+                    "pose.pose.orientation.z",
+                    "pose.pose.orientation.w",
                 ],
                 "/momo/pose": [
                     "pose.position.x",
@@ -58,6 +44,11 @@ def main() -> None:
                 ],
                 "/scan": [
                     "ranges",
+                    "angle_min",
+                    "angle_max",
+                    "angle_increment",
+                    "range_min",
+                    "range_max",
                 ],
                 "/map": [
                     "data",
@@ -72,6 +63,7 @@ def main() -> None:
                     "info.origin.orientation.z",
                     "info.origin.orientation.w",
                 ],
+                "/delocalizations": ["data"],
             },
             msgpaths=[
                 "/opt/ros/humble/share/sensor_msgs/msg/LaserScan.msg",
@@ -80,24 +72,10 @@ def main() -> None:
             ],
         )
         data = environment.observe()
-        map_array = data["/map"].to_list()[0][1]["value"]["data"]
-        width = data["/map"].to_list()[0][1]["value"]["info.width"]
-        height = data["/map"].to_list()[0][1]["value"]["info.height"]
-        resolution = data["/map"].to_list()[0][1]["value"]["info.resolution"]
-        occupancy_grid = np.array(map_array).reshape((height, width))
-        # plot_occupancy_grid(occupancy_grid, width, height, resolution)
-        detected_lines, edges = hough_line_transform(
-            occupancy_grid,
-            threshold1=50,
-            threshold2=150,
-            hough_threshold=75,
-            min_line_length=10,
-            max_line_gap=10,
+        data = scan_points_transform(
+            data=data, scan_topic="/scan", sensor_pose_topic="/amcl_pose"
         )
-        plot_detected_lines(
-            occupancy_grid=occupancy_grid, edges=edges, lines=detected_lines
-        )
-
+        data = point_distance_transform(data)
     if UPDATE_CACHE:
         if Path("cached_ros_data.json").exists():
             user_input = input("Overwrite cache? (y/n): ")
