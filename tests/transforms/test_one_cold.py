@@ -4,7 +4,7 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from flowcean.transforms import NoMatchingCategoryError, OneHot
+from flowcean.transforms import NoMatchingCategoryError, OneCold
 
 
 class OneHotTransform(unittest.TestCase):
@@ -17,17 +17,17 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transform = OneHot.from_dataframe(data_frame, ["a"])
+        transform = OneCold.from_dataframe(data_frame, ["a"])
         transformed_data = transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
             pl.DataFrame(
                 {
-                    "a_1": [1, 0, 0, 0],
-                    "a_4": [0, 1, 0, 0],
-                    "a_7": [0, 0, 1, 0],
-                    "a_10": [0, 0, 0, 1],
+                    "a_1": [0, 1, 1, 1],
+                    "a_4": [1, 0, 1, 1],
+                    "a_7": [1, 1, 0, 1],
+                    "a_10": [1, 1, 1, 0],
                     "b": [2, 5, 8, 11],
                     "c": [3, 6, 9, 12],
                 },
@@ -44,21 +44,21 @@ class OneHotTransform(unittest.TestCase):
                 {"a": 10, "b": 11, "c": 12},
             ],
         )
-        transform = OneHot.from_dataframe(data_frame, ["a", "b"])
+        transform = OneCold.from_dataframe(data_frame, ["a", "b"])
         transformed_data = transform(data_frame)
 
         assert_frame_equal(
             transformed_data,
             pl.DataFrame(
                 {
-                    "a_1": [1, 0, 0, 0],
-                    "a_4": [0, 1, 0, 0],
-                    "a_7": [0, 0, 1, 0],
-                    "a_10": [0, 0, 0, 1],
-                    "b_2": [1, 0, 0, 0],
-                    "b_5": [0, 1, 0, 0],
-                    "b_8": [0, 0, 1, 0],
-                    "b_11": [0, 0, 0, 1],
+                    "a_1": [0, 1, 1, 1],
+                    "a_4": [1, 0, 1, 1],
+                    "a_7": [1, 1, 0, 1],
+                    "a_10": [1, 1, 1, 0],
+                    "b_2": [0, 1, 1, 1],
+                    "b_5": [1, 0, 1, 1],
+                    "b_8": [1, 1, 0, 1],
+                    "b_11": [1, 1, 1, 0],
                     "c": [3, 6, 9, 12],
                 },
             ),
@@ -66,7 +66,7 @@ class OneHotTransform(unittest.TestCase):
         )
 
     def test_given_categories(self) -> None:
-        transform = OneHot({"a": [1, 7]})
+        transform = OneCold({"a": [1, 7]})
         data_frame = pl.DataFrame(
             [
                 {"a": 1, "b": 2, "c": 3},
@@ -81,8 +81,8 @@ class OneHotTransform(unittest.TestCase):
             transformed_data,
             pl.DataFrame(
                 {
-                    "a_1": [1, 0, 0, 0],
-                    "a_7": [0, 0, 1, 0],
+                    "a_1": [0, 1, 1, 1],
+                    "a_7": [1, 1, 0, 1],
                     "b": [2, 5, 8, 11],
                     "c": [3, 6, 9, 12],
                 },
@@ -91,7 +91,7 @@ class OneHotTransform(unittest.TestCase):
         )
 
     def test_missing_category(self) -> None:
-        transform = OneHot({"a": [1, 7]}, check_for_missing_categories=True)
+        transform = OneCold({"a": [1, 7]}, check_for_missing_categories=True)
         data_frame = pl.DataFrame(
             [
                 {"a": 1, "b": 2, "c": 3},
