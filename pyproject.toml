@@ -65,6 +65,13 @@ members = [
     "flowcean-ode",
     "flowcean-grpc"
 ]
+energy = [
+  "midas-mosaik[base]>=2.0.0a7",
+  "midas-palaestrai>=3.5.4a1",
+  "palaestrai-agents",
+  "palaestrai@git+https://gitlab.com/arl2/palaestrai.git@development#egg=palaestrai",
+  "dask[dataframe]"
+]
 
 [build-system]
 requires = ["hatchling"]
