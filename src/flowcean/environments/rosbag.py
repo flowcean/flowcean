@@ -1,13 +1,24 @@
 """Loading data from rosbag topics."""
 
-from collections.abc import Sequence
+from __future__ import annotations
+
+import logging
 from pathlib import Path
+from typing import TYPE_CHECKING, Union
 
 import polars as pl
-from rosbags.dataframe import get_dataframe
 from rosbags.highlevel import AnyReader
+from rosbags.typesys import Stores, get_types_from_msg, get_typestore
 
 from flowcean.environments.dataset import Dataset
+from flowcean.environments.rosbags_dataframe import get_dataframe
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    AttrValue = Union[str, bool, int, float, object]  # noqa: UP007
+
+logger = logging.getLogger(__name__)
 
 
 class RosbagLoader(Dataset):
@@ -44,19 +55,39 @@ class RosbagLoader(Dataset):
         self,
         path: str | Path,
         topics: dict[str, list[str]],
+        msgpaths: list[str] | None = None,
     ) -> None:
         """Initialize the RosbagEnvironment.
 
         Args:
             path: Path to the rosbag.
             topics: Dictionary of topics to load (`topic: [keys]`).
+            msgpaths: List of paths to additional message definitions.
         """
-        with AnyReader([Path(path)]) as reader:
+        if msgpaths is None:
+            msgpaths = []
+        self.path = Path(path)
+        self.topics = topics
+        self.typestore = get_typestore(Stores.ROS2_HUMBLE)
+        add_types = {}
+        for pathstr in msgpaths:
+            msgpath = Path(pathstr)
+            msgdef = msgpath.read_text(encoding="utf-8")
+            add_types.update(
+                get_types_from_msg(msgdef, guess_msgtype(msgpath))
+            )
+            debug_msg = f"Added message type: {guess_msgtype(msgpath)}"
+            logger.debug(debug_msg)
+        self.typestore.register(add_types)
+
+        with AnyReader(
+            [self.path], default_typestore=self.typestore
+        ) as reader:
             features = [
                 read_timeseries(reader, topic, keys)
-                for topic, keys in topics.items()
+                for topic, keys in self.topics.items()
             ]
-        super().__init__(pl.concat(features, how="horizontal"))
+            super().__init__(pl.concat(features, how="horizontal"))
 
 
 def read_timeseries(
@@ -74,9 +105,7 @@ def read_timeseries(
     Returns:
         Timeseries DataFrame.
     """
-    data = pl.from_pandas(
-        get_dataframe(reader, topic, keys).reset_index(names="time"),
-    )
+    data = get_dataframe(reader, topic, keys)
     nest_into_timeseries = pl.struct(
         [
             pl.col("time"),
@@ -84,3 +113,18 @@ def read_timeseries(
         ]
     )
     return data.select(nest_into_timeseries.implode().alias(topic))
+
+
+def guess_msgtype(path: Path) -> str:
+    """Guess message type name from path.
+
+    Args:
+        path: Path to the message file.
+
+    Returns:
+        The message definition string.
+    """
+    name = path.relative_to(path.parents[2]).with_suffix("")
+    if "msg" not in name.parts:
+        name = name.parent / "msg" / name.name
+    return str(name)
