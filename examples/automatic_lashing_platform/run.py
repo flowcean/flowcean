@@ -82,21 +82,26 @@ def main(args) -> None:
     # look for redundant output-values in the data
 
     if args.check_redundancy:
-        logger.info("Checking for redundant output-values:")
+        logger.info("Checking for duplicated and unique output-values:")
         rows = {}
         duplicates = {}
+        uniques = {}
         for row, i in zip(observed_data.select("containerWeight").iter_rows(), range(observed_data.select("containerWeight").shape[0])):
             if row[0] in rows:
                 if row[0] in duplicates:
                     duplicates[row[0]].append(i)
                 else:
                     duplicates[row[0]] = [rows[row[0]], i]
+                if row[0] in uniques: uniques.pop(row[0])
             else:
                 rows[row[0]] = i
+                uniques[row[0]] = i
 
         if duplicates:
-            print("Duplicates:")
+            print(f"Duplicates ({len(duplicates)}):")
             print(duplicates)
+            print(f"Uniques ({len(uniques)}):")
+            print(uniques)
         else:
             print("No duplicates found.")
         
@@ -228,7 +233,7 @@ if __name__ == "__main__":
 
     data_inspection_group = parser.add_argument_group('Training-Data', 'Tools to inspect the training-data.')
     data_inspection_group.add_argument('--print_overview', action='store_true', help='Print a short overview ot the training-data.')
-    data_inspection_group.add_argument('--check_redundancy', action='store_true', help='Check for redundant output-values in the training-data. (only for containerWeight)')
+    data_inspection_group.add_argument('--check_redundancy', action='store_true', help='Checking for duplicated and unique output-values in the training-data. (only for containerWeight)')
     data_inspection_group.add_argument('--print_data', action='store_true', help='Print a number of rows of the training-data.')
     data_inspection_group.add_argument('--prints', type=int, default=10, metavar='NUMBER', help='Number of rows to print. (default: 10)')
     data_inspection_group.add_argument('--print_distributed', action='store_true', help='Print from distributed training-data.')
