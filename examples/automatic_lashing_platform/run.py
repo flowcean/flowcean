@@ -77,6 +77,28 @@ def main(args) -> None:
         logger.info("Data overview:")
 
         print(observed_data)
+
+    
+    # look for redundant output-values in the data
+
+    if args.check_redundancy:
+        logger.info("Checking for redundant output-values:")
+        rows = {}
+        duplicates = {}
+        for row, i in zip(observed_data.select("containerWeight").iter_rows(), range(observed_data.select("containerWeight").shape[0])):
+            if row[0] in rows:
+                if row[0] in duplicates:
+                    duplicates[row[0]].append(i)
+                else:
+                    duplicates[row[0]] = [rows[row[0]], i]
+            else:
+                rows[row[0]] = i
+
+        if duplicates:
+            print("Duplicates:")
+            print(duplicates)
+        else:
+            print("No duplicates found.")
         
     
     # print data
@@ -122,7 +144,7 @@ def main(args) -> None:
             plt.title(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Index: {index}")
             plt.plot(observed_data.select('^p_accumulator_.*$').row(index))
 
-        plt.subplots_adjust(hspace=0.5, wspace=0.5, left= 0.05, right=0.95, top=0.95, bottom=0.05)
+        plt.subplots_adjust(hspace=0.5, wspace=0.5, left= 0.1, right=0.95, top=0.9, bottom=0.1)
         plt.show()
 
 
@@ -131,7 +153,7 @@ def main(args) -> None:
         logger.info(f"Plotting rows interactively:")
 
         plt.figure()
-        plt.subplots_adjust(hspace=0.5, wspace=0.5, left= 0.05, right=0.95, top=0.95, bottom=0.05)
+        plt.subplots_adjust(left= 0.1, right=0.95, top=0.9, bottom=0.1)
 
         while True:
             row_index = input("Enter the row index to plot or 'x' to quit: ")
@@ -187,6 +209,7 @@ def main(args) -> None:
             pass
 
 
+# parse arguments and run
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -197,28 +220,32 @@ if __name__ == "__main__":
 
     # parameter
 
-    parser.add_argument('--sample_rate', type=float, default=1.0, help='Set the sample rate for the data. (default: 1.0) -> 15 Values')
+    parameter_group = parser.add_argument_group('Parameter', 'Parameter options for the training-data.')
+    parameter_group.add_argument('--sample_rate', type=float, default=1.0, metavar='RATE', help='Set the sample rate for the data. (default: 1.0) -> 15 Values')
 
 
-    # data inspection
+    # training-data inspection
 
-    parser.add_argument('--print_overview', action='store_true', help='Print a short overview ot the training-data.')
-    parser.add_argument('--print_data', action='store_true', help='Print a number of rows of the training-data.')
-    parser.add_argument('--prints', type=int, default=10, metavar='NUMBER', help='Number of rows to print. (default: 10)')
-    parser.add_argument('--print_distributed', action='store_true', help='Print from distributed training-data.')
-    parser.add_argument('--print_row', action='store_true', help='Print a row of the training-data interactively.')
-    parser.add_argument('--plot_data', action='store_true', help='Plot the training-data .')
-    parser.add_argument('--plots', type=int, default=10, metavar='NUMBER', help='Number of plots to show. (default: 10)')
-    parser.add_argument('--plot_distributed', action='store_true', help='Plot from distributed training-data.')
-    parser.add_argument('--plot_row', action='store_true', help='Plot a row of the training-data interactively.')
+    data_inspection_group = parser.add_argument_group('Training-Data', 'Tools to inspect the training-data.')
+    data_inspection_group.add_argument('--print_overview', action='store_true', help='Print a short overview ot the training-data.')
+    data_inspection_group.add_argument('--check_redundancy', action='store_true', help='Check for redundant output-values in the training-data. (only for containerWeight)')
+    data_inspection_group.add_argument('--print_data', action='store_true', help='Print a number of rows of the training-data.')
+    data_inspection_group.add_argument('--prints', type=int, default=10, metavar='NUMBER', help='Number of rows to print. (default: 10)')
+    data_inspection_group.add_argument('--print_distributed', action='store_true', help='Print from distributed training-data.')
+    data_inspection_group.add_argument('--print_row', action='store_true', help='Print a row of the training-data interactively.')
+    data_inspection_group.add_argument('--plot_data', action='store_true', help='Plot the training-data.')
+    data_inspection_group.add_argument('--plots', type=int, default=20, metavar='NUMBER', help='Number of plots to show. (default: 20)')
+    data_inspection_group.add_argument('--plot_distributed', action='store_true', help='Plot from distributed training-data.')
+    data_inspection_group.add_argument('--plot_row', action='store_true', help='Plot a row of the training-data interactively.')
 
 
     # training
 
-    parser.add_argument('--no_training', action='store_true', help='Apply no training.')
-    parser.add_argument('--lightning_learner', action='store_true', help='Use the Lightning Learner with Multilayer-Perceptron instead of Regression-Tree.')
-    parser.add_argument('--learning_rate', type=float, default=0.1, metavar='RATE', help='Set the learning rate for the lightning-model. (default: 0.1)')
-    parser.add_argument('--plot_error', action='store_true', help='Plot the error of the trained model.')
+    training_group = parser.add_argument_group('Model-Training', 'Options to train the model.')
+    training_group.add_argument('--no_training', action='store_true', help='Apply no training.')
+    training_group.add_argument('--lightning_learner', action='store_true', help='Use the Lightning Learner with Multilayer-Perceptron instead of Regression-Tree.')
+    training_group.add_argument('--learning_rate', type=float, default=0.1, metavar='RATE', help='Set the learning rate for the lightning-model. (default: 0.1)')
+    training_group.add_argument('--plot_error', action='store_true', help='Plot the error of the trained model.')
     
 
     args = parser.parse_args()
