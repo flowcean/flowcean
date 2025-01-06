@@ -54,8 +54,8 @@ def main(args) -> None:
         | Resample(args.sample_rate)
         | Flatten()
     )
-    time_end = time.time()
-    logger.info("Took %.5f s to load data", time_end - time_start)
+    time_after_load = time.time()
+    logger.info("Took %.5f s to load data", time_after_load - time_start)
 
     inputs = [
         "^p_accumulator_.*$",
@@ -69,6 +69,8 @@ def main(args) -> None:
     # observe data
     logger.info("Observing data...")
     observed_data = data.observe()
+    time_after_observe = time.time()
+    logger.info("Took %.5f s to observe data", time_after_observe - time_start)
 
 
     # print overview of the data
@@ -146,7 +148,7 @@ def main(args) -> None:
         for i, c in zip(range(0, dimension, int(dimension/plots)), range(plots)):
             plt.subplot(plot_rows, plot_cols, c+1)
             index = i if args.plot_distributed else c
-            plt.title(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Index: {index}")
+            plt.title(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Active Valves: {observed_data.select('activeValveCount').row(index)[0]}, Index: {index}")
             plt.plot(observed_data.select('^p_accumulator_.*$').row(index))
 
         plt.subplots_adjust(hspace=0.5, wspace=0.5, left= 0.1, right=0.95, top=0.9, bottom=0.1)
