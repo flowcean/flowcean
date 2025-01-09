@@ -2,6 +2,7 @@
 # /// script
 # dependencies = [
 #     "flowcean",
+#     "matplotlib",
 # ]
 # ///
 
