@@ -67,6 +67,7 @@ def main(args) -> None:
 
 
     # observe data
+
     logger.info("Observing data...")
     observed_data = data.observe()
     time_after_observe = time.time()
@@ -119,6 +120,9 @@ def main(args) -> None:
         for i, c in zip(range(0, dimension, int(dimension/prints)), range(prints)):
             index = i if args.print_distributed else c
             print(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Index: {index}")
+            print(f"Active Valves: {observed_data.select('activeValveCount').row(index)[0]}")
+            print(f"Initial Pressure: {round(observed_data.select('p_initial').row(index)[0], 3)}")
+            print(f"Temperature: {round(observed_data.select('T').row(index)[0], 3)}")
             print(observed_data.select('^p_accumulator_.*$').row(index))
 
 
@@ -127,11 +131,14 @@ def main(args) -> None:
     if args.print_row:
         logger.info(f"Printing rows interactively:")
         while True:
-            row_index = input("Enter the row index to print or 'x' to quit: ")
-            if row_index == 'x':
+            index = input("Enter the row index to print or 'x' to quit: ")
+            if index == 'x':
                 break
-            print(f"Weight: {round(observed_data.select('containerWeight').row(int(row_index))[0], 3)}")
-            print(observed_data.select('^p_accumulator_.*$').row(int(row_index)))
+            print(f"Weight: {round(observed_data.select('containerWeight').row(int(index))[0], 3)}")
+            print(f"Active Valves: {observed_data.select('activeValveCount').row(int(index))[0]}")
+            print(f"Initial Pressure: {round(observed_data.select('p_initial').row(int(index))[0], 3)}")
+            print(f"Temperature: {round(observed_data.select('T').row(int(index))[0], 3)}")
+            print(observed_data.select('^p_accumulator_.*$').row(int(index)))
 
 
     # plot data
@@ -163,11 +170,11 @@ def main(args) -> None:
         plt.subplots_adjust(left= 0.1, right=0.95, top=0.9, bottom=0.1)
 
         while True:
-            row_index = input("Enter the row index to plot or 'x' to quit: ")
-            if row_index == 'x':
+            index = input("Enter the row index to plot or 'x' to quit: ")
+            if index == 'x':
                 break
-            plt.title(f"Weight: {round(observed_data.select('containerWeight').row(int(row_index))[0], 3)}, Index: {row_index}")
-            plt.plot(observed_data.select('^p_accumulator_.*$').row(int(row_index)))
+            plt.title(f"Weight: {round(observed_data.select('containerWeight').row(int(index))[0], 3)}, Index: {index}")
+            plt.plot(observed_data.select('^p_accumulator_.*$').row(int(index)))
             plt.show()
 
 
