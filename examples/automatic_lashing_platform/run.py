@@ -20,7 +20,7 @@ from flowcean.learners.regression_tree import RegressionTree
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms import Flatten, Resample, Select
+from flowcean.transforms import Flatten, Resample, Select #, Filter
 
 # third-party libraries
 import matplotlib.pyplot as plt
@@ -50,6 +50,7 @@ def main(args) -> None:
                 "T",
             ]
         )
+        # | Filter(lambda df: df["activeValveCount"] > 0)
         | Resample(args.sample_rate)
         | Flatten()
     )
