@@ -22,7 +22,7 @@ class TestCsvDataLoader(unittest.TestCase):
             datapath = Path(f.name)
             dataloader = CsvDataLoader(path=datapath)
             loaded_data = dataloader.observe()
-            assert_frame_equal(loaded_data, data)
+            assert_frame_equal(loaded_data.collect(), data)
 
 
 if __name__ == "__main__":
