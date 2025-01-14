@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import pickle
+from io import BytesIO
 from pathlib import Path
 
 import numpy as np
@@ -51,8 +55,22 @@ class PyTorchModel(Model):
 
     @override
     def save(self, path: Path) -> None:
-        torch.save(self.module.state_dict(), path)
+        model_bytes = BytesIO()
+        torch.save(self.module, model_bytes)
+        data = {
+            "data": model_bytes.read(),
+            "output_names": self.output_names,
+        }
+        with path.open("wb") as file:
+            pickle.dump(data, file)
 
     @override
-    def load(self, path: Path) -> None:
-        self.module.load_state_dict(torch.load(path))
+    @classmethod
+    def load(cls, path: Path) -> PyTorchModel:
+        with path.open("rb") as file:
+            data = pickle.load(file)  # noqa: S301
+
+        return cls(
+            torch.load(BytesIO(data["data"]), weights_only=False),
+            data["output_names"],
+        )

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import pickle
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -35,8 +39,16 @@ class SciKitModel(Model):
 
     @override
     def save(self, path: Path) -> None:
-        joblib.dump(self.model, path)
+        model_bytes = BytesIO()
+        joblib.dump(self.model, model_bytes)
+        model_bytes.seek(0)
+        data = {"data": model_bytes.read(), "output_name": self.output_name}
+        with path.open("wb") as file:
+            pickle.dump(data, file)
 
     @override
-    def load(self, path: Path) -> None:
-        self.model = joblib.load(path)
+    @classmethod
+    def load(cls, path: Path) -> SciKitModel:
+        with path.open("rb") as file:
+            data = pickle.load(file)  # noqa: S301
+        return cls(joblib.load(BytesIO(data["data"])), data["output_name"])

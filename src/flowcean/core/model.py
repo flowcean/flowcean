@@ -1,8 +1,10 @@
+from __future__ import annotations
+
+import importlib
 import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import polars as pl
 from typing_extensions import override
@@ -31,6 +33,7 @@ class Model(ABC):
         """
 
     @abstractmethod
+    # TODO: Use typing.BinaryIO instead of path...?!
     def save(self, path: Path) -> None:
         """Save the model to path.
 
@@ -38,8 +41,9 @@ class Model(ABC):
             path: The path to save the model to.
         """
 
+    @classmethod
     @abstractmethod
-    def load(self, path: Path) -> None:
+    def load(cls, path: Path) -> Model:
         """Load the model from path.
 
         Args:
@@ -72,6 +76,7 @@ class ModelWithTransform(Model):
     def save(self, path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
         self.model.save(path.joinpath("model"))
+        # TODO: This is not nice at all, switch it!
         with path.joinpath("model_type").open("w") as f:
             f.write(fullname(self.model))
         with path.joinpath("input_transform").open("wb") as f:
@@ -86,16 +91,21 @@ class ModelWithTransform(Model):
             )
 
     @override
-    def load(self, path: Path) -> None:
+    @classmethod
+    def load(cls, path: Path) -> ModelWithTransform:
         # Create a model based on the type
         model_type = path.joinpath("model_type").read_text()
-        model_class = globals()[model_type]
-        self.model = model_class()
-        self.model.load(path.joinpath("model"))
+        module_name, class_name = model_type.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        model_class = getattr(module, class_name)
+
+        model = cast(Model, model_class.load(path.joinpath("model")))
         with path.joinpath("input_transform").open("rb") as f:
-            self.input_transform = pickle.load(f)  # noqa: S301
+            input_transform = pickle.load(f)  # noqa: S301
         with path.joinpath("output_transform").open("rb") as f:
-            self.output_transform = pickle.load(f)  # noqa: S301
+            output_transform = pickle.load(f)  # noqa: S301
+
+        return cls(model, input_transform, output_transform)
 
 
 def fullname(o: Any) -> str:
