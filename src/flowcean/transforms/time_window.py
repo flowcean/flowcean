@@ -56,9 +56,9 @@ class TimeWindow(Transform):
                 pl.col(feature).list.eval(
                     pl.element().filter(
                         time_expression.ge(self.t_start).and_(
-                            time_expression.le(self.t_end)
-                        )
-                    )
-                )
+                            time_expression.le(self.t_end),
+                        ),
+                    ),
+                ),
             )
         return data

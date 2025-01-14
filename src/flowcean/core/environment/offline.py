@@ -74,7 +74,7 @@ class OfflineEnvironment(TransformedObservable):
             path: Path to the parquet file where the data is written.
         """
         self.observe().collect(streaming=True).write_parquet(
-            Path(path).with_suffix(".parquet")
+            Path(path).with_suffix(".parquet"),
         )
 
     def as_stream(self, batch_size: int) -> StreamingOfflineEnvironment:

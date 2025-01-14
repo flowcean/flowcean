@@ -28,7 +28,7 @@ class SignalFilterTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [42],
-            }
+            },
         )
 
         transformed_values = transform(data_frame.lazy()).collect()
@@ -40,18 +40,20 @@ class SignalFilterTransform(unittest.TestCase):
         # Get the transformed values
         transformed_values = (
             transformed_values.select(
-                pl.col("feature_a").list.eval(pl.first().struct.field("value"))
+                pl.col("feature_a").list.eval(
+                    pl.first().struct.field("value"),
+                ),
             )
             .item()
             .to_numpy()
         )
 
         expected_values = np.array(
-            [np.sin(2 * np.pi * 5 * t) for t in time_vector]
+            [np.sin(2 * np.pi * 5 * t) for t in time_vector],
         )
 
         mean_square_error = np.sum(
-            np.power(expected_values - transformed_values, 2)
+            np.power(expected_values - transformed_values, 2),
         ) / len(expected_values)
 
         assert mean_square_error <= 0.1
@@ -77,7 +79,7 @@ class SignalFilterTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [42],
-            }
+            },
         )
 
         transformed_values = transform(data_frame.lazy()).collect()
@@ -89,18 +91,20 @@ class SignalFilterTransform(unittest.TestCase):
         # Get the transformed values
         transformed_values = (
             transformed_values.select(
-                pl.col("feature_a").list.eval(pl.first().struct.field("value"))
+                pl.col("feature_a").list.eval(
+                    pl.first().struct.field("value"),
+                ),
             )
             .item()
             .to_numpy()
         )
 
         expected_values = np.array(
-            [np.sin(2 * np.pi * 80 * t) for t in time_vector]
+            [np.sin(2 * np.pi * 80 * t) for t in time_vector],
         )
 
         mean_square_error = np.sum(
-            np.power(expected_values - transformed_values, 2)
+            np.power(expected_values - transformed_values, 2),
         ) / len(expected_values)
 
         assert mean_square_error <= 0.1

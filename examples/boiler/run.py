@@ -117,7 +117,7 @@ def main() -> None:
                 change_probability=0.002,
                 minimum=30.0,
                 maximum=60.0,
-            )
+            ),
         )
     )
 
@@ -129,7 +129,7 @@ def main() -> None:
                 "time": times,
                 "target": inputs,
                 "temperature": [mode.temperature for mode in modes],
-            }
+            },
         ),
     )
 

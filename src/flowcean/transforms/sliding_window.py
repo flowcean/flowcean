@@ -47,5 +47,5 @@ class SlidingWindow(Transform):
                 .slice(self.window_size - 1)
                 .name.suffix(f"_{i}")
                 for i in range(self.window_size)
-            ]
+            ],
         )

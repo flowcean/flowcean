@@ -59,7 +59,7 @@ class MyEnvironment(ActiveEnvironment):
             {
                 "reward": self._calculate_reward(),
                 "sensor": self.state,
-            }
+            },
         ).lazy()
 
     def _calculate_reward(self) -> float:

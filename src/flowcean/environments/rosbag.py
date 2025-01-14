@@ -81,6 +81,6 @@ def read_timeseries(
         [
             pl.col("time"),
             pl.struct(pl.exclude("time")).alias("value"),
-        ]
+        ],
     )
     return data.select(nest_into_timeseries.implode().alias(topic))

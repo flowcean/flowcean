@@ -84,10 +84,10 @@ class FilterTransform(unittest.TestCase):
                             [
                                 "a == 4",
                                 "b == 2",
-                            ]
-                        )
+                            ],
+                        ),
                     ),
-                ]
+                ],
             ),
         )
 
