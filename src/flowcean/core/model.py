@@ -55,15 +55,16 @@ class ModelWithTransform(Model):
     """
 
     model: Model
-    transform: Transform
+    input_transform: Transform
+    output_transform: Transform
 
     @override
     def predict(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
-        transformed = self.transform.apply(input_features)
-        return self.model.predict(transformed)
+        transformed = self.input_transform.apply(input_features)
+        return self.output_transform.apply(self.model.predict(transformed))
 
     @override
     def save(self, path: Path) -> None:

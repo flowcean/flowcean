@@ -4,7 +4,12 @@ from typing import cast
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import OfflineMetric
 from flowcean.core.model import Model, ModelWithTransform
-from flowcean.core.transform import FitIncremetally, FitOnce, Transform
+from flowcean.core.transform import (
+    FitIncremetally,
+    FitOnce,
+    Identity,
+    Transform,
+)
 from flowcean.environments.dataset import OfflineEnvironment
 from flowcean.metrics.report import Report
 
@@ -53,8 +58,9 @@ def learn_offline(
     if input_transform is None:
         return model
     return ModelWithTransform(
-        model,
-        input_transform,
+        model=model,
+        input_transform=input_transform,
+        output_transform=Identity(),
     )
 
 

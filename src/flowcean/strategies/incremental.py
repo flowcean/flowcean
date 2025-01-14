@@ -1,7 +1,7 @@
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.learner import SupervisedIncrementalLearner
 from flowcean.core.model import Model, ModelWithTransform
-from flowcean.core.transform import FitIncremetally, Transform
+from flowcean.core.transform import FitIncremetally, Identity, Transform
 
 
 def learn_incremental(
@@ -43,5 +43,9 @@ def learn_incremental(
         message = "No data found in environment."
         raise ValueError(message)
     if input_transform is not None:
-        return ModelWithTransform(model=model, transform=input_transform)
+        return ModelWithTransform(
+            model=model,
+            input_transform=input_transform,
+            output_transform=Identity(),
+        )
     return model
