@@ -5,7 +5,6 @@ __all__ = [
     "FeatureLengthVaryError",
     "Filter",
     "Flatten",
-    "Filter",
     "Lambda",
     "MatchSamplingRate",
     "NoCategoriesError",
@@ -33,7 +32,6 @@ from flowcean.transforms.flatten import (
     Flatten,
     NoTimeSeriesFeatureError,
 )
-from flowcean.transforms.filter import Filter
 from flowcean.transforms.function import Lambda
 from flowcean.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.transforms.one_cold import OneCold
