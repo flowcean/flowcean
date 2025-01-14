@@ -48,7 +48,7 @@ class TrainTestSplit:
             environment: The environment to split.
         """
         logger.info("Splitting data into train and test sets")
-        data = environment.observe()
+        data = environment.observe().collect(streaming=True)
         pivot = int(len(data) * self.ratio)
         splits = _split(
             data,
@@ -56,7 +56,7 @@ class TrainTestSplit:
             shuffle=self.shuffle,
             seed=get_seed(),
         )
-        return Dataset(splits[0]), Dataset(splits[1])
+        return Dataset(splits[0].lazy()), Dataset(splits[1].lazy())
 
 
 def _split(

@@ -30,11 +30,11 @@ def learn_active(
     model = None
     try:
         while True:
-            observations = environment.observe()
+            observations = environment.observe().collect(streaming=True)
             action = learner.propose_action(observations)
             environment.act(action)
             environment.step()
-            observations = environment.observe()
+            observations = environment.observe().collect(streaming=True)
             model = learner.learn_active(action, observations)
     except StopLearning:
         pass

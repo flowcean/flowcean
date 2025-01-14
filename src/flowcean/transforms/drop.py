@@ -15,5 +15,5 @@ class Drop(Transform):
         self.features = features
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return data.drop(self.features)

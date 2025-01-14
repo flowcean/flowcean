@@ -16,8 +16,8 @@ class JsonDataLoader(Dataset):
             path: Path to the JSON file.
         """
         data = pl.read_json(path)
-        super().__init__(data)
+        super().__init__(data.lazy())
 
     @override
-    def observe(self) -> pl.DataFrame:
+    def observe(self) -> pl.LazyFrame:
         return self.data

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Iterable
 from itertools import islice
-from typing import Any, override
+from typing import Any, cast, override
 
 import polars as pl
 from tqdm import tqdm
@@ -19,28 +19,39 @@ class Dataset(OfflineEnvironment):
         data: The data to represent.
     """
 
-    data: pl.DataFrame
+    data: pl.LazyFrame
+    _length: int | None = None
 
-    def __init__(self, data: pl.DataFrame) -> None:
+    def __init__(self, data: pl.DataFrame | pl.LazyFrame) -> None:
         """Initialize the dataset environment.
 
         Args:
             data: The data to represent.
         """
-        self.data = data
+        if isinstance(data, pl.DataFrame):
+            self.data = data.lazy()
+            self._length = len(data)
+        else:
+            self.data = data
         super().__init__()
 
     @override
-    def _observe(self) -> pl.DataFrame:
+    def _observe(self) -> pl.LazyFrame:
         return self.data
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
-        return len(self.data)
+        if self._length is None:
+            # This operation is potentially very slow / costly
+            self._length = cast(
+                int,
+                self.data.select(pl.len()).collect().item(),
+            )
+        return self._length
 
 
 def collect(
-    environment: Iterable[pl.DataFrame] | Collection[pl.DataFrame],
+    environment: Iterable[pl.LazyFrame] | Collection[pl.LazyFrame],
     n: int | None = None,
     *,
     progress_bar: bool | dict[str, Any] = True,

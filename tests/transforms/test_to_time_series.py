@@ -16,7 +16,7 @@ class TestToTimeSeries(unittest.TestCase):
                     "feature_a": [42, 43, 44, 45],
                     "feature_b": [3, 2, 1, 0],
                 }
-            )
+            ).lazy()
         )
 
         time_series_dataset = dataset.with_transform(
@@ -24,7 +24,7 @@ class TestToTimeSeries(unittest.TestCase):
         )
 
         assert_frame_equal(
-            time_series_dataset.observe(),
+            time_series_dataset.observe().collect(),
             pl.DataFrame(
                 {
                     "feature_a": [

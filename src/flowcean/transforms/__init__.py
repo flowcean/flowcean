@@ -3,6 +3,7 @@ __all__ = [
     "Drop",
     "Explode",
     "FeatureLengthVaryError",
+    "Filter",
     "Flatten",
     "Filter",
     "Lambda",
@@ -12,7 +13,6 @@ __all__ = [
     "NoTimeSeriesFeatureError",
     "OneCold",
     "OneHot",
-    "Rechunk",
     "Rename",
     "Resample",
     "Select",
@@ -27,6 +27,7 @@ __all__ = [
 from flowcean.transforms.cast import Cast
 from flowcean.transforms.drop import Drop
 from flowcean.transforms.explode import Explode
+from flowcean.transforms.filter import Filter
 from flowcean.transforms.flatten import (
     FeatureLengthVaryError,
     Flatten,
@@ -41,7 +42,6 @@ from flowcean.transforms.one_hot import (
     NoMatchingCategoryError,
     OneHot,
 )
-from flowcean.transforms.rechunk import Rechunk
 from flowcean.transforms.rename import Rename
 from flowcean.transforms.resample import Resample
 from flowcean.transforms.select import Select
