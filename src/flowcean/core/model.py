@@ -4,7 +4,8 @@ import importlib
 import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, cast
+from io import BytesIO
+from typing import Any, BinaryIO, cast
 
 import polars as pl
 from typing_extensions import override
@@ -33,21 +34,20 @@ class Model(ABC):
         """
 
     @abstractmethod
-    # TODO: Use typing.BinaryIO instead of path...?!
-    def save(self, path: Path) -> None:
-        """Save the model to path.
+    def save(self, file: BinaryIO) -> None:
+        """Save the model to the file.
 
         Args:
-            path: The path to save the model to.
+            file: The file like object to save the model to.
         """
 
     @classmethod
     @abstractmethod
-    def load(cls, path: Path) -> Model:
-        """Load the model from path.
+    def load(cls, file: BinaryIO) -> Model:
+        """Load the model from file.
 
         Args:
-            path: The path to load the model from.
+            file: The file like object to load the model from.
         """
 
 
@@ -73,37 +73,44 @@ class ModelWithTransform(Model):
         return self.output_transform.apply(self.model.predict(transformed))
 
     @override
-    def save(self, path: Path) -> None:
-        path.mkdir(parents=True, exist_ok=True)
-        self.model.save(path.joinpath("model"))
-        # TODO: This is not nice at all, switch it!
-        with path.joinpath("model_type").open("w") as f:
-            f.write(fullname(self.model))
-        with path.joinpath("input_transform").open("wb") as f:
-            pickle.dump(
-                self.input_transform,
-                f,
-            )
-        with path.joinpath("output_transform").open("wb") as f:
-            pickle.dump(
-                self.output_transform,
-                f,
-            )
+    def save(self, file: BinaryIO) -> None:
+        model_bytes = BytesIO()
+        self.model.save(model_bytes)
+        model_bytes.seek(0)
+
+        input_bytes = BytesIO()
+        pickle.dump(self.input_transform, input_bytes)
+        input_bytes.seek(0)
+
+        output_bytes = BytesIO()
+        pickle.dump(self.output_transform, output_bytes)
+        output_bytes.seek(0)
+
+        data = {
+            "model": model_bytes.read(),
+            "model_type": fullname(self.model),
+            "input_transform": input_bytes.read(),
+            "output_transform": output_bytes.read(),
+        }
+        pickle.dump(
+            data,
+            file,
+        )
 
     @override
     @classmethod
-    def load(cls, path: Path) -> ModelWithTransform:
+    def load(cls, file: BinaryIO) -> ModelWithTransform:
+        data = pickle.load(file)  # noqa: S301
+
         # Create a model based on the type
-        model_type = path.joinpath("model_type").read_text()
+        model_type = data["model_type"]
         module_name, class_name = model_type.rsplit(".", 1)
         module = importlib.import_module(module_name)
         model_class = getattr(module, class_name)
 
-        model = cast(Model, model_class.load(path.joinpath("model")))
-        with path.joinpath("input_transform").open("rb") as f:
-            input_transform = pickle.load(f)  # noqa: S301
-        with path.joinpath("output_transform").open("rb") as f:
-            output_transform = pickle.load(f)  # noqa: S301
+        model = cast(Model, model_class.load(BytesIO(data["model"])))
+        input_transform = pickle.load(BytesIO(data["input_transform"]))  # noqa: S301
+        output_transform = pickle.load(BytesIO(data["output_transform"]))  # noqa: S301
 
         return cls(model, input_transform, output_transform)
 

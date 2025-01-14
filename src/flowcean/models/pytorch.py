@@ -3,6 +3,7 @@ from __future__ import annotations
 import pickle
 from io import BytesIO
 from pathlib import Path
+from typing import BinaryIO
 
 import numpy as np
 import polars as pl
@@ -54,21 +55,20 @@ class PyTorchModel(Model):
         return pl.DataFrame(predictions, self.output_names).lazy()
 
     @override
-    def save(self, path: Path) -> None:
+    def save(self, file: BinaryIO) -> None:
         model_bytes = BytesIO()
         torch.save(self.module, model_bytes)
+        model_bytes.seek(0)
         data = {
             "data": model_bytes.read(),
             "output_names": self.output_names,
         }
-        with path.open("wb") as file:
-            pickle.dump(data, file)
+        pickle.dump(data, file)
 
     @override
     @classmethod
-    def load(cls, path: Path) -> PyTorchModel:
-        with path.open("rb") as file:
-            data = pickle.load(file)  # noqa: S301
+    def load(cls, file: BinaryIO) -> PyTorchModel:
+        data = pickle.load(file)  # noqa: S301
 
         return cls(
             torch.load(BytesIO(data["data"]), weights_only=False),
