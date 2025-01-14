@@ -1,6 +1,8 @@
+import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 from typing_extensions import override
@@ -68,8 +70,37 @@ class ModelWithTransform(Model):
 
     @override
     def save(self, path: Path) -> None:
-        raise NotImplementedError
+        path.mkdir(parents=True, exist_ok=True)
+        self.model.save(path.joinpath("model"))
+        with path.joinpath("model_type").open("w") as f:
+            f.write(fullname(self.model))
+        with path.joinpath("input_transform").open("wb") as f:
+            pickle.dump(
+                self.input_transform,
+                f,
+            )
+        with path.joinpath("output_transform").open("wb") as f:
+            pickle.dump(
+                self.output_transform,
+                f,
+            )
 
     @override
     def load(self, path: Path) -> None:
-        raise NotImplementedError
+        # Create a model based on the type
+        model_type = path.joinpath("model_type").read_text()
+        model_class = globals()[model_type]
+        self.model = model_class()
+        self.model.load(path.joinpath("model"))
+        with path.joinpath("input_transform").open("rb") as f:
+            self.input_transform = pickle.load(f)  # noqa: S301
+        with path.joinpath("output_transform").open("rb") as f:
+            self.output_transform = pickle.load(f)  # noqa: S301
+
+
+def fullname(o: Any) -> str:
+    klass = o.__class__
+    module = klass.__module__
+    if module == "builtins":
+        return klass.__qualname__  # avoid outputs like 'builtins.str'
+    return module + "." + klass.__qualname__
