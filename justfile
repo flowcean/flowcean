@@ -1,3 +1,5 @@
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+
 check:
   @echo "🚀 Checking lock file consistency with 'pyproject.toml'"
   @uv lock --locked
