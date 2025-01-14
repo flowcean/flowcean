@@ -52,7 +52,7 @@ class Filter(Transform):
      2 | 15 | 1
      4 | 12 | 1
 
-    To only get records wehre `x=1` *and* `t > 3` the filter expression
+    To only get records where `x=1` *and* `t > 3` the filter expression
 
     ```python
     Filter(And(["x == 1", "t > 3"]))
@@ -89,7 +89,7 @@ class Filter(Transform):
             self.predicate = expression()
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return data.filter(self.predicate)
 
 

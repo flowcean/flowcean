@@ -17,7 +17,7 @@ class FilterTransform(unittest.TestCase):
                 "b": [5, 4, 3, 2, 1],
             },
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -39,7 +39,7 @@ class FilterTransform(unittest.TestCase):
                 "b": [5, 4, 3, 2, 1],
             },
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -61,7 +61,7 @@ class FilterTransform(unittest.TestCase):
                 "b": [5, 4, 3, 2, 1],
             },
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -97,7 +97,7 @@ class FilterTransform(unittest.TestCase):
                 "b": [5, 4, 3, 2, 1],
             },
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
