@@ -48,7 +48,9 @@ class LightningLearner(SupervisedLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> PyTorchModel:
-        dataset = TorchDataset(inputs.collect(), outputs.collect())
+        collected_inputs = inputs.collect()
+        collected_outputs = outputs.collect()
+        dataset = TorchDataset(collected_inputs, collected_outputs)
         dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
