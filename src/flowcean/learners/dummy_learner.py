@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import BinaryIO
 
 import polars as pl
 from typing_extensions import override
@@ -31,12 +34,13 @@ class DummyModel(Model):
         ).lazy()
 
     @override
-    def save(self, path: Path) -> None:
+    def save(self, file: BinaryIO) -> None:
         pass
 
     @override
-    def load(self, path: Path) -> None:
-        pass
+    @classmethod
+    def load(cls, file: BinaryIO) -> DummyModel:
+        return cls([])
 
 
 class DummyLearner(SupervisedLearner):

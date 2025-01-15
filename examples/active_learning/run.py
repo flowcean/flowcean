@@ -8,10 +8,13 @@
 # flowcean = { path = "../../", editable = true }
 # ///
 
+from __future__ import annotations
+
 import logging
 import random
 from math import nan
 from pathlib import Path
+from typing import BinaryIO
 
 import polars as pl
 from typing_extensions import override
@@ -86,13 +89,14 @@ class MyModel(Model):
         ).lazy()
 
     @override
-    def save(self, path: Path) -> None:
-        _ = path
+    def save(self, file: BinaryIO) -> None:
+        _ = file
         raise NotImplementedError
 
     @override
-    def load(self, path: Path) -> None:
-        _ = path
+    @classmethod
+    def load(cls, file: BinaryIO) -> MyModel:
+        _ = file
         raise NotImplementedError
 
 
