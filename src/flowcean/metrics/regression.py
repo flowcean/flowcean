@@ -15,7 +15,8 @@ class MaxError(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.max_error(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )
 
 
@@ -28,7 +29,8 @@ class MeanAbsoluteError(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.mean_absolute_error(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )
 
 
@@ -41,7 +43,8 @@ class MeanSquaredError(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.mean_squared_error(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )
 
 
@@ -54,5 +57,6 @@ class R2Score(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.r2_score(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )

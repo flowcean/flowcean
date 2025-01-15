@@ -109,7 +109,8 @@ class CollectionExpr(FilterExpr):
     expr_collection: Iterable[pl.Expr]
 
     def __init__(
-        self, expressions: str | FilterExpr | Iterable[str | FilterExpr]
+        self,
+        expressions: str | FilterExpr | Iterable[str | FilterExpr],
     ) -> None:
         if not isinstance(expressions, Iterable):
             expressions = [expressions]

@@ -45,7 +45,7 @@ def learn_offline(
 
     if isinstance(input_transform, FitIncremetally):
         cast(FitIncremetally, input_transform).fit_incremental(
-            input_features.lazy()
+            input_features.lazy(),
         )
 
     logger.info("Learning model")

@@ -32,5 +32,5 @@ class ToTimeSeries(Transform):
                 .implode()
                 .alias(value_feature)
                 for value_feature, t_feature in time_feature.items()
-            ]
+            ],
         )

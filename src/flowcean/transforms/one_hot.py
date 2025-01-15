@@ -90,7 +90,7 @@ class OneHot(Transform):
                 [
                     pl.col(feature).eq(value).cast(pl.Int64).alias(name)
                     for name, value in category_mappings.items()
-                ]
+                ],
             ).drop(feature)
 
             if self.check_for_missing_categories and (
@@ -98,7 +98,7 @@ class OneHot(Transform):
                     [
                         pl.col(name).cast(pl.Boolean)
                         for name in category_mappings
-                    ]
+                    ],
                 )
                 .select(pl.any_horizontal(pl.all()).all())
                 .collect(streaming=True)

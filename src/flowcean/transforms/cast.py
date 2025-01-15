@@ -34,5 +34,5 @@ class Cast(Transform):
         return data.with_columns(
             (
                 pl.all() if self.features is None else pl.col(self.features)
-            ).cast(self.target_type)
+            ).cast(self.target_type),
         )

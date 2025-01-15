@@ -62,7 +62,7 @@ class FlattenTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
 
         transformed_data = flatten_transform(data_frame.lazy()).collect()
@@ -76,7 +76,7 @@ class FlattenTransform(unittest.TestCase):
                     "feature_b_0": [5, 7],
                     "feature_b_1": [6, 8],
                     "scalar": [1, 2],
-                }
+                },
             ),
             check_column_order=False,
         )
@@ -131,7 +131,7 @@ class FlattenTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
 
         transformed_data = flatten_transform(data_frame.lazy()).collect()
@@ -165,7 +165,7 @@ class FlattenTransform(unittest.TestCase):
                         ],
                     ],
                     "scalar": [1, 2],
-                }
+                },
             ),
             check_column_order=False,
         )
@@ -220,7 +220,7 @@ class FlattenTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
 
         with pytest.raises(NoTimeSeriesFeatureError):
@@ -257,7 +257,7 @@ class FlattenTransform(unittest.TestCase):
                         },
                     ],
                 ],
-            }
+            },
         )
 
         with pytest.raises(FeatureLengthVaryError):
