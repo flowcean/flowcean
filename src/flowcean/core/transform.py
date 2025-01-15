@@ -128,6 +128,14 @@ class Transform(ABC):
         """
         return self.chain(other)
 
+    def inverse(self) -> Transform:
+        """Get the inverse of the transform.
+
+        Returns:
+            The inverse of the transform.
+        """
+        raise NotImplementedError
+
 
 class FitOnce(ABC):
     """A mixin for transforms that need to be fitted to data once."""

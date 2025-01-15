@@ -48,9 +48,7 @@ class LightningLearner(SupervisedLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> PyTorchModel:
-        collected_inputs = inputs.collect()
-        collected_outputs = outputs.collect()
-        dataset = TorchDataset(collected_inputs, collected_outputs)
+        dataset = TorchDataset(inputs.collect(), outputs.collect())
         dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -107,8 +105,7 @@ class MultilayerPerceptron(lightning.LightningModule):
         return y
 
     @override
-    def training_step(self, *args: Any, **kwargs: Any) -> Tensor:
-        batch = args[0]
+    def training_step(self, batch: Any) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
         return torch.nn.functional.mse_loss(outputs, targets)

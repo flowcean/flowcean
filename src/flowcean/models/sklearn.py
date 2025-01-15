@@ -30,7 +30,7 @@ class SciKitModel(Model):
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
-        outputs = self.model.predict(input_features.collect())
+        outputs = self.model.predict(input_features)
         return pl.DataFrame({self.output_name: outputs}).lazy()
 
     @override
