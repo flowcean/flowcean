@@ -67,7 +67,7 @@
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
         </dependency>
-        
+
         <!-- transport layer with Netty -->
         <dependency>
 		    <groupId>io.grpc</groupId>

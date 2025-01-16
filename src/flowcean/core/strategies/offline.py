@@ -97,8 +97,7 @@ def evaluate_offline(
         inputs: The input feature names.
         outputs: The output feature names.
         metrics: The metrics to evaluate the model with.
-        eval_transform: Evaluation transform to apply to the predictions and
-            the true outputs.
+        eval_transform: The transform to apply to the predictions and outputs.
 
     Returns:
         The evaluation report.
