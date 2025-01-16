@@ -24,6 +24,7 @@ from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms import Flatten, Resample, Select, Filter
+from flowcean.transforms.filter import And, Or, Not
 
 # third-party libraries
 import matplotlib.pyplot as plt
@@ -53,7 +54,7 @@ def main(args) -> None:
                 "T",
             ]
         )
-        | Filter(args.filter)
+        | Filter(eval(args.filter))
         | Resample(args.sample_rate)
         | Flatten()
     )
@@ -239,7 +240,7 @@ if __name__ == "__main__":
 
     parameter_group = parser.add_argument_group('Parameter', 'Parameter options for the training-data.')
     parameter_group.add_argument('--sample_rate', type=float, default=1.0, metavar='RATE', help='Set the sample rate for the data. (default: 1.0) -> 15 Values')
-    parameter_group.add_argument('--filter', type=str, default="", metavar='CONDITION', help='Filter the data with a condition. (default: "")')
+    parameter_group.add_argument('--filter', type=str, default='"1==1"', metavar='CONDITION', help='Filter the data with a condition like \'And(["activeValveCount > 0", "activeValveCount < 3"])\' or \'"activeValveCount > 0"\'.')
 
 
     # training-data inspection
