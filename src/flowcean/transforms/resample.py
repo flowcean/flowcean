@@ -42,7 +42,7 @@ class Resample(Transform):
         sampling_mapping = (
             {
                 column_name: self.sampling_rate
-                for column_name in data.columns
+                for column_name in data.collect_schema().names()
                 if is_timeseries_feature(data, column_name)
             }
             if isinstance(self.sampling_rate, float)

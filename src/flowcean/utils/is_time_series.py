@@ -16,7 +16,7 @@ def is_timeseries_feature(df: pl.LazyFrame, name: str) -> bool:
     Returns:
         True if the column is a time series feature, False otherwise.
     """
-    data_type = df.select(name).dtypes[0]
+    data_type = df.select(name).collect_schema().dtypes()[0]
 
     if data_type.base_type() != pl.List:
         return False
