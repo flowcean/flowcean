@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import pickle
 from io import BytesIO
-from pathlib import Path
-from typing import BinaryIO
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -55,22 +53,19 @@ class PyTorchModel(Model):
         return pl.DataFrame(predictions, self.output_names).lazy()
 
     @override
-    def save(self, file: BinaryIO) -> None:
+    def save_state(self) -> dict[str, Any]:
         model_bytes = BytesIO()
         torch.save(self.module, model_bytes)
         model_bytes.seek(0)
-        data = {
+        return {
             "data": model_bytes.read(),
             "output_names": self.output_names,
         }
-        pickle.dump(data, file)
 
     @override
     @classmethod
-    def load(cls, file: BinaryIO) -> PyTorchModel:
-        data = pickle.load(file)  # noqa: S301
-
+    def load_from_state(cls, state: dict[str, Any]) -> PyTorchModel:
         return cls(
-            torch.load(BytesIO(data["data"]), weights_only=False),
-            data["output_names"],
+            torch.load(BytesIO(state["data"]), weights_only=False),
+            state["output_names"],
         )

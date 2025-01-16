@@ -14,7 +14,7 @@ import logging
 import random
 from math import nan
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import polars as pl
 from typing_extensions import override
@@ -89,14 +89,13 @@ class MyModel(Model):
         ).lazy()
 
     @override
-    def save(self, file: BinaryIO) -> None:
-        _ = file
+    def save_state(self) -> dict[str, Any]:
         raise NotImplementedError
 
     @override
     @classmethod
-    def load(cls, file: BinaryIO) -> MyModel:
-        _ = file
+    def load_from_state(cls, state: dict[str, Any]) -> MyModel:
+        _ = state
         raise NotImplementedError
 
 

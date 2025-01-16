@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, BinaryIO
+from typing import TYPE_CHECKING, Any
 
 import docker
 import grpc
@@ -210,14 +210,13 @@ class GrpcLearner(SupervisedLearner, Model):
         self.channel.close()
 
     @override
-    def save(self, file: BinaryIO) -> None:
-        _ = file
+    def save_state(self) -> dict[str, Any]:
         raise NotImplementedError
 
     @override
     @classmethod
-    def load(cls, file: BinaryIO) -> GrpcLearner:
-        _ = file
+    def load_from_state(cls, state: dict[str, Any]) -> GrpcLearner:
+        _ = state
         raise NotImplementedError
 
 

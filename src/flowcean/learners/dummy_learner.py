@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import polars as pl
 from typing_extensions import override
@@ -34,13 +34,13 @@ class DummyModel(Model):
         ).lazy()
 
     @override
-    def save(self, file: BinaryIO) -> None:
-        pass
+    def save_state(self) -> dict[str, Any]:
+        return {"output_names": self.output_names}
 
     @override
     @classmethod
-    def load(cls, file: BinaryIO) -> DummyModel:
-        return cls([])
+    def load_from_state(cls, state: dict[str, Any]) -> DummyModel:
+        return cls(state["output_names"])
 
 
 class DummyLearner(SupervisedLearner):

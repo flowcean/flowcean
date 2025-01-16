@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import pickle
 from io import BytesIO
-from typing import Any, BinaryIO
+from typing import Any
 
 import joblib
 import polars as pl
@@ -37,15 +36,19 @@ class SciKitModel(Model):
         return pl.DataFrame({self.output_name: outputs}).lazy()
 
     @override
-    def save(self, file: BinaryIO) -> None:
+    def save_state(self) -> dict[str, Any]:
         model_bytes = BytesIO()
         joblib.dump(self.model, model_bytes)
         model_bytes.seek(0)
-        data = {"data": model_bytes.read(), "output_name": self.output_name}
-        pickle.dump(data, file)
+        return {
+            "data": model_bytes.read(),
+            "output_name": self.output_name,
+        }
 
     @override
     @classmethod
-    def load(cls, file: BinaryIO) -> SciKitModel:
-        data = pickle.load(file)  # noqa: S301
-        return cls(joblib.load(BytesIO(data["data"])), data["output_name"])
+    def load_from_state(cls, state: dict[str, Any]) -> SciKitModel:
+        return cls(
+            joblib.load(BytesIO(state["data"])),
+            state["output_name"],
+        )
