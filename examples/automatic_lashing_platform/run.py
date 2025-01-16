@@ -4,8 +4,10 @@
 #     "flowcean",
 #     "matplotlib",
 # ]
+# 
+# [tool.uv.sources]
+# flowcean = { path = "../.." , editable = true }
 # ///
-
 
 # system libraries
 import logging
@@ -21,7 +23,7 @@ from flowcean.learners.regression_tree import RegressionTree
 from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms import Flatten, Resample, Select #, Filter
+from flowcean.transforms import Flatten, Resample, Select, Filter
 
 # third-party libraries
 import matplotlib.pyplot as plt
@@ -49,9 +51,9 @@ def main(args) -> None:
                 "p_initial",
                 "activeValveCount",
                 "T",
-            ],
+            ]
         )
-        # | Filter(lambda df: df["activeValveCount"] > 0)
+        | Filter(args.filter)
         | Resample(args.sample_rate)
         | Flatten()
     )
@@ -70,7 +72,7 @@ def main(args) -> None:
     # observe data
 
     logger.info("Observing data...")
-    observed_data = data.observe()
+    observed_data = data.observe().collect()
     time_after_observe = time.time()
     logger.info("Took %.5f s to observe data", time_after_observe - time_start)
 
@@ -237,6 +239,7 @@ if __name__ == "__main__":
 
     parameter_group = parser.add_argument_group('Parameter', 'Parameter options for the training-data.')
     parameter_group.add_argument('--sample_rate', type=float, default=1.0, metavar='RATE', help='Set the sample rate for the data. (default: 1.0) -> 15 Values')
+    parameter_group.add_argument('--filter', type=str, default="", metavar='CONDITION', help='Filter the data with a condition. (default: "")')
 
 
     # training-data inspection
