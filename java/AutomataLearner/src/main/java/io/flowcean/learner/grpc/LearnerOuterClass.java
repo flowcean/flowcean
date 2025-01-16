@@ -291,11 +291,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
      */
-<<<<<<< HEAD
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow>
-=======
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>
         getInputsList();
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
@@ -308,11 +304,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
      */
-<<<<<<< HEAD
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getInputsOrBuilderList();
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
@@ -323,11 +315,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
      */
-<<<<<<< HEAD
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow>
-=======
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>
         getOutputsList();
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
@@ -340,11 +328,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
      */
-<<<<<<< HEAD
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getOutputsOrBuilderList();
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
@@ -469,11 +453,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
-<<<<<<< HEAD
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getInputsOrBuilderList() {
       return inputs_;
     }
@@ -513,7 +493,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getOutputsOrBuilderList() {
       return outputs_;
     }
@@ -1132,11 +1112,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries inputs = 1;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
            getInputsOrBuilderList() {
         if (inputsBuilder_ != null) {
           return inputsBuilder_.getMessageOrBuilderList();
@@ -1162,20 +1138,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries inputs = 1;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder>
-=======
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder>
            getInputsBuilderList() {
         return getInputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-<<<<<<< HEAD
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
           getInputsFieldBuilder() {
         if (inputsBuilder_ == null) {
           inputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1384,11 +1352,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries outputs = 2;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
            getOutputsOrBuilderList() {
         if (outputsBuilder_ != null) {
           return outputsBuilder_.getMessageOrBuilderList();
@@ -1414,20 +1378,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries outputs = 2;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder>
-=======
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder>
            getOutputsBuilderList() {
         return getOutputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-<<<<<<< HEAD
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
           getOutputsFieldBuilder() {
         if (outputsBuilder_ == null) {
           outputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1500,11 +1456,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
      */
-<<<<<<< HEAD
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow>
-=======
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>
         getPredictionsList();
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
@@ -1517,11 +1469,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
      */
-<<<<<<< HEAD
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getPredictionsOrBuilderList();
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
@@ -1661,11 +1609,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
-<<<<<<< HEAD
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getPredictionsOrBuilderList() {
       return predictions_;
     }
@@ -2285,11 +2229,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries predictions = 1;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
            getPredictionsOrBuilderList() {
         if (predictionsBuilder_ != null) {
           return predictionsBuilder_.getMessageOrBuilderList();
@@ -2315,20 +2255,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries predictions = 1;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder>
-=======
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder>
            getPredictionsBuilderList() {
         return getPredictionsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-<<<<<<< HEAD
-          io.flowcean.learner.grpc.LearnerOuterClass.DataRow, io.flowcean.learner.grpc.LearnerOuterClass.DataRow.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataRowOrBuilder>
-=======
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
           getPredictionsFieldBuilder() {
         if (predictionsBuilder_ == null) {
           predictionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -2429,7 +2361,7 @@ public final class LearnerOuterClass {
        * <code>.StatusMessage status = 2;</code>
        */
       public io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder getStatusBuilder() {
-        
+
         onChanged();
         return getStatusFieldBuilder().getBuilder();
       }
@@ -2520,13 +2452,8 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSample samples = 1;</code>
      */
-<<<<<<< HEAD
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField>
-        getFieldsList();
-=======
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample>
         getSamplesList();
->>>>>>> c4129f3 (Adapt coffee machine to time series)
     /**
      * <code>repeated .TimeSample samples = 1;</code>
      */
@@ -2538,13 +2465,8 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSample samples = 1;</code>
      */
-<<<<<<< HEAD
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>
-        getFieldsOrBuilderList();
-=======
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
         getSamplesOrBuilderList();
->>>>>>> c4129f3 (Adapt coffee machine to time series)
     /**
      * <code>repeated .TimeSample samples = 1;</code>
      */
@@ -2655,15 +2577,9 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-<<<<<<< HEAD
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>
-        getFieldsOrBuilderList() {
-      return fields_;
-=======
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
         getSamplesOrBuilderList() {
       return samples_;
->>>>>>> c4129f3 (Adapt coffee machine to time series)
     }
     /**
      * <code>repeated .TimeSample samples = 1;</code>
@@ -2992,11 +2908,7 @@ public final class LearnerOuterClass {
               samplesBuilder_ = null;
               samples_ = other.samples_;
               bitField0_ = (bitField0_ & ~0x00000001);
-<<<<<<< HEAD
-              fieldsBuilder_ =
-=======
-              samplesBuilder_ = 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+              samplesBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getSamplesFieldBuilder() : null;
             } else {
@@ -3229,17 +3141,10 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSample samples = 1;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>
-           getFieldsOrBuilderList() {
-        if (fieldsBuilder_ != null) {
-          return fieldsBuilder_.getMessageOrBuilderList();
-=======
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
            getSamplesOrBuilderList() {
         if (samplesBuilder_ != null) {
           return samplesBuilder_.getMessageOrBuilderList();
->>>>>>> c4129f3 (Adapt coffee machine to time series)
         } else {
           return java.util.Collections.unmodifiableList(samples_);
         }
@@ -3262,31 +3167,17 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSample samples = 1;</code>
        */
-<<<<<<< HEAD
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder>
-           getFieldsBuilderList() {
-        return getFieldsFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>
-          getFieldsFieldBuilder() {
-        if (fieldsBuilder_ == null) {
-          fieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>(
-                  fields_,
-=======
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder>
            getSamplesBuilderList() {
         return getSamplesFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
           getSamplesFieldBuilder() {
         if (samplesBuilder_ == null) {
           samplesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>(
                   samples_,
->>>>>>> c4129f3 (Adapt coffee machine to time series)
                   ((bitField0_ & 0x00000001) != 0),
                   getParentForChildren(),
                   isClean());
@@ -3853,7 +3744,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setTime(double value) {
-        
+
         time_ = value;
         onChanged();
         return this;
@@ -3863,7 +3754,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearTime() {
-        
+
         time_ = 0D;
         onChanged();
         return this;
@@ -3956,7 +3847,7 @@ public final class LearnerOuterClass {
        * <code>.DataField value = 2;</code>
        */
       public io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder getValueBuilder() {
-        
+
         onChanged();
         return getValueFieldBuilder().getBuilder();
       }
@@ -3975,7 +3866,7 @@ public final class LearnerOuterClass {
        * <code>.DataField value = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>
           getValueFieldBuilder() {
         if (valueBuilder_ == null) {
           valueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -4245,7 +4136,7 @@ public final class LearnerOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (fieldCase_ == 3) {
@@ -4265,7 +4156,7 @@ public final class LearnerOuterClass {
         ref = field_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (fieldCase_ == 3) {
@@ -4769,7 +4660,7 @@ public final class LearnerOuterClass {
           ref = field_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (fieldCase_ == 3) {
@@ -4785,115 +4676,6 @@ public final class LearnerOuterClass {
        * @param value The string to set.
        * @return This builder for chaining.
        */
-<<<<<<< HEAD
-      public Builder setVectorInt(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt value) {
-        if (vectorIntBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          field_ = value;
-          onChanged();
-        } else {
-          vectorIntBuilder_.setMessage(value);
-        }
-        fieldCase_ = 3;
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public Builder setVectorInt(
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder builderForValue) {
-        if (vectorIntBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          vectorIntBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 3;
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public Builder mergeVectorInt(io.flowcean.learner.grpc.LearnerOuterClass.VectorInt value) {
-        if (vectorIntBuilder_ == null) {
-          if (fieldCase_ == 3 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 3) {
-            vectorIntBuilder_.mergeFrom(value);
-          } else {
-            vectorIntBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 3;
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public Builder clearVectorInt() {
-        if (vectorIntBuilder_ == null) {
-          if (fieldCase_ == 3) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 3) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          vectorIntBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder getVectorIntBuilder() {
-        return getVectorIntFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder getVectorIntOrBuilder() {
-        if ((fieldCase_ == 3) && (vectorIntBuilder_ != null)) {
-          return vectorIntBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 3) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.VectorInt vector_int = 3;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorInt, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder>
-          getVectorIntFieldBuilder() {
-        if (vectorIntBuilder_ == null) {
-          if (!(fieldCase_ == 3)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.getDefaultInstance();
-          }
-          vectorIntBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.VectorInt, io.flowcean.learner.grpc.LearnerOuterClass.VectorInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorIntOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.VectorInt) field_,
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        fieldCase_ = 3;
-=======
       public Builder setString(
           java.lang.String value) {
         if (value == null) {
@@ -4901,7 +4683,6 @@ public final class LearnerOuterClass {
   }
   fieldCase_ = 3;
         field_ = value;
->>>>>>> c4129f3 (Adapt coffee machine to time series)
         onChanged();
         return this;
       }
@@ -4909,100 +4690,9 @@ public final class LearnerOuterClass {
        * <code>string string = 3;</code>
        * @return This builder for chaining.
        */
-<<<<<<< HEAD
-      public Builder setVectorDouble(
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder builderForValue) {
-        if (vectorDoubleBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          vectorDoubleBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 4;
-        return this;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public Builder mergeVectorDouble(io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble value) {
-        if (vectorDoubleBuilder_ == null) {
-          if (fieldCase_ == 4 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 4) {
-            vectorDoubleBuilder_.mergeFrom(value);
-          } else {
-            vectorDoubleBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 4;
-        return this;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public Builder clearVectorDouble() {
-        if (vectorDoubleBuilder_ == null) {
-          if (fieldCase_ == 4) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 4) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          vectorDoubleBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder getVectorDoubleBuilder() {
-        return getVectorDoubleFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder getVectorDoubleOrBuilder() {
-        if ((fieldCase_ == 4) && (vectorDoubleBuilder_ != null)) {
-          return vectorDoubleBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 4) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.VectorDouble vector_double = 4;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder>
-          getVectorDoubleFieldBuilder() {
-        if (vectorDoubleBuilder_ == null) {
-          if (!(fieldCase_ == 4)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.getDefaultInstance();
-          }
-          vectorDoubleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble, io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.VectorDoubleOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.VectorDouble) field_,
-                  getParentForChildren(),
-                  isClean());
-=======
       public Builder clearString() {
         if (fieldCase_ == 3) {
           fieldCase_ = 0;
->>>>>>> c4129f3 (Adapt coffee machine to time series)
           field_ = null;
           onChanged();
         }
@@ -5024,248 +4714,6 @@ public final class LearnerOuterClass {
         onChanged();
         return this;
       }
-<<<<<<< HEAD
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder setMatrixInt(
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder builderForValue) {
-        if (matrixIntBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          matrixIntBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 5;
-        return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder mergeMatrixInt(io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt value) {
-        if (matrixIntBuilder_ == null) {
-          if (fieldCase_ == 5 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 5) {
-            matrixIntBuilder_.mergeFrom(value);
-          } else {
-            matrixIntBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 5;
-        return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public Builder clearMatrixInt() {
-        if (matrixIntBuilder_ == null) {
-          if (fieldCase_ == 5) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 5) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          matrixIntBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder getMatrixIntBuilder() {
-        return getMatrixIntFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder getMatrixIntOrBuilder() {
-        if ((fieldCase_ == 5) && (matrixIntBuilder_ != null)) {
-          return matrixIntBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 5) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixInt matrix_int = 5;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder>
-          getMatrixIntFieldBuilder() {
-        if (matrixIntBuilder_ == null) {
-          if (!(fieldCase_ == 5)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.getDefaultInstance();
-          }
-          matrixIntBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt, io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixIntOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.MatrixInt) field_,
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        fieldCase_ = 5;
-        onChanged();
-        return matrixIntBuilder_;
-      }
-
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder> matrixDoubleBuilder_;
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       * @return Whether the matrixDouble field is set.
-       */
-      @java.lang.Override
-      public boolean hasMatrixDouble() {
-        return fieldCase_ == 6;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       * @return The matrixDouble.
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble getMatrixDouble() {
-        if (matrixDoubleBuilder_ == null) {
-          if (fieldCase_ == 6) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-        } else {
-          if (fieldCase_ == 6) {
-            return matrixDoubleBuilder_.getMessage();
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder setMatrixDouble(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble value) {
-        if (matrixDoubleBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          field_ = value;
-          onChanged();
-        } else {
-          matrixDoubleBuilder_.setMessage(value);
-        }
-        fieldCase_ = 6;
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder setMatrixDouble(
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder builderForValue) {
-        if (matrixDoubleBuilder_ == null) {
-          field_ = builderForValue.build();
-          onChanged();
-        } else {
-          matrixDoubleBuilder_.setMessage(builderForValue.build());
-        }
-        fieldCase_ = 6;
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder mergeMatrixDouble(io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble value) {
-        if (matrixDoubleBuilder_ == null) {
-          if (fieldCase_ == 6 &&
-              field_ != io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance()) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.newBuilder((io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_)
-                .mergeFrom(value).buildPartial();
-          } else {
-            field_ = value;
-          }
-          onChanged();
-        } else {
-          if (fieldCase_ == 6) {
-            matrixDoubleBuilder_.mergeFrom(value);
-          } else {
-            matrixDoubleBuilder_.setMessage(value);
-          }
-        }
-        fieldCase_ = 6;
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public Builder clearMatrixDouble() {
-        if (matrixDoubleBuilder_ == null) {
-          if (fieldCase_ == 6) {
-            fieldCase_ = 0;
-            field_ = null;
-            onChanged();
-          }
-        } else {
-          if (fieldCase_ == 6) {
-            fieldCase_ = 0;
-            field_ = null;
-          }
-          matrixDoubleBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder getMatrixDoubleBuilder() {
-        return getMatrixDoubleFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      @java.lang.Override
-      public io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder getMatrixDoubleOrBuilder() {
-        if ((fieldCase_ == 6) && (matrixDoubleBuilder_ != null)) {
-          return matrixDoubleBuilder_.getMessageOrBuilder();
-        } else {
-          if (fieldCase_ == 6) {
-            return (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_;
-          }
-          return io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-        }
-      }
-      /**
-       * <code>.MatrixDouble matrix_double = 6;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder>
-          getMatrixDoubleFieldBuilder() {
-        if (matrixDoubleBuilder_ == null) {
-          if (!(fieldCase_ == 6)) {
-            field_ = io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.getDefaultInstance();
-          }
-          matrixDoubleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MatrixDoubleOrBuilder>(
-                  (io.flowcean.learner.grpc.LearnerOuterClass.MatrixDouble) field_,
-                  getParentForChildren(),
-                  isClean());
-          field_ = null;
-        }
-        fieldCase_ = 6;
-        onChanged();
-        return matrixDoubleBuilder_;
-      }
-=======
->>>>>>> c4129f3 (Adapt coffee machine to time series)
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -5894,13 +5342,8 @@ public final class LearnerOuterClass {
               messagesBuilder_.dispose();
               messagesBuilder_ = null;
               messages_ = other.messages_;
-<<<<<<< HEAD
-              bitField0_ = (bitField0_ & ~0x00000002);
-              messagesBuilder_ =
-=======
               bitField0_ = (bitField0_ & ~0x00000001);
-              messagesBuilder_ = 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+              messagesBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getMessagesFieldBuilder() : null;
             } else {
@@ -5955,7 +5398,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setStatusValue(int value) {
-        
+
         status_ = value;
         onChanged();
         return this;
@@ -5979,7 +5422,7 @@ public final class LearnerOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         status_ = value.getNumber();
         onChanged();
         return this;
@@ -5989,7 +5432,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearStatus() {
-        
+
         status_ = 0;
         onChanged();
         return this;
@@ -6907,7 +6350,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setLogLevelValue(int value) {
-        
+
         logLevel_ = value;
         onChanged();
         return this;
@@ -6931,7 +6374,7 @@ public final class LearnerOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         logLevel_ = value.getNumber();
         onChanged();
         return this;
@@ -6941,7 +6384,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearLogLevel() {
-        
+
         logLevel_ = 0;
         onChanged();
         return this;
@@ -6991,7 +6434,7 @@ public final class LearnerOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         sender_ = value;
         onChanged();
         return this;
@@ -7001,7 +6444,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearSender() {
-        
+
         sender_ = getDefaultInstance().getSender();
         onChanged();
         return this;
@@ -7017,7 +6460,7 @@ public final class LearnerOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         sender_ = value;
         onChanged();
         return this;
@@ -7067,7 +6510,7 @@ public final class LearnerOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         message_ = value;
         onChanged();
         return this;
@@ -7077,7 +6520,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearMessage() {
-        
+
         message_ = getDefaultInstance().getMessage();
         onChanged();
         return this;
@@ -7093,7 +6536,7 @@ public final class LearnerOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         message_ = value;
         onChanged();
         return this;
@@ -7580,18 +7023,13 @@ public final class LearnerOuterClass {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Prediction_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-<<<<<<< HEAD
-    internal_static_DataRow_descriptor;
-  private static final
-=======
     internal_static_TimeSeries_descriptor;
-  private static final 
->>>>>>> c4129f3 (Adapt coffee machine to time series)
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_TimeSeries_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_TimeSample_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_TimeSample_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
@@ -7600,29 +7038,6 @@ public final class LearnerOuterClass {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_DataField_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-<<<<<<< HEAD
-    internal_static_VectorInt_descriptor;
-  private static final
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_VectorInt_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_VectorDouble_descriptor;
-  private static final
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_VectorDouble_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_MatrixInt_descriptor;
-  private static final
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_MatrixInt_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_MatrixDouble_descriptor;
-  private static final
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_MatrixDouble_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-=======
->>>>>>> c4129f3 (Adapt coffee machine to time series)
     internal_static_StatusMessage_descriptor;
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable

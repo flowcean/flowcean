@@ -85,9 +85,7 @@ class _DockerBackend(_Backend):
         client = docker.APIClient(base_url="unix://var/run/docker.sock")
         ports = client.inspect_container(self._docker_container.id)[  # type: ignore[type]
             "NetworkSettings"
-        ][
-            "Ports"
-        ]
+        ]["Ports"]
         time.sleep(2)
         host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
         host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
