@@ -3,6 +3,9 @@
 # dependencies = [
 #     "flowcean",
 # ]
+#
+# [tool.uv.sources]
+# flowcean = { path = "../../", editable = true }
 # ///
 
 import logging

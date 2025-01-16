@@ -65,11 +65,11 @@ class SignalFilter(Transform):
                             {
                                 "time": pl.Float64,
                                 "value": pl.Float64,
-                            }
-                        )
+                            },
+                        ),
                     ),
                 )
-                .alias(feature)
+                .alias(feature),
             )
         return data
 

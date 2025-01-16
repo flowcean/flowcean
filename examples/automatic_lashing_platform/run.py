@@ -49,7 +49,7 @@ def main(args) -> None:
                 "p_initial",
                 "activeValveCount",
                 "T",
-            ]
+            ],
         )
         # | Filter(lambda df: df["activeValveCount"] > 0)
         | Resample(args.sample_rate)

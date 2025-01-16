@@ -15,7 +15,8 @@ class Accuracy(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.accuracy_score(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )
 
 
@@ -28,7 +29,8 @@ class ClassificationReport(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.classification_report(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )
 
 
@@ -64,7 +66,8 @@ class PrecisionScore(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.precision_score(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )
 
 
@@ -77,5 +80,6 @@ class Recall(OfflineMetric):
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return metrics.recall_score(
-            true.collect(streaming=True), predicted.collect(streaming=True)
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
         )

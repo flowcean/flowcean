@@ -34,7 +34,7 @@ class ResampleTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
         transformed_data = transform(data_frame.lazy()).collect()
 
@@ -77,7 +77,7 @@ class ResampleTransform(unittest.TestCase):
                         ],
                     ],
                     "scalar": [1, 2],
-                }
+                },
             ),
         )
 
@@ -114,7 +114,7 @@ class ResampleTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [42],
-            }
+            },
         )
         transformed_data = transform(data_frame.lazy()).collect()
 
@@ -151,7 +151,7 @@ class ResampleTransform(unittest.TestCase):
                         ],
                     ],
                     "scalar": [42],
-                }
+                },
             ),
         )
 

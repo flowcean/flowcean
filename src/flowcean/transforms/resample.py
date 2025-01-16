@@ -69,16 +69,18 @@ class Resample(Transform):
                             {
                                 "time": pl.Float64,
                                 "value": pl.Float64,
-                            }
-                        )
+                            },
+                        ),
                     ),
                 )
-                .alias(feature)
+                .alias(feature),
             )
         return data
 
     def resample_data(
-        self, data: dict[str, list[float]], dt: float
+        self,
+        data: dict[str, list[float]],
+        dt: float,
     ) -> pl.Series:
         time = data["time"]
         value = data["value"]

@@ -112,7 +112,7 @@ class OneCold(Transform):
                 [
                     pl.col(feature).ne(value).cast(pl.Int64).alias(name)
                     for name, value in category_mappings.items()
-                ]
+                ],
             ).drop(feature)
 
             # Check only for missing categories if the user has requested it
@@ -121,7 +121,7 @@ class OneCold(Transform):
                     [
                         pl.col(name).cast(pl.Boolean)
                         for name in category_mappings
-                    ]
+                    ],
                 )  # Get the new crated on-cold feature columns
                 .select(
                     # Check if all on-cold features are true

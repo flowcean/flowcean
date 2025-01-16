@@ -83,7 +83,7 @@ class Flatten(Transform):
                     .list.get(i)
                     .alias(f"{feature}_{i}")
                     for i in range(n)
-                ]
+                ],
             ).drop(feature)
 
         return data

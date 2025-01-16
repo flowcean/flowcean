@@ -84,7 +84,7 @@ class MatchSamplingRate(Transform):
             if np.issubdtype(reference_timestamps_np.dtype, np.datetime64):
                 reference_timestamps = (
                     reference_timestamps_np.astype("datetime64[us]").astype(
-                        np.int64
+                        np.int64,
                     )
                     / 1e6
                 )
@@ -111,13 +111,13 @@ class MatchSamplingRate(Transform):
                         pl.when(pl.col("index") == i)
                         .then(resampled_timeseries)
                         .otherwise(pl.col(feature))
-                        .alias(feature)
+                        .alias(feature),
                     )
                     .drop("index")
                     .collect()
                 )
                 reference_timestamps = pl.Series(
-                    reference_timestamps
+                    reference_timestamps,
                 ).to_list()
                 df = (
                     df.lazy()
@@ -126,7 +126,7 @@ class MatchSamplingRate(Transform):
                         pl.when(pl.col("index") == i)
                         .then(reference_timestamps)
                         .otherwise(pl.col(timestamp))
-                        .alias(timestamp)
+                        .alias(timestamp),
                     )
                     .drop("index")
                     .collect()

@@ -59,7 +59,8 @@ class NonIntegrableSystem(OdeSystem[SimpleState]):
 
 
 def map_to_dataframe(
-    ts: Sequence[float], states: Sequence[SimpleState]
+    ts: Sequence[float],
+    states: Sequence[SimpleState],
 ) -> pl.DataFrame:
     return pl.DataFrame(
         {
@@ -118,7 +119,7 @@ class TestOdeEnvironment(unittest.TestCase):
             {
                 "t": ts,
                 "y_0": [np.sqrt(np.power(t, 2) + 1) for t in ts],
-            }
+            },
         )
 
         environment = OdeEnvironment(
