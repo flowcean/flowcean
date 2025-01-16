@@ -44,7 +44,7 @@ def main(args) -> None:
     logger.info("Loading data...")
     time_start = time.time()
     data = (
-        ParquetDataLoader("./alp_sim_data.parquet")
+        ParquetDataLoader("./data/" + args.training_data)
         | Select(
             [
                 "p_accumulator",
@@ -70,116 +70,119 @@ def main(args) -> None:
     outputs = ["containerWeight"]
 
 
-    # observe data
-
-    logger.info("Observing data...")
-    observed_data = data.observe().collect()
-    time_after_observe = time.time()
-    logger.info("Took %.5f s to observe data", time_after_observe - time_start)
-
-
-    # print overview of the data
-
-    if args.print_overview:
-        logger.info("Data overview:")
-
-        print(observed_data)
-
+    # inspect the training data
     
-    # look for redundant output-values in the data
+    if args.print_overview or args.check_redundancy or args.print_data or args.print_row or args.plot_data or args.plot_row:
+        # observe data
+        logger.info("Observing data...")
+        observed_data = data.observe().collect()
+        time_after_observe = time.time()
+        logger.info("Took %.5f s to observe data", time_after_observe - time_start)
 
-    if args.check_redundancy:
-        logger.info("Checking for duplicated and unique output-values:")
-        rows = {}
-        duplicates = {}
-        uniques = {}
-        for row, i in zip(observed_data.select("containerWeight").iter_rows(), range(observed_data.select("containerWeight").shape[0])):
-            if row[0] in rows:
-                if row[0] in duplicates:
-                    duplicates[row[0]].append(i)
-                else:
-                    duplicates[row[0]] = [rows[row[0]], i]
-                if row[0] in uniques: uniques.pop(row[0])
-            else:
-                rows[row[0]] = i
-                uniques[row[0]] = i
 
-        if duplicates:
-            print(f"Duplicates ({len(duplicates)}):")
-            print(duplicates)
-            print(f"Uniques ({len(uniques)}):")
-            print(uniques)
-        else:
-            print("No duplicates found.")
+        # print overview of the data
+
+        if args.print_overview:
+            logger.info("Data overview:")
+
+            print(observed_data)
+
         
-    
-    # print data
+        # look for redundant output-values in the data
 
-    if args.print_data:
-        logger.info(f"Printing {args.prints} rows:")
+        if args.check_redundancy:
+            logger.info("Checking for duplicated and unique output-values:")
+            rows = {}
+            duplicates = {}
+            uniques = {}
+            for row, i in zip(observed_data.select("containerWeight").iter_rows(), range(observed_data.select("containerWeight").shape[0])):
+                if row[0] in rows:
+                    if row[0] in duplicates:
+                        duplicates[row[0]].append(i)
+                    else:
+                        duplicates[row[0]] = [rows[row[0]], i]
+                    if row[0] in uniques: uniques.pop(row[0])
+                else:
+                    rows[row[0]] = i
+                    uniques[row[0]] = i
 
-        dimension = observed_data.shape[0]
-        prints = args.prints if args.prints < dimension else dimension
+            if duplicates:
+                print(f"Duplicates ({len(duplicates)}):")
+                print(duplicates)
+                print(f"Uniques ({len(uniques)}):")
+                print(uniques)
+            else:
+                print("No duplicates found.")
+            
+        
+        # print data
 
-        for i, c in zip(range(0, dimension, int(dimension/prints)), range(prints)):
-            index = i if args.print_distributed else c
-            print(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Index: {index}")
-            print(f"Active Valves: {observed_data.select('activeValveCount').row(index)[0]}")
-            print(f"Initial Pressure: {round(observed_data.select('p_initial').row(index)[0], 3)}")
-            print(f"Temperature: {round(observed_data.select('T').row(index)[0], 3)}")
-            print(observed_data.select('^p_accumulator_.*$').row(index))
+        if args.print_data:
+            logger.info(f"Printing {args.prints} rows:")
 
+            dimension = observed_data.shape[0]
+            prints = args.prints if args.prints < dimension else dimension
 
-    # print a row of the data interactively
-
-    if args.print_row:
-        logger.info(f"Printing rows interactively:")
-        while True:
-            index = input("Enter the row index to print or 'x' to quit: ")
-            if index == 'x':
-                break
-            print(f"Weight: {round(observed_data.select('containerWeight').row(int(index))[0], 3)}")
-            print(f"Active Valves: {observed_data.select('activeValveCount').row(int(index))[0]}")
-            print(f"Initial Pressure: {round(observed_data.select('p_initial').row(int(index))[0], 3)}")
-            print(f"Temperature: {round(observed_data.select('T').row(int(index))[0], 3)}")
-            print(observed_data.select('^p_accumulator_.*$').row(int(index)))
-
-
-    # plot data
-
-    if args.plot_data:
-        logger.info(f"Plotting {args.plots} rows:")
-
-        dimension = observed_data.shape[0]
-        plots = args.plots if args.plots < dimension else dimension
-        plot_rows = math.ceil(math.sqrt(plots))
-        plot_cols = math.ceil(plots / plot_rows)
-
-        plt.figure()
-        for i, c in zip(range(0, dimension, int(dimension/plots)), range(plots)):
-            plt.subplot(plot_rows, plot_cols, c+1)
-            index = i if args.plot_distributed else c
-            plt.title(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Active Valves: {observed_data.select('activeValveCount').row(index)[0]}, Index: {index}")
-            plt.plot(observed_data.select('^p_accumulator_.*$').row(index))
-
-        plt.subplots_adjust(hspace=0.5, wspace=0.5, left= 0.1, right=0.95, top=0.9, bottom=0.1)
-        plt.show()
+            for i, c in zip(range(0, dimension, int(dimension/prints)), range(prints)):
+                index = i if args.print_distributed else c
+                print(f"Index: {index}")
+                print(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}")
+                print(f"Active Valves: {observed_data.select('activeValveCount').row(index)[0]}")
+                print(f"Initial Pressure: {round(observed_data.select('p_initial').row(index)[0], 3)}")
+                print(f"Temperature: {round(observed_data.select('T').row(index)[0], 3)}")
+                print(observed_data.select('^p_accumulator_.*$').row(index))
 
 
-    # plot a row of the data
-    if args.plot_row:
-        logger.info(f"Plotting rows interactively:")
+        # print a row of the data interactively
 
-        plt.figure()
-        plt.subplots_adjust(left= 0.1, right=0.95, top=0.9, bottom=0.1)
+        if args.print_row:
+            logger.info(f"Printing rows interactively:")
+            while True:
+                index = input("Enter the row index to print or 'x' to quit: ")
+                if index == 'x':
+                    break
+                print(f"Weight: {round(observed_data.select('containerWeight').row(int(index))[0], 3)}")
+                print(f"Active Valves: {observed_data.select('activeValveCount').row(int(index))[0]}")
+                print(f"Initial Pressure: {round(observed_data.select('p_initial').row(int(index))[0], 3)}")
+                print(f"Temperature: {round(observed_data.select('T').row(int(index))[0], 3)}")
+                print(observed_data.select('^p_accumulator_.*$').row(int(index)))
 
-        while True:
-            index = input("Enter the row index to plot or 'x' to quit: ")
-            if index == 'x':
-                break
-            plt.title(f"Weight: {round(observed_data.select('containerWeight').row(int(index))[0], 3)}, Index: {index}")
-            plt.plot(observed_data.select('^p_accumulator_.*$').row(int(index)))
+
+        # plot data
+
+        if args.plot_data:
+            logger.info(f"Plotting {args.plots} rows:")
+
+            dimension = observed_data.shape[0]
+            plots = args.plots if args.plots < dimension else dimension
+            plot_rows = math.ceil(math.sqrt(plots))
+            plot_cols = math.ceil(plots / plot_rows)
+
+            plt.figure()
+            for i, c in zip(range(0, dimension, int(dimension/plots)), range(plots)):
+                plt.subplot(plot_rows, plot_cols, c+1)
+                index = i if args.plot_distributed else c
+                plt.title(f"Weight: {round(observed_data.select('containerWeight').row(index)[0], 3)}, Index: {index}")
+                plt.plot(observed_data.select('^p_accumulator_.*$').row(index))
+
+            plt.subplots_adjust(hspace=0.5, wspace=0.5, left= 0.1, right=0.95, top=0.9, bottom=0.1)
             plt.show()
+
+
+        # plot a row of the data
+        if args.plot_row:
+            logger.info(f"Plotting rows interactively:")
+
+            plt.figure()
+            plt.subplots_adjust(left= 0.1, right=0.95, top=0.9, bottom=0.1)
+
+            while True:
+                index = input("Enter the row index to plot or 'x' to quit: ")
+                if index == 'x':
+                    break
+                plt.title(f"Weight: {round(observed_data.select('containerWeight').row(int(index))[0], 3)}, Active Valves: {observed_data.select('activeValveCount').row(int(index))[0]}, Temperature: {round(observed_data.select('T').row(int(index))[0], 3)}")
+                plt.plot(observed_data.select('^p_accumulator_.*$').row(int(index)))
+                plt.show()
 
 
     # train the model
@@ -239,6 +242,7 @@ if __name__ == "__main__":
     # parameter
 
     parameter_group = parser.add_argument_group('Parameter', 'Parameter options for the training-data.')
+    parameter_group.add_argument('--training_data', type=str, default='alp_sim_data.parquet', metavar='FILE', help='Set the training-data file. (default: alp_sim_data.parquet)')
     parameter_group.add_argument('--sample_rate', type=float, default=1.0, metavar='RATE', help='Set the sample rate for the data. (default: 1.0) -> 15 Values')
     parameter_group.add_argument('--filter', type=str, default='"1==1"', metavar='CONDITION', help='Filter the data with a condition like \'And(["activeValveCount > 0", "activeValveCount < 3"])\' or \'"activeValveCount > 0"\'.')
 
