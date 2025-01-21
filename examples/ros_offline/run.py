@@ -42,7 +42,7 @@ def main() -> None:
         },
     )
     transformed_data = transform(
-        data.select("/momo/pose", "/odometry/filtered")
+        data.select("/momo/pose", "/odometry/filtered"),
     )
 
     print(transformed_data)
