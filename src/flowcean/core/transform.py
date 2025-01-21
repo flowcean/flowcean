@@ -30,7 +30,7 @@ Here's a basic example:
 from flowcean.transforms import Select, Standardize
 
 # Load the dataset
-dataset: pl.DataFrame = ...
+dataset = ...
 
 # Define transforms by chaining a selection and a standardization
 transforms = Select(features=["reference", "temperature"]) | Standardize(
@@ -59,14 +59,14 @@ from typing_extensions import override
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import polars as pl
+    from flowcean.core.data import Data
 
 
 class Transform(ABC):
     """Base class for all transforms."""
 
     @abstractmethod
-    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def apply(self, data: Data) -> Data:
         """Apply the transform to data.
 
         Args:
@@ -76,7 +76,7 @@ class Transform(ABC):
             The transformed data.
         """
 
-    def __call__(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def __call__(self, data: Data) -> Data:
         """Apply the transform to data.
 
         Args:
@@ -141,7 +141,7 @@ class FitOnce(ABC):
     """A mixin for transforms that need to be fitted to data once."""
 
     @abstractmethod
-    def fit(self, data: pl.LazyFrame) -> None:
+    def fit(self, data: Data) -> None:
         """Fit to the data.
 
         Args:
@@ -153,7 +153,7 @@ class FitIncremetally(ABC):
     """A mixin for transforms that need to be fitted to data incrementally."""
 
     @abstractmethod
-    def fit_incremental(self, data: pl.LazyFrame) -> None:
+    def fit_incremental(self, data: Data) -> None:
         """Fit to the data incrementally.
 
         Args:
@@ -178,7 +178,7 @@ class ChainedTransforms(Transform, FitOnce, FitIncremetally):
         self.transforms = transforms
 
     @override
-    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def apply(self, data: Data) -> Data:
         for transform in self.transforms:
             data = transform.apply(data)
         return data
@@ -191,14 +191,14 @@ class ChainedTransforms(Transform, FitOnce, FitIncremetally):
         return ChainedTransforms(*self.transforms, other)
 
     @override
-    def fit(self, data: pl.LazyFrame) -> None:
+    def fit(self, data: Data) -> None:
         for transform in self.transforms:
             if isinstance(transform, FitOnce):
                 transform.fit(data)
             data = transform.apply(data)
 
     @override
-    def fit_incremental(self, data: pl.LazyFrame) -> None:
+    def fit_incremental(self, data: Data) -> None:
         for transform in self.transforms:
             if isinstance(transform, FitIncremetally):
                 transform.fit_incremental(data)
@@ -213,7 +213,7 @@ class Identity(Transform):
         super().__init__()
 
     @override
-    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def apply(self, data: Data) -> Data:
         return data
 
     @override

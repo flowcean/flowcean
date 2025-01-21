@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import polars as pl
-
+from flowcean.core.data import Data
 from flowcean.core.environment.actable import Actable
 from flowcean.core.environment.observable import (
     TransformedObservable,
@@ -12,7 +11,7 @@ from flowcean.core.environment.stepable import Stepable
 class ActiveEnvironment(
     TransformedObservable,
     Stepable,
-    Actable[pl.DataFrame],
+    Actable[Data],
 ):
     """Base class for active environments.
 

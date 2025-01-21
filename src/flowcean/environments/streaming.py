@@ -1,3 +1,5 @@
+from typing import cast
+
 import polars as pl
 from typing_extensions import override
 
@@ -36,7 +38,7 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
     @override
     def _observe(self) -> pl.LazyFrame:
         if self.data is None:
-            self.data = self.environment.observe()
+            self.data = cast(pl.LazyFrame, self.environment.observe())
         if self.slice is None:
             self.slice = self.data.slice(self.i, self.batch_size)
         return self.slice
@@ -44,7 +46,7 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
     @override
     def step(self) -> None:
         if self.data is None:
-            self.data = self.environment.observe()
+            self.data = cast(pl.LazyFrame, self.environment.observe())
         self.i += self.batch_size
         self.slice = self.data.slice(self.i, self.batch_size)
         if (
