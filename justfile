@@ -19,10 +19,6 @@ check-deptry:
   @echo "🚀 Checking for obsolete dependencies: Running deptry"
   @uv run deptry src
 
-typecheck:
-  @echo "🚀 Static type checking: Running pyright"
-  @uv run pyright
-
 test:
   @echo "🚀 Testing code: Running pytest"
   @uv run python -m pytest tests --cov --cov-config=pyproject.toml
