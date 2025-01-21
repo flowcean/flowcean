@@ -44,10 +44,12 @@ class LightningLearner(SupervisedLearner):
     @override
     def learn(
         self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> PyTorchModel:
-        dataset = TorchDataset(inputs, outputs)
+        collected_inputs = inputs.collect()
+        collected_outputs = outputs.collect()
+        dataset = TorchDataset(collected_inputs, collected_outputs)
         dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -58,7 +60,7 @@ class LightningLearner(SupervisedLearner):
             max_epochs=self.max_epochs,
         )
         trainer.fit(self.module, dataloader)
-        return PyTorchModel(self.module, outputs.columns)
+        return PyTorchModel(self.module, collected_outputs.columns)
 
 
 class MultilayerPerceptron(lightning.LightningModule):

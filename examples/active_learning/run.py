@@ -75,14 +75,15 @@ class MyModel(Model):
         self.best_action = best_action
 
     @override
-    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
+    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         return pl.DataFrame(
             {
                 "action": [
-                    self.best_action for _ in range(len(input_features))
+                    self.best_action
+                    for _ in range(len(input_features.collect()))
                 ],
             },
-        )
+        ).lazy()
 
     @override
     def save(self, path: Path) -> None:
@@ -117,8 +118,8 @@ class MyLearner(ActiveLearner):
     @override
     def propose_action(self, observation: pl.DataFrame) -> pl.DataFrame:
         sensor = observation["sensor"]
-        action = self.model.predict(pl.DataFrame({"sensor": sensor}))
-        return action["action"][0]
+        action = self.model.predict(pl.DataFrame({"sensor": sensor}).lazy())
+        return action.collect()["action"][0]
 
 
 def main() -> None:
