@@ -1,4 +1,5 @@
 import logging
+from gc import collect
 from typing import Literal
 
 import polars as pl
@@ -88,9 +89,10 @@ class MatchSamplingRate(Transform):
         """
         # preserve all constant columns that are not timeseries data
         transformed_data = pl.DataFrame()
-        for i in range(len(data.collect().rows())):
+        collected_data = data.collect()
+        for i in range(len(collected_data.rows())):
             transformed_data_slice = self._transform_row(
-                data.collect().slice(i, 1),
+                collected_data.slice(i, 1),
             )
             transformed_data = transformed_data.vstack(transformed_data_slice)
         return transformed_data.lazy()
@@ -110,10 +112,9 @@ class MatchSamplingRate(Transform):
         logger.debug(debug_msg)
 
         if self.reference_feature_name not in data.columns:
-            msg = f"'{self.reference_feature_name}' not in the DataFrame."
-            raise FeatureNotFoundError(msg)
+            raise FeatureNotFoundError(feature=self.reference_feature_name)
 
-        features = list(self.feature_interpolation_map.keys())
+        features = self.feature_interpolation_map.keys()
 
         reference_feature = (
             data.select(pl.col(self.reference_feature_name).explode())
@@ -138,7 +139,7 @@ class MatchSamplingRate(Transform):
             [
                 data.select(self.reference_feature_name),
                 result,
-                data.select(non_timeseries_features),
+                non_timeseries_features,
             ],
             how="horizontal",
         )
@@ -174,37 +175,33 @@ def interpolate_feature(
                 else name,
             )
         )
-        return (
-            (
-                pl.concat(
-                    [reference_feature, feature_df],
-                    how="diagonal",
-                )
-                .sort("time")
-                .with_columns(
-                    pl.col(feature_df.drop("time").columns).interpolate(),
-                )
-                .drop_nulls()
+
+        interpolated_features = (
+            pl.concat(
+                [reference_feature, feature_df],
+                how="diagonal",
             )
+            .sort("time")
+            .with_columns(
+                pl.col(feature_df.drop("time").columns).interpolate(),
+            )
+            .drop_nulls()
             .select(feature_df.columns)
-            .select(
-                [
-                    pl.struct(
-                        pl.col("time"),
-                        pl.struct(
-                            {
-                                col: pl.col(col)
-                                for col in feature_df.columns
-                                if col != "time"
-                            },
-                        ).alias("value"),
-                    ).alias(target_feature_name),
-                ],
-            )
-            .select(pl.all().implode())
         )
-    msg = f"Unknown interpolation method: {interpolation_method}"
-    raise ValueError(msg)
+        restructure_to_time_series = pl.struct(
+            pl.col("time"),
+            pl.struct(
+                {
+                    col: pl.col(col)
+                    for col in feature_df.columns
+                    if col != "time"
+                },
+            ).alias("value"),
+        )
+        return interpolated_features.select(
+            restructure_to_time_series.alias(target_feature_name),
+        ).select(pl.all().implode())
+    raise UnknownInterpolationError(interpolation_method=interpolation_method)
 
 
 class FeatureNotFoundError(Exception):
@@ -212,3 +209,16 @@ class FeatureNotFoundError(Exception):
 
     This exception is raised when a feature is not found in the DataFrame.
     """
+
+    def __init__(self, feature: str) -> None:
+        super().__init__(f"{feature} not found")
+
+
+class UnknownInterpolationError(Exception):
+    """Interpolation method is not implemented yet.
+
+    This exception is raised when a feature is not found in the DataFrame.
+    """
+
+    def __init__(self, interpolation_method: str) -> None:
+        super().__init__(f"{interpolation_method} not found")

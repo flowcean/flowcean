@@ -23,6 +23,7 @@ __all__ = [
     "Standardize",
     "TimeWindow",
     "ToTimeSeries",
+    "UnknownInterpolationError",
 ]
 
 from flowcean.transforms.cast import Cast
@@ -38,6 +39,7 @@ from flowcean.transforms.function import Lambda
 from flowcean.transforms.match_sampling_rate import (
     FeatureNotFoundError,
     MatchSamplingRate,
+    UnknownInterpolationError,
 )
 from flowcean.transforms.one_cold import OneCold
 from flowcean.transforms.one_hot import (
