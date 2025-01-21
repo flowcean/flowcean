@@ -1,5 +1,4 @@
 import logging
-from gc import collect
 from typing import Literal
 
 import polars as pl
