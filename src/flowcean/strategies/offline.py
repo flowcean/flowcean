@@ -37,8 +37,8 @@ def learn_offline(
     logger.info("Learning with offline strategy")
     data = environment.observe()
     logger.info("Selecting input and output features")
-    input_features = data.select(inputs).collect(streaming=True)
-    output_features = data.select(outputs).collect(streaming=True)
+    input_features = data.select(inputs)
+    output_features = data.select(outputs)
 
     if isinstance(input_transform, FitOnce):
         cast(FitOnce, input_transform).fit(input_features.lazy())
@@ -83,7 +83,7 @@ def evaluate_offline(
     data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
-    predictions = model.predict(input_features.collect(streaming=True))
+    predictions = model.predict(input_features)
     return Report(
         {
             metric.name: metric(output_features, predictions.lazy())
