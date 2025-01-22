@@ -15,7 +15,7 @@ from flowcean.environments.rosbag import RosbagLoader
 
 logger = logging.getLogger(__name__)
 
-USE_CACHED_ROS_DATA = True
+USE_CACHED_ROS_DATA = False
 UPDATE_CACHE = False
 
 
@@ -40,6 +40,8 @@ def main() -> None:
                     "ranges",
                 ],
                 "/particle_cloud": ["particles"],
+                "/position_error": ["data"],
+                "/heading_error": ["data"],
             },
             msgpaths=[
                 "/opt/ros/humble/share/sensor_msgs/msg/LaserScan.msg",
