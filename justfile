@@ -1,3 +1,5 @@
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+
 check:
   @echo "🚀 Checking lock file consistency with 'pyproject.toml'"
   @uv lock --locked
@@ -24,28 +26,28 @@ examples: examples-alp examples-boiler examples-coffee_machine examples-failure_
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
-  @uv run --directory ./examples/automatic_lashing_platform/ --with-editable ../../ run.py
+  @uv run --directory ./examples/automatic_lashing_platform/ run.py
 
 examples-boiler:
   @echo "🚀 Running example: Boiler"
-  @uv run --directory ./examples/boiler/ --with-editable ../../ run.py
+  @uv run --directory ./examples/boiler/ run.py
 
 examples-coffee_machine:
   @echo "🚀 Running example: Coffee Machine"
-  @uv run --directory ./examples/coffee_machine/ --with-editable ../../ run.py
+  @uv run --directory ./examples/coffee_machine/ run.py
 
 examples-failure_time_prediction:
   @echo "🚀 Running example: Failure Time Prediction"
-  @uv run --directory ./examples/failure_time_prediction/ --with-editable ../../ run.py
+  @uv run --directory ./examples/failure_time_prediction/ run.py
 
 examples-linear_data:
   @echo "🚀 Running example: Linear Data"
-  @uv run --directory ./examples/linear_data/ --with-editable ../../ run.py
+  @uv run --directory ./examples/linear_data/ run.py
 
 examples-one_tank:
   @echo "🚀 Running example: One Tank"
-  @uv run --directory ./examples/one_tank/ --with-editable ../../ run.py
+  @uv run --directory ./examples/one_tank/ run.py
 
 examples-ros_offline:
   @echo "🚀 Running example: ROS Offline"
-  @uv run --directory ./examples/ros_offline/ --with-editable ../../ run.py
+  @uv run --directory ./examples/ros_offline/ run.py

@@ -5,14 +5,18 @@ from typing import Any, Self, override
 import polars as pl
 
 from flowcean.core.transform import Transform
+from flowcean.transforms.one_hot import (
+    NoCategoriesError,
+    NoMatchingCategoryError,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class OneHot(Transform):
-    """Transforms integer features into a set of binary one-hot features.
+class OneCold(Transform):
+    """Transforms integer features into a set of binary one-cold features.
 
-    Transforms integer features into a set of binary one-hot features. The
+    Transforms integer features into a set of binary one-cold features. The
     original integer features are dropped and are not part of the resulting
     data frame.
 
@@ -26,15 +30,33 @@ class OneHot(Transform):
      1      |
      5      |
 
-    When the one-hot transformation is applied, the result is as follows
+    When the one-cold transformation is applied, the result is as follows
 
     feature_0 | feature_1 | feature_2 | feature_5
     ----------|-----------|-----------|----------
-     1        | 0         | 0         | 0
-     0        | 1         | 0         | 0
-     0        | 0         | 1         | 0
-     0        | 1         | 0         | 0
-     0        | 0         | 0         | 1
+     0        | 1         | 1         | 1
+     1        | 0         | 1         | 1
+     1        | 1         | 0         | 1
+     1        | 0         | 1         | 1
+     1        | 1         | 1         | 0
+
+     In the default configuration missing categories are ignored.
+     Their respective entries will all be one. If you however want to enforce
+     that each data entry belongs to a certain category, you can set the
+     check_for_missing_categories flag to true when constructing a One-Cold
+     transform. In that case if an unknown value is found which does not belong
+     to any category, a NoMatchingCategoryError is thrown. This however has an
+     impact on the performance and will slow down the transform.
+
+     If you want to enable this check, create the transform as follows:
+     ```python
+        transform = OneCold(
+            feature_categories={
+                "feature": [0, 1, 2, 5]
+            },
+            check_for_missing_categories=True
+        )
+    ```
     """
 
     feature_category_mapping: dict[str, dict[str, Any]]
@@ -88,20 +110,29 @@ class OneHot(Transform):
         ) in self.feature_category_mapping.items():
             data = data.with_columns(
                 [
-                    pl.col(feature).eq(value).cast(pl.Int64).alias(name)
+                    pl.col(feature).ne(value).cast(pl.Int64).alias(name)
                     for name, value in category_mappings.items()
                 ],
             ).drop(feature)
 
+            # Check only for missing categories if the user has requested it
             if self.check_for_missing_categories and (
                 not data.select(
                     [
                         pl.col(name).cast(pl.Boolean)
                         for name in category_mappings
                     ],
+                )  # Get the new crated on-cold feature columns
+                .select(
+                    # Check if all on-cold features are true
+                    # That's only the case if the category is missing
+                    pl.all_horizontal(
+                        pl.all(),
+                    ).all(),  # Combine the results for all data entries ...
                 )
-                .select(pl.any_horizontal(pl.all()).all())
                 .collect(streaming=True)
+                # ... and get the final result.
+                # If it is false, there is a missing category
                 .item(0, 0)
             ):
                 raise NoMatchingCategoryError
@@ -110,7 +141,7 @@ class OneHot(Transform):
     @classmethod
     def from_dataframe(
         cls,
-        data: pl.LazyFrame,
+        data: pl.DataFrame,
         features: Iterable[str],
         *,
         check_for_missing_categories: bool = False,
@@ -135,27 +166,16 @@ class OneHot(Transform):
             if data.schema[feature].is_float():
                 logger.warning(
                     (
-                        "Feature %s is of type float. Applying a one-hot",
+                        "Feature %s is of type float. Applying a one-cold",
                         "transform to it may produce undesired results.",
                         "Check your datatypes and transforms.",
                     ),
                     feature,
                 )
             feature_categories[feature] = (
-                data.select(pl.col(feature).unique())
-                .collect(streaming=True)
-                .to_series()
-                .to_list()
+                data.select(pl.col(feature).unique()).to_series().to_list()
             )
         return cls(
             feature_categories,
             check_for_missing_categories=check_for_missing_categories,
         )
-
-
-class NoCategoriesError(Exception):
-    pass
-
-
-class NoMatchingCategoryError(Exception):
-    pass

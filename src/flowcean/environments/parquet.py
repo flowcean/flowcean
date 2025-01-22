@@ -14,5 +14,5 @@ class ParquetDataLoader(Dataset):
         Args:
             path: Path to the Parquet file.
         """
-        data = pl.read_parquet(path)
+        data = pl.scan_parquet(path)
         super().__init__(data)

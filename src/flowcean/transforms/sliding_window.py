@@ -39,7 +39,7 @@ class SlidingWindow(Transform):
         self.window_size = window_size
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return data.select(
             [
                 pl.all()
@@ -47,5 +47,5 @@ class SlidingWindow(Transform):
                 .slice(self.window_size - 1)
                 .name.suffix(f"_{i}")
                 for i in range(self.window_size)
-            ]
+            ],
         )

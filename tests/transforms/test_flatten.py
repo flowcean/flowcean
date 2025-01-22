@@ -62,10 +62,10 @@ class FlattenTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
 
-        transformed_data = flatten_transform(data_frame)
+        transformed_data = flatten_transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -76,7 +76,7 @@ class FlattenTransform(unittest.TestCase):
                     "feature_b_0": [5, 7],
                     "feature_b_1": [6, 8],
                     "scalar": [1, 2],
-                }
+                },
             ),
             check_column_order=False,
         )
@@ -131,10 +131,10 @@ class FlattenTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
 
-        transformed_data = flatten_transform(data_frame)
+        transformed_data = flatten_transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -165,7 +165,7 @@ class FlattenTransform(unittest.TestCase):
                         ],
                     ],
                     "scalar": [1, 2],
-                }
+                },
             ),
             check_column_order=False,
         )
@@ -220,11 +220,11 @@ class FlattenTransform(unittest.TestCase):
                     ],
                 ],
                 "scalar": [1, 2],
-            }
+            },
         )
 
         with pytest.raises(NoTimeSeriesFeatureError):
-            flatten_transform(data_frame)
+            flatten_transform(data_frame.lazy()).collect()
 
     def test_flatten_varying_length(self) -> None:
         flatten_transform = Flatten()
@@ -257,11 +257,11 @@ class FlattenTransform(unittest.TestCase):
                         },
                     ],
                 ],
-            }
+            },
         )
 
         with pytest.raises(FeatureLengthVaryError):
-            flatten_transform(data_frame)
+            flatten_transform(data_frame.lazy()).collect()
 
 
 if __name__ == "__main__":

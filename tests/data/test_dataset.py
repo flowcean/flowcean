@@ -15,7 +15,7 @@ class TestDataset(unittest.TestCase):
             },
         )
         data = Dataset(df)
-        assert_frame_equal(df, data.observe())
+        assert_frame_equal(df, data.observe().collect())
 
 
 if __name__ == "__main__":

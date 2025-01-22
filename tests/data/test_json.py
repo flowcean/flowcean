@@ -27,7 +27,7 @@ class TestJsonDataLoader(unittest.TestCase):
 
                 dataloader = JsonDataLoader(path=Path(f.name))
                 loaded_data = dataloader.observe()
-                assert_frame_equal(loaded_data, data)
+                assert_frame_equal(loaded_data.collect(), data)
             finally:
                 f.close()
                 Path(f.name).unlink()
@@ -57,7 +57,7 @@ class TestJsonDataLoader(unittest.TestCase):
 
                 dataloader = JsonDataLoader(path=Path(f.name))
                 loaded_data = dataloader.observe()
-                assert_frame_equal(loaded_data, data)
+                assert_frame_equal(loaded_data.collect(), data)
             finally:
                 f.close()
                 Path(f.name).unlink()

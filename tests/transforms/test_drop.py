@@ -3,12 +3,12 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.transforms import Rechunk
+from flowcean.transforms import Drop
 
 
-class RechunkTransform(unittest.TestCase):
-    def test_rechunk(self) -> None:
-        transform = Rechunk()
+class DropTransform(unittest.TestCase):
+    def test_simple(self) -> None:
+        transform = Drop(features=["a", "c"])
 
         data_frame = pl.DataFrame(
             [
@@ -17,12 +17,19 @@ class RechunkTransform(unittest.TestCase):
                 {"a": 7, "b": 8, "c": 9},
                 {"a": 10, "b": 11, "c": 12},
             ],
-        )
-        transformed_data = transform(data_frame)
+        ).lazy()
+        transformed_data = transform(data_frame).collect()
 
         assert_frame_equal(
             transformed_data,
-            data_frame,
+            pl.DataFrame(
+                [
+                    {"b": 2},
+                    {"b": 5},
+                    {"b": 8},
+                    {"b": 11},
+                ],
+            ),
         )
 
 

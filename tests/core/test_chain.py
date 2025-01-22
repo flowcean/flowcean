@@ -15,7 +15,7 @@ class TestChain(unittest.TestCase):
                     "A": [1, 2],
                     "B": [5, 6],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -24,7 +24,7 @@ class TestChain(unittest.TestCase):
                     "A": [3, 4],
                     "B": [7, 8],
                 },
-            )
+            ),
         )
 
         chain = ChainedOfflineEnvironments([dataset1, dataset2])
@@ -37,7 +37,7 @@ class TestChain(unittest.TestCase):
                     "A": [1, 2],
                     "B": [5, 6],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -46,7 +46,7 @@ class TestChain(unittest.TestCase):
                     "A": [3, 4],
                     "B": [7, 8],
                 },
-            )
+            ),
         )
 
         chain = dataset1.chain(dataset2)
@@ -59,7 +59,7 @@ class TestChain(unittest.TestCase):
                     "A": [1, 2],
                     "B": [5, 6],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -68,7 +68,7 @@ class TestChain(unittest.TestCase):
                     "A": [3, 4],
                     "B": [7, 8],
                 },
-            )
+            ),
         )
 
         chain = dataset1.chain(dataset2)
@@ -90,7 +90,7 @@ class TestChain(unittest.TestCase):
                     "A": [1, 2],
                     "B": [5, 6],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -99,18 +99,18 @@ class TestChain(unittest.TestCase):
                     "A": [3, 4],
                     "B": [7, 8],
                 },
-            )
+            ),
         )
 
         chain = dataset1.chain(dataset2)
 
         assert_frame_equal(
-            chain.collect().observe(),
+            chain.collect().observe().collect(),
             pl.DataFrame(
                 {
                     "A": [1, 2, 3, 4],
                     "B": [5, 6, 7, 8],
-                }
+                },
             ),
         )
 

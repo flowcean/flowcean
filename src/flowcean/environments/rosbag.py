@@ -98,7 +98,9 @@ class RosbagLoader(Dataset):
                 self.get_dataframe(reader, topic, keys)
                 for topic, keys in self.topics.items()
             ]
+
             super().__init__(pl.concat(features, how="horizontal"))
+
 
     def guess_msgtype(self, path: Path) -> str:
         """Guess message type name from path.
@@ -113,6 +115,7 @@ class RosbagLoader(Dataset):
         if "msg" not in name.parts:
             name = name.parent / "msg" / name.name
         return str(name)
+
 
     def get_dataframe(
         self, reader: AnyRosbagReader, topicname: str, keys: Sequence[str]
@@ -274,3 +277,4 @@ class RosbagLoader(Dataset):
                 result[key] = self.ros_msg_to_dict(value)
             return result
         return obj  # Return the base value if it's not an object
+

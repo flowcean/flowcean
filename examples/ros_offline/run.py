@@ -3,15 +3,20 @@
 # dependencies = [
 #     "flowcean",
 # ]
+#
+# [tool.uv.sources]
+# flowcean = { path = "../../", editable = true }
 # ///
 
 import logging
 from pathlib import Path
 
+
 import polars as pl
 
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
+from flowcean.transforms import MatchSamplingRate
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +66,8 @@ def main() -> None:
             data.write_json(file="cached_ros_data.json")
             print("Cache created")
     print(f"original data: {data}")
+
+
 
 
 if __name__ == "__main__":
