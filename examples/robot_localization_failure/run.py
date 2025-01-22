@@ -8,17 +8,12 @@
 # flowcean = { path = "../../", editable = true }
 # ///
 
-import logging
 from pathlib import Path
-
 
 import polars as pl
 
 import flowcean.cli
 from flowcean.environments.rosbag import RosbagLoader
-from flowcean.transforms import MatchSamplingRate
-
-logger = logging.getLogger(__name__)
 
 USE_CACHED_ROS_DATA = False
 UPDATE_CACHE = False
@@ -28,7 +23,7 @@ def main() -> None:
     flowcean.cli.initialize_logging()
 
     if USE_CACHED_ROS_DATA and Path("cached_ros_data.json").exists():
-        data = pl.read_json("cached_ros_data.json")
+        data = pl.read_json("cached_ros_data.json").lazy()
     else:
         environment = RosbagLoader(
             path="rec_20241021_152106",
@@ -60,14 +55,12 @@ def main() -> None:
         if Path("cached_ros_data.json").exists():
             user_input = input("Overwrite cache? (y/n): ")
             if user_input == "y":
-                data.write_json()
+                data.collect().write_json()
                 print("Cache updated")
         else:
-            data.write_json(file="cached_ros_data.json")
+            data.collect().write_json(file="cached_ros_data.json")
             print("Cache created")
     print(f"original data: {data}")
-
-
 
 
 if __name__ == "__main__":

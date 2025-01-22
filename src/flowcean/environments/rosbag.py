@@ -85,22 +85,21 @@ class RosbagLoader(Dataset):
             msgpath = Path(pathstr)
             msgdef = msgpath.read_text(encoding="utf-8")
             add_types.update(
-                get_types_from_msg(msgdef, self.guess_msgtype(msgpath))
+                get_types_from_msg(msgdef, self.guess_msgtype(msgpath)),
             )
             debug_msg = f"Added message type: {self.guess_msgtype(msgpath)}"
             logger.debug(debug_msg)
         self.typestore.register(add_types)
 
         with AnyRosbagReader(
-            [self.path], default_typestore=self.typestore
+            [self.path],
+            default_typestore=self.typestore,
         ) as reader:
             features = [
                 self.get_dataframe(reader, topic, keys)
                 for topic, keys in self.topics.items()
             ]
-
             super().__init__(pl.concat(features, how="horizontal"))
-
 
     def guess_msgtype(self, path: Path) -> str:
         """Guess message type name from path.
@@ -116,9 +115,11 @@ class RosbagLoader(Dataset):
             name = name.parent / "msg" / name.name
         return str(name)
 
-
     def get_dataframe(
-        self, reader: AnyRosbagReader, topicname: str, keys: Sequence[str]
+        self,
+        reader: AnyRosbagReader,
+        topicname: str,
+        keys: Sequence[str],
     ) -> pl.DataFrame:
         """Convert messages from a topic into a polars dataframe.
 
@@ -178,7 +179,8 @@ class RosbagLoader(Dataset):
                 # Find the field in the current message definition that matches
                 # the subkey. x[0] is the field name, returns None if not found
                 subfield = next(
-                    (x for x in subdef.fields if x[0] == subkey), None
+                    (x for x in subdef.fields if x[0] == subkey),
+                    None,
                 )
 
                 # Get the message definition for this subfield to continue
@@ -198,7 +200,7 @@ class RosbagLoader(Dataset):
         timestamps = []
         data = []
         for _, timestamp, rawdata in reader.messages(
-            connections=topic.connections
+            connections=topic.connections,
         ):
             dmsg = reader.deserialize(rawdata, str(topic.msgtype))
             timestamps.append(timestamp)
@@ -224,10 +226,10 @@ class RosbagLoader(Dataset):
             [
                 pl.col("time"),
                 pl.struct(pl.exclude("time")).alias("value"),
-            ]
+            ],
         )
         return df.with_columns(time).select(
-            nest_into_timeseries.implode().alias(topicname)
+            nest_into_timeseries.implode().alias(topicname),
         )
 
     def get_subdef(
@@ -277,4 +279,3 @@ class RosbagLoader(Dataset):
                 result[key] = self.ros_msg_to_dict(value)
             return result
         return obj  # Return the base value if it's not an object
-

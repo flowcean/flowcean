@@ -4,7 +4,7 @@ Highly dynamic environments as the one depicted below still remain a challenge f
 Predictively monitoring the performance of robot localization systems improves the reliability and efficiency of autonomous navigation.
 ![Predictively monitoring the performance of a robot localization system in a challenging environment](./images/localization_example.png)
 
-This example (which can be found in [flowcean/examples/ros_offline](https://github.com/flowcean/flowcean/tree/main/examples/ros_offline)
+This example (which can be found in [flowcean/examples/ros_offline](https://github.com/flowcean/flowcean/tree/main/examples/robot_localization_failure)
 ) is assuming the robot utilizes the Robot Operating System(ROS) which is a software framework that is widely used in the robotics community. We are using the version [ROS 2 Humble](https://docs.ros.org/en/humble/index.html).
 ROS allows users to record robotics data, such as sensor data or internal data of running processes in so called *rosbags*. Flowcean supports rosbag data using its `RosbagLoader` environment. Here is a code snippet from the `run.py`.
 

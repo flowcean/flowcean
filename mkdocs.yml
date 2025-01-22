@@ -109,5 +109,5 @@ nav:
     - Coffee Machine: examples/coffee_machine.md
     - Failure Time Prediction: examples/failure_time_prediction.md
     - One Tank: examples/one_tank.md
-    - Robot Localization Failure: examples/localization_failure_prediction.md
+    - Robot Localization Failure: examples/robot_localization_failure.md
   - Reference: reference/
