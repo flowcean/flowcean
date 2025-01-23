@@ -89,8 +89,8 @@ class OneCold(Transform):
     @override
     def apply(
         self,
-        data: pl.DataFrame,
-    ) -> pl.DataFrame:
+        data: pl.LazyFrame,
+    ) -> pl.LazyFrame:
         """Transform data with this one hot transformation.
 
         Transform data with this one hot transformation and return the
@@ -112,7 +112,7 @@ class OneCold(Transform):
                 [
                     pl.col(feature).ne(value).cast(pl.Int64).alias(name)
                     for name, value in category_mappings.items()
-                ]
+                ],
             ).drop(feature)
 
             # Check only for missing categories if the user has requested it
@@ -121,7 +121,7 @@ class OneCold(Transform):
                     [
                         pl.col(name).cast(pl.Boolean)
                         for name in category_mappings
-                    ]
+                    ],
                 )  # Get the new crated on-cold feature columns
                 .select(
                     # Check if all on-cold features are true
@@ -130,6 +130,7 @@ class OneCold(Transform):
                         pl.all(),
                     ).all(),  # Combine the results for all data entries ...
                 )
+                .collect(streaming=True)
                 # ... and get the final result.
                 # If it is false, there is a missing category
                 .item(0, 0)

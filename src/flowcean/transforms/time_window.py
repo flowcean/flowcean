@@ -38,7 +38,7 @@ class TimeWindow(Transform):
         self.t_end = time_end
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         for feature in (
             self.features
             if self.features is not None
@@ -56,9 +56,9 @@ class TimeWindow(Transform):
                 pl.col(feature).list.eval(
                     pl.element().filter(
                         time_expression.ge(self.t_start).and_(
-                            time_expression.le(self.t_end)
-                        )
-                    )
-                )
+                            time_expression.le(self.t_end),
+                        ),
+                    ),
+                ),
             )
         return data

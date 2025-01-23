@@ -13,11 +13,11 @@ class ToTimeSeries(Transform):
         self.time_feature = time_feature
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         if isinstance(self.time_feature, str):
             time_feature = {
                 feature_name: self.time_feature
-                for feature_name in data.columns
+                for feature_name in data.collect_schema().names()
                 if feature_name != self.time_feature
             }
         else:
@@ -32,5 +32,5 @@ class ToTimeSeries(Transform):
                 .implode()
                 .alias(value_feature)
                 for value_feature, t_feature in time_feature.items()
-            ]
+            ],
         )

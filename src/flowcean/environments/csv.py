@@ -18,6 +18,6 @@ class CsvDataLoader(Dataset):
             path: Path to the CSV file.
             separator: Value separator. Defaults to ",".
         """
-        data = pl.read_csv(path, separator=separator)
-        data.columns = [column_name.strip() for column_name in data.columns]
+        data = pl.scan_csv(path, separator=separator)
+        data = data.rename(lambda column_name: column_name.strip())
         super().__init__(data)

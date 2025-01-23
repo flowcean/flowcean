@@ -35,7 +35,7 @@ class SimpleSystem(OdeSystem[SimpleState]):
         t: float,
         state: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        return -1 / 2 * state
+        return np.array(-1 / 2 * state, dtype=np.float64)
 
 
 class TimeDependentSystem(OdeSystem[SimpleState]):
@@ -59,7 +59,8 @@ class NonIntegrableSystem(OdeSystem[SimpleState]):
 
 
 def map_to_dataframe(
-    ts: Sequence[float], states: Sequence[SimpleState]
+    ts: Sequence[float],
+    states: Sequence[SimpleState],
 ) -> pl.DataFrame:
     return pl.DataFrame(
         {
@@ -91,7 +92,7 @@ class TestOdeEnvironment(unittest.TestCase):
             SimpleSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        loaded_data = environment.collect(5).observe()
+        loaded_data = environment.collect(5).observe().collect()
 
         assert_frame_equal(
             data,
@@ -118,14 +119,14 @@ class TestOdeEnvironment(unittest.TestCase):
             {
                 "t": ts,
                 "y_0": [np.sqrt(np.power(t, 2) + 1) for t in ts],
-            }
+            },
         )
 
         environment = OdeEnvironment(
             TimeDependentSystem(t=0.0, state=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
-        loaded_data = environment.collect(4).observe()
+        loaded_data = environment.collect(4).observe().collect()
 
         assert_frame_equal(
             data,

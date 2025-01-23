@@ -24,6 +24,6 @@ class Select(Transform):
         self.features = features
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("selecting features %s", self.features)
         return data.select(self.features)

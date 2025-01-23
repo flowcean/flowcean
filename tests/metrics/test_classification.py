@@ -13,8 +13,8 @@ from flowcean.metrics.classification import (
 
 class TestMetrics(unittest.TestCase):
     def setUp(self) -> None:
-        self.true = pl.DataFrame({"a": [0, 1, 0, 1]})
-        self.predicted = pl.DataFrame({"a": [1, 1, 0, 0]})
+        self.true = pl.DataFrame({"a": [0, 1, 0, 1]}).lazy()
+        self.predicted = pl.DataFrame({"a": [1, 1, 0, 0]}).lazy()
 
     def test_name(self) -> None:
         assert Accuracy().name == "Accuracy"

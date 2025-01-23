@@ -14,7 +14,7 @@ class TestCombine(unittest.TestCase):
                 {
                     "A": [1, 2],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -22,7 +22,7 @@ class TestCombine(unittest.TestCase):
                 {
                     "B": [3, 4],
                 },
-            )
+            ),
         )
 
         combine = JoinedOfflineEnvironment([dataset1, dataset2])
@@ -35,7 +35,7 @@ class TestCombine(unittest.TestCase):
                 {
                     "A": [1, 2],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -43,7 +43,7 @@ class TestCombine(unittest.TestCase):
                 {
                     "B": [3, 4],
                 },
-            )
+            ),
         )
 
         combine = dataset1.join(dataset2)
@@ -55,7 +55,7 @@ class TestCombine(unittest.TestCase):
                 {
                     "A": [1, 2],
                 },
-            )
+            ),
         )
 
         dataset2 = Dataset(
@@ -63,13 +63,13 @@ class TestCombine(unittest.TestCase):
                 {
                     "B": [3, 4],
                 },
-            )
+            ),
         )
 
         combine = dataset1.join(dataset2)
 
         assert_frame_equal(
-            combine.observe(),
+            combine.observe().collect(),
             pl.DataFrame(
                 {
                     "A": [1, 2],

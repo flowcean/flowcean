@@ -56,7 +56,7 @@ class RosbagLoader(Dataset):
                 read_timeseries(reader, topic, keys)
                 for topic, keys in topics.items()
             ]
-        super().__init__(pl.concat(features, how="horizontal"))
+        super().__init__(pl.concat(features, how="horizontal").lazy())
 
 
 def read_timeseries(
@@ -81,6 +81,6 @@ def read_timeseries(
         [
             pl.col("time"),
             pl.struct(pl.exclude("time")).alias("value"),
-        ]
+        ],
     )
     return data.select(nest_into_timeseries.implode().alias(topic))
