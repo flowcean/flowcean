@@ -29,7 +29,7 @@ def deploy(
     output = model.predict(input_transforms.apply(observation))
 
     if isinstance(environment, ActiveEnvironment):
-        environment.act(output_transforms.apply(output))
+        environment.act(output_transforms.apply(output).collect())
 
 def apply(
     observation: pl.DataFrame,
