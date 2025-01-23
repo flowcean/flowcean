@@ -13,8 +13,11 @@ class Accuracy(OfflineMetric):
     """
 
     @override
-    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
-        return metrics.accuracy_score(true, predicted)
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+        return metrics.accuracy_score(
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
+        )
 
 
 class ClassificationReport(OfflineMetric):
@@ -24,8 +27,11 @@ class ClassificationReport(OfflineMetric):
     """
 
     @override
-    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
-        return metrics.classification_report(true, predicted)
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+        return metrics.classification_report(
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
+        )
 
 
 class FBetaScore(OfflineMetric):
@@ -43,8 +49,12 @@ class FBetaScore(OfflineMetric):
         self.beta = beta
 
     @override
-    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
-        return metrics.fbeta_score(true, predicted, beta=self.beta)
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+        return metrics.fbeta_score(
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
+            beta=self.beta,
+        )
 
 
 class PrecisionScore(OfflineMetric):
@@ -54,8 +64,11 @@ class PrecisionScore(OfflineMetric):
     """
 
     @override
-    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
-        return metrics.precision_score(true, predicted)
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+        return metrics.precision_score(
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
+        )
 
 
 class Recall(OfflineMetric):
@@ -65,5 +78,8 @@ class Recall(OfflineMetric):
     """
 
     @override
-    def __call__(self, true: pl.DataFrame, predicted: pl.DataFrame) -> Any:
-        return metrics.recall_score(true, predicted)
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+        return metrics.recall_score(
+            true.collect(streaming=True),
+            predicted.collect(streaming=True),
+        )

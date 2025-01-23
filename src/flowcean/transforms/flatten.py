@@ -43,7 +43,7 @@ class Flatten(Transform):
         self.features = features
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         # Loop over the features we want to explode
         feature_names = (
             self.features
@@ -63,7 +63,11 @@ class Flatten(Transform):
 
             # Figure out how "long" the feature is and how many new columns
             # need to be added
-            row_lengths = data.select(pl.col(feature).list.len()).unique()
+            row_lengths = (
+                data.select(pl.col(feature).list.len())
+                .unique()
+                .collect(streaming=True)
+            )
 
             # Check if all rows have the same length
             if row_lengths.count().item(0, 0) > 1:
@@ -79,7 +83,7 @@ class Flatten(Transform):
                     .list.get(i)
                     .alias(f"{feature}_{i}")
                     for i in range(n)
-                ]
+                ],
             ).drop(feature)
 
         return data

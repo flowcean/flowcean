@@ -178,12 +178,12 @@ class GrpcLearner(SupervisedLearner, Model):
     @override
     def learn(
         self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> GrpcLearner:
         proto_datapackage = DataPackage(
-            inputs=[_row_to_proto(row) for row in inputs.rows()],
-            outputs=[_row_to_proto(row) for row in outputs.rows()],
+            inputs=[_row_to_proto(row) for row in inputs.collect().rows()],
+            outputs=[_row_to_proto(row) for row in outputs.collect().rows()],
         )
         stream = self._stub.Train(proto_datapackage)
         for status_message in stream:
@@ -194,14 +194,16 @@ class GrpcLearner(SupervisedLearner, Model):
         return self
 
     @override
-    def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
+    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         proto_datapackage = DataPackage(
-            inputs=[_row_to_proto(row) for row in input_features.rows()],
+            inputs=[
+                _row_to_proto(row) for row in input_features.collect().rows()
+            ],
             outputs=[],
         )
         predictions = self._stub.Predict(proto_datapackage)
         _log_messages(predictions.status.messages)
-        return _predictions_to_frame(predictions)
+        return _predictions_to_frame(predictions).lazy()
 
     def __del__(self) -> None:
         """Close the gRPC channel."""

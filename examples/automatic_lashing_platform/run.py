@@ -32,7 +32,7 @@ def main() -> None:
                 "p_initial",
                 "activeValveCount",
                 "T",
-            ]
+            ],
         )
         | Resample(1.0)
         | Flatten()

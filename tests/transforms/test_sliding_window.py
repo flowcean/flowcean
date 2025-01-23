@@ -15,9 +15,9 @@ class SlidingWindowTransform(unittest.TestCase):
                 "a": [1, 2, 3, 4],
                 "b": [10, 20, 30, 40],
                 "c": [100, 200, 300, 400],
-            }
+            },
         )
-        transformed_data = transform(data_frame)
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
             transformed_data,
@@ -32,7 +32,7 @@ class SlidingWindowTransform(unittest.TestCase):
                     "a_2": [3, 4],
                     "b_2": [30, 40],
                     "c_2": [300, 400],
-                }
+                },
             ),
         )
 

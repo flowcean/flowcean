@@ -4,14 +4,18 @@ from flowcean.core.transform import Transform
 
 class SliceTimeSeries(Transform):
     
-    def __init__(self, num_slices : int, slice_length : int) -> None:
+    def __init__(self, num_slices : int, slice_length : int, series_name : str) -> None:
         super().__init__()
         
         self.n_slices = num_slices
         self.len = slice_length
     
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         
-        
-        return None
+        collected_data = data.collect()
+
+        print(collected_data.select())
+
+        data = pl.LazyFrame()
+        return data

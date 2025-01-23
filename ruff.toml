@@ -1,51 +1,51 @@
 line-length = 79
-extend-exclude = ["*/_generated/*_pb2*"]
+extend-exclude = ["*/_generated/*_pb2*", "*.ipynb"]
 target-version = "py312"
 
 [format]
 preview = false
 docstring-code-format = true
 docstring-code-line-length = 80
+exclude = ["*.ipynb"]
 
 [lint]
 preview = false
 select = ["ALL"]
 ignore = [
-  "ANN101", # deprecated
-  "ANN102", # deprecated
-  "ANN401", # dynamically typed expressions (typing.Any) are disallowed
-  "ERA001", # commented-out code
-  "D10", # missing docstrings
-  "N818", # Error suffix on exceptions
-  "PD", # pandas
+  "ANN101",  # deprecated
+  "ANN102",  # deprecated
+  "ANN401",  # dynamically typed expressions (typing.Any) are disallowed
+  "ERA001",  # commented-out code
+  "D10",     # missing docstrings
+  "N818",    # Error suffix on exceptions
+  "PD",      # pandas
   "PLR0913", # too many arguments
-  "S311", # pseudo-random number generation
-  "T201", # allow print
-  "TD", # TODO rules
-  "ISC001", # implicit string concatenation
-  "CPY001", # missing copyright notice
+  "S311",    # pseudo-random number generation
+  "T201",    # allow print
+  "TD",      # TODO rules
+  "ISC001",  # implicit string concatenation
+  "CPY001",  # missing copyright notice
   "PLC0415", # import at top of file
-  "COM812", # missing comma
 ]
 
 [lint.per-file-ignores]
 "**/examples/**/*" = [
-  "D10", # missing docstrings
+  "D10",    # missing docstrings
   "INP001", # implicit namespace packages
-  "T", # print
+  "T",      # print
 ]
 "**/scripts/*" = [
-  "D10", # missing docstrings
+  "D10",    # missing docstrings
   "INP001", # implicit namespace packages
-  "T", # print
+  "T",      # print
 ]
 "**/tests/**/*" = [
-  "D10", # missing docstrings
+  "D10",     # missing docstrings
   "PLC1901", # compare to empty string
   "PLR2004", # magic value comparison
   "PLR6301", # no self use in methods
-  "S101", # asserts
-  "TID252", # relative imports
+  "S101",    # asserts
+  "TID252",  # relative imports
 ]
 
 [lint.isort]

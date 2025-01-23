@@ -30,11 +30,9 @@ class Cast(Transform):
         self.features = features
 
     @override
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return data.with_columns(
             (
-                pl.all()
-                if self.features is None
-                else data.select(self.features)
-            ).cast(self.target_type)
+                pl.all() if self.features is None else pl.col(self.features)
+            ).cast(self.target_type),
         )

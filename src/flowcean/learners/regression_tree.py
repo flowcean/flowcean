@@ -34,17 +34,21 @@ class RegressionTree(SupervisedLearner):
             **kwargs: Keyword arguments to pass to the DecisionTreeRegressor.
         """
         self.regressor = DecisionTreeRegressor(
-            *args, **kwargs, random_state=get_seed()
+            *args,
+            **kwargs,
+            random_state=get_seed(),
         )
         self.dot_graph_export_path = dot_graph_export_path
 
     @override
     def learn(
         self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> Model:
-        self.regressor.fit(inputs, outputs)
+        collected_inputs = inputs.collect()
+        collected_outputs = outputs.collect()
+        self.regressor.fit(collected_inputs, collected_outputs)
         if self.dot_graph_export_path is not None:
             logger.info(
                 "Exporting decision tree graph to %s",
@@ -54,4 +58,4 @@ class RegressionTree(SupervisedLearner):
                 self.regressor,
                 out_file=self.dot_graph_export_path,
             )
-        return SciKitModel(self.regressor, outputs.columns[0])
+        return SciKitModel(self.regressor, collected_outputs.columns[0])
