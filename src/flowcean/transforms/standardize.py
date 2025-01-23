@@ -38,8 +38,12 @@ class Standardize(Transform, FitOnce):
     def fit(self, data: pl.LazyFrame) -> None:
         df = data.collect(streaming=True)
 
-        self.mean = {c: _as_float(df[c].mean()) for c in data.collect_schema().names()}
-        self.std = {c: _as_float(df[c].std()) for c in data.collect_schema().names()}
+        self.mean = {
+            c: _as_float(df[c].mean()) for c in data.collect_schema().names()
+        }
+        self.std = {
+            c: _as_float(df[c].std()) for c in data.collect_schema().names()
+        }
         self.counts = len(df)
 
     @override
