@@ -27,7 +27,13 @@ from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
 from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms import Filter, Flatten, Resample, Select
+from flowcean.transforms import (
+    Filter,
+    Flatten,
+    Resample,
+    Select,
+    TimeWindow,
+)
 from flowcean.transforms.filter import (
     And,  # noqa: F401
     Not,  # noqa: F401
@@ -64,6 +70,10 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
         )
         | Filter(eval(args.filter))  # noqa: S307
         | Resample(args.sample_rate)
+        | TimeWindow(
+            time_start=args.time_window_start,
+            time_end=args.time_window_end,
+        )
         | Flatten()
     )
     time_after_load = time.time()
@@ -351,6 +361,20 @@ if __name__ == "__main__":
         default="alp_sim_data.parquet",
         metavar="FILE",
         help="Set the training-data file. (default: alp_sim_data.parquet)",
+    )
+    parameter_group.add_argument(
+        "--time_window_start",
+        type=float,
+        default=0.0,
+        metavar="TIME",
+        help="Set the start of the time window. Range: [0, 15] (default: 0.0)",
+    )
+    parameter_group.add_argument(
+        "--time_window_end",
+        type=float,
+        default=15.0,
+        metavar="TIME",
+        help="Set the end of the time window. Range: [0, 15] (default: 15.0)",
     )
     parameter_group.add_argument(
         "--sample_rate",
