@@ -97,7 +97,8 @@ def inspect_training_data(
         observed_data = data.observe().collect()
         time_after_observe = time.time()
         logger.info(
-            "Took %.5f s to observe data", time_after_observe - time_start,
+            "Took %.5f s to observe data",
+            time_after_observe - time_start,
         )
 
         if args.print_overview:
@@ -155,8 +156,8 @@ def check_data_redundancy(observed_data: DataFrame) -> None:
 
 
 def print_data_rows(
-        args: argparse.Namespace,
-        observed_data: DataFrame,
+    args: argparse.Namespace,
+    observed_data: DataFrame,
 ) -> None:
     logger.info("Printing %d rows:", args.prints)
 
@@ -189,7 +190,7 @@ def print_data_rows(
         print(
             f"Accumulated Pressures: \n{observed_data
                 .select("^p_accumulator_.*$").row(index)}",
-            )
+        )
 
 
 def print_data_row_interactively(observed_data: DataFrame) -> None:
@@ -236,8 +237,9 @@ def plot_data_rows(args: argparse.Namespace, observed_data: DataFrame) -> None:
     ):
         plt.subplot(plot_rows, plot_cols, c + 1)
         index = i if args.plot_distributed else c
-        weight = (
-            round(observed_data.select("containerWeight").row(index)[0], 3)
+        weight = round(
+            observed_data.select("containerWeight").row(index)[0],
+            3,
         )
         plt.title(
             f"Weight: {weight}, Index: {index}",
@@ -263,16 +265,14 @@ def plot_data_row_interactively(observed_data: DataFrame) -> None:
 
     while True:
         index = input("Enter the row index to plot or 'x' to quit: ")
-        weight = (
-            round(observed_data.select("containerWeight")
-                  .row(int(index))[0], 3)
+        weight = round(
+            observed_data.select("containerWeight").row(int(index))[0],
+            3,
         )
-        active_valves = (
-            observed_data.select("activeValveCount").row(int(index))[0]
-        )
-        temperature = (
-            round(observed_data.select("T").row(int(index))[0], 3)
-        )
+        active_valves = observed_data.select("activeValveCount").row(
+            int(index),
+        )[0]
+        temperature = round(observed_data.select("T").row(int(index))[0], 3)
         if index == "x":
             break
         plt.title(
@@ -286,10 +286,10 @@ def plot_data_row_interactively(observed_data: DataFrame) -> None:
 
 
 def train_and_evaluate_model(
-        args: argparse.Namespace,
-        data: ParquetDataLoader,
-        inputs: list,
-        outputs: list,
+    args: argparse.Namespace,
+    data: ParquetDataLoader,
+    inputs: list,
+    outputs: list,
 ) -> None:
     logger.info("Training the model:")
     time_start = time.time()
@@ -324,7 +324,8 @@ def train_and_evaluate_model(
     )
     time_after_learning = time.time()
     logger.info(
-        "Took %.5f s to learn model", time_after_learning - time_start,
+        "Took %.5f s to learn model",
+        time_after_learning - time_start,
     )
 
     print(report)
@@ -341,7 +342,8 @@ if __name__ == "__main__":
     # parameter
 
     parameter_group = parser.add_argument_group(
-        "Parameter", "Parameter options for the training-data.",
+        "Parameter",
+        "Parameter options for the training-data.",
     )
     parameter_group.add_argument(
         "--training_data",
@@ -372,7 +374,8 @@ if __name__ == "__main__":
     # training-data inspection
 
     data_inspection_group = parser.add_argument_group(
-        "Training-Data", "Tools to inspect the training-data.",
+        "Training-Data",
+        "Tools to inspect the training-data.",
     )
     data_inspection_group.add_argument(
         "--print_overview",
@@ -410,7 +413,9 @@ if __name__ == "__main__":
         help="Print a row of the training-data interactively.",
     )
     data_inspection_group.add_argument(
-        "--plot_data", action="store_true", help="Plot the training-data.",
+        "--plot_data",
+        action="store_true",
+        help="Plot the training-data.",
     )
     data_inspection_group.add_argument(
         "--plots",
@@ -433,10 +438,13 @@ if __name__ == "__main__":
     # training
 
     training_group = parser.add_argument_group(
-        "Model-Training", "Options to train the model.",
+        "Model-Training",
+        "Options to train the model.",
     )
     training_group.add_argument(
-        "--no_training", action="store_true", help="Apply no training.",
+        "--no_training",
+        action="store_true",
+        help="Apply no training.",
     )
     training_group.add_argument(
         "--lightning_learner",
