@@ -28,6 +28,7 @@ from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms import (
+    Derive,
     Filter,
     Flatten,
     Resample,
@@ -74,6 +75,7 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
             time_start=args.time_window_start,
             time_end=args.time_window_end,
         )
+        | Derive("p_accumulator")
         | Flatten()
     )
     time_after_load = time.time()

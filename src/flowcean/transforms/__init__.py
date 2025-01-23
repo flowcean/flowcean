@@ -1,6 +1,7 @@
 __all__ = [
     "Cast",
     "Drop",
+    "Derive",
     "Explode",
     "FeatureLengthVaryError",
     "Filter",
@@ -24,6 +25,7 @@ __all__ = [
 ]
 
 from flowcean.transforms.cast import Cast
+from flowcean.transforms.derive import Derive
 from flowcean.transforms.drop import Drop
 from flowcean.transforms.explode import Explode
 from flowcean.transforms.filter import Filter
