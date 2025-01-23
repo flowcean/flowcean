@@ -1,7 +1,7 @@
 import polars as pl
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.core.transform import ChainedTransforms
+from flowcean.core.transform import Transform, Identity
 
 from flowcean.core.model import ModelWithTransform
 
@@ -9,8 +9,8 @@ def deploy(
     environment: ActiveEnvironment | IncrementalEnvironment,
     config: list[str],
     model: ModelWithTransform,
-    input_transforms: ChainedTransforms,
-    output_transforms: ChainedTransforms,
+    input_transforms: Transform = Identity(),
+    output_transforms: Transform  = Identity()
 ) -> None:
     """
     Deploy a trained model to a custom environment
@@ -29,13 +29,13 @@ def deploy(
     output = model.predict(input_transforms.apply(observation))
 
     if isinstance(environment, ActiveEnvironment):
-        environment.act(output_transforms.apply(output))
+        environment.act(output_transforms.apply(output).collect())
 
 def apply(
     observation: pl.DataFrame,
     model: ModelWithTransform,
-    input_transforms: ChainedTransforms,
-    output_transforms: ChainedTransforms,
+    input_transforms: Transform = Identity(),
+    output_transforms: Transform = Identity(),
 ) -> pl.DataFrame:
     """
     Use a trained model
