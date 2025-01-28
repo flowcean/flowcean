@@ -51,16 +51,16 @@ def main() -> None:
         )
         data = environment.observe()
 
-    if UPDATE_CACHE:
-        if Path("cached_ros_data.json").exists():
-            user_input = input("Overwrite cache? (y/n): ")
-            if user_input == "y":
-                data.collect().write_json()
-                print("Cache updated")
-        else:
-            data.collect().write_json(file="cached_ros_data.json")
-            print("Cache created")
-    print(f"original data: {data}")
+        if UPDATE_CACHE:
+            if Path("cached_ros_data.json").exists():
+                user_input = input("Overwrite cache? (y/n): ")
+                if user_input == "y":
+                    data.collect().write_json()
+                    print("Cache updated")
+            else:
+                data.collect().write_json(file="cached_ros_data.json")
+                print("Cache created")
+    print(f"original data: {data.collect()}")
 
 
 if __name__ == "__main__":

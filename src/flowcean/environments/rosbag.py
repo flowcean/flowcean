@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import polars as pl
 from rosbags.highlevel import AnyReader as AnyRosbagReader
 from rosbags.interfaces import Msgdef, Nodetype
@@ -60,7 +61,7 @@ class RosbagLoader(Dataset):
         self,
         path: str | Path,
         topics: dict[str, list[str]],
-        msgpaths: list[str] | None = None,
+        msgpaths: list[str],
     ) -> None:
         """Initialize the RosbagEnvironment.
 
@@ -211,13 +212,15 @@ class RosbagLoader(Dataset):
                 if isinstance(value, list):
                     # Convert list items to dicts but keep them in the row
                     row.append([self.ros_msg_to_dict(i) for i in value])
+                elif hasattr(value, "__dict__"):
+                    row.append(self.ros_msg_to_dict(value))
                 else:
                     row.append(value)
             data.append(row)
 
         # Handle any numpy arrays
         data = [
-            [x.tolist() if hasattr(x, "tolist") else x for x in row]
+            [x.tolist() if isinstance(x, np.ndarray) else x for x in row]
             for row in data
         ]
         df = pl.DataFrame(data, schema=tuple(keys))
@@ -272,7 +275,12 @@ class RosbagLoader(Dataset):
         return getter
 
     def ros_msg_to_dict(self, obj: dict) -> dict:
-        """Recursively convert ROS messages to a dictionary."""
+        """Recursively convert ROS messages to a dictionary.
+
+        Args:
+            obj: ROS message object. This is a dictionary with keys as field
+            names.
+        """
         if hasattr(obj, "__dict__"):  # Check if the object has attributes
             result = {}
             for key, value in obj.__dict__.items():
