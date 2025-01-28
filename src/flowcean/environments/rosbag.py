@@ -275,14 +275,15 @@ class RosbagLoader(Dataset):
         return getter
 
     def ros_msg_to_dict(self, obj: dict) -> dict:
-        """Recursively convert ROS messages to a dictionary.
+        """Recursively convert a ROS message object into a dictionary.
 
         Args:
-            obj: ROS message object. This is a dictionary with keys as field
-            names.
+            obj (dict): A ROS message object represented as a dictionary where
+                keys are field names and values are their corresponding data.
 
         Returns:
-            Dictionary representation of the ROS message.
+            dict: A dictionary representation of the ROS message, with all
+                nested fields converted to dictionaries.
         """
         if hasattr(obj, "__dict__"):  # Check if the object has attributes
             result = {}
