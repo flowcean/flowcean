@@ -213,7 +213,7 @@ The final step is to evaluate the obtained models.
 This is done to estimate how well they are able to describe the unknown function as described above.
 Flowcean ships with a couple of different [metrics](../reference/flowcean/metrics/index.md) which can be used for this purpose.
 Depending on the underlying problem, different metrics can be reasonable to apply.
-For this example the [`MeanAbsoluteError`](../reference/flowcean/metrics/index.md#flowcean.metrics.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/metrics/index.md#flowcean.metrics.MeanSquaredError) error are used.
+For this example the [`MeanAbsoluteError`](../reference/flowcean/metrics/regression.md#flowcean.metrics.regression.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/metrics/regression.md#flowcean.metrics.regression.MeanSquaredError) error are used.
 These metrics are useful when the output of the learned function is a (more or less) continuous value and the deviation from the actual value is of interest.
 The helper method [`evaluate_offline`](../reference/flowcean/strategies/offline.md) allows for easy evaluation of multiple metrics for a learned model.
 
