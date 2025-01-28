@@ -280,6 +280,9 @@ class RosbagLoader(Dataset):
         Args:
             obj: ROS message object. This is a dictionary with keys as field
             names.
+
+        Returns:
+            Dictionary representation of the ROS message.
         """
         if hasattr(obj, "__dict__"):  # Check if the object has attributes
             result = {}
