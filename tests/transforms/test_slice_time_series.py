@@ -9,107 +9,75 @@ from flowcean.transforms import SliceTimeSeries
 
 class SliceTimeSeriesTransform(unittest.TestCase):
     def test_slicetimeseries(self) -> None:
-        transform = SliceTimeSeries(num_slices=1, slice_length=1)
+        duration = 2
+        input_data = pl.LazyFrame(
+            {
+                "feature_a":
+                [
+                    [
+                        {"time": datetime(2024, 6, 25, 12, 26, 1, 0, tzinfo=UTC), "value": {"x": 1}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 2, 0, tzinfo=UTC), "value": {"x": 2}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 3, 0, tzinfo=UTC), "value": {"x": 3}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 4, 0, tzinfo=UTC), "value": {"x": 4}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC), "value": {"x": 5}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 6, 0, tzinfo=UTC), "value": {"x": 6}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 7, 0, tzinfo=UTC), "value": {"x": 7}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 8, 0, tzinfo=UTC), "value": {"x": 8}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 9, 0, tzinfo=UTC), "value": {"x": 9}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC), "value": {"x": 10}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 11, 0, tzinfo=UTC), "value": {"x": 11}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 12, 0, tzinfo=UTC), "value": {"x": 12}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 13, 0, tzinfo=UTC), "value": {"x": 13}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 14, 0, tzinfo=UTC), "value": {"x": 14}},
+                    ],
+                ],
 
-        data_frame = pl.DataFrame(
+                "counter":
+                [
+                    [   
+                        {"time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC), "value": {"x": 1.0}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC), "value": {"x": 2.0}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 15, 0, tzinfo=UTC), "value": {"x": 3.0}},
+                    ],
+                ],
+            },
+        )
+        target_data = pl.LazyFrame(
             {
                 "feature_a": [
                     [
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 1, 0, tzinfo=UTC, ),
-                            "value": {"x": 1.2},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 2, 0, tzinfo=UTC, ),
-                            "value": {"x": 2.4},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 3, 0, tzinfo=UTC, ),
-                            "value": {"x":3.6},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 4, 0, tzinfo=UTC, ),
-                            "value": {"x": 4.8},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC, ),
-                            "value": {"x": 5.6},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 6, 0, tzinfo=UTC, ),
-                            "value": {"x": 7.4},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 8, 0, tzinfo=UTC, ),
-                            "value": {"x":8.1},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 9, 0, tzinfo=UTC, ),
-                            "value": {"x": 8.5},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC, ),
-                            "value": {"x": 9.2},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 11, 0, tzinfo=UTC, ),
-                            "value": {"x": 10.0},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 12, 0, tzinfo=UTC, ),
-                            "value": {"x": 11.3},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 13, 0, tzinfo=UTC, ),
-                            "value": {"x": 12.6},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 14, 0, tzinfo=UTC, ),
-                            "value": {"x": 13.9},
-                        },
+                        {"time": datetime(2024, 6, 25, 12, 26, 3, 0, tzinfo=UTC), "value": {"x": 3}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 4, 0, tzinfo=UTC), "value": {"x": 4}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC), "value": {"x": 5}},
+                    ],
+                    [
+                        {"time": datetime(2024, 6, 25, 12, 26, 8, 0, tzinfo=UTC), "value": {"x": 8}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 9, 0, tzinfo=UTC), "value": {"x": 9}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC), "value": {"x": 10}},
+                    ],
+                    [
+                        {"time": datetime(2024, 6, 25, 12, 26, 13, 0, tzinfo=UTC), "value": {"x": 13}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 14, 0, tzinfo=UTC), "value": {"x": 14}},
                     ],
                 ],
-                "feature_b": [
-                    [   
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 0, 0, tzinfo=UTC, ),
-                            "value": {"x": 1.0},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC, ),
-                            "value": {"x": 2.0},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC, ),
-                            "value": {"x": 3.0},
-                        },
-                        {
-                            "time": datetime(2024, 6, 25, 12, 26, 15, 0, tzinfo=UTC, ),
-                            "value": {"x": 4.0},
-                        },
-                    ],
+
+                "counter": [
+                        {"time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC), "value": {"x": 1.0}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC), "value": {"x": 2.0}},
+                        {"time": datetime(2024, 6, 25, 12, 26, 15, 0, tzinfo=UTC), "value": {"x": 3.0}},
                 ],
-                "const": [1],
             },
         )
-        transformed_data = transform(data_frame.lazy()).collect()
-        exit()
-        assert_frame_equal(
-            transformed_data,
-            pl.DataFrame(
-                {
-                    "a_0": [1, 2],
-                    "b_0": [10, 20],
-                    "c_0": [100, 200],
-                    "a_1": [2, 3],
-                    "b_1": [20, 30],
-                    "c_1": [200, 300],
-                    "a_2": [3, 4],
-                    "b_2": [30, 40],
-                    "c_2": [300, 400],
-                }
-            ),
-        )
+        tf = SliceTimeSeries(counter_col="counter", dur_in_sec=duration)
+        transformed_data = tf.apply(input_data)
+        print(input_data.collect())
+        print(target_data.collect())
+        print(transformed_data.collect())
+        assert_frame_equal(transformed_data, target_data)
+
+# TODO: QUESTIONS
+# Should a counter entry be removed if there is no other feature data available during that duration?
+
 
 
 if __name__ == "__main__":
