@@ -14,8 +14,8 @@ class SupervisedLearner(ABC):
     @abstractmethod
     def learn(
         self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> Model:
         """Learn from the data.
 
@@ -38,8 +38,8 @@ class SupervisedIncrementalLearner(ABC):
     @abstractmethod
     def learn_incremental(
         self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> Model:
         """Learn from the data incrementally.
 

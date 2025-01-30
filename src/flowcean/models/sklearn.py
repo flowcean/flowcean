@@ -27,10 +27,10 @@ class SciKitModel(Model):
     @override
     def predict(
         self,
-        input_features: pl.DataFrame,
-    ) -> pl.DataFrame:
-        outputs = self.model.predict(input_features)
-        return pl.DataFrame({self.output_name: outputs})
+        input_features: pl.LazyFrame,
+    ) -> pl.LazyFrame:
+        outputs = self.model.predict(input_features.collect())
+        return pl.DataFrame({self.output_name: outputs}).lazy()
 
     @override
     def save(self, path: Path) -> None:
