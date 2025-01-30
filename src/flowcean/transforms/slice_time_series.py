@@ -13,19 +13,17 @@ class SliceTimeSeries(Transform):
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         df = data.collect()
-        col_names = df.select(pl.exclude(self.counter_col)).columns
-        df = df.explode(self.counter_col).explode(*col_names)
+        remaining_columns = df.select(pl.exclude(self.counter_col)).columns
+        df = df.explode(self.counter_col).explode(*remaining_columns)
         
-        for col_name in df.columns:
-            if not col_name == self.counter_col:
-                df = df.filter(
-                    pl.col(col_name).struct.field("time").is_between(
-                        pl.col(self.counter_col).struct.field("time") - pl.duration(seconds=self.dur),
-                        pl.col(self.counter_col).struct.field("time")
-                    )
-                )        
+        for col_name in remaining_columns:
+            df = df.filter(
+                pl.col(col_name).struct.field("time").is_between(
+                    pl.col(self.counter_col).struct.field("time") - pl.duration(seconds=self.dur),
+                    pl.col(self.counter_col).struct.field("time")
+                )
+            )        
 
-        df = df.group_by(self.counter_col, maintain_order=True).agg(col_names)
-        df = df.select(pl.col(self.counter_col).map_elements(lambda x:[x]), pl.col(col_names))
-        # print(df)       
+        df = df.group_by(self.counter_col, maintain_order=True).agg(remaining_columns)
+        df = df.select(pl.col(self.counter_col).map_elements(lambda x:[x]), pl.col(remaining_columns))
         return df.select(data.collect_schema().names()).lazy()
