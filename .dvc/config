@@ -1,6 +1,6 @@
 [core]
     analytics = false
-    remote = tuhh-cloud
+    remote = itl-nas
 ['remote "tuhh-cloud"']
     url = webdavs://cloud.tuhh.de/public.php/webdav
     user = Q9WX2KGsC2oSQMD
