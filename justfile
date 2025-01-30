@@ -1,12 +1,21 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
-check:
+[no-exit-message]
+check: check-uv check-pre-commit check-types check-deptry
+
+check-uv:
   @echo "🚀 Checking lock file consistency with 'pyproject.toml'"
   @uv lock --locked
+
+check-pre-commit:
   @echo "🚀 Checking code style: Running pre-commit"
   @uv run pre-commit run --all-files
+
+check-types:
   @echo "🚀 Static type checking: Running pyright"
   @uv run pyright
+
+check-deptry:
   @echo "🚀 Checking for obsolete dependencies: Running deptry"
   @uv run deptry src
 
