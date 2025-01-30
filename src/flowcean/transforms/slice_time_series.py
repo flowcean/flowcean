@@ -25,12 +25,7 @@ class SliceTimeSeries(Transform):
                     )
                 )        
 
-        # print(df)
-        df = df.group_by(self.counter_col).agg(col_names).sort(self.counter_col)
-        # df = df.sort(self.counter_col)
-        # df = df.select(pl.col(self.counter_col).implode(), pl.col(*col_names))
-        # df = df.select(self.counter_col).get_column()
-        # print(df)
-        # print(df.select(data.collect_schema().names()))
-        
+        df = df.group_by(self.counter_col, maintain_order=True).agg(col_names)
+        df = df.select(pl.col(self.counter_col).map_elements(lambda x:[x]), pl.col(col_names))
+        # print(df)       
         return df.select(data.collect_schema().names()).lazy()

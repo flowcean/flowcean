@@ -62,9 +62,15 @@ class SliceTimeSeriesTransform(unittest.TestCase):
                 ],
 
                 "counter": [
+                    [
                         {"time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC), "value": {"x": 1.0}},
+                    ],
+                    [
                         {"time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC), "value": {"x": 2.0}},
+                    ],
+                    [
                         {"time": datetime(2024, 6, 25, 12, 26, 15, 0, tzinfo=UTC), "value": {"x": 3.0}},
+                    ]
                 ],
             },
         )
