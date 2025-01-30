@@ -28,18 +28,14 @@ from flowcean.learners.regression_tree import RegressionTree
 from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
 from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms import (
-    Derive,
+    Derivative,
     Filter,
     Flatten,
     Resample,
     Select,
     TimeWindow,
 )
-from flowcean.transforms.filter import (
-    And,  # noqa: F401
-    Not,  # noqa: F401
-    Or,  # noqa: F401
-)  # used for filter evaluation
+from flowcean.transforms.filter import And, Not, Or  # noqa: F401
 
 # start logger
 logger = logging.getLogger(__name__)
@@ -49,7 +45,7 @@ def main(args: argparse.Namespace) -> None:
     flowcean.cli.initialize_logging(parse_arguments=False)
 
     data, inputs, outputs = load_and_prepare_data(args)
-    inspect_training_data(args, data)
+    inspect_data(args, data)
 
     if not args.no_training:
         train_and_evaluate_model(args, data, inputs, outputs)
@@ -75,7 +71,7 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
             time_start=args.time_window_start,
             time_end=args.time_window_end,
         )
-        | Derive("p_accumulator")
+        | Derivative("p_accumulator")
         | Flatten()
     )
     time_after_load = time.time()
@@ -92,7 +88,7 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
     return data, inputs, outputs
 
 
-def inspect_training_data(
+def inspect_data(
     args: argparse.Namespace,
     data: ParquetDataLoader,
 ) -> None:
@@ -114,30 +110,30 @@ def inspect_training_data(
         )
 
         if args.print_overview:
-            print_data_overview(observed_data)
+            print_overview(observed_data)
 
         if args.check_redundancy:
-            check_data_redundancy(observed_data)
+            check_redundancy(observed_data)
 
         if args.print_data:
-            print_data_rows(args, observed_data)
+            print_data(args, observed_data)
 
         if args.print_row:
-            print_data_row_interactively(observed_data)
+            print_row(observed_data)
 
         if args.plot_data:
-            plot_data_rows(args, observed_data)
+            plot_data(args, observed_data)
 
         if args.plot_row:
-            plot_data_row_interactively(observed_data)
+            plot_row(observed_data)
 
 
-def print_data_overview(observed_data: DataFrame) -> None:
+def print_overview(observed_data: DataFrame) -> None:
     logger.info("Data overview:")
     print(observed_data)
 
 
-def check_data_redundancy(observed_data: DataFrame) -> None:
+def check_redundancy(observed_data: DataFrame) -> None:
     logger.info("Checking for duplicated and unique output-values:")
     rows = {}
     duplicates = {}
@@ -167,7 +163,7 @@ def check_data_redundancy(observed_data: DataFrame) -> None:
         print("No duplicates found.")
 
 
-def print_data_rows(
+def print_data(
     args: argparse.Namespace,
     observed_data: DataFrame,
 ) -> None:
@@ -205,7 +201,7 @@ def print_data_rows(
         )
 
 
-def print_data_row_interactively(observed_data: DataFrame) -> None:
+def print_row(observed_data: DataFrame) -> None:
     logger.info("Printing rows interactively:")
     while True:
         index = input("Enter the row index to print or 'x' to quit: ")
@@ -233,7 +229,7 @@ def print_data_row_interactively(observed_data: DataFrame) -> None:
         )
 
 
-def plot_data_rows(args: argparse.Namespace, observed_data: DataFrame) -> None:
+def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
     logger.info("Plotting %d rows:", args.plots)
 
     dimension = observed_data.shape[0]
@@ -269,7 +265,7 @@ def plot_data_rows(args: argparse.Namespace, observed_data: DataFrame) -> None:
     plt.show()
 
 
-def plot_data_row_interactively(observed_data: DataFrame) -> None:
+def plot_row(observed_data: DataFrame) -> None:
     logger.info("Plotting rows interactively:")
 
     plt.figure()
@@ -342,8 +338,6 @@ def train_and_evaluate_model(
 
     print(report)
 
-
-# parse arguments and run
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
