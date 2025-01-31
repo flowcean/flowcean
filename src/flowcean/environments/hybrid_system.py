@@ -8,15 +8,24 @@ the next mode based on a current input.
 
 from abc import abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from typing import override
+from typing import Generic, TypeVar
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.environments.ode_environment import OdeSystem, State
 
+# Type variables for Python 3.10+
+X = TypeVar("X", bound=State)
+Input = TypeVar("Input")
 
-class DifferentialMode[X: State, Input](OdeSystem[X]):
+
+class DifferentialMode(Generic[X, Input], OdeSystem[X]):
     """Differential mode of a hybrid system.
 
     This class represents a mode of a hybrid system by extending an OdeSystem
@@ -41,7 +50,7 @@ class DifferentialMode[X: State, Input](OdeSystem[X]):
         """
 
 
-class HybridSystem[X: State, Input](IncrementalEnvironment):
+class HybridSystem(IncrementalEnvironment, Generic[X, Input]):
     """Hybrid system environment.
 
     This environment generates samples by simulating a hybrid system. The
@@ -63,7 +72,7 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
         Args:
             initial_mode: Initial mode of the system.
             inputs: Timeseries of inputs (time, input).
-            map_to_dataframe: Function to map times, inputs and states to a
+            map_to_dataframe: Function to map times, inputs, and states to a
                 DataFrame.
         """
         super().__init__()
@@ -74,10 +83,6 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
         self.data = pl.DataFrame()
 
     @override
-    def _observe(self) -> pl.LazyFrame:
-        return self.data.lazy()
-
-    @override
     def step(self) -> None:
         t, i = next(self.inputs)
         dt = t - self.last_t
@@ -85,3 +90,7 @@ class HybridSystem[X: State, Input](IncrementalEnvironment):
         ts, states = self.mode.step(dt)
         self.mode = self.mode.transition(i)
         self.data = self.map_to_dataframe(ts, [i] * len(ts), states)
+
+    @override
+    def _observe(self) -> pl.LazyFrame:
+        return self.data.lazy()

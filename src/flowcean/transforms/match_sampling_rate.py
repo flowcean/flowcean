@@ -8,7 +8,8 @@ from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
-type MatchSamplingRateMethod = Literal["linear"]
+
+MatchSamplingRateMethod = Literal["linear"]
 
 
 class MatchSamplingRate(Transform):

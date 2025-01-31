@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self, override
+from typing import Generic, TypeVar
+
+try:
+    from typing import Self, override
+except ImportError:
+    from typing_extensions import Self, override  # noqa: UP035
 
 import polars as pl
 
 from flowcean.core.transform import Identity, Transform
 
+Observation = TypeVar("Observation")
 
-class Observable[Observation](ABC):
+
+class Observable(Generic[Observation], ABC):
     """Base class for observations."""
 
     @abstractmethod

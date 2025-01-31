@@ -3,9 +3,10 @@ name = "flowcean"
 version = "0.3.0"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
-requires-python = "~=3.12.7"
+requires-python = ">=3.10,<3.13"
 classifiers = [
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
@@ -30,6 +31,7 @@ dependencies = [
   "sympy>=1.13.1",
   "torch>=2.5.0",
   "tqdm>=4.66.5",
+  "typing_extensions>=4.0.0",
 ]
 
 [project.urls]

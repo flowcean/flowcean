@@ -1,6 +1,11 @@
 import logging
 from collections.abc import Iterable
-from typing import Literal, override
+from typing import Literal
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 from scipy.signal import butter, sosfilt
@@ -9,7 +14,7 @@ from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
-type SignalFilterType = Literal["lowpass", "highpass"]
+SignalFilterType = Literal["lowpass", "highpass"]
 
 
 class SignalFilter(Transform):

@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Self, override
+from typing import TYPE_CHECKING, Any
+
+try:
+    from typing import Self, override  # Python 3.12+
+except ImportError:
+    from typing_extensions import Self, override  # noqa: UP035
 
 import docker
 import grpc

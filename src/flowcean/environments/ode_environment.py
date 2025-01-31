@@ -1,6 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import Self, cast, override
+from typing import Generic, TypeVar, cast
+
+try:
+    from typing import Self, override  # Python 3.12+
+except ImportError:
+    from typing_extensions import Self, override  # noqa: UP035
 
 import numpy as np
 import polars as pl
@@ -50,7 +55,10 @@ class State(ABC):
         """
 
 
-class OdeSystem[X: State](ABC):
+X = TypeVar("X", bound=State)  # Define a generic type for states
+
+
+class OdeSystem(ABC, Generic[X]):
     r"""System governed by an ordinary differential equation.
 
     This class represents a continuous system. The system is defined by a
@@ -72,11 +80,7 @@ class OdeSystem[X: State](ABC):
     t: float
     state: X
 
-    def __init__(
-        self,
-        t: float,
-        state: X,
-    ) -> None:
+    def __init__(self, t: float, state: X) -> None:
         """Initialize the system.
 
         Args:
@@ -104,10 +108,7 @@ class OdeSystem[X: State](ABC):
             Derivative of the state.
         """
 
-    def step(
-        self,
-        dt: float,
-    ) -> tuple[Sequence[float], Sequence[X]]:
+    def step(self, dt: float) -> tuple[Sequence[float], Sequence[X]]:
         """Step the mode forward in time.
 
         Step the mode forward in time by integrating the differential equation
@@ -129,7 +130,10 @@ class OdeSystem[X: State](ABC):
             raise IntegrationError
 
         ts = cast(Sequence[float], solution.t[1:])
-        states = [self.state.from_numpy(y) for y in solution.y.T[1:]]
+        states = cast(
+            Sequence[X],
+            [self.state.from_numpy(y) for y in solution.y.T[1:]],
+        )
 
         self.t = ts[-1]
         self.state = states[-1]
@@ -137,7 +141,7 @@ class OdeSystem[X: State](ABC):
         return ts, states
 
 
-class OdeEnvironment[X: State](IncrementalEnvironment):
+class OdeEnvironment(IncrementalEnvironment, Generic[X]):
     """Environment governed by an ordinary differential equation.
 
     This environment integrates an OdeSystem to generate a sequence of states.

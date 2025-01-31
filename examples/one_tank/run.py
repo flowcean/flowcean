@@ -10,8 +10,14 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import Self, override
+from datetime import datetime
+
+import pytz
+
+try:
+    from typing import Self, override  # Python 3.12+
+except ImportError:
+    from typing_extensions import Self, override  # noqa: UP035
 
 import numpy as np
 import polars as pl
@@ -31,6 +37,8 @@ from flowcean.strategies.offline import evaluate_offline, learn_offline
 from flowcean.transforms.sliding_window import SlidingWindow
 
 logger = logging.getLogger(__name__)
+
+UTC = pytz.UTC
 
 
 @dataclass

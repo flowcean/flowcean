@@ -1,5 +1,9 @@
 from pathlib import Path
-from typing import override
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 
@@ -51,4 +55,6 @@ class DummyLearner(SupervisedLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> DummyModel:
+        return DummyModel(outputs.collect_schema().names())
+        return DummyModel(outputs.collect_schema().names())
         return DummyModel(outputs.collect_schema().names())

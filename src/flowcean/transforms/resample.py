@@ -1,6 +1,11 @@
 import logging
 import math
-from typing import Literal, cast, override
+from typing import Literal, cast
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import numpy as np
 import polars as pl
@@ -11,7 +16,7 @@ from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
-type InterpolationMethod = Literal["linear", "cubic"]
+InterpolationMethod = Literal["linear", "cubic"]
 
 
 class Resample(Transform):

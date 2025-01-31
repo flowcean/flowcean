@@ -52,7 +52,12 @@ transformed_data = transforms(dataset)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

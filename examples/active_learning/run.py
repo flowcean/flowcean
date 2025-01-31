@@ -12,7 +12,11 @@ import logging
 import random
 from math import nan
 from pathlib import Path
-from typing import override
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 

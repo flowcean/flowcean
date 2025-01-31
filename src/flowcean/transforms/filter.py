@@ -2,7 +2,11 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import reduce
-from typing import override
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 import sympy

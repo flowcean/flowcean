@@ -10,7 +10,11 @@
 
 import random
 from collections.abc import Iterator
-from typing import Self, override
+
+try:
+    from typing import Self, override  # Python 3.12+
+except ImportError:
+    from typing_extensions import Self, override  # noqa: UP035
 
 import numpy as np
 import polars as pl
@@ -46,7 +50,7 @@ class Temperature(State):
         return cls(state[0])
 
 
-type TargetTemperature = float
+TargetTemperature = float
 
 
 class Heating(DifferentialMode[Temperature, TargetTemperature]):

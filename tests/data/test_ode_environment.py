@@ -1,6 +1,10 @@
 import unittest
 from collections.abc import Sequence
-from typing import override
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import numpy as np
 import polars as pl

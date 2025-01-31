@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 
-from flowcean.core.environment.observable import (
-    TransformedObservable,
-)
+from flowcean.core.environment.observable import TransformedObservable
 from flowcean.core.environment.stepable import Finished, Stepable
 
 if TYPE_CHECKING:

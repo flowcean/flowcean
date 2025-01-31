@@ -1,6 +1,11 @@
 import os
 import platform
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import lightning
 import polars as pl

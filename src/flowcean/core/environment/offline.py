@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
+
+try:
+    from typing import override  # Python 3.12+
+except ImportError:
+    from typing_extensions import override  # noqa: UP035
 
 import polars as pl
 
@@ -86,9 +91,7 @@ class OfflineEnvironment(TransformedObservable):
         Returns:
             The streaming environment.
         """
-        from flowcean.environments.streaming import (
-            StreamingOfflineEnvironment,
-        )
+        from flowcean.environments.streaming import StreamingOfflineEnvironment
 
         return StreamingOfflineEnvironment(self, batch_size)
 

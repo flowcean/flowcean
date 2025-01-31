@@ -1,6 +1,11 @@
 import logging
 from collections.abc import Iterable
-from typing import Any, Self, override
+from typing import Any
+
+try:
+    from typing import Self, override  # Python 3.12+
+except ImportError:
+    from typing_extensions import Self, override  # noqa: UP035
 
 import polars as pl
 
