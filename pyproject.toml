@@ -3,7 +3,7 @@ name = "flowcean"
 version = "0.3.0"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.10,<3.13"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -84,7 +84,7 @@ testpaths = ["tests"]
 
 [tool.pyright]
 ignore = ["src/flowcean/learners/grpc/_generated/*"]
-pythonVersion = "3.12"
+pythonVersion = "3.10"
 strict = ["src/flowcean/core"]
 
 [tool.coverage.run]
