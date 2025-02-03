@@ -14,7 +14,7 @@ from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
-SignalFilterType = Literal["lowpass", "highpass"]
+SignalFilterType: TypeAlias = Literal["lowpass", "highpass"]
 
 
 class SignalFilter(Transform):
