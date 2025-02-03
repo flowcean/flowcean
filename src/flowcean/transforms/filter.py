@@ -3,13 +3,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import reduce
 
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
-
 import polars as pl
 import sympy
+from typing_extensions import override
 
 from flowcean.core.transform import Transform
 

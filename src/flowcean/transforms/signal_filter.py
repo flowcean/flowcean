@@ -1,11 +1,6 @@
 import logging
 from collections.abc import Iterable
-from typing import Literal
-
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
+from typing import Literal, override
 
 import polars as pl
 from scipy.signal import butter, sosfilt

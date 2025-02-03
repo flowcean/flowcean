@@ -8,12 +8,7 @@ the next mode based on a current input.
 
 from abc import abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from typing import Generic, TypeVar
-
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
+from typing import Generic, TypeVar, override
 
 import polars as pl
 

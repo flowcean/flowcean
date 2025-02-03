@@ -11,14 +11,10 @@
 import random
 from collections.abc import Iterator
 
-try:
-    from typing import Self, override  # Python 3.12+
-except ImportError:
-    from typing_extensions import Self, override  # noqa: UP035
-
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
+from typing_extensions import Self, override
 
 from flowcean.cli.logging import initialize_logging
 from flowcean.environments.hybrid_system import (

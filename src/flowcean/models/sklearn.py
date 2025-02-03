@@ -1,13 +1,9 @@
 from pathlib import Path
 from typing import Any
 
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
-
 import joblib
 import polars as pl
+from typing_extensions import override
 
 from flowcean.core.model import Model
 

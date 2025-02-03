@@ -4,16 +4,12 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-try:
-    from typing import Self, override  # Python 3.12+
-except ImportError:
-    from typing_extensions import Self, override  # noqa: UP035
-
 import docker
 import grpc
 import polars as pl
 from docker import DockerClient
 from docker.models.containers import Container
+from typing_extensions import Self, override
 
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.model import Model

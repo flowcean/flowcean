@@ -1,11 +1,6 @@
 import logging
 import math
-from typing import Literal, cast
-
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
+from typing import Literal, cast, override
 
 import numpy as np
 import polars as pl

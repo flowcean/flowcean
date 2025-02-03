@@ -1,12 +1,8 @@
 from typing import Any
 
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
-
 import polars as pl
 from sklearn import metrics
+from typing_extensions import override
 
 from flowcean.core.metric import OfflineMetric
 

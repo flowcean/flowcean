@@ -1,9 +1,5 @@
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
-
 import polars as pl
+from typing_extensions import override
 
 from flowcean.core.transform import Transform
 

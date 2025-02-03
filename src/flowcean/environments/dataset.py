@@ -4,13 +4,9 @@ from collections.abc import Collection, Iterable
 from itertools import islice
 from typing import Any, cast
 
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
-
 import polars as pl
 from tqdm import tqdm
+from typing_extensions import override
 
 from flowcean.core.environment.offline import OfflineEnvironment
 

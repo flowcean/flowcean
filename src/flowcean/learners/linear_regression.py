@@ -1,12 +1,8 @@
-try:
-    from typing import override  # Python 3.12+
-except ImportError:
-    from typing_extensions import override  # noqa: UP035
-
 import polars as pl
 import torch
 from torch import nn
 from torch.optim.sgd import SGD
+from typing_extensions import override
 
 from flowcean.core.learner import SupervisedIncrementalLearner
 from flowcean.models.pytorch import PyTorchModel

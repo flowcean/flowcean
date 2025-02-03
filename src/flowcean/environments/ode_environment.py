@@ -2,15 +2,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from typing import Generic, TypeVar, cast
 
-try:
-    from typing import Self, override  # Python 3.12+
-except ImportError:
-    from typing_extensions import Self, override  # noqa: UP035
-
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 from scipy.integrate import solve_ivp
+from typing_extensions import Self, override
 
 from flowcean.core.environment.incremental import IncrementalEnvironment
 

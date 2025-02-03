@@ -3,12 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-try:
-    from typing import Self, override
-except ImportError:
-    from typing_extensions import Self, override  # noqa: UP035
-
 import polars as pl
+from typing_extensions import Self, override
 
 from flowcean.core.transform import Identity, Transform
 

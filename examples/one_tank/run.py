@@ -12,16 +12,11 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 
-import pytz
-
-try:
-    from typing import Self, override  # Python 3.12+
-except ImportError:
-    from typing_extensions import Self, override  # noqa: UP035
-
 import numpy as np
 import polars as pl
+import pytz
 from numpy.typing import NDArray
+from typing_extensions import Self, override
 
 import flowcean.cli
 from flowcean.environments.ode_environment import (
