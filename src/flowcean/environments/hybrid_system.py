@@ -20,7 +20,6 @@ import polars as pl
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.environments.ode_environment import OdeSystem, State
 
-# Type variables for Python 3.10+
 X = TypeVar("X", bound=State)
 Input = TypeVar("Input")
 
