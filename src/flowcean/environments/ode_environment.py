@@ -55,7 +55,7 @@ class State(ABC):
         """
 
 
-X = TypeVar("X", bound=State)  # Define a generic type for states
+X = TypeVar("X", bound=State)
 
 
 class OdeSystem(ABC, Generic[X]):
