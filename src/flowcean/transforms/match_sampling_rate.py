@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Literal, TypeAlias
 
 import polars as pl
 import polars.selectors as cs

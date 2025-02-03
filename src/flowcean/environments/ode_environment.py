@@ -126,10 +126,7 @@ class OdeSystem(ABC, Generic[X]):
             raise IntegrationError
 
         ts = cast(Sequence[float], solution.t[1:])
-        states = cast(
-            Sequence[X],
-            [self.state.from_numpy(y) for y in solution.y.T[1:]],
-        )
+        states = [self.state.from_numpy(y) for y in solution.y.T[1:]]
 
         self.t = ts[-1]
         self.state = states[-1]

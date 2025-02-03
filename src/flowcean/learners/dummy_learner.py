@@ -52,5 +52,3 @@ class DummyLearner(SupervisedLearner):
         outputs: pl.LazyFrame,
     ) -> DummyModel:
         return DummyModel(outputs.collect_schema().names())
-        return DummyModel(outputs.collect_schema().names())
-        return DummyModel(outputs.collect_schema().names())

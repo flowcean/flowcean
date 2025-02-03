@@ -8,9 +8,10 @@ the next mode based on a current input.
 
 from abc import abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from typing import Generic, TypeVar, override
+from typing import Generic, TypeVar
 
 import polars as pl
+from typing_extensions import override
 
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.environments.ode_environment import OdeSystem, State
@@ -77,6 +78,10 @@ class HybridSystem(IncrementalEnvironment, Generic[X, Input]):
         self.data = pl.DataFrame()
 
     @override
+    def _observe(self) -> pl.LazyFrame:
+        return self.data.lazy()
+
+    @override
     def step(self) -> None:
         t, i = next(self.inputs)
         dt = t - self.last_t
@@ -84,7 +89,3 @@ class HybridSystem(IncrementalEnvironment, Generic[X, Input]):
         ts, states = self.mode.step(dt)
         self.mode = self.mode.transition(i)
         self.data = self.map_to_dataframe(ts, [i] * len(ts), states)
-
-    @override
-    def _observe(self) -> pl.LazyFrame:
-        return self.data.lazy()
