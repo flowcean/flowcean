@@ -51,4 +51,3 @@ class LinearRegression(SupervisedIncrementalLearner):
         loss.backward()
         self.optimizer.step()
         return PyTorchModel(self.model, outputs.columns)
-        return PyTorchModel(self.model, outputs.columns)
