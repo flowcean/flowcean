@@ -16,7 +16,7 @@ from flowcean.utils import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
-InterpolationMethod = Literal["linear", "cubic"]
+InterpolationMethod: TypeAlias = Literal["linear", "cubic"]
 
 
 class Resample(Transform):
