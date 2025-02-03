@@ -50,7 +50,7 @@ class Temperature(State):
         return cls(state[0])
 
 
-TargetTemperature = float
+TargetTemperature: TypeAlias = float
 
 
 class Heating(DifferentialMode[Temperature, TargetTemperature]):
