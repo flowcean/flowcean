@@ -33,8 +33,6 @@ from flowcean.transforms.sliding_window import SlidingWindow
 
 logger = logging.getLogger(__name__)
 
-UTC = pytz.UTC
-
 
 @dataclass
 class TankState(State):
