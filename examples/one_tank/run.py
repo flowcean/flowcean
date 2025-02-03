@@ -142,14 +142,14 @@ def main() -> None:
             max_epochs=10,
         ),
     ]:
-        t_start = datetime.now(tz=UTC)
+        t_start = datetime.now(tz=pytz.utc)
         model = learn_offline(
             train,
             learner,
             inputs,
             outputs,
         )
-        delta_t = datetime.now(tz=UTC) - t_start
+        delta_t = datetime.now(tz=pytz.utc) - t_start
         print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
         report = evaluate_offline(

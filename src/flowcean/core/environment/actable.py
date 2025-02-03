@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
+
+Action = TypeVar("Action")
 
 
-class Actable[Action](ABC):
+class Actable(Generic[Action], ABC):
     """Base class for active environments.
 
     Active environments require actions to be taken to advance.
