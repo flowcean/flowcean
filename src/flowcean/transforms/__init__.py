@@ -11,7 +11,6 @@ __all__ = [
     "NoCategoriesError",
     "NoMatchingCategoryError",
     "NoTimeSeriesFeatureError",
-    "NoTimeSeriesFeatureError",
     "OneCold",
     "OneHot",
     "Rename",
