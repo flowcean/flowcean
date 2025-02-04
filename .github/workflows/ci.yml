@@ -11,7 +11,9 @@ on:
 jobs:
   check:
     name: Checks
-    runs-on: self-hosted
+    runs-on:
+      - self-hosted
+      - itl
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -31,7 +33,9 @@ jobs:
 
   tests:
     name: Tests
-    runs-on: self-hosted
+    runs-on:
+      - self-hosted
+      - itl
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -51,7 +55,9 @@ jobs:
 
   docs:
     name: Documentation
-    runs-on: self-hosted
+    runs-on:
+      - self-hosted
+      - itl
     steps:
       - name: Check out
         uses: actions/checkout@v4

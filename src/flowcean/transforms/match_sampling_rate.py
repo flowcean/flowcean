@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Literal, TypeAlias
 
 import polars as pl
 import polars.selectors as cs
@@ -8,7 +8,8 @@ from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
-type MatchSamplingRateMethod = Literal["linear"]
+
+MatchSamplingRateMethod: TypeAlias = Literal["linear"]
 
 
 class MatchSamplingRate(Transform):

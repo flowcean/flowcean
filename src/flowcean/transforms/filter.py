@@ -2,10 +2,10 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import reduce
-from typing import override
 
 import polars as pl
 import sympy
+from typing_extensions import override
 
 from flowcean.core.transform import Transform
 
