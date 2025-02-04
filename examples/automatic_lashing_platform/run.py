@@ -72,7 +72,7 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
             time_end=args.time_window_end,
         )
         | Flatten()
-        | Derivative("p_accumulator" if args.derivative else " ")
+        | Derivative("p_accumulator" if args.apply_derivative else " ")
     )
     time_after_load = time.time()
     logger.info("Took %.5f s to load data", time_after_load - time_start)
@@ -391,9 +391,9 @@ if __name__ == "__main__":
         ),
     )
     parameter_group.add_argument(
-        "--derivative",
+        "--apply_derivative",
         action="store_true",
-        help="Apply derivative to the data.",
+        help="Applying the derivative to the data.",
     )
 
     # training-data inspection
