@@ -118,11 +118,11 @@ def inspect_data(
         if args.print_data:
             print_data(args, observed_data)
 
-        if args.print_row:
-            print_row(observed_data)
-
         if args.plot_data:
             plot_data(args, observed_data)
+
+        if args.print_row:
+            print_row(observed_data)
 
         if args.plot_row:
             plot_row(observed_data)

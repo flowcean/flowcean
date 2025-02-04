@@ -19,8 +19,11 @@ class Derivative(Transform):
         ]
         if columns:
             derivatives = [
-                (pl.col(columns[i + 1]) - pl.col(columns[i])).alias(columns[i])
-                for i in range(len(columns) - 1)
+                (
+                    pl.lit(0) if i == 0
+                    else (pl.col(columns[i]) - pl.col(columns[i - 1]))
+                ).alias(columns[i])
+                for i in range(len(columns))
             ]
-            return data.with_columns(derivatives).drop(columns[-1])
+            return data.with_columns(derivatives)
         return data
