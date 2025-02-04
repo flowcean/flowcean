@@ -37,8 +37,6 @@ class ParticleCloudStatistics(Transform):
 
         sys.setrecursionlimit(1000000)
 
-        data = pl.read_json("cached_ros_data.json")
-
         particle_cloud = data[0, self.particle_cloud_feature_name]
 
         number_of_messages = len(particle_cloud)

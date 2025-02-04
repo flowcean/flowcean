@@ -9,19 +9,16 @@ from flowcean.transforms.particle_cloud_statistics import (
 class TestParticleCloudStatistics(unittest.TestCase):
     """Unit tests for the ParticleCloudStatistics class.
 
-    We define three particles with the following positions/weights:
-      - A: (0, 0), weight=1
-      - B: (2, 0), weight=2
-      - C: (0, 2), weight=1
+    We define five particles with specific positions/orientations/weights.
 
     We then check each feature method against known, hand-computed values.
     """
 
-    def setUp(self)-> None:
+    def setUp(self) -> None:
         # Instantiate the transform
         self.pcs = ParticleCloudStatistics()
 
-        # Define a small set of particles
+        # Define a small set of particles (unchanged)
         self.list_of_particles = [
             {
                 "pose": {
@@ -133,159 +130,171 @@ class TestParticleCloudStatistics(unittest.TestCase):
     # Helper / direct method tests
     #########################
 
-    def test_center_of_gravity(self)-> None:
+    def test_center_of_gravity(self) -> None:
         cog = self.pcs.center_of_gravity(self.list_of_particles)
-        self.assertAlmostEqual(cog["x"], 2.473, places=2)
-        self.assertAlmostEqual(cog["y"], 1.818, places=2)
+        # Expect (2.473, 1.818) within 2 decimal places
+        assert math.isclose(cog["x"], 2.473, abs_tol=1e-2), cog["x"]
+        assert math.isclose(cog["y"], 1.818, abs_tol=1e-2), cog["y"]
 
-    def test_calculate_cog_mean(self)-> None:
+    def test_calculate_cog_mean(self) -> None:
         cmean = self.pcs.calculate_cog_mean(self.list_of_particles)
-        self.assertAlmostEqual(cmean["x"], 2.473, places=2)
-        self.assertAlmostEqual(cmean["y"], 1.818, places=2)
+        # Expect (2.473, 1.818)
+        assert math.isclose(cmean["x"], 2.473, abs_tol=1e-2), cmean["x"]
+        assert math.isclose(cmean["y"], 1.818, abs_tol=1e-2), cmean["y"]
 
-    def test_dist(self)-> None:
-        self.assertAlmostEqual(self.pcs.dist((0, 0), (3, 4)), 5.0, places=2)
-        self.assertAlmostEqual(
+    def test_dist(self) -> None:
+        # (0, 0) to (3, 4) => 5.0
+        # (1, 1) to (2, 2) => sqrt(2)
+        assert math.isclose(self.pcs.dist((0, 0), (3, 4)), 5.0, abs_tol=1e-2)
+        assert math.isclose(
             self.pcs.dist((1, 1), (2, 2)),
             math.sqrt(2),
-            places=2,
+            abs_tol=1e-2,
         )
 
-    def test_is_in_circle(self)-> None:
+    def test_is_in_circle(self) -> None:
         # Circle center = (1,1), radius = sqrt(2)
         center, radius = (1, 1), math.sqrt(2)
-        # (0,0) should be inside
-        self.assertTrue(self.pcs.is_in_circle((0, 0), (center, radius)))
-        # (3,3) is outside
-        self.assertFalse(self.pcs.is_in_circle((3, 3), (center, radius)))
+        # (0,0) inside
+        assert self.pcs.is_in_circle((0, 0), (center, radius))
+        # (3,3) outside
+        assert not self.pcs.is_in_circle((3, 3), (center, radius))
 
-    def test_circle_from_two_points(self)-> None:
+    def test_circle_from_two_points(self) -> None:
         center, radius = self.pcs.circle_from_two_points((0, 0), (2, 0))
-        # Center => (1,0), radius => 1
-        self.assertAlmostEqual(center[0], 1.0, places=2)
-        self.assertAlmostEqual(center[1], 0.0, places=2)
-        self.assertAlmostEqual(radius, 1.0, places=2)
+        # Expect center (1,0), radius 1
+        assert math.isclose(center[0], 1.0, abs_tol=1e-2), center[0]
+        assert math.isclose(center[1], 0.0, abs_tol=1e-2), center[1]
+        assert math.isclose(radius, 1.0, abs_tol=1e-2), radius
 
-    def test_circle_from_three_points(self)-> None:
-        # (0,0), (2,0), (0,2) => encl. circle center => (1,1),radius => sqrt(2)
+    def test_circle_from_three_points(self) -> None:
         center, radius = self.pcs.circle_from_three_points(
             (0, 0),
             (2, 0),
             (0, 2),
         )
-        self.assertAlmostEqual(center[0], 1.0, places=2)
-        self.assertAlmostEqual(center[1], 1.0, places=2)
-        self.assertAlmostEqual(radius, math.sqrt(2), places=2)
+        # Expect center (1,1), radius sqrt(2)
+        assert math.isclose(center[0], 1.0, abs_tol=1e-2), center[0]
+        assert math.isclose(center[1], 1.0, abs_tol=1e-2), center[1]
+        assert math.isclose(radius, math.sqrt(2), abs_tol=1e-2), radius
 
-    def test_welzl(self)-> None:
-        # smallest enclosing circle using Welzl's
+    def test_welzl(self) -> None:
         points = [(0, 0), (2, 0), (0, 2)]
         center, radius = self.pcs.welzl(points)
-        self.assertAlmostEqual(center[0], 1.0, places=2)
-        self.assertAlmostEqual(center[1], 1.0, places=2)
-        self.assertAlmostEqual(radius, math.sqrt(2), places=2)
+        # Expect (1,1), sqrt(2)
+        assert math.isclose(center[0], 1.0, abs_tol=1e-2), center[0]
+        assert math.isclose(center[1], 1.0, abs_tol=1e-2), center[1]
+        assert math.isclose(radius, math.sqrt(2), abs_tol=1e-2), radius
 
     #########################
     # Feature method tests
     #########################
 
-    def test_cog_max_dist(self)-> None:
+    def test_cog_max_dist(self) -> None:
         max_distance, furthest_particle = self.pcs.cog_max_dist(
             self.list_of_particles,
         )
-        self.assertAlmostEqual(max_distance, 1.3201, places=2)
+        # Expect ~1.3201
+        assert math.isclose(max_distance, 1.3201, abs_tol=1e-2), max_distance
 
-    def test_cog_mean_dist(self)-> None:
+    def test_cog_mean_dist(self) -> None:
         result = self.pcs.cog_mean_dist(self.list_of_particles)
-        self.assertAlmostEqual(result, 0.6843, places=2)
+        # Expect ~0.6843
+        assert math.isclose(result, 0.6843, abs_tol=1e-2), result
 
-    def test_cog_mean_absolute_deviation(self)-> None:
+    def test_cog_mean_absolute_deviation(self) -> None:
         mad = self.pcs.cog_mean_absolute_deviation(self.list_of_particles)
-        self.assertAlmostEqual(mad, 0.2543, places=2)
+        # Expect ~0.2543
+        assert math.isclose(mad, 0.2543, abs_tol=1e-2), mad
 
-    def test_cog_median(self)-> None:
+    def test_cog_median(self) -> None:
         median_dist = self.pcs.cog_median(self.list_of_particles)
-        self.assertAlmostEqual(median_dist, 0.5337, places=2)
+        # Expect ~0.5337
+        assert math.isclose(median_dist, 0.5337, abs_tol=1e-2), median_dist
 
-    def test_cog_median_absolute_deviation(self)-> None:
+    def test_cog_median_absolute_deviation(self) -> None:
         mad = self.pcs.cog_median_absolute_deviation(self.list_of_particles)
-        self.assertAlmostEqual(mad, 0.0955, places=2)
+        # Expect ~0.0955
+        assert math.isclose(mad, 0.0955, abs_tol=1e-2), mad
 
-    def test_cog_min_dist(self)-> None:
+    def test_cog_min_dist(self) -> None:
         min_dist, closest_particle = self.pcs.cog_min_dist(
             self.list_of_particles,
         )
-        self.assertAlmostEqual(min_dist, 0.4382, places=2)
+        # Expect ~0.4382
+        assert math.isclose(min_dist, 0.4382, abs_tol=1e-2), min_dist
 
-    def test_cog_standard_deviation(self)-> None:
+    def test_cog_standard_deviation(self) -> None:
         std_dev = self.pcs.cog_standard_deviation(self.list_of_particles)
-        self.assertAlmostEqual(std_dev, 0.3296, places=2)
+        # Expect ~0.3296
+        assert math.isclose(std_dev, 0.3296, abs_tol=1e-2), std_dev
 
-    def test_smallest_enclosing_circle(self)-> None:
+    def test_smallest_enclosing_circle(self) -> None:
         points = [
             (p["pose"]["position"]["x"], p["pose"]["position"]["y"])
             for p in self.list_of_particles
         ]
         center, radius = self.pcs.smallest_enclosing_circle(points)
-        self.assertAlmostEqual(radius, 0.9213, places=2)
+        # Expect ~0.9213
+        assert math.isclose(radius, 0.9213, abs_tol=1e-2), radius
 
-    def test_circle_mean(self)-> None:
+    def test_circle_mean(self) -> None:
         mean_dist = self.pcs.circle_mean(self.list_of_particles)
-        self.assertAlmostEqual(mean_dist, 0.8647, places=2)
+        # Expect ~0.8647
+        assert math.isclose(mean_dist, 0.8647, abs_tol=1e-2), mean_dist
 
-    def test_circle_mean_absolute_deviation(self)-> None:
-        # All distances => sqrt(2). => MAD => 0
+    def test_circle_mean_absolute_deviation(self) -> None:
         mad = self.pcs.circle_mean_absolute_deviation(self.list_of_particles)
-        self.assertAlmostEqual(mad, 0.06801, places=2)
+        # Expect ~0.06801
+        assert math.isclose(mad, 0.06801, abs_tol=1e-2), mad
 
-    def test_circle_median(self)-> None:
-        # All distances => sqrt(2). => median => sqrt(2)
+    def test_circle_median(self) -> None:
         median_dist = self.pcs.circle_median(self.list_of_particles)
-        self.assertAlmostEqual(median_dist, 0.9213, places=2)
+        # Expect ~0.9213
+        assert math.isclose(median_dist, 0.9213, abs_tol=1e-2), median_dist
 
-    def test_circle_median_absolute_deviation(self)-> None:
-        # All distances => sqrt(2). => median => sqrt(2). => dev => 0
+    def test_circle_median_absolute_deviation(self) -> None:
         mad = self.pcs.circle_median_absolute_deviation(self.list_of_particles)
-        self.assertAlmostEqual(mad, 0.0, places=2)
+        # Expect ~0.0
+        assert math.isclose(mad, 0.0, abs_tol=1e-2), mad
 
-    def test_circle_min_dist(self)-> None:
-        # All distances => sqrt(2). => min => sqrt(2)
+    def test_circle_min_dist(self) -> None:
         cmin = self.pcs.circle_min_dist(self.list_of_particles)
-        self.assertAlmostEqual(cmin, 0.763, places=2)
+        # Expect ~0.763
+        assert math.isclose(cmin, 0.763, abs_tol=1e-2), cmin
 
-    def test_circle_std_deviation(self)-> None:
-        # All distances => sqrt(2). => stdev => 0
+    def test_circle_std_deviation(self) -> None:
         std_dev = self.pcs.circle_std_deviation(self.list_of_particles)
-        self.assertAlmostEqual(std_dev, 0.0702, places=2)
+        # Expect ~0.0702
+        assert math.isclose(std_dev, 0.0702, abs_tol=1e-2), std_dev
 
-    def test_count_clusters(self)-> None:
+    def test_count_clusters(self) -> None:
         num = self.pcs.count_clusters(
             self.list_of_particles,
             self.eps,
             self.min_samples,
         )
-        self.assertEqual(num, 1)
+        # Expect 1
+        assert num == 1
 
-    def test_main_cluster_variance_x(self)-> None:
-        # The main cluster => x coords [0,2,0], mean=2/3
-        # => variance => ~0.8889
+    def test_main_cluster_variance_x(self) -> None:
         var_x = self.pcs.main_cluster_variance_x(
             self.list_of_particles,
             self.eps,
             self.min_samples,
         )
-        # Because DBSCAN lumps them together in one cluster, we should see ~0.8889
-        self.assertAlmostEqual(var_x, 0.1797, places=2)
+        # Expect ~0.1797
+        assert math.isclose(var_x, 0.1797, abs_tol=1e-2), var_x
 
-    def test_main_cluster_variance_y(self)-> None:
-        # The main cluster => y coords [0,0,2], mean=2/3
-        # => variance => ~0.8889
+    def test_main_cluster_variance_y(self) -> None:
         var_y = self.pcs.main_cluster_variance_y(
             self.list_of_particles,
             self.eps,
             self.min_samples,
         )
-        self.assertAlmostEqual(var_y, 0.3971, places=2)
+        # Expect ~0.3971
+        assert math.isclose(var_y, 0.3971, abs_tol=1e-2), var_y
+
 
 if __name__ == "__main__":
     unittest.main()
