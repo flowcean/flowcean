@@ -37,7 +37,7 @@ environment = RosbagLoader(
         )
 ```
 
-The `RosbagLoader` requires a list of ROS topics to be loaded along with a specification which fields of the ROS message should be extracted. Here a brief explanation of the topics that are loaded in this example:
+The `RosbagLoader` requires a list of ROS topics to be loaded along with a specification which fields of the ROS message should be extracted. Here is a brief explanation of the topics that are loaded in this example:
 
 - `/amcl_pose`: this is the pose that the localization algorithm of the robot estimates. AMCL stands for Adaptive Monte Carlo Localization and is a commonly used localization approach using a range sensor, e.g. a LiDAR sensor.
 - `/momo/pose`: this is the pose provided by a motion capturing system that is installed in our lab. This data is used to determine the error of the data provided by AMCL.
