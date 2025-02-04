@@ -17,6 +17,7 @@ from flowcean.environments.rosbag import RosbagLoader
 
 USE_CACHED_ROS_DATA = False
 UPDATE_CACHE = False
+WS = Path(__file__).resolve().parent
 
 
 def main() -> None:
@@ -44,9 +45,9 @@ def main() -> None:
                 "/heading_error": ["data"],
             },
             msgpaths=[
-                "src/flowcean/examples/robot_localization_failure/ros_msgs/LaserScan.msg",
-                "src/flowcean/examples/robot_localization_failure/ros_msgs/Particle.msg",
-                "src/flowcean/examples/robot_localization_failure/ros_msgs/ParticleCloud.msg",
+                str(WS / "ros_msgs/LaserScan.msg"),
+                str(WS / "ros_msgs/nav2_msgs/msg/Particle.msg"),
+                str(WS / "ros_msgs/nav2_msgs/msg/ParticleCloud.msg"),
             ],
         )
         data = environment.observe()
