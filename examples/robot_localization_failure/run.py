@@ -44,9 +44,9 @@ def main() -> None:
                 "/heading_error": ["data"],
             },
             msgpaths=[
-                "/opt/ros/humble/share/sensor_msgs/msg/LaserScan.msg",
-                "/opt/ros/humble/share/nav2_msgs/msg/ParticleCloud.msg",
-                "/opt/ros/humble/share/nav2_msgs/msg/Particle.msg",
+                "src/flowcean/examples/robot_localization_failure/ros_msgs/LaserScan.msg",
+                "src/flowcean/examples/robot_localization_failure/ros_msgs/Particle.msg",
+                "src/flowcean/examples/robot_localization_failure/ros_msgs/ParticleCloud.msg",
             ],
         )
         data = environment.observe()
