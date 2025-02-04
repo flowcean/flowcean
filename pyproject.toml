@@ -39,6 +39,7 @@ Source = "https://github.com/flowcean/flowcean"
 
 [tool.uv]
 dev-dependencies = [
+  "asyncssh<2.19.0",
   "deptry>=0.20.0",
   "dvc-ssh>=4.1.1",
   "dvc-webdav>=3.0.0",
