@@ -223,7 +223,7 @@ class RosbagLoader(Dataset):
             [x.tolist() if isinstance(x, np.ndarray) else x for x in row]
             for row in data
         ]
-        df = pl.DataFrame(data, schema=tuple(keys))
+        df = pl.DataFrame(data, schema=tuple(keys), orient="row")
         time = pl.Series("time", timestamps)
         nest_into_timeseries = pl.struct(
             [
