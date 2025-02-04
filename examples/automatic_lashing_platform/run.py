@@ -71,8 +71,8 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
             time_start=args.time_window_start,
             time_end=args.time_window_end,
         )
-        | Derivative("p_accumulator")
         | Flatten()
+        | Derivative("p_accumulator" if args.derivative else " ")
     )
     time_after_load = time.time()
     logger.info("Took %.5f s to load data", time_after_load - time_start)
@@ -389,6 +389,11 @@ if __name__ == "__main__":
             """\'And(["activeValveCount > 0", "activeValveCount < 3"])\' """
             """or \'"activeValveCount > 0"\'."""
         ),
+    )
+    parameter_group.add_argument(
+        "--derivative",
+        action="store_true",
+        help="Apply derivative to the data.",
     )
 
     # training-data inspection
