@@ -17,7 +17,7 @@ def deploy(
 
     Args:
         environment: custom system environment
-        config: 
+        config:
         model: the trained model
         input_transforms: system specific transforms for model input
         output_transforms: system specific transforms for system input

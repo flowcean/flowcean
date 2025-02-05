@@ -6,7 +6,6 @@ from polars.testing import assert_frame_equal
 
 from flowcean.transforms import SliceTimeSeries
 
-
 class SliceTimeSeriesTransform(unittest.TestCase):
     def test_slicetimeseries(self) -> None:
         duration = 2
@@ -34,12 +33,13 @@ class SliceTimeSeriesTransform(unittest.TestCase):
 
                 "counter":
                 [
-                    [   
+                    [
                         {"time": datetime(2024, 6, 25, 12, 26, 5, 0, tzinfo=UTC), "value": {"x": 1.0}},
                         {"time": datetime(2024, 6, 25, 12, 26, 10, 0, tzinfo=UTC), "value": {"x": 2.0}},
                         {"time": datetime(2024, 6, 25, 12, 26, 15, 0, tzinfo=UTC), "value": {"x": 3.0}},
                     ],
                 ],
+                "const": [1],
             },
         )
         target_data = pl.LazyFrame(
@@ -71,6 +71,11 @@ class SliceTimeSeriesTransform(unittest.TestCase):
                     [
                         {"time": datetime(2024, 6, 25, 12, 26, 15, 0, tzinfo=UTC), "value": {"x": 3.0}},
                     ]
+                ],
+                "const": [
+                    1,
+                    1,
+                    1,
                 ],
             },
         )

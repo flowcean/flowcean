@@ -109,7 +109,7 @@ class TestMatchSamplingRate(unittest.TestCase):
         )
 
         transformed_data = transform(data_frame.lazy()).collect()
-    
+
         expected_data = pl.DataFrame(
             {
                 "feature_a": [
