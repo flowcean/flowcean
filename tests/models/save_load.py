@@ -51,10 +51,10 @@ class TestSaveLoad(unittest.TestCase):
         # Test a random prediction
         test_frame = pl.DataFrame(
             {"x": [0.5]},
-        )
+        ).lazy()
         assert_frame_equal(
-            model.predict(test_frame),
-            loaded_model.predict(test_frame),
+            model.predict(test_frame).collect(),
+            loaded_model.predict(test_frame).collect(),
         )
 
     def test_save_load_pytorch(self) -> None:
@@ -95,10 +95,10 @@ class TestSaveLoad(unittest.TestCase):
         # Test a random prediction
         test_frame = pl.DataFrame(
             {"x": [0.5]},
-        )
+        ).lazy()
         assert_frame_equal(
-            model.predict(test_frame),
-            loaded_model.predict(test_frame),
+            model.predict(test_frame).collect(),
+            loaded_model.predict(test_frame).collect(),
         )
 
     def test_save_load_model_with_transforms(self) -> None:
@@ -136,10 +136,10 @@ class TestSaveLoad(unittest.TestCase):
         # Test a random prediction
         test_frame = pl.DataFrame(
             {"x": [0.5]},
-        )
+        ).lazy()
         assert_frame_equal(
-            model.predict(test_frame),
-            loaded_model.predict(test_frame),
+            model.predict(test_frame).collect(),
+            loaded_model.predict(test_frame).collect(),
         )
 
 
