@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import polars as pl
 import torch
-from torch.nn import Module
 from torch.utils.data import DataLoader
 from typing_extensions import override
 
 from flowcean.core.model import Model
 from flowcean.environments.pytorch import TorchDataset
+
+if TYPE_CHECKING:
+    from torch.nn import Module
 
 
 class PyTorchModel(Model):

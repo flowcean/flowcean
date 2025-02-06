@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any
 
 import polars as pl
 from typing_extensions import override

@@ -5,12 +5,15 @@ import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, BinaryIO, cast, final
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, BinaryIO, cast, final
 
-import polars as pl
 from typing_extensions import override
 
-from flowcean.core.transform import Transform
+if TYPE_CHECKING:
+    import polars as pl
+
+    from flowcean.core.transform import Transform
 
 
 class Model(ABC):
@@ -34,7 +37,7 @@ class Model(ABC):
         """
 
     @final
-    def save(self, file: BinaryIO) -> None:
+    def save(self, file: Path | BinaryIO) -> None:
         """Save the model to the file.
 
         Args:
@@ -44,17 +47,25 @@ class Model(ABC):
             "model": self.save_state(),
             "model_type": fullname(self),
         }
-        pickle.dump(data, file)
+        if isinstance(file, Path):
+            with file.open("wb") as f:
+                pickle.dump(data, f)
+        else:
+            pickle.dump(data, file)
 
     @staticmethod
-    def load(file: BinaryIO) -> Model:
+    def load(file: Path | BinaryIO) -> Model:
         """Load the model from file.
 
         Args:
             file: The file like object to load the model from.
         """
         # Read the general model from the file
-        data = pickle.load(file)  # noqa: S301
+        if isinstance(file, Path):
+            with file.open("rb") as f:
+                data = pickle.load(f)  # noqa: S301
+        else:
+            data = pickle.load(file)  # noqa: S301
         if not isinstance(data, dict):
             msg = "Invalid model file"
             raise ValueError(msg)  # noqa: TRY004, it's really a value error and not a type error

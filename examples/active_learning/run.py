@@ -13,8 +13,7 @@ from __future__ import annotations
 import logging
 import random
 from math import nan
-from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any
 
 import polars as pl
 from typing_extensions import override
