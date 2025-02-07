@@ -68,10 +68,10 @@ class ModelWithTransform(Model):
 
         prediction = self.model.predict(input_features)
 
-        if self.output_transform is None:
-            return prediction
+        if self.output_transform is not None:
+            return self.output_transform.apply(prediction)
 
-        return self.output_transform.apply(prediction)
+        return prediction
 
     @override
     def save(self, path: Path) -> None:
