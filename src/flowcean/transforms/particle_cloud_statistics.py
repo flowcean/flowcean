@@ -88,21 +88,18 @@ class ParticleCloudStatistics(Transform):
             .lazy()
         )
 
-    ################# Features #################
-
-    # Feature 1
     def cog_max_dist(
         self,
         list_of_particles: list[dict],
     ) -> tuple[float, tuple | None]:
         """Calculates maximum distance from any particle to center of gravity.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        tuple: The maximum distance and the coordinates of particle furthest
-        from the COG.
+            tuple: The maximum distance and coordinates of particle furthest
+            from the COG.
         """
         cog = self.center_of_gravity(list_of_particles)
         cog_x, cog_y = cog["x"], cog["y"]
@@ -119,15 +116,14 @@ class ParticleCloudStatistics(Transform):
 
         return max_distance, furthest_particle
 
-    # Feature 2
     def cog_mean_dist(self, list_of_particles: list[dict]) -> float:
         """Calculates mean distance of all particles from center of gravity.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        float: The mean distance of the particles from the center of gravity.
+            float: The mean distance of particles from the center of gravity.
         """
         num_particles = len(list_of_particles)
         if num_particles == 0:
@@ -145,18 +141,17 @@ class ParticleCloudStatistics(Transform):
 
         return sum(distances) / num_particles
 
-    # Feature 3
     def cog_mean_absolute_deviation(
         self,
         list_of_particles: list[dict],
     ) -> float:
         """Get mean absolute deviation of distances to center of gravity mean.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        float: The mean absolute deviation of distances.
+            float: The mean absolute deviation of distances.
         """
         self.cog_mean = self.calculate_cog_mean(list_of_particles)
         mean_x, mean_y = self.cog_mean["x"], self.cog_mean["y"]
@@ -174,15 +169,14 @@ class ParticleCloudStatistics(Transform):
 
         return sum(abs(d - mean_distance) for d in distances) / len(distances)
 
-    # Feature 4
     def cog_median(self, list_of_particles: list[dict]) -> float:
         """Get median of distances from all particles to cog mean.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        float: The median distance from particles to the COG mean.
+            float: The median distance from particles to the COG mean.
         """
         cog_mean = self.calculate_cog_mean(list_of_particles)
         mean_x, mean_y = cog_mean["x"], cog_mean["y"]
@@ -205,7 +199,6 @@ class ParticleCloudStatistics(Transform):
 
         return (distances[n // 2 - 1] + distances[n // 2]) / 2
 
-    # Feature 5
     def cog_median_absolute_deviation(
         self,
         list_of_particles: list[dict],
@@ -215,11 +208,11 @@ class ParticleCloudStatistics(Transform):
         Calculates the median absolute deviation (MAD) from the median distance
         of particles to the center of gravity mean.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        float: The median absolute deviation of distances.
+            float: The median absolute deviation of distances.
         """
         # calculate_cog_median to get the median distance
         median_distance = self.cog_median(list_of_particles)
@@ -252,19 +245,18 @@ class ParticleCloudStatistics(Transform):
             + absolute_deviations[n_dev // 2]
         ) / 2
 
-    # Feature 6
     def cog_min_dist(
         self,
         list_of_particles: list[dict],
     ) -> tuple[float, tuple | None]:
         """Calculates minimum distance from any particle to center of gravity.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        tuple: The minimum distance and coordinates of the particle closest to
-        the COG.
+            tuple: The minimum distance and coordinates of particle closest to
+            the COG.
         """
         cog = self.center_of_gravity(list_of_particles)
         cog_x, cog_y = cog["x"], cog["y"]
@@ -281,15 +273,14 @@ class ParticleCloudStatistics(Transform):
 
         return min_distance, closest_particle
 
-    # Feature 7
     def cog_standard_deviation(self, list_of_particles: list[dict]) -> float:
         """Calculates standard deviation of distances to cog mean.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
 
         Returns:
-        float: The standard deviation of distances.
+            float: The standard deviation of distances.
         """
         cog_mean = self.calculate_cog_mean(list_of_particles)
         mean_x, mean_y = cog_mean["x"], cog_mean["y"]
@@ -308,14 +299,12 @@ class ParticleCloudStatistics(Transform):
 
         return np.sqrt(variance)
 
-    # Feature 8
     def smallest_enclosing_circle(self, points: list[tuple]) -> tuple:
         """Find the smallest enclosing circle for a set of points."""
         shuffled_points = points[:]
         random.shuffle(shuffled_points)
         return self.welzl(shuffled_points)
 
-    # Feature 9
     def circle_mean(self, list_of_particles: list[dict]) -> float:
         """Calculate mean of distances from the circle center to the points."""
         points = [
@@ -331,7 +320,6 @@ class ParticleCloudStatistics(Transform):
         total_distance = sum(self.dist(center, point) for point in points)
         return total_distance / len(points)
 
-    # Feature 10
     def circle_mean_absolute_deviation(
         self,
         list_of_particles: list[dict],
@@ -352,7 +340,6 @@ class ParticleCloudStatistics(Transform):
 
         return sum(abs(d - mean_distance) for d in distances) / len(points)
 
-    # Feature 11
     def circle_median(self, list_of_particles: list[dict]) -> float:
         """Calculate median of distances from the circle center to points."""
         points = [
@@ -375,7 +362,6 @@ class ParticleCloudStatistics(Transform):
             return distances[n // 2]
         return (distances[n // 2 - 1] + distances[n // 2]) / 2
 
-    # Feature 12
     def circle_median_absolute_deviation(
         self,
         list_of_particles: list[dict],
@@ -404,7 +390,6 @@ class ParticleCloudStatistics(Transform):
             else (abs_deviation[n // 2 - 1] + abs_deviation[n // 2]) / 2
         )
 
-    # Feature 13
     def circle_min_dist(self, list_of_particles: list[dict]) -> float:
         """Get min distance between circle center and its closest particle."""
         points = [
@@ -419,7 +404,6 @@ class ParticleCloudStatistics(Transform):
 
         return min(self.dist(center, point) for point in points)
 
-    # Feature 14
     def circle_std_deviation(self, list_of_particles: list[dict]) -> float:
         """Get standard deviation of distances from circle center to points."""
         points = [
@@ -441,7 +425,6 @@ class ParticleCloudStatistics(Transform):
 
         return math.sqrt(variance)
 
-    # Feature 30
     def count_clusters(
         self,
         list_of_particles: list[dict],
@@ -465,7 +448,6 @@ class ParticleCloudStatistics(Transform):
 
         return len(unique_labels) - (1 if -1 in unique_labels else 0)
 
-    # Feature 31
     def main_cluster_variance_x(
         self,
         list_of_particles: list[dict],
@@ -499,7 +481,6 @@ class ParticleCloudStatistics(Transform):
 
         return float(np.var(main_cluster_points[:, 0]))
 
-    # Feature 32
     def main_cluster_variance_y(
         self,
         list_of_particles: list[dict],
@@ -533,7 +514,6 @@ class ParticleCloudStatistics(Transform):
 
         return float(np.var(main_cluster_points[:, 1]))
 
-    # Extract all features
     def extract_features_from_message(
         self,
         list_of_particles: list[dict],
@@ -542,52 +522,44 @@ class ParticleCloudStatistics(Transform):
     ) -> dict:
         """Extracts all features from a list of particles.
 
-        Parameters:
-        list_of_particles (list): List of dictionaries representing particles.
-        eps (float): The maximum distance between two samples for one to be
-            considered as in the neighborhood of the other.
-        min_samples (int): The number of samples in a neighborhood for a point
-            to be considered as a core point.
+        Args:
+            list_of_particles: List of dictionaries representing particles.
+            eps: The maximum distance between two samples for one to be
+                considered as in the neighborhood of the other.
+            min_samples: The number of samples in a neighborhood for a point
+                to be considered as a core point.
 
         Returns:
-        dict: A dictionary containing all extracted features.
+            dict: A dictionary containing all extracted features.
         """
         features = {}
 
-        # Feature 1
         max_distance, furthest_particle = self.cog_max_dist(list_of_particles)
         features["cog_max_distance"] = max_distance
 
-        # Feature 2
         features["cog_mean_dist"] = self.cog_mean_dist(list_of_particles)
 
-        # Feature 3
         features["cog_mean_absolute_deviation"] = (
             self.cog_mean_absolute_deviation(
                 list_of_particles,
             )
         )
 
-        # Feature 4
         features["cog_median"] = self.cog_median(list_of_particles)
 
-        # Feature 5
         features["cog_median_absolute_deviation"] = (
             self.cog_median_absolute_deviation(
                 list_of_particles,
             )
         )
 
-        # Feature 6
         min_distance, closest_particle = self.cog_min_dist(list_of_particles)
         features["cog_min_distance"] = min_distance
 
-        # Feature 7
         features["cog_standard_deviation"] = self.cog_standard_deviation(
             list_of_particles,
         )
 
-        # Feature 8
         points = [
             (
                 particle["pose"]["position"]["x"],
@@ -598,47 +570,38 @@ class ParticleCloudStatistics(Transform):
         circle = self.smallest_enclosing_circle(points)
         features["circle_radius"] = circle[1]
 
-        # Feature 9
         features["circle_mean"] = self.circle_mean(list_of_particles)
 
-        # Feature 10
         features["circle_mean_absolute_deviation"] = (
             self.circle_mean_absolute_deviation(list_of_particles)
         )
 
-        # Feature 11
         features["circle_median"] = self.circle_median(list_of_particles)
 
-        # Feature 12
         features["circle_median_absolute_deviation"] = (
             self.circle_median_absolute_deviation(list_of_particles)
         )
 
-        # Feature 13
         features["circle_min_distance"] = self.circle_min_dist(
             list_of_particles,
         )
 
-        # Feature 14
         features["circle_standard_deviation"] = self.circle_std_deviation(
             list_of_particles,
         )
 
-        # Feature 30
         features["num_clusters"] = self.count_clusters(
             list_of_particles,
             eps,
             min_samples,
         )
 
-        # Feature 31
         features["main_cluster_variance_x"] = self.main_cluster_variance_x(
             list_of_particles,
             eps,
             min_samples,
         )
 
-        # Feature 32
         features["main_cluster_variance_y"] = self.main_cluster_variance_y(
             list_of_particles,
             eps,
@@ -652,7 +615,7 @@ class ParticleCloudStatistics(Transform):
     def center_of_gravity(self, list_of_particles: list[dict]) -> dict:
         """Get the center of gravity of particles based on their weights.
 
-        Parameters:
+        Args:
         list_of_particles (list): List of dictionaries representing particles.
 
         Returns:
@@ -684,7 +647,7 @@ class ParticleCloudStatistics(Transform):
     def calculate_cog_mean(self, list_of_particles: list[dict]) -> dict:
         """Calculates mean position (cog mean) over all particles.
 
-        Parameters:
+        Args:
         list_of_particles (list): List of dictionaries representing particles.
 
         Returns:
