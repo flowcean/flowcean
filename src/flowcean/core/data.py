@@ -1,3 +1,3 @@
-from typing import Any
+from typing import Any, TypeAlias
 
-type Data = Any
+Data: TypeAlias = Any
