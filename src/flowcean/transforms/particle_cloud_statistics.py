@@ -32,12 +32,12 @@ class ParticleCloudStatistics(Transform):
         """
         self.particle_cloud_feature_name = particle_cloud_feature_name
 
-    def apply(self, data: pl.DataFrame) -> pl.DataFrame:
+    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Matching sampling rate of time series.")
 
         sys.setrecursionlimit(1000000)
 
-        particle_cloud = data[0, self.particle_cloud_feature_name]
+        particle_cloud = data.collect()[0, self.particle_cloud_feature_name]
 
         number_of_messages = len(particle_cloud)
 
@@ -81,7 +81,12 @@ class ParticleCloudStatistics(Transform):
 
         final_df = pl.DataFrame(new_data)
 
-        return data.drop(self.particle_cloud_feature_name).hstack(final_df)
+        return (
+            data.collect()
+            .drop(self.particle_cloud_feature_name)
+            .hstack(final_df)
+            .lazy()
+        )
 
     ################# Features #################
 

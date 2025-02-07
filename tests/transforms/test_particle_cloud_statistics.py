@@ -179,7 +179,9 @@ class TestParticleCloudStatistics(unittest.TestCase):
         # All distances => sqrt(2). => median => sqrt(2)
         median_dist = self.pcs.circle_median(self.list_of_particles)
         assert math.isclose(
-            median_dist, math.sqrt(2), abs_tol=1e-2,
+            median_dist,
+            math.sqrt(2),
+            abs_tol=1e-2,
         ), median_dist
 
     def test_circle_median_absolute_deviation(self) -> None:
