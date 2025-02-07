@@ -10,6 +10,7 @@ def learn_incremental(
     inputs: list[str],
     outputs: list[str],
     input_transform: Transform | None = None,
+    output_transform: Transform | None = None,
 ) -> Model:
     """Learn from a incremental environment.
 
@@ -23,6 +24,8 @@ def learn_incremental(
         inputs: The input feature names.
         outputs: The output feature names.
         input_transform: The transform to apply to the input features.
+        output_transform: The transform to apply to the output features.
+            Its inverse will be part of the final model.
 
     Returns:
         The model learned from the environment.
@@ -32,16 +35,35 @@ def learn_incremental(
         input_features = data.select(inputs)
         output_features = data.select(outputs)
 
+        if isinstance(input_transform, FitIncremetally):
+            input_transform.fit_incremental(input_features)
+
         if input_transform is not None:
-            if isinstance(input_transform, FitIncremetally):
-                input_transform.fit_incremental(input_features)
             input_features = input_transform.apply(input_features)
 
-        model = learner.learn_incremental(input_features, output_features)
+        if isinstance(output_transform, FitIncremetally):
+            output_transform.fit_incremental(output_features)
+
+        if output_transform is not None:
+            output_features = output_transform.apply(output_features)
+
+        model = learner.learn_incremental(
+            input_features,
+            output_features,
+        )
 
     if model is None:
         message = "No data found in environment."
         raise ValueError(message)
-    if input_transform is not None:
-        return ModelWithTransform(model=model, transform=input_transform)
-    return model
+
+    if input_transform is None and output_transform is None:
+        return model
+
+    if output_transform is not None:
+        output_transform = output_transform.inverse()
+
+    return ModelWithTransform(
+        model=model,
+        input_transform=input_transform,
+        output_transform=output_transform,
+    )

@@ -55,15 +55,23 @@ class ModelWithTransform(Model):
     """
 
     model: Model
-    transform: Transform
+    input_transform: Transform | None
+    output_transform: Transform | None
 
     @override
     def predict(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
-        transformed = self.transform.apply(input_features)
-        return self.model.predict(transformed)
+        if self.input_transform is not None:
+            input_features = self.input_transform.apply(input_features)
+
+        prediction = self.model.predict(input_features)
+
+        if self.output_transform is not None:
+            return self.output_transform.apply(prediction)
+
+        return prediction
 
     @override
     def save(self, path: Path) -> None:

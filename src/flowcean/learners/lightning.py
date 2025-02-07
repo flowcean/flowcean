@@ -107,8 +107,7 @@ class MultilayerPerceptron(lightning.LightningModule):
         return y
 
     @override
-    def training_step(self, *args: Any, **kwargs: Any) -> Tensor:
-        batch = args[0]
+    def training_step(self, batch: Any) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
         return torch.nn.functional.mse_loss(outputs, targets)
