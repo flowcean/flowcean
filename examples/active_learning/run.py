@@ -12,9 +12,9 @@ import logging
 import random
 from math import nan
 from pathlib import Path
-from typing import override
 
 import polars as pl
+from typing_extensions import override
 
 import flowcean.cli
 from flowcean.core.environment.active import ActiveEnvironment

@@ -52,7 +52,9 @@ transformed_data = transforms(dataset)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
+
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -125,6 +127,14 @@ class Transform(ABC):
             A new Chain transform.
         """
         return self.chain(other)
+
+    def inverse(self) -> Transform:
+        """Get the inverse of the transform.
+
+        Returns:
+            The inverse of the transform.
+        """
+        raise NotImplementedError
 
 
 class FitOnce(ABC):

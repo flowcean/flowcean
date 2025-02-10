@@ -6,7 +6,6 @@ __all__ = [
     "FeatureNotFoundError",
     "Filter",
     "Flatten",
-    "NoTimeSeriesFeatureError",
     "Lambda",
     "MatchSamplingRate",
     "NoCategoriesError",

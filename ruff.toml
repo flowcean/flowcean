@@ -1,6 +1,6 @@
 line-length = 79
 extend-exclude = ["*/_generated/*_pb2*", "*.ipynb"]
-target-version = "py312"
+target-version = "py310"
 
 [format]
 preview = false
@@ -12,6 +12,7 @@ exclude = ["*.ipynb"]
 preview = false
 select = ["ALL"]
 ignore = [
+  "A005",    # module shadows standard library imports
   "ANN101",  # deprecated
   "ANN102",  # deprecated
   "ANN401",  # dynamically typed expressions (typing.Any) are disallowed

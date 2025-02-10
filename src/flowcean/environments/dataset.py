@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Collection, Iterable
 from itertools import islice
-from typing import Any, cast, override
+from typing import Any, cast
 
 import polars as pl
 from tqdm import tqdm
+from typing_extensions import override
 
 from flowcean.core.environment.offline import OfflineEnvironment
 

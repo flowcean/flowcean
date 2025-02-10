@@ -1,7 +1,7 @@
 from collections.abc import Iterable, Iterator
-from typing import override
 
 import polars as pl
+from typing_extensions import override
 
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.environment.offline import OfflineEnvironment

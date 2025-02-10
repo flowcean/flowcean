@@ -10,11 +10,12 @@
 
 import random
 from collections.abc import Iterator
-from typing import Self, override
+from typing import TypeAlias
 
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
+from typing_extensions import Self, override
 
 from flowcean.cli.logging import initialize_logging
 from flowcean.environments.hybrid_system import (
@@ -46,7 +47,7 @@ class Temperature(State):
         return cls(state[0])
 
 
-type TargetTemperature = float
+TargetTemperature: TypeAlias = float
 
 
 class Heating(DifferentialMode[Temperature, TargetTemperature]):
