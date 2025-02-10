@@ -77,12 +77,16 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
     time_after_load = time.time()
     logger.info("Took %.5f s to load data", time_after_load - time_start)
 
-    inputs = [
-        "^p_accumulator_.*$",
-        "activeValveCount",
-        "p_initial",
-        "T",
-    ]
+    if args.only_pressure_curve:
+        inputs = ["^p_accumulator_.*$"]
+    else:
+        inputs = [
+            "^p_accumulator_.*$",
+            "activeValveCount",
+            "p_initial",
+            "T",
+        ]
+
     outputs = ["containerWeight"]
 
     return data, inputs, outputs
@@ -375,9 +379,9 @@ if __name__ == "__main__":
     parameter_group.add_argument(
         "--sample_rate",
         type=float,
-        default=1.0,
+        default=0.01,
         metavar="RATE",
-        help="Set the sample rate for the data. (default: 1.0) -> 15 Values",
+        help="Set the sample rate for the data. (default: 0.01) -> 1500 Values",
     )
     parameter_group.add_argument(
         "--filter",
@@ -387,13 +391,18 @@ if __name__ == "__main__":
         help=(
             """Filter the data with a condition like """
             """\'And(["activeValveCount > 0", "activeValveCount < 3"])\' """
-            """or \'"activeValveCount > 0"\'."""
+            """or simple something like \'"activeValveCount > 0"\'."""
         ),
     )
     parameter_group.add_argument(
         "--apply_derivative",
         action="store_true",
         help="Applying the derivative to the data.",
+    )
+    parameter_group.add_argument(
+        "--only_pressure_curve",
+        action="store_true",
+        help="Use only the pressure curve as input for training.",
     )
 
     # training-data inspection
