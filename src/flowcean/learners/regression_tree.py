@@ -1,8 +1,9 @@
 import logging
-from typing import Any, override
+from typing import Any
 
 import polars as pl
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
+from typing_extensions import override
 
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.model import Model

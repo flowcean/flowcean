@@ -9,7 +9,9 @@ on:
 jobs:
   publish:
     name: Publish
-    runs-on: self-hosted
+    runs-on:
+      - self-hosted
+      - itl
     permissions:
       contents: write
     steps:

@@ -1,11 +1,13 @@
-from typing import override
+from dataclasses import dataclass
 
 import polars as pl
 from polars._typing import PythonLiteral
+from typing_extensions import override
 
 from flowcean.core.transform import FitOnce, Transform
 
 
+@dataclass
 class Standardize(Transform, FitOnce):
     r"""Standardize features by removing the mean and scaling to unit variance.
 
@@ -24,15 +26,10 @@ class Standardize(Transform, FitOnce):
         mean: The mean $\mu$ of each feature.
         std: The standard deviation $\sigma$
             of each feature.
-        counts: Number of samples already learned
     """
 
     mean: dict[str, float] | None = None
     std: dict[str, float] | None = None
-    counts: int | None = None
-
-    def __init__(self) -> None:
-        super().__init__()
 
     @override
     def fit(self, data: pl.LazyFrame) -> None:
@@ -58,6 +55,25 @@ class Standardize(Transform, FitOnce):
                 / (self.std.get(c) or 1.0)
                 for c in data.collect_schema().names()
             ],
+        )
+
+    @override
+    def inverse(self) -> Transform:
+        if self.mean is None or self.std is None:
+            message = "Standardize transform has not been fitted"
+            raise RuntimeError(message)
+
+        return Standardize(
+            mean={
+                c: -m * s
+                for c, m, s in zip(
+                    self.mean,
+                    self.mean.values(),
+                    self.std.values(),
+                    strict=True,
+                )
+            },
+            std={c: 1.0 / s for c, s in self.std.items()},
         )
 
 

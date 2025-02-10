@@ -1,9 +1,9 @@
 import logging
 from collections.abc import Iterable
-from typing import override
 
 import polars as pl
 from polars._typing import PolarsDataType
+from typing_extensions import override
 
 from flowcean.core.transform import Transform
 

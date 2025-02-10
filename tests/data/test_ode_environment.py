@@ -1,12 +1,12 @@
 import unittest
 from collections.abc import Sequence
-from typing import override
 
 import numpy as np
 import polars as pl
 import pytest
 from numpy.typing import NDArray
 from polars.testing import assert_frame_equal
+from typing_extensions import override
 
 from flowcean.environments.ode_environment import (
     IntegrationError,

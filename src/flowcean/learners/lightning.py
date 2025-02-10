@@ -1,6 +1,6 @@
 import os
 import platform
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any
 
 import lightning
 import polars as pl
@@ -8,6 +8,7 @@ import torch
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.utils.data import DataLoader
+from typing_extensions import override
 
 from flowcean.core.learner import SupervisedLearner
 from flowcean.environments.pytorch import TorchDataset
@@ -106,8 +107,7 @@ class MultilayerPerceptron(lightning.LightningModule):
         return y
 
     @override
-    def training_step(self, *args: Any, **kwargs: Any) -> Tensor:
-        batch = args[0]
+    def training_step(self, batch: Any) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
         return torch.nn.functional.mse_loss(outputs, targets)

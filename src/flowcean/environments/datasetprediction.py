@@ -1,6 +1,5 @@
-from typing import override
-
 import polars as pl
+from typing_extensions import override
 
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.environment.stepable import Finished

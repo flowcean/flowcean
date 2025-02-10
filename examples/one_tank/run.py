@@ -10,12 +10,12 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import Self, override
+from datetime import datetime, timezone
 
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
+from typing_extensions import Self, override
 
 import flowcean.cli
 from flowcean.environments.ode_environment import (
@@ -139,14 +139,14 @@ def main() -> None:
             max_epochs=10,
         ),
     ]:
-        t_start = datetime.now(tz=UTC)
+        t_start = datetime.now(tz=timezone.utc)
         model = learn_offline(
             train,
             learner,
             inputs,
             outputs,
         )
-        delta_t = datetime.now(tz=UTC) - t_start
+        delta_t = datetime.now(tz=timezone.utc) - t_start
         print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
         report = evaluate_offline(
