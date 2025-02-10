@@ -201,7 +201,7 @@ def print_data(
         )
         print(
             f"Accumulated Pressures: \n{observed_data
-                .select("^p_accumulator_.*$").row(index)}",
+                .select('^p_accumulator_.*$').row(index)}",
         )
 
 
@@ -229,7 +229,7 @@ def print_row(observed_data: DataFrame) -> None:
         )
         print(
             f"Accumulated Pressures: \n{observed_data
-                .select("^p_accumulator_.*$").row(int(index))}",
+                .select('^p_accumulator_.*$').row(int(index))}",
         )
 
 
