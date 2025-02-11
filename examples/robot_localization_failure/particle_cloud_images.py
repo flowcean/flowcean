@@ -1,5 +1,4 @@
 import math
-import matplotlib
 import matplotlib.pyplot as plt
 
 list_of_particles = [
@@ -27,30 +26,42 @@ list_of_particles = [
 
 plt.figure()
 
+sum_x = 0
+sum_y = 0
+num_particles = len(list_of_particles)
+
 for particle in list_of_particles:
-    # Extract the position
     pos = particle['pose']['position']
     x = pos['x']
     y = pos['y']
+
+    sum_x += x
+    sum_y += y
     
     quat = particle['pose']['orientation']
-
-    # Calculate yaw (rotation around z-axis) using 2D conversion
+    # Calculate yaw (rotation around the z-axis) using 2D conversion
     yaw = 2 * math.atan2(quat['z'], quat['w'])
     
     # Plot the position as a blue dot
     plt.plot(x, y, 'bo')
-
+    
     arrow_length = 0.3
     
-    # Draw an arrow showing the orientation
+    # Draw an arrow representing the orientation
     plt.arrow(x, y, arrow_length * math.cos(yaw), arrow_length * math.sin(yaw),
               head_width=0.1, head_length=0.1, fc='r', ec='r')
 
+mean_x = sum_x / num_particles
+mean_y = sum_y / num_particles
+
+# Plot the mean position as a green star
+plt.plot(mean_x, mean_y, 'g*', markersize=15, label='Mean Position')
+
 plt.xlabel('X')
 plt.ylabel('Y')
-plt.title('Particle Positions and Orientations')
+plt.title('Particle Positions, Orientations, and Mean Position')
 plt.axis('equal')
 plt.grid(True)
+plt.legend()
 
 plt.show()
