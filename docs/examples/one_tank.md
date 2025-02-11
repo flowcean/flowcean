@@ -45,7 +45,7 @@ $$ x*n = f\left(V_n, x*{n-1}, V*{n-1}, x*{n-2}, V\_{n-2}\right). $$
 To do this, we first need data to learn the functions representation in Flowcean.
 Normally this data would be recorded from a real CPS and imported into the framework as a CSV, ROS bag or something similar.
 However, since we know the differential equation describing the system behavior, we can also use this equation to generate data.
-We can do this by using an [`ODEEnvironment`](../reference/flowcean/environments/ode_environment.md) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/environment/incremental.md) within the framework.
+We can do this by using an [`ODEEnvironment`](../reference/flowcean/ode/index.md#flowcean.ode.OdeEnvironment) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/index.md#flowcean.core.IncrementalEnvironment) within the framework.
 
 To do so, a special `OneTank` class is created which inherits from the general flowcean `OdeSystem` class.
 
@@ -141,7 +141,7 @@ The generated output of the `OdeEnvironment` environment has the form
 | $x[N]$  | $V[N]$  |
 
 Since the learners we will use later only support learning on a fixed amount of data (called "[offline learners](../user_guide/learning_strategies.md)" in the framework), we need to convert the incremental dataset into a fixed size dataset.
-This can be done by calling the [`collect(N)`](../reference/flowcean/core/environment/incremental.md#flowcean.core.environment.incremental.IncrementalEnvironment.collect) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`Dataset`](../reference/flowcean/environments/dataset.md).
+This can be done by calling the [`collect(env, N)`](../reference/flowcean/polars/index.md#flowcean.polars.collect) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`Dataset`](../reference/flowcean/polars/index.md#flowcean.polars.Dataset).
 
 ```python
 data = Dataset(data_incremental.load().take(250))
@@ -149,7 +149,7 @@ data = Dataset(data_incremental.load().take(250))
 
 Until now, the data is in a time series format with each row representing a sampled value at the step $n$.
 However, for our prediction of the current fill level $x[n]$, as described by the equation above, we need the current input $V[n]$ and the values of the two previous time steps as a single sample.
-To achieve this we use a [`SlidingWindow`](../reference/flowcean/transforms/index.md#flowcean.transforms.SlidingWindow) transform.
+To achieve this we use a [`SlidingWindow`](../reference/flowcean/polars/index.md#flowcean.polars.SlidingWindow) transform.
 See the linked documentation for a more detailed explanation of how the transform works.
 
 ```python
@@ -157,7 +157,7 @@ data = data.with_transform(SlidingWindow(window_size=3))
 ```
 
 Now that the data is in the correct format, it can be split into a test set with 80% of the samples and a training set with the remaining 20%.
-This is done by using a [`TrainTestSplit`](../reference/flowcean/environments/train_test_split.md) operation and helps with evaluating the learned models performance after training.
+This is done by using a [`TrainTestSplit`](../reference/flowcean/polars/index.md#flowcean.polars.train_test_split) operation and helps with evaluating the learned models performance after training.
 To make the learning less biased, the samples are shuffled before splitting.
 
 ```python
@@ -167,11 +167,11 @@ train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 With the training data generated, fully transformed and split it's time to use learning algorithms to learn the prediction function from the beginning of this section.
 We use two different learners which both belong the category of [offline learners](../user_guide/learning_strategies.md).
 
-First, a [regression tree](../reference/flowcean/learners/regression_tree.md) is used to learn a model.
+First, a [regression tree](../reference/flowcean/sklearn/index.md#flowcean.sklearn.RegressionTree) is used to learn a model.
 The implementation of this learner is part of the scikit-learn library.
 The learned model consists of a sequence of binary questions / comparisons that lead to the model result.
 The maximum depth, i.e. the number of questions asked on each path, is limited to five.
-The learner class is created and the helper method [`learn_offline`](../reference/flowcean/strategies/offline.md#flowcean.strategies.offline.learn_offline) called to start the training process
+The learner class is created and the helper method [`learn_offline`](../reference/flowcean/core/index.md#flowcean.core.learn_offline) called to start the training process
 
 ```python
 regression_learner = RegressionTree(max_depth=5)
@@ -185,7 +185,7 @@ regression_model = learn_offline(
 
 The `inputs` and `outputs` variables contain the names of the input and output fields in the `train' dataframe.
 
-Secondly a [multi-layer perceptron](../reference/flowcean/learners/lightning.md) is used to create a model.
+Secondly a [multi-layer perceptron](../reference/flowcean/torch/index.md#flowcean.torch.MultilayerPerceptron) is used to create a model.
 This type of model consists of a set of neurones arranged in layers which are connected with the previous layer.
 The value of each neuron is calculated by weighting and summing up the values of the neurons in the previous layer and applying a non-linear function; in this case a [leaky ReLU function](<https://en.wikipedia.org/wiki/Rectifier_(neural_networks)#Leaky_ReLU>).
 The result can be read from the neurons of the last layer.
@@ -211,11 +211,11 @@ perceptron_model = learn_offline(
 
 The final step is to evaluate the obtained models.
 This is done to estimate how well they are able to describe the unknown function as described above.
-Flowcean ships with a couple of different [metrics](../reference/flowcean/metrics/index.md) which can be used for this purpose.
+Flowcean ships with a couple of different metrics which can be used for this purpose.
 Depending on the underlying problem, different metrics can be reasonable to apply.
-For this example the [`MeanAbsoluteError`](../reference/flowcean/metrics/regression.md#flowcean.metrics.regression.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/metrics/regression.md#flowcean.metrics.regression.MeanSquaredError) error are used.
+For this example the [`MeanAbsoluteError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanSquaredError) error are used.
 These metrics are useful when the output of the learned function is a (more or less) continuous value and the deviation from the actual value is of interest.
-The helper method [`evaluate_offline`](../reference/flowcean/strategies/offline.md) allows for easy evaluation of multiple metrics for a learned model.
+The helper method [`evaluate_offline`](../reference/flowcean/core/index.md#flowcean.core.evaluate_offline) allows for easy evaluation of multiple metrics for a learned model.
 
 ```python
 regression_report = evaluate_offline(

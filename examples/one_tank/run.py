@@ -17,24 +17,26 @@ import polars as pl
 from numpy.typing import NDArray
 from typing_extensions import Self, override
 
-import flowcean.cli
-from flowcean.environments.ode_environment import (
+from flowcean.cli import initialize_logging
+from flowcean.core import evaluate_offline, learn_offline
+from flowcean.ode import (
     OdeEnvironment,
+    OdeState,
     OdeSystem,
-    State,
 )
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms.sliding_window import SlidingWindow
+from flowcean.polars import SlidingWindow, TrainTestSplit, collect
+from flowcean.sklearn import (
+    MeanAbsoluteError,
+    MeanSquaredError,
+    RegressionTree,
+)
+from flowcean.torch import LightningLearner, MultilayerPerceptron
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class TankState(State):
+class TankState(OdeState):
     water_level: float
 
     @override
@@ -98,7 +100,7 @@ class OneTank(OdeSystem[TankState]):
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    initialize_logging()
 
     system = OneTank(
         area=5.0,
@@ -118,7 +120,7 @@ def main() -> None:
         ),
     )
 
-    data = data_incremental.collect(250).with_transform(
+    data = collect(data_incremental, 250).with_transform(
         SlidingWindow(window_size=3),
     )
 

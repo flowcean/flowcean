@@ -13,7 +13,7 @@ from pathlib import Path
 import polars as pl
 
 import flowcean.cli
-from flowcean.environments.rosbag import RosbagLoader
+from flowcean.ros import RosbagLoader
 
 USE_CACHED_ROS_DATA = False
 UPDATE_CACHE = False

@@ -5,11 +5,13 @@ from pathlib import Path
 from tqdm import tqdm
 
 import flowcean.cli
-from flowcean.core.environment.chained import ChainedOfflineEnvironments
-from flowcean.core.environment.join import JoinedEnvironments
-from flowcean.environments.json import JsonDataLoader
-from flowcean.environments.parquet import ParquetDataLoader
-from flowcean.transforms import ToTimeSeries
+from flowcean.core import ChainedOfflineEnvironments
+from flowcean.polars import (
+    JoinedOfflineEnvironment,
+    JsonDataLoader,
+    ParquetDataLoader,
+    ToTimeSeries,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +21,11 @@ def main() -> None:
     time_start = time.time()
     data = ChainedOfflineEnvironments(
         [
-            JoinedEnvironments(
-                ParquetDataLoader(path).with_transform(ToTimeSeries("t")),
-                JsonDataLoader(path.with_suffix(".json")),
+            JoinedOfflineEnvironment(
+                (
+                    ParquetDataLoader(path).with_transform(ToTimeSeries("t")),
+                    JsonDataLoader(path.with_suffix(".json")),
+                ),
             )
             for path in tqdm(
                 list(Path("./data").glob("*.parquet")),
