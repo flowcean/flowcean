@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any
 
 from typing_extensions import override
 
@@ -10,9 +9,6 @@ from flowcean.core.environment.observable import (
     TransformedObservable,
 )
 from flowcean.core.environment.stepable import Finished, Stepable
-
-if TYPE_CHECKING:
-    from flowcean.environments.dataset import Dataset
 
 
 class IncrementalEnvironment(
@@ -39,26 +35,6 @@ class IncrementalEnvironment(
             except Finished:
                 break
             yield self.observe()
-
-    def collect(
-        self,
-        n: int | None = None,
-        *,
-        progress_bar: bool | dict[str, Any] = True,
-    ) -> Dataset:
-        """Collect data from the environment.
-
-        Args:
-            n: Number of steps to collect. If None, all steps are collected.
-            progress_bar: Whether to show a progress bar. If a dictionary is
-                provided, it will be passed to the progress bar.
-
-        Returns:
-            The collected dataset.
-        """
-        from flowcean.environments.dataset import collect
-
-        return collect(self, n, progress_bar=progress_bar)
 
     def num_steps(self) -> int | None:
         """Return the number of steps in the environment.

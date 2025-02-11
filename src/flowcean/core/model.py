@@ -4,8 +4,8 @@ from pathlib import Path
 
 from typing_extensions import override
 
-from flowcean.core.data import Data
-from flowcean.core.transform import Transform
+from .data import Data
+from .transform import Transform
 
 
 class Model(ABC):

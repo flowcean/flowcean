@@ -17,10 +17,13 @@ import polars as pl
 from typing_extensions import override
 
 import flowcean.cli
-from flowcean.core.environment.active import ActiveEnvironment
-from flowcean.core.learner import ActiveLearner
-from flowcean.core.model import Model
-from flowcean.strategies.active import StopLearning, learn_active
+from flowcean.core import (
+    ActiveEnvironment,
+    ActiveLearner,
+    Model,
+    StopLearning,
+    learn_active,
+)
 
 logger = logging.getLogger(__name__)
 
