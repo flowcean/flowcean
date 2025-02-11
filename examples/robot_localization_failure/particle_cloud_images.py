@@ -26,40 +26,51 @@ list_of_particles = [
 
 plt.figure()
 
-sum_x = 0
-sum_y = 0
+sum_x = 0.0
+sum_y = 0.0
+sum_sin = 0.0
+sum_cos = 0.0
 num_particles = len(list_of_particles)
 
 for particle in list_of_particles:
     pos = particle['pose']['position']
     x = pos['x']
     y = pos['y']
-
     sum_x += x
     sum_y += y
-    
+
     quat = particle['pose']['orientation']
-    # Calculate yaw (rotation around the z-axis) using 2D conversion
     yaw = 2 * math.atan2(quat['z'], quat['w'])
+    sum_sin += math.sin(yaw)
+    sum_cos += math.cos(yaw)
     
-    # Plot the position as a blue dot
+    # Plot the particle's position as a blue dot
     plt.plot(x, y, 'bo')
     
     arrow_length = 0.3
-    
-    # Draw an arrow representing the orientation
-    plt.arrow(x, y, arrow_length * math.cos(yaw), arrow_length * math.sin(yaw),
+    plt.arrow(x, y,
+              arrow_length * math.cos(yaw),
+              arrow_length * math.sin(yaw),
               head_width=0.1, head_length=0.1, fc='r', ec='r')
 
 mean_x = sum_x / num_particles
 mean_y = sum_y / num_particles
 
+mean_yaw = math.atan2(sum_sin, sum_cos)
+
 # Plot the mean position as a green star
 plt.plot(mean_x, mean_y, 'g*', markersize=15, label='Mean Position')
 
+# Plot the mean orientation as an arrow starting at the mean position
+arrow_length_mean = 0.5
+plt.arrow(mean_x, mean_y,
+          arrow_length_mean * math.cos(mean_yaw),
+          arrow_length_mean * math.sin(mean_yaw),
+          head_width=0.1, head_length=0.1, fc='k', ec='k', label='Mean Orientation')
+
 plt.xlabel('X')
 plt.ylabel('Y')
-plt.title('Particle Positions, Orientations, and Mean Position')
+plt.title('Particle Positions, Orientations, Mean Position, and Mean Orientation')
 plt.axis('equal')
 plt.grid(True)
 plt.legend()
