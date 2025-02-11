@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol
 
-import polars as pl
 from typing_extensions import Self, override
 
 from flowcean.core.transform import Identity, Transform
 
-Observation = TypeVar("Observation")
+if TYPE_CHECKING:
+    from flowcean.core.data import Data
 
 
-class Observable(Generic[Observation], ABC):
-    """Base class for observations."""
+class Observable(Protocol):
+    """Protocol for observations."""
 
     @abstractmethod
-    def observe(self) -> Observation:
+    def observe(self) -> Data:
         """Observe and return the observation."""
+        raise NotImplementedError
 
 
-class TransformedObservable(Observable[pl.LazyFrame]):
+class TransformedObservable(Observable):
     """Base class for observations that carry a transform.
 
     Attributes:
@@ -49,7 +50,7 @@ class TransformedObservable(Observable[pl.LazyFrame]):
         return self
 
     @abstractmethod
-    def _observe(self) -> pl.LazyFrame:
+    def _observe(self) -> Data:
         """Observe and return the observation without applying the transform.
 
         This method must be implemented by subclasses.
@@ -59,7 +60,7 @@ class TransformedObservable(Observable[pl.LazyFrame]):
         """
 
     @override
-    def observe(self) -> pl.LazyFrame:
+    def observe(self) -> Data:
         return self.transform(self._observe())
 
     def __or__(

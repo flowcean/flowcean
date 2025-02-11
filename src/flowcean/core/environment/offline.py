@@ -3,14 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import polars as pl
-from typing_extensions import override
-
 from flowcean.core.environment.observable import TransformedObservable
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from flowcean.core.environment.chained import ChainedOfflineEnvironments
     from flowcean.environments.streaming import StreamingOfflineEnvironment
 
@@ -26,21 +21,6 @@ class OfflineEnvironment(TransformedObservable):
     def __init__(self) -> None:
         """Initialize the offline environment."""
         super().__init__()
-
-    def join(self, other: OfflineEnvironment) -> JoinedOfflineEnvironment:
-        """Join this offline environment with another one.
-
-        Args:
-            other: The other offline environment to join.
-
-        Returns:
-            The joined offline environment.
-        """
-        return JoinedOfflineEnvironment([self, other])
-
-    def __and__(self, other: OfflineEnvironment) -> JoinedOfflineEnvironment:
-        """Shorthand for `join`."""
-        return self.join(other)
 
     def chain(self, *other: OfflineEnvironment) -> ChainedOfflineEnvironments:
         """Chain this offline environment with other offline environments.
@@ -90,29 +70,3 @@ class OfflineEnvironment(TransformedObservable):
         from flowcean.environments.streaming import StreamingOfflineEnvironment
 
         return StreamingOfflineEnvironment(self, batch_size)
-
-
-class JoinedOfflineEnvironment(OfflineEnvironment):
-    """Environment that joins multiple offline environments.
-
-    Attributes:
-        environments: The offline environments to join.
-    """
-
-    environments: Iterable[OfflineEnvironment]
-
-    def __init__(self, environments: Iterable[OfflineEnvironment]) -> None:
-        """Initialize the joined offline environment.
-
-        Args:
-            environments: The offline environments to join.
-        """
-        self.environments = environments
-        super().__init__()
-
-    @override
-    def _observe(self) -> pl.LazyFrame:
-        return pl.concat(
-            (environment.observe() for environment in self.environments),
-            how="horizontal",
-        )

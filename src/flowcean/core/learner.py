@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-import polars as pl
+from flowcean.core.data import Data
 
 from .model import Model
 
@@ -12,11 +12,7 @@ class SupervisedLearner(ABC):
     """
 
     @abstractmethod
-    def learn(
-        self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
-    ) -> Model:
+    def learn(self, inputs: Data, outputs: Data) -> Model:
         """Learn from the data.
 
         Args:
@@ -36,11 +32,7 @@ class SupervisedIncrementalLearner(ABC):
     """
 
     @abstractmethod
-    def learn_incremental(
-        self,
-        inputs: pl.LazyFrame,
-        outputs: pl.LazyFrame,
-    ) -> Model:
+    def learn_incremental(self, inputs: Data, outputs: Data) -> Model:
         """Learn from the data incrementally.
 
         Args:
@@ -59,11 +51,7 @@ class ActiveLearner(ABC):
     """
 
     @abstractmethod
-    def learn_active(
-        self,
-        action: pl.DataFrame,
-        observation: pl.DataFrame,
-    ) -> Model:
+    def learn_active(self, action: Data, observation: Data) -> Model:
         """Learn from actions and observations.
 
         Args:
@@ -75,7 +63,7 @@ class ActiveLearner(ABC):
         """
 
     @abstractmethod
-    def propose_action(self, observation: pl.DataFrame) -> pl.DataFrame:
+    def propose_action(self, observation: Data) -> Data:
         """Propose an action based on an observation.
 
         Args:

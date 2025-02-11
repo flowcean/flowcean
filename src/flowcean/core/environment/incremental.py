@@ -3,10 +3,12 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
-import polars as pl
 from typing_extensions import override
 
-from flowcean.core.environment.observable import TransformedObservable
+from flowcean.core.data import Data
+from flowcean.core.environment.observable import (
+    TransformedObservable,
+)
 from flowcean.core.environment.stepable import Finished, Stepable
 
 if TYPE_CHECKING:
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
 class IncrementalEnvironment(
     TransformedObservable,
     Stepable,
-    Iterable[pl.LazyFrame],
+    Iterable[Data],
 ):
     """Base class for incremental environments.
 
@@ -29,7 +31,7 @@ class IncrementalEnvironment(
         super().__init__()
 
     @override
-    def __iter__(self) -> Iterator[pl.LazyFrame]:
+    def __iter__(self) -> Iterator[Data]:
         yield self.observe()
         while True:
             try:

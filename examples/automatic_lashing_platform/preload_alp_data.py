@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 import flowcean.cli
 from flowcean.core.environment.chained import ChainedOfflineEnvironments
+from flowcean.core.environment.join import JoinedEnvironments
 from flowcean.environments.json import JsonDataLoader
 from flowcean.environments.parquet import ParquetDataLoader
 from flowcean.transforms import ToTimeSeries
@@ -18,9 +19,10 @@ def main() -> None:
     time_start = time.time()
     data = ChainedOfflineEnvironments(
         [
-            ParquetDataLoader(path)
-            .with_transform(ToTimeSeries("t"))
-            .join(JsonDataLoader(path.with_suffix(".json")))
+            JoinedEnvironments(
+                ParquetDataLoader(path).with_transform(ToTimeSeries("t")),
+                JsonDataLoader(path.with_suffix(".json")),
+            )
             for path in tqdm(
                 list(Path("./data").glob("*.parquet")),
                 desc="Loading environments",
