@@ -50,7 +50,7 @@ class ParticleCloudImage(Transform):
         if self.save_images:
             Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        # Collect the particle cloud data from the LazyFrame
+        # Collect the particle cloud data from the LazyFrame.
         particle_cloud = data.collect()[0, self.particle_cloud_feature_name]
         image_records = []
 
@@ -58,9 +58,9 @@ class ParticleCloudImage(Transform):
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
         ax.axis("off")
 
-        # Process a slice of messages (adjust indices as needed)
+        # Process messages (adjust indices as needed)
         for message_number, message_data in enumerate(
-            particle_cloud[0:9],
+            particle_cloud[0:59],
             start=0,
         ):
             time_stamp = message_data["time"]
@@ -125,7 +125,7 @@ class ParticleCloudImage(Transform):
             ax.set_xlim(mean_x - half_region, mean_x + half_region)
             ax.set_ylim(mean_y - half_region, mean_y + half_region)
 
-            # Plot all filtered particles as black dots
+            # Plot each filtered particle as a black dot
             for p in filtered_particles:
                 ax.plot(p["x"], p["y"], "ko", markersize=2)
 
@@ -138,21 +138,22 @@ class ParticleCloudImage(Transform):
 
             # Convert the figure to a NumPy array using the RGBA buffer
             fig.canvas.draw()
-            img_array = np.asarray(fig.canvas.buffer_rgba())
-            img_array = img_array[..., :3]  # Remove alpha channel
+            img_array = np.asarray(
+                fig.canvas.buffer_rgba(),
+            )  # shape: (image_pixel_size, image_pixel_size, 4)
+            img_array = img_array[..., :3]  # Remove the alpha channel
 
-            # Convert to grayscale using luminance conversion
-            gray_image = np.dot(img_array, [0.2989, 0.5870, 0.1140]).astype(
-                np.uint8,
-            )
+            # Take any one channel for gray scaling (since plot is b&w)
+            gray_image = img_array[..., 0].astype(np.uint8)
+            plt.close(fig)
+
             image_records.append(
                 {"time": time_stamp, "image": gray_image.tolist()},
             )
 
-        plt.close(fig)
+        plt.close("all")
 
         df_images = pl.DataFrame({"/particle_cloud_image": [image_records]})
-
         return data.collect().hstack(df_images).lazy()
 
     def rotate_point(
