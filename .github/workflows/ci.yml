@@ -102,7 +102,6 @@ jobs:
       - name: Set up DVC
         run: |
           uv run dvc --version
-          uv run dvc remote modify --local itl-nas password ${{ secrets.ITL_NAS_DVC_SHARE_PASSWORD }}
           uv run dvc config cache.dir ${{ runner.workspace }}/.cache/dvc
 
       - name: DVC pull

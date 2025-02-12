@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, Any, BinaryIO, cast, final
 
 from typing_extensions import override
 
+from flowcean.core.data import Data
+from flowcean.core.transform import Transform
+
 if TYPE_CHECKING:
     import polars as pl
-
-    from flowcean.core.transform import Transform
-
 
 class Model(ABC):
     """Base class for models.
@@ -23,10 +23,7 @@ class Model(ABC):
     """
 
     @abstractmethod
-    def predict(
-        self,
-        input_features: pl.LazyFrame,
-    ) -> pl.LazyFrame:
+    def predict(self, input_features: Data) -> Data:
         """Predict outputs for the given inputs.
 
         Args:
@@ -114,16 +111,20 @@ class ModelWithTransform(Model):
     """
 
     model: Model
-    input_transform: Transform
-    output_transform: Transform
+    input_transform: Transform | None
+    output_transform: Transform | None
 
     @override
-    def predict(
-        self,
-        input_features: pl.LazyFrame,
-    ) -> pl.LazyFrame:
-        transformed = self.input_transform.apply(input_features)
-        return self.output_transform.apply(self.model.predict(transformed))
+    def predict(self, input_features: Data) -> Data:
+        if self.input_transform is not None:
+            input_features = self.input_transform.apply(input_features)
+
+        prediction = self.model.predict(input_features)
+
+        if self.output_transform is not None:
+            return self.output_transform.apply(prediction)
+
+        return prediction
 
     @override
     def save_state(self) -> dict[str, Any]:

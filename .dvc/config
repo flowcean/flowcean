@@ -6,4 +6,5 @@
     user = Q9WX2KGsC2oSQMD
 ['remote "itl-nas"']
     url = ssh://nas.flowcean.me:/agenc/dvc_data
-    user = flowcean-write
+    user = flowcean-read
+    password = mUSG1JMkYFazWtQKlqayUQifCG$TW2E3

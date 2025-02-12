@@ -1,5 +1,4 @@
 import logging
-from typing import cast
 
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import OfflineMetric
@@ -23,6 +22,7 @@ def learn_offline(
     outputs: list[str],
     *,
     input_transform: Transform | None = None,
+    output_transform: Transform | None = None,
 ) -> Model:
     """Learn from an offline environment.
 
@@ -35,6 +35,8 @@ def learn_offline(
         outputs: The output feature names.
         input_transform: The transform to apply to the input features.
             Will be part of the final model.
+        output_transform: The transform to apply to the output features.
+            Its inverse will be part of the final model.
 
     Returns:
         The model learned from the environment.
@@ -46,21 +48,34 @@ def learn_offline(
     output_features = data.select(outputs)
 
     if isinstance(input_transform, FitOnce):
-        cast(FitOnce, input_transform).fit(input_features.lazy())
+        input_transform.fit(input_features)
+    elif isinstance(input_transform, FitIncremetally):
+        input_transform.fit_incremental(input_features)
 
-    if isinstance(input_transform, FitIncremetally):
-        cast(FitIncremetally, input_transform).fit_incremental(
-            input_features.lazy(),
-        )
+    if input_transform is not None:
+        input_features = input_transform.apply(input_features)
+
+    if isinstance(output_transform, FitOnce):
+        output_transform.fit(output_features)
+    elif isinstance(output_transform, FitIncremetally):
+        output_transform.fit_incremental(output_features)
+
+    if output_transform is not None:
+        output_features = output_transform.apply(output_features)
 
     logger.info("Learning model")
-    model = learner.learn(input_features, output_features)
-    if input_transform is None:
+    model = learner.learn(inputs=input_features, outputs=output_features)
+
+    if input_transform is None and output_transform is None:
         return model
+
+    if output_transform is not None:
+        output_transform = output_transform.inverse()
+
     return ModelWithTransform(
-        model=model,
-        input_transform=input_transform,
-        output_transform=Identity(),
+        model,
+        input_transform,
+        output_transform,
     )
 
 
