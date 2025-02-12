@@ -1,7 +1,7 @@
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.learner import SupervisedIncrementalLearner
 from flowcean.core.model import Model, ModelWithTransform
-from flowcean.core.transform import FitIncremetally, Identity, Transform
+from flowcean.core.transform import FitIncremetally, Transform
 
 
 def learn_incremental(

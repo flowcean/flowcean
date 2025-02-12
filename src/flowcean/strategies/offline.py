@@ -6,7 +6,6 @@ from flowcean.core.model import Model, ModelWithTransform
 from flowcean.core.transform import (
     FitIncremetally,
     FitOnce,
-    Identity,
     Transform,
 )
 from flowcean.environments.dataset import OfflineEnvironment

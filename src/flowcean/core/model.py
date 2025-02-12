@@ -10,11 +10,10 @@ from typing import TYPE_CHECKING, Any, BinaryIO, cast, final
 
 from typing_extensions import override
 
-from flowcean.core.data import Data
-from flowcean.core.transform import Transform
-
 if TYPE_CHECKING:
-    import polars as pl
+    from flowcean.core.data import Data
+    from flowcean.core.transform import Transform
+
 
 class Model(ABC):
     """Base class for models.
