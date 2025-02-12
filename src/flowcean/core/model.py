@@ -51,7 +51,24 @@ class Model(ABC):
 
     @staticmethod
     def load(file: Path | BinaryIO) -> Model:
-        """Load the model from file.
+        """Load a model from file.
+
+        This method can be used to load a previously saved flowcean model from
+        a file or a file-like object.
+        To load a model from a file use
+
+        ```python
+        with open("model.fml", "rb") as f:
+            model = Model.load(f)
+        ```
+
+        The `load` method will automatically determine the model type and and
+        any attached transforms and will load them into the correct model
+        class.
+
+        As this method uses the `pickle` module to load the model, it is not
+        safe to load models from untrusted sources as this could lead to
+        arbitrary code execution!
 
         Args:
             file: The file like object to load the model from.
