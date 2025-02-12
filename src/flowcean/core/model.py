@@ -36,6 +36,17 @@ class Model(ABC):
     def save(self, file: Path | BinaryIO) -> None:
         """Save the model to the file.
 
+        This method can be used to save a flowcean model to a file or a
+        file-like object. To save a model to a file use
+
+        ```python
+        with open("model.fml", "wb") as f:
+            model.save(f)
+        ```
+
+        The resulting file will contain the model any any attached transforms.
+        It can be loaded again using the `load` method from the `Model` class.
+
         Args:
             file: The file like object to save the model to.
         """
