@@ -1,6 +1,6 @@
 import logging
 import math
-import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,10 +11,10 @@ from flowcean.core.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-class ParticleCloudImages(Transform):
-    """Generates grayscale images from 2D particle data.
+class ParticleCloudImage(Transform):
+    """Generates grayscale image from particle cloud data.
 
-    Processes 2D particle data to create grayscale
+    Processes 2D particle cloud data to create grayscale
     images highlighting the particle distribution.
     Optionally saves images to disk
     and returns them embedded in a Polars DataFrame for further analysis.
@@ -28,11 +28,11 @@ class ParticleCloudImages(Transform):
         *,
         save_images: bool = False,
     ) -> None:
-        """Initialize the ParticleImages transform.
+        """Initialize the ParticleCloudImage transform.
 
         Args:
             particle_cloud_feature_name: Name of the particle cloud feature.
-            cutting_area: Square region side length in meters.
+            cutting_area: Square region side length for cropping (in meters).
             image_pixel_size: Output image resolution.
             save_images: Whether to save images to disk.
         """
@@ -44,51 +44,35 @@ class ParticleCloudImages(Transform):
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Matching sampling rate of time series.")
 
-        # -------------------------------
-        # Configuration Variables
-        # -------------------------------
-        # save_images = False
-        # cutting_area = 15.0  # Square region side length in meters
-        # image_pixel_size = 300  # Output image resolution
-
         half_region = self.cutting_area / 2.0
 
         region_str = str(self.cutting_area).replace(".", "_")
         output_dir = f"particle_images_{region_str}m_{self.image_pixel_size}p"
+
         if self.save_images:
-            os.makedirs(output_dir, exist_ok=True)
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         particle_cloud = data.collect()[
             0,
             self.particle_cloud_feature_name,
         ]
-
-        # Prepare a List for the Image Records
-        # Each record will be a dict with keys "time" and "image"
-        # The image field will be a nested list
-        # (converted from a grayscale NumPy array)
-        # so that the DataFrame column type is list[struct(2)]
         image_records = []
 
-        # Process given messages
         for message_number, message_data in enumerate(
-            particle_cloud[3300:3303],
-            start=3300,
+            particle_cloud[3357:3359],
+            start=3357,
         ):
             time_stamp = message_data["time"]
             print(f"Processing message {message_number} at time {time_stamp}")
 
-            # Extract particle data from the message.
-            particles_dict = message_data["value"]  # Dict with key "particles"
-            list_of_particles = particles_dict[
-                "particles"
-            ]  # List of particle dicts
+            particles_dict = message_data["value"]
+            list_of_particles = particles_dict["particles"]
 
             if not list_of_particles:
                 print(f"Message {message_number} has no particles. Skipping.")
                 continue
 
-            # Step 1: Compute Mean Position and Mean Orientation
+            # Compute Mean Position and Mean Orientation
             sum_x, sum_y = 0.0, 0.0
             sum_sin, sum_cos = 0.0, 0.0
             num_particles = len(list_of_particles)
@@ -99,8 +83,8 @@ class ParticleCloudImages(Transform):
                 x = pos["x"]
                 y = pos["y"]
                 quat = particle["pose"]["orientation"]
-                # Compute yaw (rotation about z-axis) assuming the
-                # quaternion represents 2D rotation
+
+                # Compute yaw (rotation about z-axis)
                 yaw = 2 * math.atan2(quat["z"], quat["w"])
                 particles_data.append({"x": x, "y": y, "yaw": yaw})
                 sum_x += x
@@ -112,7 +96,7 @@ class ParticleCloudImages(Transform):
             mean_y = sum_y / num_particles
             mean_yaw = math.atan2(sum_sin, sum_cos)
 
-            # Step 2: Rotate Particle Data by -mean_yaw About the Mean Position
+            # Rotate Particle Data by -mean_yaw About the Mean Position
             rotated_particles = []
             for p in particles_data:
                 x, y, yaw = p["x"], p["y"], p["yaw"]
@@ -122,12 +106,12 @@ class ParticleCloudImages(Transform):
                     -mean_yaw,
                     (mean_x, mean_y),
                 )
-                new_yaw = yaw - mean_yaw  # Adjust orientation accordingly
+                new_yaw = yaw - mean_yaw
                 rotated_particles.append(
                     {"x": new_x, "y": new_y, "yaw": new_yaw},
                 )
 
-            # Step 3: Filter Out Particles Outside the Square Region
+            # Filter Out Particles Outside the Square Region
             filtered_particles = [
                 p
                 for p in rotated_particles
@@ -135,23 +119,21 @@ class ParticleCloudImages(Transform):
                 and abs(p["y"] - mean_y) <= half_region
             ]
 
-            # Step 4: Create the Image
-            # Create a figure that is 1x1 inch at dpi=image_pixel_size
-            # (yielding image_pixel_size x image_pixel_size pixels)
+            # Create the Image
             fig, ax = plt.subplots(figsize=(1, 1), dpi=self.image_pixel_size)
             fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
             ax.set_xlim(mean_x - half_region, mean_x + half_region)
             ax.set_ylim(mean_y - half_region, mean_y + half_region)
-            ax.axis("off")  # Remove axes, grid, ticks, etc.
+            ax.axis("off")
 
             # Plot each filtered particle as a black dot
             for p in filtered_particles:
                 ax.plot(p["x"], p["y"], "ko", markersize=2)
 
             if self.save_images:
-                filename = os.path.join(
-                    output_dir,
-                    f"particle_region_{message_number:04d}.png",
+                filename = (
+                    Path(output_dir)
+                    / f"particle_region_{message_number:04d}.png"
                 )
                 plt.savefig(filename, dpi=self.image_pixel_size)
 
@@ -174,12 +156,6 @@ class ParticleCloudImages(Transform):
                 {"time": time_stamp, "image": gray_image.tolist()},
             )
 
-        # -------------------------------
-        # Create a Polars DataFrame with One Column and One Row
-        # -------------------------------
-        # The column '/particle_cloud_image' will contain a list of structs,
-        # each struct has 2 fields: 'time' (Int64) and 'image'
-        # (list of lists of Int64)
         df_images = pl.DataFrame({"/particle_cloud_image": [image_records]})
 
         return (
@@ -190,7 +166,11 @@ class ParticleCloudImages(Transform):
         )
 
     def rotate_point(
-        self, x: float, y: float, angle: float, origin: tuple[float, float],
+        self,
+        x: float,
+        y: float,
+        angle: float,
+        origin: tuple[float, float],
     ) -> tuple[float, float]:
         """Rotate a point about given origin by specified angle (radians)."""
         ox, oy = origin
