@@ -12,7 +12,7 @@ import logging
 
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_offline
-from flowcean.polars import Select, Standardize, TrainTestSplit, UriDataLoader
+from flowcean.polars import DataFrame, Select, Standardize, TrainTestSplit
 from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
 from flowcean.torch import LightningLearner, MultilayerPerceptron
 
@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    data = UriDataLoader(uri="file:./data/processed_data.csv").with_transform(
+    data = DataFrame.from_uri(
+        uri="file:./data/processed_data.csv",
+    ).with_transform(
         Select(
             [
                 "y-Amplitude",

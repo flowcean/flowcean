@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from flowcean.polars import InvalidUriSchemeError
-from flowcean.polars.environments.uri import _file_uri_to_path
+from flowcean.polars.environments.dataframe import _file_uri_to_path
 
 
 class TestFileUriToPath(unittest.TestCase):

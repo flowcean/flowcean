@@ -3,12 +3,12 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars import Dataset, ToTimeSeries
+from flowcean.polars import DataFrame, ToTimeSeries
 
 
 class TestToTimeSeries(unittest.TestCase):
     def test_to_time_series_single_time_feature(self) -> None:
-        dataset = Dataset(
+        dataset = DataFrame(
             pl.DataFrame(
                 {
                     "time_feature": [0, 1, 2, 3],

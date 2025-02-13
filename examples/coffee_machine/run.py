@@ -11,14 +11,14 @@
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_offline
 from flowcean.grpc import GrpcLearner
-from flowcean.polars import TrainTestSplit, UriDataLoader
+from flowcean.polars import DataFrame, TrainTestSplit
 from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
 
 
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    data = UriDataLoader(uri="file:./data/coffee_data.csv")
+    data = DataFrame.from_uri(uri="file:./data/coffee_data.csv")
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
     learner = GrpcLearner.run_docker(

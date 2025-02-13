@@ -11,8 +11,8 @@ import time
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_offline
 from flowcean.polars import (
+    DataFrame,
     Flatten,
-    ParquetDataLoader,
     Resample,
     Select,
     TrainTestSplit,
@@ -31,7 +31,7 @@ def main() -> None:
     time_start = time.time()
 
     data = (
-        ParquetDataLoader("./alp_sim_data.parquet")
+        DataFrame.from_parquet("./alp_sim_data.parquet")
         | Select(
             [
                 "p_accumulator",

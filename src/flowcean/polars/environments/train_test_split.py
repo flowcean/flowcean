@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from flowcean.utils.random import get_seed
 
-from .dataset import Dataset
+from .dataframe import DataFrame
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -42,7 +42,7 @@ class TrainTestSplit:
     def split(
         self,
         environment: OfflineEnvironment,
-    ) -> tuple[Dataset, Dataset]:
+    ) -> tuple[DataFrame, DataFrame]:
         """Split the data into train and test sets.
 
         Args:
@@ -57,7 +57,7 @@ class TrainTestSplit:
             shuffle=self.shuffle,
             seed=get_seed(),
         )
-        return Dataset(splits[0].lazy()), Dataset(splits[1].lazy())
+        return DataFrame(splits[0].lazy()), DataFrame(splits[1].lazy())
 
 
 def _split(

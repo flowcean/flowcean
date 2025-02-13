@@ -10,7 +10,7 @@ from rosbags.highlevel import AnyReader as AnyRosbagReader
 from rosbags.interfaces import Msgdef, Nodetype
 from rosbags.typesys import Stores, get_types_from_msg, get_typestore
 
-from flowcean.polars import Dataset
+from flowcean.polars import DataFrame
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -27,7 +27,7 @@ class RosbagError(Exception):
 logger = logging.getLogger(__name__)
 
 
-class RosbagLoader(Dataset):
+class RosbagLoader(DataFrame):
     """Environment to load data from a rosbag file.
 
     The RosbagEnvironment is used to load data from a rosbag file. The
