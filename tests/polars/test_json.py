@@ -5,7 +5,7 @@ from pathlib import Path
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars import JsonDataLoader
+from flowcean.polars.environments.dataframe import DataFrame
 
 
 class TestJsonDataLoader(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestJsonDataLoader(unittest.TestCase):
                 f.write(bytes(json_content, "UTF-8"))
                 f.close()
 
-                dataloader = JsonDataLoader(path=Path(f.name))
+                dataloader = DataFrame.from_json(path=Path(f.name))
                 loaded_data = dataloader.observe()
                 assert_frame_equal(loaded_data.collect(), data)
             finally:
@@ -55,7 +55,7 @@ class TestJsonDataLoader(unittest.TestCase):
                 f.write(bytes(json_content, "UTF-8"))
                 f.close()
 
-                dataloader = JsonDataLoader(path=Path(f.name))
+                dataloader = DataFrame.from_json(path=Path(f.name))
                 loaded_data = dataloader.observe()
                 assert_frame_equal(loaded_data.collect(), data)
             finally:

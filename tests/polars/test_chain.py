@@ -4,12 +4,12 @@ import polars as pl
 from polars.testing import assert_frame_equal
 
 from flowcean.core import ChainedOfflineEnvironments
-from flowcean.polars import Dataset, collect
+from flowcean.polars import DataFrame, collect
 
 
 class TestChain(unittest.TestCase):
     def test_chain_environment(self) -> None:
-        dataset1 = Dataset(
+        dataset1 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [1, 2],
@@ -18,7 +18,7 @@ class TestChain(unittest.TestCase):
             ),
         )
 
-        dataset2 = Dataset(
+        dataset2 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [3, 4],
@@ -31,7 +31,7 @@ class TestChain(unittest.TestCase):
         assert isinstance(chain, ChainedOfflineEnvironments)
 
     def test_chain_method(self) -> None:
-        dataset1 = Dataset(
+        dataset1 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [1, 2],
@@ -40,7 +40,7 @@ class TestChain(unittest.TestCase):
             ),
         )
 
-        dataset2 = Dataset(
+        dataset2 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [3, 4],
@@ -53,7 +53,7 @@ class TestChain(unittest.TestCase):
         assert isinstance(chain, ChainedOfflineEnvironments)
 
     def test_step(self) -> None:
-        dataset1 = Dataset(
+        dataset1 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [1, 2],
@@ -62,7 +62,7 @@ class TestChain(unittest.TestCase):
             ),
         )
 
-        dataset2 = Dataset(
+        dataset2 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [3, 4],
@@ -84,7 +84,7 @@ class TestChain(unittest.TestCase):
         )
 
     def test_collect(self) -> None:
-        dataset1 = Dataset(
+        dataset1 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [1, 2],
@@ -93,7 +93,7 @@ class TestChain(unittest.TestCase):
             ),
         )
 
-        dataset2 = Dataset(
+        dataset2 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [3, 4],

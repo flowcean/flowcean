@@ -3,12 +3,12 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars import Dataset, JoinedOfflineEnvironment
+from flowcean.polars import DataFrame, JoinedOfflineEnvironment
 
 
 class TestCombine(unittest.TestCase):
     def test_combine_environment(self) -> None:
-        dataset1 = Dataset(
+        dataset1 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [1, 2],
@@ -16,7 +16,7 @@ class TestCombine(unittest.TestCase):
             ),
         )
 
-        dataset2 = Dataset(
+        dataset2 = DataFrame(
             pl.DataFrame(
                 {
                     "B": [3, 4],
@@ -29,7 +29,7 @@ class TestCombine(unittest.TestCase):
         assert isinstance(combine, JoinedOfflineEnvironment)
 
     def test_join_results(self) -> None:
-        dataset1 = Dataset(
+        dataset1 = DataFrame(
             pl.DataFrame(
                 {
                     "A": [1, 2],
@@ -37,7 +37,7 @@ class TestCombine(unittest.TestCase):
             ),
         )
 
-        dataset2 = Dataset(
+        dataset2 = DataFrame(
             pl.DataFrame(
                 {
                     "B": [3, 4],

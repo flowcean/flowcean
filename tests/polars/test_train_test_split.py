@@ -4,13 +4,13 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from flowcean.polars import Dataset, TrainTestSplit
+from flowcean.polars import DataFrame, TrainTestSplit
 from flowcean.utils import initialize_random
 
 
 class TestTrainTestSplit(unittest.TestCase):
     def test_split(self) -> None:
-        dataset = Dataset(pl.DataFrame({"a": [1, 2, 3, 4, 5, 6]}))
+        dataset = DataFrame(pl.DataFrame({"a": [1, 2, 3, 4, 5, 6]}))
         train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(dataset)
 
         expected_train = pl.DataFrame({"a": [1, 2, 3, 4]})
@@ -24,7 +24,7 @@ class TestTrainTestSplit(unittest.TestCase):
 
     def test_split_shuffle(self) -> None:
         initialize_random(42)
-        dataset = Dataset(pl.DataFrame({"a": [1, 2, 3, 4, 5, 6]}))
+        dataset = DataFrame(pl.DataFrame({"a": [1, 2, 3, 4, 5, 6]}))
         train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(dataset)
 
         expected_train = pl.DataFrame({"a": [2, 5, 1, 3]})

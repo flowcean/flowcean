@@ -3,7 +3,7 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars import Dataset
+from flowcean.polars import DataFrame
 
 
 class TestDataset(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestDataset(unittest.TestCase):
                 "B": [4, 5, 6],
             },
         )
-        data = Dataset(df)
+        data = DataFrame(df)
         assert_frame_equal(df, data.observe().collect())
 
 

@@ -15,7 +15,7 @@ import polars as pl
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_incremental
 from flowcean.polars import (
-    Dataset,
+    DataFrame,
     StreamingOfflineEnvironment,
     TrainTestSplit,
 )
@@ -30,7 +30,7 @@ N = 1_000
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    data = Dataset(
+    data = DataFrame(
         pl.DataFrame(
             {
                 "x": pl.arange(0, N, eager=True).cast(pl.Float32) / N,

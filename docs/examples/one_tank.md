@@ -141,10 +141,10 @@ The generated output of the `OdeEnvironment` environment has the form
 | $x[N]$  | $V[N]$  |
 
 Since the learners we will use later only support learning on a fixed amount of data (called "[offline learners](../user_guide/learning_strategies.md)" in the framework), we need to convert the incremental dataset into a fixed size dataset.
-This can be done by calling the [`collect(env, N)`](../reference/flowcean/polars/index.md#flowcean.polars.collect) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`Dataset`](../reference/flowcean/polars/index.md#flowcean.polars.Dataset).
+This can be done by calling the [`collect(env, N)`](../reference/flowcean/polars/index.md#flowcean.polars.collect) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`DataFrame`](../reference/flowcean/polars/index.md#flowcean.polars.DataFrame).
 
 ```python
-data = Dataset(data_incremental.load().take(250))
+data = DataFrame(data_incremental.load().take(250))
 ```
 
 Until now, the data is in a time series format with each row representing a sampled value at the step $n$.

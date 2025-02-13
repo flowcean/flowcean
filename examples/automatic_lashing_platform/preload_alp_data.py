@@ -7,9 +7,8 @@ from tqdm import tqdm
 import flowcean.cli
 from flowcean.core import ChainedOfflineEnvironments
 from flowcean.polars import (
+    DataFrame,
     JoinedOfflineEnvironment,
-    JsonDataLoader,
-    ParquetDataLoader,
     ToTimeSeries,
 )
 
@@ -23,8 +22,10 @@ def main() -> None:
         [
             JoinedOfflineEnvironment(
                 (
-                    ParquetDataLoader(path).with_transform(ToTimeSeries("t")),
-                    JsonDataLoader(path.with_suffix(".json")),
+                    DataFrame.from_parquet(path).with_transform(
+                        ToTimeSeries("t"),
+                    ),
+                    DataFrame.from_json(path.with_suffix(".json")),
                 ),
             )
             for path in tqdm(

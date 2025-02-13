@@ -11,7 +11,7 @@ from flowcean.core import (
     learn_offline,
 )
 from flowcean.polars import (
-    Dataset,
+    DataFrame,
     Select,
     StreamingOfflineEnvironment,
     TrainTestSplit,
@@ -23,7 +23,7 @@ from flowcean.torch import LinearRegression, PyTorchModel
 class TestSaveLoad(unittest.TestCase):
     def test_save_load_sklearn(self) -> None:
         n = 100
-        data = Dataset(
+        data = DataFrame(
             pl.DataFrame(
                 {
                     "x": pl.arange(0, n, eager=True).cast(pl.Float32) / n,
@@ -32,7 +32,7 @@ class TestSaveLoad(unittest.TestCase):
             ),
         )
 
-        train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        train_env, _test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
             data,
         )
 
@@ -63,7 +63,7 @@ class TestSaveLoad(unittest.TestCase):
 
     def test_save_load_pytorch(self) -> None:
         n = 100
-        data = Dataset(
+        data = DataFrame(
             pl.DataFrame(
                 {
                     "x": pl.arange(0, n, eager=True).cast(pl.Float32) / n,
@@ -72,7 +72,7 @@ class TestSaveLoad(unittest.TestCase):
             ),
         )
 
-        train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        train_env, _test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
             data,
         )
 
@@ -107,7 +107,7 @@ class TestSaveLoad(unittest.TestCase):
 
     def test_save_load_model_with_transforms(self) -> None:
         n = 100
-        data = Dataset(
+        data = DataFrame(
             pl.DataFrame(
                 {
                     "x": pl.arange(0, n, eager=True).cast(pl.Float32) / n,
@@ -116,7 +116,7 @@ class TestSaveLoad(unittest.TestCase):
             ),
         )
 
-        train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        train_env, _test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
             data,
         )
 
