@@ -1,10 +1,11 @@
 import logging
 import math
 from pathlib import Path
+from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
+from PIL import Image
 
 from flowcean.core.transform import Transform
 
@@ -41,7 +42,7 @@ class ParticleCloudImage(Transform):
         self.save_images = save_images
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        logger.debug("Matching sampling rate of time series.")
+        logger.debug("Processing particle cloud data to generate images.")
 
         half_region = self.cutting_area / 2.0
         region_str = str(self.cutting_area).replace(".", "_")
@@ -49,23 +50,25 @@ class ParticleCloudImage(Transform):
         if self.save_images:
             Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        # Collect the particle cloud data from the LazyFrame.
         particle_cloud = data.collect()[0, self.particle_cloud_feature_name]
         image_records = []
 
-        for message_number, message_data in enumerate(
-            particle_cloud,
-        ):
+        for message_number, message_data in enumerate(particle_cloud):
             time_stamp = message_data["time"]
-            print(f"Processing message {message_number} at time {time_stamp}")
+            logger.debug(
+                "Processing message %d at time %s", message_number, time_stamp
+            )
 
-            particles_dict = message_data["value"]
+            particles_dict: dict[str, Any] = message_data["value"]
             list_of_particles = particles_dict["particles"]
 
             if not list_of_particles:
-                print(f"Message {message_number} has no particles. Skipping.")
+                logger.debug(
+                    "Message %d has no particles. Skipping.", message_number
+                )
                 continue
 
+            # Extract positions and orientations
             positions = np.array(
                 [
                     [p["pose"]["position"]["x"], p["pose"]["position"]["y"]]
@@ -81,82 +84,66 @@ class ParticleCloudImage(Transform):
                     for p in list_of_particles
                 ],
             )
-            # Compute yaw angles (rotation about z-axis)
-            yaws = 2 * np.arctan2(quats[:, 0], quats[:, 1])
-            # Compute mean position and circular mean of yaws
+
+            # Calculate mean position and yaw
             mean_pos = positions.mean(axis=0)
             mean_x, mean_y = mean_pos
-            mean_yaw = math.atan2(np.mean(np.sin(yaws)), np.mean(np.cos(yaws)))
+            yaws = 2 * np.arctan2(quats[:, 0], quats[:, 1])
+            mean_yaw = math.atan2(np.sin(yaws).mean(), np.cos(yaws).mean())
 
-            # Rotation by -mean_yaw
-            rot_angle = -mean_yaw
-            cos_val = math.cos(rot_angle)
-            sin_val = math.sin(rot_angle)
-            R = np.array([[cos_val, -sin_val], [sin_val, cos_val]])
-            # Rotate all positions: subtract mean, rotate, then add mean back.
-            rotated_positions = (positions - mean_pos) @ R.T + mean_pos
+            # Rotate positions to align with mean yaw
+            cos_val, sin_val = math.cos(-mean_yaw), math.sin(-mean_yaw)
+            rotation_matrix = np.array(
+                [[cos_val, -sin_val], [sin_val, cos_val]]
+            )
+            rotated_positions = (
+                positions - mean_pos
+            ) @ rotation_matrix.T + mean_pos
 
-            # --- Filtering using a Boolean Mask ---
+            # Filter positions within the cutting area
             mask = (
                 np.abs(rotated_positions[:, 0] - mean_x) <= half_region
             ) & (np.abs(rotated_positions[:, 1] - mean_y) <= half_region)
             filtered_positions = rotated_positions[mask]
 
-            # --- Plotting and Image Extraction ---
-            fig, ax = plt.subplots(figsize=(1, 1), dpi=self.image_pixel_size)
-            fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-            ax.axis("off")
-            ax.set_xlim(mean_x - half_region, mean_x + half_region)
-            ax.set_ylim(mean_y - half_region, mean_y + half_region)
-            if filtered_positions.size > 0:
-                # Plot all filtered points in one call.
-                ax.plot(
+            # Generate grayscale image
+            if filtered_positions.size == 0:
+                gray_image = np.full(
+                    (self.image_pixel_size, self.image_pixel_size),
+                    255,
+                    dtype=np.uint8,
+                )
+            else:
+                x_min, x_max = mean_x - half_region, mean_x + half_region
+                y_min, y_max = mean_y - half_region, mean_y + half_region
+
+                x_edges = np.linspace(x_min, x_max, self.image_pixel_size + 1)
+                y_edges = np.linspace(y_min, y_max, self.image_pixel_size + 1)
+
+                # Compute 2D histogram
+                histogram, _, _ = np.histogram2d(
                     filtered_positions[:, 0],
                     filtered_positions[:, 1],
-                    "ko",
-                    markersize=2,
+                    bins=[x_edges, y_edges],
                 )
 
+                # Adjust orientation to match image coordinates
+                histogram = histogram.T[::-1, :]
+                gray_image = np.where(histogram > 0, 0, 255).astype(np.uint8)
+
+            # Save image if required
             if self.save_images:
                 filename = (
                     Path(output_dir)
                     / f"particle_region_{message_number:04d}.png"
                 )
-                fig.savefig(filename, dpi=self.image_pixel_size)
-
-            fig.canvas.draw()
-            # Convert the figure to a NumPy array using the RGBA buffer.
-            img_array = np.asarray(
-                fig.canvas.buffer_rgba(),
-            )  # shape: (image_pixel_size, image_pixel_size, 4)
-            img_array = img_array[..., :3]  # Remove the alpha channel
-
-            # Since image is strictly black-and-white, simply take one channel
-            gray_image = img_array[..., 0].astype(np.uint8)
-            plt.close(fig)
+                Image.fromarray(gray_image).save(filename)
 
             image_records.append(
                 {"time": time_stamp, "image": gray_image.tolist()},
             )
 
-        plt.close("all")
-
+        # Create DataFrame with results
         df_images = pl.DataFrame({"/particle_cloud_image": [image_records]})
-        logger.debug(df_images)
-        logger.debug(df_images.schema)
+        logger.debug("Processed images schema: %s", df_images.schema)
         return data.collect().hstack(df_images).lazy()
-
-    def rotate_point(
-        self,
-        x: float,
-        y: float,
-        angle: float,
-        origin: tuple[float, float],
-    ) -> tuple[float, float]:
-        """Rotate a point about given origin by specified angle (radians)."""
-        ox, oy = origin
-        dx = x - ox
-        dy = y - oy
-        rotated_x = dx * math.cos(angle) - dy * math.sin(angle)
-        rotated_y = dx * math.sin(angle) + dy * math.cos(angle)
-        return rotated_x + ox, rotated_y + oy
