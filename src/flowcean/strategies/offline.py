@@ -3,7 +3,11 @@ import logging
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import OfflineMetric
 from flowcean.core.model import Model, ModelWithTransform
-from flowcean.core.transform import FitIncremetally, FitOnce, Transform
+from flowcean.core.transform import (
+    FitIncremetally,
+    FitOnce,
+    Transform,
+)
 from flowcean.environments.dataset import OfflineEnvironment
 from flowcean.metrics.report import Report
 

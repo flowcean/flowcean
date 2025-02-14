@@ -27,7 +27,6 @@ from ._generated.learner_pb2_grpc import LearnerStub
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
 
 MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
 
@@ -211,13 +210,13 @@ class GrpcLearner(SupervisedLearner, Model):
         self.channel.close()
 
     @override
-    def save(self, path: Path) -> None:
-        _ = path
+    def save_state(self) -> dict[str, Any]:
         raise NotImplementedError
 
     @override
-    def load(self, path: Path) -> None:
-        _ = path
+    @classmethod
+    def load_from_state(cls, state: dict[str, Any]) -> GrpcLearner:
+        _ = state
         raise NotImplementedError
 
 

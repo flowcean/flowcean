@@ -1,14 +1,19 @@
-from pathlib import Path
+from __future__ import annotations
+
+from io import BytesIO
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import polars as pl
 import torch
-from torch.nn import Module
 from torch.utils.data import DataLoader
 from typing_extensions import override
 
 from flowcean.core.model import Model
 from flowcean.environments.pytorch import TorchDataset
+
+if TYPE_CHECKING:
+    from torch.nn import Module
 
 
 class PyTorchModel(Model):
@@ -50,9 +55,19 @@ class PyTorchModel(Model):
         return pl.DataFrame(predictions, self.output_names).lazy()
 
     @override
-    def save(self, path: Path) -> None:
-        torch.save(self.module.state_dict(), path)
+    def save_state(self) -> dict[str, Any]:
+        model_bytes = BytesIO()
+        torch.save(self.module, model_bytes)
+        model_bytes.seek(0)
+        return {
+            "data": model_bytes.read(),
+            "output_names": self.output_names,
+        }
 
     @override
-    def load(self, path: Path) -> None:
-        self.module.load_state_dict(torch.load(path))
+    @classmethod
+    def load_from_state(cls, state: dict[str, Any]) -> PyTorchModel:
+        return cls(
+            torch.load(BytesIO(state["data"]), weights_only=False),
+            state["output_names"],
+        )

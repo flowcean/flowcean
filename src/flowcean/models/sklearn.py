@@ -1,4 +1,6 @@
-from pathlib import Path
+from __future__ import annotations
+
+from io import BytesIO
 from typing import Any
 
 import joblib
@@ -34,9 +36,19 @@ class SciKitModel(Model):
         return pl.DataFrame({self.output_name: outputs}).lazy()
 
     @override
-    def save(self, path: Path) -> None:
-        joblib.dump(self.model, path)
+    def save_state(self) -> dict[str, Any]:
+        model_bytes = BytesIO()
+        joblib.dump(self.model, model_bytes)
+        model_bytes.seek(0)
+        return {
+            "data": model_bytes.read(),
+            "output_name": self.output_name,
+        }
 
     @override
-    def load(self, path: Path) -> None:
-        self.model = joblib.load(path)
+    @classmethod
+    def load_from_state(cls, state: dict[str, Any]) -> SciKitModel:
+        return cls(
+            joblib.load(BytesIO(state["data"])),
+            state["output_name"],
+        )
