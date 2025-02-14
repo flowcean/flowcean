@@ -56,7 +56,9 @@ class ParticleCloudImage(Transform):
         for message_number, message_data in enumerate(particle_cloud):
             time_stamp = message_data["time"]
             logger.debug(
-                "Processing message %d at time %s", message_number, time_stamp
+                "Processing message %d at time %s",
+                message_number,
+                time_stamp,
             )
 
             particles_dict: dict[str, Any] = message_data["value"]
@@ -64,11 +66,11 @@ class ParticleCloudImage(Transform):
 
             if not list_of_particles:
                 logger.debug(
-                    "Message %d has no particles. Skipping.", message_number
+                    "Message %d has no particles. Skipping.",
+                    message_number,
                 )
                 continue
 
-            # Extract positions and orientations
             positions = np.array(
                 [
                     [p["pose"]["position"]["x"], p["pose"]["position"]["y"]]
@@ -85,7 +87,6 @@ class ParticleCloudImage(Transform):
                 ],
             )
 
-            # Calculate mean position and yaw
             mean_pos = positions.mean(axis=0)
             mean_x, mean_y = mean_pos
             yaws = 2 * np.arctan2(quats[:, 0], quats[:, 1])
@@ -94,7 +95,7 @@ class ParticleCloudImage(Transform):
             # Rotate positions to align with mean yaw
             cos_val, sin_val = math.cos(-mean_yaw), math.sin(-mean_yaw)
             rotation_matrix = np.array(
-                [[cos_val, -sin_val], [sin_val, cos_val]]
+                [[cos_val, -sin_val], [sin_val, cos_val]],
             )
             rotated_positions = (
                 positions - mean_pos
@@ -106,7 +107,6 @@ class ParticleCloudImage(Transform):
             ) & (np.abs(rotated_positions[:, 1] - mean_y) <= half_region)
             filtered_positions = rotated_positions[mask]
 
-            # Generate grayscale image
             if filtered_positions.size == 0:
                 gray_image = np.full(
                     (self.image_pixel_size, self.image_pixel_size),
@@ -120,7 +120,6 @@ class ParticleCloudImage(Transform):
                 x_edges = np.linspace(x_min, x_max, self.image_pixel_size + 1)
                 y_edges = np.linspace(y_min, y_max, self.image_pixel_size + 1)
 
-                # Compute 2D histogram
                 histogram, _, _ = np.histogram2d(
                     filtered_positions[:, 0],
                     filtered_positions[:, 1],
@@ -131,7 +130,6 @@ class ParticleCloudImage(Transform):
                 histogram = histogram.T[::-1, :]
                 gray_image = np.where(histogram > 0, 0, 255).astype(np.uint8)
 
-            # Save image if required
             if self.save_images:
                 filename = (
                     Path(output_dir)
@@ -143,7 +141,6 @@ class ParticleCloudImage(Transform):
                 {"time": time_stamp, "image": gray_image.tolist()},
             )
 
-        # Create DataFrame with results
         df_images = pl.DataFrame({"/particle_cloud_image": [image_records]})
         logger.debug("Processed images schema: %s", df_images.schema)
         return data.collect().hstack(df_images).lazy()
