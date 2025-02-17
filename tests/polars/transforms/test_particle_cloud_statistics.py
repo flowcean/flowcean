@@ -374,14 +374,14 @@ class TestParticleCloudStatistics(unittest.TestCase):
             self.data_frame.lazy(),
         ).collect()
         print(transformed_data)
-        # check that there are 18 columns of type List(Struct()) types
+        # check that there are 19 columns of type List(Struct()) types
         list_struct_columns = [
             dtype
             for dtype in transformed_data.dtypes
             if isinstance(dtype, pl.List)
             and isinstance(dtype.inner, pl.Struct)
         ]
-        assert len(list_struct_columns) == 18
+        assert len(list_struct_columns) == 19
 
 
 if __name__ == "__main__":
