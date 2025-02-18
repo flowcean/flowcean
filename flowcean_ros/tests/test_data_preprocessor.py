@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import rclpy
 from flowcean_ros.flowcean_ros.data_preprocessor import DataPreprocessor
@@ -14,7 +15,6 @@ class DummyTime:
 
 class DummyClock(Clock):
     def __init__(self):
-        super().__init__()
         super().__init__()
 
     def now(self) -> Time:
@@ -154,3 +154,78 @@ def test_handle_one_time_data(node):
     # Verify that the map_data has a time and value entry.
     assert "time" in node.map_data
     assert "value" in node.map_data
+
+
+def test_laserscan_processing(node):
+    class LaserScanMsg:
+        __slots__ = [
+            "_angle_increment",
+            "_angle_max",
+            "_angle_min",
+            "_range_max",
+            "_range_min",
+            "_ranges",
+        ]
+
+        def __init__(self):
+            self._ranges = np.array([1.0, 2.0], dtype=np.float32)
+            self._angle_min = -1.0
+            self._angle_max = 1.0
+            self._angle_increment = 0.1
+            self._range_min = 0.0
+            self._range_max = 10.0
+
+    # Process sample message
+    msg = LaserScanMsg()
+    node.callback(msg, "/scan")
+
+    # Verify buffer content
+    buffer = node.data_buffer["/scan"]
+    assert len(buffer) == 1
+    assert buffer[0]["value"]["ranges"] == [1.0, 2.0]
+    assert buffer[0]["value"]["angle_min"] == -1.0
+
+
+def test_slashed_topic_name(node):
+    class PoseMsg:
+        __slots__ = ["_pose"]
+
+        def __init__(self):
+            self._pose = type(
+                "",
+                (),
+                {"position": type("", (), {"x": 3.14})},
+            )()
+
+    # Process sample message
+    msg = PoseMsg()
+    node.callback(msg, "/pose")
+
+    # Verify dataset structure
+    dataset = node._prepare_dataset()
+    assert "/pose" in dataset.columns
+    assert dataset["/pose"][0][0]["value"]["pose"]["position"]["x"] == 3.14
+
+
+def test_particle_cloud_processing(node):
+    class Particle:
+        __slots__ = ["_pose"]
+
+        def __init__(self):
+            self._pose = type("", (), {"x": 1.0, "y": 2.0})()
+
+    class ParticleCloudMsg:
+        __slots__ = ["_particles"]
+
+        def __init__(self):
+            self._particles = [Particle(), Particle()]
+
+    # Process sample message
+    msg = ParticleCloudMsg()
+    node.callback(msg, "/particle_cloud")
+
+    # Verify buffer content
+    buffer = node.data_buffer["/particle_cloud"]
+    assert len(buffer) == 1
+    assert len(buffer[0]["value"]["particles"]) == 2
+    assert buffer[0]["value"]["particles"][0]["pose"]["x"] == 1.0
