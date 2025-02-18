@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-from flowcean.cli.logging import (
+from .logging import (
     DEFAULT_RUNTIME_CONFIGURATION_PATH,
     initialize_logging,
 )

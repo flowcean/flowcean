@@ -83,7 +83,7 @@ include = ["*.py"]
 testpaths = ["tests"]
 
 [tool.pyright]
-ignore = ["src/flowcean/learners/grpc/_generated/*"]
+ignore = ["src/flowcean/grpc/_generated/*"]
 pythonVersion = "3.10"
 strict = ["src/flowcean/core"]
 
@@ -92,7 +92,7 @@ install_clang = "bash -c 'sudo apt-get install -y clang'"
 
 [tool.coverage.run]
 source_pkgs = ["flowcean"]
-omit = ["src/flowcean/learners/grpc/_generated/*"]
+omit = ["src/flowcean/grpc/_generated/*"]
 branch = true
 parallel = true
 

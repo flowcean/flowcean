@@ -4,16 +4,20 @@ from io import BytesIO
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core.model import Model, ModelWithTransform
-from flowcean.environments.dataset import Dataset
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.learners.linear_regression import LinearRegression
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.models.pytorch import PyTorchModel
-from flowcean.models.sklearn import SciKitModel
-from flowcean.strategies.incremental import learn_incremental
-from flowcean.strategies.offline import learn_offline
-from flowcean.transforms import Select
+from flowcean.core import (
+    Model,
+    ModelWithTransform,
+    learn_incremental,
+    learn_offline,
+)
+from flowcean.polars import (
+    Dataset,
+    Select,
+    StreamingOfflineEnvironment,
+    TrainTestSplit,
+)
+from flowcean.sklearn import RegressionTree, SciKitModel
+from flowcean.torch import LinearRegression, PyTorchModel
 
 
 class TestSaveLoad(unittest.TestCase):
@@ -78,7 +82,7 @@ class TestSaveLoad(unittest.TestCase):
             learning_rate=0.01,
         )
         model = learn_incremental(
-            train_env.as_stream(batch_size=1),
+            StreamingOfflineEnvironment(train_env, batch_size=1),
             learner,
             ["x"],
             ["y"],

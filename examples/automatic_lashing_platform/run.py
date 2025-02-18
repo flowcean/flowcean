@@ -9,12 +9,19 @@ import logging
 import time
 
 import flowcean.cli
-from flowcean.environments.parquet import ParquetDataLoader
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms import Flatten, Resample, Select
+from flowcean.core import evaluate_offline, learn_offline
+from flowcean.polars import (
+    Flatten,
+    ParquetDataLoader,
+    Resample,
+    Select,
+    TrainTestSplit,
+)
+from flowcean.sklearn import (
+    MeanAbsoluteError,
+    MeanSquaredError,
+    RegressionTree,
+)
 
 logger = logging.getLogger(__name__)
 

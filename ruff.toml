@@ -42,6 +42,7 @@ ignore = [
 ]
 "**/tests/**/*" = [
   "D10",     # missing docstrings
+  "INP001",  # implicit namespace packages
   "PLC1901", # compare to empty string
   "PLR2004", # magic value comparison
   "PLR6301", # no self use in methods

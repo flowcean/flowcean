@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Any, BinaryIO, cast, final
 from typing_extensions import override
 
 if TYPE_CHECKING:
-    from flowcean.core.data import Data
-    from flowcean.core.transform import Transform
+    from .data import Data
+    from .transform import Transform
 
 
 class Model(ABC):

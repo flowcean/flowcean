@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from flowcean.core.data import Data
-from flowcean.metrics.report import Reportable
+from .data import Data
+from .report import Reportable
 
 
 class OfflineMetric(ABC):
