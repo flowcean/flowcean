@@ -11,6 +11,7 @@ __all__ = [
     "NoCategoriesError",
     "NoMatchingCategoryError",
     "NoTimeSeriesFeatureError",
+    "NoTimeSeriesFeatureError",
     "OneCold",
     "OneHot",
     "Rename",
@@ -18,6 +19,7 @@ __all__ = [
     "Select",
     "SignalFilter",
     "SignalFilterType",
+    "SliceTimeSeries",
     "SlidingWindow",
     "Standardize",
     "TimeWindow",
@@ -50,6 +52,7 @@ from flowcean.transforms.rename import Rename
 from flowcean.transforms.resample import Resample
 from flowcean.transforms.select import Select
 from flowcean.transforms.signal_filter import SignalFilter, SignalFilterType
+from flowcean.transforms.slice_time_series import SliceTimeSeries
 from flowcean.transforms.sliding_window import SlidingWindow
 from flowcean.transforms.standardize import Standardize
 from flowcean.transforms.time_window import TimeWindow
