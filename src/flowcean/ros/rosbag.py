@@ -9,6 +9,7 @@ import polars as pl
 from rosbags.highlevel import AnyReader as AnyRosbagReader
 from rosbags.interfaces import Msgdef, Nodetype
 from rosbags.typesys import Stores, get_types_from_msg, get_typestore
+from tqdm import tqdm
 
 from flowcean.polars import Dataset
 
@@ -36,7 +37,7 @@ class RosbagLoader(Dataset):
 
     Example:
         ```python
-        from flowcean.ros import RosbagLoader
+        from flowcean.environments.rosbag import RosbagLoader
 
         environment = RosbagLoader(
             path="example_rosbag",
@@ -98,7 +99,7 @@ class RosbagLoader(Dataset):
         ) as reader:
             features = [
                 self.get_dataframe(reader, topic, keys)
-                for topic, keys in self.topics.items()
+                for topic, keys in tqdm(self.topics.items(), "Loading topics")
             ]
             super().__init__(pl.concat(features, how="horizontal"))
 
@@ -153,7 +154,7 @@ class RosbagLoader(Dataset):
             keys: Field names to get from each message.
 
         Raises:
-            DataframeError: Reader not opened or topic or field does not exist.
+            RosbagError: Reader not opened or topic or field does not exist.
 
         Returns:
             Polars dataframe.
