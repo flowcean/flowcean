@@ -84,7 +84,10 @@ def main() -> None:
             ],
         )
         data = environment.observe()
-    print(f"loaded data: {data.collect()}")
+
+    collected_data = data.collect()
+    print(f"loaded data: {collected_data}")
+    print(f"schema: {collected_data.schema}")
     transform = ScanMap(plotting=True) | ParticleCloudImage(
         particle_cloud_feature_name="/particle_cloud",
         save_images=True,
@@ -95,7 +98,6 @@ def main() -> None:
     print(f"transformed data: {transformed_data.collect()}")
 
     if UPDATE_CACHE:
-        collected_data = data.collect()
         if Path(WS / "cached_ros_data.json").exists():
             collected_data.write_json()
             print("Cache updated")

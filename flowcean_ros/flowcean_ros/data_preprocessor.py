@@ -31,13 +31,13 @@ class DataPreprocessor(Node):
     def _init_config(self) -> None:
         self.topic_config = {
             "/amcl_pose": {
-                "msg_type": "geometry_msgs.msg.PoseStamped",
-                "fields": ["pose.pose.position.x"],
+                "msg_type": "geometry_msgs/msg/PoseWithCovarianceStamped",
+                "fields": ["pose.pose.position.x", "pose.pose.position.y"],
                 "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
             },
             "/momo/pose": {
                 "msg_type": "geometry_msgs.msg.PoseStamped",
-                "fields": ["pose.pose.position.x"],
+                "fields": ["pose.pose.position.x", "pose.pose.position.y"],
                 "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
             },
             "/scan": {
@@ -70,11 +70,11 @@ class DataPreprocessor(Node):
                 "qos_profile": QoSPresetProfiles.SYSTEM_DEFAULT.value,
                 "one_time_data": True,
             },
-            # "/particle_cloud": {
-            #     "msg_type": "nav2_msgs.msg.ParticleCloud",
-            #     "fields": ["particles"],
-            #     "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            # },
+            "/particle_cloud": {
+                "msg_type": "nav2_msgs.msg.ParticleCloud",
+                "fields": ["particles"],
+                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
+            },
             "/position_error": {
                 "msg_type": "std_msgs.msg.Float32",
                 "fields": ["data"],
@@ -173,6 +173,8 @@ class DataPreprocessor(Node):
     def ros_msg_to_dict(self, msg: Any) -> dict:
         """Recursively convert ROS message to dict with proper typing."""
         result = {}
+        # print(msg.__slots__)
+
         for field in msg.__slots__:
             value = getattr(msg, field)
             if hasattr(value, "__slots__"):
@@ -221,7 +223,9 @@ class DataPreprocessor(Node):
         result = {}
         for field in fields:
             parts = field.split(".")
+            # print(parts)
             value = msg_dict
+            # print(value)
             for part in parts:
                 self.get_logger().debug(f"part: {part}")
                 value = value.get("_" + part, {})
@@ -292,7 +296,7 @@ class DataPreprocessor(Node):
             ]
 
             # Create DataFrame with single column containing the struct list
-            df = pl.DataFrame({topic: [struct_list]})
+            df = pl.DataFrame({topic: [struct_list]}, strict=False)
             frames.append(df)
 
         return (
@@ -305,17 +309,17 @@ class DataPreprocessor(Node):
             self.get_logger().warn("No data to publish")
             return
 
-        # self.get_logger().debug(f"Dataset schema:\n{dataset.schema}")
+        self.get_logger().info(f"Dataset schema:\n{dataset.schema}")
         self.get_logger().info(f"Sample data:\n{dataset}")
-        self.get_logger().debug(
-            f"/position_error:\n{dataset['/position_error']}",
-        )
-        self.get_logger().debug(
-            f"/heading_error:\n{dataset['/heading_error']}",
-        )
-        self.get_logger().debug(
-            f"/particle_cloud:\n{dataset['/particle_cloud']}",
-        )
+        # self.get_logger().debug(
+        #     f"/position_error:\n{dataset['/position_error']}",
+        # )
+        # self.get_logger().debug(
+        #     f"/heading_error:\n{dataset['/heading_error']}",
+        # )
+        # self.get_logger().debug(
+        #     f"/particle_cloud:\n{dataset['/particle_cloud']}",
+        # )
         self.get_logger().debug(f"/scan:\n{dataset['/scan']}")
 
 
