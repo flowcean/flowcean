@@ -118,5 +118,6 @@ def main() -> None:
             data.collect().write_json(file="cached_ros_data.json")
             print("Cache created")
 
+
 if __name__ == "__main__":
     main()
