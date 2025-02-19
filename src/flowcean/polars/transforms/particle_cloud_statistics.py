@@ -81,11 +81,7 @@ class ParticleCloudStatistics(Transform):
 
         final_df = pl.DataFrame(new_data)
 
-        return (
-            data.collect()
-            .hstack(final_df)
-            .lazy()
-        )
+        return data.collect().hstack(final_df).lazy()
 
     def cog_max_dist(
         self,
