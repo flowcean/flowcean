@@ -83,7 +83,6 @@ class ParticleCloudStatistics(Transform):
 
         return (
             data.collect()
-            .drop(self.particle_cloud_feature_name)
             .hstack(final_df)
             .lazy()
         )
