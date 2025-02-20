@@ -13,14 +13,14 @@
 from pathlib import Path
 
 import polars as pl
+from custom_transforms.particle_cloud_image import ParticleCloudImage
 from custom_transforms.scan_map import ScanMap
 
 import flowcean.cli
-from flowcean.polars.transforms.particle_cloud_image import ParticleCloudImage
 from flowcean.ros.rosbag import RosbagLoader
 
-USE_CACHED_ROS_DATA = True
-UPDATE_CACHE = False
+USE_CACHED_ROS_DATA = False
+UPDATE_CACHE = True
 WS = Path(__file__).resolve().parent
 
 
@@ -85,7 +85,12 @@ def main() -> None:
         )
         data = environment.observe()
     print(f"loaded data: {data.collect()}")
-    transform = ScanMap(plotting=True)
+    transform = ScanMap(plotting=True) | ParticleCloudImage(
+        particle_cloud_feature_name="/particle_cloud",
+        save_images=True,
+        cutting_area=15.0,
+        image_pixel_size=300,
+    )
     transformed_data = transform(data)
     print(f"transformed data: {transformed_data.collect()}")
 
@@ -96,26 +101,6 @@ def main() -> None:
             print("Cache updated")
         else:
             collected_data.write_json(file=WS / "cached_ros_data.json")
-            print("Cache created")
-
-    transform = ParticleCloudImage(
-        particle_cloud_feature_name="/particle_cloud",
-        save_images=True,
-        cutting_area=15.0,
-        image_pixel_size=300,
-    )
-
-    transformed_data = transform(data)
-    print(f"transformed data: {transformed_data.collect()}")
-
-    if UPDATE_CACHE:
-        if Path("cached_ros_data.json").exists():
-            user_input = input("Overwrite cache? (y/n): ")
-            if user_input == "y":
-                data.collect().write_json()
-                print("Cache updated")
-        else:
-            data.collect().write_json(file="cached_ros_data.json")
             print("Cache created")
 
 
