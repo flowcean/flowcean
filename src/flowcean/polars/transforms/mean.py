@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Mean(Transform):
-    """Replaces time-series features with there mean value."""
+    """Replaces time-series features with their mean value."""
 
     def __init__(self, features: str | Iterable[str]) -> None:
         """Initializes the Mean transform.
