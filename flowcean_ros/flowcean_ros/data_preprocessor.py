@@ -1,5 +1,6 @@
 import importlib
 from collections import defaultdict
+from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
@@ -133,13 +134,17 @@ class DataPreprocessor(Node):
         }
 
     def _extract_fields(self, msg_dict: dict, fields: list[str]) -> dict:
+        """Extract nested fields using dotted notation."""
         result = {}
         for field in fields:
             parts = field.split(".")
             value = msg_dict
             for part in parts:
                 value = value.get(part, {})
-            result[field] = value
+            # make sure this does not result in a pl.Object later
+            result[field] = (
+                list(value) if isinstance(value, Iterable) else value
+            )
         return result
 
     def _handle_one_time_data(self, msg: Any, topic: str) -> None:
@@ -150,7 +155,9 @@ class DataPreprocessor(Node):
             current = msg_dict
             for part in parts:
                 current = current.get(part, {})
-            value[field] = current
+            value[field] = (
+                list(current) if isinstance(current, Iterable) else current
+            )
         self.map_data = {
             "time": self.get_clock().now().to_msg(),
             "value": value,
@@ -174,16 +181,17 @@ class DataPreprocessor(Node):
             self.data_buffer[topic].pop(0)
 
     def ros_msg_to_dict(self, msg: Any) -> dict:
-        """Recursively convert ROS message to dict, stripping leading underscores."""
+        """Recursively convert ROS message to dict with proper list handling."""
         result = {}
         for field in msg.__slots__:
-            key = field.lstrip("_")  # Remove leading underscores
+            key = field.lstrip("_")
             value = getattr(msg, field)
-            if hasattr(value, "__slots__"):
+            if hasattr(value, "__slots__"):  # Nested message
                 result[key] = self.ros_msg_to_dict(value)
             elif isinstance(value, np.ndarray):
                 result[key] = value.tolist()
             elif isinstance(value, list):
+                # Recursively convert list items if they are ROS messages
                 result[key] = [
                     self.ros_msg_to_dict(item)
                     if hasattr(item, "__slots__")
@@ -199,6 +207,8 @@ class DataPreprocessor(Node):
     def _prepare_dataset(self) -> pl.DataFrame:
         """Prepare dataset with each topic as a column of time-value structs."""
         frames = []
+
+        # Add regular topics
         for topic, entries in self.data_buffer.items():
             if not entries:
                 continue
@@ -208,6 +218,26 @@ class DataPreprocessor(Node):
             ]
             df = pl.DataFrame({topic: [struct_list]}, strict=False)
             frames.append(df)
+
+        # Add map data -> should be generalized later for all one-time data
+        if self.map_data:
+            df_map = pl.DataFrame(
+                {
+                    "/map": [
+                        [
+                            {
+                                "time": self._convert_ros_time(
+                                    self.map_data["time"],
+                                ),
+                                "value": self.map_data["value"],
+                            },
+                        ],
+                    ],
+                },
+                strict=False,
+            )
+            frames.append(df_map)
+
         return (
             pl.concat(frames, how="horizontal") if frames else pl.DataFrame()
         )
