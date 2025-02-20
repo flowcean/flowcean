@@ -19,7 +19,6 @@ from .one_hot import (
     NoMatchingCategoryError,
     OneHot,
 )
-from .particle_cloud_statistics import ParticleCloudStatistics
 from .rename import Rename
 from .resample import Resample
 from .select import Select
@@ -44,7 +43,6 @@ __all__ = [
     "NoTimeSeriesFeatureError",
     "OneCold",
     "OneHot",
-    "ParticleCloudStatistics",
     "Rename",
     "Resample",
     "Select",
