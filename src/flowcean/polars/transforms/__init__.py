@@ -2,6 +2,7 @@ from .cast import Cast
 from .drop import Drop
 from .explode import Explode
 from .filter import Filter
+from .first import First
 from .flatten import (
     FeatureLengthVaryError,
     Flatten,
@@ -35,6 +36,7 @@ __all__ = [
     "FeatureLengthVaryError",
     "FeatureNotFoundError",
     "Filter",
+    "First",
     "Flatten",
     "Lambda",
     "MatchSamplingRate",
