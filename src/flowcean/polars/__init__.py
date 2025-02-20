@@ -35,7 +35,6 @@ from .transforms.one_hot import (
     NoMatchingCategoryError,
     OneHot,
 )
-from .transforms.particle_cloud_statistics import ParticleCloudStatistics
 from .transforms.rename import Rename
 from .transforms.resample import Resample
 from .transforms.select import Select
@@ -74,7 +73,6 @@ __all__ = [
     "OneHot",
     "Or",
     "ParquetDataLoader",
-    "ParticleCloudStatistics",
     "Rename",
     "Resample",
     "Select",

@@ -378,7 +378,7 @@ class TestParticleCloudStatistics(unittest.TestCase):
             if isinstance(dtype, pl.List)
             and isinstance(dtype.inner, pl.Struct)
         ]
-        assert len(list_struct_columns) == 18
+        assert len(list_struct_columns) == 19
 
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ dev = [
   "ruff>=0.9.2",
 ]
 
-examples = ["matplotlib>=3.10.0", "opencv-python>=4.11.0.86"]
+examples = ["matplotlib>=3.10.0", "opencv-python>=4.11.0.86",   "pillow>=11.1.0"]
 
 [tool.uv.workspace]
 members = ["flowcean-sklearn", "flowcean-pytorch", "flowcean-ros", "flowcean-ode", "flowcean-grpc"]

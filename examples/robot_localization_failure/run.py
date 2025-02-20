@@ -13,13 +13,14 @@
 from pathlib import Path
 
 import polars as pl
+from custom_transforms.particle_cloud_image import ParticleCloudImage
 from custom_transforms.scan_map import ScanMap
 
 import flowcean.cli
 from flowcean.ros.rosbag import RosbagLoader
 
 USE_CACHED_ROS_DATA = False
-UPDATE_CACHE = False
+UPDATE_CACHE = True
 WS = Path(__file__).resolve().parent
 
 
@@ -84,7 +85,12 @@ def main() -> None:
         )
         data = environment.observe()
     print(f"loaded data: {data.collect()}")
-    transform = ScanMap(plotting=True)
+    transform = ScanMap(plotting=True) | ParticleCloudImage(
+        particle_cloud_feature_name="/particle_cloud",
+        save_images=True,
+        cutting_area=15.0,
+        image_pixel_size=300,
+    )
     transformed_data = transform(data)
     print(f"transformed data: {transformed_data.collect()}")
 
