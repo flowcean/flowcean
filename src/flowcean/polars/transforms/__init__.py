@@ -9,6 +9,7 @@ from .flatten import (
     NoTimeSeriesFeatureError,
 )
 from .function import Lambda
+from .last import Last
 from .match_sampling_rate import (
     FeatureNotFoundError,
     MatchSamplingRate,
@@ -39,6 +40,7 @@ __all__ = [
     "First",
     "Flatten",
     "Lambda",
+    "Last",
     "MatchSamplingRate",
     "NoCategoriesError",
     "NoMatchingCategoryError",
