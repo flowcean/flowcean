@@ -2,12 +2,14 @@ from .cast import Cast
 from .drop import Drop
 from .explode import Explode
 from .filter import Filter
+from .first import First
 from .flatten import (
     FeatureLengthVaryError,
     Flatten,
     NoTimeSeriesFeatureError,
 )
 from .function import Lambda
+from .last import Last
 from .match_sampling_rate import (
     FeatureNotFoundError,
     MatchSamplingRate,
@@ -35,8 +37,10 @@ __all__ = [
     "FeatureLengthVaryError",
     "FeatureNotFoundError",
     "Filter",
+    "First",
     "Flatten",
     "Lambda",
+    "Last",
     "MatchSamplingRate",
     "NoCategoriesError",
     "NoMatchingCategoryError",
