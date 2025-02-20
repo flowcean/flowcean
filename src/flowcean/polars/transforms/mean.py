@@ -27,7 +27,8 @@ class Mean(Transform):
             data = data.with_columns(
                 pl.col(feature)
                 .list.eval(pl.element().struct.field("value"))
-                .list.mean(),
+                .list.mean()
+                .alias(f"{feature}_mean"),
             )
 
         return data

@@ -41,11 +41,11 @@ class MeanTransform(unittest.TestCase):
         ).collect()
 
         assert_frame_equal(
-            transformed_data,
+            transformed_data.select(pl.col("a_mean")),
             pl.DataFrame(
                 [
-                    {"a": 5.0},
-                    {"a": 0.0},
+                    {"a_mean": 5.0},
+                    {"a_mean": 0.0},
                 ],
             ),
         )
