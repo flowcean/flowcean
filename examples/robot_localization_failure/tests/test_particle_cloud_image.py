@@ -3,8 +3,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 import polars as pl
-
-from flowcean.polars.transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.particle_cloud_image import ParticleCloudImage
 
 
 class TestParticleCloudImage(unittest.TestCase):

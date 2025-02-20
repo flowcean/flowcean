@@ -32,7 +32,7 @@ class ParticleCloudImage(Transform):
 
         Args:
             particle_cloud_feature_name: Name of the particle cloud feature.
-            cutting_area: Square region side length for cropping (in meters).
+            cutting_area: Side length of square region for cropping (meters).
             image_pixel_size: Output image resolution (both width and height).
             save_images: Whether to save images to disk.
         """
