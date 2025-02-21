@@ -45,16 +45,18 @@ class SACModel(Model):
                         value=python_literal_to_basic_value(c.max()),
                         uid=c.name,
                         space=get_space_from_uid(
-                            c.name, self._observation.sensors
+                            c.name,
+                            self._observation.sensors,
                         ),
                     )
                     for c in input_features.iter_columns()
                 ],
                 rewards=[],
-            )
+            ),
         )
         actuators, self.data_for_brain = self.muscle.propose_actions(
-            sensors, actuators_available
+            sensors,
+            actuators_available,
         )
 
         return pl.DataFrame(
@@ -119,7 +121,7 @@ class SACLearner(ActiveLearner):
         self.brain = SACBrain()
         self.brain._seed = 0  # noqa: SLF001
         self.brain._sensors = convert_to_sensor_informations(  # noqa: SLF001
-            self.observation
+            self.observation,
         )
         self.brain._actuators = convert_to_actuator_informations(self.action)  # noqa: SLF001
         self.brain.setup()
@@ -141,16 +143,16 @@ class SACLearner(ActiveLearner):
         self.brain.memory.append(
             muscle_uid=self._model_id,
             sensor_readings=convert_to_sensor_informations(
-                filter_observation(observation, self.sen_ids)
+                filter_observation(observation, self.sen_ids),
             ),
             actuator_setpoints=convert_to_actuator_informations(
-                filter_action(action, self.act_ids)
+                filter_action(action, self.act_ids),
             ),
             rewards=rewards,
             done=False,
         )
         objective = np.array(
-            [self._objective.internal_reward(self.brain.memory)]
+            [self._objective.internal_reward(self.brain.memory)],
         )
         self.brain.memory.append(
             self._model_id,
@@ -178,7 +180,7 @@ class SACLearner(ActiveLearner):
                     space=get_space_from_uid(c.name, self.action.actuators),
                 )
                 for c in prediction_df.iter_columns()
-            ]
+            ],
         )
 
 
@@ -202,12 +204,13 @@ def python_literal_to_basic_value(value: Any) -> int | float:
 
 def filter_action(action: Action, available_ids: list[str]) -> Action:
     return Action(
-        actuators=[a for a in action.actuators if a.uid in available_ids]
+        actuators=[a for a in action.actuators if a.uid in available_ids],
     )
 
 
 def filter_observation(
-    observation: Observation, available_ids: list[str]
+    observation: Observation,
+    available_ids: list[str],
 ) -> Observation:
     return Observation(
         sensors=[s for s in observation.sensors if s.uid in available_ids],
@@ -228,7 +231,7 @@ def convert_to_actuator_informations(
                 else None,
                 uid=obj.uid,
                 space=space,
-            )
+            ),
         )
     return infos
 
@@ -246,7 +249,7 @@ def convert_to_sensor_informations(
                 else None,
                 uid=obj.uid,
                 space=space,
-            )
+            ),
         )
     return infos
 
@@ -264,12 +267,13 @@ def convert_to_reward_informations(
                 else None,
                 uid=obj.uid,
                 space=space,
-            )
+            ),
         )
     return infos
 
 
 def get_space_from_uid(
-    name: str, entries: list[Actuator] | list[Sensor]
+    name: str,
+    entries: list[Actuator] | list[Sensor],
 ) -> str:
     return next(o.space for o in entries if name == o.uid)

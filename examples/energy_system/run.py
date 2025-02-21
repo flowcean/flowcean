@@ -36,7 +36,7 @@ def main() -> None:
     model = learn_active(env, learner)  # noqa: F841
     # Commented out for type checking
     # Uncomment to see model summary
-    # print(model.summary())  # noqa: ERA001
+    # print(model.summary())
 
     data = {"objective": learner.objectives}
     for row in learner.rewards:
