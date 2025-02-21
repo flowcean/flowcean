@@ -15,6 +15,7 @@ from .match_sampling_rate import (
     MatchSamplingRate,
     UnknownInterpolationError,
 )
+from .mean import Mean
 from .median import Median
 from .one_cold import OneCold
 from .one_hot import (
@@ -43,6 +44,7 @@ __all__ = [
     "Lambda",
     "Last",
     "MatchSamplingRate",
+    "Mean",
     "Median",
     "NoCategoriesError",
     "NoMatchingCategoryError",
