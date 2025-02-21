@@ -6,6 +6,9 @@ from typing import Any
 import numpy as np
 import polars as pl
 import rclpy
+from custom_transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
+from custom_transforms.scan_map import ScanMap
 from rclpy.node import Node
 from rclpy.qos import QoSPresetProfiles
 from std_msgs.msg import Float32MultiArray
@@ -20,6 +23,13 @@ class DataPreprocessor(Node):
         self._init_timer()
 
     def _init_config(self) -> None:
+        self.transform = (
+            ScanMap(plotting=False)
+            | ParticleCloudImage(
+                save_images=False,
+            )
+            | ParticleCloudStatistics()
+        )
         self.topic_config = {
             "/amcl_pose": {
                 "msg_type": "geometry_msgs.msg.PoseWithCovarianceStamped",
@@ -74,7 +84,7 @@ class DataPreprocessor(Node):
                 "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
             },
             "/delocalizations": {
-                "msg_type": "std_msgs.msg.Int64",
+                "msg_type": "std_msgs.msg.Int16",
                 "fields": ["data"],
                 "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
             },
@@ -121,7 +131,7 @@ class DataPreprocessor(Node):
         self.timer_period = 0.5
         self.timer = self.create_timer(
             self.timer_period,
-            self.publish_preprocessed_data,
+            self.apply_transforms,
         )
 
     def _convert_ros_time(self, timestamp) -> int:
@@ -242,13 +252,29 @@ class DataPreprocessor(Node):
             pl.concat(frames, how="horizontal") if frames else pl.DataFrame()
         )
 
-    def publish_preprocessed_data(self) -> None:
+    def apply_transforms(self) -> None:
         dataset = self._prepare_dataset()
         if dataset.is_empty():
-            self.get_logger().warn("No data to publish")
+            self.get_logger().warn("No dataframe to process")
             return
         print(dataset.schema)
         print(dataset)
+        # Check if all topics are present
+        if not all(topic in dataset.columns for topic in self.topic_config):
+            self.get_logger().warn("Not all topics present in dataframe")
+            return
+        # print(f"dataset['m/ap']: {dataset['/map']}")
+        # print(f"dataset['/map'].to_list(): {dataset['/map'].to_list()}")
+        # print(f"dataset['/map'].to_list()[0]: {dataset['/map'].to_list()[0]}")
+        # print(
+        #     f"dataset['/map'].to_list()[0][1]: {dataset['/map'].to_list()[0][0]}",
+        # )
+        # print(
+        #     f"dataset['/map'].to_list()[0][1]['value']: {dataset['/map'].to_list()[0][0]['value']}",
+        # )
+
+        transformed_dataset = self.transform(dataset.lazy())
+        print(f"transformed data: {transformed_dataset.collect()}")
 
 
 def main(args: list[str] | None = None) -> None:

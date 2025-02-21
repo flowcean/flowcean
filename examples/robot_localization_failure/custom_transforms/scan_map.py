@@ -102,7 +102,7 @@ class ScanMap(Transform):
         )
 
     def compute_scan_point_distances(self, data: pl.DataFrame) -> pl.DataFrame:
-        map_entry = data["/map"].to_list()[0][1]["value"]
+        map_entry = data["/map"].to_list()[0][0]["value"]
         map_array = map_entry["data"]
         width = map_entry["info.width"]
         height = map_entry["info.height"]
