@@ -28,22 +28,14 @@ def learn_active(
         The model learned from the environment.
     """
     model = None
-<<<<<<< HEAD:src/flowcean/core/strategies/active.py
-<<<<<<< HEAD:src/flowcean/core/strategies/active.py
-=======
-    action, observation = environment.load()
-    learner.load(action, observation)
-=======
->>>>>>> 6880901 (Fixed type-check errors):src/flowcean/strategies/active.py
 
->>>>>>> a3cadc5 (Powergrid example now working. No guarantees for learning success though):src/flowcean/strategies/active.py
     try:
         while True:
-            observations = environment.observe().collect(streaming=True)
+            observations = environment.observe()
             action = learner.propose_action(observations)
             environment.act(action)
             environment.step()
-            observations = environment.observe().collect(streaming=True)
+            observations = environment.observe()
             model = learner.learn_active(action, observations)
     except StopLearning:
         pass
