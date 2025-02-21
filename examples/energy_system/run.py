@@ -4,7 +4,7 @@ from midas_palaestrai import ArlDefenderObjective
 from sac_learner import SACLearner
 
 import flowcean.cli
-from flowcean.strategies.active import learn_active
+from flowcean.core.strategies.active import learn_active
 
 
 def main() -> None:

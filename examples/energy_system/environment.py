@@ -8,6 +8,7 @@ from copy import copy
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
+from socket import socket
 from statistics import mean, median, stdev
 from typing import Any, override
 
@@ -16,8 +17,8 @@ from numpy.random import RandomState
 from simulator import SyncSimulator
 
 from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.strategies.active import StopLearning
 from flowcean.core.transform import Identity
-from flowcean.strategies.active import StopLearning
 
 LOG = logging.getLogger("mosaik_environment")
 
@@ -68,9 +69,11 @@ class MosaikEnvironment(ActiveEnvironment):
         description_func: str = "describe",
         instance_func: str = "get_world",
         sync_host: str = "localhost",
-        sync_port: int = 58976,
+        sync_port: int = 0,
         silent: bool = False,
         params: dict[str, Any] | None = None,
+        no_extra_step: bool = False,
+        simulation_timeout: int = 60,
     ) -> None:
         self.transform = Identity()
         self.uid = "MosaikEnvironment_flowcean_edition"
@@ -83,12 +86,12 @@ class MosaikEnvironment(ActiveEnvironment):
         self._instance_func = instance_func
 
         self._sync_host = sync_host
-        self._sync_port = sync_port
+        self._sync_port = sync_port if sync_port != 0 else find_free_port()
 
         self._mosaik_params = {} if params is None else params
         self._mosaik_params["meta_params"] = {
             "seed": self.rng.randint(2**32 - 1),
-            "end": parse_end(end),
+            "end": parse_end(end) + (0 if no_extra_step else 1),
             "start_date": parse_start_date(start_date, self.rng),
             "sync_freq": sync_freq,
             "silent": silent,
@@ -105,14 +108,22 @@ class MosaikEnvironment(ActiveEnvironment):
 
         self.sensor_queue = queue.Queue(1)
         self.actuator_queue = queue.Queue(1)
+        self.sim_terminate = multiprocessing.Event()
+        self.sim_finished = multiprocessing.Event()
+        self.sync_terminate = threading.Event()
+        self.sync_finished = threading.Event()
 
         LOG.debug("%s loading sensors and actuators ...", log_(self))
         description, instance = load_funcs(
-            self._module, self._description_func, self._instance_func
+            self._module,
+            self._description_func,
+            self._instance_func,
         )
         sensor_description, actuator_description, world_state = description(
-            self._mosaik_params
+            self._mosaik_params,
         )
+        self.sensors, self.sen_map = create_sensors(sensor_description)
+        self.actuators, self.act_map = create_actuators(actuator_description)
         LOG.debug("%s starting SyncSimulator ...", log_(self))
         self.sync_task = threading.Thread(
             target=_start_simulator,
@@ -121,6 +132,10 @@ class MosaikEnvironment(ActiveEnvironment):
                 self._sync_port,
                 self.sensor_queue,
                 self.actuator_queue,
+                self._mosaik_params["meta_params"]["end"],
+                simulation_timeout,
+                self.sync_terminate,
+                self.sync_finished,
             ],
         )
         self.sync_task.start()
@@ -131,21 +146,22 @@ class MosaikEnvironment(ActiveEnvironment):
             args=(
                 instance,
                 self._mosaik_params,
-                sensor_description,
-                actuator_description,
+                [s.uid for s in self.sensors],
+                [a.uid for a in self.actuators],
                 self._sync_host,
                 self._sync_port,
+                self.sim_finished,
             ),
         )
         self.sim_proc.start()
-        self.sensors, self.sen_map = create_sensors(sensor_description)
-        self.actuators, self.act_map = create_actuators(actuator_description)
         LOG.info(
-            "%s finished setup. Co-simulation is now starting up.", log_(self)
+            "%s finished setup. Co-simulation is now starting up.",
+            log_(self),
         )
         self.initial_action = Action(actuators=self.actuators)
         self.initial_observation = Observation(
-            sensors=self.sensors, rewards=[]
+            sensors=self.sensors,
+            rewards=[],
         )
 
     def act(self, action: Action) -> None:
@@ -165,7 +181,8 @@ class MosaikEnvironment(ActiveEnvironment):
         self.actuator_queue.put(self._data_for_simulation, block=True)
 
         done, self._data_from_simulation = self.sensor_queue.get(
-            block=True, timeout=60
+            block=True,
+            timeout=60,
         )
         if done or self._data_for_simulation is None:
             raise StopLearning
@@ -179,7 +196,8 @@ class MosaikEnvironment(ActiveEnvironment):
         if not self._data_received:
             try:
                 done, self._data_from_simulation = self.sensor_queue.get(
-                    block=True, timeout=10
+                    block=True,
+                    timeout=10,
                 )
             except queue.Empty:
                 LOG.info(
@@ -223,7 +241,7 @@ def calculate_reward(sensors: list) -> list:
     ]
 
     lineloads = sorted(
-        [s.value for s in sensors if ".loading_percent" in s.uid]
+        [s.value for s in sensors if ".loading_percent" in s.uid],
     )
 
     lineload_rewards = [
@@ -238,6 +256,9 @@ def calculate_reward(sensors: list) -> list:
 
 
 def parse_start_date(start_date: str, rng: RandomState) -> str:
+    if start_date is None:
+        LOG.info("Start_date is None, time information will not be available")
+        return None
     if start_date == "random":
         start_date = (
             f"2020-{rng.randint(1, 12):02d}-"
@@ -247,11 +268,11 @@ def parse_start_date(start_date: str, rng: RandomState) -> str:
     try:
         datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S%z")
     except ValueError:
-        msg = (
-            f"Unable to parse start_date {start_date} "
-            f"(format string: {DATE_FORMAT})"
+        LOG.exception(
+            "Unable to parse start_date %s (format string: %s)",
+            start_date,
+            DATE_FORMAT,
         )
-        LOG.exception(msg)
     return start_date
 
 
@@ -265,18 +286,21 @@ def parse_end(end: str | int) -> int:
 
     """
     if isinstance(end, str):
-        parts = end.split("*")
-        prod_end = 1.0
-        for part in parts:
-            prod_end *= float(part)
-        converted_end = int(prod_end)
-    else:
-        converted_end = int(end)
-    return converted_end
+        smnds = end.split("+")
+        end = 0
+        for p in smnds:
+            parts = p.split("*")
+            prod = 1
+            for part in parts:
+                prod *= float(part)
+            end += prod
+    return int(end)
 
 
 def load_funcs(
-    module_name: str, description_func: str, instance_func: str
+    module_name: str,
+    description_func: str,
+    instance_func: str,
 ) -> Any:
     """Load the description functions.
 
@@ -327,7 +351,14 @@ def load_funcs(
 
 
 def _start_simulator(
-    host: str, port: int | str, q1: queue.Queue, q2: queue.Queue
+    host: str,
+    port: int | str,
+    q1: queue.Queue,
+    q2: queue.Queue,
+    end: int,
+    timeout: int,
+    terminate: threading.Event,
+    finished: threading.Event,
 ) -> None:
     argv_backup = sys.argv
     sys.argv = [
@@ -337,7 +368,9 @@ def _start_simulator(
         "--log-level",
         "error",
     ]
-    mosaik_api_v3.start_simulation(SyncSimulator(q1, q2))
+    mosaik_api_v3.start_simulation(
+        SyncSimulator(q1, q2, terminate, finished, end, timeout),
+    )
     sys.argv = argv_backup
 
 
@@ -348,6 +381,7 @@ def _start_world(
     actuators: list,
     host: str,
     port: int | str,
+    finished: multiprocessing.Event,
 ) -> None:
     meta_params = params["meta_params"]
 
@@ -359,16 +393,16 @@ def _start_world(
         start_date=meta_params.get("start_date", None),
     )
 
-    for sensor in sensors:
-        sid, eid, attr = sensor["uid"].split(".")
+    for uid in sensors:
+        sid, eid, attr = uid.split(".")
         full_id = f"{sid}.{eid}"
-        sensor_model = arlsim.Sensor(uid=sensor["uid"])
+        sensor_model = arlsim.Sensor(uid=uid)
         world.connect(entities[full_id], sensor_model, (attr, "reading"))
 
-    for actuator in actuators:
-        sid, eid, attr = actuator["uid"].split(".")
+    for uid in actuators:
+        sid, eid, attr = uid.split(".")
         full_id = f"{sid}.{eid}"
-        actuator_model = arlsim.Actuator(uid=actuator["uid"])
+        actuator_model = arlsim.Actuator(uid=uid)
         world.connect(
             actuator_model,
             entities[full_id],
@@ -379,8 +413,11 @@ def _start_world(
 
     LOG.info("Co-Simulation finished configuration and will start now.")
     world.run(
-        until=meta_params["end"], print_progress=not meta_params["silent"]
+        until=meta_params["end"],
+        print_progress=not meta_params["silent"],
     )
+
+    finished.set()
 
 
 def create_sensors(
@@ -429,8 +466,9 @@ def create_actuators(
     for actuator in actuator_defs:
         uid = str(
             actuator.get(
-                "uid", actuator.get("actuator_id", "Unnamed Actuator")
-            )
+                "uid",
+                actuator.get("actuator_id", "Unnamed Actuator"),
+            ),
         )
 
         try:
@@ -439,7 +477,7 @@ def create_actuators(
                 actuator.get("setpoint", None),
             )
             actuators.append(
-                Actuator(value=value, uid=uid, space=actuator["space"])
+                Actuator(value=value, uid=uid, space=actuator["space"]),
             )
         except RuntimeError:
             LOG.exception(actuator)
@@ -450,3 +488,12 @@ def create_actuators(
 
 def log_(env: MosaikEnvironment) -> str:
     return f"MosaikEnvironment (id={id(env)}, uid={env.uid})"
+
+
+def find_free_port() -> int:
+    port = 0
+    with socket() as s:
+        s.bind(("", 0))
+        port = s.getsockname()[1]
+        s.close()
+    return port

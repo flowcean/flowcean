@@ -5,6 +5,7 @@ It is used by the :class:`.MosaikEnvironment` for synchronization.
 
 import logging
 import queue
+import threading
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -48,21 +49,34 @@ class SyncSimulator(mosaik_api_v3.Simulator):
     """
 
     def __init__(
-        self, sensor_queue: queue.Queue, actuator_queue: queue.Queue
+        self,
+        sensor_queue: queue.Queue,
+        actuator_queue: queue.Queue,
+        terminate: threading.Event,
+        finished: threading.Event,
+        end: int,
+        timeout: int = 60,
     ) -> None:
         super().__init__(META)
 
         self.sensor_queue = sensor_queue
         self.actuator_queue = actuator_queue
+        self.sync_terminate = terminate
+        self.sync_finished = finished
         self.sid = None
         self.step_size: int = 0
         self.models = {}
+        self.a_uid_dict = {}
+        self.s_uid_dict = {}
         self.uid_dict = {}
         self.model_ctr = {"Sensor": 0, "Actuator": 0}
         self._env = None
         self._sim_time = 0
         self._now_dt = None
-        self._timeout = 30
+        self._timeout = timeout
+        self._aq_timeout = 3
+        self._sq_timeout = 5
+        self._end = end
 
     def init(
         self,
@@ -96,11 +110,12 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         if "start_date" in sim_params:
             try:
                 self._now_dt = datetime.strptime(
-                    str(sim_params["start_date"]), "%Y-%m-%d %H:%M:%S%z"
+                    str(sim_params["start_date"]),
+                    "%Y-%m-%d %H:%M:%S%z",
                 )
             except ValueError:
                 print(
-                    f"Unable to parse start date: {sim_params['start_date']}"
+                    f"Unable to parse start date: {sim_params['start_date']}",
                 )
                 self._now_dt = None
         return self.meta
@@ -125,6 +140,24 @@ class SyncSimulator(mosaik_api_v3.Simulator):
             msg = f"Only one model at a time but {num} were requested."
             raise ValueError(msg)
 
+        uid = model_params["uid"]
+        if model == "Sensor":
+            if uid in self.s_uid_dict:
+                msg = (
+                    f"A Sensor model with uid '{uid}' was already created "
+                    "but only one model per uid is allowed."
+                )
+                raise ValueError(msg)
+        elif model == "Actuator":
+            if uid in self.a_uid_dict:
+                msg = (
+                    f"An Actuator model with uid '{uid}' was already created "
+                    "but only one model per uid is allowed.",
+                )
+                raise ValueError(msg)
+        else:
+            msg = f"Invalid model: '{model}'. Use ARLSensor or ARLActuator."
+            raise ValueError(msg)
         num_models = self.model_ctr[model]
         self.model_ctr[model] += 1
 
@@ -132,6 +165,10 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self.models[eid] = {"uid": model_params["uid"], "value": None}
         self.uid_dict[model_params["uid"]] = eid
 
+        if model == "Sensor":
+            self.s_uid_dict[uid] = eid
+        elif model == "Actuator":
+            self.a_uid_dict[uid] = eid
         return [{"eid": eid, "type": model}]
 
     def step(self, time: int, inputs: dict, max_advance: int = 0) -> int:
@@ -156,8 +193,11 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         if self._now_dt is not None:
             self._now_dt += timedelta(seconds=self.step_size)
             sensors["simtime_timestamp"] = self._now_dt.strftime(
-                "%Y-%m-%d %H:%M:%S%z"
+                "%Y-%m-%d %H:%M:%S%z",
             )
+        if self.sync_terminate.is_set():
+            msg = "Stop was requested. Terminating simulation."
+            raise SimulationError(msg)
 
         for sensor_eid, readings in inputs.items():
             reading = readings["reading"]
@@ -166,13 +206,25 @@ class SyncSimulator(mosaik_api_v3.Simulator):
                     (1 if value else 0) if isinstance(value, bool) else value
                 )
 
+        if self._sim_time + self.step_size >= self._end:
+            LOG.info("Repent, the end is nigh. Final readings are coming.")
+            self._notified_done = True
         success = False
         while not success:
             try:
-                self.sensor_queue.put((False, sensors), block=True, timeout=5)
+                self.sensor_queue.put(
+                    (False, sensors),
+                    block=True,
+                    timeout=self._sq_timeout,
+                )
                 success = True
-            except queue.Full:
-                LOG.exception("Failed to fill queue!")
+            except queue.Full:  # noqa: PERF203
+                msg = "Failed to fill queue!"
+                LOG.exception(msg)
+
+        if self.sync_terminate.is_set():
+            msg = "Stop was requested. Terminating simulation."
+            raise SimulationError(msg)
 
         return time + self.step_size
 
@@ -193,43 +245,64 @@ class SyncSimulator(mosaik_api_v3.Simulator):
             An empty dictionary, since no output is generated.
 
         """
+        if self.sync_terminate.is_set():
+            msg = "Stop was requested. Terminating simulation."
+            raise SimulationError(msg)
         data = {}
         success = False
         to_ctr = self._timeout
         actuator_data = {}
         while not success:
             try:
-                actuator_data = self.actuator_queue.get(block=True, timeout=3)
-                success = True
-            except queue.Empty as exc:
-                to_ctr -= 1
-                if to_ctr <= 0:
-                    raise SimulationError(
-                        "No actuators after %.1f seconds. Stopping mosaik"
-                        % (to_ctr * 3)
-                    ) from exc
-
-                LOG.warning(
-                    "At step %d: Failed to get actuator data from queue (queue"
-                    " is empty). Timeout in %d",
-                    self._sim_time,
-                    (to_ctr * 3),
+                actuator_data = self.actuator_queue.get(
+                    block=True,
+                    timeout=self._aq_timeout,
                 )
+                success = True
+            except queue.Empty as exc:  # noqa: PERF203
+                to_ctr -= self._aq_timeout
+                timeout_msg = (
+                    f"At step {self._sim_time}: Failed to get actuator "
+                    "data from queue (queue is empty). Timeout in "
+                    f"{to_ctr} s ..."
+                )
+                if to_ctr <= 0:
+                    msg = (
+                        f"No actuators after {to_ctr * 3:.1f} seconds. "
+                        "Stopping mosaik."
+                    )
+                    raise SimulationError(msg) from exc
+                log_timeout(to_ctr, self._timeout, timeout_msg)
+
         for uid, value in actuator_data.items():
             self.models[self.uid_dict[uid]]["value"] = value
 
         for eid in outputs:
             data[eid] = {"setpoint": self.models[eid]["value"]}
 
+        if self.sync_terminate.is_set():
+            msg = "Stop was requested. Terminating simulation."
+            raise SimulationError(msg)
         return data
 
     def finalize(self) -> None:
         sensors: dict[str, Any] = {
-            "simtime_ticks": self._sim_time + self.step_size
+            "simtime_ticks": self._sim_time + self.step_size,
         }
         if self._now_dt is not None:
             self._now_dt += timedelta(seconds=self.step_size)
             sensors["simtime_timestamp"] = self._now_dt.strftime(
-                "%Y-%m-%d %H:%M:%S%z"
+                "%Y-%m-%d %H:%M:%S%z",
             )
         self.sensor_queue.put((True, sensors), block=True, timeout=3)
+
+
+def log_timeout(ctr: int, timeout: int, msg: str) -> None:
+    if ctr < timeout / 8:
+        LOG.critical(msg)
+    elif ctr < timeout / 4:
+        LOG.error(msg)
+    elif ctr < timeout / 2:
+        LOG.warning(msg)
+    else:
+        LOG.info(msg)

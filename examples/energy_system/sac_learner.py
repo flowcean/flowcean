@@ -80,6 +80,14 @@ class SACModel(Model):
     def load(self, path: Path) -> None:
         raise NotImplementedError
 
+    @override
+    def save_state(self, path: Path) -> None:
+        raise NotImplementedError
+
+    @override
+    def load_from_state(self, path: Path) -> None:
+        raise NotImplementedError
+
     def summary(self) -> str:
         return str(self.muscle._model)  # noqa: SLF001
 
