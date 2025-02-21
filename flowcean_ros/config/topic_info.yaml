@@ -1,0 +1,72 @@
+# Specify here which topics you want to subscribe to and which fields you
+# want to use from each topic.
+# Make sure to specify the correct message type and fields for each topic.
+"/amcl_pose":
+  msg_type: "geometry_msgs.msg.PoseWithCovarianceStamped"
+  fields:
+    - "pose.pose.position.x"
+    - "pose.pose.position.y"
+    - "pose.pose.orientation.x"
+    - "pose.pose.orientation.y"
+    - "pose.pose.orientation.z"
+    - "pose.pose.orientation.w"
+  qos_profile: "SENSOR_DATA"
+
+"/momo/pose":
+  msg_type: "geometry_msgs.msg.PoseStamped"
+  fields:
+    - "pose.position.x"
+    - "pose.position.y"
+  qos_profile: "SENSOR_DATA"
+
+"/scan":
+  msg_type: "sensor_msgs.msg.LaserScan"
+  fields:
+    - "ranges"
+    - "angle_min"
+    - "angle_max"
+    - "angle_increment"
+    - "range_min"
+    - "range_max"
+  qos_profile: "SENSOR_DATA"
+
+"/map":
+  msg_type: "nav_msgs.msg.OccupancyGrid"
+  fields:
+    - "data"
+    - "info.resolution"
+    - "info.width"
+    - "info.height"
+    - "info.origin.position.x"
+    - "info.origin.position.y"
+    - "info.origin.position.z"
+    - "info.origin.orientation.x"
+    - "info.origin.orientation.y"
+    - "info.origin.orientation.z"
+    - "info.origin.orientation.w"
+  qos_profile: "SYSTEM_DEFAULT"
+  one_time_data: true
+
+"/particle_cloud":
+  msg_type: "nav2_msgs.msg.ParticleCloud"
+  fields:
+    - "particles"
+  qos_profile: "SENSOR_DATA"
+
+"/delocalizations":
+  msg_type: "std_msgs.msg.Int16"
+  fields:
+    - "data"
+  qos_profile: "SENSOR_DATA"
+
+"/position_error":
+  msg_type: "std_msgs.msg.Float32"
+  fields:
+    - "data"
+  qos_profile: "SENSOR_DATA"
+
+"/heading_error":
+  msg_type: "std_msgs.msg.Float32"
+  fields:
+    - "data"
+  qos_profile: "SENSOR_DATA"
