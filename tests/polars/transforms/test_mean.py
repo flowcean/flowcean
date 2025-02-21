@@ -3,50 +3,75 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars.transforms import Mean, ToTimeSeries
+from flowcean.polars.transforms import Mean
 
 
 class MeanTransform(unittest.TestCase):
     def test_single_feature(self) -> None:
         transform = Mean("a")
 
-        data_frame_a = pl.DataFrame(
-            [
-                {"t": 0, "a": 0},
-                {"t": 1, "a": 5},
-                {"t": 2, "a": 10},
-            ],
-        ).lazy()
-
-        data_frame_b = pl.DataFrame(
-            [
-                {"t": 0, "a": -100},
-                {"t": 1, "a": 50},
-                {"t": 2, "a": 50},
-            ],
-        ).lazy()
-
-        time_series_transform = ToTimeSeries(time_feature="t")
-        time_series_data_frame_a = time_series_transform(data_frame_a)
-        time_series_data_frame_b = time_series_transform(data_frame_b)
-
-        transformed_data = transform(
-            pl.concat(
-                [
-                    time_series_data_frame_a,
-                    time_series_data_frame_b,
+        data_frame = pl.DataFrame(
+            {
+                "a": [
+                    [
+                        {"time": 0, "value": 0},
+                        {"time": 1, "value": 5},
+                        {"time": 2, "value": 10},
+                    ],
+                    [
+                        {"time": 0, "value": -100},
+                        {"time": 1, "value": 50},
+                        {"time": 2, "value": 50},
+                    ],
                 ],
-                how="vertical",
-            ),
-        ).collect()
+            },
+        )
+
+        transformed_data = transform(data_frame.lazy()).collect()
 
         assert_frame_equal(
-            transformed_data.select(pl.col("a_mean")),
-            pl.DataFrame(
+            transformed_data,
+            pl.concat(
                 [
-                    {"a_mean": 5.0},
-                    {"a_mean": 0.0},
+                    data_frame,
+                    pl.DataFrame(
+                        {
+                            "a_mean": [5.0, 0.0],
+                        },
+                    ),
                 ],
+                how="horizontal",
+            ),
+        )
+
+    def test_replace_single_feature(self) -> None:
+        transform = Mean("a", replace=True)
+
+        data_frame = pl.DataFrame(
+            {
+                "a": [
+                    [
+                        {"time": 0, "value": 0},
+                        {"time": 1, "value": 5},
+                        {"time": 2, "value": 10},
+                    ],
+                    [
+                        {"time": 0, "value": -100},
+                        {"time": 1, "value": 50},
+                        {"time": 2, "value": 50},
+                    ],
+                ],
+            },
+        )
+
+        transformed_data = transform(data_frame.lazy()).collect()
+
+        assert_frame_equal(
+            transformed_data,
+            pl.DataFrame(
+                {
+                    "a": [5.0, 0.0],
+                },
             ),
         )
 
