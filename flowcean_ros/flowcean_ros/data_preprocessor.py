@@ -1,11 +1,14 @@
 import importlib
 from collections import defaultdict
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import polars as pl
 import rclpy
+import yaml
+from builtin_interfaces.msg import Time
 from custom_transforms.particle_cloud_image import ParticleCloudImage
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_map import ScanMap
@@ -25,81 +28,24 @@ class DataPreprocessor(Node):
     def _init_config(self) -> None:
         self.transform = (
             ScanMap(plotting=False)
-            | ParticleCloudImage(
-                save_images=False,
-            )
+            | ParticleCloudImage(save_images=False)
             | ParticleCloudStatistics()
         )
-        self.topic_config = {
-            "/amcl_pose": {
-                "msg_type": "geometry_msgs.msg.PoseWithCovarianceStamped",
-                "fields": [
-                    "pose.pose.position.x",
-                    "pose.pose.position.y",
-                    "pose.pose.orientation.x",
-                    "pose.pose.orientation.y",
-                    "pose.pose.orientation.z",
-                    "pose.pose.orientation.w",
-                ],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
-            "/momo/pose": {
-                "msg_type": "geometry_msgs.msg.PoseStamped",
-                "fields": ["pose.position.x", "pose.position.y"],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
-            "/scan": {
-                "msg_type": "sensor_msgs.msg.LaserScan",
-                "fields": [
-                    "ranges",
-                    "angle_min",
-                    "angle_max",
-                    "angle_increment",
-                    "range_min",
-                    "range_max",
-                ],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
-            "/map": {
-                "msg_type": "nav_msgs.msg.OccupancyGrid",
-                "fields": [
-                    "data",
-                    "info.resolution",
-                    "info.width",
-                    "info.height",
-                    "info.origin.position.x",
-                    "info.origin.position.y",
-                    "info.origin.position.z",
-                    "info.origin.orientation.x",
-                    "info.origin.orientation.y",
-                    "info.origin.orientation.z",
-                    "info.origin.orientation.w",
-                ],
-                "qos_profile": QoSPresetProfiles.SYSTEM_DEFAULT.value,
-                "one_time_data": True,
-            },
-            "/particle_cloud": {
-                "msg_type": "nav2_msgs.msg.ParticleCloud",
-                "fields": ["particles"],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
-            "/delocalizations": {
-                "msg_type": "std_msgs.msg.Int16",
-                "fields": ["data"],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
-            "/position_error": {
-                "msg_type": "std_msgs.msg.Float32",
-                "fields": ["data"],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
-            "/heading_error": {
-                "msg_type": "std_msgs.msg.Float32",
-                "fields": ["data"],
-                "qos_profile": QoSPresetProfiles.SENSOR_DATA.value,
-            },
+        self.topic_config: dict[str, Any] = {}
+        config_file = (
+            Path.home()
+            / "ros2_ws/src/flowcean/flowcean_ros/config/topic_info.yaml"
+        )
+        with Path.open(config_file) as f:
+            loaded_config = yaml.safe_load(f)
+            self.topic_config = (
+                loaded_config if isinstance(loaded_config, dict) else {}
+            )
+        self.quality_of_service_mapping = {
+            "SENSOR_DATA": QoSPresetProfiles.SENSOR_DATA.value,
+            "PARAMETER_EVENTS": QoSPresetProfiles.PARAMETER_EVENTS.value,
+            "SYSTEM_DEFAULT": QoSPresetProfiles.SYSTEM_DEFAULT.value,
         }
-
         self.subscribers = {}
         self.data_buffer: dict[str, list[dict]] = defaultdict(list)
         self.max_buffer_size = 50
@@ -107,14 +53,17 @@ class DataPreprocessor(Node):
 
     def _init_subscribers(self) -> None:
         self.subscribers = {}
-        for topic, config in self.topic_config.items():
-            msg_cls = self._get_msg_class(config["msg_type"])
-            self.subscribers[topic] = self.create_subscription(
-                msg_cls,
-                topic,
-                lambda msg, topic=topic: self.callback(msg, topic),
-                config["qos_profile"],
-            )
+        if isinstance(self.topic_config, dict):
+            for topic, config in self.topic_config.items():
+                msg_cls = self._get_msg_class(config["msg_type"])
+                self.subscribers[topic] = self.create_subscription(
+                    msg_cls,
+                    topic,
+                    lambda msg, topic=topic: self.callback(msg, topic),
+                    self.quality_of_service_mapping[config["qos_profile"]],
+                )
+        else:
+            self.get_logger().error("No topics found in config")
 
     def _get_msg_class(self, msg_type: str) -> Any:
         module, cls = msg_type.rsplit(".", 1)
@@ -134,7 +83,7 @@ class DataPreprocessor(Node):
             self.apply_transforms,
         )
 
-    def _convert_ros_time(self, timestamp) -> int:
+    def _convert_ros_time(self, timestamp: Time) -> int:
         return timestamp.sec * 1_000_000_000 + timestamp.nanosec
 
     def _create_entry(self, msg_dict: dict, config: dict) -> dict:
@@ -191,7 +140,7 @@ class DataPreprocessor(Node):
             self.data_buffer[topic].pop(0)
 
     def ros_msg_to_dict(self, msg: Any) -> dict:
-        """Recursively convert ROS message to dict with proper list handling."""
+        """Recursively convert ROS message to dict."""
         result = {}
         for field in msg.__slots__:
             key = field.lstrip("_")
@@ -215,10 +164,9 @@ class DataPreprocessor(Node):
         return result
 
     def _prepare_dataset(self) -> pl.DataFrame:
-        """Prepare dataset with each topic as a column of time-value structs."""
+        """Prepare dataset with time series columns for each topic."""
         frames = []
 
-        # Add regular topics
         for topic, entries in self.data_buffer.items():
             if not entries:
                 continue
@@ -257,21 +205,11 @@ class DataPreprocessor(Node):
         if dataset.is_empty():
             self.get_logger().warn("No dataframe to process")
             return
-        print(dataset.schema)
         print(dataset)
         # Check if all topics are present
         if not all(topic in dataset.columns for topic in self.topic_config):
             self.get_logger().warn("Not all topics present in dataframe")
             return
-        # print(f"dataset['m/ap']: {dataset['/map']}")
-        # print(f"dataset['/map'].to_list(): {dataset['/map'].to_list()}")
-        # print(f"dataset['/map'].to_list()[0]: {dataset['/map'].to_list()[0]}")
-        # print(
-        #     f"dataset['/map'].to_list()[0][1]: {dataset['/map'].to_list()[0][0]}",
-        # )
-        # print(
-        #     f"dataset['/map'].to_list()[0][1]['value']: {dataset['/map'].to_list()[0][0]['value']}",
-        # )
 
         transformed_dataset = self.transform(dataset.lazy())
         print(f"transformed data: {transformed_dataset.collect()}")

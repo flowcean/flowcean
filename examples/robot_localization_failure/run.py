@@ -14,6 +14,7 @@ from pathlib import Path
 
 import polars as pl
 from custom_transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_map import ScanMap
 
 import flowcean.cli
@@ -87,12 +88,15 @@ def main() -> None:
 
     collected_data = data.collect()
     print(f"loaded data: {collected_data}")
-    print(f"schema: {collected_data.schema}")
-    transform = ScanMap(plotting=True) | ParticleCloudImage(
-        particle_cloud_feature_name="/particle_cloud",
-        save_images=True,
-        cutting_area=15.0,
-        image_pixel_size=300,
+    transform = (
+        ScanMap(plotting=True)
+        | ParticleCloudImage(
+            particle_cloud_feature_name="/particle_cloud",
+            save_images=True,
+            cutting_area=15.0,
+            image_pixel_size=300,
+        )
+        | ParticleCloudStatistics()
     )
     transformed_data = transform(data)
     print(f"transformed data: {transformed_data.collect()}")
