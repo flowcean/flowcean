@@ -1,3 +1,22 @@
+#!/usr/bin/env python
+# /// script
+# dependencies = [
+#     "flowcean",
+#     "matplotlib",
+#     "opencv-python",
+#     "rclpy",
+#     "numpy",
+#     "polars",
+#     "pyyaml",
+#     "builtin_interfaces",
+#     "std_msgs"
+# ]
+#
+# [tool.uv.sources]
+# flowcean = { path = "../../", editable = true }
+# ///
+
+
 import importlib
 from collections import defaultdict
 from collections.abc import Iterable
