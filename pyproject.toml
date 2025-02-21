@@ -68,7 +68,6 @@ dev = [
 examples = ["matplotlib>=3.10.0", "opencv-python>=4.11.0.86", "pillow>=11.1.0"]
 
 [tool.uv.workspace]
-members = ["flowcean-sklearn", "flowcean-pytorch", "flowcean-ros", "flowcean-ode", "flowcean-grpc"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/flowcean"]
