@@ -1,18 +1,14 @@
 from .dummy import DummyLearner, DummyModel
-from .environments.csv import CsvDataLoader
-from .environments.dataset import Dataset, collect
-from .environments.datasetprediction import DatasetPredictionEnvironment
-from .environments.join import JoinedOfflineEnvironment
-from .environments.json import JsonDataLoader
-from .environments.parquet import ParquetDataLoader
-from .environments.streaming import StreamingOfflineEnvironment
-from .environments.train_test_split import TrainTestSplit
-from .environments.uri import (
+from .environments.dataframe import (
+    DataFrame,
     InvalidUriSchemeError,
     UnsupportedFileTypeError,
-    UriDataLoader,
+    collect,
 )
-from .environments.yaml import YamlDataLoader
+from .environments.datasetprediction import DatasetPredictionEnvironment
+from .environments.join import JoinedOfflineEnvironment
+from .environments.streaming import StreamingOfflineEnvironment
+from .environments.train_test_split import TrainTestSplit
 from .is_time_series import is_timeseries_feature
 from .transforms.cast import Cast
 from .transforms.drop import Drop
@@ -48,8 +44,7 @@ __all__ = [
     "And",
     "Cast",
     "CollectionExpr",
-    "CsvDataLoader",
-    "Dataset",
+    "DataFrame",
     "DatasetPredictionEnvironment",
     "Drop",
     "DummyLearner",
@@ -62,7 +57,6 @@ __all__ = [
     "Flatten",
     "InvalidUriSchemeError",
     "JoinedOfflineEnvironment",
-    "JsonDataLoader",
     "Lambda",
     "MatchSamplingRate",
     "NoCategoriesError",
@@ -72,7 +66,6 @@ __all__ = [
     "OneCold",
     "OneHot",
     "Or",
-    "ParquetDataLoader",
     "Rename",
     "Resample",
     "Select",
@@ -86,8 +79,6 @@ __all__ = [
     "TrainTestSplit",
     "UnknownInterpolationError",
     "UnsupportedFileTypeError",
-    "UriDataLoader",
-    "YamlDataLoader",
     "collect",
     "is_timeseries_feature",
 ]

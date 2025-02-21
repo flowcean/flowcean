@@ -5,13 +5,13 @@ from typing_extensions import override
 
 from flowcean.core import ActiveEnvironment, Finished
 
-from .dataset import Dataset
+from .dataframe import DataFrame
 
 
 class DatasetPredictionEnvironment(ActiveEnvironment):
     """Dataset prediction environment."""
 
-    environment: Dataset
+    environment: DataFrame
     batch_size: int
     data: pl.LazyFrame | None = None
     slice: pl.LazyFrame | None = None
@@ -19,7 +19,7 @@ class DatasetPredictionEnvironment(ActiveEnvironment):
 
     def __init__(
         self,
-        environment: Dataset,
+        environment: DataFrame,
         batch_size: int,
     ) -> None:
         """Initialize the dataset prediction environment.

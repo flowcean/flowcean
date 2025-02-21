@@ -5,7 +5,7 @@ from pathlib import Path
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars import YamlDataLoader
+from flowcean.polars.environments.dataframe import DataFrame
 
 
 class TestYamlDataLoader(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestYamlDataLoader(unittest.TestCase):
                 f.write(bytes(yaml_content, "UTF-8"))
                 f.close()
 
-                dataloader = YamlDataLoader(path=Path(f.name))
+                dataloader = DataFrame.from_yaml(path=Path(f.name))
                 loaded_data = dataloader.observe().collect()
                 assert_frame_equal(loaded_data, data)
             finally:
@@ -47,7 +47,7 @@ class TestYamlDataLoader(unittest.TestCase):
                 f.write(bytes(yaml_content, "UTF-8"))
                 f.close()
 
-                dataloader = YamlDataLoader(path=Path(f.name))
+                dataloader = DataFrame.from_yaml(path=Path(f.name))
                 loaded_data = dataloader.observe().collect()
                 assert_frame_equal(loaded_data, data)
             finally:
