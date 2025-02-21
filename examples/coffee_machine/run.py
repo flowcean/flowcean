@@ -1,12 +1,4 @@
 #!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../../", editable = true }
-# ///
 
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_offline
