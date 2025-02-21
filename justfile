@@ -13,11 +13,11 @@ check-pre-commit:
 
 check-types:
   @echo "🚀 Static type checking: Running pyright"
-  @uv run --group examples pyright
+  @uv run pyright
 
 check-deptry:
   @echo "🚀 Checking for obsolete dependencies: Running deptry"
-  @uv run --group examples deptry src
+  @uv run deptry src
 
 test:
   @echo "🚀 Testing code: Running pytest"
