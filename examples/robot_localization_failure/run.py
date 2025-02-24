@@ -10,17 +10,31 @@
 # flowcean = { path = "../../", editable = true }
 # ///
 
+from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import polars as pl
 from custom_transforms.particle_cloud_image import ParticleCloudImage
-from custom_transforms.scan_map import ScanMap
 
 import flowcean.cli
+from flowcean.core.strategies.offline import evaluate_offline, learn_offline
+from flowcean.polars.environments.train_test_split import TrainTestSplit
+from flowcean.polars.transforms.explode import Explode
+from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.polars.transforms.select import Select
+from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
+from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
+from flowcean.torch import (
+    ConvolutionalNeuralNetwork,
+    LightningLearner,
+    LongShortTermMemoryNetwork,
+    LongTermRecurrentConvolutionalNetwork,
+)
 
 USE_CACHED_ROS_DATA = False
-UPDATE_CACHE = True
+UPDATE_CACHE = False
 WS = Path(__file__).resolve().parent
 
 
@@ -85,14 +99,38 @@ def main() -> None:
         )
         data = environment.observe()
     print(f"loaded data: {data.collect()}")
-    transform = ScanMap(plotting=True) | ParticleCloudImage(
-        particle_cloud_feature_name="/particle_cloud",
-        save_images=True,
-        cutting_area=15.0,
-        image_pixel_size=300,
+    pixel_size = 300
+    transform = (
+        TimeWindow(
+            time_start=1729516872004267978,
+            time_end=1729516872004267978,
+        )
+        | ParticleCloudImage(
+            particle_cloud_feature_name="/particle_cloud",
+            save_images=False,
+            cutting_area=15.0,
+            image_pixel_size=pixel_size,
+        )
+        | Select(
+            ["/particle_cloud_image", "/position_error", "/heading_error"],
+        )
+        | MatchSamplingRate(
+            reference_feature_name="/particle_cloud_image",
+            feature_interpolation_map={
+                "/position_error": "linear",
+                "/heading_error": "linear",
+            },
+        )
+        | Explode(
+            features=[
+                "/particle_cloud_image",
+                "/position_error",
+                "/heading_error",
+            ],
+        )
     )
-    transformed_data = transform(data)
-    print(f"transformed data: {transformed_data.collect()}")
+    image_data = transform(data)
+    print(f"image data: {image_data.collect()}")
 
     if UPDATE_CACHE:
         collected_data = data.collect()
@@ -102,6 +140,130 @@ def main() -> None:
         else:
             collected_data.write_json(file=WS / "cached_ros_data.json")
             print("Cache created")
+
+    train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
+        image_data.collect(),
+    )
+    inputs = ["/particle_cloud_image"]
+    outputs = ["/position_error", "/heading_error"]
+    learners = [
+        # CNN (simple)
+        LightningLearner(
+            module=ConvolutionalNeuralNetwork(
+                learning_rate=1e-3,
+                conv_configs=[(1, 32, 3)],
+                fully_connected_layer_sizes=[128, 64],
+                output_size=2,
+            ),
+            max_epochs=10,
+        ),
+        # CNN (mid-complex)
+        LightningLearner(
+            module=ConvolutionalNeuralNetwork(
+                learning_rate=1e-3,
+                conv_configs=[(1, 32, 3), (32, 64, 3)],
+                fully_connected_layer_sizes=[128, 64, 32, 16],
+                output_size=2,
+            ),
+            max_epochs=10,
+        ),
+        # CNN (complex)
+        LightningLearner(
+            module=ConvolutionalNeuralNetwork(
+                learning_rate=1e-3,
+                conv_configs=[(1, 32, 3)] * 21,
+                fully_connected_layer_sizes=[128] * 11,
+                output_size=2,
+            ),
+            max_epochs=10,
+        ),
+        # LSTM (simple)
+        LightningLearner(
+            module=LongShortTermMemoryNetwork(
+                learning_rate=1e-3,
+                input_size=300 * 300,
+                output_size=2,
+                hidden_sizes=[128],
+                fully_connected_layer_sizes=[64, 32],
+            ),
+            max_epochs=10,
+        ),
+        # LSTM (mid-complex)
+        LightningLearner(
+            module=LongShortTermMemoryNetwork(
+                learning_rate=1e-3,
+                input_size=300 * 300,
+                output_size=2,
+                hidden_sizes=[128, 64],
+                fully_connected_layer_sizes=[64, 32, 16],
+            ),
+            max_epochs=10,
+        ),
+        # LSTM (complex)
+        LightningLearner(
+            module=LongShortTermMemoryNetwork(
+                learning_rate=1e-3,
+                input_size=300 * 300,
+                output_size=2,
+                hidden_sizes=[128, 64, 32],
+                fully_connected_layer_sizes=[64, 32, 16, 8],
+            ),
+            max_epochs=10,
+        ),
+        # LRCN (simple)
+        LightningLearner(
+            module=LongTermRecurrentConvolutionalNetwork(
+                learning_rate=1e-3,
+                conv_configs=[(1, 32, 3), (32, 64, 3)],
+                lstm_hidden_sizes=[128, 64],
+                fully_connected_layer_sizes=[64, 32],
+                output_size=2,
+            ),
+            max_epochs=10,
+        ),
+        # LRCN (mid-complex)
+        LightningLearner(
+            module=LongTermRecurrentConvolutionalNetwork(
+                learning_rate=1e-3,
+                conv_configs=[(1, 32, 3), (32, 64, 3), (64, 128, 3)],
+                lstm_hidden_sizes=[128, 64],
+                fully_connected_layer_sizes=[128, 64, 32, 16, 8],
+                output_size=2,
+            ),
+            max_epochs=10,
+        ),
+        # LRCN (complex)
+        LightningLearner(
+            module=LongTermRecurrentConvolutionalNetwork(
+                learning_rate=1e-3,
+                conv_configs=[(1, 32, 3)] * 5,
+                lstm_hidden_sizes=[128, 64],
+                fully_connected_layer_sizes=[128] * 7,
+                output_size=2,
+            ),
+            max_epochs=10,
+        ),
+    ]
+    return
+    for learner in learners:
+        t_start = datetime.now(tz=timezone.utc)
+        model = learn_offline(
+            train,
+            learner,
+            inputs,
+            outputs,
+        )
+        delta_t = datetime.now(tz=timezone.utc) - t_start
+        print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
+
+        report = evaluate_offline(
+            model,
+            test,
+            inputs,
+            outputs,
+            [MeanAbsoluteError(), MeanSquaredError()],
+        )
+        print(report)
 
 
 if __name__ == "__main__":
