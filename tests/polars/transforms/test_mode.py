@@ -44,34 +44,36 @@ class ModeTransform(unittest.TestCase):
             check_column_order=False,
         )
 
-    # def test_replace_single_feature(self) -> None:
-    #     dataset = pl.DataFrame(
-    #         {
-    #             "feature_a": [
-    #                 [
-    #                     {"time": 0, "value": 42},
-    #                     {"time": 1, "value": 43},
-    #                 ],
-    #                 [
-    #                     {"time": 2, "value": 44},
-    #                     {"time": 3, "value": 45},
-    #                 ],
-    #             ],
-    #         },
-    #     )
+    def test_replace_single_feature(self) -> None:
+        dataset = pl.DataFrame(
+            {
+                "feature_a": [
+                    [
+                        {"time": 0, "value": 42},
+                        {"time": 1, "value": 43},
+                        {"time": 2, "value": 43},
+                    ],
+                    [
+                        {"time": 0, "value": 0.0},
+                        {"time": 1, "value": 1.0},
+                        {"time": 2, "value": 0.0},
+                    ],
+                ],
+            },
+        )
 
-    #     transform = Mode("feature_a", replace=True)
-    #     transformed = transform.apply(dataset.lazy()).collect()
+        transform = Mode("feature_a", replace=True)
+        transformed = transform.apply(dataset.lazy()).collect()
 
-    #     assert_frame_equal(
-    #         transformed,
-    #         pl.DataFrame(
-    #             {
-    #                 "feature_a": [42, 44],
-    #             },
-    #         ),
-    #         check_column_order=False,
-    #     )
+        assert_frame_equal(
+            transformed,
+            pl.DataFrame(
+                {
+                    "feature_a": [43, 0],
+                },
+            ),
+            check_column_order=False,
+        )
 
 
 if __name__ == "__main__":
