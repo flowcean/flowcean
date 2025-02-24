@@ -17,7 +17,8 @@ class ParticleCloudImage(Transform):
 
     Processes 2D particle cloud data to create grayscale images highlighting
     the particle distribution. Optionally saves images to disk and returns them
-    embedded in a Polars DataFrame for further analysis.
+    embedded in a Polars DataFrame for further analysis. The respective column
+    is named `/particle_cloud_image`.
     """
 
     def __init__(
@@ -138,7 +139,7 @@ class ParticleCloudImage(Transform):
                 Image.fromarray(gray_image).save(filename)
 
             image_records.append(
-                {"time": time_stamp, "image": gray_image.tolist()},
+                {"time": time_stamp, "value": gray_image.tolist()},
             )
 
         df_images = pl.DataFrame({"/particle_cloud_image": [image_records]})
