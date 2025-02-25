@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, override
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -35,7 +35,6 @@ class SACModel(Model):
         self.muscle.update(model)
         self.data_for_brain = {}
 
-    @override
     def predict(self, input_features: pl.DataFrame) -> pl.DataFrame:
         actuators_available = convert_to_actuator_informations(self._action)
         sensors = convert_to_sensor_informations(
@@ -74,19 +73,15 @@ class SACModel(Model):
         if update is not None:
             self.muscle.update(update)
 
-    @override
     def save(self, path: Path) -> None:
         raise NotImplementedError
 
-    @override
     def load(self, path: Path) -> None:
         raise NotImplementedError
 
-    @override
     def save_state(self, path: Path) -> None:
         raise NotImplementedError
 
-    @override
     def load_from_state(self, path: Path) -> None:
         raise NotImplementedError
 
@@ -132,7 +127,6 @@ class SACLearner(ActiveLearner):
             self.brain.thinking(self._model_id, None),
         )
 
-    @override
     def learn_active(
         self,
         action: Action,
@@ -165,7 +159,6 @@ class SACLearner(ActiveLearner):
         self.objectives.append(objective[0])
         return self.model
 
-    @override
     def propose_action(self, observation: Observation) -> Action:
         filtered = filter_observation(observation, self.sen_ids)
 

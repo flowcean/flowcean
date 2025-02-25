@@ -10,7 +10,7 @@ from datetime import datetime
 from importlib import import_module
 from socket import socket
 from statistics import mean, median, stdev
-from typing import Any, override
+from typing import Any
 
 import mosaik_api_v3
 from numpy.random import RandomState
@@ -191,7 +191,6 @@ class MosaikEnvironment(ActiveEnvironment):
         self.sensors = None
         self.rewards = None
 
-    @override
     def _observe(self) -> Observation:
         if not self._data_received:
             try:
@@ -286,14 +285,15 @@ def parse_end(end: str | int) -> int:
 
     """
     if isinstance(end, str):
-        smnds = end.split("+")
-        end = 0
+        smnds: list[str] = end.split("+")
+        endf: float = 0.0
         for p in smnds:
-            parts = p.split("*")
-            prod = 1
+            parts: list[str] = p.split("*")
+            prod: float = 1.0
             for part in parts:
                 prod *= float(part)
-            end += prod
+            endf += prod
+        end = int(endf)
     return int(end)
 
 
