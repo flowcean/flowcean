@@ -17,7 +17,7 @@ class ParticleCloudImage(Transform):
 
     Processes 2D particle cloud data to create grayscale images highlighting
     the particle distribution. Optionally saves images to disk and returns them
-    embedded in a Polars DataFrame for further analysis. The respective column
+    embedded in a Polars DataFrame for further analysis. The respective feature
     is named `/particle_cloud_image`.
     """
 
