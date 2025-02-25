@@ -3,10 +3,10 @@ import logging
 from pathlib import Path
 
 import polars as pl
+from typing_extensions import override
 
 from flowcean.core import (
     HashingNotSupportedError,
-    Observable,
     TransformedObservable,
 )
 from flowcean.core.data import Data
@@ -15,7 +15,7 @@ from flowcean.polars import DataFrame
 logger = logging.getLogger(__name__)
 
 
-class Cache(Observable):
+class Cache(TransformedObservable):
     """A cache environment."""
 
     def __init__(
@@ -71,12 +71,16 @@ class Cache(Observable):
             self.cache_path,
         )
 
+    @override
     def hash(self) -> bytes:
+        # TODO: This hash should be always the same, regardless if the cache is
+        # used or the base environment
         if self.cached_environment is not None:
             return self.cached_environment.hash()
         return self.base_environment.hash()
 
-    def observe(self) -> Data:
+    @override
+    def _observe(self) -> Data:
         if not self.caching_supported:
             return self.base_environment.observe()
 
