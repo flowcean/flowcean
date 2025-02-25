@@ -14,13 +14,9 @@ if TYPE_CHECKING:
 class NotSupportedError(Exception):
     """Error raised when hashing is not supported by the observable."""
 
-    def __init__(self, observable: Observable) -> None:
-        """Initialize the error.
-
-        Args:
-            observable: Observable that does not support hashing.
-        """
-        super().__init__(f"Observable {observable} does not support hashing.")
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("Hashing is not supported for this observable.")
 
 
 class Observable(Protocol):
