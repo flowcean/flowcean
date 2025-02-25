@@ -28,13 +28,14 @@ def learn_active(
         The model learned from the environment.
     """
     model = None
+
     try:
         while True:
-            observations = environment.observe().collect(streaming=True)
+            observations = environment.observe()
             action = learner.propose_action(observations)
             environment.act(action)
             environment.step()
-            observations = environment.observe().collect(streaming=True)
+            observations = environment.observe()
             model = learner.learn_active(action, observations)
     except StopLearning:
         pass
