@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from flowcean.core.data import Data
-from flowcean.core.environment.actable import Actable
-from flowcean.core.environment.observable import (
+from typing_extensions import override
+
+from flowcean.core import (
+    Actable,
+    NotSupportedError,
+    Stepable,
     TransformedObservable,
 )
-from flowcean.core.environment.stepable import Stepable
+from flowcean.core.data import Data
 
 
 class ActiveEnvironment(
@@ -23,3 +26,7 @@ class ActiveEnvironment(
     def __init__(self) -> None:
         """Initialize the active environment."""
         super().__init__()
+
+    @override
+    def hash(self) -> bytes:
+        raise NotSupportedError

@@ -4,11 +4,13 @@ from collections.abc import Iterable, Iterator
 
 from typing_extensions import override
 
-from flowcean.core.data import Data
-from flowcean.core.environment.observable import (
+from flowcean.core import (
+    Finished,
+    NotSupportedError,
+    Stepable,
     TransformedObservable,
 )
-from flowcean.core.environment.stepable import Finished, Stepable
+from flowcean.core.data import Data
 
 
 class IncrementalEnvironment(
@@ -25,6 +27,10 @@ class IncrementalEnvironment(
     def __init__(self) -> None:
         """Initialize the incremental environment."""
         super().__init__()
+
+    @override
+    def hash(self) -> bytes:
+        raise NotSupportedError
 
     @override
     def __iter__(self) -> Iterator[Data]:
