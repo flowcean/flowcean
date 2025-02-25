@@ -9,8 +9,8 @@ from custom_transforms.scan_map import ScanMap
 import flowcean.cli
 from flowcean.ros.rosbag import RosbagLoader
 
-USE_CACHED_ROS_DATA = False
-UPDATE_CACHE = True
+USE_CACHED_ROS_DATA = True
+UPDATE_CACHE = False
 WS = Path(__file__).resolve().parent
 
 
@@ -74,6 +74,10 @@ def main() -> None:
             ],
         )
         data = environment.observe()
+        if UPDATE_CACHE:
+            collected_data = data.collect()
+            collected_data.write_json(file=WS / "cached_ros_data.json")
+            print("Cache created")
     print(f"loaded data: {data.collect()}")
     transform = ScanMap(plotting=True) | ParticleCloudImage(
         particle_cloud_feature_name="/particle_cloud",
@@ -83,15 +87,6 @@ def main() -> None:
     )
     transformed_data = transform(data)
     print(f"transformed data: {transformed_data.collect()}")
-
-    if UPDATE_CACHE:
-        collected_data = data.collect()
-        if Path(WS / "cached_ros_data.json").exists():
-            collected_data.write_json()
-            print("Cache updated")
-        else:
-            collected_data.write_json(file=WS / "cached_ros_data.json")
-            print("Cache created")
 
 
 if __name__ == "__main__":
