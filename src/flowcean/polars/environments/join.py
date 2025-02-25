@@ -1,9 +1,10 @@
+import hashlib
 from collections.abc import Iterable
 
 import polars as pl
 from typing_extensions import override
 
-from flowcean.core.environment.offline import OfflineEnvironment
+from flowcean.core import OfflineEnvironment
 
 
 class JoinedOfflineEnvironment(OfflineEnvironment):
@@ -23,6 +24,15 @@ class JoinedOfflineEnvironment(OfflineEnvironment):
         """
         self.environments = environments
         super().__init__()
+
+    @override
+    def hash(self) -> bytes:
+        # The assumption here is, that if all individual environments are the
+        # same, then the joined environment is the same as well.
+        hasher = hashlib.sha256()
+        for environment in self.environments:
+            hasher.update(environment.hash())
+        return hasher.digest()
 
     @override
     def _observe(self) -> pl.LazyFrame:
