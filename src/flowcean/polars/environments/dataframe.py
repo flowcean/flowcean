@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Collection, Iterable
 from itertools import islice
 from pathlib import Path
@@ -101,6 +102,20 @@ class DataFrame(OfflineEnvironment):
             return cls.from_yaml(path)
 
         raise UnsupportedFileTypeError(suffix)
+
+    @override
+    def hash(self) -> bytes:
+        """Return a hash of the environment."""
+        hasher = hashlib.sha256()
+        # Include the schema in the hash
+        for c, t in self.data.collect_schema().items():
+            hasher.update(c.encode())
+            hasher.update(str(t).encode())
+
+        # Add the hash of each row to the hash
+        for h in self.data.collect(streaming=True).hash_rows():
+            hasher.update(h.to_bytes(64))
+        return hasher.digest()
 
     @override
     def _observe(self) -> pl.LazyFrame:
