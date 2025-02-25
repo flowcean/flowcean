@@ -21,6 +21,9 @@ class ScanMap(Transform):
     and detected lines in the occupancy grid.
     """
 
+    # Threshold for considering a cell occupied in the occupancy grid (0-100)
+    OCCUPANCY_THRESHOLD = 50
+
     def __init__(
         self,
         scan_topic: str = "/scan",
@@ -52,7 +55,7 @@ class ScanMap(Transform):
         self,
         data: pl.DataFrame,
     ) -> pl.DataFrame:
-        scan_timeseries = data[self.scan_topic].to_list()[0]
+        self.scan_timeseries = data[self.scan_topic].to_list()[0]
         amcl_pose_timeseries = data[self.sensor_pose_topic].to_list()[0]
 
         # Precompute poses into (time, x, y, theta)
@@ -77,7 +80,8 @@ class ScanMap(Transform):
         pose_times = [entry[0] for entry in pose_entries]
 
         scan_points_timeseries = []
-        for scan in tqdm(scan_timeseries, "Computing scan points"):
+        self.synced_sensor_poses = []
+        for scan in tqdm(self.scan_timeseries, "Computing scan points"):
             timestamp = scan["time"]
             # Binary search for the latest pose before timestamp
             idx = bisect.bisect_right(pose_times, timestamp) - 1
@@ -95,6 +99,8 @@ class ScanMap(Transform):
                 scan["value"] = scan_points.tolist()
                 scan["time"] = timestamp
                 scan_points_timeseries.append(scan)
+                self.synced_sensor_poses.append((x, y, theta))
+
             else:
                 continue
         return data.hstack(
@@ -198,7 +204,7 @@ class ScanMap(Transform):
         detected_lines = []
         if lines is not None:
             for line in lines:
-                x1, y1, x2, y2 = line[0]
+                x1, y1, x2, y2 = line.ravel()
                 detected_lines.append((x1, y1, x2, y2))
 
         return detected_lines
@@ -239,7 +245,7 @@ class ScanMap(Transform):
             )
 
             # Projection point on the line segment
-            projection = np.array([x1, y1]) + t * line_vec
+            projection = np.array([x1, y1]) + np.array(t) * line_vec
             return float(np.linalg.norm(np.array([px, py]) - projection))
 
         total_distance = 0.0
@@ -372,22 +378,26 @@ class ScanMap(Transform):
         line_distance_timeseries = []
         line_fitting_timeseries = []
         line_length_timeseries = []
-
-        for scan in tqdm(
-            scan_points_timeseries,
-            desc="Computing features",
+        for i, scan in enumerate(
+            tqdm(
+                scan_points_timeseries,
+                desc="Computing features",
+            ),
         ):
-            scan_pts = np.array(scan["value"]["points"])
-            scan_pose = scan["value"]["pose"]
-            valid_ranges = scan["value"]["ranges"]
-            valid_angles = scan["value"]["angles"]
-            valid_mask = scan["value"]["valid_mask"]
-            sensor_x, sensor_y, theta_sensor = scan_pose
+            scan_pts = np.array(scan["value"])
 
+            valid_mask = self.scan_timeseries[i]["value"]["ranges"] != 0
+            valid_angles = np.arange(
+                self.scan_timeseries[i]["value"]["angle_min"],
+                self.scan_timeseries[i]["value"]["angle_max"],
+                self.scan_timeseries[i]["value"]["angle_increment"],
+            )
+            sensor_x, sensor_y, theta_sensor = self.synced_sensor_poses[i]
             min_distances, closest_line_indices = (
                 self._get_closest_line_distance_details(
                     lines_np,
-                    **line_params,
+                    line_vec=line_params["line_vec"],
+                    line_start=line_params["line_start"],
                     scan_pts=scan_pts,
                 )
             )
@@ -438,14 +448,15 @@ class ScanMap(Transform):
                 sensor_y,
                 theta_sensor,
                 valid_angles,
-                valid_mask,
                 map_resolution,
                 map_origin_x,
                 map_origin_y,
                 occupancy_grid,
-                scan["value"]["range_max"],
+                self.scan_timeseries[i]["value"]["range_max"],
             )
-            actual_ranges = np.array(scan["value"]["ranges"])[valid_mask]
+            actual_ranges = np.array(
+                self.scan_timeseries[i]["value"]["ranges"],
+            )[valid_mask]
             tolerance = 0.1  # meters
             epsilon = 0.05  # meters
 
@@ -551,7 +562,7 @@ class ScanMap(Transform):
                 {"time": scan["time"], "value": line_length},
             )
 
-        new_data = data.hstack(
+        return data.hstack(
             pl.DataFrame(
                 {
                     "point_distance": [point_distance_timeseries],
@@ -572,7 +583,6 @@ class ScanMap(Transform):
                 },
             ),
         )
-        return new_data
 
     def _precompute_line_parameters(self, lines_np: np.ndarray) -> dict:
         if lines_np.size == 0:
@@ -606,15 +616,10 @@ class ScanMap(Transform):
     def _get_closest_line_distance_details(
         self,
         lines_np: np.ndarray,
-        x1,
-        y1,
-        x2,
-        y2,
-        line_vec,
-        line_normals,
-        line_start,
+        line_vec: np.ndarray,
+        line_start: np.ndarray,
         scan_pts: np.ndarray,
-    ):
+    ) -> tuple[np.ndarray, np.ndarray]:
         if scan_pts.size == 0:
             return np.array([]), np.array([])
         if lines_np.size == 0:
@@ -645,16 +650,24 @@ class ScanMap(Transform):
     ):
         if lines_np.size == 0 or scan_pts.size == 0:
             return 0
+        # Convert to float64 when creating line_normals
         line_normals = np.column_stack(
             (
                 -(lines_np[:, 3] - lines_np[:, 1]),
                 lines_np[:, 2] - lines_np[:, 0],
             ),
-        )
+        ).astype(np.float64)  # Add this explicit conversion
+
         line_normals /= np.linalg.norm(line_normals, axis=1, keepdims=True)
-        sensor_vec = np.array([sensor_x, sensor_y]) - lines_np[:, :2]
+        sensor_vec = np.array(
+            [sensor_x, sensor_y],
+            dtype=np.float64,
+        ) - lines_np[:, :2].astype(np.float64)
         sensor_signs = np.einsum("ij,ij->i", sensor_vec, line_normals)
-        point_vec = scan_pts - lines_np[closest_line_indices, :2]
+        point_vec = scan_pts.astype(np.float64) - lines_np[
+            closest_line_indices,
+            :2,
+        ].astype(np.float64)
         point_signs = np.einsum(
             "ij,ij->i",
             point_vec,
@@ -667,17 +680,16 @@ class ScanMap(Transform):
 
     def _perform_raycasting(
         self,
-        sensor_x,
-        sensor_y,
-        theta_sensor,
-        valid_angles,
-        valid_mask,
+        sensor_x: float,
+        sensor_y: float,
+        theta_sensor: float,
+        valid_angles: np.ndarray,
         map_resolution,
         map_origin_x,
         map_origin_y,
         occupancy_grid,
         range_max,
-    ):
+    ) -> np.ndarray:
         raycasted_ranges = []
         for angle in valid_angles:
             global_angle = theta_sensor + angle
@@ -726,12 +738,11 @@ class ScanMap(Transform):
             if (
                 0 <= current_x < grid.shape[1]
                 and 0 <= current_y < grid.shape[0]
-            ) and grid[current_y, current_x] > 50:
-                distance = np.hypot(
+            ) and grid[current_y, current_x] > self.OCCUPANCY_THRESHOLD:
+                return np.hypot(
                     (current_x * map_resolution + map_origin_x - sensor_x),
                     (current_y * map_resolution + map_origin_y - sensor_y),
                 )
-                return distance
             if current_x == x1 and current_y == y1:
                 break
             e2 = 2 * err
@@ -771,7 +782,7 @@ class ScanMap(Transform):
             return []
         detected = []
         for line in lines:
-            x1, y1, x2, y2 = line[0]
+            x1, y1, x2, y2 = line.ravel()
             detected.append(
                 (
                     x1 * map_resolution + map_origin_x,
