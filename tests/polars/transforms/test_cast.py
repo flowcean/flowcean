@@ -53,6 +53,34 @@ class CastTransform(unittest.TestCase):
             ),
         )
 
+    def test_dictionary(self) -> None:
+        transform = Cast(
+            {
+                "a": pl.Boolean,
+                "b": pl.Float64,
+            },
+        )
+
+        data_frame = pl.DataFrame(
+            [
+                {"a": 1, "b": 2},
+                {"a": 0, "b": 4},
+                {"a": 1, "b": 6},
+            ],
+        ).lazy()
+        transformed_data = transform(data_frame).collect()
+
+        assert_frame_equal(
+            transformed_data,
+            pl.DataFrame(
+                [
+                    {"a": True, "b": 2.0},
+                    {"a": False, "b": 4.0},
+                    {"a": True, "b": 6.0},
+                ],
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
