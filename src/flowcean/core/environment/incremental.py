@@ -6,7 +6,7 @@ from typing_extensions import override
 
 from flowcean.core import (
     Finished,
-    NotSupportedError,
+    HashingNotSupportedError,
     Stepable,
     TransformedObservable,
 )
@@ -30,7 +30,7 @@ class IncrementalEnvironment(
 
     @override
     def hash(self) -> bytes:
-        raise NotSupportedError
+        raise HashingNotSupportedError
 
     @override
     def __iter__(self) -> Iterator[Data]:

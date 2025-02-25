@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from flowcean.core.data import Data
 
 
-class NotSupportedError(Exception):
+class HashingNotSupportedError(Exception):
     """Error raised when hashing is not supported by the observable."""
 
     def __init__(self) -> None:

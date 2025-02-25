@@ -3,7 +3,7 @@ from .environment.active import ActiveEnvironment
 from .environment.chained import ChainedOfflineEnvironments
 from .environment.incremental import IncrementalEnvironment
 from .environment.observable import (
-    NotSupportedError,
+    HashingNotSupportedError,
     Observable,
     TransformedObservable,
 )
@@ -42,7 +42,7 @@ __all__ = [
     "IncrementalEnvironment",
     "Model",
     "ModelWithTransform",
-    "NotSupportedError",
+    "HashingNotSupportedError",
     "Observable",
     "OfflineEnvironment",
     "OfflineMetric",

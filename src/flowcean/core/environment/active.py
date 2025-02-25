@@ -4,7 +4,7 @@ from typing_extensions import override
 
 from flowcean.core import (
     Actable,
-    NotSupportedError,
+    HashingNotSupportedError,
     Stepable,
     TransformedObservable,
 )
@@ -29,4 +29,4 @@ class ActiveEnvironment(
 
     @override
     def hash(self) -> bytes:
-        raise NotSupportedError
+        raise HashingNotSupportedError

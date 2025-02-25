@@ -4,7 +4,11 @@ from pathlib import Path
 
 import polars as pl
 
-from flowcean.core import NotSupportedError, Observable, TransformedObservable
+from flowcean.core import (
+    HashingNotSupportedError,
+    Observable,
+    TransformedObservable,
+)
 from flowcean.core.data import Data
 from flowcean.polars import DataFrame
 
@@ -27,7 +31,7 @@ class Cache(Observable):
         # Calculate the hash of the base environment and it's transforms
         try:
             self.environment_hash = base_environment.hash()
-        except NotSupportedError:
+        except HashingNotSupportedError:
             self.caching_supported = False
             logger.warning("Caching is not supported by the base environment.")
             return
