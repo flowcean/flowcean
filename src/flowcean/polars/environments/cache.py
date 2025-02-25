@@ -71,6 +71,11 @@ class Cache(Observable):
             self.cache_path,
         )
 
+    def hash(self) -> bytes:
+        if self.cached_environment is not None:
+            return self.cached_environment.hash()
+        return self.base_environment.hash()
+
     def observe(self) -> Data:
         if not self.caching_supported:
             return self.base_environment.observe()
