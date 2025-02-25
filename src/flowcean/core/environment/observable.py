@@ -11,6 +11,14 @@ if TYPE_CHECKING:
     from flowcean.core.data import Data
 
 
+class HashingNotSupportedError(Exception):
+    """Error raised when hashing is not supported by the observable."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("Hashing is not supported for this observable.")
+
+
 class Observable(Protocol):
     """Protocol for observations."""
 
@@ -18,6 +26,14 @@ class Observable(Protocol):
     def observe(self) -> Data:
         """Observe and return the observation."""
         raise NotImplementedError
+
+    @abstractmethod
+    def hash(self) -> bytes:
+        """Return a hash of the observable.
+
+        Raises:
+            NotSupportedError: If the observable does not support hashing.
+        """
 
 
 class TransformedObservable(Observable):
