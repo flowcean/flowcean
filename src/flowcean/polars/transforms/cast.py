@@ -11,7 +11,35 @@ logger = logging.getLogger(__name__)
 
 
 class Cast(Transform):
-    """Cast features to a different datatype."""
+    """Cast features to a different datatype.
+
+    This transform allows to change the datatype of features in a DataFrame.
+    To cast all features to the same datatype, provide a single type as the
+    `target_type` argument e.g.
+
+    ```python
+    transform = Cast(pl.Float64)
+    ```
+
+    By specifying the `features` keyword argument, only the selected features
+    will be cast e.g.
+
+    ```python
+    transform = Cast(pl.Float64, features=["feature_a"])
+    ```
+
+    Lastly, to cast features to different datatypes, provide a dictionary with
+    feature names as keys and target types as values e.g.
+
+    ```python
+    transform = Cast(
+        {
+            "feature_a": pl.Boolean,
+            "feature_b": pl.Float64,
+        },
+    )
+    ```
+    """
 
     def __init__(
         self,
