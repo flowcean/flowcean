@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing_extensions import override
 
-from flowcean.core import (
-    Actable,
+from flowcean.core.data import Data
+from flowcean.core.environment.actable import Actable
+from flowcean.core.environment.observable import (
     HashingNotSupportedError,
-    Stepable,
     TransformedObservable,
 )
-from flowcean.core.data import Data
+from flowcean.core.environment.stepable import Stepable
 
 
 class ActiveEnvironment(

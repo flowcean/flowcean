@@ -4,13 +4,12 @@ from collections.abc import Iterable, Iterator
 
 from typing_extensions import override
 
-from flowcean.core import (
-    Finished,
+from flowcean.core.data import Data
+from flowcean.core.environment.observable import (
     HashingNotSupportedError,
-    Stepable,
     TransformedObservable,
 )
-from flowcean.core.data import Data
+from flowcean.core.environment.stepable import Finished, Stepable
 
 
 class IncrementalEnvironment(
