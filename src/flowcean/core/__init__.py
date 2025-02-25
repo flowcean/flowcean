@@ -2,7 +2,11 @@ from .environment.actable import Actable
 from .environment.active import ActiveEnvironment
 from .environment.chained import ChainedOfflineEnvironments
 from .environment.incremental import IncrementalEnvironment
-from .environment.observable import Observable, TransformedObservable
+from .environment.observable import (
+    NotSupportedError,
+    Observable,
+    TransformedObservable,
+)
 from .environment.offline import OfflineEnvironment
 from .environment.stepable import Finished, Stepable
 from .learner import (
@@ -38,6 +42,7 @@ __all__ = [
     "IncrementalEnvironment",
     "Model",
     "ModelWithTransform",
+    "NotSupportedError",
     "Observable",
     "OfflineEnvironment",
     "OfflineMetric",
