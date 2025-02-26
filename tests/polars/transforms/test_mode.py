@@ -50,8 +50,9 @@ class ModeTransform(unittest.TestCase):
                 "feature_a": [
                     [
                         {"time": 0, "value": 42},
-                        {"time": 1, "value": 43},
+                        {"time": 1, "value": 42},
                         {"time": 2, "value": 43},
+                        {"time": 3, "value": 43},
                     ],
                     [
                         {"time": 0, "value": 0.0},
@@ -69,7 +70,7 @@ class ModeTransform(unittest.TestCase):
             transformed,
             pl.DataFrame(
                 {
-                    "feature_a": [43, 0],
+                    "feature_a": [42, 0],
                 },
             ),
             check_column_order=False,
