@@ -20,6 +20,7 @@ class MatchSamplingRate(Transform):
     transform in a `run.py` file. Assuming the loaded data is
     represented by the table:
 
+    ```
     | feature_a                   | feature_b                   | const |
     | ---                         | ---                         | ---   |
     | list[struct[time,struct[]]] | list[struct[time,struct[]]] | int   |
@@ -28,6 +29,7 @@ class MatchSamplingRate(Transform):
     |  {12:26:02.0, {2.4}},       |  {12:26:05.0, {2.0}}]       |       |
     |  {12:26:03.0, {3.6}},       |                             |       |
     |  {12:26:04.0, {4.8}}]       |                             |       |
+    ```
 
     The following transform can be used to match the sampling rate
     of the time series `feature_b` to the sampling rate
@@ -49,6 +51,7 @@ class MatchSamplingRate(Transform):
 
     The resulting Dataframe after the transform is:
 
+    ```
     | feature_a                   | feature_b                   | const |
     | ---                         | ---                         | ---   |
     | list[struct[time,struct[]]] | list[struct[time,struct[]]] | int   |
@@ -57,6 +60,7 @@ class MatchSamplingRate(Transform):
     |  {12:26:01.0, {2.4}},       |  {12:26:01.0, {1.4}},       |       |
     |  {12:26:02.0, {3.6}},       |  {12:26:02.0, {1.6}},       |       |
     |  {12:26:03.0, {4.8}}]       |  {12:26:03.0, {1.8}}]       |       |
+    ```
 
     """
 
@@ -134,7 +138,6 @@ class MatchSamplingRate(Transform):
             ],
             how="horizontal",
         )
-
         return pl.concat(
             [
                 data.select(self.reference_feature_name),
@@ -149,7 +152,7 @@ def interpolate_feature(
     target_feature_name: str,
     data: pl.DataFrame,
     reference_feature: pl.DataFrame,
-    interpolation_method: str,
+    interpolation_method: Literal["linear", "nearest"],
 ) -> pl.DataFrame:
     """Interpolate a single time series feature.
 
@@ -157,51 +160,48 @@ def interpolate_feature(
         target_feature_name: Timeseries feature to interpolate.
         data: Input DataFrame.
         reference_feature: Reference timeseries feature.
-        interpolation_method: Interpolation method to use.
+        interpolation_method: Interpolation method to use. Can be 'linear' or
+            'nearest'.
 
     Returns:
         Interpolated timeseries feature.
 
     """
     logger.debug("Interpolating feature %s", target_feature_name)
-    if interpolation_method == "linear":
-        feature_df = (
-            data.select(pl.col(target_feature_name).explode())
-            .unnest(cs.all())
-            .unnest("value")
-            .rename(
-                lambda name: target_feature_name + "_" + name
-                if name != "time"
-                else name,
-            )
+    feature_df = (
+        data.select(pl.col(target_feature_name).explode())
+        .unnest(cs.all())
+        .unnest("value")
+        .rename(
+            lambda name: target_feature_name + "_" + name
+            if name != "time"
+            else name,
         )
+    )
 
-        interpolated_features = (
-            pl.concat(
-                [reference_feature, feature_df],
-                how="diagonal",
-            )
-            .sort("time")
-            .with_columns(
-                pl.col(feature_df.drop("time").columns).interpolate(),
-            )
-            .drop_nulls()
-            .select(feature_df.columns)
+    interpolated_features = (
+        pl.concat(
+            [reference_feature, feature_df],
+            how="diagonal",
         )
-        restructure_to_time_series = pl.struct(
-            pl.col("time"),
-            pl.struct(
-                {
-                    col: pl.col(col)
-                    for col in feature_df.columns
-                    if col != "time"
-                },
-            ).alias("value"),
+        .sort("time")
+        .with_columns(
+            pl.col(feature_df.drop("time").columns).interpolate(
+                method=interpolation_method,
+            ),
         )
-        return interpolated_features.select(
-            restructure_to_time_series.alias(target_feature_name),
-        ).select(pl.all().implode())
-    raise UnknownInterpolationError(interpolation_method=interpolation_method)
+        .drop_nulls()
+        .select(feature_df.columns)
+    )
+    restructure_to_time_series = pl.struct(
+        pl.col("time"),
+        pl.struct(
+            {col: pl.col(col) for col in feature_df.columns if col != "time"},
+        ).alias("value"),
+    )
+    return interpolated_features.select(
+        restructure_to_time_series.alias(target_feature_name),
+    ).select(pl.all().implode())
 
 
 class FeatureNotFoundError(Exception):
