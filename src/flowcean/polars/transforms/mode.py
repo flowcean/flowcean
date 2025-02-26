@@ -53,7 +53,7 @@ class Mode(Transform):
                 # Unfortunately, `mode` is not implemented for lists, so we
                 # have to use `map_elements` as a workaround.
                 .map_elements(
-                    lambda x: x.mode().item(),
+                    lambda x: x.mode().item(0, 0),
                     return_dtype=time_series_type,
                 )
             )
