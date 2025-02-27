@@ -1264,6 +1264,7 @@ class TestMatchSamplingRate(unittest.TestCase):
             feature_interpolation_map={
                 "feature_b": "linear",
             },
+            fill_strategy="zero",
         )
 
         data_frame = pl.DataFrame(
@@ -1365,6 +1366,7 @@ class TestMatchSamplingRate(unittest.TestCase):
             feature_interpolation_map={
                 "feature_b": "linear",
             },
+            fill_strategy="zero",
         )
 
         data_frame = pl.DataFrame(

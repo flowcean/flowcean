@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 
 import polars as pl
 import polars.selectors as cs
@@ -9,7 +9,17 @@ from flowcean.core import Transform
 logger = logging.getLogger(__name__)
 
 
-MatchSamplingRateMethod: TypeAlias = Literal["linear"]
+MatchSamplingRateMethod: TypeAlias = Literal["linear", "nearest"]
+FillStrategy: TypeAlias = Literal[
+    "forward",
+    "backward",
+    "min",
+    "max",
+    "mean",
+    "zero",
+    "one",
+    "both_ways",
+]
 
 
 class MatchSamplingRate(Transform):
@@ -68,6 +78,7 @@ class MatchSamplingRate(Transform):
         self,
         reference_feature_name: str,
         feature_interpolation_map: dict[str, MatchSamplingRateMethod],
+        fill_strategy: FillStrategy = "both_ways",
     ) -> None:
         """Initialize the transform.
 
@@ -75,11 +86,13 @@ class MatchSamplingRate(Transform):
             reference_feature_name: Reference timeseries feature.
             feature_interpolation_map: Key-value pairs of the timeseries
                 features that are targeted in interpolation columns and the
-                interpolation method to use. At the moment, the interpolation
-                method can only be 'linear'.
+                interpolation method to use. The interpolation
+                method can be 'linear' or 'nearest'.
+            fill_strategy: Strategy to fill missing values after interpolation.
         """
         self.reference_feature_name = reference_feature_name
         self.feature_interpolation_map = feature_interpolation_map
+        self.fill_strategy = fill_strategy
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         """Transform the input DataFrame.
@@ -133,6 +146,7 @@ class MatchSamplingRate(Transform):
                     data,
                     reference_feature,
                     self.feature_interpolation_map[feature],
+                    cast(FillStrategy | None, self.fill_strategy),
                 )
                 for feature in features
             ],
@@ -152,56 +166,82 @@ def interpolate_feature(
     target_feature_name: str,
     data: pl.DataFrame,
     reference_feature: pl.DataFrame,
-    interpolation_method: Literal["linear", "nearest"],
+    interpolation_method: Literal["linear", "nearest"] = "linear",
+    fill_strategy: FillStrategy | None = None,
 ) -> pl.DataFrame:
-    """Interpolate a single time series feature.
-
-    Args:
-        target_feature_name: Timeseries feature to interpolate.
-        data: Input DataFrame.
-        reference_feature: Reference timeseries feature.
-        interpolation_method: Interpolation method to use. Can be 'linear' or
-            'nearest'.
-
-    Returns:
-        Interpolated timeseries feature.
-
-    """
+    """Interpolate a single time series feature using Polars expressions."""
     logger.debug("Interpolating feature %s", target_feature_name)
+
+    # Extract and unnest feature dataframe
     feature_df = (
         data.select(pl.col(target_feature_name).explode())
         .unnest(cs.all())
         .unnest("value")
         .rename(
-            lambda name: target_feature_name + "_" + name
+            lambda name: f"{target_feature_name}_{name}"
             if name != "time"
             else name,
         )
     )
 
-    interpolated_features = (
-        pl.concat(
-            [reference_feature, feature_df],
-            how="diagonal",
-        )
-        .sort("time")
-        .with_columns(
-            pl.col(feature_df.drop("time").columns).interpolate(
-                method=interpolation_method,
-            ),
-        )
-        .drop_nulls()
-        .select(feature_df.columns)
+    # Get reference times and feature times
+    reference_times = reference_feature.get_column("time")
+    feature_times = feature_df.get_column("time")
+
+    # Combine all unique times and sort
+    all_times = (
+        pl.concat([reference_times, feature_times])
+        .unique()
+        .sort()
+        .to_frame("time")
     )
-    restructure_to_time_series = pl.struct(
+
+    # Join with feature data
+    joined_df = all_times.join(feature_df, on="time", how="left")
+
+    # Get value columns (excluding time)
+    value_columns = [col for col in feature_df.columns if col != "time"]
+
+    # Interpolate missing values
+    interpolated = joined_df.with_columns(
+        [
+            pl.col(col).interpolate(method=interpolation_method)
+            for col in value_columns
+        ],
+    )
+    if fill_strategy == "both_ways":
+        fill_strategy = "backward"
+        interpolated = interpolated.with_columns(
+            [
+                pl.col(col).fill_null(strategy=fill_strategy)
+                for col in value_columns
+            ],
+        )
+        fill_strategy = "forward"
+        interpolated = interpolated.with_columns(
+            [
+                pl.col(col).fill_null(strategy=fill_strategy)
+                for col in value_columns
+            ],
+        )
+    else:
+        interpolated = interpolated.with_columns(
+            [
+                pl.col(col).fill_null(strategy=fill_strategy)
+                for col in value_columns
+            ],
+        )
+
+    # Filter to only include reference times
+    interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
+
+    # Restructure to nested format
+    restructure = pl.struct(
         pl.col("time"),
-        pl.struct(
-            {col: pl.col(col) for col in feature_df.columns if col != "time"},
-        ).alias("value"),
-    )
-    return interpolated_features.select(
-        restructure_to_time_series.alias(target_feature_name),
-    ).select(pl.all().implode())
+        pl.struct(value_columns).alias("value"),
+    ).alias(target_feature_name)
+
+    return interpolated.select(restructure).select(pl.all().implode())
 
 
 class FeatureNotFoundError(Exception):
@@ -212,13 +252,3 @@ class FeatureNotFoundError(Exception):
 
     def __init__(self, feature: str) -> None:
         super().__init__(f"{feature} not found")
-
-
-class UnknownInterpolationError(Exception):
-    """Interpolation method is not implemented yet.
-
-    This exception is raised when a feature is not found in the DataFrame.
-    """
-
-    def __init__(self, interpolation_method: str) -> None:
-        super().__init__(f"{interpolation_method} not found")
