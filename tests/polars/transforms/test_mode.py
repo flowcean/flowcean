@@ -70,7 +70,7 @@ class ModeTransform(unittest.TestCase):
             transformed,
             pl.DataFrame(
                 {
-                    "feature_a": [42, 0],
+                    "feature_a": [43, 0],
                 },
             ),
             check_column_order=False,
