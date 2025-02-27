@@ -12,14 +12,7 @@ from flowcean.core.transform import Transform
 
 
 class ScanMap(Transform):
-    """Computes features based on comparing a Laserscan to an occupancy map.
-
-    The ScanMap class is responsible for transforming and analyzing LaserScan
-    data in conjunction with an occupancy grid map. By combining pose
-    information from the sensor and scan data, this class computes scan point
-    coordinates in the map frame and calculates distances between scan points
-    and detected lines in the occupancy grid.
-    """
+    """Computes features based on comparing a Laserscan to an occupancy map."""
 
     # Threshold for considering a cell occupied in the occupancy grid (0-100)
     OCCUPANCY_THRESHOLD = 50
@@ -361,7 +354,7 @@ class ScanMap(Transform):
             np.array(detected_lines) if detected_lines else np.empty((0, 4))
         )
         line_params = self._precompute_line_parameters(lines_np)
-
+        complete_scan_timeseries = data[self.scan_topic].to_list()[0]
         scan_points_timeseries = data["scan_points"][0].to_list()
         point_distance_timeseries = []
         point_fitting_timeseries = []
@@ -386,11 +379,11 @@ class ScanMap(Transform):
         ):
             scan_pts = np.array(scan["value"])
 
-            valid_mask = self.scan_timeseries[i]["value"]["ranges"] != 0
+            valid_mask = complete_scan_timeseries[i]["value"]["ranges"] != 0
             valid_angles = np.arange(
-                self.scan_timeseries[i]["value"]["angle_min"],
-                self.scan_timeseries[i]["value"]["angle_max"],
-                self.scan_timeseries[i]["value"]["angle_increment"],
+                complete_scan_timeseries[i]["value"]["angle_min"],
+                complete_scan_timeseries[i]["value"]["angle_max"],
+                complete_scan_timeseries[i]["value"]["angle_increment"],
             )
             sensor_x, sensor_y, theta_sensor = self.synced_sensor_poses[i]
             min_distances, closest_line_indices = (
@@ -452,10 +445,10 @@ class ScanMap(Transform):
                 map_origin_x,
                 map_origin_y,
                 occupancy_grid,
-                self.scan_timeseries[i]["value"]["range_max"],
+                complete_scan_timeseries[i]["value"]["range_max"],
             )
             actual_ranges = np.array(
-                self.scan_timeseries[i]["value"]["ranges"],
+                complete_scan_timeseries[i]["value"]["ranges"],
             )[valid_mask]
             tolerance = 0.1  # meters
             epsilon = 0.05  # meters
