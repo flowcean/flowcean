@@ -9,7 +9,7 @@ import flowcean.cli
 from flowcean.ros.rosbag import RosbagLoader
 
 USE_CACHED_ROS_DATA = False
-UPDATE_CACHE = False
+UPDATE_CACHE = True
 WS = Path(__file__).resolve().parent
 
 
