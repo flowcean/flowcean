@@ -15,7 +15,7 @@ class LocalizationStatus(Transform):
     a certain threshold.
 
     As an example, consider the following time series input data with position
-    and heading error thresholds as 1.2 and 1.2 respectively:
+    and heading error thresholds as 1.2 m and 1.2 rad respectively:
 
     ┌────────────────────┬─────────────────┐
     │ /position_error    ┆ /heading_error  │
