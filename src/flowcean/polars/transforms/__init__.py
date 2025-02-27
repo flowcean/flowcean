@@ -17,6 +17,7 @@ from .match_sampling_rate import (
 )
 from .mean import Mean
 from .median import Median
+from .mode import Mode
 from .one_cold import OneCold
 from .one_hot import (
     NoCategoriesError,
@@ -46,6 +47,7 @@ __all__ = [
     "MatchSamplingRate",
     "Mean",
     "Median",
+    "Mode",
     "NoCategoriesError",
     "NoMatchingCategoryError",
     "NoTimeSeriesFeatureError",
