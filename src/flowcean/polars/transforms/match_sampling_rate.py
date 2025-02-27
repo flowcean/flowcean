@@ -173,15 +173,29 @@ def interpolate_feature(
     logger.debug("Interpolating feature %s", target_feature_name)
 
     # Extract and unnest feature dataframe
-    feature_df = (
-        data.select(pl.col(target_feature_name).explode())
-        .unnest(cs.all())
-        .unnest("value")
-        .rename(
-            lambda name: f"{target_feature_name}_{name}"
-            if name != "time"
-            else name,
+    feature_df = data.select(pl.col(target_feature_name).explode()).unnest(
+        cs.all(),
+    )
+    # Handle scalar 'value' by wrapping into a struct
+    if "value" in feature_df.columns:
+        if not isinstance(feature_df.schema["value"], pl.Struct):
+            # Wrap scalar 'value' into a struct with a single field
+            feature_df = feature_df.with_columns(
+                pl.struct([pl.col("value").alias("value")]).alias("value"),
+            )
+        # Now unnest the 'value' struct
+        feature_df = feature_df.unnest("value")
+    else:
+        msg = f"Feature {target_feature_name} is missing 'value' field."
+        raise ValueError(
+            msg,
         )
+
+    # Rename columns except 'time' to include the feature name
+    feature_df = feature_df.rename(
+        lambda name: f"{target_feature_name}_{name}"
+        if name != "time"
+        else name,
     )
 
     # Get reference times and feature times
@@ -224,7 +238,7 @@ def interpolate_feature(
                 for col in value_columns
             ],
         )
-    else:
+    elif fill_strategy:
         interpolated = interpolated.with_columns(
             [
                 pl.col(col).fill_null(strategy=fill_strategy)
@@ -234,11 +248,21 @@ def interpolate_feature(
 
     # Filter to only include reference times
     interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
+    # Determine if the original 'value' was a scalar
+    is_scalar_value = (
+        len(value_columns) == 1
+        and value_columns[0] == f"{target_feature_name}_value"
+    )
 
-    # Restructure to nested format
+    # Restructure to nested format, preserving scalar 'value' if needed
+    if is_scalar_value:
+        restructure_value = pl.col(value_columns[0]).alias("value")
+    else:
+        restructure_value = pl.struct(value_columns).alias("value")
+
     restructure = pl.struct(
         pl.col("time"),
-        pl.struct(value_columns).alias("value"),
+        restructure_value,
     ).alias(target_feature_name)
 
     return interpolated.select(restructure).select(pl.all().implode())
