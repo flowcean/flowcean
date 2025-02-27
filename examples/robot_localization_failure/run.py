@@ -72,7 +72,7 @@ def main() -> None:
                     "info.origin.orientation.w",
                 ],
                 "/delocalizations": ["data"],
-                "/particle_cloud": ["particles"],
+                # "/particle_cloud": ["particles"],
                 "/position_error": ["data"],
                 "/heading_error": ["data"],
             },
