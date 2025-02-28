@@ -1,6 +1,6 @@
 [project]
 name = "flowcean"
-version = "0.3.0"
+version = "0.4.0"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -40,38 +40,34 @@ Documentation = "https://flowcean.me/"
 Issues = "https://github.com/flowcean/flowcean/issues"
 Source = "https://github.com/flowcean/flowcean"
 
-[tool.uv]
-dev-dependencies = [
-  "asyncssh<2.19.0",
-  "deptry>=0.20.0",
-  "dvc-ssh>=4.1.1",
-  "dvc-webdav>=3.0.0",
-  "dvc>=3.55.2",
-  "mkdocs-gen-files>=0.5.0",
-  "mkdocs-literate-nav>=0.6.1",
-  "mkdocs-material>=9.5.41",
-  "mkdocs-section-index>=0.3.9",
-  "mkdocs>=1.6.1",
-  "mkdocstrings[python]>=0.26.2",
-  "pre-commit>=4.0.1",
-  "pyright>=1.1.385",
-  "pytest-cov>=5.0.0",
-  "pytest>=8.3.3",
-  "ruff>=0.7.0",
-]
-
-[tool.uv.workspace]
-members = [
-  "flowcean-sklearn",
-  "flowcean-pytorch",
-  "flowcean-ros",
-  "flowcean-ode",
-  "flowcean-grpc",
-]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+  "asyncssh>=2.18.0",
+  "deptry>=0.22.0",
+  "dvc>=3.59.0",
+  "dvc-ssh>=4.1.1",
+  "dvc-webdav>=3.0.0",
+  "mkdocs>=1.6.1",
+  "mkdocs-gen-files>=0.5.0",
+  "mkdocs-literate-nav>=0.6.1",
+  "mkdocs-material>=9.5.50",
+  "mkdocs-section-index>=0.3.9",
+  "mkdocstrings[python]>=0.27.0",
+  "pre-commit>=4.1.0",
+  "pyright>=1.1.394",
+  "pytest>=8.3.4",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.9.2",
+]
+
+examples = ["matplotlib>=3.10.0", "opencv-python>=4.11.0.86",   "pillow>=11.1.0"]
+
+[tool.uv.workspace]
+members = ["flowcean-sklearn", "flowcean-pytorch", "flowcean-ros", "flowcean-ode", "flowcean-grpc"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/flowcean"]
@@ -83,7 +79,7 @@ include = ["*.py"]
 testpaths = ["tests"]
 
 [tool.pyright]
-ignore = ["src/flowcean/learners/grpc/_generated/*"]
+ignore = ["src/flowcean/grpc/_generated/*"]
 pythonVersion = "3.10"
 strict = ["src/flowcean/core"]
 
@@ -92,7 +88,7 @@ install_clang = "bash -c 'sudo apt-get install -y clang'"
 
 [tool.coverage.run]
 source_pkgs = ["flowcean"]
-omit = ["src/flowcean/learners/grpc/_generated/*"]
+omit = ["src/flowcean/grpc/_generated/*"]
 branch = true
 parallel = true
 

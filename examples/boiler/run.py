@@ -18,20 +18,22 @@ from numpy.typing import NDArray
 from typing_extensions import Self, override
 
 from flowcean.cli.logging import initialize_logging
-from flowcean.environments.hybrid_system import (
+from flowcean.core import evaluate_offline, learn_offline
+from flowcean.ode import (
     DifferentialMode,
     HybridSystem,
-    State,
+    OdeState,
 )
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms import SlidingWindow
-from flowcean.utils.random import initialize_random
+from flowcean.polars import SlidingWindow, TrainTestSplit, collect
+from flowcean.sklearn import (
+    MeanAbsoluteError,
+    MeanSquaredError,
+    RegressionTree,
+)
+from flowcean.utils import initialize_random
 
 
-class Temperature(State):
+class Temperature(OdeState):
     temperature: float
 
     def __init__(self, temperature: float) -> None:
@@ -135,7 +137,7 @@ def main() -> None:
     )
 
     environment.step()
-    data = environment.collect(10_000)
+    data = collect(environment, 10_000)
     train, test = TrainTestSplit(ratio=0.8).split(data)
 
     train = train.with_transform(

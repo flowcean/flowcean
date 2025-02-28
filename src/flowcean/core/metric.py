@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
-import polars as pl
+from .data import Data
+from .report import Reportable
 
 
 class OfflineMetric(ABC):
@@ -17,7 +17,7 @@ class OfflineMetric(ABC):
         return self.__class__.__name__
 
     @abstractmethod
-    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+    def __call__(self, true: Data, predicted: Data) -> Reportable:
         """Calculate the metric value for given true and predicted labels.
 
         Args:

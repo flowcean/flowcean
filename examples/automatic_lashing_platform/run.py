@@ -17,25 +17,30 @@ import time
 
 # third-party libraries
 import matplotlib.pyplot as plt
-from polars import DataFrame
 
 # flowcean libraries
 import flowcean.cli
-from flowcean.environments.parquet import ParquetDataLoader
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.offline import evaluate_offline, learn_offline
-from flowcean.transforms import (
+from flowcean.core import evaluate_offline, learn_offline
+from flowcean.polars import (
+    DataFrame,
     Derivative,
     Filter,
     Flatten,
     Resample,
     Select,
     TimeWindow,
+    TrainTestSplit,
 )
-from flowcean.transforms.filter import And, Not, Or  # noqa: F401
+from flowcean.polars.transforms.filter import And, Not, Or  # noqa: F401
+from flowcean.sklearn import (
+    MeanAbsoluteError,
+    MeanSquaredError,
+    RegressionTree,
+)
+from flowcean.torch.lightning_learner import (
+    LightningLearner,
+    MultilayerPerceptron,
+)
 
 # start logger
 logger = logging.getLogger(__name__)
@@ -55,7 +60,7 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
     logger.info("Loading data...")
     time_start = time.time()
     data = (
-        ParquetDataLoader("./data/" + args.training_data)
+        DataFrame.from_parquet("./data/" + args.training_data)
         | Select(
             [
                 "p_accumulator",
@@ -94,7 +99,7 @@ def load_and_prepare_data(args: argparse.Namespace) -> tuple:
 
 def inspect_data(
     args: argparse.Namespace,
-    data: ParquetDataLoader,
+    data: DataFrame,
 ) -> None:
     if (
         args.print_overview
@@ -184,24 +189,29 @@ def print_data(
         index = i if args.print_distributed else c
         print(f"Index: {index}")
         print(
-            f"Weight: {round(observed_data.select('containerWeight')
-                             .row(index)[0], 3)}",
+            f"Weight: {
+                round(observed_data.select('containerWeight').row(index)[0], 3)
+            }",
         )
         print(
-            f"Active Valves: {observed_data.select('activeValveCount')
-                              .row(index)[0]}",
+            f"Active Valves: {
+                observed_data.select('activeValveCount').row(index)[0]
+            }",
         )
         print(
-            f"Initial Pressure: {round(observed_data.select('p_initial')
-                                       .row(index)[0], 3)}",
+            f"Initial Pressure: {
+                round(observed_data.select('p_initial').row(index)[0], 3)
+            }",
         )
         print(
-            f"Temperature: {round(observed_data.select('T')
-                                  .row(index)[0], 3)}",
+            f"Temperature: {
+                round(observed_data.select('T').row(index)[0], 3)
+            }",
         )
         print(
-            f"Accumulated Pressures: \n{observed_data
-                .select('^p_accumulator_.*$').row(index)}",
+            f"Accumulated Pressures: \n{
+                observed_data.select('^p_accumulator_.*$').row(index)
+            }",
         )
 
 
@@ -212,24 +222,32 @@ def print_row(observed_data: DataFrame) -> None:
         if index == "x":
             break
         print(
-            f"Weight: {round(observed_data.select('containerWeight')
-                             .row(int(index))[0], 3)}",
+            f"Weight: {
+                round(
+                    observed_data.select('containerWeight').row(int(index))[0],
+                    3,
+                )
+            }",
         )
         print(
-            f"Active Valves: {observed_data.select('activeValveCount')
-                              .row(int(index))[0]}",
+            f"Active Valves: {
+                observed_data.select('activeValveCount').row(int(index))[0]
+            }",
         )
         print(
-            f"Initial Pressure: {round(observed_data.select('p_initial')
-                                       .row(int(index))[0], 3)}",
+            f"Initial Pressure: {
+                round(observed_data.select('p_initial').row(int(index))[0], 3)
+            }",
         )
         print(
-            f"Temperature: {round(observed_data.select('T')
-                                  .row(int(index))[0], 3)}",
+            f"Temperature: {
+                round(observed_data.select('T').row(int(index))[0], 3)
+            }",
         )
         print(
-            f"Accumulated Pressures: \n{observed_data
-                .select('^p_accumulator_.*$').row(int(index))}",
+            f"Accumulated Pressures: \n{
+                observed_data.select('^p_accumulator_.*$').row(int(index))
+            }",
         )
 
 
@@ -299,7 +317,7 @@ def plot_row(observed_data: DataFrame) -> None:
 
 def train_and_evaluate_model(
     args: argparse.Namespace,
-    data: ParquetDataLoader,
+    data: DataFrame,
     inputs: list,
     outputs: list,
 ) -> None:
@@ -381,7 +399,7 @@ if __name__ == "__main__":
         type=float,
         default=0.01,
         metavar="RATE",
-        help="Set the sample rate for the data. (default: 0.01) -> 1500 Values",
+        help="Set the sample rate for the data. (default: 0.01 [1500 Values])",
     )
     parameter_group.add_argument(
         "--filter",

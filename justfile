@@ -13,11 +13,11 @@ check-pre-commit:
 
 check-types:
   @echo "🚀 Static type checking: Running pyright"
-  @uv run pyright
+  @uv run --group examples pyright
 
 check-deptry:
   @echo "🚀 Checking for obsolete dependencies: Running deptry"
-  @uv run deptry src
+  @uv run --group examples deptry src
 
 test:
   @echo "🚀 Testing code: Running pytest"
@@ -31,7 +31,7 @@ docs-serve:
   @echo "🚀 Serving documentation: Running mkdocs"
   @uv run mkdocs serve
 
-examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-ros_offline
+examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-robot_localization_failure
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
@@ -57,6 +57,6 @@ examples-one_tank:
   @echo "🚀 Running example: One Tank"
   @uv run --directory ./examples/one_tank/ run.py
 
-examples-ros_offline:
-  @echo "🚀 Running example: ROS Offline"
-  @uv run --directory ./examples/ros_offline/ run.py
+examples-robot_localization_failure:
+  @echo "🚀 Running example: Robot Localization Failure"
+  @uv run --directory ./examples/robot_localization_failure/ run.py

@@ -8,19 +8,24 @@
 # flowcean = { path = "../../", editable = true }
 # ///
 
+from __future__ import annotations
+
 import logging
 import random
 from math import nan
-from pathlib import Path
+from typing import Any
 
 import polars as pl
 from typing_extensions import override
 
 import flowcean.cli
-from flowcean.core.environment.active import ActiveEnvironment
-from flowcean.core.learner import ActiveLearner
-from flowcean.core.model import Model
-from flowcean.strategies.active import StopLearning, learn_active
+from flowcean.core import (
+    ActiveEnvironment,
+    ActiveLearner,
+    Model,
+    StopLearning,
+    learn_active,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -86,13 +91,13 @@ class MyModel(Model):
         ).lazy()
 
     @override
-    def save(self, path: Path) -> None:
-        _ = path
+    def save_state(self) -> dict[str, Any]:
         raise NotImplementedError
 
     @override
-    def load(self, path: Path) -> None:
-        _ = path
+    @classmethod
+    def load_from_state(cls, state: dict[str, Any]) -> MyModel:
+        _ = state
         raise NotImplementedError
 
 

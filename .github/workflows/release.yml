@@ -3,8 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-*"
+      - "v[0-9]+.[0-9]+.[0-9]+.*"
 
 jobs:
   publish:
@@ -29,7 +28,9 @@ jobs:
         id: version
         run: |
           VERSION=${GITHUB_REF#refs/*/v}
-          if [[ "$VERSION" == *"-"* ]]; then
+          # Check if the version has a pre-release segment (a, b, or rc followed by digits)
+          # or a developmental release segment (".dev" followed by digits).
+          if [[ "$VERSION" =~ ((a|b|rc)[0-9]+)|(\.dev[0-9]+) ]]; then
             IS_PRERELEASE=true
           else
             IS_PRERELEASE=false
