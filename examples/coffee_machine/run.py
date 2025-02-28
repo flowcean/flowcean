@@ -23,6 +23,7 @@ from flowcean.polars import (
     ToTimeSeries,
     TrainTestSplit,
     Unnest,
+    collect,
 )
 from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
 
@@ -43,7 +44,7 @@ def main() -> None:
     )
     print(data.observe().head())
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(
-        data.observe(),
+        collect(data),
     )
 
     learner = GrpcPassiveAutomataLearner.run_docker(
