@@ -206,7 +206,10 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
     @override
     def predict(self, input_features: Data) -> Data:
         proto_datapackage = DataPackage(
-            inputs=[_row_to_proto(row) for row in input_features.rows()],
+            inputs=[
+                _row_to_proto(row)
+                for row in input_features.collect(streaming=True).rows()
+            ],
             outputs=[],
         )
         predictions = self._stub.Predict(proto_datapackage)

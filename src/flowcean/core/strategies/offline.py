@@ -105,7 +105,7 @@ def evaluate_offline(
     data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
-    predictions = model.predict(input_features.collect(streaming=True))
+    predictions = model.predict(input_features)
     if eval_transform is not None:
         predictions = eval_transform(predictions.lazy())
         output_features = eval_transform(output_features)
