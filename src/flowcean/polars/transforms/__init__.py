@@ -20,6 +20,7 @@ from .sliding_window import SlidingWindow
 from .standardize import Standardize
 from .time_window import TimeWindow
 from .to_time_series import ToTimeSeries
+from .unnest import Unnest
 
 __all__ = [
     "Cast",
@@ -50,4 +51,5 @@ __all__ = [
     "Standardize",
     "TimeWindow",
     "ToTimeSeries",
+    "Unnest",
 ]
