@@ -42,7 +42,6 @@ def main() -> None:
             )
         ],
     )
-    print(data.observe().head())
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(
         collect(data),
     )
