@@ -84,7 +84,7 @@ class _DockerBackend(_Backend):
             message = "did not receive a container"
             raise TypeError(message)
         self._docker_container.reload()
-        client = docker.APIClient(base_url="unix://var/run/docker.sock")
+        client = docker.APIClient()
         ports = client.inspect_container(self._docker_container.id)[  # type: ignore[type]
             "NetworkSettings"
         ]["Ports"]
@@ -196,7 +196,7 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
         stream: grpc.UnaryStreamMultiCallable = self._stub.Train(
             proto_datapackage,
         )
-        for status_message in stream: # type: ignore[type]
+        for status_message in stream:  # type: ignore[type]
             _log_messages(status_message.messages)
             if status_message.status == Status.STATUS_FAILED:
                 msg = "training failed"
@@ -206,9 +206,7 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
     @override
     def predict(self, input_features: Data) -> Data:
         proto_datapackage = DataPackage(
-            inputs=[
-                _row_to_proto(row) for row in input_features.rows()
-            ],
+            inputs=[_row_to_proto(row) for row in input_features.rows()],
             outputs=[],
         )
         predictions = self._stub.Predict(proto_datapackage)
@@ -226,7 +224,8 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
     @override
     @classmethod
     def load_from_state(
-        cls, state: dict[str, Any],
+        cls,
+        state: dict[str, Any],
     ) -> GrpcPassiveAutomataLearner:
         _ = state
         raise NotImplementedError
