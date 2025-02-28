@@ -3,27 +3,15 @@ from .drop import Drop
 from .explode import Explode
 from .filter import Filter
 from .first import First
-from .flatten import (
-    FeatureLengthVaryError,
-    Flatten,
-    NoTimeSeriesFeatureError,
-)
+from .flatten import FeatureLengthVaryError, Flatten, NoTimeSeriesFeatureError
 from .function import Lambda
 from .last import Last
-from .match_sampling_rate import (
-    FeatureNotFoundError,
-    MatchSamplingRate,
-    UnknownInterpolationError,
-)
+from .match_sampling_rate import FeatureNotFoundError, MatchSamplingRate
 from .mean import Mean
 from .median import Median
 from .mode import Mode
 from .one_cold import OneCold
-from .one_hot import (
-    NoCategoriesError,
-    NoMatchingCategoryError,
-    OneHot,
-)
+from .one_hot import NoCategoriesError, NoMatchingCategoryError, OneHot
 from .rename import Rename
 from .resample import Resample
 from .select import Select
@@ -62,5 +50,4 @@ __all__ = [
     "Standardize",
     "TimeWindow",
     "ToTimeSeries",
-    "UnknownInterpolationError",
 ]

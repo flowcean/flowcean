@@ -23,7 +23,6 @@ from .transforms.function import Lambda
 from .transforms.match_sampling_rate import (
     FeatureNotFoundError,
     MatchSamplingRate,
-    UnknownInterpolationError,
 )
 from .transforms.one_cold import OneCold
 from .transforms.one_hot import (
@@ -77,7 +76,6 @@ __all__ = [
     "TimeWindow",
     "ToTimeSeries",
     "TrainTestSplit",
-    "UnknownInterpolationError",
     "UnsupportedFileTypeError",
     "collect",
     "is_timeseries_feature",
