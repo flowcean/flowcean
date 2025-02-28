@@ -29,6 +29,8 @@ from ._generated.learner_pb2_grpc import LearnerStub
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from flowcean.core.data import Data
+
 MAX_MESSAGE_LENGTH = 1024 * 1024 * 1024
 
 logger = logging.getLogger(__name__)
@@ -202,10 +204,10 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
         return self
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def predict(self, input_features: Data) -> Data:
         proto_datapackage = DataPackage(
             inputs=[
-                _row_to_proto(row) for row in input_features.collect().rows()
+                _row_to_proto(row) for row in input_features.rows()
             ],
             outputs=[],
         )
