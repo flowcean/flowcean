@@ -38,6 +38,7 @@ from .transforms.sliding_window import SlidingWindow
 from .transforms.standardize import Standardize
 from .transforms.time_window import TimeWindow
 from .transforms.to_time_series import ToTimeSeries
+from .transforms.unnest import Unnest
 
 __all__ = [
     "And",
@@ -76,6 +77,7 @@ __all__ = [
     "TimeWindow",
     "ToTimeSeries",
     "TrainTestSplit",
+    "Unnest",
     "UnsupportedFileTypeError",
     "collect",
     "is_timeseries_feature",
