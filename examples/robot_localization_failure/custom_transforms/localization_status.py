@@ -102,8 +102,18 @@ class LocalizationStatus(Transform):
                 "value": {
                     "data": 0
                     if (
-                        pos["value"]["data"] < self.position_threshold
-                        and head["value"]["data"] < self.heading_threshold
+                        isinstance(pos["value"], dict)
+                        and isinstance(head["value"], dict)
+                        and pos["value"].get("data", float("inf"))
+                        < self.position_threshold
+                        and head["value"].get("data", float("inf"))
+                        < self.heading_threshold
+                    )
+                    or (
+                        not isinstance(pos["value"], dict)
+                        and not isinstance(head["value"], dict)
+                        and pos["value"] < self.position_threshold
+                        and head["value"] < self.heading_threshold
                     )
                     else 1,
                 },

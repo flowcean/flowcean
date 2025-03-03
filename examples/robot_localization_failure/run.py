@@ -15,9 +15,11 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_image import ParticleCloudImage
 
 import flowcean.cli
+from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
 from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.explode import Explode
@@ -101,9 +103,19 @@ def main() -> None:
     print(f"loaded data: {data.collect()}")
     pixel_size = 300
     transform = (
-        TimeWindow(
-            time_start=1729516872004267978,
-            time_end=1729516872004267978,
+        TimeWindow(  # get the first two minutes of data
+            features=[
+                "/amcl_pose",
+                "/momo/pose",
+                "/scan",
+                "/map",
+                "/delocalizations",
+                "/particle_cloud",
+                "/position_error",
+                "/heading_error",
+            ],
+            time_start=1729516868012553090,
+            time_end=1729516988012553090,
         )
         | ParticleCloudImage(
             particle_cloud_feature_name="/particle_cloud",
@@ -111,14 +123,29 @@ def main() -> None:
             cutting_area=15.0,
             image_pixel_size=pixel_size,
         )
+        # timestamps need to be aligned before applying LocalizationStatus
+        | MatchSamplingRate(
+            reference_feature_name="/heading_error",
+            feature_interpolation_map={"/position_error": "linear"},
+        )
+        | LocalizationStatus(
+            position_error_feature_name="/position_error",
+            heading_error_feature_name="/heading_error",
+        )
         | Select(
-            ["/particle_cloud_image", "/position_error", "/heading_error"],
+            [
+                "/particle_cloud_image",
+                "/position_error",
+                "/heading_error",
+                "isDelocalized",
+            ],
         )
         | MatchSamplingRate(
             reference_feature_name="/particle_cloud_image",
             feature_interpolation_map={
                 "/position_error": "linear",
                 "/heading_error": "linear",
+                "isDelocalized": "nearest",
             },
         )
         | Explode(
@@ -126,6 +153,7 @@ def main() -> None:
                 "/particle_cloud_image",
                 "/position_error",
                 "/heading_error",
+                "isDelocalized",
             ],
         )
     )
@@ -140,9 +168,9 @@ def main() -> None:
         else:
             collected_data.write_json(file=WS / "cached_ros_data.json")
             print("Cache created")
-
+    data_environment = OfflineEnvironment(data=image_data.collect())
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
-        image_data.collect(),
+        data_environment,
     )
     inputs = ["/particle_cloud_image"]
     outputs = ["/position_error", "/heading_error"]
