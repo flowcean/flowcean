@@ -31,7 +31,8 @@ class RandomForestRegressorLearner(SupervisedLearner):
 
         Args:
             *args: Positional arguments to pass to the RandomForestRegressor.
-            dot_graph_export_path: Path to export a tree from the random forest to.
+            dot_graph_export_path: Path to export a tree from the random forest
+                to.
             **kwargs: Keyword arguments to pass to the RandomForestRegressor.
         """
         self.regressor = RandomForestRegressor(
@@ -49,7 +50,8 @@ class RandomForestRegressorLearner(SupervisedLearner):
         self.regressor.fit(inputs, outputs)
         print("Using Random Forest Regressor")
         if self.dot_graph_export_path is not None:
-            # Exporting one tree from the forest (usually the first tree) as a dot graph
+            # Exporting one tree from the forest (usually the first tree) as
+            # a dot graph
             logger.info(
                 "Exporting one tree from the random forest to %s",
                 self.dot_graph_export_path,
