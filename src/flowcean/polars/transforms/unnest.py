@@ -11,7 +11,32 @@ logger = logging.getLogger(__name__)
 
 
 class Unnest(Transform):
-    """Decompose struct columns into separate columns for each field."""
+    """Decompose struct columns into separate columns for each field.
+
+    Example:
+    ```python
+    data_frame = pl.Series(
+        "c",
+        [
+            {"a": 1, "t": 1},
+            {"a": 4, "t": 2},
+            {"a": 7, "t": 3},
+            {"a": 10, "t": 4},
+            {"a": 15, "t": 5},
+        ],
+    ).to_frame()
+    ```
+    The transformed_data will be:
+    ```python
+    pl.DataFrame(
+        {
+            "a": [1, 4, 7, 10, 15],
+            "t": [1, 2, 3, 4, 5],
+        },
+    )
+    ```
+    .
+    """
 
     def __init__(
         self,

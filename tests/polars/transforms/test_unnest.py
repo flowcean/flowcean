@@ -6,7 +6,7 @@ from polars.testing import assert_frame_equal
 from flowcean.polars import Unnest
 
 
-class SelectTransform(unittest.TestCase):
+class UnnestTransform(unittest.TestCase):
     def test_simple(self) -> None:
         transform = Unnest(features=["c"])
 
