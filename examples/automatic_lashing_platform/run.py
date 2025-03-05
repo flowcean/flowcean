@@ -3,6 +3,7 @@
 # dependencies = [
 #     "flowcean",
 #     "matplotlib",
+#     "graphviz",
 # ]
 #
 # [tool.uv.sources]
@@ -13,9 +14,12 @@
 import argparse
 import logging
 import math
+import os
 import time
+from pathlib import Path
 
 # third-party libraries
+import graphviz
 import matplotlib.pyplot as plt
 
 # flowcean libraries
@@ -54,6 +58,11 @@ def main(args: argparse.Namespace) -> None:
 
     if not args.no_training:
         train_and_evaluate_model(args, data, inputs, outputs)
+
+    if args.show_latest_graph or args.show_graph:
+        graph = get_graph(args)
+        if graph:
+            graph.render(view=True)
 
 
 def load_and_prepare_data(args: argparse.Namespace) -> tuple:
@@ -335,6 +344,15 @@ def train_and_evaluate_model(
                 output_size=len(outputs),
             ),
         )
+    elif args.store_graph:
+        Path.mkdir(Path("./graphs"), exist_ok=True)
+        tree_path = Path(
+            f"./graphs/regression_tree_{time.strftime('%Y%m%d-%H%M%S')}.dot",
+        )
+        tree_path.open(mode="w").close()
+        learner = RegressionTree(
+            dot_graph_export_path=str(tree_path),
+        )
     else:
         learner = RegressionTree()
 
@@ -359,6 +377,33 @@ def train_and_evaluate_model(
     )
 
     print(report)
+
+
+def get_graph(args: argparse.Namespace) -> graphviz.Source:
+    graph_path = None
+
+    if args.show_latest_graph:
+        list_of_graphs = os.listdir("./graphs")
+        if list_of_graphs:
+            graph_path = Path("./graphs/" + max(list_of_graphs))
+        else:
+            logger.warning("No dot-graphs found in './graphs'.")
+
+    elif args.show_graph:
+        path = Path("./graphs/" + args.show_graph)
+        if path.exists():
+            graph_path = path
+        else:
+            logger.warning(
+                "No dot-graph found at './graphs/%s'.", args.show_graph,
+            )
+
+    if graph_path:
+        with graph_path.open() as file:
+            dot_graph = file.read()
+        return graphviz.Source(dot_graph)
+
+    return None
 
 
 if __name__ == "__main__":
@@ -517,6 +562,29 @@ if __name__ == "__main__":
         default=0.1,
         metavar="RATE",
         help="Set the learning rate for the lightning-model. (default: 0.1)",
+    )
+
+    # training evaluation
+
+    evaluation_group = parser.add_argument_group(
+        "Model-Evaluation",
+        "Options to evaluate the model.",
+    )
+    evaluation_group.add_argument(
+        "--store_graph",
+        action="store_true",
+        help="Store the regression-tree as dot-graph at './graphs'.",
+    )
+    evaluation_group.add_argument(
+        "--show_latest_graph",
+        action="store_true",
+        help="Show the latest stored dot-graph.",
+    )
+    evaluation_group.add_argument(
+        "--show_graph",
+        type=str,
+        metavar="FILE-NAME",
+        help="Show a stored dot-graph.",
     )
 
     args = parser.parse_args()
