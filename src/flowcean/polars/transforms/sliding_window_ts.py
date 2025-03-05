@@ -18,6 +18,9 @@ class TimeSeriesSlidingWindow(Transform):
     As a result, the resulting data frame will contain multiple samples for
     each original sample, where each sample is a sub-series of the original
     time series. The number of features (columns) will remain the same.
+    For this transform to work, all selected time series features of a sample
+    must have the same time vector. Use a `MatchSamplingRate` or `Resample`
+    transform to ensure this is the case.
     """
 
     def __init__(
