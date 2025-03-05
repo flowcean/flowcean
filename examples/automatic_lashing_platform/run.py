@@ -365,6 +365,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="run.py",
         description="Run the Automatic Lashing Platform example.",
+        epilog=(
+            """Try this example: uv run run.py --time_window_end 5 """
+            """--apply_derivative --filter \'"activeValveCount > 0"\' """
+            """--plot_data --plot_distributed --plots 9"""
+        ),
     )
 
     # parameter
