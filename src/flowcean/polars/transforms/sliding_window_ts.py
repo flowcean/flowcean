@@ -67,6 +67,8 @@ class TimeSeriesSlidingWindow(Transform):
 
         return data.map_batches(
             lambda df: self._map_frame(df, target_features=target_features),
+            slice_pushdown=False,
+            streamable=True,
         )
 
     def _map_frame(
