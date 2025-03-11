@@ -13,14 +13,12 @@ from flowcean.environments.ode_environment import (
     OdeSystem,
     State,
 )
-from flowcean.learners.regression_tree import RegressionTree
-from flowcean.learners.lightning import LightningLearner, MultilayerPerceptron
-from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.offline import evaluate_offline
-from flowcean.transforms.sliding_window import SlidingWindow
-from flowcean.strategies.incremental import learn_incremental
 from flowcean.environments.train_test_split import TrainTestSplit
 from flowcean.learners.linear_regression import LinearRegression
+from flowcean.metrics.regression import MeanAbsoluteError, MeanSquaredError
+from flowcean.strategies.incremental import learn_incremental
+from flowcean.strategies.offline import evaluate_offline
+from flowcean.transforms.sliding_window import SlidingWindow
 
 logger = logging.getLogger(__name__)
 
@@ -114,11 +112,15 @@ def main() -> None:
 
     inputs = ["h_0", "h_1"]
     outputs = ["h_2"]
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data_incremental.collect(250).with_transform(window_transform))
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data_incremental
+                                                                 .collect(250)
+                                                                 .with_transform(window_transform))
 
     # Convert the train and test data to float32
-    train.data = train.data.with_columns([pl.col(col).cast(pl.Float32) for col in inputs + outputs])
-    test.data = test.data.with_columns([pl.col(col).cast(pl.Float32) for col in inputs + outputs])
+    train.data = train.data.with_columns([pl.col(col).cast(pl.Float32) for col
+                                          in inputs + outputs])
+    test.data = test.data.with_columns([pl.col(col).cast(pl.Float32) for col in
+                                         inputs + outputs])
 
 
 
@@ -128,7 +130,7 @@ def main() -> None:
         learning_rate=0.01,
     )
 
-    t_start = datetime.now(tz=UTC) 
+    t_start = datetime.now(tz=UTC)
     model = learn_incremental(
         train.as_stream(batch_size=1),
         learner,
