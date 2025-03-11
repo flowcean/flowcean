@@ -126,11 +126,6 @@ def main() -> None:
 
     pixel_size = 100
     transform = (
-        # TimeWindow(  # get the first two minutes of data
-        #     time_start=1729516868012553090,
-        #     time_end=1729516988012553090,
-        # )
-        # |
         ParticleCloudImage(
             particle_cloud_feature_name="/particle_cloud",
             save_images=False,
@@ -185,7 +180,7 @@ def main() -> None:
     collected_transformed_data = collected_transformed_data.unnest(
         "isDelocalized_value",
     ).rename(
-        {"isDelocalized_data": "isDelocalized_value"},
+        {"data": "isDelocalized_value"},
     )
     print(collected_transformed_data)
     print(collected_transformed_data.shape)
@@ -203,7 +198,7 @@ def main() -> None:
                 learning_rate=1e-3,
                 conv_configs=[
                     (1, 32, 3),
-                ],  # 1 conv layer: 1 input channel, 32 output channels, 3x3 kernel
+                ],  # 1 conv layer: 1 input, 32 output channels, 3x3 kernel
                 fully_connected_layer_sizes=[
                     128,
                     1,
