@@ -2903,7 +2903,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
                             {
                                 "time": pl.Datetime(
                                     time_unit="us",
-                                    time_zone=None,
+                                    time_zone="UTC",
                                 ),
                                 "value": pl.Struct({"x": pl.Int64}),
                             },
@@ -2917,7 +2917,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
                             {
                                 "time": pl.Datetime(
                                     time_unit="us",
-                                    time_zone=None,
+                                    time_zone="UTC",
                                 ),
                                 "value": pl.Struct({"x": pl.Float64}),
                             },
