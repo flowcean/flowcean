@@ -25,19 +25,20 @@ from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.explode import Explode
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
-from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
-from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
+from flowcean.sklearn.metrics.classification import Accuracy
 from flowcean.torch import ConvolutionalNeuralNetwork, LightningLearner
 
-USE_CACHED_ROS_DATA = False
-UPDATE_CACHE = False
+USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
 CACHE_FILE = WS / "cached_ros_data.parquet"
 ROS_BAG_PATH = WS / "rec_20241021_152106"
 
 
-def load_or_cache_ros_data(force_refresh: bool = False) -> pl.LazyFrame:
+def load_or_cache_ros_data(
+    *,
+    force_refresh: bool = False,
+) -> pl.LazyFrame:
     """Load data from ROS bag or cache, with optional refresh.
 
     Args:
@@ -48,17 +49,15 @@ def load_or_cache_ros_data(force_refresh: bool = False) -> pl.LazyFrame:
     """
     # Check if cache exists and is valid
     cache_exists = CACHE_FILE.exists()
+
     if cache_exists and not force_refresh:
-        try:
-            # Load cached data
-            print("Loading data from cache.")
-            data = pl.read_parquet(CACHE_FILE).lazy()
-            # Optional: Validate cache (e.g., check metadata or row count)
-            if data.collect().height > 0:
-                return data
-            print("Cache invalid; reloading from ROS bag.")
-        except Exception as e:
-            print(f"Cache read failed ({e}); reloading from ROS bag.")
+        # Load cached data
+        print("Loading data from cache.")
+        data = pl.read_parquet(CACHE_FILE).lazy()
+        # Optional: Validate cache (e.g., check metadata or row count)
+        if data.collect().height > 0:
+            return data
+        print("Cache invalid; reloading from ROS bag.")
 
     # Load from ROS bag
     print("Loading data from ROS bag.")
@@ -123,15 +122,16 @@ def main() -> None:
     flowcean.cli.initialize_logging()
 
     # Load data with caching (set force_refresh=True to always reload)
-    data = load_or_cache_ros_data(force_refresh=False)
+    data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    pixel_size = 300
+    pixel_size = 100
     transform = (
-        TimeWindow(  # get the first two minutes of data
-            time_start=1729516868012553090,
-            time_end=1729516988012553090,
-        )
-        | ParticleCloudImage(
+        # TimeWindow(  # get the first two minutes of data
+        #     time_start=1729516868012553090,
+        #     time_end=1729516988012553090,
+        # )
+        # |
+        ParticleCloudImage(
             particle_cloud_feature_name="/particle_cloud",
             save_images=False,
             cutting_area=15.0,
@@ -182,11 +182,18 @@ def main() -> None:
             column,
         ).rename({"time": column + "_time", "value": column + "_value"})
     # convert dict to value for isDelocalized_value
-
+    collected_transformed_data = collected_transformed_data.unnest(
+        "isDelocalized_value",
+    ).rename(
+        {"isDelocalized_data": "isDelocalized_value"},
+    )
+    print(collected_transformed_data)
+    print(collected_transformed_data.shape)
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
+    # Define inputs and outputs with task types
     inputs = ["/particle_cloud_image_value"]
     outputs = ["isDelocalized_value"]
     learners = [
@@ -201,99 +208,36 @@ def main() -> None:
                     128,
                     1,
                 ],  # 2 fully connected layers: 128 units, then 1 output
-                output_size=1,  # Binary classification (isDelocalized)
+                output_size=1,
+                input_shape=(1, pixel_size, pixel_size),
             ),
-            max_epochs=10,
+            max_epochs=4,
+            batch_size=4,
+            num_workers=1,
+            accelerator="cpu",
         ),
         # CNN (mid-complex)
         LightningLearner(
             module=ConvolutionalNeuralNetwork(
                 learning_rate=1e-3,
-                conv_configs=[(1, 32, 3)]
-                + [(32, 32, 3)]
-                * 20,  # 21 conv layers: 1->32, then 20 at 32->32
-                fully_connected_layer_sizes=[128] * 10
-                + [1],  # 11 fully connected layers
-                output_size=1,
+                conv_configs=[
+                    (1, 32, 3),  # (input channel, output channel, kernel size)
+                    (32, 64, 3),
+                ],
+                fully_connected_layer_sizes=[
+                    256,
+                    128,
+                    64,
+                    32,  # 4 fully connected layers
+                ],
+                output_size=1,  # Single output for binary classification
+                input_shape=(1, pixel_size, pixel_size),  # (1, 100, 100)
             ),
-            max_epochs=10,
+            max_epochs=4,
+            batch_size=4,
+            num_workers=1,
+            accelerator="cpu",  # Change to "gpu" if available
         ),
-        # CNN (complex)
-        LightningLearner(
-            module=ConvolutionalNeuralNetwork(
-                learning_rate=1e-3,
-                conv_configs=[(1, 32, 3)] * 21,
-                fully_connected_layer_sizes=[128] * 11,
-                output_size=1,
-            ),
-            max_epochs=10,
-        ),
-        # # LSTM (simple)
-        # LightningLearner(
-        #     module=LongShortTermMemoryNetwork(
-        #         learning_rate=1e-3,
-        #         input_size=300 * 300,
-        #         output_size=1,
-        #         hidden_sizes=[128],
-        #         fully_connected_layer_sizes=[64, 32],
-        #     ),
-        #     max_epochs=10,
-        # ),
-        # # LSTM (mid-complex)
-        # LightningLearner(
-        #     module=LongShortTermMemoryNetwork(
-        #         learning_rate=1e-3,
-        #         input_size=300 * 300,
-        #         output_size=1,
-        #         hidden_sizes=[128, 64],
-        #         fully_connected_layer_sizes=[64, 32, 16],
-        #     ),
-        #     max_epochs=10,
-        # ),
-        # # LSTM (complex)
-        # LightningLearner(
-        #     module=LongShortTermMemoryNetwork(
-        #         learning_rate=1e-3,
-        #         input_size=300 * 300,
-        #         output_size=1,
-        #         hidden_sizes=[128, 64, 32],
-        #         fully_connected_layer_sizes=[64, 32, 16, 8],
-        #     ),
-        #     max_epochs=10,
-        # ),
-        # # LRCN (simple)
-        # LightningLearner(
-        #     module=LongTermRecurrentConvolutionalNetwork(
-        #         learning_rate=1e-3,
-        #         conv_configs=[(1, 32, 3), (32, 64, 3)],
-        #         lstm_hidden_sizes=[128, 64],
-        #         fully_connected_layer_sizes=[64, 32],
-        #         output_size=1,
-        #     ),
-        #     max_epochs=10,
-        # ),
-        # # LRCN (mid-complex)
-        # LightningLearner(
-        #     module=LongTermRecurrentConvolutionalNetwork(
-        #         learning_rate=1e-3,
-        #         conv_configs=[(1, 32, 3), (32, 64, 3), (64, 128, 3)],
-        #         lstm_hidden_sizes=[128, 64],
-        #         fully_connected_layer_sizes=[128, 64, 32, 16, 8],
-        #         output_size=1,
-        #     ),
-        #     max_epochs=10,
-        # ),
-        # # LRCN (complex)
-        # LightningLearner(
-        #     module=LongTermRecurrentConvolutionalNetwork(
-        #         learning_rate=1e-3,
-        #         conv_configs=[(1, 32, 3)] * 5,
-        #         lstm_hidden_sizes=[128, 64],
-        #         fully_connected_layer_sizes=[128] * 7,
-        #         output_size=1,
-        #     ),
-        #     max_epochs=10,
-        # ),
     ]
     for learner in learners:
         t_start = datetime.now(tz=timezone.utc)
@@ -311,7 +255,7 @@ def main() -> None:
             test,
             inputs,
             outputs,
-            [MeanAbsoluteError(), MeanSquaredError()],
+            [Accuracy()],
         )
         print(report)
 

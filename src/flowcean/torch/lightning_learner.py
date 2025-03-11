@@ -28,6 +28,7 @@ class LightningLearner(SupervisedLearner):
         num_workers: int | None = None,
         batch_size: int = 32,
         max_epochs: int = 100,
+        accelerator: str = "auto",
     ) -> None:
         """Initialize the learner.
 
@@ -36,12 +37,14 @@ class LightningLearner(SupervisedLearner):
             num_workers: The number of workers to use for the DataLoader.
             batch_size: The batch size to use for training.
             max_epochs: The maximum number of epochs to train for.
+            accelerator: The accelerator to use.
         """
         self.module = module
         self.num_workers = num_workers or os.cpu_count() or 0
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.optimizer = None
+        self.accelerator = accelerator
 
     @override
     def learn(
@@ -59,6 +62,7 @@ class LightningLearner(SupervisedLearner):
             persistent_workers=platform.system() == "Windows",
         )
         trainer = lightning.Trainer(
+            accelerator=self.accelerator,
             max_epochs=self.max_epochs,
         )
         trainer.fit(self.module, dataloader)
@@ -162,20 +166,14 @@ class ConvolutionalNeuralNetwork(lightning.LightningModule):
         self.save_hyperparameters()
         self.learning_rate = learning_rate
 
+        # Convolutional layers
         self.conv_layers = torch.nn.ModuleList()
-        for input_channels, output_channels, kernel_size in conv_configs:
+        for in_ch, out_ch, kernel_size in conv_configs:
             self.conv_layers.append(
-                torch.nn.Conv2d(
-                    input_channels,
-                    output_channels,
-                    kernel_size=kernel_size,
-                ),
+                torch.nn.Conv2d(in_ch, out_ch, kernel_size=kernel_size),
             )
 
-        self.dropout_layers = torch.nn.ModuleList(
-            torch.nn.Dropout2d(rate) for rate in dropout_rates
-        )
-
+        # Fully connected layers
         self.fully_connected_layers = torch.nn.ModuleList()
         prev_size = self._compute_flat_features(conv_configs)
         for size in fully_connected_layer_sizes:
@@ -190,30 +188,30 @@ class ConvolutionalNeuralNetwork(lightning.LightningModule):
         conv_configs: list[tuple[int, int, int]],
     ) -> int:
         channels, height, width = self.input_shape
-        for _, output_channels, kernel_size in conv_configs:
-            height = height - kernel_size + 1
+        for _, out_ch, kernel_size in conv_configs:
+            height = height - kernel_size + 1  # Conv without padding
             width = width - kernel_size + 1
-            height //= 2
+            height //= 2  # MaxPool2d with kernel 2
             width //= 2
-            channels = output_channels
+            channels = out_ch
         return channels * height * width
 
     def forward(self, x: Tensor) -> Tensor:
-        for i, conv in enumerate(self.conv_layers):
+        for conv in self.conv_layers:
             x = torch.relu(conv(x))
-            if i < len(self.dropout_layers):
-                x = self.dropout_layers[i](x)
             x = torch.max_pool2d(x, 2)
         x = torch.flatten(x, 1)
         for fc in self.fully_connected_layers:
             x = torch.relu(fc(x))
-        return self.output_layer(x)
+        logits = self.output_layer(x)
+        probabilities = torch.sigmoid(logits)
+        return torch.round(probabilities)
 
-    @override
     def training_step(self, batch: Any) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
-        return torch.nn.functional.mse_loss(outputs, targets)
+        targets = targets.float()
+        return torch.nn.functional.binary_cross_entropy(outputs, targets)
 
     @override
     def configure_optimizers(self) -> Any:

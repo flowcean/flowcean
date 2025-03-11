@@ -157,6 +157,36 @@ class TestLocalizationStatus(unittest.TestCase):
         ]
         assert result["isDelocalized"].to_list() == [expected]
 
+    def test_custom_values(self) -> None:
+        """Test with custom thresholds."""
+        with patch("logging.getLogger"):
+            custom_transform = LocalizationStatus(
+                position_threshold=1.0,
+                heading_threshold=1.0,
+            )
+        position_data = [
+            {"time": 1729516872004267978, "value": {"data": 0.0343}},
+            {"time": 1729516872929902269, "value": {"data": 0.0486}},
+        ]
+        heading_data = [
+            {"time": 1729516872004267978, "value": {"data": 0.0141}},
+            {"time": 1729516872929902269, "value": {"data": 0.0270}},
+        ]
+        data = self.create_lazy_frame(position_data, heading_data)
+
+        result = custom_transform.apply(data).collect()
+        expected = [
+            {
+                "time": 1729516872004267978,
+                "value": {"data": 0},
+            },  # Heading exceeds
+            {
+                "time": 1729516872929902269,
+                "value": {"data": 0},
+            },  # Position exceeds
+        ]
+        assert result["isDelocalized"].to_list() == [expected]
+
 
 if __name__ == "__main__":
     unittest.main()
