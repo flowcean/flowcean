@@ -1,6 +1,6 @@
 import os
 import platform
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import lightning
 import polars as pl
@@ -366,7 +366,8 @@ class LongTermRecurrentConvolutionalNetwork(lightning.LightningModule):
             if i < len(self.dropout_layers):
                 x = self.dropout_layers[i](x)
             x = torch.max_pool2d(x, 2)
-        x = x.view(x.size(0), -1, self.conv_layers[-1].out_channels)
+        last_conv = cast(torch.nn.Conv2d, self.conv_layers[-1])
+        x = x.view(x.size(0), -1, last_conv.out_channels)
         for lstm in self.lstm_layers:
             x, _ = lstm(x)
         x = x[:, -1, :]
