@@ -1,3 +1,4 @@
+import hashlib
 from collections.abc import Iterable, Iterator
 
 from typing_extensions import override
@@ -28,6 +29,13 @@ class ChainedOfflineEnvironments(IncrementalEnvironment):
         self._environments = iter(environments)
         self._element = next(self._environments)
         super().__init__()
+
+    @override
+    def hash(self) -> bytes:
+        hasher = hashlib.sha256()
+        for environment in self._environments:
+            hasher.update(environment.hash())
+        return hasher.digest()
 
     @override
     def _observe(self) -> Data:
