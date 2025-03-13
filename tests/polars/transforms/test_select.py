@@ -89,6 +89,28 @@ class SelectTransform(unittest.TestCase):
             ),
         )
 
+    def test_hashing(self) -> None:
+        transform_a = Select(features=["a", "c"])
+
+        transform_b = Select(features=["a", "c"])
+
+        assert transform_a.hash() == transform_b.hash()
+
+    def test_complex_hashing(self) -> None:
+        transform_a = Select(
+            (np.sqrt(pl.col("a") + pl.col("b")) / pl.col("c")).alias(
+                "computed",
+            ),
+        )
+
+        transform_b = Select(
+            (np.sqrt(pl.col("a") + pl.col("b")) / pl.col("c")).alias(
+                "computed",
+            ),
+        )
+
+        assert transform_a.hash() == transform_b.hash()
+
 
 if __name__ == "__main__":
     unittest.main()
