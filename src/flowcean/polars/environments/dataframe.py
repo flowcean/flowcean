@@ -26,7 +26,7 @@ class DataFrame(OfflineEnvironment):
     """
 
     data: pl.LazyFrame
-    _hash: bytes
+    _hash: bytes | None = None
     _length: int | None = None
 
     def __init__(
@@ -48,11 +48,7 @@ class DataFrame(OfflineEnvironment):
         else:
             self.data = data
 
-        self._hash = (
-            data_hash
-            if data_hash is not None
-            else _hash_from_dataframe(self.data)
-        )
+        self._hash = data_hash
         super().__init__()
 
     @classmethod
@@ -124,6 +120,8 @@ class DataFrame(OfflineEnvironment):
 
     @override
     def hash(self) -> bytes:
+        if self._hash is None:
+            self._hash = _hash_from_dataframe(self.data)
         return self._hash
 
     def __len__(self) -> int:
