@@ -55,7 +55,8 @@ import hashlib
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-import dill  # type:ignore[reportMissingTypeStubs]
+# import dill  # type:ignore[reportMissingTypeStubs]
+import cloudpickle  # type:ignore[reportMissingTypeStubs]
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -85,7 +86,7 @@ class Transform(ABC):
             The hash of the transform.
         """
         hasher = hashlib.sha256()
-        hasher.update(dill.dumps(self))  # type: ignore[reportUnknownMember]
+        hasher.update(cloudpickle.dumps(self))  # type: ignore[reportUnknownMember]
         return hasher.digest()
 
     def __call__(self, data: Data) -> Data:
