@@ -208,8 +208,8 @@ def main() -> None:
             ),
             max_epochs=4,
             batch_size=4,
-            num_workers=1,
-            accelerator="cpu",
+            num_workers=15,
+            accelerator="auto",
         ),
         # CNN (mid-complex)
         LightningLearner(
@@ -230,8 +230,8 @@ def main() -> None:
             ),
             max_epochs=4,
             batch_size=4,
-            num_workers=1,
-            accelerator="cpu",  # Change to "gpu" if available
+            num_workers=15,
+            accelerator="auto",
         ),
     ]
     for learner in learners:
