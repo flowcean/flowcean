@@ -11,8 +11,11 @@ logger = logging.getLogger(__name__)
 class Explode(Transform):
     """Explodes a Dataframe to long format by exploding the given features.
 
+    If no features are specified, all columns will be exploded.
+
     Args:
-        features (list[str]): List of features to explode.
+        features (list[str] | None): List of features to explode. If None, all
+            columns are exploded.
 
     The below example shows the usage of a `Explode` transform in an
     `experiment.yaml` file. Assuming the loaded data is represented by the
@@ -22,9 +25,6 @@ class Explode(Transform):
     --------------|--------------|--------------|---------
      [0, 1]       | [2, 1]       | [9, 3]       | 1
      [0, 2]       | [3, 4]       | [8, 4]       | 2
-
-    This transform can be used to explode the columns `time`,
-    `feature_a`, and `feature_b`.
 
     The resulting Dataframe after the transform is:
 
@@ -36,10 +36,30 @@ class Explode(Transform):
      2            | 4            | 4            | 2
     """
 
-    def __init__(self, features: list[str]) -> None:
+    def __init__(self, features: list[str] | None = None) -> None:
+        """Initialize the Explode transform.
+
+        Args:
+            features: List of column names to explode, or None to explode all
+                columns.
+        """
         self.features = features
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        """Apply the explosion transformation to the DataFrame.
+
+        Args:
+            data: Input LazyFrame to transform.
+
+        Returns:
+            Transformed LazyFrame with exploded columns.
+        """
         logger.debug("Exploding timeseries")
-        return data.explode(self.features)
+        # If features is None, use all column names from the schema
+        features_to_explode = (
+            self.features
+            if self.features is not None
+            else data.collect_schema().names()
+        )
+        return data.explode(features_to_explode)
