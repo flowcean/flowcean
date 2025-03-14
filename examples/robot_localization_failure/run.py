@@ -4,6 +4,7 @@
 #     "flowcean",
 #     "matplotlib",
 #     "opencv-python",
+#     "scikit-learn",
 # ]
 #
 # [tool.uv.sources]
@@ -13,11 +14,12 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flowcean.sklearn.ada_boost_classifier import AdaptiveBoostingClassifier
 import numpy as np
 import polars as pl
+import torch
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
@@ -27,8 +29,11 @@ from flowcean.polars.transforms.explode import Explode
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
 from flowcean.ros.rosbag import RosbagLoader
+from flowcean.sklearn.adaboost import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
 from flowcean.torch import ConvolutionalNeuralNetwork, LightningLearner
+
+torch.set_float32_matmul_precision("medium")
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -52,15 +57,12 @@ def load_or_cache_ros_data(
     cache_exists = CACHE_FILE.exists()
 
     if cache_exists and not force_refresh:
-        # Load cached data
         print("Loading data from cache.")
         data = pl.read_parquet(CACHE_FILE).lazy()
-        # Optional: Validate cache (e.g., check metadata or row count)
         if data.collect().height > 0:
             return data
         print("Cache invalid; reloading from ROS bag.")
 
-    # Load from ROS bag
     print("Loading data from ROS bag.")
     environment = RosbagLoader(
         path=ROS_BAG_PATH,
@@ -111,7 +113,6 @@ def load_or_cache_ros_data(
     )
     data = environment.observe()
 
-    # Cache the data
     print("Caching data to Parquet.")
     collected_data = data.collect()
     collected_data.write_parquet(CACHE_FILE, compression="snappy")
@@ -122,18 +123,21 @@ def load_or_cache_ros_data(
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    # Load data with caching (set force_refresh=True to always reload)
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
     pixel_size = 100
     transform = (
+        # TimeWindow(
+        #     time_start=1729516868012553090,
+        #     time_end=1729516968012553090,
+        # )
+        # |
         ParticleCloudImage(
             particle_cloud_feature_name="/particle_cloud",
             save_images=False,
             cutting_area=15.0,
             image_pixel_size=pixel_size,
         )
-        # timestamps need to be aligned before applying LocalizationStatus
         | MatchSamplingRate(
             reference_feature_name="/heading_error",
             feature_interpolation_map={"/position_error": "linear"},
@@ -144,6 +148,7 @@ def main() -> None:
         )
         | Select(
             [
+                "/particle_cloud",
                 "/particle_cloud_image",
                 "/position_error",
                 "/heading_error",
@@ -158,14 +163,8 @@ def main() -> None:
                 "isDelocalized": "nearest",
             },
         )
-        | Explode(
-            features=[
-                "/particle_cloud_image",
-                "/position_error",
-                "/heading_error",
-                "isDelocalized",
-            ],
-        )
+        | ParticleCloudStatistics()
+        | Explode()
     )
     transformed_data = transform(data)
 
@@ -183,27 +182,28 @@ def main() -> None:
     ).rename(
         {"data": "isDelocalized_value"},
     )
-    print(collected_transformed_data)
-    print(collected_transformed_data.shape)
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
-    # Define inputs and outputs with task types
-    inputs = ["/particle_cloud_image_value"]
+
+    # Define inputs and outputs
+    base_inputs = ["/particle_cloud_image_value"]  # For CNN
+    boost_features = [
+        "num_clusters_value",
+        "main_cluster_variance_x_value",
+        "main_cluster_variance_y_value",
+    ]
+    all_inputs = base_inputs + boost_features
     outputs = ["isDelocalized_value"]
-    learners = [
-        # CNN (simple)
+
+    # Define base learners
+    base_learners = [
         LightningLearner(
             module=ConvolutionalNeuralNetwork(
                 learning_rate=1e-3,
-                conv_configs=[
-                    (1, 32, 3),
-                ],  # 1 conv layer: 1 input, 32 output channels, 3x3 kernel
-                fully_connected_layer_sizes=[
-                    128,
-                    1,
-                ],  # 2 fully connected layers: 128 units, then 1 output
+                conv_configs=[(1, 32, 3)],
+                fully_connected_layer_sizes=[128, 1],
                 output_size=1,
                 input_shape=(1, pixel_size, pixel_size),
             ),
@@ -212,22 +212,13 @@ def main() -> None:
             num_workers=15,
             accelerator="auto",
         ),
-        # CNN (mid-complex)
         LightningLearner(
             module=ConvolutionalNeuralNetwork(
                 learning_rate=1e-3,
-                conv_configs=[
-                    (1, 32, 3),  # (input channel, output channel, kernel size)
-                    (32, 64, 3),
-                ],
-                fully_connected_layer_sizes=[
-                    256,
-                    128,
-                    64,
-                    32,  # 4 fully connected layers
-                ],
-                output_size=1,  # Single output for binary classification
-                input_shape=(1, pixel_size, pixel_size),  # (1, 100, 100)
+                conv_configs=[(1, 32, 3), (32, 64, 3)],
+                fully_connected_layer_sizes=[256, 128, 64, 32],
+                output_size=1,
+                input_shape=(1, pixel_size, pixel_size),
             ),
             max_epochs=4,
             batch_size=4,
@@ -235,21 +226,51 @@ def main() -> None:
             accelerator="auto",
         ),
     ]
-    for learner in learners:
+
+    # Wrap with AdaBoost
+    learners = [
+        AdaBoost(
+            base_learner=learner,
+            base_input_features=base_inputs,
+            boost_features=boost_features,
+            n_estimators=50,
+            learning_rate=1.0,
+        )
+        for learner in base_learners
+    ]
+
+    for i, learner in enumerate(learners):
+        print(f"\nTraining learner {i + 1}")
         t_start = datetime.now(tz=timezone.utc)
         model = learn_offline(
             train,
             learner,
-            inputs,
+            all_inputs,  # Pass all features to AdaBoost
             outputs,
         )
         delta_t = datetime.now(tz=timezone.utc) - t_start
-        print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
+        print(
+            f"Learning took {np.round(delta_t.total_seconds() * 1000, 1)} ms",
+        )
 
+        # Compute base predictions for evaluation
+        base_inputs_test = test.data.select(base_inputs)
+        base_predictions = (
+            learner.base_model.predict(base_inputs_test)
+            .collect()
+            .to_numpy()
+            .ravel()
+        )
+
+        eval_data = test.data.select(boost_features + outputs).with_columns(
+            pl.Series("base_pred", base_predictions),
+        )
+
+        print(f"Evaluating learner {i + 1}")
         report = evaluate_offline(
             model,
-            test,
-            inputs,
+            DataFrame(eval_data),
+            [*boost_features, "base_pred"],
             outputs,
             [Accuracy()],
         )
