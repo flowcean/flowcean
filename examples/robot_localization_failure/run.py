@@ -13,6 +13,7 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
+from flowcean.sklearn.ada_boost_classifier import AdaptiveBoostingClassifier
 import numpy as np
 import polars as pl
 from custom_transforms.localization_status import LocalizationStatus
