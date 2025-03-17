@@ -49,7 +49,7 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
         self.slice = self.data.slice(self.i, self.batch_size)
         if (
             self.slice.slice(0, 1)
-            .collect(streaming=False)
+            .collect()
             .select(pl.len())
             .item(0, 0)
             == 0
