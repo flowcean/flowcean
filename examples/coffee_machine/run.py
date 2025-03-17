@@ -15,6 +15,7 @@ from tqdm import tqdm
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_offline
 from flowcean.core.environment.chained import ChainedOfflineEnvironments
+from flowcean.core.model import ModelWithTransform
 from flowcean.grpc import GrpcPassiveAutomataLearner
 from flowcean.polars import (
     DataFrame,
@@ -60,13 +61,18 @@ def main() -> None:
         outputs,
     )
 
+    model = ModelWithTransform(
+        model,
+        None,
+        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
+    )
+
     report = evaluate_offline(
         model,
         test,
         inputs,
         outputs,
         [MeanAbsoluteError(), MeanSquaredError()],
-        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
     )
     print(report)
 
