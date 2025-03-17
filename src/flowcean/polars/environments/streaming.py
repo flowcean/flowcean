@@ -47,11 +47,5 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
             self.data = cast(pl.LazyFrame, self.environment.observe())
         self.i += self.batch_size
         self.slice = self.data.slice(self.i, self.batch_size)
-        if (
-            self.slice.slice(0, 1)
-            .collect()
-            .select(pl.len())
-            .item(0, 0)
-            == 0
-        ):
+        if self.slice.slice(0, 1).collect().select(pl.len()).item(0, 0) == 0:
             raise Finished
