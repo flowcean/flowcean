@@ -66,7 +66,7 @@ class Flatten(Transform):
             row_lengths = (
                 data.select(pl.col(feature).list.len())
                 .unique()
-                .collect(streaming=True)
+                .collect(engine="streaming")
             )
 
             # Check if all rows have the same length
