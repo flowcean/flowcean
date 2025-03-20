@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -292,3 +293,12 @@ class RosbagLoader(DataFrame):
                 result[key] = self.ros_msg_to_dict(value)
             return result
         return obj  # Return the base value if it's not an object
+
+    def hash(self) -> bytes:
+        # For rosbags, it's probably cheaper to hash the file directly than to
+        # hash the dataframe.
+        hasher = hashlib.sha256()
+        with self.path.open("rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hasher.update(chunk)
+        return hasher.digest()
