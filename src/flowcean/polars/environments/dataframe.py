@@ -171,7 +171,7 @@ def _iter_slices(
         offset: int,
         batch_size: int,
     ) -> pl.DataFrame:
-        return df.slice(offset, batch_size).collect(streaming=True)
+        return df.slice(offset, batch_size).collect(engine="streaming")
 
     batch = get_batch(df, 0, batch_size)
     # Yield once even if we got passed an empty LazyFrame
