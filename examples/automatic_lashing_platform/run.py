@@ -38,6 +38,7 @@ from flowcean.polars import (
 from flowcean.polars.transforms.filter import And, Not, Or  # noqa: F401
 from flowcean.sklearn import (
     MeanAbsoluteError,
+    MeanAbsolutePercentageError,
     MeanSquaredError,
     RegressionTree,
 )
@@ -378,7 +379,10 @@ def train_and_evaluate_model(
         test_env,
         inputs,
         outputs,
-        [MeanAbsoluteError(), MeanSquaredError()],
+        [
+            MeanAbsoluteError(),
+            MeanSquaredError(),
+            MeanAbsolutePercentageError()],
     )
     time_after_learning = time.time()
     logger.info(
