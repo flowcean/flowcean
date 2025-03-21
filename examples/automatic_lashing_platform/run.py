@@ -336,25 +336,35 @@ def train_and_evaluate_model(
     train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
         data,
     )
-    if args.lightning_learner:
+    if args.use_lightning_learner:
         learner = LightningLearner(
             MultilayerPerceptron(
-                learning_rate=args.learning_rate,
+                learning_rate=args.lightning_learning_rate,
                 input_size=len(inputs),
                 output_size=len(outputs),
             ),
         )
-    elif args.store_graph:
-        Path.mkdir(Path("./graphs"), exist_ok=True)
-        tree_path = Path(
-            f"./graphs/regression_tree_{time.strftime('%Y%m%d-%H%M%S')}.dot",
-        )
-        tree_path.open(mode="w").close()
-        learner = RegressionTree(
-            dot_graph_export_path=str(tree_path),
-        )
     else:
-        learner = RegressionTree()
+        tree_params = {
+            "max_depth": args.tree_max_depth,
+            "min_samples_split": args.tree_min_samples_split,
+            "min_samples_leaf": args.tree_min_samples_leaf,
+            "max_leaf_nodes": args.tree_max_leaf_nodes,
+            "min_impurity_decrease": args.tree_min_impurity_decrease,
+            "ccp_alpha": args.tree_ccp_alpha,
+        }
+        if args.store_graph:
+            Path.mkdir(Path("./graphs"), exist_ok=True)
+            tree_path = Path(
+                f"./graphs/regression_tree_{time.strftime('%Y%m%d-%H%M%S')}.dot",
+            )
+            tree_path.open(mode="w").close()
+            learner = RegressionTree(
+                dot_graph_export_path=str(tree_path),
+                **tree_params,
+            )
+        else:
+            learner = RegressionTree(**tree_params)
 
     model = learn_offline(
         train_env,
@@ -549,7 +559,62 @@ if __name__ == "__main__":
         help="Apply no training.",
     )
     training_group.add_argument(
-        "--lightning_learner",
+        "--tree_max_depth",
+        type=int,
+        default=None,
+        metavar="DEPTH",
+        help="Set the maximum depth of the regression-tree. (default: None)",
+    )
+    training_group.add_argument(
+        "--tree_min_samples_split",
+        type=int,
+        default=2,
+        metavar="SAMPLES",
+        help=(
+            "Set the minimum samples to split the regression-tree. "
+            "(default: 2)"
+        ),
+    )
+    training_group.add_argument(
+        "--tree_min_samples_leaf",
+        type=int,
+        default=1,
+        metavar="SAMPLES",
+        help=(
+            "Set the minimum samples in a leaf of the regression-tree. "
+            "(default: 1)"
+        ),
+    )
+    training_group.add_argument(
+        "--tree_max_leaf_nodes",
+        type=int,
+        default=None,
+        metavar="NODES",
+        help="Set the maximum leaf nodes of the regression-tree. "
+        "(default: None)",
+    )
+    training_group.add_argument(
+        "--tree_min_impurity_decrease",
+        type=float,
+        default=0.0,
+        metavar="DECREASE",
+        help=(
+            "Set the minimum impurity decrease of the regression-tree. "
+            "(default: 0.0)"
+        ),
+    )
+    training_group.add_argument(
+        "--tree_ccp_alpha",
+        type=float,
+        default=0.0,
+        metavar="ALPHA",
+        help=(
+            "Set the complexity parameter of the regression-tree. "
+            "(default: 0.0)"
+        ),
+    )
+    training_group.add_argument(
+        "--use_lightning_learner",
         action="store_true",
         help=(
             "Use the Lightning Learner with Multilayer-Perceptron "
@@ -557,7 +622,7 @@ if __name__ == "__main__":
         ),
     )
     training_group.add_argument(
-        "--learning_rate",
+        "--lightning_learning_rate",
         type=float,
         default=0.1,
         metavar="RATE",

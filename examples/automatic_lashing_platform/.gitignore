@@ -1,3 +1,5 @@
 *.parquet
 /data
 /graphs
+*.gv
+*.pdf
