@@ -16,6 +16,7 @@ from .rename import Rename
 from .resample import Resample
 from .select import Select
 from .signal_filter import SignalFilter, SignalFilterType
+from .slice_time_series import SliceTimeSeries
 from .sliding_window import SlidingWindow
 from .sliding_window_ts import TimeSeriesSlidingWindow
 from .standardize import Standardize
@@ -48,6 +49,7 @@ __all__ = [
     "Select",
     "SignalFilter",
     "SignalFilterType",
+    "SliceTimeSeries",
     "SlidingWindow",
     "Standardize",
     "TimeSeriesSlidingWindow",
