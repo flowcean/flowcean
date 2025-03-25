@@ -181,7 +181,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.2},
+                            "value": {"x": 1.2},
                         },
                         {
                             "time": datetime(
@@ -194,7 +194,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.4},
+                            "value": {"x": 1.4},
                         },
                         {
                             "time": datetime(
@@ -207,7 +207,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.6},
+                            "value": {"x": 1.6},
                         },
                         {
                             "time": datetime(
@@ -220,7 +220,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.8},
+                            "value": {"x": 1.8},
                         },
                     ],
                 ],
@@ -402,7 +402,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.2, "feature_b_y": 12.0},
+                            "value": {"x": 1.2, "y": 12.0},
                         },
                         {
                             "time": datetime(
@@ -415,7 +415,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.4, "feature_b_y": 14.0},
+                            "value": {"x": 1.4, "y": 14.0},
                         },
                         {
                             "time": datetime(
@@ -428,7 +428,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.6, "feature_b_y": 16.0},
+                            "value": {"x": 1.6, "y": 16.0},
                         },
                         {
                             "time": datetime(
@@ -441,7 +441,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.8, "feature_b_y": 18.0},
+                            "value": {"x": 1.8, "y": 18.0},
                         },
                     ],
                 ],
@@ -654,7 +654,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.2, "feature_b_y": 12.0},
+                            "value": {"x": 1.2, "y": 12.0},
                         },
                         {
                             "time": datetime(
@@ -667,7 +667,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.4, "feature_b_y": 14.0},
+                            "value": {"x": 1.4, "y": 14.0},
                         },
                         {
                             "time": datetime(
@@ -680,7 +680,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.6, "feature_b_y": 16.0},
+                            "value": {"x": 1.6, "y": 16.0},
                         },
                         {
                             "time": datetime(
@@ -693,7 +693,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.8, "feature_b_y": 18.0},
+                            "value": {"x": 1.8, "y": 18.0},
                         },
                     ],
                 ],
@@ -710,7 +710,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_c_x": 2.4, "feature_c_y": 24.0},
+                            "value": {"x": 2.4, "y": 24.0},
                         },
                         {
                             "time": datetime(
@@ -723,7 +723,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_c_x": 2.8, "feature_c_y": 28.0},
+                            "value": {"x": 2.8, "y": 28.0},
                         },
                         {
                             "time": datetime(
@@ -736,7 +736,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_c_x": 3.2, "feature_c_y": 32.0},
+                            "value": {"x": 3.2, "y": 32.0},
                         },
                         {
                             "time": datetime(
@@ -749,7 +749,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_c_x": 3.6, "feature_c_y": 36.0},
+                            "value": {"x": 3.6, "y": 36.0},
                         },
                     ],
                 ],
@@ -1064,7 +1064,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.2, "feature_b_y": 12.0},
+                            "value": {"x": 1.2, "y": 12.0},
                         },
                         {
                             "time": datetime(
@@ -1077,7 +1077,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.4, "feature_b_y": 14.0},
+                            "value": {"x": 1.4, "y": 14.0},
                         },
                         {
                             "time": datetime(
@@ -1090,7 +1090,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.6, "feature_b_y": 16.0},
+                            "value": {"x": 1.6, "y": 16.0},
                         },
                         {
                             "time": datetime(
@@ -1103,7 +1103,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.8, "feature_b_y": 18.0},
+                            "value": {"x": 1.8, "y": 18.0},
                         },
                     ],
                     [
@@ -1118,7 +1118,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.2, "feature_b_y": 12.0},
+                            "value": {"x": 1.2, "y": 12.0},
                         },
                         {
                             "time": datetime(
@@ -1131,7 +1131,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.4, "feature_b_y": 14.0},
+                            "value": {"x": 1.4, "y": 14.0},
                         },
                         {
                             "time": datetime(
@@ -1144,7 +1144,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.6, "feature_b_y": 16.0},
+                            "value": {"x": 1.6, "y": 16.0},
                         },
                         {
                             "time": datetime(
@@ -1157,7 +1157,7 @@ class TestMatchSamplingRate(unittest.TestCase):
                                 0,
                                 tzinfo=timezone.utc,
                             ),
-                            "value": {"feature_b_x": 1.8, "feature_b_y": 18.0},
+                            "value": {"x": 1.8, "y": 18.0},
                         },
                     ],
                 ],
@@ -1238,19 +1238,19 @@ class TestMatchSamplingRate(unittest.TestCase):
                     [
                         {
                             "time": 1.0,
-                            "value": {"feature_b_x": 1.2, "feature_b_y": 12.0},
+                            "value": {"x": 1.2, "y": 12.0},
                         },
                         {
                             "time": 2.0,
-                            "value": {"feature_b_x": 1.4, "feature_b_y": 14.0},
+                            "value": {"x": 1.4, "y": 14.0},
                         },
                         {
                             "time": 3.0,
-                            "value": {"feature_b_x": 1.6, "feature_b_y": 16.0},
+                            "value": {"x": 1.6, "y": 16.0},
                         },
                         {
                             "time": 4.0,
-                            "value": {"feature_b_x": 1.8, "feature_b_y": 18.0},
+                            "value": {"x": 1.8, "y": 18.0},
                         },
                     ],
                 ],
@@ -1340,19 +1340,19 @@ class TestMatchSamplingRate(unittest.TestCase):
                     [
                         {
                             "time": 1,
-                            "value": {"feature_b_x": 0.0, "feature_b_y": 0.0},
+                            "value": {"x": 0.0, "y": 0.0},
                         },
                         {
                             "time": 2,
-                            "value": {"feature_b_x": 1.0, "feature_b_y": 10.0},
+                            "value": {"x": 1.0, "y": 10.0},
                         },
                         {
                             "time": 3,
-                            "value": {"feature_b_x": 2.0, "feature_b_y": 20.0},
+                            "value": {"x": 2.0, "y": 20.0},
                         },
                         {
                             "time": 4,
-                            "value": {"feature_b_x": 3.0, "feature_b_y": 30.0},
+                            "value": {"x": 3.0, "y": 30.0},
                         },
                     ],
                 ],
@@ -1442,19 +1442,19 @@ class TestMatchSamplingRate(unittest.TestCase):
                     [
                         {
                             "time": 1.0,
-                            "value": {"feature_b_x": 0.0, "feature_b_y": 0.0},
+                            "value": {"x": 0.0, "y": 0.0},
                         },
                         {
                             "time": 2.0,
-                            "value": {"feature_b_x": 1.0, "feature_b_y": 10.0},
+                            "value": {"x": 1.0, "y": 10.0},
                         },
                         {
                             "time": 3.0,
-                            "value": {"feature_b_x": 2.0, "feature_b_y": 20.0},
+                            "value": {"x": 2.0, "y": 20.0},
                         },
                         {
                             "time": 4.0,
-                            "value": {"feature_b_x": 3.0, "feature_b_y": 30.0},
+                            "value": {"x": 3.0, "y": 30.0},
                         },
                     ],
                 ],
