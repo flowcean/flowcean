@@ -33,7 +33,7 @@ class Standardize(Transform, FitOnce):
 
     @override
     def fit(self, data: pl.LazyFrame) -> None:
-        df = data.collect(streaming=True)
+        df = data.collect(engine="streaming")
 
         self.mean = {
             c: _as_float(df[c].mean()) for c in data.collect_schema().names()

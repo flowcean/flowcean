@@ -132,7 +132,7 @@ class OneCold(Transform):
                         pl.all(),
                     ).all(),  # Combine the results for all data entries ...
                 )
-                .collect(streaming=True)
+                .collect(engine="streaming")
                 # ... and get the final result.
                 # If it is false, there is a missing category
                 .item(0, 0)

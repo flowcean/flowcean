@@ -51,9 +51,11 @@ transformed_data = transforms(dataset)
 
 from __future__ import annotations
 
+import hashlib
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import cloudpickle  # type:ignore[reportMissingTypeStubs]
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -75,6 +77,16 @@ class Transform(ABC):
         Returns:
             The transformed data.
         """
+
+    def hash(self) -> bytes:
+        """Get the hash of the transform.
+
+        Returns:
+            The hash of the transform.
+        """
+        hasher = hashlib.sha256()
+        hasher.update(cloudpickle.dumps(self))  # type: ignore[reportUnknownMember]
+        return hasher.digest()
 
     def __call__(self, data: Data) -> Data:
         """Apply the transform to data.
