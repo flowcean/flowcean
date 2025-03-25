@@ -178,28 +178,24 @@ def interpolate_feature(
     )
     # Handle 'value' field
     if "value" in feature_df.columns:
-        is_scalar = not isinstance(feature_df.schema["value"], pl.Struct)
-        if is_scalar:
-            # Rename scalar 'value' to a temporary name to avoid conflicts
-            feature_df = feature_df.rename(
-                {"value": f"{target_feature_name}_value"},
-            )
-            original_field_names = [f"{target_feature_name}_value"]
-        else:
+        value_schema = feature_df.schema["value"]
+        if isinstance(value_schema, pl.Struct):
             # Get the schema of 'value' and extract field names for structs
-            value_schema = feature_df.schema["value"]
-            if not isinstance(value_schema, pl.Struct):
-                msg = "Expected value_schema to be a Struct here"
-                raise ValueError(msg)
             original_field_names = [
                 field.name for field in value_schema.fields
             ]
             feature_df = feature_df.unnest("value")
+        else:
+            # Rename non-struct 'value' to a temporary name to avoid conflicts
+            feature_df = feature_df.rename(
+                {"value": f"{target_feature_name}_value"},
+            )
+            original_field_names = [f"{target_feature_name}_value"]
     else:
         msg = f"Feature {target_feature_name} is missing 'value' field."
         raise ValueError(msg)
 
-    # Store column names after unnesting (or renaming for scalar)
+    # Store column names after unnesting (or renaming for non-struct 'value')
     value_columns = [col for col in feature_df.columns if col != "time"]
 
     # Get reference times and feature times
@@ -251,7 +247,7 @@ def interpolate_feature(
     interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
 
     # Restructure to nested format
-    if is_scalar:
+    if is_not_struct:
         # Scalar case: restore the original scalar 'value' field
         restructure_value = pl.col(value_columns[0]).alias("value")
     else:
