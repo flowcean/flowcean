@@ -425,9 +425,12 @@ if __name__ == "__main__":
         prog="run.py",
         description="Run the Automatic Lashing Platform example.",
         epilog=(
-            """Try this example: uv run run.py --time_window_end 5 """
+            """Try this example for learning with best-known parameters: """
+            """uv run run.py --time_window_end 5 """
             """--apply_derivative --filter \'"activeValveCount > 0"\' """
-            """--plot_data --plot_distributed --plots 9"""
+            """--tree_min_impurity_decrease 0.1 --tree_max_depth 10 """
+            """--plot_data --plot_distributed --plots 9 """
+            """--store_graph --show_latest_graph"""
         ),
     )
 
