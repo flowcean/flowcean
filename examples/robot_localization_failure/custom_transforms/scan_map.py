@@ -22,6 +22,10 @@ OCCUPANCY_THRESHOLD = 50
 MAX_LINE_DISTANCE = 0.1  # Maximum distance for matching lines (meters)
 MAX_ANGLE_DIFF = 5  # Maximum angle difference for matching lines (degrees)
 
+# Constants for raycasting feature computation
+RAYCAST_TOLERANCE = 0.1  # meters
+RAYCAST_EPSILON = 0.05  # meters
+
 
 class ScanMap(Transform):
     """Computes features based on comparing a Laserscan to an occupancy map."""
@@ -265,12 +269,8 @@ class ScanMap(Transform):
                     range_min=scan["value"]["range_min"],
                 )
                 scan["value"] = scan_points.tolist()
-                scan["time"] = timestamp
                 scan_points_timeseries.append(scan)
                 self.synced_sensor_poses.append((x, y, theta))
-
-            else:
-                continue
         return data.hstack(
             pl.DataFrame({"scan_points": [scan_points_timeseries]}),
         )
@@ -623,8 +623,6 @@ class ScanMap(Transform):
             actual_ranges = np.array(
                 complete_scan_timeseries[i]["value"]["ranges"],
             )[valid_mask]
-            tolerance = 0.1  # meters
-            epsilon = 0.05  # meters
 
             if len(actual_ranges) == 0:
                 ray_inlier = ray_inlier_percent = ray_matching = (
@@ -633,8 +631,8 @@ class ScanMap(Transform):
             else:
                 # Feature 19: Raycasting inlier
                 inlier_mask = (
-                    actual_ranges >= (raycasted_ranges - tolerance)
-                ) & (actual_ranges <= (raycasted_ranges + tolerance))
+                    actual_ranges >= (raycasted_ranges - RAYCAST_TOLERANCE)
+                ) & (actual_ranges <= (raycasted_ranges + RAYCAST_TOLERANCE))
                 ray_inlier = np.sum(inlier_mask) / len(actual_ranges) * 100
                 # Feature 20: Raycasting inlier percentage (actual < expected)
                 ray_inlier_percent = (
@@ -644,11 +642,13 @@ class ScanMap(Transform):
                 )
                 # Feature 21: Raycasting matching percentage
                 matching_mask = (
-                    np.abs(actual_ranges - raycasted_ranges) < epsilon
+                    np.abs(actual_ranges - raycasted_ranges) < RAYCAST_EPSILON
                 )
                 ray_matching = np.sum(matching_mask) / len(actual_ranges) * 100
                 # Feature 22: Raycasting outlier percentage
-                outlier_mask = actual_ranges > (raycasted_ranges + tolerance)
+                outlier_mask = actual_ranges > (
+                    raycasted_ranges + RAYCAST_TOLERANCE
+                )
                 ray_outlier = np.sum(outlier_mask) / len(actual_ranges) * 100
                 # Feature 23: Raycasting quality
                 ray_quality = (
