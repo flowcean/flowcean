@@ -1,14 +1,4 @@
 #!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-#     "matplotlib",
-#     "opencv-python",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../../", editable = true }
-# ///
 
 from pathlib import Path
 
