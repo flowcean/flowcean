@@ -10,7 +10,7 @@ from flowcean.polars.transforms import SliceTimeSeries
 class SliceTimeSeriesTransform(unittest.TestCase):
     def test_1d_timeseries_data(self) -> None:
         transform = SliceTimeSeries(
-            counter_col="feature_b",
+            counter_column="feature_b",
             duration=2,
         )
         input_data = pl.LazyFrame(
@@ -420,7 +420,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
 
     def test_2d_timeseries_data(self) -> None:
         transform = SliceTimeSeries(
-            counter_col="feature_b",
+            counter_column="feature_b",
             duration=2,
         )
 
@@ -831,7 +831,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
 
     def test_multiple_timeseries_data(self) -> None:
         transform = SliceTimeSeries(
-            counter_col="feature_b",
+            counter_column="feature_b",
             duration=2,
         )
         input_data = pl.LazyFrame(
@@ -1539,7 +1539,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
 
     def test_multiple_const_data(self) -> None:
         transform = SliceTimeSeries(
-            counter_col="feature_b",
+            counter_column="feature_b",
             duration=2,
         )
         input_data = pl.LazyFrame(
@@ -1949,7 +1949,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
 
     def test_multiple_feature_time_series(self) -> None:
         transform = SliceTimeSeries(
-            counter_col="feature_b",
+            counter_column="feature_b",
             duration=2,
         )
         input_data = pl.LazyFrame(
@@ -2758,7 +2758,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
 
     def test_no_relevant_time_series_data(self) -> None:
         transform = SliceTimeSeries(
-            counter_col="feature_b",
+            counter_column="feature_b",
             duration=2,
         )
         input_data = pl.LazyFrame(
