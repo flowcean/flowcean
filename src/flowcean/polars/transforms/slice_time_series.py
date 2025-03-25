@@ -66,23 +66,35 @@ class SliceTimeSeries(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        df = data.collect()
-        n_rows = df.height
+        names = data.collect_schema().names()
+        counter_column_dtype = data.collect_schema()[self.counter_column]
+
+        # Collect names of all other time series columns
         remaining_time_series_columns = [
             col
-            for col in data.columns
+            for col in data.collect_schema().names()
             if is_timeseries_feature(data, col) and self.counter_column != col
         ]
-        const_col = df.select(
-            pl.exclude(*remaining_time_series_columns, self.counter_column),
-        )
-        df = (
-            df.select(pl.exclude(const_col.columns))
-            .explode(self.counter_column)
-            .explode(*remaining_time_series_columns)
+
+        # Collect names of all constant columns
+        const_columns = (
+            data.select(
+                pl.exclude(
+                    *remaining_time_series_columns,
+                    self.counter_column,
+                ),
+            )
+            .collect_schema()
+            .names()
         )
 
-        df = df.select(
+        # Explode all time series columns
+        data = data.explode(self.counter_column).explode(
+            *remaining_time_series_columns,
+        )
+
+        # Filter all time series columns based on the counter column
+        data = data.select(
             pl.when(
                 pl.col(remaining_time_series_columns)
                 .struct.field("time")
@@ -99,19 +111,27 @@ class SliceTimeSeries(Transform):
                 None,
             ),
             pl.col(self.counter_column),
+            pl.col(const_columns),
         )
-        df = (
-            df.unique(maintain_order=True)
-            .group_by(self.counter_column, maintain_order=True)
+
+        # Recreate time series based on the counter column
+        data = (
+            data.unique(maintain_order=True)
+            .group_by(
+                [self.counter_column, *const_columns],
+                maintain_order=True,
+            )
             .agg(remaining_time_series_columns)
         )
-        df = df.select(
-            pl.col(self.counter_column).map_elements(lambda x: [x]),
-            pl.col(remaining_time_series_columns).list.drop_nulls(),
-        ).with_columns(
-            const_col.select(
-                pl.col(col_name).repeat_by(int(df.height / n_rows)).flatten()
-                for col_name in const_col.columns
+
+        # Remove Clean up the DataFrame
+        return data.select(
+            pl.col(self.counter_column).map_elements(
+                lambda x: [x],
+                return_dtype=counter_column_dtype,
             ),
-        )
-        return df.select(data.collect_schema().names()).lazy()
+            pl.col(remaining_time_series_columns).list.drop_nulls(),
+            pl.col(
+                const_columns,
+            ),
+        ).select(names)

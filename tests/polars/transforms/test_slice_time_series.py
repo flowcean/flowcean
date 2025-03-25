@@ -2414,6 +2414,40 @@ class SliceTimeSeriesTransform(unittest.TestCase):
                 ],
             },
         )
+        schema = pl.Schema(
+            [
+                (
+                    "feature_a",
+                    pl.List(
+                        pl.Struct(
+                            {
+                                "time": pl.Datetime(
+                                    time_unit="us",
+                                    time_zone="UTC",
+                                ),
+                                "value": pl.Struct({"x": pl.Int64}),
+                            },
+                        ),
+                    ),
+                ),
+                (
+                    "feature_b",
+                    pl.List(
+                        pl.Struct(
+                            {
+                                "time": pl.Datetime(
+                                    time_unit="us",
+                                    time_zone="UTC",
+                                ),
+                                "value": pl.Struct({"x": pl.Float64}),
+                            },
+                        ),
+                    ),
+                ),
+                ("const", pl.Int64),
+            ],
+        )
+
         expected_data = pl.LazyFrame(
             {
                 "feature_a": [
@@ -2752,6 +2786,7 @@ class SliceTimeSeriesTransform(unittest.TestCase):
                     2,
                 ],
             },
+            schema=schema,
         )
         transformed_data = transform.apply(input_data)
         assert_frame_equal(transformed_data, expected_data)
