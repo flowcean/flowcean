@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import polars as pl
-from custom_transforms.particle_cloud_image import ParticleCloudImage
 from custom_transforms.scan_map import ScanMap
 
 import flowcean.cli
@@ -74,24 +73,14 @@ def main() -> None:
             ],
         )
         data = environment.observe()
-    print(f"loaded data: {data.collect()}")
-    transform = ScanMap(plotting=True) | ParticleCloudImage(
-        particle_cloud_feature_name="/particle_cloud",
-        save_images=True,
-        cutting_area=15.0,
-        image_pixel_size=300,
-    )
-    transformed_data = transform(data)
-    print(f"transformed data: {transformed_data.collect()}")
-
-    if UPDATE_CACHE:
-        collected_data = data.collect()
-        if Path(WS / "cached_ros_data.json").exists():
-            collected_data.write_json()
-            print("Cache updated")
-        else:
+        if UPDATE_CACHE:
+            collected_data = data.collect()
             collected_data.write_json(file=WS / "cached_ros_data.json")
             print("Cache created")
+    print(f"loaded data: {data.collect()}")
+    transform = ScanMap(plotting=True)
+    transformed_data = transform(data)
+    print(f"transformed data: {transformed_data.collect()}")
 
 
 if __name__ == "__main__":
