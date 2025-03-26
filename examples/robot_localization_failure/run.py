@@ -11,17 +11,17 @@
 # ///
 
 from pathlib import Path
+
 import numpy as np
 import polars as pl
+from custom_transforms.localization_status import LocalizationStatus
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from scipy.special import kl_div
 
 import flowcean.cli
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
 from flowcean.ros.rosbag import RosbagLoader
-
-from custom_transforms.localization_status import LocalizationStatus
-from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -37,6 +37,7 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
         if data.collect().height > 0:
             return data
         print("Cache invalid; reloading from ROS bag.")
+
     print("Loading data from ROS bag.")
     environment = RosbagLoader(
         path=ROS_BAG_PATH,
@@ -93,15 +94,21 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
     return data
 
 
-def compute_kl_divergence(statuses, feature_values, bin_size=0.01) -> float:
-    """
-    Compute the KL divergence for a given feature's values using a fixed bin size.
-    """
-    values_localized = [v for s, v in zip(statuses, feature_values, strict=False) if s == 0]
-    values_delocalized = [v for s, v in zip(statuses, feature_values, strict=False) if s == 1]
+def compute_kl_divergence(
+    statuses: list[int],
+    feature_values: list[float],
+    bin_size: float = 0.01,
+) -> float:
+    """Compute the KL divergence for a given feature's values using a fixed bin size."""
+    values_localized = [
+        v for s, v in zip(statuses, feature_values, strict=False) if s == 0
+    ]
+    values_delocalized = [
+        v for s, v in zip(statuses, feature_values, strict=False) if s == 1
+    ]
 
     if not values_localized or not values_delocalized:
-        return float('nan')
+        return float("nan")
 
     min_val = min(feature_values)
     max_val = max(feature_values)
@@ -142,7 +149,9 @@ def main():
             position_threshold=1.2,
             heading_threshold=1.2,
         )
-        | ParticleCloudStatistics(particle_cloud_feature_name="/particle_cloud")
+        | ParticleCloudStatistics(
+            particle_cloud_feature_name="/particle_cloud"
+        )
         | Select(["isDelocalized", "cog_max_distance", "cog_mean_dist"])
         | MatchSamplingRate(
             reference_feature_name="isDelocalized",
@@ -156,36 +165,40 @@ def main():
     df_collected = transform(data).collect()
     row = df_collected[0]
 
-    # Extract statuses from isDelocalized (each element is {'time': ..., 'value': {'data': 0 or 1}})
+    # Extract statuses
     is_delocalized_list = row["isDelocalized"]
-    statuses_extracted = [item["value"]["data"] for item in is_delocalized_list[0]]
+    statuses_extracted = [
+        item["value"]["data"] for item in is_delocalized_list[0]
+    ]
 
-    # List of feature names for which to compute KL divergence.
-    feature_names = ["cog_max_distance", "cog_mean_dist"]
+    feature_bin_sizes = {
+        "cog_max_distance": 0.01,  # meters -> 1 cm bin
+        "cog_mean_dist": 0.01,  # meters -> 1 cm bin
+    }
+
     kl_dict = {}
-
-    for feature in feature_names:
+    for feature, bin_size in feature_bin_sizes.items():
+        if feature not in row:
+            # If the feature doesn't exist in the DataFrame, skip it
+            continue
         feature_list = row[feature]
         feature_values = [item["value"] for item in feature_list[0]]
-        kl_val = compute_kl_divergence(statuses_extracted, feature_values, bin_size=0.01)
+        kl_val = compute_kl_divergence(
+            statuses_extracted, feature_values, bin_size=bin_size
+        )
         kl_dict[feature] = kl_val
 
     print("KL Divergence Dictionary:", kl_dict)
 
-    # Create a literal column from the dictionary.
-    # Specify the dtype explicitly so that the field names are preserved.
-    kl_div_column_value = pl.lit(
-        kl_dict,
-        dtype=pl.Struct({
-            "cog_max_distance": pl.Float64,
-            "cog_mean_dist": pl.Float64,
-        })
+    struct_schema = {
+        fname: pl.Float64 for fname in feature_bin_sizes if fname in kl_dict
+    }
+    kl_div_column_value = pl.lit(kl_dict, dtype=pl.Struct(struct_schema))
+
+    df_final = df_collected.with_columns(
+        kl_div_column_value.alias("kl_divergence_features")
     )
-    df_final = df_collected.with_columns(kl_div_column_value.alias("kl_divergence_features"))
-
     print(df_final)
-
-    print("Field names in 'kl_divergence_features':", df_final.schema)
 
 
 if __name__ == "__main__":
