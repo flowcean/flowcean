@@ -23,7 +23,6 @@ from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
 from flowcean.ros.rosbag import RosbagLoader
 
-# Constants
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
 CACHE_FILE = WS / "cached_ros_data.parquet"
@@ -31,14 +30,7 @@ ROS_BAG_PATH = WS / "rec_20241021_152106"
 
 
 def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
-    """Load data from ROS bag or cache, with optional refresh.
-
-    Args:
-        force_refresh: If True, reload from ROS bag and overwrite cache.
-
-    Returns:
-        A LazyFrame containing the ROS bag data.
-    """
+    """Load data from ROS bag or cache."""
     if CACHE_FILE.exists() and not force_refresh:
         print("Loading data from cache.")
         data = pl.read_parquet(CACHE_FILE).lazy()
@@ -102,56 +94,14 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
     return data
 
 
-def extract_numeric_value(x):
-    """Extract the numeric value from a dict-like structure.
+def compute_kl_divergence(statuses, cog_values, bin_size=0.01):
+    """Compute the KL divergence between the cog_max_distance distributions
+    for localized (status 0) and delocalized (status 1) samples using a fixed bin size.
 
     Args:
-        x: A dict or a numeric value.
-
-    Returns:
-        A float representing the numeric value.
-    """
-    if isinstance(x, dict):
-        for v in x.values():
-            if isinstance(v, float):
-                return v
-        for v in x.values():
-            if isinstance(v, (int, float)):
-                return float(v)
-        raise ValueError("No numeric value found in dict.")
-    return x
-
-
-def extract_status(x):
-    """Extract the status (0 or 1) from a dict-like or iterable structure.
-
-    Args:
-        x: A dict, set, or list.
-
-    Returns:
-        An integer (0 or 1).
-    """
-    if isinstance(x, (set, list)):
-        return list(x)[0]
-    if isinstance(x, dict):
-        for v in x.values():
-            if v in (0, 1):
-                return v
-        for v in x.values():
-            if isinstance(v, int):
-                return v
-        raise ValueError("No valid status found in dict.")
-    return x
-
-
-def compute_kl_divergence(statuses, cog_values, num_bins=25):
-    """Compute the KL divergence between the distribution of cog_max_distance
-    for localized (status 0) and delocalized (status 1) samples.
-
-    Args:
-        statuses: A list of status values (0 for localized, 1 for delocalized).
-        cog_values: A list of cog_max_distance values.
-        num_bins: Number of bins to use for the histogram.
+        statuses: List of status values (0 or 1).
+        cog_values: List of cog_max_distance values (floats).
+        bin_size: The fixed size of each bin (for meters, 0.01 m for 1 cm).
 
     Returns:
         A tuple containing:
@@ -160,7 +110,7 @@ def compute_kl_divergence(statuses, cog_values, num_bins=25):
             - Histogram counts for localized samples.
             - Histogram counts for delocalized samples.
     """
-    # Separate cog_max_distance values by status
+    # Separate values based on status
     cog_values_localized = [
         c for s, c in zip(statuses, cog_values, strict=False) if s == 0
     ]
@@ -168,42 +118,25 @@ def compute_kl_divergence(statuses, cog_values, num_bins=25):
         c for s, c in zip(statuses, cog_values, strict=False) if s == 1
     ]
 
-    print(
-        "Localized cog_max_distance: min =",
-        min(cog_values_localized),
-        "max =",
-        max(cog_values_localized),
-    )
-    print(
-        "Delocalized cog_max_distance: min =",
-        min(cog_values_delocalized),
-        "max =",
-        max(cog_values_delocalized),
-    )
+    # Determine overall range
+    min_val = min(cog_values)
+    max_val = max(cog_values)
 
-    # Determine overall range for binning
-    all_values = cog_values
-    min_val = min(all_values)
-    max_val = max(all_values)
-    bins = np.linspace(min_val, max_val, num_bins + 1)
+    # Compute bin edges using the fixed bin size (e.g., 0.01 m for 1 cm)
+    bins = np.arange(min_val, max_val + bin_size, bin_size)
 
-    # Build histograms for each group using the same bins
+    # Build histograms using the same bins for both groups
     counts_localized, _ = np.histogram(cog_values_localized, bins=bins)
     counts_delocalized, _ = np.histogram(cog_values_delocalized, bins=bins)
 
-    print("Histogram counts for localized:", counts_localized)
-    print("Histogram counts for delocalized:", counts_delocalized)
-
-    # Normalize counts to get probability distributions
+    # Normalize to get probability distributions
     p_localized = counts_localized.astype(float) / counts_localized.sum()
     q_delocalized = counts_delocalized.astype(float) / counts_delocalized.sum()
 
-    # Add epsilon to avoid zeros
+    # Add a small epsilon to avoid division-by-zero issues
     epsilon = 1e-10
     p_localized += epsilon
     q_delocalized += epsilon
-
-    # Renormalize after adding epsilon
     p_localized /= p_localized.sum()
     q_delocalized /= q_delocalized.sum()
 
@@ -218,7 +151,7 @@ def main():
     flowcean.cli.initialize_logging()
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    # Define transformation pipeline
+    # Transformation pipeline
     transform = (
         Select(["/position_error", "/heading_error", "/particle_cloud"])
         | MatchSamplingRate(
@@ -248,14 +181,16 @@ def main():
     is_delocalized_list = row["isDelocalized"]
     cog_max_distance_list = row["cog_max_distance"]
 
-    # Optional: inspect structure
+    # Inspect structure (optional)
     print("cog_max_distance_list[0][0]:", cog_max_distance_list[0][0])
     print("cog_max_distance_list[0][1]:", cog_max_distance_list[0][1])
 
     # Extract statuses and cog_max_distance values
+    # For isDelocalized, each element is a dict: {'time': ..., 'value': {'data': <0 or 1>}}
     statuses_extracted = [
         item["value"]["data"] for item in is_delocalized_list[0]
     ]
+    # For cog_max_distance, each element is a dict: {'time': ..., 'value': <float>}
     cog_values_extracted = [item["value"] for item in cog_max_distance_list[0]]
 
     print("Extracted statuses (first 5):", statuses_extracted[:5])
@@ -266,13 +201,12 @@ def main():
     print("Number of localized samples (0):", statuses_extracted.count(0))
     print("Number of delocalized samples (1):", statuses_extracted.count(1))
 
-    # Compute and print KL divergence
+    # Compute KL divergence using fixed bin size (1 cm for meters)
     kl_divergence, bins, counts_loc, counts_deloc = compute_kl_divergence(
         statuses_extracted,
         cog_values_extracted,
-        num_bins=25,
+        bin_size=0.01,
     )
-    print("KL divergence (Localized || Delocalized):", kl_divergence)
 
 
 if __name__ == "__main__":
