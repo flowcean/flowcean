@@ -185,12 +185,14 @@ def interpolate_feature(
                 field.name for field in value_schema.fields
             ]
             feature_df = feature_df.unnest("value")
+            value_is_struct = True
         else:
             # Rename non-struct 'value' to a temporary name to avoid conflicts
             feature_df = feature_df.rename(
                 {"value": f"{target_feature_name}_value"},
             )
             original_field_names = [f"{target_feature_name}_value"]
+            value_is_struct = False
     else:
         msg = f"Feature {target_feature_name} is missing 'value' field."
         raise ValueError(msg)
@@ -247,10 +249,7 @@ def interpolate_feature(
     interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
 
     # Restructure to nested format
-    if is_not_struct:
-        # Scalar case: restore the original scalar 'value' field
-        restructure_value = pl.col(value_columns[0]).alias("value")
-    else:
+    if value_is_struct:
         # Struct case: map original field names to their respective columns
         restructure_value = pl.struct(
             {
@@ -262,6 +261,9 @@ def interpolate_feature(
                 )
             },
         ).alias("value")
+    else:
+        # Scalar case: restore the original scalar 'value' field
+        restructure_value = pl.col(value_columns[0]).alias("value")
 
     restructure = pl.struct(
         pl.col("time"),
