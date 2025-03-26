@@ -14,9 +14,9 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+from custom_transforms.kl_divergence import KLDivergence
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
-from custom_transforms.kl_divergence import KLDivergence
 from scipy.special import kl_div
 
 import flowcean.cli
@@ -151,27 +151,39 @@ def main():
             heading_threshold=1.2,
         )
         | ParticleCloudStatistics(
-            particle_cloud_feature_name="/particle_cloud"
+            particle_cloud_feature_name="/particle_cloud",
         )
-        | Select(["isDelocalized", "cog_max_distance", "cog_mean_dist"])
+        | Select(
+            [
+                "isDelocalized",
+                "cog_max_distance",
+                "cog_mean_dist",
+                "cog_median",
+                "cog_min_distance",
+            ],
+        )
         | MatchSamplingRate(
             reference_feature_name="isDelocalized",
             feature_interpolation_map={
                 "cog_max_distance": "linear",
                 "cog_mean_dist": "linear",
+                "cog_median": "linear",
             },
         )
         | KLDivergence(
             target_column="isDelocalized",
-            features={"cog_max_distance": 0.01, "cog_mean_dist": 0.01},
+            features={
+                "cog_max_distance": 0.01,
+                "cog_mean_dist": 0.01,
+                "cog_median": 0.01,
+            },
+            top_n=2,
         )
     )
 
     transformed_data = transform(data)
 
     print(transformed_data.collect())
-
-
 
 
 if __name__ == "__main__":

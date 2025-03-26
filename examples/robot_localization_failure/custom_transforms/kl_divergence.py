@@ -14,9 +14,13 @@ class KLDivergence(Transform):
 
     For each feature specified, this transform computes KL divergence between
     the distribution of values when the target column (e.g., "isDelocalized")
-    equals 0 (localized) and when it equals 1 (delocalized). The histograms
-    for each feature are built using a fixed bin size, which is provided per
-    feature.
+    equals 0 (localized) and when it equals 1 (delocalized). The histograms for
+    each feature are built using a fixed bin size (provided per feature).
+
+    Additionally, if top_n is provided, only the top n features (those with the
+    highest KL divergence values) are retained in the output.
+    The corresponding feature columns are dropped from the DataFrame if they
+    are not among the selected ones.
 
     The output is a new column "kl_divergence" that is a struct (dictionary)
     with keys as the feature names and values as the computed KL divergence.
@@ -31,35 +35,39 @@ class KLDivergence(Transform):
         │   ...]             │  ...]                 │  ...]                │
         └────────────────────┴───────────────────────┴──────────────────────┘
 
-    After applying KLDivergence with target "isDelocalized"
-    and features {"cog_max_distance": 0.01, "cog_mean_dist": 0.01},
-    the output DataFrame will include an additional column "kl_divergence"
-    that looks like:
+    After applying KLDivergence with target "isDelocalized", features
+    {"cog_max_distance": 0.01, "cog_mean_dist": 0.01}, and top_n (e.g., top_n=3),
+    the output DataFrame will include an additional column "kl_divergence" that looks like:
 
         ┌────────────────────────────────────────────────────┐
-        │                kl_divergence                       │
-        │                 struct[2]                          │
+        │               kl_divergence                        │
+        │                struct[?]                           │
         ├────────────────────────────────────────────────────┤
         │ { "cog_max_distance": 18.5, "cog_mean_dist": 3.2 } │
         └────────────────────────────────────────────────────┘
+
+    and the feature columns not among the top_n will be dropped.
     """
 
-    def __init__(self, target_column: str, features: dict[str, float]) -> None:
+    def __init__(
+        self,
+        target_column: str,
+        features: dict[str, float],
+        top_n: int = None,
+    ) -> None:
         """Initialize the KLDivergence transform.
 
         Args:
-            target_column: Name of the column used for grouping
-                           (e.g., "isDelocalized").
-                           Each element is expected to be a struct with a
-                           key "value" containing a dict with key "data".
-
-            features: A dictionary mapping feature column names
-                      to their desired bin sizes.
-                      For example:
-                      {"cog_max_distance": 0.01, "cog_mean_dist": 0.01}
+            target_column: Name of the column used for grouping (e.g., "isDelocalized").
+                           Each element is expected to be a struct with a key "value" containing a dict with key "data".
+            features: A dictionary mapping feature column names to their desired bin sizes.
+                      For example: {"cog_max_distance": 0.01, "cog_mean_dist": 0.01}
+            top_n: Optional; if provided, only keep the top n features (by KL divergence) in the output.
+                   Features not selected will be dropped from the DataFrame.
         """
         self.target_column = target_column
         self.features = features
+        self.top_n = top_n
 
     def compute_kl_divergence(
         self,
@@ -70,15 +78,13 @@ class KLDivergence(Transform):
         """Compute the KL divergence for a feature using a fixed bin size.
 
         Args:
-            statuses: List of status values (0 : localized, 1 : delocalized).
+            statuses: List of status values (0 for localized, 1 for delocalized).
             feature_values: List of numeric values for the feature.
-            bin_size: Fixed bin size (e.g. 0.01 for 1 cm,
-                                      1 for percent or degrees).
+            bin_size: Fixed bin size (e.g. 0.01 for 1 cm, 1 for percent or degrees).
 
         Returns:
             The KL divergence value as a float.
         """
-        # Separate values based on the grouping status.
         values_localized = [
             v for s, v in zip(statuses, feature_values, strict=False) if s == 0
         ]
@@ -103,7 +109,6 @@ class KLDivergence(Transform):
             counts_delocalized.astype(float) / counts_delocalized.sum()
         )
 
-        # Add a small epsilon to avoid division-by-zero issues.
         epsilon = 1e-10
         p_localized += epsilon
         q_delocalized += epsilon
@@ -118,9 +123,12 @@ class KLDivergence(Transform):
         df = data.collect()
         row = df[0]
 
+        # Extract statuses from the target column.
+        # Each element is expected to be a dict: {"time": ..., "value": {"data": 0 or 1}}
         target_list = row[self.target_column]
         statuses = [item["value"]["data"] for item in target_list[0]]
 
+        # Compute KL divergence for each feature.
         kl_dict = {}
         for feature, bin_size in self.features.items():
             if feature not in row:
@@ -136,6 +144,23 @@ class KLDivergence(Transform):
 
         logger.debug("KL divergence computation completed: %s", kl_dict)
 
+        # If top_n is specified, sort and keep only the top n features.
+        if self.top_n is not None:
+            sorted_items = sorted(
+                kl_dict.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            kl_dict = dict(sorted_items[: self.top_n])
+
+            # Also drop from the DataFrame feature columns not in the top_n selection.
+            features_to_drop = [
+                f for f in self.features.keys() if f not in kl_dict
+            ]
+            df = df.drop(features_to_drop)
+
+        # Create a new column with the KL divergence results.
+        # The dictionary is converted to a struct.
         kl_column = pl.lit(kl_dict)
         df = df.with_columns(kl_column.alias("kl_divergence"))
         return df.lazy()
