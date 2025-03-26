@@ -2,7 +2,7 @@ import logging
 from collections.abc import Collection
 
 import polars as pl
-from polars._typing import ColumnNameOrSelector
+from polars.type_aliases import ColumnNameOrSelector
 from typing_extensions import override
 
 from flowcean.core import Transform
