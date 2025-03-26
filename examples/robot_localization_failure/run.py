@@ -16,6 +16,7 @@ import numpy as np
 import polars as pl
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
+from custom_transforms.kl_divergence import KLDivergence
 from scipy.special import kl_div
 
 import flowcean.cli
@@ -160,45 +161,17 @@ def main():
                 "cog_mean_dist": "linear",
             },
         )
-    )
-
-    df_collected = transform(data).collect()
-    row = df_collected[0]
-
-    # Extract statuses
-    is_delocalized_list = row["isDelocalized"]
-    statuses_extracted = [
-        item["value"]["data"] for item in is_delocalized_list[0]
-    ]
-
-    feature_bin_sizes = {
-        "cog_max_distance": 0.01,  # meters -> 1 cm bin
-        "cog_mean_dist": 0.01,  # meters -> 1 cm bin
-    }
-
-    kl_dict = {}
-    for feature, bin_size in feature_bin_sizes.items():
-        if feature not in row:
-            # If the feature doesn't exist in the DataFrame, skip it
-            continue
-        feature_list = row[feature]
-        feature_values = [item["value"] for item in feature_list[0]]
-        kl_val = compute_kl_divergence(
-            statuses_extracted, feature_values, bin_size=bin_size
+        | KLDivergence(
+            target_column="isDelocalized",
+            features={"cog_max_distance": 0.01, "cog_mean_dist": 0.01},
         )
-        kl_dict[feature] = kl_val
-
-    print("KL Divergence Dictionary:", kl_dict)
-
-    struct_schema = {
-        fname: pl.Float64 for fname in feature_bin_sizes if fname in kl_dict
-    }
-    kl_div_column_value = pl.lit(kl_dict, dtype=pl.Struct(struct_schema))
-
-    df_final = df_collected.with_columns(
-        kl_div_column_value.alias("kl_divergence_features")
     )
-    print(df_final)
+
+    transformed_data = transform(data)
+
+    print(transformed_data.collect())
+
+
 
 
 if __name__ == "__main__":
