@@ -11,17 +11,17 @@
 # ///
 
 from pathlib import Path
-
 import numpy as np
 import polars as pl
-from custom_transforms.localization_status import LocalizationStatus
-from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from scipy.special import kl_div
 
 import flowcean.cli
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
 from flowcean.ros.rosbag import RosbagLoader
+
+from custom_transforms.localization_status import LocalizationStatus
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -30,14 +30,13 @@ ROS_BAG_PATH = WS / "rec_20241021_152106"
 
 
 def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
-    """Load data from ROS bag or cache."""
+    """Load data from a ROS bag or cache."""
     if CACHE_FILE.exists() and not force_refresh:
         print("Loading data from cache.")
         data = pl.read_parquet(CACHE_FILE).lazy()
         if data.collect().height > 0:
             return data
         print("Cache invalid; reloading from ROS bag.")
-
     print("Loading data from ROS bag.")
     environment = RosbagLoader(
         path=ROS_BAG_PATH,
@@ -94,57 +93,36 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
     return data
 
 
-def compute_kl_divergence(statuses, cog_values, bin_size=0.01):
-    """Compute the KL divergence between the cog_max_distance distributions
-    for localized (status 0) and delocalized (status 1) samples using a fixed bin size.
-
-    Args:
-        statuses: List of status values (0 or 1).
-        cog_values: List of cog_max_distance values (floats).
-        bin_size: The fixed size of each bin (for meters, 0.01 m for 1 cm).
-
-    Returns:
-        A tuple containing:
-            - The KL divergence value.
-            - The bins used.
-            - Histogram counts for localized samples.
-            - Histogram counts for delocalized samples.
+def compute_kl_divergence(statuses, feature_values, bin_size=0.01) -> float:
     """
-    # Separate values based on status
-    cog_values_localized = [
-        c for s, c in zip(statuses, cog_values, strict=False) if s == 0
-    ]
-    cog_values_delocalized = [
-        c for s, c in zip(statuses, cog_values, strict=False) if s == 1
-    ]
+    Compute the KL divergence for a given feature's values using a fixed bin size.
+    """
+    values_localized = [v for s, v in zip(statuses, feature_values, strict=False) if s == 0]
+    values_delocalized = [v for s, v in zip(statuses, feature_values, strict=False) if s == 1]
 
-    # Determine overall range
-    min_val = min(cog_values)
-    max_val = max(cog_values)
+    if not values_localized or not values_delocalized:
+        return float('nan')
 
-    # Compute bin edges using the fixed bin size (e.g., 0.01 m for 1 cm)
+    min_val = min(feature_values)
+    max_val = max(feature_values)
     bins = np.arange(min_val, max_val + bin_size, bin_size)
+    if len(bins) < 2:
+        return 0.0
 
-    # Build histograms using the same bins for both groups
-    counts_localized, _ = np.histogram(cog_values_localized, bins=bins)
-    counts_delocalized, _ = np.histogram(cog_values_delocalized, bins=bins)
+    counts_localized, _ = np.histogram(values_localized, bins=bins)
+    counts_delocalized, _ = np.histogram(values_delocalized, bins=bins)
 
-    # Normalize to get probability distributions
     p_localized = counts_localized.astype(float) / counts_localized.sum()
     q_delocalized = counts_delocalized.astype(float) / counts_delocalized.sum()
 
-    # Add a small epsilon to avoid division-by-zero issues
     epsilon = 1e-10
     p_localized += epsilon
     q_delocalized += epsilon
     p_localized /= p_localized.sum()
     q_delocalized /= q_delocalized.sum()
 
-    # Compute KL divergence element-wise and sum
     kl_elements = kl_div(p_localized, q_delocalized)
-    kl_divergence = kl_elements.sum()
-
-    return kl_divergence, bins, counts_localized, counts_delocalized
+    return kl_elements.sum()
 
 
 def main():
@@ -164,49 +142,50 @@ def main():
             position_threshold=1.2,
             heading_threshold=1.2,
         )
-        | ParticleCloudStatistics(
-            particle_cloud_feature_name="/particle_cloud",
-        )
-        | Select(["isDelocalized", "cog_max_distance"])
+        | ParticleCloudStatistics(particle_cloud_feature_name="/particle_cloud")
+        | Select(["isDelocalized", "cog_max_distance", "cog_mean_dist"])
         | MatchSamplingRate(
             reference_feature_name="isDelocalized",
-            feature_interpolation_map={"cog_max_distance": "linear"},
+            feature_interpolation_map={
+                "cog_max_distance": "linear",
+                "cog_mean_dist": "linear",
+            },
         )
     )
 
-    transformed_data = transform(data)
-    row = transformed_data.collect()[0]
+    df_collected = transform(data).collect()
+    row = df_collected[0]
 
-    # Extract the lists from the single row
+    # Extract statuses from isDelocalized (each element is {'time': ..., 'value': {'data': 0 or 1}})
     is_delocalized_list = row["isDelocalized"]
-    cog_max_distance_list = row["cog_max_distance"]
+    statuses_extracted = [item["value"]["data"] for item in is_delocalized_list[0]]
 
-    # Inspect structure (optional)
-    print("cog_max_distance_list[0][0]:", cog_max_distance_list[0][0])
-    print("cog_max_distance_list[0][1]:", cog_max_distance_list[0][1])
+    # List of feature names for which to compute KL divergence.
+    feature_names = ["cog_max_distance", "cog_mean_dist"]
+    kl_dict = {}
 
-    # Extract statuses and cog_max_distance values
-    # For isDelocalized, each element is a dict: {'time': ..., 'value': {'data': <0 or 1>}}
-    statuses_extracted = [
-        item["value"]["data"] for item in is_delocalized_list[0]
-    ]
-    # For cog_max_distance, each element is a dict: {'time': ..., 'value': <float>}
-    cog_values_extracted = [item["value"] for item in cog_max_distance_list[0]]
+    for feature in feature_names:
+        feature_list = row[feature]
+        feature_values = [item["value"] for item in feature_list[0]]
+        kl_val = compute_kl_divergence(statuses_extracted, feature_values, bin_size=0.01)
+        kl_dict[feature] = kl_val
 
-    print("Extracted statuses (first 5):", statuses_extracted[:5])
-    print(
-        "Extracted cog_max_distance values (first 5):",
-        cog_values_extracted[:5],
+    print("KL Divergence Dictionary:", kl_dict)
+
+    # Create a literal column from the dictionary.
+    # Specify the dtype explicitly so that the field names are preserved.
+    kl_div_column_value = pl.lit(
+        kl_dict,
+        dtype=pl.Struct({
+            "cog_max_distance": pl.Float64,
+            "cog_mean_dist": pl.Float64,
+        })
     )
-    print("Number of localized samples (0):", statuses_extracted.count(0))
-    print("Number of delocalized samples (1):", statuses_extracted.count(1))
+    df_final = df_collected.with_columns(kl_div_column_value.alias("kl_divergence_features"))
 
-    # Compute KL divergence using fixed bin size (1 cm for meters)
-    kl_divergence, bins, counts_loc, counts_deloc = compute_kl_divergence(
-        statuses_extracted,
-        cog_values_extracted,
-        bin_size=0.01,
-    )
+    print(df_final)
+
+    print("Field names in 'kl_divergence_features':", df_final.schema)
 
 
 if __name__ == "__main__":
