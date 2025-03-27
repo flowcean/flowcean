@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from flowcean.core.data import Data
 
@@ -51,7 +52,11 @@ class ActiveLearner(ABC):
     """
 
     @abstractmethod
-    def learn_active(self, action: Data, observation: Data) -> Model:
+    def learn_active(
+        self,
+        action: Any,
+        observation: Any,
+    ) -> Model:
         """Learn from actions and observations.
 
         Args:
@@ -63,7 +68,7 @@ class ActiveLearner(ABC):
         """
 
     @abstractmethod
-    def propose_action(self, observation: Data) -> Data:
+    def propose_action(self, observation: Any) -> Any:
         """Propose an action based on an observation.
 
         Args:

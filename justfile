@@ -31,7 +31,7 @@ docs-serve:
   @echo "🚀 Serving documentation: Running mkdocs"
   @uv run mkdocs serve
 
-examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-robot_localization_failure
+examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
@@ -60,3 +60,7 @@ examples-one_tank:
 examples-robot_localization_failure:
   @echo "🚀 Running example: Robot Localization Failure"
   @uv run --directory ./examples/robot_localization_failure/ run.py
+
+examples-energy_system:
+  echo "🚀 Running example: Energy System"
+  @uv run --directory ./examples/energy_system/ run.py
