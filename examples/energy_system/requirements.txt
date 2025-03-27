@@ -1,5 +1,0 @@
-midas-mosaik[base]>=2.0.0
-midas-palaestrai>=3.5.4.post2
-palaestrai-agents
-palaestrai@git+https://gitlab.com/arl2/palaestrai.git@agenc_compatibility#egg=palaestrai
-dask[dataframe]
