@@ -20,11 +20,11 @@ class Interface:
         value_max: Simple representation of the maximum value
     """
 
-    value: int | float | None
+    value: int | float | str | None
     uid: str
     space: str
-    value_min: int | float
-    value_max: int | float
+    value_min: int | float | None
+    value_max: int | float | None
 
 
 @dataclass

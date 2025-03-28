@@ -1,13 +1,12 @@
 import logging
 import queue
-from typing import TYPE_CHECKING, Any
+import threading
+from typing import Any
 
 import mosaik_api_v3
 from mosaik.exceptions import SimulationError
+from mosaik_api_v3.types import Meta
 from typing_extensions import override
-
-if TYPE_CHECKING:
-    import threading
 
 LOG = logging.getLogger("flowcean.mosaik.simulator")
 META = {
@@ -24,36 +23,71 @@ META = {
 
 
 class SyncSimulator(mosaik_api_v3.Simulator):
+    sid: str
+    step_size: int
+    end: int
+    timeout: int
+    a_uid_dict: dict[str, str]
+    s_uid_dict: dict[str, str]
+    sensor_queue: queue.Queue
+    actuator_queue: queue.Queue
+    sync_finished: threading.Event
+    sync_terminate: threading.Event
+    sensors: dict[str, Any]
+
     def __init__(self) -> None:
         super().__init__(META)
 
-        self.sid: str | None = None
-        self.step_size: int = 0
-        self.end: int = 0
+        # self.sid: str | None = None
+        self.step_size = 0
+        self.end = 0
         self.models = {}
-        self.a_uid_dict: dict[str, str] = {}
-        self.s_uid_dict: dict[str, str] = {}
+        self.a_uid_dict = {}
+        self.s_uid_dict = {}
         self.model_ctr = {"Sensor": 0, "Actuator": 0}
-        self.sensor_queue: threading.Queue | None = None
-        self.actuator_queue: threading.Queue | None = None
-        self.sync_finished: threading.Event | None = None
-        self.sync_terminate: threading.Event | None = None
-        self.sensors: dict[str, Any] = {}
+        # self.sensor_queue: queue.Queue | None = None
+        # self.actuator_queue: queue.Queue | None = None
+        # self.sync_finished: threading.Event | None = None
+        # self.sync_terminate: threading.Event | None = None
+        self.sensors = {}
         self.timeout = 20
 
     @override
     def init(
         self,
         sid: str,
+        time_resolution: float = 1.0,
         **sim_params: dict[str, Any],
-    ) -> list[dict[str, str]]:
+    ) -> Meta:
         self.sid = sid
-        self.step_size = sim_params["step_size"]
-        self.sensor_queue = sim_params["sensor_queue"]
-        self.actuator_queue = sim_params["actuator_queue"]
-        self.sync_finished = sim_params["sync_finished"]
-        self.sync_terminate = sim_params["sync_terminate"]
-        self.end = sim_params["end"]
+        self.step_size = (
+            sim_params["step_size"]
+            if isinstance(sim_params["step_size"], int)
+            else 0
+        )
+        self.sensor_queue = (
+            sim_params["sensor_queue"]
+            if isinstance(sim_params["sensor_queue"], queue.Queue)
+            else queue.Queue()
+        )
+        self.actuator_queue = (
+            sim_params["actuator_queue"]
+            if isinstance(sim_params["actuator_queue"], queue.Queue)
+            else queue.Queue()
+        )
+        self.sync_finished = (
+            sim_params["sync_finished"]
+            if isinstance(sim_params["sync_finished"], threading.Event)
+            else threading.Event()
+        )
+        self.sync_terminate = (
+            sim_params["sync_terminate"]
+            if isinstance(sim_params["sync_terminate"], threading.Event)
+            else threading.Event()
+        )
+        self.end = (
+            sim_params["end"] if isinstance(sim_params["end"], int) else 0
+        )
         return self.meta
 
     @override
@@ -70,7 +104,13 @@ class SyncSimulator(mosaik_api_v3.Simulator):
             )
             raise ValueError(msg)
 
-        uid = model_params["uid"]
+        uid = (
+            model_params["uid"] if isinstance(model_params["uid"], str) else ""
+        )
+        if not uid:
+            msg = f"UID of the {model} model is empty"
+            raise ValueError(msg)
+
         num_models = self.model_ctr[model]
         self.model_ctr[model] += 1
         eid = f"{model}-{num_models}"

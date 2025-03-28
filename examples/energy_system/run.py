@@ -77,9 +77,17 @@ class MyModel(Model):
         actuators = []
         for actuator in self.action.actuators:
             new_actuator = copy(actuator)
-            new_actuator.value = new_actuator.value_min + random.random() * (
-                new_actuator.value_max - new_actuator.value_min
-            )
+            if (
+                new_actuator.value_min is not None
+                and new_actuator.value_max is not None
+                and not isinstance(actuator.value, str)
+            ):
+                new_actuator.value = (
+                    new_actuator.value_min
+                    + random.random()
+                    * (new_actuator.value_max - new_actuator.value_min)
+                )
+
             actuators.append(new_actuator)
         return Action(actuators=actuators)
 
@@ -96,7 +104,7 @@ class MyModel(Model):
 
 class MyLearner(ActiveLearner):
     model: MyModel
-    rewards: list[float]
+    rewards: list[Interface]
     actuator_ids: list[str]
     sensor_ids: list[str]
     action: Action

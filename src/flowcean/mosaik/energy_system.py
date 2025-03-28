@@ -5,6 +5,7 @@ from collections.abc import Callable
 from copy import copy
 
 import midas.api
+import mosaik
 import polars as pl
 from midas.scenario.scenario import Scenario
 from mosaik.exceptions import SimulationError
@@ -24,6 +25,10 @@ LOG = logging.getLogger("energysystem")
 
 
 class EnergySystemActive(ActiveEnvironment):
+    _data_for_simulation: dict[str, int | float | str | None]
+    _data_from_simulation: dict[str, int | float | str | None]
+    reward: Callable
+
     def __init__(
         self,
         scenario_name: str,
@@ -37,9 +42,10 @@ class EnergySystemActive(ActiveEnvironment):
         super().__init__()
 
         self.rng: RandomState = RandomState(seed)
-        self.reward = reward_func
         if reward_func is None:
             self.reward = default_reward
+        else:
+            self.reward = reward_func
 
         self.sensor_queue = queue.Queue(1)
         self.actuator_queue = queue.Queue(1)
@@ -65,8 +71,12 @@ class EnergySystemActive(ActiveEnvironment):
             no_run=True,
         )
 
-        self.sensors = create_interface(self.scenario.sensors)
-        self.actuators = create_interface(self.scenario.actuators)
+        self.sensors: dict[str, Interface] = create_interface(
+            self.scenario.sensors,
+        )
+        self.actuators: dict[str, Interface] = create_interface(
+            self.scenario.actuators,
+        )
 
         self.task = threading.Thread(
             target=start_mosaik,
@@ -88,8 +98,8 @@ class EnergySystemActive(ActiveEnvironment):
             sensors=list(self.sensors.values()),
             rewards=[],
         )
-        self._data_for_simulation: dict[str, int | float] = {}
-        self._data_from_simulation: dict[str, int | float] | None = None
+        self._data_for_simulation = {}
+        self._data_from_simulation = {}
         self._get_data_from_sensor_queue()
 
     @override
@@ -126,6 +136,7 @@ class EnergySystemActive(ActiveEnvironment):
             sensor = copy(self.sensors[uid])
             sensor.value = value
             sensors.append(sensor)
+
         rewards = self.reward(sensors)
         self.observation = Observation(sensors=sensors, rewards=rewards)
 
@@ -157,7 +168,7 @@ class EnergySystemActive(ActiveEnvironment):
 
 def create_interface(
     defs: list[dict[str, int | float | str | None]],
-) -> list[Interface]:
+) -> dict[str, Interface]:
     object_map = {}
 
     for interf in defs:
@@ -220,6 +231,11 @@ def start_mosaik(
     }
     scenario.build()
     world = scenario.world
+    if not isinstance(world, mosaik.World):
+        sim_finished.set()
+        LOG.error("Malformed world object: %s (%s)", str(world), type(world))
+        return
+
     LOG.debug("Starting SyncSimulator ...")
     sync_sim = world.start(
         "SyncSimulator",
