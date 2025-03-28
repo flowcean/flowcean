@@ -8,6 +8,7 @@ import midas.api
 import mosaik
 import polars as pl
 from midas.scenario.scenario import Scenario
+from midas_store.meta import META
 from mosaik.exceptions import SimulationError
 from numpy.random import RandomState
 from typing_extensions import override
@@ -315,6 +316,12 @@ class EnergySystemOffline(DataFrame):
         end: int = 0,
         seed: int | None = None,
     ) -> None:
+        if "DatabaseCSV" not in META["models"]:
+            msg = (
+                "Wrong version of midas_store is used. "
+                "At least required is 2.1.0a1"
+            )
+            raise ValueError(msg)
         params = {
             "seed": seed,
             "store_params": {
