@@ -204,8 +204,7 @@ class ConvolutionalNeuralNetwork(lightning.LightningModule):
         for fc in self.fully_connected_layers:
             x = torch.relu(fc(x))
         logits = self.output_layer(x)
-        probabilities = torch.sigmoid(logits)
-        return torch.round(probabilities)
+        return torch.sigmoid(logits)
 
     def training_step(self, batch: Any) -> Tensor:
         inputs, targets = batch
@@ -366,7 +365,7 @@ class LongTermRecurrentConvolutionalNetwork(lightning.LightningModule):
             if i < len(self.dropout_layers):
                 x = self.dropout_layers[i](x)
             x = torch.max_pool2d(x, 2)
-        last_conv = cast(torch.nn.Conv2d, self.conv_layers[-1])
+        last_conv = cast("torch.nn.Conv2d", self.conv_layers[-1])
         x = x.view(x.size(0), -1, last_conv.out_channels)
         for lstm in self.lstm_layers:
             x, _ = lstm(x)
