@@ -1,5 +1,5 @@
-from .learner import GrpcLearner
+from .learner import GrpcPassiveAutomataLearner
 
 __all__ = [
-    "GrpcLearner",
+    "GrpcPassiveAutomataLearner",
 ]

@@ -3,22 +3,30 @@ from typing import cast
 import polars as pl
 
 
-def is_timeseries_feature(df: pl.LazyFrame, name: str) -> bool:
+def is_timeseries_feature(
+    target: pl.DataFrame | pl.LazyFrame | pl.Schema,
+    name: str,
+) -> bool:
     """Check if the given column is a time series feature.
 
     A time series feature contains a list of structs with fields _time_ and
     _value_.
 
     Args:
-        df: The DataFrame to check.
+        target: The LazyFrame, DataFrame or schema to check.
         name: The column to check.
 
     Returns:
         True if the column is a time series feature, False otherwise.
     """
-    data_type = df.select(name).collect_schema().dtypes()[0]
+    if isinstance(target, pl.Schema):
+        data_type = target.get(name)
+    elif isinstance(target, pl.DataFrame):
+        data_type = target.schema.get(name)
+    elif isinstance(target, pl.LazyFrame):
+        data_type = target.select(name).collect_schema().dtypes()[0]
 
-    if data_type.base_type() != pl.List:
+    if data_type is None or data_type.base_type() != pl.List:
         return False
 
     inner_type: pl.DataType = cast(pl.DataType, cast(pl.List, data_type).inner)

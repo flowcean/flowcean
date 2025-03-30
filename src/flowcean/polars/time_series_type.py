@@ -1,7 +1,7 @@
 from typing import cast
 
 import polars as pl
-from polars._typing import PolarsDataType
+from polars.type_aliases import PolarsDataType
 
 
 def get_time_series_type(t: pl.DataType) -> PolarsDataType:

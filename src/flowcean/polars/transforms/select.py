@@ -2,10 +2,10 @@ import logging
 from collections.abc import Iterable
 
 import polars as pl
-from polars._typing import IntoExpr
+from polars.type_aliases import IntoExpr
 from typing_extensions import override
 
-from flowcean.core import Transform
+from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 

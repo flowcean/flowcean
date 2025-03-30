@@ -17,6 +17,7 @@ from .resample import Resample
 from .select import Select
 from .signal_filter import SignalFilter, SignalFilterType
 from .sliding_window import SlidingWindow
+from .sliding_window_ts import TimeSeriesSlidingWindow
 from .standardize import Standardize
 from .time_window import TimeWindow
 from .to_time_series import ToTimeSeries
@@ -49,6 +50,7 @@ __all__ = [
     "SignalFilterType",
     "SlidingWindow",
     "Standardize",
+    "TimeSeriesSlidingWindow",
     "TimeWindow",
     "ToTimeSeries",
     "Unnest",

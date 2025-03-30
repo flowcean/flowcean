@@ -102,7 +102,7 @@ class OneHot(Transform):
                     ],
                 )
                 .select(pl.any_horizontal(pl.all()).all())
-                .collect(streaming=True)
+                .collect(engine="streaming")
                 .item(0, 0)
             ):
                 raise NoMatchingCategoryError
@@ -144,7 +144,7 @@ class OneHot(Transform):
                 )
             feature_categories[feature] = (
                 data.select(pl.col(feature).unique())
-                .collect(streaming=True)
+                .collect(engine="streaming")
                 .to_series()
                 .to_list()
             )

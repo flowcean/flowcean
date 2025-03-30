@@ -1,12 +1,4 @@
 #!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../../", editable = true }
-# ///
 
 from __future__ import annotations
 

@@ -100,6 +100,11 @@ def evaluate_offline(
     input_features = data.select(inputs)
     output_features = data.select(outputs)
     predictions = model.predict(input_features)
+    if (
+        isinstance(model, ModelWithTransform)
+        and model.output_transform is not None
+    ):
+        output_features = model.output_transform.apply(output_features)
     return Report(
         {
             metric.name: metric(output_features, predictions.lazy())
