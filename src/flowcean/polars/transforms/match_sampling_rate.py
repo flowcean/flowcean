@@ -146,7 +146,7 @@ class MatchSamplingRate(Transform):
                     data,
                     reference_feature,
                     self.feature_interpolation_map[feature],
-                    cast(FillStrategy | None, self.fill_strategy),
+                    cast("FillStrategy | None", self.fill_strategy),
                 )
                 for feature in features
             ],
@@ -176,6 +176,9 @@ def interpolate_feature(
     feature_df = data.select(pl.col(target_feature_name).explode()).unnest(
         cs.all(),
     )
+    # Ensure time in feature_df is Float64
+    feature_df = feature_df.with_columns(pl.col("time").cast(pl.Float64))
+
     # Handle 'value' field
     if "value" in feature_df.columns:
         value_schema = feature_df.schema["value"]
@@ -201,15 +204,16 @@ def interpolate_feature(
     value_columns = [col for col in feature_df.columns if col != "time"]
 
     # Get reference times and feature times
-    reference_times = reference_feature.get_column("time")
-    feature_times = feature_df.get_column("time")
+    reference_times = reference_feature.get_column("time").cast(pl.Float64)
+    feature_times = feature_df.get_column("time").cast(pl.Float64)
 
-    # Combine all unique times and sort
+    # Combine all unique times and sort, ensuring time is Float64
     all_times = (
         pl.concat([reference_times, feature_times])
         .unique()
         .sort()
         .to_frame("time")
+        .with_columns(pl.col("time").cast(pl.Float64))
     )
 
     # Join with feature data

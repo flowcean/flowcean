@@ -15,11 +15,13 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+import torch
 from architectures.complex_cnn import ComplexCNN
 from architectures.medium_complex_cnn import MediumComplexCNN
 from architectures.simple_cnn import SimpleCNN
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
@@ -28,9 +30,13 @@ from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.explode import Explode
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
+from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
+from flowcean.sklearn.adaboost import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
 from flowcean.torch import LightningLearner
+
+torch.set_float32_matmul_precision("medium")
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -129,7 +135,11 @@ def main() -> None:
 
     pixel_size = 36
     transform = (
-        ParticleCloudImage(
+        TimeWindow(
+            time_start=1729516868012553090,
+            time_end=1729516968012553090,
+        )
+        | ParticleCloudImage(
             particle_cloud_feature_name="/particle_cloud",
             save_images=False,
             cutting_area=15.0,
@@ -146,6 +156,7 @@ def main() -> None:
         )
         | Select(
             [
+                "/particle_cloud",
                 "/particle_cloud_image",
                 "/position_error",
                 "/heading_error",
@@ -160,12 +171,27 @@ def main() -> None:
                 "isDelocalized": "nearest",
             },
         )
+        | ParticleCloudStatistics()
+        | Select(
+            [
+                "/particle_cloud_image",
+                "/position_error",
+                "/heading_error",
+                "isDelocalized",
+                "num_clusters",
+                "main_cluster_variance_x",
+                "main_cluster_variance_y",
+            ],
+        )
         | Explode(
             features=[
                 "/particle_cloud_image",
                 "/position_error",
                 "/heading_error",
                 "isDelocalized",
+                "num_clusters",
+                "main_cluster_variance_x",
+                "main_cluster_variance_y",
             ],
         )
     )
@@ -185,16 +211,24 @@ def main() -> None:
     ).rename(
         {"data": "isDelocalized_value"},
     )
-    print(collected_transformed_data)
-    print(collected_transformed_data.shape)
+    # print(collected_transformed_data)
+    # print(collected_transformed_data.shape)
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
-    # Define inputs and outputs with task types
-    inputs = ["/particle_cloud_image_value"]
+
+    # Define inputs and outputs
+    base_inputs = ["/particle_cloud_image_value"]  # For CNN
+    boost_features = [
+        "num_clusters_value",
+        "main_cluster_variance_x_value",
+        "main_cluster_variance_y_value",
+    ]
+    all_inputs = base_inputs + boost_features
     outputs = ["isDelocalized_value"]
-    learners = [
+
+    base_learners = [
         # CNN (simple)
         LightningLearner(
             module=SimpleCNN(image_size=pixel_size),
@@ -217,21 +251,49 @@ def main() -> None:
             num_workers=15,
         ),
     ]
-    for learner in learners:
+
+    # Wrap base learners with AdaBoost
+    learners = [
+        AdaBoost(
+            base_learner=learner,
+            base_input_features=base_inputs,
+            boost_features=boost_features,
+            n_estimators=50,
+            learning_rate=1.0,
+        )
+        for learner in base_learners
+    ]
+
+    for i, learner in enumerate(learners):
+        print(f"\nTraining learner {i + 1}")
         t_start = datetime.now(tz=timezone.utc)
         model = learn_offline(
             train,
             learner,
-            inputs,
+            all_inputs,
             outputs,
         )
         delta_t = datetime.now(tz=timezone.utc) - t_start
         print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
+        # Compute base predictions for evaluation
+        base_inputs_test = test.data.select(base_inputs)
+        base_predictions = (
+            learner.base_model.predict(base_inputs_test)
+            .collect()
+            .to_numpy()
+            .ravel()
+        )
+
+        eval_data = test.data.select(boost_features + outputs).with_columns(
+            pl.Series("base_pred", base_predictions),
+        )
+
+        print(f"Evaluating learner {i + 1}")
         report = evaluate_offline(
             model,
-            test,
-            inputs,
+            DataFrame(eval_data),
+            [*boost_features, "base_pred"],
             outputs,
             [Accuracy()],
         )

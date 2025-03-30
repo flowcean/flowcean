@@ -83,6 +83,17 @@ class LocalizationStatus(Transform):
                     s[self.position_error_feature_name],
                     s[self.heading_error_feature_name],
                 ),
+                return_dtype=pl.List(
+                    pl.Struct(
+                        [
+                            pl.Field("time", pl.Float64()),
+                            pl.Field(
+                                "value",
+                                pl.Struct([pl.Field("data", pl.Int64())]),
+                            ),
+                        ],
+                    ),
+                ),
             )
             .alias("isDelocalized"),
         )
