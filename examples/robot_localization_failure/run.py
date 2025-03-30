@@ -15,6 +15,9 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+from architectures.complex_cnn import ComplexCNN
+from architectures.medium_complex_cnn import MediumComplexCNN
+from architectures.simple_cnn import SimpleCNN
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_image import ParticleCloudImage
 
@@ -27,7 +30,7 @@ from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.select import Select
 from flowcean.ros.rosbag import RosbagLoader
 from flowcean.sklearn.metrics.classification import Accuracy
-from flowcean.torch import ConvolutionalNeuralNetwork, LightningLearner
+from flowcean.torch import LightningLearner
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -124,7 +127,7 @@ def main() -> None:
     # Load data with caching (set force_refresh=True to always reload)
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    pixel_size = 100
+    pixel_size = 36
     transform = (
         ParticleCloudImage(
             particle_cloud_feature_name="/particle_cloud",
@@ -194,44 +197,24 @@ def main() -> None:
     learners = [
         # CNN (simple)
         LightningLearner(
-            module=ConvolutionalNeuralNetwork(
-                learning_rate=1e-3,
-                conv_configs=[
-                    (1, 32, 3),
-                ],  # 1 conv layer: 1 input, 32 output channels, 3x3 kernel
-                fully_connected_layer_sizes=[
-                    128,
-                    1,
-                ],  # 2 fully connected layers: 128 units, then 1 output
-                output_size=1,
-                input_shape=(1, pixel_size, pixel_size),
-            ),
-            max_epochs=4,
+            module=SimpleCNN(image_size=pixel_size),
+            max_epochs=2,
             batch_size=4,
-            num_workers=1,
-            accelerator="cpu",
+            num_workers=15,
         ),
-        # CNN (mid-complex)
+        # CNN (medium)
         LightningLearner(
-            module=ConvolutionalNeuralNetwork(
-                learning_rate=1e-3,
-                conv_configs=[
-                    (1, 32, 3),  # (input channel, output channel, kernel size)
-                    (32, 64, 3),
-                ],
-                fully_connected_layer_sizes=[
-                    256,
-                    128,
-                    64,
-                    32,  # 4 fully connected layers
-                ],
-                output_size=1,  # Single output for binary classification
-                input_shape=(1, pixel_size, pixel_size),  # (1, 100, 100)
-            ),
-            max_epochs=4,
+            module=MediumComplexCNN(image_size=pixel_size),
+            max_epochs=2,
             batch_size=4,
-            num_workers=1,
-            accelerator="cpu",  # Change to "gpu" if available
+            num_workers=15,
+        ),
+        # CNN (complex)
+        LightningLearner(
+            module=ComplexCNN(image_size=pixel_size),
+            max_epochs=2,
+            batch_size=4,
+            num_workers=15,
         ),
     ]
     for learner in learners:
