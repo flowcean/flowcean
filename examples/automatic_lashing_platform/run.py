@@ -17,6 +17,7 @@ import math
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 # third-party libraries
 import graphviz
@@ -25,7 +26,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 # flowcean libraries
 import flowcean.cli
-from flowcean.core import evaluate_offline, learn_offline
+from flowcean.core import SupervisedLearner, evaluate_offline, learn_offline
 from flowcean.polars import (
     DataFrame,
     Derivative,
@@ -58,7 +59,9 @@ def main(args: argparse.Namespace) -> None:
     data, inputs, outputs = load_and_prepare_data(args)
     inspect_data(args, data)
 
-    if not args.no_training:
+    if args.train_nodes_vs_error:
+        train_nodes_vs_error (args, data, inputs, outputs)
+    elif not args.no_training:
         train_and_evaluate_model(args, data, inputs, outputs)
 
     if args.show_latest_graph or args.show_graph:
@@ -332,6 +335,68 @@ def plot_row(observed_data: DataFrame) -> None:
         plt.show()
 
 
+def build_tree_learner(
+        args: argparse.Namespace,
+        **tree_params: Any
+) -> SupervisedLearner:
+    if args.store_graph:
+        Path.mkdir(Path("./graphs"), exist_ok=True)
+        tree_path = Path(
+            f"./graphs/regression_tree_{time.strftime('%Y%m%d-%H%M%S')}.dot",
+        )
+        tree_path.open(mode="w").close()
+        return RegressionTree(
+            dot_graph_export_path=str(tree_path),
+            **tree_params,
+        )
+    return RegressionTree(**tree_params)
+
+
+def train_nodes_vs_error(
+    args: argparse.Namespace,
+    data: DataFrame,
+    inputs: list,
+    outputs: list,
+) -> None:
+    logger.info("Training the model with different number of nodes:")
+
+    train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        data,
+    )
+
+    errors = []
+    for nodes in range(2, args.train_node_vs_error_max_nodes):
+        logger.info("Training with %d nodes:", nodes)
+        time_start = time.time()
+
+        tree_params = {
+            "max_leaf_nodes": nodes,
+        }
+        learner = build_tree_learner(args, **tree_params)
+        model = learn_offline(train_env, learner, inputs, outputs)
+        report = evaluate_offline(
+            model,
+            test_env,
+            inputs,
+            outputs,
+            [MeanSquaredError()],
+        )
+
+        time_after_learning = time.time()
+        logger.info(
+            "Took %.5f s to learn model",
+            time_after_learning - time_start,
+        )
+        errors.append(report.entries["MeanSquaredError"])
+
+    plt.plot(errors)
+    plt.xlabel("Number of Nodes")
+    plt.ylabel("Mean Squared Error")
+    plt.title("Nodes vs. Error")
+    plt.show()
+
+
+
 def train_and_evaluate_model(
     args: argparse.Namespace,
     data: DataFrame,
@@ -361,18 +426,8 @@ def train_and_evaluate_model(
             "min_impurity_decrease": args.tree_min_impurity_decrease,
             "ccp_alpha": args.tree_ccp_alpha,
         }
-        if args.store_graph:
-            Path.mkdir(Path("./graphs"), exist_ok=True)
-            tree_path = Path(
-                f"./graphs/regression_tree_{time.strftime('%Y%m%d-%H%M%S')}.dot",
-            )
-            tree_path.open(mode="w").close()
-            learner = RegressionTree(
-                dot_graph_export_path=str(tree_path),
-                **tree_params,
-            )
-        else:
-            learner = RegressionTree(**tree_params)
+        learner = build_tree_learner(args, **tree_params)
+
 
     model = learn_offline(
         train_env,
@@ -578,6 +633,24 @@ if __name__ == "__main__":
         "--no_training",
         action="store_true",
         help="Apply no training.",
+    )
+    training_group.add_argument(
+        "--train_nodes_vs_error",
+        action="store_true",
+        help=(
+            "Train the model with different number of nodes and plot the "
+            "error."
+        ),
+    )
+    training_group.add_argument(
+        "--train_node_vs_error_max_nodes",
+        type=int,
+        default=16,
+        metavar="NODES",
+        help=(
+            "Set the maximum number of leaf nodes for the training. "
+            "(default: 20)"
+        ),
     )
     training_group.add_argument(
         "--tree_max_depth",
