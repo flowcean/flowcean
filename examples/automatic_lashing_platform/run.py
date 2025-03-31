@@ -365,7 +365,12 @@ def train_nodes_vs_error(
     )
 
     errors = []
-    for nodes in range(2, args.train_node_vs_error_max_nodes):
+    node_numbers = []
+    for nodes in range(
+        2,
+        args.train_nodes_vs_error_max_nodes,
+        args.train_nodes_vs_error_steps,
+    ):
         logger.info("Training with %d nodes:", nodes)
         time_start = time.time()
 
@@ -388,8 +393,9 @@ def train_nodes_vs_error(
             time_after_learning - time_start,
         )
         errors.append(report.entries["MeanSquaredError"])
+        node_numbers.append(nodes)
 
-    plt.plot(errors)
+    plt.plot(node_numbers, errors)
     plt.xlabel("Number of Nodes")
     plt.ylabel("Mean Squared Error")
     plt.title("Nodes vs. Error")
@@ -643,13 +649,23 @@ if __name__ == "__main__":
         ),
     )
     training_group.add_argument(
-        "--train_node_vs_error_max_nodes",
+        "--train_nodes_vs_error_max_nodes",
         type=int,
         default=16,
         metavar="NODES",
         help=(
             "Set the maximum number of leaf nodes for the training. "
             "(default: 20)"
+        ),
+    )
+    training_group.add_argument(
+        "--train_nodes_vs_error_steps",
+        type=int,
+        default=2,
+        metavar="STEPS",
+        help=(
+            "Set the number of nodes to skip after each iteration. "
+            "(default: 2)"
         ),
     )
     training_group.add_argument(
