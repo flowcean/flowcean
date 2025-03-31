@@ -21,6 +21,7 @@ from pathlib import Path
 # third-party libraries
 import graphviz
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 
 # flowcean libraries
 import flowcean.cli
@@ -281,9 +282,15 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
             observed_data.select("containerWeight").row(index)[0],
             3,
         )
-        plt.title(
-            f"Weight: {weight}, Index: {index}",
-        )
+        if args.plot_plain:
+            plt.ticklabel_format(useOffset=False, style="plain")
+            # remove decimal points from x and y axis
+            plt.gca().xaxis.set_major_formatter(FormatStrFormatter('%d'))
+            plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%d'))
+        else:
+            plt.title(
+                f"Weight: {weight}, Index: {index}",
+            )
         plt.plot(observed_data.select("^p_accumulator_.*$").row(index))
 
     plt.subplots_adjust(
@@ -542,6 +549,13 @@ if __name__ == "__main__":
         default=20,
         metavar="NUMBER",
         help="Number of plots to show. (default: 20)",
+    )
+    data_inspection_group.add_argument(
+        "--plot_plain",
+        action="store_true",
+        help=(
+            "Plot only the graph without notations."
+        ),
     )
     data_inspection_group.add_argument(
         "--plot_distributed",
