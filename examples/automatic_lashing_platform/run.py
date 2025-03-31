@@ -409,9 +409,9 @@ def train_nodes_vs_error(
     plt.figure(figsize=(10, 6))
     plt.plot(node_numbers, errors, "b-", linewidth=2)
     plt.plot(node_numbers[min_index], errors[min_index], "ro", markersize=8)
-    plt.xlabel("Number of Nodes")
+    plt.xlabel("Number of Leaf-Nodes")
     plt.ylabel("Mean Squared Error")
-    plt.title("Nodes vs. Error")
+    plt.title("Leaf-Nodes vs. Error")
     plt.grid(visible=True, linestyle="--", alpha=0.7)
     plt.show()
 
