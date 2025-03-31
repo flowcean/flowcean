@@ -22,6 +22,7 @@ from typing import Any
 # third-party libraries
 import graphviz
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import FormatStrFormatter
 
 # flowcean libraries
@@ -395,12 +396,24 @@ def train_nodes_vs_error(
         errors.append(report.entries["MeanSquaredError"])
         node_numbers.append(nodes)
 
-    plt.plot(node_numbers, errors)
+    # calculate optimal number of nodes
+    distances = np.sqrt(np.array(node_numbers)**2 + np.array(errors)**2)
+    min_index = np.argmin(distances)
+    logger.info(
+        "Optimal number of nodes: %d with error: %.2f",
+        node_numbers[min_index],
+        errors[min_index],
+    )
+
+    # plot errors
+    plt.figure(figsize=(10, 6))
+    plt.plot(node_numbers, errors, "b-", linewidth=2)
+    plt.plot(node_numbers[min_index], errors[min_index], "ro", markersize=8)
     plt.xlabel("Number of Nodes")
     plt.ylabel("Mean Squared Error")
     plt.title("Nodes vs. Error")
+    plt.grid(visible=True, linestyle="--", alpha=0.7)
     plt.show()
-
 
 
 def train_and_evaluate_model(
@@ -644,8 +657,8 @@ if __name__ == "__main__":
         "--train_nodes_vs_error",
         action="store_true",
         help=(
-            "Train the model with different number of nodes and plot the "
-            "error."
+            "Train the model with different number of nodes, plot the "
+            "error and give the optimal number of nodes."
         ),
     )
     training_group.add_argument(
