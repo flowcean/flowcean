@@ -286,7 +286,7 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
             plt.ticklabel_format(useOffset=False, style="plain")
             # remove decimal points from x and y axis
             plt.gca().xaxis.set_major_formatter(FormatStrFormatter('%d'))
-            plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%d'))
+            plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         else:
             plt.title(
                 f"Weight: {weight}, Index: {index}",
@@ -312,6 +312,8 @@ def plot_row(observed_data: DataFrame) -> None:
 
     while True:
         index = input("Enter the row index to plot or 'x' to quit: ")
+        if index == "x":
+            break
         weight = round(
             observed_data.select("containerWeight").row(int(index))[0],
             3,
@@ -320,8 +322,6 @@ def plot_row(observed_data: DataFrame) -> None:
             int(index),
         )[0]
         temperature = round(observed_data.select("T").row(int(index))[0], 3)
-        if index == "x":
-            break
         plt.title(
             f"Weight: {weight}, Active Valves: {active_valves}, "
             f"Temperature: {temperature}",
