@@ -62,6 +62,10 @@ def main(args: argparse.Namespace) -> None:
 
     if args.train_nodes_vs_error:
         train_nodes_vs_error (args, data, inputs, outputs)
+    elif args.train_depth_vs_error:
+        train_depth_vs_error(args, data, inputs, outputs)
+    elif args.train_time_vs_error:
+        train_time_vs_error(args, data, inputs, outputs)
     elif not args.no_training:
         train_and_evaluate_model(args, data, inputs, outputs)
 
@@ -359,7 +363,10 @@ def train_nodes_vs_error(
     inputs: list,
     outputs: list,
 ) -> None:
-    logger.info("Training the model with different number of nodes:")
+    logger.info(
+        "Training the model with %d as maximum number of nodes:",
+        args.train_nodes_vs_error_max_nodes,
+    )
 
     train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
         data,
@@ -416,6 +423,159 @@ def train_nodes_vs_error(
     plt.show()
 
 
+def train_depth_vs_error(
+    args: argparse.Namespace,
+    data: DataFrame,
+    inputs: list,
+    outputs: list,
+) -> None:
+    logger.info(
+        "Training the model with %d as maximum depth of the tree:",
+        args.train_depth_vs_error_max_depth,
+    )
+
+    train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        data,
+    )
+
+    errors = []
+    depth_numbers = []
+    for depth in range(
+        2,
+        args.train_depth_vs_error_max_depth,
+        args.train_depth_vs_error_steps,
+    ):
+        logger.info("Training with a depth of %d:", depth)
+        time_start = time.time()
+
+        tree_params = {
+            "max_depth": depth,
+        }
+        learner = build_tree_learner(args, **tree_params)
+        model = learn_offline(train_env, learner, inputs, outputs)
+        report = evaluate_offline(
+            model,
+            test_env,
+            inputs,
+            outputs,
+            [MeanSquaredError()],
+        )
+
+        time_after_learning = time.time()
+        logger.info(
+            "Took %.5f s to learn model",
+            time_after_learning - time_start,
+        )
+        errors.append(report.entries["MeanSquaredError"])
+        depth_numbers.append(depth)
+
+        if learner.regressor.get_depth() < depth:
+            logger.info(
+                "Max depth of the model is less than %d.",
+                depth,
+            )
+            break
+
+    # calculate optimal number of nodes
+    distances = np.sqrt(np.array(depth_numbers)**2 + np.array(errors)**2)
+    min_index = np.argmin(distances)
+    logger.info(
+        "Optimal number of depth: %d with error: %.2f",
+        depth_numbers[min_index],
+        errors[min_index],
+    )
+
+    # plot errors
+    plt.figure(figsize=(10, 6))
+    plt.plot(depth_numbers, errors, "b-", linewidth=2)
+    plt.plot(depth_numbers[min_index], errors[min_index], "ro", markersize=8)
+    plt.xlabel("Tree-Depth")
+    plt.ylabel("Mean Squared Error")
+    plt.title("Tree-Depth vs. Error")
+    plt.grid(visible=True, linestyle="--", alpha=0.7)
+    plt.show()
+
+
+def train_time_vs_error(
+    args: argparse.Namespace,
+    data: DataFrame,
+    inputs: list,
+    outputs: list,
+) -> None:
+    logger.info(
+        "Training the model with %d as maximum seconds to train the model",
+        args.train_time_vs_error_max_time,
+    )
+
+    train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        data,
+    )
+
+    errors = []
+    times = []
+    depths = []
+    depth_count = 1
+    while True:
+        logger.info("Training with %d as max-depth:", depth_count)
+        time_start = time.time()
+
+        tree_params = {
+            "max_depth": depth_count,
+        }
+        learner = build_tree_learner(args, **tree_params)
+        model = learn_offline(train_env, learner, inputs, outputs)
+        report = evaluate_offline(
+            model,
+            test_env,
+            inputs,
+            outputs,
+            [MeanSquaredError()],
+        )
+
+        time_to_learn = time.time() - time_start
+        logger.info(
+            "Took %.5f s to learn model",
+            time_to_learn,
+        )
+        errors.append(report.entries["MeanSquaredError"])
+        times.append(time_to_learn)
+        depths.append(depth_count)
+
+        if time_to_learn > args.train_time_vs_error_max_time:
+            logger.info(
+                "Time to train the model exceeded %d seconds.",
+                args.train_time_vs_error_max_time,
+            )
+            break
+        if learner.regressor.get_depth() < depth_count:
+            logger.info(
+                "Max depth of the model is less than %d.",
+                depth_count,
+            )
+            break
+        depth_count += 1
+
+    # calculate optimal number of nodes
+    distances = np.sqrt(np.array(times)**2 + np.array(errors)**2)
+    min_index = np.argmin(distances)
+    logger.info(
+        "Optimal time to train: %.2f with error: %.2f and depth: %d",
+        times[min_index],
+        errors[min_index],
+        depths[min_index],
+    )
+
+    # plot errors
+    plt.figure(figsize=(10, 6))
+    plt.plot(times, errors, "b-", linewidth=2)
+    plt.plot(times[min_index], errors[min_index], "ro", markersize=8)
+    plt.xlabel("Time to Train (s)")
+    plt.ylabel("Mean Squared Error")
+    plt.title("Training Duration vs. Error")
+    plt.grid(visible=True, linestyle="--", alpha=0.7)
+    plt.show()
+
+
 def train_and_evaluate_model(
     args: argparse.Namespace,
     data: DataFrame,
@@ -423,11 +583,13 @@ def train_and_evaluate_model(
     outputs: list,
 ) -> None:
     logger.info("Training the model:")
-    time_start = time.time()
 
     train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=False).split(
         data,
     )
+
+    time_start = time.time()
+
     if args.use_lightning_learner:
         learner = LightningLearner(
             MultilayerPerceptron(
@@ -677,8 +839,52 @@ if __name__ == "__main__":
         default=2,
         metavar="STEPS",
         help=(
-            "Set the number of nodes to skip after each iteration. "
+            "Set the number of nodes to increment after each iteration. "
             "(default: 2)"
+        ),
+    )
+    training_group.add_argument(
+        "--train_depth_vs_error",
+        action="store_true",
+        help=(
+            "Train the model with different depth of the tree, plot the "
+            "error and give the optimal depth."
+        ),
+    )
+    training_group.add_argument(
+        "--train_depth_vs_error_max_depth",
+        type=int,
+        default=20,
+        metavar="DEPTH",
+        help=(
+            "Set the maximum depth of the regression-tree. (default: 20)"
+        ),
+    )
+    training_group.add_argument(
+        "--train_depth_vs_error_steps",
+        type=int,
+        default=1,
+        metavar="STEPS",
+        help=(
+            "Set the number of depth to increment after each iteration. "
+            "(default: 1)"
+        ),
+    )
+    training_group.add_argument(
+        "--train_time_vs_error",
+        action="store_true",
+        help=(
+            "Train the model with different time to train, plot the error "
+            "and give the optimal time and nodes to train."
+        ),
+    )
+    training_group.add_argument(
+        "--train_time_vs_error_max_time",
+        type=int,
+        default=8,
+        metavar="TIME",
+        help=(
+            "Set the maximum time (seconds) to train the model. (default: 8)"
         ),
     )
     training_group.add_argument(
