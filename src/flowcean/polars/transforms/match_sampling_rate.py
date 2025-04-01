@@ -176,27 +176,29 @@ def interpolate_feature(
     feature_df = data.select(pl.col(target_feature_name).explode()).unnest(
         cs.all(),
     )
-    # Handle scalar 'value' by wrapping into a struct
+    # Handle 'value' field
     if "value" in feature_df.columns:
-        if not isinstance(feature_df.schema["value"], pl.Struct):
-            # Wrap scalar 'value' into a struct with a single field
-            feature_df = feature_df.with_columns(
-                pl.struct([pl.col("value").alias("value")]).alias("value"),
+        value_schema = feature_df.schema["value"]
+        if isinstance(value_schema, pl.Struct):
+            # Get the schema of 'value' and extract field names for structs
+            original_field_names = [
+                field.name for field in value_schema.fields
+            ]
+            feature_df = feature_df.unnest("value")
+            value_is_struct = True
+        else:
+            # Rename non-struct 'value' to a temporary name to avoid conflicts
+            feature_df = feature_df.rename(
+                {"value": f"{target_feature_name}_value"},
             )
-        # Now unnest the 'value' struct
-        feature_df = feature_df.unnest("value")
+            original_field_names = [f"{target_feature_name}_value"]
+            value_is_struct = False
     else:
         msg = f"Feature {target_feature_name} is missing 'value' field."
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
-    # Rename columns except 'time' to include the feature name
-    feature_df = feature_df.rename(
-        lambda name: f"{target_feature_name}_{name}"
-        if name != "time"
-        else name,
-    )
+    # Store column names after unnesting (or renaming for non-struct 'value')
+    value_columns = [col for col in feature_df.columns if col != "time"]
 
     # Get reference times and feature times
     reference_times = reference_feature.get_column("time")
@@ -212,9 +214,6 @@ def interpolate_feature(
 
     # Join with feature data
     joined_df = all_times.join(feature_df, on="time", how="left")
-
-    # Get value columns (excluding time)
-    value_columns = [col for col in feature_df.columns if col != "time"]
 
     # Interpolate missing values
     interpolated = joined_df.with_columns(
@@ -248,17 +247,23 @@ def interpolate_feature(
 
     # Filter to only include reference times
     interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
-    # Determine if the original 'value' was a scalar
-    is_scalar_value = (
-        len(value_columns) == 1
-        and value_columns[0] == f"{target_feature_name}_value"
-    )
 
-    # Restructure to nested format, preserving scalar 'value' if needed
-    if is_scalar_value:
-        restructure_value = pl.col(value_columns[0]).alias("value")
+    # Restructure to nested format
+    if value_is_struct:
+        # Struct case: map original field names to their respective columns
+        restructure_value = pl.struct(
+            {
+                name: pl.col(col)
+                for name, col in zip(
+                    original_field_names,
+                    value_columns,
+                    strict=False,
+                )
+            },
+        ).alias("value")
     else:
-        restructure_value = pl.struct(value_columns).alias("value")
+        # Scalar case: restore the original scalar 'value' field
+        restructure_value = pl.col(value_columns[0]).alias("value")
 
     restructure = pl.struct(
         pl.col("time"),
