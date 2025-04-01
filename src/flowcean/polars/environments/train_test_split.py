@@ -49,7 +49,7 @@ class TrainTestSplit:
             environment: The environment to split.
         """
         logger.info("Splitting data into train and test sets")
-        data = environment.observe().collect(engine="streaming")
+        data = environment.observe().collect(streaming=True)
         pivot = int(len(data) * self.ratio)
         splits = _split(
             data,

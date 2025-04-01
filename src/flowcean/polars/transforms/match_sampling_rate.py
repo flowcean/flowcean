@@ -146,7 +146,7 @@ class MatchSamplingRate(Transform):
                     data,
                     reference_feature,
                     self.feature_interpolation_map[feature],
-                    cast(FillStrategy | None, self.fill_strategy),
+                    cast("FillStrategy | None", self.fill_strategy),
                 )
                 for feature in features
             ],
@@ -176,18 +176,22 @@ def interpolate_feature(
     feature_df = data.select(pl.col(target_feature_name).explode()).unnest(
         cs.all(),
     )
+    # Get the original time type from the reference feature
+    original_time_type = reference_feature.schema["time"]
+
+    # Cast time to Float64 for interpolation
+    feature_df = feature_df.with_columns(pl.col("time").cast(pl.Float64))
+
     # Handle 'value' field
     if "value" in feature_df.columns:
         value_schema = feature_df.schema["value"]
         if isinstance(value_schema, pl.Struct):
-            # Get the schema of 'value' and extract field names for structs
             original_field_names = [
                 field.name for field in value_schema.fields
             ]
             feature_df = feature_df.unnest("value")
             value_is_struct = True
         else:
-            # Rename non-struct 'value' to a temporary name to avoid conflicts
             feature_df = feature_df.rename(
                 {"value": f"{target_feature_name}_value"},
             )
@@ -197,12 +201,11 @@ def interpolate_feature(
         msg = f"Feature {target_feature_name} is missing 'value' field."
         raise ValueError(msg)
 
-    # Store column names after unnesting (or renaming for non-struct 'value')
     value_columns = [col for col in feature_df.columns if col != "time"]
 
-    # Get reference times and feature times
-    reference_times = reference_feature.get_column("time")
-    feature_times = feature_df.get_column("time")
+    # Get reference times and feature times, cast to Float64 for interpolation
+    reference_times = reference_feature.get_column("time").cast(pl.Float64)
+    feature_times = feature_df.get_column("time").cast(pl.Float64)
 
     # Combine all unique times and sort
     all_times = (
@@ -210,6 +213,7 @@ def interpolate_feature(
         .unique()
         .sort()
         .to_frame("time")
+        .with_columns(pl.col("time").cast(pl.Float64))
     )
 
     # Join with feature data
@@ -248,9 +252,13 @@ def interpolate_feature(
     # Filter to only include reference times
     interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
 
+    # Restore original time type
+    interpolated = interpolated.with_columns(
+        pl.col("time").cast(original_time_type),
+    )
+
     # Restructure to nested format
     if value_is_struct:
-        # Struct case: map original field names to their respective columns
         restructure_value = pl.struct(
             {
                 name: pl.col(col)
@@ -262,13 +270,11 @@ def interpolate_feature(
             },
         ).alias("value")
     else:
-        # Scalar case: restore the original scalar 'value' field
         restructure_value = pl.col(value_columns[0]).alias("value")
 
-    restructure = pl.struct(
-        pl.col("time"),
-        restructure_value,
-    ).alias(target_feature_name)
+    restructure = pl.struct(pl.col("time"), restructure_value).alias(
+        target_feature_name,
+    )
 
     return interpolated.select(restructure).select(pl.all().implode())
 
