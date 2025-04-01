@@ -99,9 +99,13 @@ class SliceTimeSeries(Transform):
                 pl.col(remaining_time_series_columns)
                 .struct.field("time")
                 .is_between(
-                    pl.col(self.counter_column).struct.field("time").cast(pl.Float64)
+                    pl.col(self.counter_column)
+                    .struct.field("time")
+                    .cast(pl.Float64)
                     - pl.duration(seconds=self.dur).cast(pl.Float64),
-                    pl.col(self.counter_column).struct.field("time").cast(pl.Float64),
+                    pl.col(self.counter_column)
+                    .struct.field("time")
+                    .cast(pl.Float64),
                 ),
             )
             .then(
