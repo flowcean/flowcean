@@ -26,6 +26,7 @@ from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.drop import Drop
 from flowcean.polars.transforms.explode import Explode
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
 from flowcean.sklearn.adaboost_classifier import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
@@ -126,13 +127,12 @@ def main() -> None:
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
     transform = (
-        # TimeWindow(  # full data set exceeds memory
-        #     time_start=1729516868012553090,
-        #     time_end=1729516968012553090,
-        # )
-        # # timestamps need to be aligned before applying LocalizationStatus
-        # |
-        MatchSamplingRate(
+        TimeWindow(  # full data set exceeds memory
+            time_start=1729516868012553090,
+            time_end=1729516968012553090,
+        )
+        # timestamps need to be aligned before applying LocalizationStatus
+        | MatchSamplingRate(
             reference_feature_name="/heading_error",
             feature_interpolation_map={"/position_error": "linear"},
         )
@@ -152,11 +152,11 @@ def main() -> None:
                 "/amcl_pose",
                 "/position_error",
                 "/heading_error",
-                "scan_points",
             ],
         )
-        | MatchSamplingRate(  # for all features
+        | MatchSamplingRate(
             reference_feature_name="point_distance",
+            feature_interpolation_map=None,  # interpolate all features
         )
         | Explode()  # explode all columns
     )
@@ -180,11 +180,13 @@ def main() -> None:
         {"data": "isDelocalized_value"},
     )
     print(f"collected transformed data: {collected_transformed_data}")
+    print(f"shape: {collected_transformed_data.shape}")
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
-    # inputs are all features except "isDelocalized_value"
+    # Define inputs and outputs with task types
+    # inputs are all features except isDelocalized_value
     inputs = collected_transformed_data.columns
     print(f"inputs: {inputs}")
     inputs.remove("isDelocalized_value")
