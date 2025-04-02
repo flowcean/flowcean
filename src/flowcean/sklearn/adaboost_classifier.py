@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+import numpy as np
 import polars as pl
 from sklearn.ensemble import AdaBoostClassifier
 from typing_extensions import override
@@ -59,8 +60,25 @@ class AdaBoost(SupervisedLearner):
     ) -> Model:
         collected_inputs = inputs.collect()
         collected_outputs = outputs.collect()
-        self.classifier.fit(
-            collected_inputs,
-            collected_outputs.to_numpy().ravel(),  # 1D output array required
-        )
+
+        # Explicitly convert inputs to a numeric NumPy array
+        x = collected_inputs.to_numpy()
+        if not np.issubdtype(x.dtype, np.number):
+            msg = f"Input data contains non-numeric values: {x.dtype}"
+            raise ValueError(
+                msg,
+            )
+        if np.any(np.isnan(x)):
+            logger.warning("Input data contains NaN values; replacing with 0")
+            x = np.nan_to_num(x, nan=0.0)
+
+        # Convert outputs to 1D numeric array
+        y = collected_outputs.to_numpy().ravel()
+        if not np.issubdtype(y.dtype, np.number):
+            msg = f"Output data contains non-numeric values: {y.dtype}"
+            raise ValueError(
+                msg,
+            )
+
+        self.classifier.fit(x, y)
         return SciKitModel(self.classifier, collected_outputs.columns[0])

@@ -152,11 +152,11 @@ def main() -> None:
                 "/amcl_pose",
                 "/position_error",
                 "/heading_error",
+                "scan_points",
             ],
         )
-        | MatchSamplingRate(
+        | MatchSamplingRate(  # for all features
             reference_feature_name="point_distance",
-            feature_interpolation_map=None,  # interpolate all features
         )
         | Explode()  # explode all columns
     )
@@ -180,13 +180,11 @@ def main() -> None:
         {"data": "isDelocalized_value"},
     )
     print(f"collected transformed data: {collected_transformed_data}")
-    print(f"shape: {collected_transformed_data.shape}")
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
-    # Define inputs and outputs with task types
-    # inputs are all features except isDelocalized_value
+    # inputs are all features except "isDelocalized_value"
     inputs = collected_transformed_data.columns
     print(f"inputs: {inputs}")
     inputs.remove("isDelocalized_value")
