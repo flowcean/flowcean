@@ -26,7 +26,6 @@ from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.drop import Drop
 from flowcean.polars.transforms.explode import Explode
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
-from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
 from flowcean.sklearn.adaboost_classifier import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
@@ -127,12 +126,13 @@ def main() -> None:
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
     transform = (
-        TimeWindow(  # full data set exceeds memory
-            time_start=1729516868012553090,
-            time_end=1729516968012553090,
-        )
-        # timestamps need to be aligned before applying LocalizationStatus
-        | MatchSamplingRate(
+        # TimeWindow(  # full data set exceeds memory
+        #     time_start=1729516868012553090,
+        #     time_end=1729516968012553090,
+        # )
+        # # timestamps need to be aligned before applying LocalizationStatus
+        # |
+        MatchSamplingRate(
             reference_feature_name="/heading_error",
             feature_interpolation_map={"/position_error": "linear"},
         )
