@@ -15,22 +15,20 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-from architectures.complex_cnn import ComplexCNN
-from architectures.medium_complex_cnn import MediumComplexCNN
-from architectures.simple_cnn import SimpleCNN
 from custom_transforms.localization_status import LocalizationStatus
-from custom_transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
+from custom_transforms.scan_map import ScanMap
 
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.polars.environments.train_test_split import TrainTestSplit
+from flowcean.polars.transforms.drop import Drop
 from flowcean.polars.transforms.explode import Explode
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
-from flowcean.polars.transforms.select import Select
 from flowcean.ros.rosbag import RosbagLoader
+from flowcean.sklearn.adaboost_classifier import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
-from flowcean.torch import LightningLearner
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -127,16 +125,14 @@ def main() -> None:
     # Load data with caching (set force_refresh=True to always reload)
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    pixel_size = 36
     transform = (
-        ParticleCloudImage(
-            particle_cloud_feature_name="/particle_cloud",
-            save_images=False,
-            cutting_area=15.0,
-            image_pixel_size=pixel_size,
-        )
-        # timestamps need to be aligned before applying LocalizationStatus
-        | MatchSamplingRate(
+        # TimeWindow(  # full data set exceeds memory
+        #     time_start=1729516868012553090,
+        #     time_end=1729516968012553090,
+        # )
+        # # timestamps need to be aligned before applying LocalizationStatus
+        # |
+        MatchSamplingRate(
             reference_feature_name="/heading_error",
             feature_interpolation_map={"/position_error": "linear"},
         )
@@ -144,78 +140,57 @@ def main() -> None:
             position_error_feature_name="/position_error",
             heading_error_feature_name="/heading_error",
         )
-        | Select(
-            [
-                "/particle_cloud_image",
-                "/position_error",
-                "/heading_error",
-                "isDelocalized",
-            ],
-        )
-        | MatchSamplingRate(
-            reference_feature_name="/particle_cloud_image",
-            feature_interpolation_map={
-                "/position_error": "linear",
-                "/heading_error": "linear",
-                "isDelocalized": "nearest",
-            },
-        )
-        | Explode(
+        | ParticleCloudStatistics()
+        | ScanMap()
+        | Drop(
             features=[
-                "/particle_cloud_image",
+                "/particle_cloud",
+                "/map",
+                "/scan",
+                "/delocalizations",
+                "/momo/pose",
+                "/amcl_pose",
                 "/position_error",
                 "/heading_error",
-                "isDelocalized",
+                "scan_points",
             ],
         )
+        | MatchSamplingRate(  # for all features
+            reference_feature_name="point_distance",
+        )
+        | Explode()  # explode all columns
     )
     transformed_data = transform(data)
 
     print(f"transformed data: {transformed_data.collect()}")
-    # unnest data
     collected_transformed_data = transformed_data.collect()
     # loop over all columns and unnest them
     for column in collected_transformed_data.columns:
         collected_transformed_data = collected_transformed_data.unnest(
             column,
         ).rename({"time": column + "_time", "value": column + "_value"})
+        # drop time columns
+        collected_transformed_data = collected_transformed_data.drop(
+            column + "_time",
+        )
     # convert dict to value for isDelocalized_value
     collected_transformed_data = collected_transformed_data.unnest(
         "isDelocalized_value",
     ).rename(
         {"data": "isDelocalized_value"},
     )
-    print(collected_transformed_data)
-    print(collected_transformed_data.shape)
+    print(f"collected transformed data: {collected_transformed_data}")
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
-    # Define inputs and outputs with task types
-    inputs = ["/particle_cloud_image_value"]
+    # inputs are all features except "isDelocalized_value"
+    inputs = collected_transformed_data.columns
+    print(f"inputs: {inputs}")
+    inputs.remove("isDelocalized_value")
     outputs = ["isDelocalized_value"]
     learners = [
-        # CNN (simple)
-        LightningLearner(
-            module=SimpleCNN(image_size=pixel_size),
-            max_epochs=2,
-            batch_size=4,
-            num_workers=15,
-        ),
-        # CNN (medium)
-        LightningLearner(
-            module=MediumComplexCNN(image_size=pixel_size),
-            max_epochs=2,
-            batch_size=4,
-            num_workers=15,
-        ),
-        # CNN (complex)
-        LightningLearner(
-            module=ComplexCNN(image_size=pixel_size),
-            max_epochs=2,
-            batch_size=4,
-            num_workers=15,
-        ),
+        AdaBoost(),
     ]
     for learner in learners:
         t_start = datetime.now(tz=timezone.utc)
