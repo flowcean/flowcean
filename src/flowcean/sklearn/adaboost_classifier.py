@@ -38,7 +38,7 @@ class AdaBoost(SupervisedLearner):
                 is built. If None, then the base estimator is
                 DecisionTreeClassifier(max_depth=1).
             n_estimators: The maximum number of estimators at which boosting is
-            terminated. Defaults to 50.
+                terminated. Defaults to 50.
             learning_rate: Learning rate shrinks the contribution of each
                 classifier. Defaults to 1.0.
             **kwargs: Keyword arguments to pass to the AdaBoostClassifier.
