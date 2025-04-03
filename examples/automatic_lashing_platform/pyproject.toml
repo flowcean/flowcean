@@ -6,5 +6,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = ["flowcean"]
 
+[tool.pyright]
+extends = "../../pyproject.toml"
+
 [tool.uv.sources]
 flowcean = { workspace = true }

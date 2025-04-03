@@ -5,5 +5,8 @@ description = "Add your description here"
 requires-python = ">=3.10, <4.0"
 dependencies = ["flowcean"]
 
+[tool.pyright]
+extends = "../../pyproject.toml"
+
 [tool.uv.sources]
 flowcean = { workspace = true }
