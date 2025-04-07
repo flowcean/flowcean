@@ -4,7 +4,11 @@ from flowcean.core import Transform
 
 
 class ZeroOrderHoldMatching(Transform):
-    def __init__(self, columns=None, all_times=None):
+    def __init__(
+        self,
+        columns: list[str] | None = None,
+        all_times: pl.LazyFrame | None = None,
+    ) -> None:
         self.columns = columns
         self.all_times = all_times  # Precomputed timestamps
 
@@ -33,7 +37,7 @@ class ZeroOrderHoldMatching(Transform):
         else:
             all_times = self.all_times
 
-        # Process this batch’s columns with the full timestamp set
+        # Process the columns of this batch with the full timestamp set
         result = all_times
         for col in self.columns:
             exploded_df = (

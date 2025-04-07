@@ -99,9 +99,8 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
 def get_reduced_timestamps(
     data: pl.LazyFrame,
     columns: list[str],
-    start_after_all: bool = True,
 ) -> pl.LazyFrame:
-    """Precompute a reduced set of timestamps starting after all columns have data."""
+    """Precompute a reduced set of timestamps for the given columns."""
     # Explode and unnest all columns to get their timestamps
     exploded_dfs = [
         data.select(col)
@@ -128,12 +127,9 @@ def get_reduced_timestamps(
         .sort("time")
     )
 
-    # Start after all topics have published
-    if start_after_all:
-        start_time = max(first_times) if first_times else 0
-        all_times = all_times.filter(pl.col("time") >= start_time)
-
-    return all_times
+    # Start after all remaining topics have data
+    start_time = max(first_times) if first_times else 0
+    return all_times.filter(pl.col("time") >= start_time)
 
 
 def extract_map_data(data: pl.LazyFrame) -> dict:
@@ -192,7 +188,6 @@ def main() -> None:
     all_times = get_reduced_timestamps(
         intermediate_data,
         columns_to_batch,
-        start_after_all=True,  # Start after all remaining topics have data
     )
     print(f"Reduced all_times length: {all_times.collect().height}")
 
@@ -234,36 +229,36 @@ def main() -> None:
     output_path = WS / "transformed_data.parquet"
     transformed_data.sink_parquet(output_path, compression="snappy")
 
-    sample_data = pl.read_parquet(output_path)
-    print(f"Sample data: {sample_data}")
-    sample_data = sample_data.drop_nulls()
-    print(f"Sample data after dropping nulls: {sample_data}")
+    transformed_data = pl.read_parquet(output_path)
+    print(f"transformed data: {transformed_data}")
+    transformed_data = transformed_data.drop_nulls()
+    print(f"transformed data after dropping nulls: {transformed_data}")
 
     # clean up temporary files
     shutil.rmtree(temp_dir)
     return
     # loop over all columns and unnest them
-    for column in collected_transformed_data.columns:
-        collected_transformed_data = collected_transformed_data.unnest(
+    for column in transformed_data.columns:
+        transformed_data = transformed_data.unnest(
             column,
         ).rename({"time": column + "_time", "value": column + "_value"})
         # drop time columns
-        collected_transformed_data = collected_transformed_data.drop(
+        transformed_data = transformed_data.drop(
             column + "_time",
         )
     # convert dict to value for isDelocalized_value
-    collected_transformed_data = collected_transformed_data.unnest(
+    transformed_data = transformed_data.unnest(
         "isDelocalized_value",
     ).rename(
         {"data": "isDelocalized_value"},
     )
-    print(f"collected transformed data: {collected_transformed_data}")
-    data_environment = DataFrame(data=collected_transformed_data)
+    print(f"collected transformed data: {transformed_data}")
+    data_environment = DataFrame(data=transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
     )
     # inputs are all features except "isDelocalized_value"
-    inputs = collected_transformed_data.columns
+    inputs = transformed_data.columns
     print(f"inputs: {inputs}")
     inputs.remove("isDelocalized_value")
     outputs = ["isDelocalized_value"]
