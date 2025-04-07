@@ -61,7 +61,7 @@ def main(args: argparse.Namespace) -> None:
     inspect_data(args, data)
 
     if args.train_nodes_vs_error:
-        train_nodes_vs_error (args, data, inputs, outputs)
+        train_nodes_vs_error(args, data, inputs, outputs)
     elif args.train_depth_vs_error:
         train_depth_vs_error(args, data, inputs, outputs)
     elif args.train_time_vs_error:
@@ -293,8 +293,8 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
         if args.plot_plain:
             plt.ticklabel_format(useOffset=False, style="plain")
             # remove decimal points from x and y axis
-            plt.gca().xaxis.set_major_formatter(FormatStrFormatter('%d'))
-            plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            plt.gca().xaxis.set_major_formatter(FormatStrFormatter("%d"))
+            plt.gca().yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
         else:
             plt.title(
                 f"Weight: {weight}, Index: {index}",
@@ -341,8 +341,8 @@ def plot_row(observed_data: DataFrame) -> None:
 
 
 def build_tree_learner(
-        args: argparse.Namespace,
-        **tree_params: Any
+    args: argparse.Namespace,
+    **tree_params: Any,
 ) -> SupervisedLearner:
     if args.store_graph:
         Path.mkdir(Path("./graphs"), exist_ok=True)
@@ -404,7 +404,7 @@ def train_nodes_vs_error(
         node_numbers.append(nodes)
 
     # calculate optimal number of nodes
-    distances = np.sqrt(np.array(node_numbers)**2 + np.array(errors)**2)
+    distances = np.sqrt(np.array(node_numbers) ** 2 + np.array(errors) ** 2)
     min_index = np.argmin(distances)
     logger.info(
         "Optimal number of nodes: %d with error: %.2f",
@@ -477,7 +477,7 @@ def train_depth_vs_error(
             break
 
     # calculate optimal number of nodes
-    distances = np.sqrt(np.array(depth_numbers)**2 + np.array(errors)**2)
+    distances = np.sqrt(np.array(depth_numbers) ** 2 + np.array(errors) ** 2)
     min_index = np.argmin(distances)
     logger.info(
         "Optimal number of depth: %d with error: %.2f",
@@ -556,7 +556,7 @@ def train_time_vs_error(
         depth_count += 1
 
     # calculate optimal number of nodes
-    distances = np.sqrt(np.array(times)**2 + np.array(errors)**2)
+    distances = np.sqrt(np.array(times) ** 2 + np.array(errors) ** 2)
     min_index = np.argmin(distances)
     logger.info(
         "Optimal time to train: %.2f with error: %.2f and depth: %d",
@@ -609,7 +609,6 @@ def train_and_evaluate_model(
         }
         learner = build_tree_learner(args, **tree_params)
 
-
     model = learn_offline(
         train_env,
         learner,
@@ -625,7 +624,8 @@ def train_and_evaluate_model(
         [
             MeanAbsoluteError(),
             MeanSquaredError(),
-            MeanAbsolutePercentageError()],
+            MeanAbsolutePercentageError(),
+        ],
     )
     time_after_learning = time.time()
     logger.info(
@@ -652,7 +652,8 @@ def get_graph(args: argparse.Namespace) -> graphviz.Source:
             graph_path = path
         else:
             logger.warning(
-                "No dot-graph found at './graphs/%s'.", args.show_graph,
+                "No dot-graph found at './graphs/%s'.",
+                args.show_graph,
             )
 
     if graph_path:
@@ -789,9 +790,7 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--plot_plain",
         action="store_true",
-        help=(
-            "Plot only the graph without notations."
-        ),
+        help=("Plot only the graph without notations."),
     )
     data_inspection_group.add_argument(
         "--plot_distributed",
@@ -856,9 +855,7 @@ if __name__ == "__main__":
         type=int,
         default=20,
         metavar="DEPTH",
-        help=(
-            "Set the maximum depth of the regression-tree. (default: 20)"
-        ),
+        help=("Set the maximum depth of the regression-tree. (default: 20)"),
     )
     training_group.add_argument(
         "--train_depth_vs_error_steps",
