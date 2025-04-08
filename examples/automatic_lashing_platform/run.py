@@ -23,6 +23,7 @@ from typing import Any
 import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.table import Table
 from matplotlib.ticker import FormatStrFormatter
 
 # flowcean libraries
@@ -333,13 +334,14 @@ def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
             int(index),
         )[0]
         temperature = round(observed_data.select("T").row(int(index))[0], 3)
-        plt.title(
-            f"Container Weight: {weight}, Active Valves: {active_valves}, "
-            f"Oil Temperature: {temperature}",
+        initial_pressure = round(
+            observed_data.select("p_initial").row(int(index))[0],
+            3,
         )
         pressure_data = (
             observed_data.select("^p_accumulator_.*$").row(int(index))
         )
+
         # scale x-achsis to milliseconds if sample rate is native
         if args.sample_rate == NATIVE_SAMPLE_RATE:
             time_ms = np.arange(len(pressure_data)) * 10    # 10 ms per sample
@@ -347,9 +349,34 @@ def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
         else:
             time_ms = np.arange(len(pressure_data))
             plt.xlabel("Time [samples]")
-        plt.plot(time_ms, pressure_data)
         plt.ylabel("Accumulator Pressure [bar]")
-        plt.grid(visible=True, linestyle="--", alpha=0.7)
+        plt.plot(time_ms, pressure_data)
+
+        # table with parameter
+        parameter_table = [
+            ["Container Weight", f"{weight} tons"],
+            ["Active Valves", f"{active_valves}"],
+            ["Temperature", f"{temperature} °C"],
+            ["Initial Pressure", f"{initial_pressure} bar"],
+        ]
+        ax = plt.gca()
+        table = Table(ax, loc="lower right")
+        for i, row in enumerate(parameter_table):
+            for j, cell in enumerate(row):
+                table_cell = table.add_cell(
+                    i,
+                    j,
+                    text=cell,
+                    loc="left",
+                    width=0.3,
+                    height=0.075,
+                )
+                table_cell.get_text().set_fontfamily("serif")
+                table_cell.get_text().set_fontsize(10)
+                table_cell.set_facecolor("white")
+        ax.add_table(table)
+
+        plt.grid(visible=True, linestyle="--", alpha=0.5)
         plt.show()
 
 
@@ -426,7 +453,7 @@ def train_nodes_vs_error(
     )
 
     # plot errors
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     plt.plot(node_numbers, errors, "b-", linewidth=2)
     plt.plot(node_numbers[min_index], errors[min_index], "ro", markersize=8)
     plt.xlabel("Number of Leaf-Nodes")
@@ -499,7 +526,6 @@ def train_depth_vs_error(
     )
 
     # plot errors
-    plt.figure(figsize=(10, 6))
     plt.plot(depth_numbers, errors, "b-", linewidth=2)
     plt.plot(depth_numbers[min_index], errors[min_index], "ro", markersize=8)
     plt.xlabel("Tree-Depth")
@@ -579,7 +605,7 @@ def train_time_vs_error(
     )
 
     # plot errors
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     plt.plot(times, errors, "b-", linewidth=2)
     plt.plot(times[min_index], errors[min_index], "ro", markersize=8)
     plt.xlabel("Time to Train (s)")
