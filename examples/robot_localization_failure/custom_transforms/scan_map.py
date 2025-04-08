@@ -223,10 +223,7 @@ class ScanMap(Transform):
 
         return ranges
 
-    def compute_lidar_scan_points(
-        self,
-        data: pl.DataFrame,
-    ) -> pl.DataFrame:
+    def compute_lidar_scan_points(self, data: pl.DataFrame) -> pl.DataFrame:
         self.scan_timeseries = data[self.scan_topic].to_list()[0]
         amcl_pose_timeseries = data[self.sensor_pose_topic].to_list()[0]
 
@@ -241,17 +238,13 @@ class ScanMap(Transform):
             orientation_z = pose_data["pose.pose.orientation.z"]
             orientation_w = pose_data["pose.pose.orientation.w"]
             theta = Rotation.from_quat(
-                [
-                    orientation_x,
-                    orientation_y,
-                    orientation_z,
-                    orientation_w,
-                ],
+                [orientation_x, orientation_y, orientation_z, orientation_w],
             ).as_euler("xyz", degrees=False)[2]
             pose_entries.append((entry["time"], x, y, theta))
         pose_times = [entry[0] for entry in pose_entries]
 
-        scan_points_timeseries = []
+        scan_points_timeseries = []  # Map-frame scan points
+        scan_points_sensor_timeseries = []  # Sensor-frame scan points
         self.synced_sensor_poses = []
         for scan in tqdm(self.scan_timeseries, "Computing scan points"):
             timestamp = scan["time"]
@@ -259,20 +252,32 @@ class ScanMap(Transform):
             idx = bisect.bisect_right(pose_times, timestamp) - 1
             if idx >= 0:
                 _, x, y, theta = pose_entries[idx]
-                scan_points = self.calculate_scan_points(
-                    pose=(x, y, theta),
-                    ranges=scan["value"]["ranges"],
-                    angle_min=scan["value"]["angle_min"],
-                    angle_max=scan["value"]["angle_max"],
-                    angle_increment=scan["value"]["angle_increment"],
-                    range_max=scan["value"]["range_max"],
-                    range_min=scan["value"]["range_min"],
+                # Compute scan points in both frames
+                scan_points_map, scan_points_sensor = (
+                    self.calculate_scan_points(
+                        pose=(x, y, theta),
+                        ranges=scan["value"]["ranges"],
+                        angle_min=scan["value"]["angle_min"],
+                        angle_max=scan["value"]["angle_max"],
+                        angle_increment=scan["value"]["angle_increment"],
+                        range_min=scan["value"]["range_min"],
+                        range_max=scan["value"]["range_max"],
+                    )
                 )
-                scan["value"] = scan_points.tolist()
-                scan_points_timeseries.append(scan)
+                scan_points_timeseries.append(
+                    {"time": timestamp, "value": scan_points_map.tolist()},
+                )
+                scan_points_sensor_timeseries.append(
+                    {"time": timestamp, "value": scan_points_sensor.tolist()},
+                )
                 self.synced_sensor_poses.append((x, y, theta))
         return data.hstack(
-            pl.DataFrame({"scan_points": [scan_points_timeseries]}),
+            pl.DataFrame(
+                {
+                    "scan_points": [scan_points_timeseries],
+                    "scan_points_sensor": [scan_points_sensor_timeseries],
+                },
+            ),
         )
 
     def _get_closest_line_distance(
@@ -439,7 +444,7 @@ class ScanMap(Transform):
         range_min: float,
         range_max: float,
         ranges: list[float],
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculates the coordinates of scan points from a LaserScan message.
 
         Args:
@@ -466,11 +471,12 @@ class ScanMap(Transform):
         valid_ranges = np.array(ranges)[valid_mask]
         valid_angles = angles[valid_mask]
 
-        # Convert polar coordinates to Cartesian coordinates in sensor frame
+        # Sensor-frame coordinates (local to the sensor)
         x_sensor_frame = valid_ranges * np.cos(valid_angles)
         y_sensor_frame = valid_ranges * np.sin(valid_angles)
+        scan_points_sensor = np.column_stack((x_sensor_frame, y_sensor_frame))
 
-        # Transform points from sensor frame to map frame
+        # Map-frame coordinates (transformed from sensor frame)
         x_map = (
             x_sensor
             + x_sensor_frame * np.cos(theta_sensor)
@@ -481,8 +487,9 @@ class ScanMap(Transform):
             + x_sensor_frame * np.sin(theta_sensor)
             + y_sensor_frame * np.cos(theta_sensor)
         )
+        scan_points_map = np.column_stack((x_map, y_map))
 
-        return np.column_stack((x_map, y_map))
+        return scan_points_map, scan_points_sensor
 
     def plot_detected_lines(
         self,
