@@ -290,16 +290,17 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
     ):
         plt.subplot(plot_rows, plot_cols, c + 1)
         index = i if args.plot_distributed else c
-        weight = round(
+
+        if args.plot_plain:
+            plt.xticks([])
+            plt.yticks([])
+            plt.xlabel("")
+            plt.ylabel("")
+        else:
+            weight = round(
             observed_data.select("containerWeight").row(index)[0],
             3,
         )
-        if args.plot_plain:
-            plt.ticklabel_format(useOffset=False, style="plain")
-            # remove decimal points from x and y axis
-            plt.gca().xaxis.set_major_formatter(FormatStrFormatter("%d"))
-            plt.gca().yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
-        else:
             plt.title(
                 f"Weight: {weight}, Index: {index}",
             )
@@ -342,41 +343,49 @@ def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
             observed_data.select("^p_accumulator_.*$").row(int(index))
         )
 
-        # scale x-achsis to milliseconds if sample rate is native
-        if args.sample_rate == NATIVE_SAMPLE_RATE:
-            time_ms = np.arange(len(pressure_data)) * 10    # 10 ms per sample
-            plt.xlabel("Time [ms]")
+        if args.plot_plain:
+            # only plot the plain graph
+            plt.plot(pressure_data)
+            plt.xticks([])
+            plt.yticks([])
+            plt.xlabel("")
+            plt.ylabel("")
         else:
-            time_ms = np.arange(len(pressure_data))
-            plt.xlabel("Time [samples]")
-        plt.ylabel("Accumulator Pressure [bar]")
-        plt.plot(time_ms, pressure_data)
+            # scale x-achsis to milliseconds if sample rate is native
+            if args.sample_rate == NATIVE_SAMPLE_RATE:
+                time_ms = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+                plt.xlabel("Time [ms]")
+            else:
+                time_ms = np.arange(len(pressure_data))
+                plt.xlabel("Time [samples]")
+            plt.ylabel("Accumulator Pressure [bar]")
+            plt.plot(time_ms, pressure_data)
 
-        # table with parameter
-        parameter_table = [
-            ["Container Weight", f"{weight} tons"],
-            ["Active Valves", f"{active_valves}"],
-            ["Temperature", f"{temperature} °C"],
-            ["Initial Pressure", f"{initial_pressure} bar"],
-        ]
-        ax = plt.gca()
-        table = Table(ax, loc="lower right")
-        for i, row in enumerate(parameter_table):
-            for j, cell in enumerate(row):
-                table_cell = table.add_cell(
-                    i,
-                    j,
-                    text=cell,
-                    loc="left",
-                    width=0.3,
-                    height=0.075,
-                )
-                table_cell.get_text().set_fontfamily("serif")
-                table_cell.get_text().set_fontsize(10)
-                table_cell.set_facecolor("white")
-        ax.add_table(table)
+            # table with parameter
+            parameter_table = [
+                ["Container Weight", f"{weight:.2f} tons"],
+                ["Active Valves", f"{active_valves}"],
+                ["Temperature", f"{temperature:.2f} °C"],
+                ["Initial Pressure", f"{initial_pressure:.2f} bar"],
+            ]
+            ax = plt.gca()
+            table = Table(ax, loc="lower right")
+            for i, row in enumerate(parameter_table):
+                for j, cell in enumerate(row):
+                    table_cell = table.add_cell(
+                        i,
+                        j,
+                        text=cell,
+                        loc="left",
+                        width=0.3,
+                        height=0.075,
+                    )
+                    table_cell.get_text().set_fontfamily("serif")
+                    table_cell.get_text().set_fontsize(10)
+                    table_cell.set_facecolor("white")
+            ax.add_table(table)
 
-        plt.grid(visible=True, linestyle="--", alpha=0.5)
+            plt.grid(visible=True, linestyle="--", alpha=0.5)
         plt.show()
 
 
