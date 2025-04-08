@@ -50,6 +50,9 @@ from flowcean.torch.lightning_learner import (
     MultilayerPerceptron,
 )
 
+# constants
+NATIVE_SAMPLE_RATE = 0.01 # 1500 values per second
+
 # start logger
 logger = logging.getLogger(__name__)
 
@@ -153,7 +156,7 @@ def inspect_data(
             print_row(observed_data)
 
         if args.plot_row:
-            plot_row(observed_data)
+            plot_row(args, observed_data)
 
 
 def print_overview(observed_data: DataFrame) -> None:
@@ -312,7 +315,7 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
     plt.show()
 
 
-def plot_row(observed_data: DataFrame) -> None:
+def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
     logger.info("Plotting rows interactively:")
 
     plt.figure()
@@ -331,12 +334,22 @@ def plot_row(observed_data: DataFrame) -> None:
         )[0]
         temperature = round(observed_data.select("T").row(int(index))[0], 3)
         plt.title(
-            f"Weight: {weight}, Active Valves: {active_valves}, "
-            f"Temperature: {temperature}",
+            f"Container Weight: {weight}, Active Valves: {active_valves}, "
+            f"Oil Temperature: {temperature}",
         )
-        plt.plot(
-            observed_data.select("^p_accumulator_.*$").row(int(index)),
+        pressure_data = (
+            observed_data.select("^p_accumulator_.*$").row(int(index))
         )
+        # scale x-achsis to milliseconds if sample rate is native
+        if args.sample_rate == NATIVE_SAMPLE_RATE:
+            time_ms = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+            plt.xlabel("Time [ms]")
+        else:
+            time_ms = np.arange(len(pressure_data))
+            plt.xlabel("Time [samples]")
+        plt.plot(time_ms, pressure_data)
+        plt.ylabel("Accumulator Pressure [bar]")
+        plt.grid(visible=True, linestyle="--", alpha=0.7)
         plt.show()
 
 
