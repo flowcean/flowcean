@@ -54,7 +54,7 @@ class Model(ABC):
             "model": self.save_state(),
             "model_type": fullname(self),
         }
-        if isinstance(file, (Path, str)):
+        if isinstance(file, Path | str):
             with Path(file).open("wb") as f:
                 pickle.dump(data, f)
         else:
@@ -85,7 +85,7 @@ class Model(ABC):
             file: The file like object to load the model from.
         """
         # Read the general model from the file
-        if isinstance(file, (Path, str)):
+        if isinstance(file, Path | str):
             with Path(file).open(
                 "rb",
             ) as f:
