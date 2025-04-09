@@ -105,6 +105,7 @@ nav:
     - Evaluation: user_guide/evaluation.md
     - Experiment: user_guide/experiment.md
     - Tools: user_guide/tools.md
+    - Adapter: user_guide/adapter.md
   - Examples:
     - Coffee Machine: examples/coffee_machine.md
     - Failure Time Prediction: examples/failure_time_prediction.md
