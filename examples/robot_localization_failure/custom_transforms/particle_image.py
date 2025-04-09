@@ -111,7 +111,7 @@ class ParticleImage(Transform):
         histogram, _, _ = np.histogram2d(
             x_array,
             y_array,
-            bins=(x_edges, y_edges),
+            bins=(np.asarray(x_edges), np.asarray(y_edges)),
         )
 
         # Rotate histogram 90° clockwise so robot's forward axis point upward.
