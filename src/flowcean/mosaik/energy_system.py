@@ -234,6 +234,8 @@ def read_min_and_max_from_space(
             continue
         if "dtype" in part:
             _, val = part.split("=")
+            if val.endswith(")"):
+                val = val.removesuffix(")")
             dtype = get_numpy_type(val)
     return value_min, value_max, shape, dtype
 
