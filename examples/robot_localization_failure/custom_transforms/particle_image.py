@@ -60,16 +60,16 @@ class ParticleImage(Transform):
         """Transform particle cloud to sensor frame and generate grayscale img.
 
         Args:
-            particle_data: A dictionary corresponding to
-                           one `/particle_cloud` message.
-                           Expected to have a "time" key and a "value" key
-                           containing a "particles" list.
-            robot_pose:    A tuple containing the robot's pose
-            (x, y, theta) in the map frame.
+            particle_data:  A dictionary corresponding to
+                            one `/particle_cloud` message.
+                            Expected to have a "time" key and a "value" key
+                            containing a "particles" list.
+            robot_pose:     A tuple containing the robot's pose
+                            (x, y, theta) in the map frame.
 
         Returns:
-            np.ndarray: A generated grayscale image (single channel)
-            as a NumPy array.
+            np.ndarray:     A generated grayscale image (single channel)
+                            as a NumPy array.
         """
         x_r, y_r, theta_r = robot_pose
 
@@ -111,7 +111,7 @@ class ParticleImage(Transform):
         histogram, _, _ = np.histogram2d(
             x_array,
             y_array,
-            bins=[x_edges, y_edges],
+            bins=(x_edges, y_edges),
         )
 
         # Rotate histogram 90° clockwise so robot's forward axis point upward.
@@ -136,12 +136,13 @@ class ParticleImage(Transform):
         """Apply the transformation to generate particle images.
 
         Args:
-            data: A Polars LazyFrame containing the topics for
-            particle cloud and sensor pose.
+            data:   A Polars LazyFrame containing the topics for
+                    particle cloud and sensor pose.
 
         Returns:
-            pl.LazyFrame: An updated DataFrame with a new
-            column `/particle_image` embedding the generated images.
+            pl.LazyFrame:   An updated DataFrame with a new
+                            column `/particle_image` embedding
+                            the generated images.
         """
         logger.debug("Processing particle cloud data to generate images.")
 
