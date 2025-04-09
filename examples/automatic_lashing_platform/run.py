@@ -298,9 +298,9 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
             plt.ylabel("")
         else:
             weight = round(
-            observed_data.select("containerWeight").row(index)[0],
-            3,
-        )
+                observed_data.select("containerWeight").row(index)[0],
+                3,
+            )
             plt.title(
                 f"Weight: {weight}, Index: {index}",
             )
@@ -468,7 +468,7 @@ def train_nodes_vs_error(
     plt.annotate(
         f"({node_numbers[min_index]}, {errors[min_index]:.2f})",
         xy=(node_numbers[min_index], errors[min_index]),
-        xytext=(node_numbers[min_index] + 5, errors[min_index] + 5),
+        xytext=(20, 20),
         textcoords="offset points",
         arrowprops={"arrowstyle": "->", "color": "black"},
         fontsize=10,
@@ -553,7 +553,7 @@ def train_depth_vs_error(
     plt.annotate(
         f"({depth_numbers[min_index]}, {errors[min_index]:.2f})",
         xy=(depth_numbers[min_index], errors[min_index]),
-        xytext=(depth_numbers[min_index] + 5, errors[min_index] + 5),
+        xytext=(20, 20),
         textcoords="offset points",
         arrowprops={"arrowstyle": "->", "color": "black"},
         fontsize=10,
@@ -644,9 +644,10 @@ def train_time_vs_error(
     plt.plot(times, errors)
     plt.plot(times[min_index], errors[min_index], "ro", markersize=6)
     plt.annotate(
-        f"({times[min_index]:.2f}, {errors[min_index]:.2f})",
+        f"({times[min_index]:.2f}, {errors[min_index]:.2f})\n"
+        f"Depth: {depths[min_index]}",
         xy=(times[min_index], errors[min_index]),
-        xytext=(times[min_index] + 5, errors[min_index] + 5),
+        xytext=(20, 20),
         textcoords="offset points",
         arrowprops={"arrowstyle": "->", "color": "black"},
         fontsize=10,
@@ -757,7 +758,7 @@ if __name__ == "__main__":
         description="Run the Automatic Lashing Platform example.",
         epilog=(
             """Try this example for learning with best-known parameters: """
-            """uv run run.py --time_window_end 5 """
+            """uv run run.py --time_window_end 4 """
             """--apply_derivative --filter \'"activeValveCount > 0"\' """
             """--tree_min_impurity_decrease 0.1 --tree_max_depth 10 """
             """--plot_data --plot_distributed --plots 9 """
