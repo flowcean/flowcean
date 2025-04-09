@@ -361,7 +361,7 @@ def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
             plt.ylabel("Accumulator Pressure [bar]")
             plt.plot(time_ms, pressure_data)
 
-            # table with parameter
+            # table with parameter of the simulation run
             parameter_table = [
                 ["Container Weight", f"{weight:.2f} tons"],
                 ["Active Valves", f"{active_valves}"],
@@ -369,7 +369,10 @@ def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
                 ["Initial Pressure", f"{initial_pressure:.2f} bar"],
             ]
             ax = plt.gca()
-            table = Table(ax, loc="lower right")
+            if args.apply_derivative:
+                table = Table(ax, loc="upper right")
+            else:
+                table = Table(ax, loc="lower right")
             for i, row in enumerate(parameter_table):
                 for j, cell in enumerate(row):
                     table_cell = table.add_cell(
@@ -385,6 +388,43 @@ def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
                     table_cell.set_facecolor("white")
             ax.add_table(table)
 
+            #### could be deprecated ####
+            # special annotation for the application of the model
+            if (
+                args.filter == '"activeValveCount > 0"'
+                and args.training_data == "alp_sim_data.parquet"
+                and args.apply_derivative
+                and index == "18"
+            ):
+                plt.plot(170, pressure_data[17], "ro", markersize=6)
+                plt.annotate(
+                    "≤ 0.07\n⇒ False",
+                    xy=(170, pressure_data[17]),
+                    xytext=(20, 20),
+                    textcoords="offset points",
+                    arrowprops={"arrowstyle": "->", "color": "black"},
+                    fontsize=10,
+                    bbox={
+                        "boxstyle": "round,pad=0.3",
+                        "edgecolor": "gray",
+                        "facecolor": "white",
+                    },
+                )
+                plt.plot(350, pressure_data[35], "ro", markersize=6)
+                plt.annotate(
+                    "≤ 0.09\n⇒ True",
+                    xy=(350, pressure_data[35]),
+                    xytext=(20, 20),
+                    textcoords="offset points",
+                    arrowprops={"arrowstyle": "->", "color": "black"},
+                    fontsize=10,
+                    bbox={
+                        "boxstyle": "round,pad=0.3",
+                        "edgecolor": "gray",
+                        "facecolor": "white",
+                    },
+                )
+            #############################
             plt.grid(visible=True, linestyle="--", alpha=0.5)
         plt.show()
 
