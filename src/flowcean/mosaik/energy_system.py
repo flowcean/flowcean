@@ -4,7 +4,7 @@ import queue
 import threading
 from collections.abc import Callable, Sequence
 from copy import copy
-from typing import Any, Type
+from typing import Any
 
 import midas.api
 import mosaik
@@ -180,7 +180,7 @@ def create_interface(
         uid = str(interf["uid"])
         space = str(interf["space"])
         value = interf.get("value", None)
-        if not isinstance(value, (int, float)):
+        if not isinstance(value, int | float):
             value = None
         vmin, vmax, shape, dtype = read_min_and_max_from_space(space)
 

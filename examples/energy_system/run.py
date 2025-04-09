@@ -82,12 +82,12 @@ class MyModel(Model):
                 new_actuator.value_min is not None
                 and isinstance(
                     new_actuator.value_min,
-                    (int, float, np.ndarray),
+                    int | float | np.ndarray,
                 )
                 and new_actuator.value_max is not None
                 and isinstance(
                     new_actuator.value_max,
-                    (int, float, np.ndarray),
+                    int | float | np.ndarray,
                 )
                 and not isinstance(actuator.value, str)
             ):
