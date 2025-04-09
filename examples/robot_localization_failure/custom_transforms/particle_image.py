@@ -71,14 +71,12 @@ class ParticleImage(Transform):
             np.ndarray: A generated grayscale image (single channel)
             as a NumPy array.
         """
-        # Unpack the robot pose.
         x_r, y_r, theta_r = robot_pose
 
         # Compute rotation offset so that robot x-axis points upward.
         # Desired offset = π/2 - theta_r.
         offset = math.pi / 2 - theta_r
 
-        # Extract particle positions.
         particles = particle_data["value"]["particles"]
         particle_xs = []
         particle_ys = []
@@ -99,7 +97,6 @@ class ParticleImage(Transform):
             rotated_particle_xs.append(new_x)
             rotated_particle_ys.append(new_y)
 
-        # Define the region boundaries.
         half_region = self.crop_region_size / 2.0
         x_min, x_max = -half_region, half_region
         y_min, y_max = -half_region, half_region
@@ -132,9 +129,6 @@ class ParticleImage(Transform):
                 255,
                 dtype=np.uint8,
             )
-
-        # flip horizontally to match display.
-        gray_image = gray_image[:, ::-1]
 
         return gray_image[:, ::-1]
 
@@ -170,7 +164,7 @@ class ParticleImage(Transform):
             orientation_y = pose_data["pose.pose.orientation.y"]
             orientation_z = pose_data["pose.pose.orientation.z"]
             orientation_w = pose_data["pose.pose.orientation.w"]
-            # Use scipy's Rotation to extract yaw (theta) in radians.
+            # Extract yaw (theta) in radians.
             theta = Rotation.from_quat(
                 [orientation_x, orientation_y, orientation_z, orientation_w],
             ).as_euler("xyz", degrees=False)[2]
@@ -205,7 +199,6 @@ class ParticleImage(Transform):
                 (x_robot, y_robot, theta_robot),
             )
 
-            # Save image to disk if enabled.
             if self.save_images:
                 filename = (
                     Path(output_dir)
