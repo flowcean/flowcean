@@ -105,13 +105,17 @@ class ParticleImage(Transform):
         x_edges = np.linspace(x_min, x_max, self.image_pixel_size + 1)
         y_edges = np.linspace(y_min, y_max, self.image_pixel_size + 1)
 
+        bins_x = len(x_edges) - 1  # Number of bins for x-axis
+        bins_y = len(y_edges) - 1  # Number of bins for y-axis
+
         # Create a 2D histogram of the transformed particles.
         x_array = np.array(rotated_particle_xs)
         y_array = np.array(rotated_particle_ys)
         histogram, _, _ = np.histogram2d(
             x_array,
             y_array,
-            bins=(np.asarray(x_edges), np.asarray(y_edges)),
+            bins=(bins_x, bins_y),
+            range=[[x_min, x_max], [y_min, y_max]],
         )
 
         # Rotate histogram 90° clockwise so robot's forward axis point upward.
