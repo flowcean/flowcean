@@ -18,11 +18,13 @@ from custom_transforms.map_image import MapImage
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_image import ScanImage
 from custom_transforms.scan_map import ScanMap
+from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
 
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.polars.environments.train_test_split import TrainTestSplit
+from flowcean.polars.transforms.drop import Drop
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
@@ -127,7 +129,7 @@ def main() -> None:
     transform = (
         TimeWindow(  # full data set exceeds memory
             time_start=1729516868012553090,
-            time_end=1729516968012553090,
+            time_end=1729516888012553090,
         )
         # timestamps need to be aligned before applying LocalizationStatus
         | MatchSamplingRate(
@@ -157,19 +159,19 @@ def main() -> None:
             image_pixel_size=IMAGE_PIXEL_SIZE,
             save_images=True,
         )
-        # | Drop(
-        #     features=[
-        #         "/particle_cloud",
-        #         "/map",
-        #         "/scan",
-        #         "/delocalizations",
-        #         "/momo/pose",
-        #         "/amcl_pose",
-        #         "/position_error",
-        #         "/heading_error",
-        #         "scan_points",
-        #     ],
-        # )
+        | Drop(
+            features=[
+                "/particle_cloud",
+                "/map",
+                "/scan",
+                "/delocalizations",
+                "/momo/pose",
+                "/amcl_pose",
+                "/position_error",
+                "/heading_error",
+                "scan_points",
+            ],
+        )
         # | MatchSamplingRate(  # for all features
         #     reference_feature_name="point_distance",
         # )
@@ -180,6 +182,10 @@ def main() -> None:
 
     print(f"transformed data: {transformed_data.collect()}")
     collected_transformed_data = transformed_data.collect()
+
+    zoh_transform = ZeroOrderHoldMatching()
+    zoh_data = zoh_transform(collected_transformed_data.lazy())
+    print(f"zoh data: {zoh_data.collect()}")
     return
     # loop over all columns and unnest them
     for column in collected_transformed_data.columns:
