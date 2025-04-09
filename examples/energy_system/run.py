@@ -4,6 +4,7 @@ from copy import copy
 from statistics import mean, median, stdev
 from typing import Any
 
+import numpy as np
 from typing_extensions import Self, override
 
 import flowcean.cli
@@ -15,7 +16,7 @@ from flowcean.mosaik.energy_system import (
     Observation,
 )
 
-LOG = logging.getLogger("energy_example")
+logger = logging.getLogger("energy_example")
 
 
 def run_active() -> None:
@@ -50,10 +51,10 @@ def run_active() -> None:
 
         print({r.uid: r.value for r in observation.rewards})
     except Exception:
-        LOG.exception("Error during environment operation.")
+        logger.exception("Error during environment operation.")
 
     environment.shutdown()
-    LOG.info("Finished!")
+    logger.info("Finished!")
 
 
 class MyModel(Model):
@@ -161,43 +162,45 @@ def filter_observation(
 
 
 def calculate_reward(sensors: list) -> list:
-    vspace = "Box(low=0.0, high=1.5, shape=(), dtype=np.float32)"
-    lspace = "Box(low=0.0, high=200.0, shape=(), dtype=np.float32)"
-
     voltages = sorted([s.value for s in sensors if "vm_pu" in s.uid])
     voltage_rewards = [
         Interface(
             value=voltages[0],
             uid="vm_pu-min",
-            space=vspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=1.5,
         ),
         Interface(
             value=voltages[-1],
             uid="vm_pu-max",
-            space=vspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=1.5,
         ),
         Interface(
             value=median(voltages),
             uid="vm_pu-median",
-            space=vspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=1.5,
         ),
         Interface(
             value=mean(voltages),
             uid="vm_pu-mean",
-            space=vspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=1.5,
         ),
         Interface(
             value=stdev(voltages),
             uid="vm_pu-std",
-            space=vspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=1.5,
         ),
@@ -211,35 +214,40 @@ def calculate_reward(sensors: list) -> list:
         Interface(
             value=lineloads[0],
             uid="lineload-min",
-            space=lspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=200.0,
         ),
         Interface(
             value=lineloads[-1],
             uid="lineload-max",
-            space=lspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=200.0,
         ),
         Interface(
             value=median(lineloads),
             uid="lineload-median",
-            space=lspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=200.0,
         ),
         Interface(
             value=mean(lineloads),
             uid="lineload-mean",
-            space=lspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=200.0,
         ),
         Interface(
             value=stdev(lineloads),
             uid="lineload-std",
-            space=lspace,
+            shape=(),
+            dtype=np.float32,
             value_min=0.0,
             value_max=200.0,
         ),

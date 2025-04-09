@@ -8,7 +8,7 @@ from mosaik.exceptions import SimulationError
 from mosaik_api_v3.types import Meta
 from typing_extensions import override
 
-LOG = logging.getLogger("flowcean.mosaik.simulator")
+logger = logging.getLogger("flowcean.mosaik.simulator")
 META = {
     "type": "time-based",
     "models": {
@@ -138,7 +138,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         ctr = 0
         while True:
             try:
-                LOG.debug("Trying to fill sensors ... (ctr=%d)", ctr)
+                logger.debug("Trying to fill sensors ... (ctr=%d)", ctr)
                 self.sensor_queue.put(
                     (False, self.sensors),
                     block=True,
@@ -162,7 +162,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         ctr = 0
         while True:
             try:
-                LOG.debug("Trying to get actuators ... (ctr=%d)", ctr)
+                logger.debug("Trying to get actuators ... (ctr=%d)", ctr)
                 actuator_data = self.actuator_queue.get(block=True, timeout=3)
                 break
             except queue.Empty:
@@ -183,7 +183,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
     @override
     def finalize(self) -> None:
         try:
-            LOG.debug("Final attempt to fill sensor queue")
+            logger.debug("Final attempt to fill sensor queue")
             self.sensor_queue.put(
                 (True, self.sensors),
                 block=True,
@@ -191,6 +191,6 @@ class SyncSimulator(mosaik_api_v3.Simulator):
             )
         except queue.Full:
             msg = "Sensor queue is full. No final data available."
-            LOG.exception(msg)
+            logger.exception(msg)
 
         self.sync_finished.set()

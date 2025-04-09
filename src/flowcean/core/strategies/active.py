@@ -1,4 +1,9 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any, SupportsFloat
+
+import numpy as np
+from numpy.typing import NDArray
 
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.learner import ActiveLearner
@@ -20,11 +25,12 @@ class Interface:
         value_max: Simple representation of the maximum value
     """
 
-    value: int | float | str | None
     uid: str
-    space: str
-    value_min: int | float | None
-    value_max: int | float | None
+    value: int | float | NDArray[Any] | None
+    value_min: SupportsFloat | NDArray[Any] | list[Any]
+    value_max: SupportsFloat | NDArray[Any] | list[Any]
+    shape: Sequence[int]
+    dtype: type[np.floating[Any]] | type[np.integer[Any]]
 
 
 @dataclass

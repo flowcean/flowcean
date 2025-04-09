@@ -1,11 +1,14 @@
+import ast
 import logging
 import queue
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from copy import copy
+from typing import Any
 
 import midas.api
 import mosaik
+import numpy as np
 import polars as pl
 from midas.scenario.scenario import Scenario
 from midas_store.meta import META
@@ -22,7 +25,7 @@ from flowcean.core.strategies.active import (
 )
 from flowcean.polars import DataFrame
 
-LOG = logging.getLogger("energysystem")
+logger = logging.getLogger("energysystem")
 
 
 class EnergySystemActive(ActiveEnvironment):
@@ -105,22 +108,22 @@ class EnergySystemActive(ActiveEnvironment):
 
     @override
     def _observe(self) -> Observation:
-        LOG.info("Returning current observation ...")
+        logger.info("Returning current observation ...")
         return self.observation
 
     @override
     def step(self) -> None:
-        LOG.info("Stepping environment with current settings ...")
+        logger.info("Stepping environment with current settings ...")
         self.actuator_queue.put(self._data_for_simulation, block=True)
-        LOG.debug("Placed actuators. Now waiting for sensors ...")
+        logger.debug("Placed actuators. Now waiting for sensors ...")
         done = self._get_data_from_sensor_queue()
 
         self._data_for_simulation = {}
 
         if done:
-            LOG.info("Environment has finished. Terminating.")
+            logger.info("Environment has finished. Terminating.")
             raise StopLearning
-        LOG.info("Step complete!")
+        logger.info("Step complete!")
 
     def _get_data_from_sensor_queue(self) -> bool:
         done, self._data_from_simulation = self.sensor_queue.get(
@@ -145,18 +148,18 @@ class EnergySystemActive(ActiveEnvironment):
 
     @override
     def act(self, action: Action) -> None:
-        LOG.info("Preparing actions on the environment ...")
+        logger.info("Preparing actions on the environment ...")
         self._data_for_simulation = {}
         if action.actuators is not None:
             for actuator in action.actuators:
                 self._data_for_simulation[actuator.uid] = actuator.value
         else:
-            LOG.info("Simulation will step without setpoints")
+            logger.info("Simulation will step without setpoints")
         # self._data_received = False
         self.action = action
 
     def shutdown(self) -> None:
-        LOG.info("Initiating shutdown procedure ...")
+        logger.info("Initiating shutdown procedure ...")
         if not self.sync_finished.is_set():
             self.sync_terminate.set()
         if not self.sim_finished.is_set():
@@ -164,7 +167,7 @@ class EnergySystemActive(ActiveEnvironment):
         self.task.join()
         del self.sensor_queue
         del self.actuator_queue
-        LOG.info("Shutdown complete!")
+        logger.info("Shutdown complete!")
 
 
 def create_interface(
@@ -175,22 +178,32 @@ def create_interface(
     for interf in defs:
         uid = str(interf["uid"])
         space = str(interf["space"])
-        value_min, value_max = read_min_and_max_from_space(space)
+        vmin, vmax, shape, dtype = read_min_and_max_from_space(space)
 
         object_map[uid] = Interface(
             value=interf.get("value", None),
             uid=uid,
-            space=space,
-            value_min=value_min,
-            value_max=value_max,
+            shape=shape,
+            value_min=vmin,
+            value_max=vmax,
+            dtype=dtype,
         )
     return object_map
 
 
-def read_min_and_max_from_space(space: str) -> tuple[int | float, int | float]:
+def read_min_and_max_from_space(
+    space: str,
+) -> tuple[
+    int | float,
+    int | float,
+    Sequence[int],
+    type[np.floating[Any]] | type[np.integer[Any]],
+]:
     parts = space.split(",")
     value_min = 0
     value_max = 0
+    shape = ()
+    dtype = float
 
     for part in parts:
         if "low" in part:
@@ -211,8 +224,14 @@ def read_min_and_max_from_space(space: str) -> tuple[int | float, int | float]:
             except (TypeError, ValueError):
                 pass
             value_max = float(val)
-
-    return value_min, value_max
+        if "shape" in part:
+            _, val = part.split("=")
+            shape = ast.literal_eval(val)
+            continue
+        if "dtype" in part:
+            _, val = part.split("=")
+            dtype = val
+    return value_min, value_max, shape, dtype
 
 
 def start_mosaik(
@@ -234,10 +253,14 @@ def start_mosaik(
     world = scenario.world
     if not isinstance(world, mosaik.World):
         sim_finished.set()
-        LOG.error("Malformed world object: %s (%s)", str(world), type(world))
+        logger.error(
+            "Malformed world object: %s (%s)",
+            str(world),
+            type(world),
+        )
         return
 
-    LOG.debug("Starting SyncSimulator ...")
+    logger.debug("Starting SyncSimulator ...")
     sync_sim = world.start(
         "SyncSimulator",
         step_size=scenario.base.step_size,
@@ -249,19 +272,19 @@ def start_mosaik(
         end=scenario.base.end,
     )
 
-    LOG.debug("Connecting sensor entities ...")
+    logger.debug("Connecting sensor entities ...")
     for uid in sensors:
         sid, eid, attr = uid.split(".")
         full_id = f"{sid}.{eid}"
         sensor_model = sync_sim.Sensor(uid=uid)
-        LOG.debug("Connecting %s ...", full_id)
+        logger.debug("Connecting %s ...", full_id)
         world.connect(
             scenario.entities[full_id],
             sensor_model,
             (attr, "reading"),
         )
 
-    LOG.debug("Connecting actuator entities ...")
+    logger.debug("Connecting actuator entities ...")
     for uid in actuators:
         sid, eid, attr = uid.split(".")
         full_id = f"{sid}.{eid}"
@@ -274,14 +297,14 @@ def start_mosaik(
             initial_data={"setpoint": None},
         )
 
-    LOG.info("Starting mosaik run ...")
+    logger.info("Starting mosaik run ...")
     try:
         world.run(until=scenario.base.end)
     except SimulationError:
-        LOG.info("Simulation finished non-regular.")
+        logger.info("Simulation finished non-regular.")
         world.shutdown()
     else:
-        LOG.info("Simulation finished.")
+        logger.info("Simulation finished.")
     sim_finished.set()
 
 

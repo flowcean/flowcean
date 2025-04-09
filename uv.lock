@@ -1567,7 +1567,7 @@ base = [
 
 [[package]]
 name = "midas-powergrid"
-version = "2.0.5"
+version = "2.0.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "joblib" },
@@ -1581,9 +1581,9 @@ dependencies = [
     { name = "pandapower" },
     { name = "simbench" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/8c/5384c2c9793342a4ffa3b5de308cc55388d804dca7873ba02f4a0cd01566/midas_powergrid-2.0.5.tar.gz", hash = "sha256:f092e3286ded4779bfe835706475810e4b9341dc2a9a203048eda72c5b2e36b5", size = 42072 }
+sdist = { url = "https://files.pythonhosted.org/packages/08/0a/acd3fabac22213eda352c9f64288303ece04dbbc3da3b0941416426106d9/midas_powergrid-2.0.7.tar.gz", hash = "sha256:5747e7c64f9b590629dc4247f758361c0cc69410f574beada72b2c3bfbbbc9f7", size = 42138 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/fc/6b518c51305c449abf6b5c24bbc4549fea7e013a7e91f6bb524320035eea/midas_powergrid-2.0.5-py3-none-any.whl", hash = "sha256:564218061ddf61cd175059e3376386f9fe31aaab8da314dc66205b44c65bf0b6", size = 48317 },
+    { url = "https://files.pythonhosted.org/packages/bb/6a/72f81f0cd49d8343151c83851094f72d518dbcf56df98bea6075e1b9349f/midas_powergrid-2.0.7-py3-none-any.whl", hash = "sha256:a770bf0184448060229c0d4ee64e20cd1ea42051f6dfec6463ab1a281b7e8697", size = 48443 },
 ]
 
 [[package]]
