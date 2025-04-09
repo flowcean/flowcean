@@ -13,11 +13,9 @@
 from pathlib import Path
 
 import polars as pl
-from custom_transforms.map_image import MapImage
 from custom_transforms.particle_image import ParticleImage
 
 import flowcean.cli
-from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
 
@@ -116,19 +114,16 @@ def main() -> None:
     # Load data with caching (set force_refresh=True to always reload)
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    transform = (
-        TimeWindow(
-            features=["/particle_cloud", "/amcl_pose", "/map"],
-            time_start=1729516868012553090,
-            time_end=1729516908012553090,
-        )
-        | ParticleImage(
-            particle_topic="/particle_cloud",
-            amcl_pose_topic="/amcl_pose",
-            crop_region_size=20.0,
-            image_pixel_size=200,
-            save_images=True,
-        )
+    transform = TimeWindow(
+        features=["/particle_cloud", "/amcl_pose", "/map"],
+        time_start=1729516868012553090,
+        time_end=1729516908012553090,
+    ) | ParticleImage(
+        particle_topic="/particle_cloud",
+        amcl_pose_topic="/amcl_pose",
+        crop_region_size=20.0,
+        image_pixel_size=200,
+        save_images=True,
     )
 
     transformed_data = transform(data)
