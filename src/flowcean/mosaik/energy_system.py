@@ -4,7 +4,7 @@ import queue
 import threading
 from collections.abc import Callable, Sequence
 from copy import copy
-from typing import Any
+from typing import Any, Type
 
 import midas.api
 import mosaik
@@ -14,6 +14,7 @@ from midas.scenario.scenario import Scenario
 from midas_store.meta import META
 from mosaik.exceptions import SimulationError
 from numpy.random import RandomState
+from numpy.typing import NDArray
 from typing_extensions import override
 
 from flowcean.core.environment.active import ActiveEnvironment
@@ -29,8 +30,8 @@ logger = logging.getLogger("energysystem")
 
 
 class EnergySystemActive(ActiveEnvironment):
-    _data_for_simulation: dict[str, int | float | str | None]
-    _data_from_simulation: dict[str, int | float | str | None]
+    _data_for_simulation: dict[str, int | float | NDArray[Any] | None]
+    _data_from_simulation: dict[str, int | float | NDArray[Any] | None]
     reward: Callable
 
     def __init__(
@@ -178,10 +179,13 @@ def create_interface(
     for interf in defs:
         uid = str(interf["uid"])
         space = str(interf["space"])
+        value = interf.get("value", None)
+        if not isinstance(value, (int, float)):
+            value = None
         vmin, vmax, shape, dtype = read_min_and_max_from_space(space)
 
         object_map[uid] = Interface(
-            value=interf.get("value", None),
+            value=value,
             uid=uid,
             shape=shape,
             value_min=vmin,
@@ -203,7 +207,7 @@ def read_min_and_max_from_space(
     value_min = 0
     value_max = 0
     shape = ()
-    dtype = float
+    dtype = np.float32
 
     for part in parts:
         if "low" in part:
@@ -230,7 +234,7 @@ def read_min_and_max_from_space(
             continue
         if "dtype" in part:
             _, val = part.split("=")
-            dtype = val
+            dtype = get_numpy_type(val)
     return value_min, value_max, shape, dtype
 
 
@@ -314,7 +318,8 @@ def default_reward(sensors: list[Interface]) -> list[Interface]:
         Interface(
             value=0,
             uid="default",
-            space="",
+            shape=(),
+            dtype=np.int32,
             value_max=1,
             value_min=0,
         ),
@@ -359,3 +364,9 @@ class EnergySystemOffline(DataFrame):
         midas.api.run(scenario_name, params, scenario_file)
         data = pl.scan_csv(data_file)
         super().__init__(data)
+
+
+def get_numpy_type(
+    type_str: str,
+) -> type[np.floating[Any]] | type[np.integer[Any]]:
+    return getattr(np, type_str.split(".")[1])
