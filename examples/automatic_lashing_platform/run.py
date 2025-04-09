@@ -463,11 +463,24 @@ def train_nodes_vs_error(
 
     # plot errors
     plt.figure()
-    plt.plot(node_numbers, errors, "b-", linewidth=2)
-    plt.plot(node_numbers[min_index], errors[min_index], "ro", markersize=8)
-    plt.xlabel("Number of Leaf-Nodes")
+    plt.plot(node_numbers, errors)
+    plt.plot(node_numbers[min_index], errors[min_index], "ro", markersize=6)
+    plt.annotate(
+        f"({node_numbers[min_index]}, {errors[min_index]:.2f})",
+        xy=(node_numbers[min_index], errors[min_index]),
+        xytext=(node_numbers[min_index] + 5, errors[min_index] + 5),
+        textcoords="offset points",
+        arrowprops={"arrowstyle": "->", "color": "black"},
+        fontsize=10,
+        bbox={
+            "boxstyle": "round,pad=0.3",
+            "edgecolor": "gray",
+            "facecolor": "white",
+        },
+    )
+    plt.xlabel("Number of Leaf Nodes")
     plt.ylabel("Mean Squared Error")
-    plt.title("Leaf-Nodes vs. Error")
+    plt.title("Leaf Nodes vs. Error")
     plt.grid(visible=True, linestyle="--", alpha=0.7)
     plt.show()
 
@@ -535,11 +548,24 @@ def train_depth_vs_error(
     )
 
     # plot errors
-    plt.plot(depth_numbers, errors, "b-", linewidth=2)
-    plt.plot(depth_numbers[min_index], errors[min_index], "ro", markersize=8)
-    plt.xlabel("Tree-Depth")
+    plt.plot(depth_numbers, errors)
+    plt.plot(depth_numbers[min_index], errors[min_index], "ro", markersize=6)
+    plt.annotate(
+        f"({depth_numbers[min_index]}, {errors[min_index]:.2f})",
+        xy=(depth_numbers[min_index], errors[min_index]),
+        xytext=(depth_numbers[min_index] + 5, errors[min_index] + 5),
+        textcoords="offset points",
+        arrowprops={"arrowstyle": "->", "color": "black"},
+        fontsize=10,
+        bbox={
+            "boxstyle": "round,pad=0.3",
+            "edgecolor": "gray",
+            "facecolor": "white",
+        },
+    )
+    plt.xlabel("Depth of the Tree")
     plt.ylabel("Mean Squared Error")
-    plt.title("Tree-Depth vs. Error")
+    plt.title("Tree Depth vs. Error")
     plt.grid(visible=True, linestyle="--", alpha=0.7)
     plt.show()
 
@@ -615,8 +641,21 @@ def train_time_vs_error(
 
     # plot errors
     plt.figure()
-    plt.plot(times, errors, "b-", linewidth=2)
-    plt.plot(times[min_index], errors[min_index], "ro", markersize=8)
+    plt.plot(times, errors)
+    plt.plot(times[min_index], errors[min_index], "ro", markersize=6)
+    plt.annotate(
+        f"({times[min_index]:.2f}, {errors[min_index]:.2f})",
+        xy=(times[min_index], errors[min_index]),
+        xytext=(times[min_index] + 5, errors[min_index] + 5),
+        textcoords="offset points",
+        arrowprops={"arrowstyle": "->", "color": "black"},
+        fontsize=10,
+        bbox={
+            "boxstyle": "round,pad=0.3",
+            "edgecolor": "gray",
+            "facecolor": "white",
+        },
+    )
     plt.xlabel("Time to Train (s)")
     plt.ylabel("Mean Squared Error")
     plt.title("Training Duration vs. Error")
