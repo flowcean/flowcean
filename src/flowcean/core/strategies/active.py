@@ -18,11 +18,12 @@ class Interface:
     either an input, an output, or the reward of the environment.
 
     Args:
-        value: The value of the feature
         uid: Identifier of the feature inside the environment
-        space: String-representation of the value space
+        value: The value of the feature
         value_min: Simple representation of the minimum value
         value_max: Simple representation of the maximum value
+        shape: Tuple representing the shape of the value
+        dtype: Data type of this interface, e.g., numpy.float32
     """
 
     uid: str
