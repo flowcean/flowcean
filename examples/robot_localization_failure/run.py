@@ -10,25 +10,14 @@
 # flowcean = { path = "../../", editable = true }
 # ///
 
-from datetime import datetime, timezone
 from pathlib import Path
 
-import numpy as np
 import polars as pl
-from custom_transforms.localization_status import LocalizationStatus
-from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
-from custom_transforms.scan_map import ScanMap
+from custom_transforms.particle_image import ParticleImage
 
 import flowcean.cli
-from flowcean.core.strategies.offline import evaluate_offline, learn_offline
-from flowcean.polars.environments.dataframe import DataFrame
-from flowcean.polars.environments.train_test_split import TrainTestSplit
-from flowcean.polars.transforms.drop import Drop
-from flowcean.polars.transforms.explode import Explode
-from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
+from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
-from flowcean.sklearn.adaboost_classifier import AdaBoost
-from flowcean.sklearn.metrics.classification import Accuracy
 
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
@@ -125,92 +114,21 @@ def main() -> None:
     # Load data with caching (set force_refresh=True to always reload)
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    transform = (
-        # TimeWindow(  # full data set exceeds memory
-        #     time_start=1729516868012553090,
-        #     time_end=1729516968012553090,
-        # )
-        # # timestamps need to be aligned before applying LocalizationStatus
-        # |
-        MatchSamplingRate(
-            reference_feature_name="/heading_error",
-            feature_interpolation_map={"/position_error": "linear"},
-        )
-        | LocalizationStatus(
-            position_error_feature_name="/position_error",
-            heading_error_feature_name="/heading_error",
-        )
-        | ParticleCloudStatistics()
-        | ScanMap()
-        | Drop(
-            features=[
-                "/particle_cloud",
-                "/map",
-                "/scan",
-                "/delocalizations",
-                "/momo/pose",
-                "/amcl_pose",
-                "/position_error",
-                "/heading_error",
-                "scan_points",
-            ],
-        )
-        | MatchSamplingRate(  # for all features
-            reference_feature_name="point_distance",
-        )
-        | Explode()  # explode all columns
+    transform = TimeWindow(
+        features=["/particle_cloud", "/amcl_pose", "/map"],
+        time_start=1729516868012553090,
+        time_end=1729516908012553090,
+    ) | ParticleImage(
+        particle_topic="/particle_cloud",
+        amcl_pose_topic="/amcl_pose",
+        crop_region_size=20.0,
+        image_pixel_size=200,
+        save_images=True,
     )
+
     transformed_data = transform(data)
 
-    print(f"transformed data: {transformed_data.collect()}")
-    collected_transformed_data = transformed_data.collect()
-    # loop over all columns and unnest them
-    for column in collected_transformed_data.columns:
-        collected_transformed_data = collected_transformed_data.unnest(
-            column,
-        ).rename({"time": column + "_time", "value": column + "_value"})
-        # drop time columns
-        collected_transformed_data = collected_transformed_data.drop(
-            column + "_time",
-        )
-    # convert dict to value for isDelocalized_value
-    collected_transformed_data = collected_transformed_data.unnest(
-        "isDelocalized_value",
-    ).rename(
-        {"data": "isDelocalized_value"},
-    )
-    print(f"collected transformed data: {collected_transformed_data}")
-    data_environment = DataFrame(data=collected_transformed_data)
-    train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
-        data_environment,
-    )
-    # inputs are all features except "isDelocalized_value"
-    inputs = collected_transformed_data.columns
-    print(f"inputs: {inputs}")
-    inputs.remove("isDelocalized_value")
-    outputs = ["isDelocalized_value"]
-    learners = [
-        AdaBoost(),
-    ]
-    for learner in learners:
-        t_start = datetime.now(tz=timezone.utc)
-        model = learn_offline(
-            train,
-            learner,
-            inputs,
-            outputs,
-        )
-        delta_t = datetime.now(tz=timezone.utc) - t_start
-        print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
-
-        report = evaluate_offline(
-            model,
-            test,
-            inputs,
-            outputs,
-            [Accuracy()],
-        )
-        print(report)
+    print(transformed_data.collect())
 
 
 if __name__ == "__main__":
