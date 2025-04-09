@@ -116,8 +116,6 @@ def main() -> None:
     # Load data with caching (set force_refresh=True to always reload)
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    print(data.collect())
-
     transform = (
         TimeWindow(
             features=["/particle_cloud", "/amcl_pose", "/map"],
@@ -127,19 +125,6 @@ def main() -> None:
         | ParticleImage(
             particle_topic="/particle_cloud",
             amcl_pose_topic="/amcl_pose",
-            crop_region_size=20.0,
-            image_pixel_size=200,
-            save_images=True,
-        )
-        | MatchSamplingRate(
-            reference_feature_name="/particle_cloud",
-            feature_interpolation_map={
-                "/map": "nearest",
-            },
-        )
-        | MapImage(
-            map_topic="/map",
-            sensor_pose_topic="/amcl_pose",
             crop_region_size=20.0,
             image_pixel_size=200,
             save_images=True,
