@@ -8,20 +8,34 @@ logger = logging.getLogger(__name__)
 
 
 class ZeroOrderHoldMatching(Transform):
+    def __init__(self, output_shift_seconds: float = 0.0) -> None:
+        """Initialize the transform.
+
+        Args:
+            output_shift_seconds: Time in seconds to shift the output column
+                (isDelocalized_value) back in time. Positive values shift it
+                later in time (inputs predict future).
+                Default is 0 (no shift).
+        """
+        self.output_shift_seconds = output_shift_seconds
+
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Applying ZeroOrderHoldMatching transform")
 
         collected_data = data.collect()
-        # Check if there's more than one row
         if collected_data.height == 0:
             return collected_data.lazy()  # Return empty if no data
 
-        # List to store processed DataFrames for each recording
-        processed_recordings = []
+        # Convert shift from seconds to nanoseconds
+        shift_ns = int(
+            self.output_shift_seconds * 1_000_000_000,
+        )  # seconds to nanoseconds
 
-        # Step 1: Process each row (recording) separately
-        for row_idx, row in enumerate(collected_data.rows(named=True)):
-            # Convert the row to a single-row DataFrame
+        # List to store processed DataFrames for each slice
+        processed_slices = []
+
+        # Step 1: Process each row (slice) separately
+        for slice_idx, row in enumerate(collected_data.rows(named=True)):
             row_df = pl.DataFrame([row])
 
             # Explode each column and extract time and value
@@ -44,7 +58,7 @@ class ZeroOrderHoldMatching(Transform):
                 )
                 exploded_dfs.append(exploded_df)
 
-            # Step 2: Get all unique timestamps for this recording
+            # Step 2: Get all unique timestamps for this slice
             all_times = (
                 pl.concat(
                     [
@@ -58,22 +72,57 @@ class ZeroOrderHoldMatching(Transform):
 
             # Step 3: Forward fill values to match all timestamps
             result = all_times
+            output_df = None  # To store the shifted isDelocalized_value
             for exploded_df in exploded_dfs:
-                col_name = [c for c in exploded_df.columns if c != "time"][0]
+                col_name = next(c for c in exploded_df.columns if c != "time")
+                if col_name == "isDelocalized_value" and shift_ns != 0:
+                    # Shift output forward by subtracting shift_ns from time
+                    output_df = exploded_df.with_columns(
+                        (pl.col("time") - shift_ns).alias("shifted_time"),
+                    ).select(
+                        pl.col("shifted_time").alias("time"),
+                        pl.col("isDelocalized_value"),
+                    )
+                else:
+                    # Join and forward fill other columns
+                    result = result.join(
+                        exploded_df,
+                        on="time",
+                        how="left",
+                    ).with_columns(
+                        pl.col(col_name).forward_fill(),
+                    )
+
+            # Step 4: Handle the shifted output column
+            if output_df is not None:
                 result = result.join(
-                    exploded_df,
+                    output_df,
                     on="time",
                     how="left",
                 ).with_columns(
-                    pl.col(col_name).forward_fill(),
+                    pl.col("isDelocalized_value").forward_fill(),
+                )
+            elif "isDelocalized_value" not in result.columns:
+                # If no shift and column wasn't processed, join it unshifted
+                output_df = next(
+                    df
+                    for df in exploded_dfs
+                    if "isDelocalized_value" in df.columns
+                )
+                result = result.join(
+                    output_df,
+                    on="time",
+                    how="left",
+                ).with_columns(
+                    pl.col("isDelocalized_value").forward_fill(),
                 )
 
-            # Add a recording identifier
+            # Add slice identifier
             result = result.with_columns(
-                pl.lit(row_idx).alias("recording_id"),
+                pl.lit(slice_idx).alias("slice_id"),
             )
-            processed_recordings.append(result)
+            processed_slices.append(result)
 
-        # Step 4: Concatenate all processed recordings vertically
-        final_df = pl.concat(processed_recordings)
+        # Step 5: Concatenate all processed slices vertically
+        final_df = pl.concat(processed_slices)
         return final_df.lazy()
