@@ -156,6 +156,8 @@ class ScaleToRange(Transform, FitOnce):
 
 
 def _as_float(value: PythonLiteral | None) -> float:
+    if isinstance(value, pl.Series):
+        value = value.item()
     if value is None:
         message = "value cannot be None"
         raise ValueError(message)
