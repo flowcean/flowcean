@@ -6,6 +6,7 @@ from typing_extensions import override
 
 from flowcean.core.data import Data
 from flowcean.core.environment.observable import (
+    HashingNotSupportedError,
     TransformedObservable,
 )
 from flowcean.core.environment.stepable import Finished, Stepable
@@ -25,6 +26,10 @@ class IncrementalEnvironment(
     def __init__(self) -> None:
         """Initialize the incremental environment."""
         super().__init__()
+
+    @override
+    def hash(self) -> bytes:
+        raise HashingNotSupportedError
 
     @override
     def __iter__(self) -> Iterator[Data]:
