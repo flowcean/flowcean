@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import polars as pl
 from scipy.special import kl_div
+from tqdm import tqdm
 
 from flowcean.core.transform import Transform
 
@@ -36,12 +37,14 @@ class KLDivergence(Transform):
         └────────────────────┴───────────────────────┴──────────────────────┘
 
     After applying KLDivergence with target "isDelocalized", features
-    {"cog_max_distance": 0.01, "cog_mean_dist": 0.01}, and top_n (e.g., top_n=3),
-    the output DataFrame will include an additional column "kl_divergence" that looks like:
+    {"cog_max_distance": 0.01, "cog_mean_dist": 0.01},
+    and top_n (e.g., top_n=3),
+    the output DataFrame will include an additional column "kl_divergence"
+    that looks like:
 
         ┌────────────────────────────────────────────────────┐
         │               kl_divergence                        │
-        │                struct[?]                           │
+        │                struct[2]                           │
         ├────────────────────────────────────────────────────┤
         │ { "cog_max_distance": 18.5, "cog_mean_dist": 3.2 } │
         └────────────────────────────────────────────────────┘
@@ -58,12 +61,16 @@ class KLDivergence(Transform):
         """Initialize the KLDivergence transform.
 
         Args:
-            target_column: Name of the column used for grouping (e.g., "isDelocalized").
-                           Each element is expected to be a struct with a key "value" containing a dict with key "data".
-            features: A dictionary mapping feature column names to their desired bin sizes.
-                      For example: {"cog_max_distance": 0.01, "cog_mean_dist": 0.01}
-            top_n: Optional; if provided, only keep the top n features (by KL divergence) in the output.
-                   Features not selected will be dropped from the DataFrame.
+            target_column: Name of the column used for grouping
+                (e.g., "isDelocalized").
+                Each element is expected to be a struct with a key "value"
+                containing a dict with key "data".
+            features: A dictionary mapping feature column names to
+                their desired bin sizes.
+                For example: {"cog_max_distance": 0.01, "cog_mean_dist": 0.01}
+            top_n: Optional; if provided, only keep the top n features
+                (by KL divergence) in the output.
+                Features not selected will be dropped from the DataFrame.
         """
         self.target_column = target_column
         self.features = features
@@ -78,9 +85,11 @@ class KLDivergence(Transform):
         """Compute the KL divergence for a feature using a fixed bin size.
 
         Args:
-            statuses: List of status values (0 for localized, 1 for delocalized).
+            statuses: List of status values
+            (0 for localized, 1 for delocalized).
             feature_values: List of numeric values for the feature.
-            bin_size: Fixed bin size (e.g. 0.01 for 1 cm, 1 for percent or degrees).
+            bin_size: Fixed bin size
+            (e.g. 0.01 for 1 cm, 1 for percent or degrees).
 
         Returns:
             The KL divergence value as a float.
@@ -124,13 +133,17 @@ class KLDivergence(Transform):
         row = df[0]
 
         # Extract statuses from the target column.
-        # Each element is expected to be a dict: {"time": ..., "value": {"data": 0 or 1}}
+        # Each element is expected to be a dict:
+        # {"time": ..., "value": {"data": 0 or 1}}
         target_list = row[self.target_column]
         statuses = [item["value"]["data"] for item in target_list[0]]
 
         # Compute KL divergence for each feature.
         kl_dict = {}
-        for feature, bin_size in self.features.items():
+        for feature, bin_size in tqdm(
+            self.features.items(),
+            desc="Computing KL divergence",
+        ):
             if feature not in row:
                 continue
             feature_list = row[feature]
@@ -153,9 +166,9 @@ class KLDivergence(Transform):
             )
             kl_dict = dict(sorted_items[: self.top_n])
 
-            # Also drop from the DataFrame feature columns not in the top_n selection.
+            # drop from the DataFrame feature columns not in top_n selection.
             features_to_drop = [
-                f for f in self.features.keys() if f not in kl_dict
+                f for f in self.features if f not in kl_dict
             ]
             df = df.drop(features_to_drop)
 
