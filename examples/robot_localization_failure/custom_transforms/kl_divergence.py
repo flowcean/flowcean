@@ -38,7 +38,7 @@ class KLDivergence(Transform):
 
     After applying KLDivergence with target "isDelocalized", features
     {"cog_max_distance": 0.01, "cog_mean_dist": 0.01},
-    and top_n (e.g., top_n=3),
+    and top_n (e.g., top_n=2),
     the output DataFrame will include an additional column "kl_divergence"
     that looks like:
 
@@ -56,7 +56,7 @@ class KLDivergence(Transform):
         self,
         target_column: str,
         features: dict[str, float],
-        top_n: int = None,
+        top_n: int = -1,
     ) -> None:
         """Initialize the KLDivergence transform.
 
@@ -158,7 +158,7 @@ class KLDivergence(Transform):
         logger.debug("KL divergence computation completed: %s", kl_dict)
 
         # If top_n is specified, sort and keep only the top n features.
-        if self.top_n is not None:
+        if self.top_n != -1:
             sorted_items = sorted(
                 kl_dict.items(),
                 key=lambda x: x[1],

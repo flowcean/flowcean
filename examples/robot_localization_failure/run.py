@@ -12,12 +12,10 @@
 
 from pathlib import Path
 
-import numpy as np
 import polars as pl
 from custom_transforms.kl_divergence import KLDivergence
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
-from scipy.special import kl_div
 
 import flowcean.cli
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
@@ -30,15 +28,31 @@ CACHE_FILE = WS / "cached_ros_data.parquet"
 ROS_BAG_PATH = WS / "rec_20241021_152106"
 
 
-def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
-    """Load data from a ROS bag or cache."""
-    if CACHE_FILE.exists() and not force_refresh:
+def load_or_cache_ros_data(
+    *,
+    force_refresh: bool = False,
+) -> pl.LazyFrame:
+    """Load data from ROS bag or cache, with optional refresh.
+
+    Args:
+        force_refresh: If True, reload from ROS bag and overwrite cache.
+
+    Returns:
+        LazyFrame containing the ROS bag data.
+    """
+    # Check if cache exists and is valid
+    cache_exists = CACHE_FILE.exists()
+
+    if cache_exists and not force_refresh:
+        # Load cached data
         print("Loading data from cache.")
         data = pl.read_parquet(CACHE_FILE).lazy()
+        # Optional: Validate cache (e.g., check metadata or row count)
         if data.collect().height > 0:
             return data
         print("Cache invalid; reloading from ROS bag.")
 
+    # Load from ROS bag
     print("Loading data from ROS bag.")
     environment = RosbagLoader(
         path=ROS_BAG_PATH,
@@ -88,6 +102,8 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
         ],
     )
     data = environment.observe()
+
+    # Cache the data
     print("Caching data to Parquet.")
     collected_data = data.collect()
     collected_data.write_parquet(CACHE_FILE, compression="snappy")
@@ -95,49 +111,10 @@ def load_or_cache_ros_data(*, force_refresh: bool = False) -> pl.LazyFrame:
     return data
 
 
-def compute_kl_divergence(
-    statuses: list[int],
-    feature_values: list[float],
-    bin_size: float = 0.01,
-) -> float:
-    """Compute the KL divergence for a given feature's values using a fixed bin size."""
-    values_localized = [
-        v for s, v in zip(statuses, feature_values, strict=False) if s == 0
-    ]
-    values_delocalized = [
-        v for s, v in zip(statuses, feature_values, strict=False) if s == 1
-    ]
-
-    if not values_localized or not values_delocalized:
-        return float("nan")
-
-    min_val = min(feature_values)
-    max_val = max(feature_values)
-    bins = np.arange(min_val, max_val + bin_size, bin_size)
-    if len(bins) < 2:
-        return 0.0
-
-    counts_localized, _ = np.histogram(values_localized, bins=bins)
-    counts_delocalized, _ = np.histogram(values_delocalized, bins=bins)
-
-    p_localized = counts_localized.astype(float) / counts_localized.sum()
-    q_delocalized = counts_delocalized.astype(float) / counts_delocalized.sum()
-
-    epsilon = 1e-10
-    p_localized += epsilon
-    q_delocalized += epsilon
-    p_localized /= p_localized.sum()
-    q_delocalized /= q_delocalized.sum()
-
-    kl_elements = kl_div(p_localized, q_delocalized)
-    return kl_elements.sum()
-
-
-def main():
+def main()-> None:
     flowcean.cli.initialize_logging()
     data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
 
-    # Transformation pipeline
     transform = (
         Select(["/position_error", "/heading_error", "/particle_cloud"])
         | MatchSamplingRate(
@@ -179,7 +156,7 @@ def main():
             },
             top_n=2,
         )
-    )
+     )
 
     transformed_data = transform(data)
 
