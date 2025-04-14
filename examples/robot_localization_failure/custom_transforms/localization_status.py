@@ -71,6 +71,14 @@ class LocalizationStatus(Transform):
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Computing localization status")
 
+        # Define the expected return type for the 'isDelocalized' column
+        return_dtype = pl.List(pl.Struct([
+            pl.Field("time", pl.Int64),
+            pl.Field("value", pl.Struct([
+                pl.Field("data", pl.Int32),
+            ])),
+        ]))
+
         data = data.with_columns(
             pl.struct(
                 [
@@ -83,6 +91,7 @@ class LocalizationStatus(Transform):
                     s[self.position_error_feature_name],
                     s[self.heading_error_feature_name],
                 ),
+                return_dtype=return_dtype,
             )
             .alias("isDelocalized"),
         )
