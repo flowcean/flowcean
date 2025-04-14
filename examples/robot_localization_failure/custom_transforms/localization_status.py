@@ -91,7 +91,9 @@ class LocalizationStatus(Transform):
                     s[self.position_error_feature_name],
                     s[self.heading_error_feature_name],
                 ),
+
                 return_dtype=return_dtype,
+
             )
             .alias("isDelocalized"),
         )
