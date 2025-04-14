@@ -44,7 +44,7 @@ class KLDivergence(Transform):
 
         ┌────────────────────────────────────────────────────┐
         │               kl_divergence                        │
-        │                struct[2]                           │
+        │                struct[top_n]                       │
         ├────────────────────────────────────────────────────┤
         │ { "cog_max_distance": 18.5, "cog_mean_dist": 3.2 } │
         └────────────────────────────────────────────────────┘
@@ -107,7 +107,7 @@ class KLDivergence(Transform):
         min_val = min(feature_values)
         max_val = max(feature_values)
         bins = np.arange(min_val, max_val + bin_size, bin_size)
-        if len(bins) < 2:
+        if len(bins) < 2:  # noqa: PLR2004
             return 0.0
 
         counts_localized, _ = np.histogram(values_localized, bins=bins)
