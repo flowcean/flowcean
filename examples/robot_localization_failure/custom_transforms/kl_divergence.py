@@ -50,6 +50,10 @@ class KLDivergence(Transform):
         └────────────────────────────────────────────────────┘
 
     and the feature columns not among the top_n will be dropped.
+
+    Note: The timestamps of the features must be aligned with the target column
+        (e.g., "isDelocalized") using the MatchSamplingRate transform
+        before applying this transform.
     """
 
     def __init__(
