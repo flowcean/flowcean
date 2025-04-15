@@ -27,11 +27,12 @@ RAYCAST_TOLERANCE = 0.1  # meters
 RAYCAST_EPSILON = 0.05  # meters
 
 
-class ScanMap(Transform):
+class ScanMapStatistics(Transform):
     """Computes features based on comparing a Laserscan to an occupancy map."""
 
     def __init__(
         self,
+        occupancy_map: dict,
         scan_topic: str = "/scan",
         sensor_pose_topic: str = "/amcl_pose",
         *,
@@ -40,6 +41,7 @@ class ScanMap(Transform):
         """Initializes the ScanMap transform.
 
         Args:
+            occupancy_map: The occupancy map data.
             scan_topic: The name of the topic providing LaserScan data.
             sensor_pose_topic: The name of the topic providing the pose of the
                 sensor.
@@ -50,6 +52,7 @@ class ScanMap(Transform):
         self.sensor_pose_topic = sensor_pose_topic
         self.plotting = plotting
         self.precomputed_map_lines: dict[str, np.ndarray] | None = None
+        self.occupancy_map = occupancy_map
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
@@ -58,17 +61,16 @@ class ScanMap(Transform):
 
         # Precompute map line parameters once
         if self.precomputed_map_lines is None:
-            self._precompute_map_line_parameters(collected_data)
+            self._precompute_map_line_parameters()
 
         collected_data = self.derive_scan_point_features(collected_data)
         return collected_data.lazy()
 
-    def _precompute_map_line_parameters(self, data: pl.DataFrame) -> dict:
+    def _precompute_map_line_parameters(self) -> dict:
         """Precompute all map-related line parameters once."""
-        map_entry = data["/map"].to_list()[0][0]["value"]
-        map_array = map_entry["data"]
-        width = map_entry["info.width"]
-        height = map_entry["info.height"]
+        map_array = self.occupancy_map["data"]
+        width = self.occupancy_map["info.width"]
+        height = self.occupancy_map["info.height"]
         occupancy_grid = np.array(map_array).reshape((height, width))
         detected_lines = self.detect_lines_from_grid(occupancy_grid)
         lines_np = (
@@ -376,7 +378,7 @@ class ScanMap(Transform):
         # Convert infinite lines into finite ones
         detected_lines = []
         if lines is not None:
-            for line in lines:
+            for line in tqdm(lines, desc="Detecting lines"):
                 x1, y1, x2, y2 = line.ravel()
                 detected_lines.append((x1, y1, x2, y2))
 
@@ -517,13 +519,12 @@ class ScanMap(Transform):
 
     def derive_scan_point_features(self, data: pl.DataFrame) -> pl.DataFrame:  # noqa: PLR0915 this cannot be split
         """Derive features based on the scan points and the occupancy map."""
-        map_entry = data["/map"].to_list()[0][0]["value"]
-        map_array = map_entry["data"]
-        width = map_entry["info.width"]
-        height = map_entry["info.height"]
-        map_resolution = map_entry["info.resolution"]
-        map_origin_x = map_entry["info.origin.position.x"]
-        map_origin_y = map_entry["info.origin.position.y"]
+        map_array = self.occupancy_map["data"]
+        width = self.occupancy_map["info.width"]
+        height = self.occupancy_map["info.height"]
+        map_resolution = self.occupancy_map["info.resolution"]
+        map_origin_x = self.occupancy_map["info.origin.position.x"]
+        map_origin_y = self.occupancy_map["info.origin.position.y"]
         occupancy_grid = np.array(map_array).reshape((height, width))
         detected_lines = self.detect_lines_from_grid(
             occupancy_grid,
@@ -534,7 +535,7 @@ class ScanMap(Transform):
             max_line_gap=10,
         )
         if self.precomputed_map_lines is None:
-            lines_np = self._precompute_map_line_parameters(data)["lines_np"]
+            lines_np = self._precompute_map_line_parameters()["lines_np"]
         else:
             lines_np = self.precomputed_map_lines["lines_np"]
         complete_scan_timeseries = data[self.scan_topic].to_list()[0]
@@ -557,7 +558,7 @@ class ScanMap(Transform):
         for i, scan in enumerate(
             tqdm(
                 scan_points_timeseries,
-                desc="Computing features",
+                desc="Computing scan-map features",
             ),
         ):
             scan_pts = np.array(scan["value"])
