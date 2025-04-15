@@ -23,6 +23,7 @@ from custom_transforms.particle_cloud_image import ParticleCloudImage
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_image import ScanImage
 from custom_transforms.scan_map_statistics import ScanMapStatistics
+from custom_transforms.shift_timestamps import ShiftTimestamps
 from custom_transforms.slice_time_series import SliceTimeSeries
 from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
 
@@ -161,6 +162,10 @@ def main() -> None:
                 heading_error_feature_name="/heading_error",
                 position_threshold=0.8,
                 heading_threshold=0.8,
+            )
+            | ShiftTimestamps(
+                shift=0.0,
+                feature="/isDelocalized",
             )
             | MapImage(
                 occupancy_map=occupancy_map,
