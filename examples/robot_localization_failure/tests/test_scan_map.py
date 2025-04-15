@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import polars as pl
-from custom_transforms.scan_map import ScanMap
+from custom_transforms.scan_map_statistics import ScanMapStatistics
 
 
 class TestScanMap(unittest.TestCase):
     def setUp(self) -> None:
         # Initialize ScanMap with default parameters
-        self.scan_map = ScanMap(
+        self.scan_map = ScanMapStatistics(
             scan_topic="/scan",
             sensor_pose_topic="/amcl_pose",
             plotting=False,
@@ -113,11 +113,13 @@ class TestScanMap(unittest.TestCase):
             "line_length_squared": np.array([2, 2], dtype=np.float32),
         }
         points = np.array([[0.5, 0.5], [2.5, 2.5]], dtype=np.float32)
-        distances, indices = ScanMap._vectorized_distance_calculation(  # noqa: SLF001
-            points,
-            self.scan_map.precomputed_map_lines["line_start"],
-            self.scan_map.precomputed_map_lines["line_vec"],
-            self.scan_map.precomputed_map_lines["line_length_squared"],
+        distances, indices = (
+            ScanMapStatistics._vectorized_distance_calculation(  # noqa: SLF001
+                points,
+                self.scan_map.precomputed_map_lines["line_start"],
+                self.scan_map.precomputed_map_lines["line_vec"],
+                self.scan_map.precomputed_map_lines["line_length_squared"],
+            )
         )
         assert abs(distances[0] - 0.0) < 1e-5  # Regular assert with tolerance
         assert indices[0] == 0
@@ -141,7 +143,7 @@ class TestScanMap(unittest.TestCase):
         sensor_x, sensor_y = 0.0, 0.0
         angles = np.array([0, np.pi / 2], dtype=np.float32)
         grid = np.array([[0, 100], [0, 0]], dtype=np.uint8)
-        ranges = ScanMap._batched_raycast(  # noqa: SLF001
+        ranges = ScanMapStatistics._batched_raycast(  # noqa: SLF001
             sensor_x,
             sensor_y,
             angles,

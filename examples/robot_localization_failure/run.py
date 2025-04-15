@@ -19,9 +19,11 @@ from architectures.cnn import CNN
 from custom_transforms.images_to_tensor import ImagesToTensor
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.map_image import MapImage
+from custom_transforms.particle_cloud_image import ParticleCloudImage
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_image import ScanImage
-from custom_transforms.scan_map import ScanMap
+from custom_transforms.scan_map_statistics import ScanMapStatistics
+from custom_transforms.slice_time_series import SliceTimeSeries
 from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
 
 import flowcean.cli
@@ -30,18 +32,19 @@ from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.drop import Drop
 from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
-from flowcean.polars.transforms.time_window import TimeWindow
 from flowcean.ros.rosbag import RosbagLoader
 from flowcean.sklearn.adaboost_classifier import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
 from flowcean.torch.lightning_learner import LightningLearner
 
+SAVE_IMAGES = True
 USE_ROSBAG = False
 WS = Path(__file__).resolve().parent
 CACHE_FILE = WS / "cached_ros_data.parquet"
-ROS_BAG_PATH = WS / "rec_20241021_152106"
-IMAGE_PIXEL_SIZE = 10
-CROP_REGION_SIZE = 20.0
+ROSBAG_NAME = "rec_20241021_152106"
+ROS_BAG_PATH = WS / ROSBAG_NAME
+IMAGE_PIXEL_SIZE = 100
+CROP_REGION_SIZE = 10.0
 
 
 def load_or_cache_ros_data(
@@ -62,7 +65,7 @@ def load_or_cache_ros_data(
     if cache_exists and not force_refresh:
         # Load cached data
         print("Loading data from cache.")
-        data = pl.read_parquet(CACHE_FILE).lazy()
+        data = pl.scan_parquet(CACHE_FILE)
         # Optional: Validate cache (e.g., check metadata or row count)
         if data.collect().height > 0:
             return data
@@ -130,81 +133,113 @@ def load_or_cache_ros_data(
 def main() -> None:
     flowcean.cli.initialize_logging()
 
-    # Load data with caching (set force_refresh=True to always reload)
-    data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
+    dataframes = []
+    transformed_cache_exists = (WS / "transformed_data.parquet").exists()
+    if transformed_cache_exists:
+        print("Transformed data already exists. Loading from cache.")
+        data = pl.scan_parquet(WS / "transformed_data.parquet")
+    else:
+        # Load data with caching (set force_refresh=True to always reload)
+        data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
+        print("Data loaded.")
 
-    transform = (
-        TimeWindow(
-            time_start=1729516868012553090,
-            time_end=1729516908012553090,
+        # extract map because it is only published once
+        collected_data = data.collect()
+        occupancy_map = collected_data[0, "/map"][1]["value"]
+
+        transform = (
+            Drop(features=["/map"])
+            | MatchSamplingRate(
+                reference_feature_name="/amcl_pose",
+                feature_interpolation_map={
+                    "/heading_error": "linear",
+                    "/position_error": "linear",
+                },
+            )
+            | LocalizationStatus(
+                position_error_feature_name="/position_error",
+                heading_error_feature_name="/heading_error",
+                position_threshold=0.8,
+                heading_threshold=0.8,
+            )
+            | MapImage(
+                occupancy_map=occupancy_map,
+                crop_region_size=CROP_REGION_SIZE,
+                image_pixel_size=IMAGE_PIXEL_SIZE,
+                save_images=SAVE_IMAGES,
+            )
+            | ParticleCloudStatistics()
+            | ScanMapStatistics(occupancy_map=occupancy_map)
+            | ScanImage(
+                crop_region_size=CROP_REGION_SIZE,
+                image_pixel_size=IMAGE_PIXEL_SIZE,
+                save_images=SAVE_IMAGES,
+            )
+            | ParticleCloudImage(
+                crop_region_size=CROP_REGION_SIZE,
+                image_pixel_size=IMAGE_PIXEL_SIZE,
+                save_images=SAVE_IMAGES,
+            )
+            | Drop(
+                features=[
+                    "/particle_cloud",
+                    "/scan",
+                    "/momo/pose",
+                    "/amcl_pose",
+                    "/position_error",
+                    "/heading_error",
+                    "scan_points",
+                    "scan_points_sensor",
+                ],
+            )
+            | SliceTimeSeries(
+                counter_column="/delocalizations",
+                deadzone=500_000_000,  # 0.5 seconds
+            )
+            | Drop(features=["/delocalizations"])
         )
-        # timestamps need to be aligned before applying LocalizationStatus
-        | MatchSamplingRate(
-            reference_feature_name="/heading_error",
-            feature_interpolation_map={"/position_error": "linear"},
+        # Apply the transform to the data
+        transformed_data = transform.apply(data.lazy())
+        print("Data after transformations:")
+        # Use streaming to save memory
+        output_file = WS / "transformed_data.parquet"
+        transformed_data.sink_parquet(
+            output_file,
+            compression="snappy",
+            row_group_size=1,
         )
-        | LocalizationStatus(
-            position_error_feature_name="/position_error",
-            heading_error_feature_name="/heading_error",
-            position_threshold=0.8,
-            heading_threshold=0.8,
-        )
-        | ParticleCloudStatistics()
-        | ScanMap()  # calculates the scan_points which are used for ScanImage
-        | MatchSamplingRate(
-            reference_feature_name="/particle_cloud",
-            feature_interpolation_map={
-                "/map": "nearest",
-                "scan_points_sensor": "nearest",
-            },
-        )
-        | ScanImage(
-            crop_region_size=CROP_REGION_SIZE,
-            image_pixel_size=IMAGE_PIXEL_SIZE,
-            save_images=True,
-        )
-        | MapImage(
-            crop_region_size=CROP_REGION_SIZE,
-            image_pixel_size=IMAGE_PIXEL_SIZE,
-            save_images=True,
-        )
-        | Drop(
-            features=[
-                "/particle_cloud",
-                "/map",
-                "/scan",
-                "/delocalizations",
-                "/momo/pose",
-                "/amcl_pose",
-                "/position_error",
-                "/heading_error",
-                "scan_points",
-            ],
-        )
-        # | MatchSamplingRate(  # for all features
-        #     reference_feature_name="point_distance",
-        # )
-        # | Explode()  # explode all columns
+        print(f"Transformed data streamed to {output_file}")
+
+    print("Applying ZeroOrderHoldMatching...")
+    # Collect each row and apply ZeroOrderHoldMatching
+    # to each slice separately
+    zoh_transform = ZeroOrderHoldMatching(
+        output_shift_seconds=0.0,
     )
-
-    transformed_data = transform(data)
-
-    print(f"transformed data: {transformed_data.collect()}")
-    collected_transformed_data = transformed_data.collect()
-
-    zoh_transform = ZeroOrderHoldMatching(output_shift_seconds=0.0)
-    zoh_data = zoh_transform(collected_transformed_data.lazy())
-
-    print(f"zoh data: {zoh_data.collect()}")
-    print(f"zoh data drop nulls: {zoh_data.drop_nulls().collect()}")
-    to_tensor = ImagesToTensor(
-        image_columns=["/scan_image_value", "/map_image_value"],
+    transformed_dataframes = []
+    for row_df in dataframes:
+        # Apply the transform to each slice
+        transformed_slice = zoh_transform.apply(row_df.lazy())
+        transformed_dataframes.append(transformed_slice)
+    # Concatenate all transformed slices
+    transformed_data = pl.concat(transformed_dataframes).lazy()
+    print("Data after ZeroOrderHoldMatching:")
+    print(transformed_data.collect())
+    tensor_transform = ImagesToTensor(
+        image_columns=[
+            "/scan_image_value",
+            "/map_image_value",
+            "/particle_cloud_image_value",
+        ],
         height=IMAGE_PIXEL_SIZE,
         width=IMAGE_PIXEL_SIZE,
     )
-    zoh_data = to_tensor(zoh_data.drop_nulls())
-    zoh_data = (
-        zoh_data.with_columns(
+    transformed_data = tensor_transform.apply(transformed_data)
+    print("Data after ImagesToTensor:")
+    print(transformed_data.collect())
+
+    transformed_data = (
+        transformed_data.with_columns(
             pl.col("isDelocalized_value")
             .struct[0]
             .alias("isDelocalized_value_scalar"),
@@ -212,11 +247,7 @@ def main() -> None:
         .drop("isDelocalized_value")
         .rename({"isDelocalized_value_scalar": "isDelocalized_value"})
     )
-    collected_transformed_data = zoh_data.collect()
-    collected_transformed_data = zoh_data.collect()
-    print(f"zoh data with tensor: {zoh_data.collect()}")
-    # loop over all columns and unnest them
-    collected_transformed_data = zoh_data.collect()
+    collected_transformed_data = transformed_data.collect()
     data_environment = DataFrame(data=collected_transformed_data)
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(
         data_environment,
