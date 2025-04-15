@@ -61,7 +61,7 @@ class ScanImage(Transform):
 
         image_records = []
         for message_number, message_data in enumerate(
-            tqdm(scan_data, desc="Generating images"),
+            tqdm(scan_data, desc="Generating scan images"),
         ):
             timestamp = message_data["time"]
             logger.debug(
