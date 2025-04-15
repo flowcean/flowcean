@@ -15,14 +15,14 @@ class ImagesToTensor(Transform):
         height: int,
         width: int,
         tensor_column: str = "image_tensor",
-    ):
-        """Initialize the transform to convert image columns to a PyTorch tensor and append as a new column.
+    ) -> None:
+        """Initialize the transform to convert image columns to a tensor.
 
         Args:
-            image_columns: List of column names containing grayscale image data (e.g., ["/scan_image_value", "/map_image_value"]).
+            image_columns: List of column names containing grayscale images.
             height: Height of each image in pixels.
             width: Width of each image in pixels.
-            tensor_column: Name of the new column to store the tensor (default: "image_tensor").
+            tensor_column: Name of the new column to store the tensor.
         """
         self.image_columns = image_columns
         self.height = height
@@ -44,7 +44,8 @@ class ImagesToTensor(Transform):
             if col not in collected_data.columns
         ]
         if missing_cols:
-            raise ValueError(f"Columns {missing_cols} not found in DataFrame")
+            error_msg = f"Columns {missing_cols} not found in DataFrame"
+            raise ValueError(error_msg)
 
         # Ensure each image has the correct 2D shape
         for col in self.image_columns:
@@ -53,20 +54,26 @@ class ImagesToTensor(Transform):
             sample = sample_series[0].to_list()  # Get the first element
             # Check if sample is a list and has the correct dimensions
             if not isinstance(sample, list):
-                raise ValueError(
-                    f"Image in column '{col}' is not a list, got {type(sample)}",
+                error_msg = (
+                    f"Image in column '{col}' is not a list, got "
+                    f"{type(sample)}"
                 )
+                raise TypeError(error_msg)
             if len(sample) != self.height:
-                raise ValueError(
-                    f"Image in column '{col}' has height {len(sample)}, expected {self.height}",
+                error_msg = (
+                    f"Image in column '{col}' has height {len(sample)}, "
+                    f"expected {self.height}"
                 )
+                raise ValueError(error_msg)
             if not all(
                 isinstance(row, list) and len(row) == self.width
                 for row in sample
             ):
-                raise ValueError(
-                    f"Image in column '{col}' has inconsistent width, expected {self.width}",
+                error_msg = (
+                    f"Image in column '{col}' has inconsistent width, "
+                    f"expected {self.width}"
                 )
+                raise ValueError(error_msg)
 
         # Process each row to create tensors
         tensor_list = []
@@ -78,9 +85,12 @@ class ImagesToTensor(Transform):
                 # Convert to numpy array directly
                 image_np = np.array(image_2d, dtype=np.uint8)
                 if image_np.shape != (self.height, self.width):
-                    raise ValueError(
+                    error_msg = (
                         f"Image in column '{col}' has shape {image_np.shape}, "
                         f"expected ({self.height}, {self.width})",
+                    )
+                    raise ValueError(
+                        error_msg,
                     )
                 images.append(image_np)
 
@@ -95,9 +105,11 @@ class ImagesToTensor(Transform):
             )
             tensor_list.append(multi_channel_image)
 
+
+
         # Add the tensor list as a new column with Object dtype
         result_df = collected_data.with_columns(
             pl.Series(self.tensor_column, tensor_list, dtype=pl.Object),
-        )
+        ).drop_nulls()
 
         return result_df.lazy()

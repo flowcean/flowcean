@@ -1,4 +1,3 @@
-import bisect
 import logging
 from pathlib import Path
 
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 class MapImage(Transform):
     """Generates grayscale images from an occupancy map in the robot's frame.
 
-    Transforms the occupancy map from `/map` into the robot's sensor coordinate
+    Transforms the occupancy map into the robot's sensor coordinate
     frame using the latest pose from `/amcl_pose`, with sensor x (forward)
     pointing upwards and sensor y (left) pointing rightward to match RViz.
     The map is cropped around the robot and resized to the specified pixel
@@ -27,7 +26,7 @@ class MapImage(Transform):
 
     def __init__(
         self,
-        map_topic: str = "/map",
+        occupancy_map: dict,
         sensor_pose_topic: str = "/amcl_pose",
         crop_region_size: float = 15.0,
         image_pixel_size: int = 300,
@@ -37,13 +36,13 @@ class MapImage(Transform):
         """Initialize the MapImage transform.
 
         Args:
-            map_topic: Topic name for the occupancy map data.
+            occupancy_map: Occupancy map data.
             sensor_pose_topic: Topic name for the sensor pose data.
             crop_region_size: Side length of square region for cropping (m).
             image_pixel_size: Output image resolution (both width and height).
             save_images: Whether to save images to disk.
         """
-        self.map_topic = map_topic
+        self.occupancy_map = occupancy_map
         self.sensor_pose_topic = sensor_pose_topic
         self.crop_region_size = crop_region_size
         self.image_pixel_size = image_pixel_size
@@ -124,7 +123,7 @@ class MapImage(Transform):
         )
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        """Apply the transformation to generate map images.
+        """Apply the transformation to generate map images for each robot pose.
 
         Args:
             data: LazyFrame containing map and pose data.
@@ -132,7 +131,7 @@ class MapImage(Transform):
         Returns:
             pl.LazyFrame: Updated DataFrame with map images.
         """
-        logger.debug("Processing map data to generate images.")
+        logger.debug("Processing pose data to generate images.")
 
         region_str = str(self.crop_region_size).replace(".", "_")
         output_dir = f"map_images_{region_str}m_{self.image_pixel_size}p"
@@ -140,7 +139,6 @@ class MapImage(Transform):
             Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         collected_data = data.collect()
-        map_data = collected_data[0, self.map_topic]
         amcl_pose_data = collected_data[0, self.sensor_pose_topic]
 
         # Extract pose data
@@ -157,34 +155,26 @@ class MapImage(Transform):
                 [orientation_x, orientation_y, orientation_z, orientation_w],
             ).as_euler("xyz", degrees=False)[2]
             pose_entries.append((entry["time"], x, y, theta))
-        pose_times = [entry[0] for entry in pose_entries]
 
-        # Process each map message
+        # Process each pose message
         image_records = []
-        for message_number, message_data in enumerate(
-            tqdm(map_data, desc="Generating map images"),
+        for message_number, (
+            timestamp,
+            x_robot,
+            y_robot,
+            theta_robot,
+        ) in enumerate(
+            tqdm(pose_entries, desc="Generating map images"),
         ):
-            timestamp = message_data["time"]
             logger.debug(
-                "Processing map message %d at time %s",
+                "Processing pose message %d at time %s",
                 message_number,
                 timestamp,
             )
 
-            # Find the latest pose before the map timestamp
-            idx = bisect.bisect_right(pose_times, timestamp) - 1
-            if idx < 0:
-                logger.warning(
-                    "No pose found before timestamp %s, skipping.",
-                    timestamp,
-                )
-                continue
-            _, x_robot, y_robot, theta_robot = pose_entries[idx]
-
             # Transform map to sensor frame
-            map_value = message_data["value"]
             transformed_image = self._transform_map_to_sensor_frame(
-                map_value,
+                self.occupancy_map,
                 (x_robot, y_robot, theta_robot),
             )
 

@@ -125,4 +125,4 @@ class ZeroOrderHoldMatching(Transform):
 
         # Step 5: Concatenate all processed slices vertically
         final_df = pl.concat(processed_slices)
-        return final_df.lazy()
+        return final_df.drop_nulls().lazy()
