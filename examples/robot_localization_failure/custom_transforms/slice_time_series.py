@@ -14,7 +14,7 @@ class SliceTimeSeries(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        # extract the counter column
+        # Extract the counter column to identify increase events
         collected_data = data.collect()
         extracted_counter = (
             collected_data.select([self.counter_column])
@@ -32,33 +32,42 @@ class SliceTimeSeries(Transform):
         increases = df_with_diff.filter(pl.col("value_diff") > 0)
         # Get timestamps of the increases
         timestamp_of_increases = increases["time"].to_list()
+
+        # Define time intervals for slicing
         intervals = []
         for i in range(len(timestamp_of_increases) - 1):
-            # Get the start and end timestamps for each slice
-            if i == 0:  # First slice
+            if i == 0:
                 # Start 10 seconds before the first increase
                 start = timestamp_of_increases[i] - 10_000_000_000
                 end = timestamp_of_increases[i]
             else:
                 start = timestamp_of_increases[i] + self.deadzone
                 end = timestamp_of_increases[i + 1]
-
             intervals.append((start, end))
+
+        # Create a LazyFrame for each interval
         dataframes = []
         for start, end in intervals:
+            filtered_data = data
             for feature in data.collect_schema().names():
-                time_expression = (
-                    pl.element().struct.field("time").cast(pl.Float64)
-                )
-                data.with_columns(
+                # Filter the list of structs in each feature column
+                filtered_data = filtered_data.with_columns(
                     pl.col(feature).list.eval(
                         pl.element().filter(
-                            time_expression.ge(start).and_(
-                                time_expression.le(end),
-                            ),
+                            pl.element()
+                            .struct.field("time")
+                            .cast(pl.Float64)
+                            .is_between(start, end),
                         ),
                     ),
                 )
-            dataframes.append(data)
-        #  Stack all the dataframes
-        return pl.concat(dataframes)
+            # Add a column to identify the slice (optional, for debugging)
+            filtered_data = filtered_data.with_columns(
+                slice_id=pl.lit(f"{start}_{end}"),
+            )
+            dataframes.append(filtered_data)
+
+        # Concatenate all filtered LazyFrames
+        if not dataframes:
+            return pl.LazyFrame()
+        return pl.concat(dataframes, how="vertical")
