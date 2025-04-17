@@ -23,7 +23,6 @@ class SliceTimeSeries(Transform):
             .unnest(["value"])
             .rename({"data": "value"})
         )
-        print(f"Counter column: {extracted_counter}")
 
         # Compute the difference in the value column
         df_with_diff = extracted_counter.with_columns(
