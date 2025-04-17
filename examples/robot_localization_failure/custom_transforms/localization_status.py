@@ -8,7 +8,6 @@ from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
-
 class LocalizationStatus(Transform):
     """Checks if the robot is delocalized based on position and heading errors.
 
@@ -46,9 +45,6 @@ class LocalizationStatus(Transform):
 
         Args:
             data: Input LazyFrame containing pose timeseries data.
-
-        Returns:
-            data: LazyFrame with added columns: position_error, heading_error, isDelocalized.
         """
         logger.debug("Computing localization status")
         topics = [self.ground_truth_pose, self.estimated_pose]
@@ -114,33 +110,33 @@ class LocalizationStatus(Transform):
                 | (pl.col("heading_error") > self.heading_threshold)
             ).alias("isDelocalized"),
         )
-        # put isDelocalized, position_error and heading_error back into the original format
-        localization_status_features = {
+        # Define localization metrics with time column
+        localization_metrics = {
             "isDelocalized": "time",
             "position_error": "time",
             "heading_error": "time",
         }
-        if isinstance(localization_status_features, str):
+        if isinstance(localization_metrics, str):
             time_feature = {
-                feature_name: localization_status_features
+                feature_name: localization_metrics
                 for feature_name in data.collect_schema().names()
-                if feature_name != localization_status_features
+                if feature_name != localization_metrics
             }
         else:
-            time_feature = localization_status_features
+            time_feature = localization_metrics
 
+        # Nest metrics with value as a struct to mimic curly braces
         nested = delocalized.select(
             [
                 pl.struct(
                     pl.col(t_feature).alias("time"),
-                    pl.col(value_feature).alias("value"),
+                    pl.struct(pl.col(value_feature).alias(value_feature)).alias("value"),
                 )
                 .implode()
                 .alias(value_feature)
                 for value_feature, t_feature in time_feature.items()
             ],
         )
-
         return pl.concat([data, nested], how="horizontal")
 
     def _explode_timeseries(

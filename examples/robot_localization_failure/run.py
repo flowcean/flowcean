@@ -21,6 +21,7 @@ from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.shift_timestamps import ShiftTimestamps
 from custom_transforms.slice_time_series import SliceTimeSeries
 
+from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
@@ -157,19 +158,18 @@ def main() -> None:
             )
             | SliceTimeSeries(
                 counter_column="/delocalizations",
-                deadzone=500_000_000,  # 0.5 seconds
+                deadzone=50_000_000,  # 0.05 seconds
             )
             | Drop(["position_error", "heading_error", "/delocalizations"])
-            # | ZeroOrderHoldMatching(
-            #     topics=[
-            #         "/scan",
-            #         "/particle_cloud",
-            #         "/momo/pose",
-            #         "/amcl_pose",
-            #         "isDelocalized",
-            #     ],
-            # )
-            # | Drop(features=["/delocalizations"])
+            | ZeroOrderHoldMatching(
+                topics=[
+                    "/scan",
+                    "/particle_cloud",
+                    "/momo/pose",
+                    "/amcl_pose",
+                    "isDelocalized",
+                ],
+            )
             # | MapImage(
             #     occupancy_map=occupancy_map,
             #     crop_region_size=CROP_REGION_SIZE,
