@@ -18,21 +18,14 @@ import polars as pl
 from architectures.cnn import CNN
 from custom_transforms.images_to_tensor import ImagesToTensor
 from custom_transforms.localization_status import LocalizationStatus
-from custom_transforms.map_image import MapImage
-from custom_transforms.particle_cloud_image import ParticleCloudImage
-from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
-from custom_transforms.scan_image import ScanImage
-from custom_transforms.scan_map_statistics import ScanMapStatistics
 from custom_transforms.shift_timestamps import ShiftTimestamps
 from custom_transforms.slice_time_series import SliceTimeSeries
-from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
 
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.drop import Drop
-from flowcean.polars.transforms.match_sampling_rate import MatchSamplingRate
 from flowcean.ros.rosbag import RosbagLoader
 from flowcean.sklearn.adaboost_classifier import AdaBoost
 from flowcean.sklearn.metrics.classification import Accuracy
@@ -88,6 +81,10 @@ def load_or_cache_ros_data(
             "/momo/pose": [
                 "pose.position.x",
                 "pose.position.y",
+                "pose.orientation.x",
+                "pose.orientation.y",
+                "pose.orientation.z",
+                "pose.orientation.w",
             ],
             "/scan": [
                 "ranges",
@@ -112,8 +109,6 @@ def load_or_cache_ros_data(
             ],
             "/delocalizations": ["data"],
             "/particle_cloud": ["particles"],
-            "/position_error": ["data"],
-            "/heading_error": ["data"],
         },
         msgpaths=[
             str(WS / "ros_msgs/LaserScan.msg"),
@@ -150,62 +145,66 @@ def main() -> None:
 
         transform = (
             Drop(features=["/map"])
-            | MatchSamplingRate(
-                reference_feature_name="/amcl_pose",
-                feature_interpolation_map={
-                    "/heading_error": "linear",
-                    "/position_error": "linear",
-                },
-            )
             | LocalizationStatus(
-                position_error_feature_name="/position_error",
-                heading_error_feature_name="/heading_error",
-                position_threshold=0.8,
-                heading_threshold=0.8,
+                ground_truth_pose="/momo/pose",
+                estimated_pose="/amcl_pose",
+                position_threshold=0.4,
+                heading_threshold=0.4,
             )
             | ShiftTimestamps(
-                shift=0.0,
-                feature="/isDelocalized",
-            )
-            | MapImage(
-                occupancy_map=occupancy_map,
-                crop_region_size=CROP_REGION_SIZE,
-                image_pixel_size=IMAGE_PIXEL_SIZE,
-                save_images=SAVE_IMAGES,
-            )
-            | ParticleCloudStatistics()
-            | ScanMapStatistics(occupancy_map=occupancy_map)
-            | ScanImage(
-                crop_region_size=CROP_REGION_SIZE,
-                image_pixel_size=IMAGE_PIXEL_SIZE,
-                save_images=SAVE_IMAGES,
-            )
-            | ParticleCloudImage(
-                crop_region_size=CROP_REGION_SIZE,
-                image_pixel_size=IMAGE_PIXEL_SIZE,
-                save_images=SAVE_IMAGES,
-            )
-            | Drop(
-                features=[
-                    "/particle_cloud",
-                    "/scan",
-                    "/momo/pose",
-                    "/amcl_pose",
-                    "/position_error",
-                    "/heading_error",
-                    "scan_points",
-                    "scan_points_sensor",
-                ],
+                shift=1.0,
+                feature="isDelocalized",
             )
             | SliceTimeSeries(
                 counter_column="/delocalizations",
                 deadzone=500_000_000,  # 0.5 seconds
             )
-            | Drop(features=["/delocalizations"])
+            | Drop(["position_error", "heading_error", "/delocalizations"])
+            # | ZeroOrderHoldMatching(
+            #     topics=[
+            #         "/scan",
+            #         "/particle_cloud",
+            #         "/momo/pose",
+            #         "/amcl_pose",
+            #         "isDelocalized",
+            #     ],
+            # )
+            # | Drop(features=["/delocalizations"])
+            # | MapImage(
+            #     occupancy_map=occupancy_map,
+            #     crop_region_size=CROP_REGION_SIZE,
+            #     image_pixel_size=IMAGE_PIXEL_SIZE,
+            #     save_images=SAVE_IMAGES,
+            # )
+            # | ParticleCloudStatistics()
+            # | ScanMapStatistics(occupancy_map=occupancy_map)
+            # | ScanImage(
+            #     crop_region_size=CROP_REGION_SIZE,
+            #     image_pixel_size=IMAGE_PIXEL_SIZE,
+            #     save_images=SAVE_IMAGES,
+            # )
+            # | ParticleCloudImage(
+            #     crop_region_size=CROP_REGION_SIZE,
+            #     image_pixel_size=IMAGE_PIXEL_SIZE,
+            #     save_images=SAVE_IMAGES,
+            # )
+            # | Drop(
+            #     features=[
+            #         "/particle_cloud",
+            #         "/scan",
+            #         "/momo/pose",
+            #         "/amcl_pose",
+            #         "position_error",
+            #         "heading_error",
+            #         "scan_points",
+            #         "scan_points_sensor",
+            #     ],
+            # )
         )
-        # Apply the transform to the data
-        transformed_data = transform.apply(data.lazy())
+
+        transformed_data = transform(data)
         print("Data after transformations:")
+        print(transformed_data.collect())
         # Use streaming to save memory
         output_file = WS / "transformed_data.parquet"
         transformed_data.sink_parquet(
@@ -215,12 +214,7 @@ def main() -> None:
         )
         print(f"Transformed data streamed to {output_file}")
 
-    print("Applying ZeroOrderHoldMatching...")
-    # Collect each row and apply ZeroOrderHoldMatching
-    # to each slice separately
-    zoh_transform = ZeroOrderHoldMatching(
-        output_shift_seconds=0.0,
-    )
+    return
     transformed_dataframes = []
     for row_df in dataframes:
         # Apply the transform to each slice
