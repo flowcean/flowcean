@@ -7,9 +7,9 @@ topics = [
     "/amcl_pose",
     "/momo/pose",
     "/scan",
-    # "/map",
-    "/delocalizations",
     "/particle_cloud",
+    # "/map",
+    # "/delocalizations",
     # "/position_error",
     # "/heading_error",
 ]
