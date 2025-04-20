@@ -1,14 +1,4 @@
 #!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-#     "matplotlib",
-#     "opencv-python",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../../", editable = true }
-# ///
 
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,8 +10,8 @@ from custom_transforms.images_to_tensor import ImagesToTensor
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.shift_timestamps import ShiftTimestamps
 from custom_transforms.slice_time_series import SliceTimeSeries
-
 from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
+
 import flowcean.cli
 from flowcean.core.strategies.offline import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
