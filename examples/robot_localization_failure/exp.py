@@ -21,7 +21,7 @@ def explode_timeseries(df: pl.LazyFrame, column: str) -> pl.LazyFrame:
     exploded = df.select(column).with_row_index().explode(column)
     unnested = exploded.unnest(column)
     renamed = unnested.with_columns(
-        pl.col("value").name.map_fields(lambda x: f"{column}/{x}"),
+        pl.col("value").name.prefix_fields(f"{column}/"),
     )
     return renamed.unnest("value")
 
