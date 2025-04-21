@@ -15,39 +15,27 @@ from datetime import datetime, timezone
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
+from river import tree
 from typing_extensions import Self, override
 
 from flowcean.cli import initialize_logging
-from flowcean.core import evaluate_offline, learn_offline
+from flowcean.core import (
+    evaluate_offline,
+    learn_offline,
+)
 from flowcean.ode import (
     OdeEnvironment,
     OdeState,
     OdeSystem,
 )
 from flowcean.polars import SlidingWindow, TrainTestSplit, collect
+from flowcean.river import RiverLearner
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanSquaredError,
     RegressionTree,
 )
 from flowcean.torch import LightningLearner, MultilayerPerceptron
-
-from river import tree
-import logging
-from typing import Any
-
-
-from river.base import Regressor
-from typing_extensions import override
-
-from flowcean.core import Model, SupervisedLearner
-import pickle
-from typing import Any
-from typing_extensions import override
-
-from flowcean.core import Model
-from flowcean.river import RiverLearner
-from flowcean.river import RiverModel
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +136,9 @@ def main() -> None:
 
     for learner in [
         RegressionTree(max_depth=5),
-        RiverLearner(model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5)),
+        RiverLearner(
+            model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5),
+        ),
         LightningLearner(
             module=MultilayerPerceptron(
                 learning_rate=1e-3,
@@ -159,7 +149,6 @@ def main() -> None:
             max_epochs=10,
         ),
     ]:
-
         t_start = datetime.now(tz=timezone.utc)
         model = learn_offline(
             train,

@@ -36,7 +36,9 @@ class RandomForestRegressorLearner(SupervisedLearner):
             **kwargs: Keyword arguments to pass to the RandomForestRegressor.
         """
         self.regressor = RandomForestRegressor(
-            *args, **kwargs, random_state=get_seed(),
+            *args,
+            **kwargs,
+            random_state=get_seed(),
         )
         self.dot_graph_export_path = dot_graph_export_path
 

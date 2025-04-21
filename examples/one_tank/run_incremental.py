@@ -1,29 +1,31 @@
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing_extensions import Self, override
 
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
+from river import tree
+from typing_extensions import Self, override
 
 import flowcean.cli
+from flowcean.core import evaluate_offline, learn_incremental
 from flowcean.ode import (
     OdeEnvironment,
-    OdeSystem,
     OdeState,
+    OdeSystem,
 )
-from flowcean.polars import SlidingWindow, TrainTestSplit, collect
+from flowcean.polars import (
+    SlidingWindow,
+    StreamingOfflineEnvironment,
+    TrainTestSplit,
+    collect,
+)
+from flowcean.river import RiverLearner
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanSquaredError,
-    RegressionTree,
 )
-from flowcean.core import evaluate_offline, learn_incremental
-from flowcean.torch import LightningLearner, MultilayerPerceptron
-from flowcean.torch import LinearRegression
-from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.polars import StreamingOfflineEnvironment
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +119,8 @@ def main() -> None:
 
     inputs = ["h_0", "h_1"]
     outputs = ["h_2"]
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(collect(data_incremental,250).with_transform(window_transform))
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(collect(
+        data_incremental,250).with_transform(window_transform))
 
 
     # Convert the train and test data to float32
@@ -125,16 +128,13 @@ def main() -> None:
                                           in inputs + outputs])
     test.data = test.data.with_columns([pl.col(col).cast(pl.Float32) for col in
                                          inputs + outputs])
-    
+
     train = StreamingOfflineEnvironment(train, batch_size=1)
 
     print(type(train))
 
-    learner = LinearRegression(
-        input_size=2,
-        output_size=1,
-        learning_rate=0.01,
-    )
+    learner = RiverLearner(model=tree.HoeffdingTreeRegressor(grace_period=50,
+                                                             max_depth=5))
 
     t_start = datetime.now(tz=UTC)
     model = learn_incremental(
