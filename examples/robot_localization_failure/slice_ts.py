@@ -1,6 +1,6 @@
-from typing import Callable
+from collections.abc import Callable
+
 import polars as pl
-from sympy import field
 
 df = pl.DataFrame(
     {
@@ -19,23 +19,19 @@ df = pl.DataFrame(
 )
 
 
-def list_eval_ref(
-    listcol: pl.Expr | str,
-    op: Callable[..., pl.Expr],
-    *ref_cols: str | pl.Expr,
-) -> pl.Expr:
-    # if len(ref_cols) == 0:
-    #     ref_cols = tuple([x for x in signature(op).parameters.keys()][1:])
+def slice_time_series(time_series: pl.Expr, slices: pl.Expr) -> pl.Expr:
+    def list_eval_with(
+        listcol: pl.Expr | str,
+        operation: Callable[..., pl.Expr],
+        *ref_cols: str | pl.Expr,
+    ) -> pl.Expr:
+        arguments = [pl.element().struct[0].explode()] + [
+            pl.element().struct[i + 1] for i in range(len(ref_cols))
+        ]
+        return pl.concat_list(pl.struct(listcol, *ref_cols)).list.eval(
+            operation(*arguments),
+        )
 
-    args_to_op = [pl.element().struct[0].explode()] + [
-        pl.element().struct[i + 1] for i in range(len(ref_cols))
-    ]
-    return pl.concat_list(pl.struct(listcol, *ref_cols)).list.eval(
-        op(*args_to_op),
-    )
-
-
-def slice_time_series(feature: pl.Expr, slices: pl.Expr) -> pl.Expr:
     def is_between(
         element: pl.Expr,
         lower: pl.Expr,
@@ -45,51 +41,25 @@ def slice_time_series(feature: pl.Expr, slices: pl.Expr) -> pl.Expr:
             element.struct.field("time").is_between(
                 lower,
                 upper,
-                closed="none",
+                closed="left",
             ),
         )
 
-    # return slices.list.eval(pl.struct(pl.element()))
-    return (
-        list_eval_ref(
-            pl.col("slices"),
-            lambda slice, a: slice.struct.with_fields(a.alias("feature")),
-            pl.col("a"),
-        ).list.eval(
-            list_eval_ref(
-                pl.element().struct.field("feature"),
-                lambda feature, f, t: is_between(feature, f, t),
-                pl.element().struct.field("from"),
-                pl.element().struct.field("to"),
+    return list_eval_with(
+        slices,
+        lambda from_to, time_series: list_eval_with(
+            time_series,
+            lambda sample, from_to: is_between(
+                sample,
+                from_to.struct.field("from"),
+                from_to.struct.field("to"),
             ),
-        )
-        # .list.eval(
-        #     pl.struct(
-        #         pl.element().struct.field("feature").explode(),
-        #         pl.element().struct.field("").alias("slices"),
-        #     ),
-        # )
-        # .list.eval(
-        #     pl.element().struct.field("feature").list.eval(
-        #     is_between(
-        #         pl.element().struct.field("feature").explode(),
-        #         pl.element().struct.field("slices"),
-        #     ),
-        # )
+            from_to,
+        ),
+        time_series,
     )
-    # return pl.concat_list(
-    #     pl.struct(
-    #         feature.alias("feature"),
-    #         slices.alias("slices"),
-    #     ),
-    # ).list.eval(
-    #     is_between(
-    #         pl.element().struct.field("feature").explode(),
-    #         pl.element().struct.field("slices"),
-    #     ),
-    # )
 
 
-after = df.sample(2, with_replacement=True).select(
+after = df.sample(2, with_replacement=True).with_columns(
     slice_time_series(pl.col("a"), pl.col("slices")).alias("a"),
 )
