@@ -83,7 +83,6 @@ class TestFailed(Exception):
     predicate.
     """
 
-    # TODO: Allow for multiple input data and predictions
     def __init__(self, input_data: list[Data], prediction: list[Data]) -> None:
         self.input_data = [
             (data.collect() if isinstance(data, pl.LazyFrame) else data)
