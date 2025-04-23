@@ -5,6 +5,7 @@ from polars.type_aliases import PythonLiteral
 from typing_extensions import Self, override
 
 from flowcean.core import FitOnce, Transform
+from flowcean.polars import is_timeseries_feature
 
 
 @dataclass
@@ -53,7 +54,11 @@ class ScaleToRange(Transform, FitOnce):
     @override
     def fit(self, data: pl.LazyFrame) -> None:
         schema = data.collect_schema()
-        target_features = self.features or schema.names()
+        target_features = self.features or [
+            name
+            for name in schema.names()
+            if not is_timeseries_feature(schema, name)
+        ]
 
         # Get the min and max values of the features
         min_max_values = data.select(
@@ -74,14 +79,9 @@ class ScaleToRange(Transform, FitOnce):
         }
 
         self.b = {
-            feature: _as_float(
-                min_max_values[f"{feature}_min"]
-                * (self.upper_range - self.lower_range)
-                / (
-                    min_max_values[f"{feature}_max"]
-                    - min_max_values[f"{feature}_min"]
-                )
-                + self.lower_range,
+            feature: -_as_float(
+                min_max_values[f"{feature}_min"] * self.m[feature]
+                - self.lower_range,
             )
             for feature in target_features
         }
@@ -92,11 +92,8 @@ class ScaleToRange(Transform, FitOnce):
             message = "ScaleToRange transform has not been fitted"
             raise RuntimeError(message)
 
-        return data.select(
-            [
-                pl.col(c) * self.m.get(c) + self.b.get(c)
-                for c in data.collect_schema().names()
-            ],
+        return data.with_columns(
+            [pl.col(c) * self.m.get(c) + self.b.get(c) for c in self.m],
         )
 
     @override
