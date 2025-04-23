@@ -14,6 +14,7 @@ def test_model(
     predicate: Predicate,
     *,
     show_progress: bool = False,
+    stop_after: int = 1,
 ) -> None:
     """Test a model with the given test data and predicate.
 
@@ -31,11 +32,17 @@ def test_model(
         predicate: The predicate used to check the model's predictions.
         show_progress: Whether to show progress during testing.
             Defaults to False.
+        stop_after: Number of tests that need to fail before stopping. Defaults
+            to 1. If set to 0 or negative, all tests are run regardless of
+            failures.
 
     Raises:
         TestFailed: If the model's prediction does not satisfy the
             predicate.
     """
+    number_of_failures = 0
+    failure_data: list[Data] = []
+    failure_prediction: list[Data] = []
     # Run the model on the test data
     for input_data in (
         tqdm.tqdm(
@@ -53,8 +60,16 @@ def test_model(
             input_data,
             prediction,
         ):
-            # TODO: Don't stop after the first failure
-            raise TestFailed(input_data, prediction)
+            number_of_failures += 1
+            failure_data.append(input_data)
+            failure_prediction.append(prediction)
+
+            if number_of_failures >= stop_after > 0:
+                break
+
+    # If we got any failures at this point, raise an exception
+    if number_of_failures > 0:
+        raise TestFailed(failure_data, failure_prediction)
 
 
 # TODO: Rename to "PredicateFailed?"
@@ -67,21 +82,39 @@ class TestFailed(Exception):
     """
 
     # TODO: Allow for multiple input data and predictions
-    def __init__(self, input_data: Data, prediction: Data) -> None:
-        self.input_data = (
-            input_data.collect()
-            if isinstance(input_data, pl.LazyFrame)
-            else input_data
-        )
-        self.prediction = (
-            prediction.collect()
-            if isinstance(prediction, pl.LazyFrame)
-            else prediction
-        )
+    def __init__(self, input_data: list[Data], prediction: list[Data]) -> None:
+        self.input_data = [
+            (data.collect() if isinstance(data, pl.LazyFrame) else data)
+            for data in input_data
+        ]
+        self.prediction = [
+            (data.collect() if isinstance(data, pl.LazyFrame) else data)
+            for data in prediction
+        ]
 
-        message = (
-            f"Test failed for input data: {self.input_data} "
-            f"with prediction: {self.prediction}"
-        )
+        if len(self.input_data) != len(self.prediction):
+            msg = (
+                "Input data and prediction must have the same length. "
+                f"Got {len(self.input_data)} and {len(self.prediction)}."
+            )
+            raise ValueError(msg)
+
+        if len(self.input_data) == 1:
+            message = (
+                f"Test failed for input data: {self.input_data} "
+                f"with prediction: {self.prediction}"
+            )
+        else:
+            message = (
+                "Test failed. The following input data and predictions"
+                "did not fulfill the predicate:\n"
+            )
+
+            for data, pred in zip(
+                self.input_data,
+                self.prediction,
+                strict=True,
+            ):
+                message += f"Input data: {data}\nPrediction: {pred}\n"
 
         super().__init__(message)
