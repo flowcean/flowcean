@@ -21,6 +21,8 @@ def test_model(
     This function runs the model on the test data and checks if the
     predictions satisfy the given predicate. If any prediction does not
     satisfy the predicate, a TestFailed exception is raised.
+    This exception contains the input data and prediction that failed the
+    predicate and can be used as a counterexample.
     This method relies on the model's predict method to obtain a prediction.
     It does not utilize the model's type or internal structure to prove
     predicates.
