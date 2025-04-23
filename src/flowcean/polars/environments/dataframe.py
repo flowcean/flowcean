@@ -111,7 +111,7 @@ class DataFrame(OfflineEnvironment):
         if self._length is None:
             # This operation is potentially very slow / costly
             self._length = cast(
-                int,
+                "int",
                 self.data.select(pl.len()).collect().item(),
             )
         return self._length
