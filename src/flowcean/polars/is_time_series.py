@@ -29,9 +29,9 @@ def is_timeseries_feature(
     if data_type is None or data_type.base_type() != pl.List:
         return False
 
-    inner_type: pl.DataType = cast(pl.DataType, cast(pl.List, data_type).inner)
+    inner_type: pl.DataType = cast("pl.DataType", cast("pl.List", data_type).inner)
     if inner_type.base_type() != pl.Struct:
         return False
 
-    field_names = [field.name for field in cast(pl.Struct, inner_type).fields]
+    field_names = [field.name for field in cast("pl.Struct", inner_type).fields]
     return "time" in field_names and "value" in field_names

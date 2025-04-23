@@ -18,13 +18,13 @@ def get_time_series_type(t: pl.DataType) -> PolarsDataType:
     if not isinstance(t, pl.List):
         msg = f"Expected a List data type, got {t}."
         raise TypeError(msg)
-    t = cast(pl.List, t)
+    t = cast("pl.List", t)
 
     # ... of structs.
     if not isinstance(t.inner, pl.Struct):
         msg = f"Expected a List of Structs, got a List of {t}."
         raise TypeError(msg)
-    t = cast(pl.Struct, t.inner)
+    t = cast("pl.Struct", t.inner)
 
     # Then check if the struct has a field named "value".
     value_field = [field for field in t.fields if field.name == "value"]
