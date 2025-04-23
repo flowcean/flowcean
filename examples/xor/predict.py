@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from flowcean.core.model import Model
-from flowcean.core.tool.predict import start_prediction_loop
+from flowcean.core.tool import start_prediction_loop
 from flowcean.polars.adapter.dataframe_adapter import DataFrameAdapter
 from flowcean.polars.environments.dataframe import DataFrame
 
