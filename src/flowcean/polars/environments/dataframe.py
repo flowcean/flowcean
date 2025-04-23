@@ -14,6 +14,7 @@ from typing_extensions import Self, override
 
 from flowcean.core import OfflineEnvironment
 from flowcean.core.environment.incremental import IncrementalEnvironment
+from flowcean.core.environment.stepable import Finished
 
 
 class DataFrame(OfflineEnvironment):
@@ -148,6 +149,7 @@ class IncrementalDataFrame(IncrementalEnvironment):
         self.data = data
         self.batch_size = batch_size
         self.current_observation = data.data.slice(0, batch_size)
+        self.index = batch_size
 
     def num_steps(self) -> int | None:
         return math.ceil(len(self.data) / self.batch_size)
@@ -155,7 +157,7 @@ class IncrementalDataFrame(IncrementalEnvironment):
     def step(self) -> None:
         """Advance the environment by one step."""
         if self.index >= len(self.data):
-            raise StopIteration
+            raise Finished
 
         self.current_observation = self.data.data.slice(
             self.index,
