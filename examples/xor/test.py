@@ -31,6 +31,7 @@ def main() -> None:
         test_data,
         NotPredicate(predicate),
         show_progress=True,
+        stop_after=0,
     )
 
 
