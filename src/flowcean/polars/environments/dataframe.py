@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections.abc import Collection, Iterable
 from itertools import islice
 from pathlib import Path
@@ -12,6 +13,7 @@ from tqdm import tqdm
 from typing_extensions import Self, override
 
 from flowcean.core import OfflineEnvironment
+from flowcean.core.environment.incremental import IncrementalEnvironment
 
 
 class DataFrame(OfflineEnvironment):
@@ -38,6 +40,14 @@ class DataFrame(OfflineEnvironment):
         else:
             self.data = data
         super().__init__()
+
+    def to_incremental(self, batch_size: int = 1) -> IncrementalDataFrame:
+        """Convert the DataFrame to an incremental environment.
+
+        Args:
+            batch_size: The size of each batch. Defaults to 1.
+        """
+        return IncrementalDataFrame(self, batch_size)
 
     @classmethod
     def from_csv(cls, path: str | Path, separator: str = ",") -> Self:
@@ -115,6 +125,52 @@ class DataFrame(OfflineEnvironment):
                 self.data.select(pl.len()).collect().item(),
             )
         return self._length
+
+
+class IncrementalDataFrame(IncrementalEnvironment):
+    """Wraps a DataFrame in an incremental environment."""
+
+    index: int = 0
+    current_observation: pl.LazyFrame
+    data: DataFrame
+    batch_size: int
+
+    def __init__(self, data: DataFrame, batch_size: int) -> None:
+        """Create an incremental environment from a DataFrame.
+
+        Args:
+            data: The DataFrame to wrap.
+            batch_size: The size of each batch.
+        """
+        super().__init__()
+
+        self.transform = data.transform
+        self.data = data
+        self.batch_size = batch_size
+        self.current_observation = data.data.slice(0, batch_size)
+
+    def num_steps(self) -> int | None:
+        return math.ceil(len(self.data) / self.batch_size)
+
+    def step(self) -> None:
+        """Advance the environment by one step."""
+        if self.index >= len(self.data):
+            raise StopIteration
+
+        self.current_observation = self.data.data.slice(
+            self.index,
+            self.batch_size,
+        )
+        self.index += self.batch_size
+
+    @override
+    def _observe(self) -> pl.LazyFrame:
+        """Return the current raw observation.
+
+        If any transforms were attached to the original environment, they will
+        be applied to the current observation before returning it!
+        """
+        return self.current_observation
 
 
 def _file_uri_to_path(uri: str) -> Path:
