@@ -5,4 +5,4 @@ __all__ = [
 ]
 
 from .predict import Stop, start_prediction_loop
-from .testing import test_model
+from .test import test_model

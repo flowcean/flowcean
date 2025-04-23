@@ -4,7 +4,7 @@ import tqdm
 from flowcean.core import Model
 from flowcean.core.data import Data
 from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.core.tool.predicates import Predicate
+from flowcean.core.tool.testing.predicates import Predicate
 
 
 # TODO: Rename predicate to statement?
