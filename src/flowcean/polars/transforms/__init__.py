@@ -14,6 +14,7 @@ from .one_cold import OneCold
 from .one_hot import NoCategoriesError, NoMatchingCategoryError, OneHot
 from .rename import Rename
 from .resample import Resample
+from .scale_to_range import ScaleToRange
 from .select import Select
 from .signal_filter import SignalFilter, SignalFilterType
 from .sliding_window import SlidingWindow
@@ -45,6 +46,7 @@ __all__ = [
     "OneHot",
     "Rename",
     "Resample",
+    "ScaleToRange",
     "Select",
     "SignalFilter",
     "SignalFilterType",
