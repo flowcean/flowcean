@@ -2,7 +2,10 @@ from .range import Range
 
 
 class Fixed(Range):
-    """A fixed range that always returns the same value."""
+    """A fixed range with a single value.
+
+    This range describes a fixed value for the given feature.
+    """
 
     def __init__(self, feature_name: str, value: float) -> None:
         """Initialize the fixed range.
@@ -11,7 +14,7 @@ class Fixed(Range):
             feature_name: The name of the feature the range belongs to.
             value: The fixed value to return.
         """
-        super().__init__(feature_name, value, value)
+        super().__init__(feature_name)
         self.value = value
 
     def get_value(self) -> float:

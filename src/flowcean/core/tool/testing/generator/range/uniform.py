@@ -4,7 +4,11 @@ from .range import Range
 
 
 class Uniform(Range):
-    """A range that generates random values uniformly distributed between a minimum and maximum value."""
+    """A range of uniform distributed values.
+
+    This range describes a uniform distribution of values between a minimum
+    and maximum value for the given feature.
+    """
 
     rng: random.Random
 
@@ -21,7 +25,7 @@ class Uniform(Range):
             min_value: The minimum value of the range.
             max_value: The maximum value of the range.
         """
-        super().__init__(feature_name, min_value, max_value)
+        super().__init__(feature_name)
         if min_value >= max_value:
             msg = (
                 f"min_value ({min_value}) must be less"
