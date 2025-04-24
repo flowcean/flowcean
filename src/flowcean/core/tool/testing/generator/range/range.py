@@ -5,14 +5,25 @@ class Range(ABC):
     """An abstract base class for generating random values within a specified range."""
 
     feature_name: str
+    upper_bound: float
+    lower_bound: float
 
-    def __init__(self, feature_name: str) -> None:
+    def __init__(
+        self,
+        feature_name: str,
+        lower_bound: float,
+        upper_bound: float,
+    ) -> None:
         """Initialize the range.
 
         Args:
             feature_name: The name of the feature the range belongs to.
+            lower_bound: The lower bound of the range.
+            upper_bound: The upper bound of the range.
         """
         self.feature_name = feature_name
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
 
     @abstractmethod
     def get_value(self) -> float:

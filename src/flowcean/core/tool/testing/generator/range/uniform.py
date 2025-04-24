@@ -21,7 +21,15 @@ class Uniform(Range):
             min_value: The minimum value of the range.
             max_value: The maximum value of the range.
         """
-        super().__init__(feature_name)
+        super().__init__(feature_name, min_value, max_value)
+        if min_value >= max_value:
+            msg = (
+                f"min_value ({min_value}) must be less"
+                "than max_value ({max_value})"
+            )
+            raise ValueError(
+                msg,
+            )
         self.min_value = min_value
         self.max_value = max_value
         self.rng = random.Random()

@@ -11,7 +11,7 @@ class Fixed(Range):
             feature_name: The name of the feature the range belongs to.
             value: The fixed value to return.
         """
-        super().__init__(feature_name)
+        super().__init__(feature_name, value, value)
         self.value = value
 
     def get_value(self) -> float:
