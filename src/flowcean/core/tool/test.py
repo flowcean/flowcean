@@ -116,6 +116,6 @@ class TestFailed(Exception):
                 self.prediction,
                 strict=True,
             ):
-                message += f"Input data: {data}\nPrediction: {pred}\n"
+                message += f"Input data: {data}\nPrediction: {pred}\n\n"
 
         super().__init__(message)
