@@ -1,3 +1,3 @@
-__all__ = ["StochasticDataFrameGenerator"]
+__all__ = ["StochasticGenerator"]
 
-from .stochastic_generator import StochasticDataFrameGenerator
+from .stochastic_generator import StochasticGenerator

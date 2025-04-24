@@ -8,7 +8,7 @@ from flowcean.core.environment.stepable import Finished
 from flowcean.core.tool.testing.generator.range import Range
 
 
-class StochasticDataFrameGenerator(IncrementalEnvironment):
+class StochasticGenerator(IncrementalEnvironment):
     """A generator that produces random tests based on given ranges."""
 
     data: pl.DataFrame
