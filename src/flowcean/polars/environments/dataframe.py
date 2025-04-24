@@ -49,7 +49,7 @@ class DataFrame(OfflineEnvironment):
         Args:
             batch_size: The size of each batch. Defaults to 1.
         """
-        return StreamingOfflineEnvironment(self, batch_size)
+        return StreamingOfflineEnvironment(self, batch_size, size=len(self))
 
     @classmethod
     def from_csv(cls, path: str | Path, separator: str = ",") -> Self:
