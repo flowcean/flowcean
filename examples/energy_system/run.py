@@ -15,7 +15,9 @@ from flowcean.mosaik.energy_system import (
     EnergySystemActive,
     Observation,
 )
+from flowcean.palaestrai.sac_learner import SACLearner
 
+# from flowcean.palaestrai.sac_model import SA
 logger = logging.getLogger("energy_example")
 
 
@@ -42,7 +44,7 @@ def run_active() -> None:
         "Powergrid-0.0-bus-6.vm_pu",
     ]
 
-    learner = MyLearner(actuator_ids, sensor_ids)
+    learner = SACLearner(actuator_ids, sensor_ids)
     learner.load(environment.action, environment.observation)
 
     try:
