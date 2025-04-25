@@ -24,15 +24,12 @@ class RandomForestRegressorLearner(SupervisedLearner):
     def __init__(
         self,
         *args: Any,
-        dot_graph_export_path: None | str = None,
         **kwargs: Any,
     ) -> None:
         """Initialize the random forest learner.
 
         Args:
             *args: Positional arguments to pass to the RandomForestRegressor.
-            dot_graph_export_path: Path to export a tree from the random forest
-                to.
             **kwargs: Keyword arguments to pass to the RandomForestRegressor.
         """
         self.regressor = RandomForestRegressor(
@@ -40,7 +37,6 @@ class RandomForestRegressorLearner(SupervisedLearner):
             **kwargs,
             random_state=get_seed(),
         )
-        self.dot_graph_export_path = dot_graph_export_path
 
     @override
     def learn(
@@ -51,11 +47,4 @@ class RandomForestRegressorLearner(SupervisedLearner):
         """Fit the random forest regressor on the given inputs and outputs."""
         self.regressor.fit(inputs, outputs)
         logger.info("Using Random Forest Regressor")
-        if self.dot_graph_export_path is not None:
-            # Exporting one tree from the forest (usually the first tree) as
-            # a dot graph
-            logger.info(
-                "Exporting one tree from the random forest to %s",
-                self.dot_graph_export_path,
-            )
         return SciKitModel(self.regressor, outputs.columns[0])
