@@ -5,12 +5,10 @@ from flowcean.core.transform import Transform
 
 
 class SliceTimeSeries(Transform):
-    """Slices time series features based on a counter column and deadzone."""
-
-    def __init__(self, time_series: str, counter_feature: str) -> None:
+    def __init__(self, time_series: str, slice_points: str) -> None:
         super().__init__()
         self.time_series = time_series
-        self.counter_feature = counter_feature
+        self.slice_points = slice_points
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
@@ -21,13 +19,13 @@ class SliceTimeSeries(Transform):
             .unnest(self.time_series)
         )
         slice_points = (
-            data.select(self.counter_feature)
+            data.select(self.slice_points)
             .with_row_index("experiment_i")
-            .explode(self.counter_feature)
-            .unnest(self.counter_feature)
-            .filter(pl.col("value").struct.field("data").diff() > 0)
-            .drop("value")
-            .with_columns(
+            .explode(self.slice_points)
+            .filter(pl.col(self.slice_points) > 0)
+            .select(
+                pl.col("experiment_i"),
+                pl.col(self.slice_points).alias("time"),
                 pl.int_range(pl.len()).over("experiment_i").alias("slice_i"),
             )
         )
