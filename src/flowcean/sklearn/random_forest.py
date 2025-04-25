@@ -50,16 +50,12 @@ class RandomForestRegressorLearner(SupervisedLearner):
     ) -> Model:
         """Fit the random forest regressor on the given inputs and outputs."""
         self.regressor.fit(inputs, outputs)
-        print("Using Random Forest Regressor")
+        logger.info("Using Random Forest Regressor")
         if self.dot_graph_export_path is not None:
             # Exporting one tree from the forest (usually the first tree) as
             # a dot graph
             logger.info(
                 "Exporting one tree from the random forest to %s",
                 self.dot_graph_export_path,
-            )
-            export_graphviz(
-                self.regressor.estimators_[0],  # Exporting the first tree
-                out_file=self.dot_graph_export_path,
             )
         return SciKitModel(self.regressor, outputs.columns[0])

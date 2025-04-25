@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../../", editable = true }
-# ///
-
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone

@@ -131,8 +131,6 @@ def main() -> None:
 
     train = StreamingOfflineEnvironment(train, batch_size=1)
 
-    print(type(train))
-
     learner = RiverLearner(model=tree.HoeffdingTreeRegressor(grace_period=50,
                                                              max_depth=5))
 
