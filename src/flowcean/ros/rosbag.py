@@ -14,7 +14,8 @@ from tqdm import tqdm
 from flowcean.polars import DataFrame
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
+    from os import PathLike
 
     from rosbags.interfaces.typing import FieldDesc
 
@@ -62,7 +63,7 @@ class RosbagLoader(DataFrame):
         self,
         path: str | Path,
         topics: dict[str, list[str]],
-        msgpaths: list[str],
+        message_paths: Iterable[PathLike] | None = None,
     ) -> None:
         """Initialize the RosbagEnvironment.
 
@@ -75,16 +76,18 @@ class RosbagLoader(DataFrame):
         Args:
             path: Path to the rosbag.
             topics: Dictionary of topics to load (`topic: [keys]`).
-            msgpaths: List of paths to additional message definitions.
+            message_paths: List of paths to additional message definitions.
         """
-        if msgpaths is None:
-            msgpaths = []
+        if message_paths is None:
+            message_paths = []
+
         self.path = Path(path)
         self.topics = topics
         self.typestore = get_typestore(Stores.ROS2_HUMBLE)
+
         add_types = {}
-        for pathstr in msgpaths:
-            msgpath = Path(pathstr)
+        for path_like in message_paths:
+            msgpath = Path(path_like)
             msgdef = msgpath.read_text(encoding="utf-8")
             add_types.update(
                 get_types_from_msg(msgdef, self.guess_msgtype(msgpath)),
@@ -291,6 +294,8 @@ class RosbagLoader(DataFrame):
         if hasattr(obj, "__dict__"):  # Check if the object has attributes
             result = {}
             for key, value in obj.__dict__.items():
+                if key == "__msgtype__":
+                    continue
                 result[key] = self.ros_msg_to_dict(value)
             return result
         return obj  # Return the base value if it's not an object
