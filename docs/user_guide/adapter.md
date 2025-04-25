@@ -8,5 +8,5 @@ The key difference between adapters and environments is the fact, that adapters 
 With the ability to make observations and pass data back to a CPS, adapters allow to create a closed loop between the CPS and flowcean and are an important part in the tool loop.
 <!-- The figure below shows how adapters are integrated in the tool loop and therefore the deployment phase of a model. -->
 
-In general, adapters need to be adapted to a specific CPS to ensure seamless communication between the two.
+In general, adapters need to be adjusted to a specific CPS to ensure seamless communication between the two.
 Some generic adapters are provided by flowcean which can serve as a starting point for a CPS specific adapter.
