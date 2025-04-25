@@ -3,196 +3,135 @@ from math import nan
 
 import polars as pl
 from scipy.spatial.transform import Rotation
+from typing_extensions import override
 
 from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
+
 class LocalizationStatus(Transform):
-    """Checks if the robot is delocalized based on position and heading errors.
-
-    Compares the estimated pose with the ground truth pose to determine
-    the position error (i.e. euclidean distance) and the heading error robot is
-    delocalized. The robot is considered delocalized if any error is above
-    a certain threshold regarding either heading or position.
-    The `isDelocalized` column is computed based on the position and heading
-    errors. If both errors are below the threshold, the robot is considered
-    localized. Otherwise, it is considered delocalized.
-    """
-
     def __init__(
         self,
+        time_series: str,
         ground_truth_pose: str = "/momo/pose",
         estimated_pose: str = "/amcl_pose",
         position_threshold: float = 0.7,
         heading_threshold: float = 0.7,
     ) -> None:
-        """Initialize the LocalizationStatus transform.
-
-        Args:
-            ground_truth_pose: Topic name for the ground truth pose.
-            estimated_pose: Topic name for the estimated pose.
-            position_threshold: Max position error to be considered localized.
-            heading_threshold: Max heading error to be considered localized.
-        """
+        self.time_series = time_series
         self.ground_truth_pose = ground_truth_pose
         self.estimated_pose = estimated_pose
         self.position_threshold = position_threshold
         self.heading_threshold = heading_threshold
 
+    @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        """Apply the localization status transformation.
+        return data.with_columns(
+            pl.col(self.time_series).list.eval(
+                pl.element().struct.with_fields(
+                    pl.field("value")
+                    .struct.with_fields(
+                        self._position_error(),
+                        self._orientation_error(),
+                    )
+                    .struct.with_fields(self._is_delocalized()),
+                ),
+            ),
+        )
 
-        Args:
-            data: Input LazyFrame containing pose timeseries data.
-        """
-        logger.debug("Computing localization status")
-        topics = [self.ground_truth_pose, self.estimated_pose]
-        joined = self._join_topics(data, topics)
-        filled = joined.select(
-            pl.all().forward_fill().over("index"),
-        ).drop_nulls()
-
-        # Compute the position error (euclidean distance)
-        position_error = filled.with_columns(
+    def _position_error(self) -> pl.Expr:
+        return (
             (
                 (
-                    pl.col(f"{self.ground_truth_pose}/pose.position.x")
-                    - pl.col(f"{self.estimated_pose}/pose.pose.position.x")
+                    pl.field(
+                        f"{self.ground_truth_pose}/pose.position.x",
+                    )
+                    - pl.field(
+                        f"{self.estimated_pose}/pose.pose.position.x",
+                    )
                 )
                 ** 2
                 + (
-                    pl.col(f"{self.ground_truth_pose}/pose.position.y")
-                    - pl.col(f"{self.estimated_pose}/pose.pose.position.y")
+                    pl.field(
+                        f"{self.ground_truth_pose}/pose.position.y",
+                    )
+                    - pl.field(
+                        f"{self.estimated_pose}/pose.pose.position.y",
+                    )
                 )
                 ** 2
             )
             .sqrt()
-            .alias("position_error"),
+            .alias("position_error")
         )
-        # Compute heading error
-        heading_error = position_error.with_columns(
-            pl.struct(
-                [
-                    f"{self.ground_truth_pose}/pose.orientation.x",
-                    f"{self.ground_truth_pose}/pose.orientation.y",
-                    f"{self.ground_truth_pose}/pose.orientation.z",
-                    f"{self.ground_truth_pose}/pose.orientation.w",
-                    f"{self.estimated_pose}/pose.pose.orientation.x",
-                    f"{self.estimated_pose}/pose.pose.orientation.y",
-                    f"{self.estimated_pose}/pose.pose.orientation.z",
-                    f"{self.estimated_pose}/pose.pose.orientation.w",
-                ],
-            )
-            .map_elements(
-                lambda s: self._calculate_heading_error(
-                    [
-                        s[f"{self.ground_truth_pose}/pose.orientation.x"],
-                        s[f"{self.ground_truth_pose}/pose.orientation.y"],
-                        s[f"{self.ground_truth_pose}/pose.orientation.z"],
-                        s[f"{self.ground_truth_pose}/pose.orientation.w"],
-                    ],
-                    [
-                        s[f"{self.estimated_pose}/pose.pose.orientation.x"],
-                        s[f"{self.estimated_pose}/pose.pose.orientation.y"],
-                        s[f"{self.estimated_pose}/pose.pose.orientation.z"],
-                        s[f"{self.estimated_pose}/pose.pose.orientation.w"],
-                    ],
-                ),
-                return_dtype=pl.Float64,
-            )
-            .alias("heading_error"),
-        )
-        # Determine if the robot is delocalized
-        delocalized = heading_error.with_columns(
-            (
-                (pl.col("position_error") > self.position_threshold)
-                | (pl.col("heading_error") > self.heading_threshold)
-            ).alias("isDelocalized"),
-        )
-        # Define localization metrics with time column
-        localization_metrics = {
-            "isDelocalized": "time",
-            "position_error": "time",
-            "heading_error": "time",
-        }
-        if isinstance(localization_metrics, str):
-            time_feature = {
-                feature_name: localization_metrics
-                for feature_name in data.collect_schema().names()
-                if feature_name != localization_metrics
-            }
-        else:
-            time_feature = localization_metrics
 
-        # Nest metrics with value as a struct to mimic curly braces
-        nested = delocalized.select(
+    def _orientation_error(self) -> pl.Expr:
+        return (
+            pl.struct(
+                pl.field(
+                    f"{self.ground_truth_pose}/pose.orientation.x",
+                ).alias("ground_truth_x"),
+                pl.field(
+                    f"{self.ground_truth_pose}/pose.orientation.y",
+                ).alias("ground_truth_y"),
+                pl.field(
+                    f"{self.ground_truth_pose}/pose.orientation.z",
+                ).alias("ground_truth_z"),
+                pl.field(
+                    f"{self.ground_truth_pose}/pose.orientation.w",
+                ).alias("ground_truth_w"),
+                pl.field(
+                    f"{self.estimated_pose}/pose.pose.orientation.x",
+                ).alias("estimated_x"),
+                pl.field(
+                    f"{self.estimated_pose}/pose.pose.orientation.y",
+                ).alias("estimated_y"),
+                pl.field(
+                    f"{self.estimated_pose}/pose.pose.orientation.z",
+                ).alias("estimated_z"),
+                pl.field(
+                    f"{self.estimated_pose}/pose.pose.orientation.w",
+                ).alias("estimated_w"),
+            )
+            .map_elements(_calculate_yaw_error, return_dtype=pl.Float64)
+            .alias("yaw_error")
+        )
+
+    def _is_delocalized(self) -> pl.Expr:
+        return (
+            (pl.field("position_error") > self.position_threshold)
+            | (pl.field("yaw_error") > self.heading_threshold)
+        ).alias("is_delocalized")
+
+
+def _calculate_yaw_error(sample: dict[str, float]) -> float:
+    try:
+        ground_truth = Rotation.from_quat(
             [
-                pl.struct(
-                    pl.col(t_feature).alias("time"),
-                    pl.struct(pl.col(value_feature).alias(value_feature)).alias("value"),
-                )
-                .implode()
-                .alias(value_feature)
-                for value_feature, t_feature in time_feature.items()
+                sample["ground_truth_x"],
+                sample["ground_truth_y"],
+                sample["ground_truth_z"],
+                sample["ground_truth_w"],
             ],
         )
-        return pl.concat([data, nested], how="horizontal")
-
-    def _explode_timeseries(
-        self,
-        df: pl.LazyFrame,
-        column: str,
-    ) -> pl.LazyFrame:
-        exploded = df.select(column).with_row_index().explode(column)
-        unnested = exploded.unnest(column)
-        renamed = unnested.with_columns(
-            pl.col("value").name.map_fields(lambda x: f"{column}/{x}"),
+        estimated = Rotation.from_quat(
+            [
+                sample["estimated_x"],
+                sample["estimated_y"],
+                sample["estimated_z"],
+                sample["estimated_w"],
+            ],
         )
-        return renamed.unnest("value")
-
-    def _join_topics(
-        self,
-        df: pl.LazyFrame,
-        topics: list[str],
-    ) -> pl.LazyFrame:
-        it = iter(topics)
-        joined = self._explode_timeseries(df, next(it))
-
-        for topic in it:
-            joined = joined.join(
-                self._explode_timeseries(df, topic),
-                on=["index", "time"],
-                how="full",
-                coalesce=True,
-            )
-
-        return joined.sort(["index", "time"])
-
-    def _calculate_heading_error(
-        self,
-        ground_truth_quat: list[float],
-        estimated_quat: list[float],
-    ) -> float:
-        """Calculate the heading error between two quaternions.
-
-        Args:
-            ground_truth_quat: Ground truth quaternion [x, y, z, w].
-            estimated_quat: Estimated quaternion [x, y, z, w].
-
-        Returns:
-            Heading error in radians, or nan if invalid.
-        """
-        try:
-            ground_truth_rot = Rotation.from_quat(ground_truth_quat)
-            estimated_rot = Rotation.from_quat(estimated_quat)
-            relative_rot = ground_truth_rot.inv() * estimated_rot
-            return abs(relative_rot.as_euler("zyx")[0])  # Yaw
-        except ValueError as e:
-            msg = (
-                "Invalid quaternion encountered. "
-                f"Ground truth: {ground_truth_quat}, "
-                f"Estimated: {estimated_quat}. Error: {e}"
-            )
-            logger.debug(msg)
-            return nan
+        error = ground_truth.inv() * estimated
+        _, _, yaw = error.as_euler("xyz")
+    except ValueError as e:
+        msg = (
+            "Invalid quaternion encountered. "
+            f"Ground truth: {sample}, "
+            f"Estimated: {sample}. Error: {e}"
+        )
+        logger.debug(msg)
+        return nan
+    else:
+        return yaw
