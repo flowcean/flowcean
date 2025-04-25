@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 
 import polars as pl
 from typing_extensions import override
@@ -19,13 +20,16 @@ class Explode(Transform):
 
     """
 
-    def __init__(self, features: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        features: str | Sequence[str] | None = None,
+        *more_features: str,
+    ) -> None:
         self.features = features
+        self.more_features = more_features
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        logger.debug("Exploding timeseries")
         if self.features is None:
-            # explode all columns
             self.features = data.columns
-        return data.explode(self.features)
+        return data.explode(self.features, *self.more_features)
