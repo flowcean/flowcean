@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import numpy as np
 import polars as pl
@@ -28,6 +28,7 @@ from flowcean.sklearn import (
 )
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class TankState(OdeState):
@@ -119,29 +120,32 @@ def main() -> None:
 
     inputs = ["h_0", "h_1"]
     outputs = ["h_2"]
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(collect(
-        data_incremental,250).with_transform(window_transform))
-
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(
+        collect(data_incremental, 250).with_transform(window_transform),
+    )
 
     # Convert the train and test data to float32
-    train.data = train.data.with_columns([pl.col(col).cast(pl.Float32) for col
-                                          in inputs + outputs])
-    test.data = test.data.with_columns([pl.col(col).cast(pl.Float32) for col in
-                                         inputs + outputs])
+    train.data = train.data.with_columns(
+        [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
+    )
+    test.data = test.data.with_columns(
+        [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
+    )
 
     train = StreamingOfflineEnvironment(train, batch_size=1)
 
-    learner = RiverLearner(model=tree.HoeffdingTreeRegressor(grace_period=50,
-                                                             max_depth=5))
+    learner = RiverLearner(
+        model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5),
+    )
 
-    t_start = datetime.now(tz=UTC)
+    t_start = datetime.now(tz=timezone.utc)
     model = learn_incremental(
         train,
         learner,
         inputs,
         outputs,
-        )
-    delta_t = datetime.now(tz=UTC) - t_start
+    )
+    delta_t = datetime.now(tz=timezone.utc) - t_start
     print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
     report = evaluate_offline(
