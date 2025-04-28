@@ -127,7 +127,7 @@ Until now, the data is in a time series format with each row representing a samp
 window_transform = SlidingWindow(window_size=3)
 ```
 
-Now that the data is in the correct format, it can be split into a test set with 80% of the samples and a training set with the remaining 20%. This is done by using a [`TrainTestSplit`](../reference/flowcean/polars/index.md#flowcean.polars.train_test_split) operation and helps with evaluating the learned model's performance after training. To make the learning less biased, the samples are shuffled before splitting.
+Now that the data is in the correct format, it can be split into a test set with 80% of the samples and a training set with the remaining 20%. This is done by using a [`TrainTestSplit`] operation and helps with evaluating the learned model's performance after training. To make the learning less biased, the samples are shuffled before splitting.
 
 ```python
 train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data_incremental.collect(250).with_transform(window_transform))
@@ -164,19 +164,6 @@ delta_t = datetime.now(tz=UTC) - t_start
 print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 ```
 
-The final step is to evaluate the obtained model. This is done to estimate how well it is able to describe the unknown function as described above. Flowcean ships with a couple of different metrics which can be used for this purpose. Depending on the underlying problem, different metrics can be reasonable to apply. For this example, the [`MeanAbsoluteError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanSquaredError) error are used. These metrics are useful when the output of the learned function is a (more or less) continuous value and the deviation from the actual value is of interest. The helper method [`evaluate_offline`](../reference/flowcean/core/index.md#flowcean.core.evaluate_offline) allows for easy evaluation of multiple metrics for a learned model.
-
-```python
-report = evaluate_offline(
-    model,
-    test,
-    inputs,
-    outputs,
-    [MeanAbsoluteError(), MeanSquaredError()],
-)
-print(report)
-```
-
 For this example, the resulting metrics are about
 
 | Learner type           | Runtime              | Mean Absolute Error | Mean Squared Error |
@@ -187,17 +174,7 @@ Depending on the size of the dataset, the way the train and test set are split a
 
 ## Run this example
 
-To run this example, first make sure you followed the [installation instructions](../getting_started/prerequisites.md) to set up Python and `just`. Afterwards, you can either use `just` or run the examples from source.
-
-### Just
-
-The easiest way to run this example is using `just`. Follow the [installation guide](../getting_started/installation.md) to clone Flowcean but stop before installing it or any of its dependencies. Now you can run the example using
-
-```sh
-just examples-one_tank_incremental
-```
-
-This command will take care of installing any required dependencies in a separate environment. After a short moment, you should see the learning results and the achieved metric values.
+To run this example, first make sure you followed the [installation instructions](../getting_started/prerequisites.md) to set up Python and `just`. Afterwards, you can run the examples from source.
 
 ### From source
 
