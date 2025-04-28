@@ -1,7 +1,7 @@
 from typing import cast
 
 import polars as pl
-import sympy
+import sympy  # type:ignore[reportMissingTypeStubs]
 
 from .predicate import Predicate
 
@@ -84,10 +84,13 @@ class PolarsPredicate(Predicate):
 def _str_to_pl(expression: str) -> pl.Expr:
     sym_expr = sympy.parse_expr(expression, evaluate=False)
     symbols = list(sym_expr.free_symbols)
-    lambda_expr = sympy.lambdify(
+    lambda_expr = sympy.lambdify(  # type:ignore[reportUnknownVariableType, reportUnknownMemberType]
         symbols,
         sym_expr,
         "math",
         docstring_limit=0,
     )
-    return lambda_expr(*[pl.col(str(symbol)) for symbol in symbols])
+    return cast(
+        "pl.Expr",
+        lambda_expr(*[pl.col(str(symbol)) for symbol in symbols]),
+    )
