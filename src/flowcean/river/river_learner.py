@@ -46,7 +46,9 @@ class RiverLearner(SupervisedIncrementalLearner):
         self.model = model
 
     def learn_incremental(
-        self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+        self,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> Model:
         logger.info("Training river model incrementally")
 
