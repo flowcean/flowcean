@@ -122,37 +122,6 @@ def main() -> None:
     # Split the data into train and test sets
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
-    # Manually split the data into train and test sets
-    # data = data.observe().collect()
-    # shuffle = False
-    # ratio = 0.8
-    # data = OfflineEnvironment.observe().collect(engine="streaming")
-    # pivot = int(len(data) * ratio)
-    # lengths = [pivot, len(data) - pivot]
-    # shuffled_dataset = data.sample(
-    #    fraction=1.0, shuffle=shuffle, seed=get_seed()
-    # )
-    # splits = [
-    #    shuffled_dataset.slice(offset - length, length)
-    #    for offset, length in zip(accumulate(lengths), lengths, strict=True)
-    # ]
-    # train, test = (
-    #    pl.DataFrame(splits[0].lazy()),
-    #    pl.DataFrame(splits[1].lazy()),
-    # )
-
-    # Wrap the splits in DataFrame objects
-    # train = StreamingOfflineEnvironment(train_data, batch_size=1)
-    # test = test_data
-
-    # Convert the train and test data to float32
-    # train = train.with_columns(
-    #    [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
-    # )
-    # test.data = test.data.with_columns(
-    #    [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
-    # )
-
     train = StreamingOfflineEnvironment(train, batch_size=1)
 
     learner = RiverLearner(
@@ -168,6 +137,9 @@ def main() -> None:
     )
     delta_t = datetime.now(tz=timezone.utc) - t_start
     print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
+
+    # Have to not use the evaluate_offline function for now
+    # because it does not support the RiverModel
 
     # report = evaluate_offline(
     #    model,
