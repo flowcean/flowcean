@@ -7,7 +7,6 @@ from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.tool.testing.predicates import Predicate
 
 
-# TODO: Rename predicate to statement?
 def test_model(
     model: Model,
     test_data: IncrementalEnvironment,
@@ -74,7 +73,6 @@ def test_model(
         raise TestFailed(failure_data, failure_prediction)
 
 
-# TODO: Rename to "PredicateFailed?"
 class TestFailed(Exception):
     """Test failed exception.
 
