@@ -9,12 +9,13 @@ from .predicate import Predicate
 class PolarsPredicate(Predicate):
     """Predicate for Polars DataFrame.
 
-    This predicate allows for two different ways to provide the predicate expression:
+    This predicate allows for two different ways to provide the predicate
+    expression:
 
-    1. As a Polars expression. This expression is used directly and must evaluate to a single boolean
-    value. For example, the following expression checks if the values in
-    the "feature_a" column are in the list [1, 2, 3] and if the values in
-    the "feature_b" column are greater than 0:
+    1. As a Polars expression. This expression is used directly and must
+    evaluate to a single boolean value. For example, the following expression
+    checks if the values in the "feature_a" column are in the list [1, 2, 3]
+    and if the values in the "feature_b" column are greater than 0:
     ```python
         import polars as pl
 
@@ -24,9 +25,10 @@ class PolarsPredicate(Predicate):
     ```
 
     2. As a string. The string is parsed as a Polars expression.
-    Any string identifier are replace with the respective feature during evaluation.
-    The string expression must evaluate to a single boolean value as well.
-    For example, the following expression checks if "feature_a" is always greater than "feature_b":
+    Any string identifier are replace with the respective feature during
+    evaluation. The string expression must evaluate to a single boolean value
+    as well. For example, the following expression checks if "feature_a" is
+    always greater than "feature_b":
     ```python
         import polars as pl
 
@@ -34,8 +36,9 @@ class PolarsPredicate(Predicate):
             "feature_a > feature_b",
         )
     ```
-    Boolean expressions like `and`, `or`, and `not` are *not* supported by this syntax.
-    See `AndPredicate`, `OrPredicate` and `NotPredicate` for combined predicates or use the polars expression syntax above.
+    Boolean expressions like `and`, `or`, and `not` are *not* supported by this
+    syntax. See `AndPredicate`, `OrPredicate` and `NotPredicate` for combined
+    predicates or use the polars expression syntax above.
     """
 
     def __init__(self, expr: pl.Expr | str) -> None:
