@@ -1,13 +1,13 @@
 import logging
-from typing import Any, override
+from typing import Any
 
 import polars as pl
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.tree import export_graphviz
+from typing_extensions import override
 
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.model import Model
-from flowcean.models.sklearn import SciKitModel
+from flowcean.sklearn import SciKitModel
 from flowcean.utils.random import get_seed
 
 logger = logging.getLogger(__name__)
