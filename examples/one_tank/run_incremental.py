@@ -9,7 +9,7 @@ from river import tree
 from typing_extensions import Self, override
 
 import flowcean.cli
-from flowcean.core import evaluate_offline, learn_incremental
+from flowcean.core import learn_incremental
 from flowcean.ode import (
     OdeEnvironment,
     OdeState,
@@ -18,14 +18,9 @@ from flowcean.ode import (
 from flowcean.polars import (
     SlidingWindow,
     StreamingOfflineEnvironment,
-    TrainTestSplit,
     collect,
 )
-from flowcean.river import RiverLearner
-from flowcean.sklearn import (
-    MeanAbsoluteError,
-    MeanSquaredError,
-)
+from flowcean.river import RiverLearner, TrainTestSplit
 
 logger = logging.getLogger(__name__)
 
@@ -120,17 +115,43 @@ def main() -> None:
 
     inputs = ["h_0", "h_1"]
     outputs = ["h_2"]
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(
-        collect(data_incremental, 250).with_transform(window_transform),
-    )
+
+    # Collect the data first
+    data = collect(data_incremental, 250).with_transform(window_transform)
+
+    # Split the data into train and test sets
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
+
+    # Manually split the data into train and test sets
+    # data = data.observe().collect()
+    # shuffle = False
+    # ratio = 0.8
+    # data = OfflineEnvironment.observe().collect(engine="streaming")
+    # pivot = int(len(data) * ratio)
+    # lengths = [pivot, len(data) - pivot]
+    # shuffled_dataset = data.sample(
+    #    fraction=1.0, shuffle=shuffle, seed=get_seed()
+    # )
+    # splits = [
+    #    shuffled_dataset.slice(offset - length, length)
+    #    for offset, length in zip(accumulate(lengths), lengths, strict=True)
+    # ]
+    # train, test = (
+    #    pl.DataFrame(splits[0].lazy()),
+    #    pl.DataFrame(splits[1].lazy()),
+    # )
+
+    # Wrap the splits in DataFrame objects
+    # train = StreamingOfflineEnvironment(train_data, batch_size=1)
+    # test = test_data
 
     # Convert the train and test data to float32
-    train.data = train.data.with_columns(
-        [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
-    )
-    test.data = test.data.with_columns(
-        [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
-    )
+    # train = train.with_columns(
+    #    [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
+    # )
+    # test.data = test.data.with_columns(
+    #    [pl.col(col).cast(pl.Float32) for col in inputs + outputs],
+    # )
 
     train = StreamingOfflineEnvironment(train, batch_size=1)
 
@@ -139,7 +160,7 @@ def main() -> None:
     )
 
     t_start = datetime.now(tz=timezone.utc)
-    model = learn_incremental(
+    learn_incremental(
         train,
         learner,
         inputs,
@@ -148,14 +169,15 @@ def main() -> None:
     delta_t = datetime.now(tz=timezone.utc) - t_start
     print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
-    report = evaluate_offline(
-        model,
-        test,
-        inputs,
-        outputs,
-        [MeanAbsoluteError(), MeanSquaredError()],
-    )
-    print(report)
+    # report = evaluate_offline(
+    #    model,
+    #    test,
+    #    inputs,
+    #    outputs,
+    #    [MeanAbsoluteError(), MeanSquaredError()],
+    # )
+    # print(report)
+    logger.info("Model learning succesful.")
 
 
 if __name__ == "__main__":

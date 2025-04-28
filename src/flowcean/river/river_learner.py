@@ -50,17 +50,19 @@ class RiverLearner(SupervisedIncrementalLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> Model:
-        logger.info("Training river model incrementally")
+        # Collect the inputs and outputs into DataFrames
+        inputs_df = inputs.collect()
+        outputs_df = outputs.collect()
 
         # Iterate over the rows of the inputs and outputs incrementally
         for input_row, output_row in zip(
-            pl.LazyFrame.collect(inputs),
-            pl.LazyFrame.collect(outputs),
+            inputs_df.iter_rows(named=True),
+            outputs_df.iter_rows(named=True),
             strict=False,
         ):
             xi = dict(input_row)  # Convert input row to a dictionary
             yi = next(
-                iter(output_row.to_list()),
+                iter(output_row.values()),
             )  # Extract the first (and only) output value
             self.model.learn_one(xi, yi)  # Incrementally train the model
 
