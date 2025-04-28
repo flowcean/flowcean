@@ -1,9 +1,8 @@
 import logging
 import time
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-import polars as pl
 from tqdm import tqdm
 
 import flowcean.cli
@@ -13,6 +12,9 @@ from flowcean.polars import (
     JoinedOfflineEnvironment,
     ToTimeSeries,
 )
+
+if TYPE_CHECKING:
+    import polars as pl
 
 logger = logging.getLogger(__name__)
 
