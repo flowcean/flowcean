@@ -9,7 +9,7 @@ from river import tree
 from typing_extensions import Self, override
 
 import flowcean.cli
-from flowcean.core import learn_incremental
+from flowcean.core import evaluate_offline, learn_incremental
 from flowcean.ode import (
     OdeEnvironment,
     OdeState,
@@ -19,6 +19,11 @@ from flowcean.polars import (
     SlidingWindow,
     StreamingOfflineEnvironment,
     TrainTestSplit,
+)
+from flowcean.sklearn import (
+    MeanAbsoluteError,
+    MeanSquaredError,
+    RegressionTree,
 )
 from flowcean.polars.environments.dataframe import collect
 from flowcean.river import RiverLearner  # , TrainTestSplit
@@ -130,7 +135,7 @@ def main() -> None:
     )
 
     t_start = datetime.now(tz=timezone.utc)
-    learn_incremental(
+    model = learn_incremental(
         train,
         learner,
         inputs,
@@ -142,14 +147,14 @@ def main() -> None:
     # Have to not use the evaluate_offline function for now
     # because it does not support the RiverModel
 
-    # report = evaluate_offline(
-    #    model,
-    #    test,
-    #    inputs,
-    #    outputs,
-    #    [MeanAbsoluteError(), MeanSquaredError()],
-    # )
-    # print(report)
+    report = evaluate_offline(
+        model,
+        test,
+        inputs,
+        outputs,
+        [MeanAbsoluteError(), MeanSquaredError()],
+    )
+    print(report)
     logger.info("Model learning succesful.")
 
 
