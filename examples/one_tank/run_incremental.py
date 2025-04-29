@@ -18,9 +18,10 @@ from flowcean.ode import (
 from flowcean.polars import (
     SlidingWindow,
     StreamingOfflineEnvironment,
-    collect,
+    TrainTestSplit,
 )
-from flowcean.river import RiverLearner, TrainTestSplit
+from flowcean.polars.environments.dataframe import collect
+from flowcean.river import RiverLearner  # , TrainTestSplit
 
 logger = logging.getLogger(__name__)
 
