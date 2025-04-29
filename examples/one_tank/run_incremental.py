@@ -20,13 +20,12 @@ from flowcean.polars import (
     StreamingOfflineEnvironment,
     TrainTestSplit,
 )
+from flowcean.polars.environments.dataframe import collect
+from flowcean.river import RiverLearner  # , TrainTestSplit
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanSquaredError,
-    RegressionTree,
 )
-from flowcean.polars.environments.dataframe import collect
-from flowcean.river import RiverLearner  # , TrainTestSplit
 
 logger = logging.getLogger(__name__)
 
