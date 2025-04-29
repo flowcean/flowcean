@@ -67,7 +67,7 @@ class RiverLearner(SupervisedIncrementalLearner):
             self.model.learn_one(xi, yi)  # Incrementally train the model
 
         # Return the trained RiverModel
-        y_col = outputs.columns[0]
+        y_col = pl.LazyFrame.collect_schema(outputs).names()[0]
         return RiverModel(self.model, y_col)
 
 
