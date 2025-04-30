@@ -76,10 +76,10 @@ class Continuous(ValueRange):
             max_value.
         """
         if self.distribution == "normal":
-            value = self.rng.gauss(self.mean, self.stddev)
-            while not (self.min_value <= value <= self.max_value):
-                value = self.rng.gauss(self.mean, self.stddev)
-            return value
+            # We ignore the min and max values for the normal distribution
+            # They are only used to check the mean and when the range is
+            # converted to discrete.
+            return self.rng.gauss(self.mean, self.stddev)
         return (
             self.min_value
             + (self.max_value - self.min_value) * self.rng.random()
