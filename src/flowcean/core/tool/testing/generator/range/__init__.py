@@ -1,8 +1,8 @@
 __all__ = [
     "Discrete",
-    "ValueRange",
     "Fixed",
     "Uniform",
+    "ValueRange",
 ]
 
 from .discrete import Discrete
