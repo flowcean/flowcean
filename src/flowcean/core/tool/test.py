@@ -63,8 +63,8 @@ def test_model(
             input_data,
             pl.LazyFrame | pl.DataFrame,
         ):
-            input_data_collected = prediction.lazy().collect()
-            prediction = input_data.lazy().collect()
+            input_data_collected = input_data.lazy().collect()
+            prediction = prediction.lazy().collect()
 
             test_inputs = [
                 input_data_collected.slice(i, 1)
@@ -109,14 +109,8 @@ class TestFailed(Exception):
     """
 
     def __init__(self, input_data: list[Data], prediction: list[Data]) -> None:
-        self.input_data = [
-            (data.collect() if isinstance(data, pl.LazyFrame) else data)
-            for data in input_data
-        ]
-        self.prediction = [
-            (data.collect() if isinstance(data, pl.LazyFrame) else data)
-            for data in prediction
-        ]
+        self.input_data = [data.lazy().collect() for data in input_data]
+        self.prediction = [data.lazy().collect() for data in prediction]
 
         if len(self.input_data) != len(self.prediction):
             msg = (
@@ -133,7 +127,7 @@ class TestFailed(Exception):
         else:
             message = (
                 "Test failed. The following input data and predictions"
-                "did not fulfill the predicate:\n"
+                " did not fulfill the predicate:\n"
             )
 
             for data, pred in zip(
