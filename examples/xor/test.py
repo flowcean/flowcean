@@ -4,20 +4,18 @@ import polars as pl
 
 from flowcean.core.model import Model
 from flowcean.core.tool import test_model
+from flowcean.core.tool.testing.generator import CombinationGenerator
+from flowcean.core.tool.testing.generator.range import Discrete
 from flowcean.core.tool.testing.predicates import PolarsPredicate
-from flowcean.polars.environments.dataframe import DataFrame
-from flowcean.polars.transforms.select import Select
 
 
 def main() -> None:
     # Load the trained model
     model = Model.load(Path("xor_model.fml"))
 
-    # Use the training data for the test
-    test_data = (
-        DataFrame.from_csv("data.csv")
-        .with_transform(Select([pl.col("x"), pl.col("y")]))
-        .to_incremental()
+    test_generator = CombinationGenerator(
+        Discrete("x", [0, 1]),
+        Discrete("y", [0, 1]),
     )
 
     # Define a predicate to check with the data
@@ -28,7 +26,7 @@ def main() -> None:
     # Test the model with the test data and predicate
     test_model(
         model,
-        test_data,
+        test_generator,
         predicate,
         show_progress=True,
         stop_after=0,
