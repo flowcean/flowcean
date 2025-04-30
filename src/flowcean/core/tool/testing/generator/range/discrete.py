@@ -1,9 +1,10 @@
 import random
+from collections.abc import Iterable, Iterator
 
 from .range import Range
 
 
-class Discrete(Range):
+class Discrete(Range, Iterable[tuple[str, float]]):
     """A range of discrete values.
 
     This range describes a discrete distribution of values from the given set
@@ -28,6 +29,14 @@ class Discrete(Range):
 
         self.rng = random.Random()
 
+    def __len__(self) -> int:
+        """Get the number of values in the range.
+
+        Returns:
+            The number of values in the range.
+        """
+        return len(self.values)
+
     def get_value(self) -> float:
         """Get a random value from the range.
 
@@ -39,3 +48,8 @@ class Discrete(Range):
 
     def set_seed(self, seed: int) -> None:
         self.rng.seed(seed)
+
+    def __iter__(self) -> Iterator[tuple[str, float]]:
+        """Iterate over the values of the range."""
+        for value in self.values:
+            yield (self.feature_name, value)
