@@ -1,10 +1,10 @@
 import random
 from collections.abc import Iterable, Iterator
 
-from .feature_value import FeatureValue
+from .feature_value import ValueRange
 
 
-class Discrete(FeatureValue, Iterable[tuple[str, float]]):
+class Discrete(ValueRange, Iterable[tuple[str, float]]):
     """A range of discrete values.
 
     This range describes a discrete distribution of values from the given set

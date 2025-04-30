@@ -1,10 +1,10 @@
 import random
 
 from .discrete import Discrete
-from .feature_value import FeatureValue
+from .feature_value import ValueRange
 
 
-class Uniform(FeatureValue):
+class Uniform(ValueRange):
     """A range of uniform distributed values.
 
     This range describes a uniform distribution of values between a minimum
