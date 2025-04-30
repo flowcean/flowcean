@@ -1,5 +1,6 @@
 import random
 
+from .discrete import Discrete
 from .range import Range
 
 
@@ -52,3 +53,24 @@ class Uniform(Range):
 
     def set_seed(self, seed: int) -> None:
         self.rng.seed(seed)
+
+    def to_discrete(self, sampling_distance: float) -> Discrete:
+        """Convert the range to a discrete range.
+
+        Args:
+            sampling_distance: The distance between two discrete values.
+
+        Returns:
+            A discrete range with the same feature name and a list of
+            uniformly distributed values.
+        """
+        return Discrete(
+            self.feature_name,
+            [
+                self.min_value + i * sampling_distance
+                for i in range(
+                    int((self.max_value - self.min_value) / sampling_distance)
+                    + 1,
+                )
+            ],
+        )
