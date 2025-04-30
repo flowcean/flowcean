@@ -50,25 +50,17 @@ class PolarsPredicate(Predicate):
         input_data: pl.DataFrame | pl.LazyFrame,
         prediction: pl.DataFrame | pl.LazyFrame,
     ) -> bool:
-        input_data = (
-            input_data.collect()
-            if isinstance(input_data, pl.LazyFrame)
-            else input_data
-        )
-        prediction = (
-            prediction.collect()
-            if isinstance(prediction, pl.LazyFrame)
-            else prediction
-        )
         return cast(
             "bool",
             pl.concat(
-                [input_data, prediction],
+                [input_data.lazy(), prediction.lazy()],
                 how="horizontal",
             )
             .select(
                 self.expr.cast(pl.Boolean).alias("predicate"),
             )
+            .lazy()
+            .collect()
             .item(),
         )
 
