@@ -115,6 +115,26 @@ While `uv` manages the necessary Python interpreters for you, you might want to 
     1. Download the latest version of Python from the official Python website.
     2. Run the downloaded installer. Be sure to check the "Add Python to PATH" option before installing.
     3. Follow the installation prompts to complete the process.
+    4. To use virtual environments in Powershell, you have to open it once in administrator mode and type
+
+      ```PS
+      Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+      ```
+
+    5. You may need to restart your computer.
+
+=== "Windows (WSL)
+
+    1. Open a powershell in administrator mode and run the command
+
+      ```PS
+      wsl --install
+      ```
+
+    2. Follow the instructions, for step-by-step guide, refer to the [offical documentation](https://learn.microsoft.com/en-us/windows/wsl/install-manual)
+
+    3. Now follow the instructions for Linux
+
 
 Verify the installation by checking the Python version:
 
