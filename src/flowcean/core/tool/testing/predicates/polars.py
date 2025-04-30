@@ -42,15 +42,7 @@ class PolarsPredicate(Predicate):
     """
 
     def __init__(self, expr: pl.Expr | str) -> None:
-        """Initialize the predicate.
-
-        There are two ways to provide the predicate expression:
-
-
-        1. As a string: The string is parsed as a Polars expression.
-
-        Provide the predicate expression either as a Polars expression
-        """
+        """Initialize the predicate from a polars expression or a string."""
         self.expr = _str_to_pl(expr) if isinstance(expr, str) else expr
 
     def __call__(
