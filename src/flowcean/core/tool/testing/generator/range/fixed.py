@@ -1,7 +1,7 @@
-from .range import Range
+from .discrete import Discrete
 
 
-class Fixed(Range):
+class Fixed(Discrete):
     """A fixed range with a single value.
 
     This range describes a fixed value for the given feature.
@@ -14,9 +14,8 @@ class Fixed(Range):
             feature_name: The name of the feature the range belongs to.
             value: The fixed value to return.
         """
-        super().__init__(feature_name)
-        self.value = value
+        super().__init__(feature_name, [value])
 
     def get_value(self) -> float:
         """Get the fixed value."""
-        return self.value
+        return self.values[0]
