@@ -34,7 +34,9 @@ class TestUniformRange(unittest.TestCase):
         assert discrete.values[0] == 0
         assert discrete.values[-1] == 9
 
-        assert len(discrete.values) == 4, "Discrete range should have 4 values"
+        assert len(discrete.values) == 4, (
+            "Discrete range should have 4 values",
+        )
 
 
 if __name__ == "__main__":
