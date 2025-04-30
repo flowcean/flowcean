@@ -15,27 +15,27 @@ class CombinationGenerator(IncrementalEnvironment):
     data: pl.DataFrame
     number_test_cases: int
 
-    def __init__(self, *ranges: Discrete) -> None:
+    def __init__(self, *values: Discrete) -> None:
         """Initialize the combination generator.
 
         Args:
-            ranges: A list of ranges to generate random values from.
-                Each range must be associated with exactly one input feature
+            values: A list of feature values to generate random values from.
+                Each entry must be associated with exactly one input feature
                 of the model that shall be tested.
         """
         super().__init__()
 
         # Check if no duplicate feature names are present
         feature_names_count: dict[str, int] = {}
-        for range_ in ranges:
-            feature_names_count[range_.feature_name] = (
+        for value in values:
+            feature_names_count[value.feature_name] = (
                 feature_names_count.get(
-                    range_.feature_name,
+                    value.feature_name,
                     0,
                 )
                 + 1
             )
-        if len(feature_names_count) != len(ranges):
+        if len(feature_names_count) != len(values):
             msg = "Duplicate feature names found in ranges: "
             msg += ", ".join(
                 f"{feature_name}: {count}"
@@ -44,18 +44,18 @@ class CombinationGenerator(IncrementalEnvironment):
             )
             raise ValueError(msg)
 
-        self.ranges = ranges
+        self.values = values
 
         # Calculate the number of test cases
         self.number_test_cases = functools.reduce(
             lambda n, range_: n * len(range_),
-            self.ranges,
+            self.values,
             1,
         )
 
         # Build the product iterator
         self.product_iterator = itertools.product(
-            *self.ranges,
+            *self.values,
         )
 
         # Perform the first step

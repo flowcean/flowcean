@@ -1,11 +1,11 @@
 __all__ = [
     "Discrete",
+    "FeatureValue",
     "Fixed",
-    "Range",
     "Uniform",
 ]
 
 from .discrete import Discrete
+from .feature_value import FeatureValue
 from .fixed import Fixed
-from .range import Range
 from .uniform import Uniform
