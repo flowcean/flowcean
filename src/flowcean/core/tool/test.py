@@ -56,17 +56,44 @@ def test_model(
     ):
         prediction = model.predict(input_data)
 
-        # Check if the prediction satisfies the predicate
-        if not predicate(
+        # Handle dataframes and lazyframes separately
+        # Those may contain multiple rows / samples and need to be
+        # sliced to get the individual samples for testing
+        if isinstance(prediction, pl.LazyFrame | pl.DataFrame) and isinstance(
             input_data,
-            prediction,
+            pl.LazyFrame | pl.DataFrame,
         ):
-            number_of_failures += 1
-            failure_data.append(input_data)
-            failure_prediction.append(prediction)
+            input_data_collected = prediction.lazy().collect()
+            prediction = input_data.lazy().collect()
 
-            if number_of_failures >= stop_after > 0:
-                break
+            test_inputs = [
+                input_data_collected.slice(i, 1)
+                for i in range(len(input_data_collected))
+            ]
+            predictions = [
+                prediction.slice(i, 1) for i in range(len(prediction))
+            ]
+
+        else:
+            test_inputs = [input_data]
+            predictions = [prediction]
+
+        # Check if the prediction satisfies the predicate
+        for test_input, prediction in zip(
+            test_inputs,
+            predictions,
+            strict=True,
+        ):
+            if not predicate(
+                test_input,
+                prediction,
+            ):
+                number_of_failures += 1
+                failure_data.append(test_input)
+                failure_prediction.append(prediction)
+
+                if number_of_failures >= stop_after > 0:
+                    break
 
     # If we got any failures at this point, raise an exception
     if number_of_failures > 0:
