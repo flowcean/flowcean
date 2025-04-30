@@ -1,11 +1,11 @@
 import unittest
 
-from flowcean.core.tool.testing.generator.range import Uniform
+from flowcean.core.tool.testing.generator.range import Continuous
 
 
-class TestUniformRange(unittest.TestCase):
+class TestContinuous(unittest.TestCase):
     def test_sampling(self) -> None:
-        r = Uniform("feature", 0, 10)
+        r = Continuous("feature", 0, 10)
         r.set_seed(0)
 
         sample = r()
@@ -13,7 +13,7 @@ class TestUniformRange(unittest.TestCase):
         assert 0 <= sample <= 10, f"Sample {sample} is out of range [0, 10]"
 
     def test_to_discrete(self) -> None:
-        r = Uniform("feature", 0, 10)
+        r = Continuous("feature", 0, 10)
         r.set_seed(0)
 
         discrete = r.to_discrete(1)
@@ -26,7 +26,7 @@ class TestUniformRange(unittest.TestCase):
         )
 
     def test_to_discrete_odd(self) -> None:
-        r = Uniform("feature", 0, 10)
+        r = Continuous("feature", 0, 10)
         r.set_seed(0)
 
         discrete = r.to_discrete(3)

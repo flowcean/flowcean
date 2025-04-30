@@ -1,13 +1,16 @@
 import random
+from typing import Literal
 
 from .discrete import Discrete
 from .feature_value import ValueRange
 
+Distribution = Literal["uniform", "normal"]
 
-class Uniform(ValueRange):
-    """A range of uniform distributed values.
 
-    This range describes a uniform distribution of values between a minimum
+class Continuous(ValueRange):
+    """A range of continuous values.
+
+    This range describes a continuous distribution of values between a minimum
     and maximum value for the given feature.
     """
 
@@ -18,6 +21,10 @@ class Uniform(ValueRange):
         feature_name: str,
         min_value: float,
         max_value: float,
+        *,
+        distribution: Distribution = "uniform",
+        mean: float | None = None,
+        stddev: float | None = None,
     ) -> None:
         """Initialize the uniform range.
 
@@ -25,6 +32,12 @@ class Uniform(ValueRange):
             feature_name: The name of the feature the range belongs to.
             min_value: The minimum value of the range.
             max_value: The maximum value of the range.
+            distribution: The distribution of the range. Can be either
+                "uniform" or "normal". Defaults to "uniform".
+            mean: The mean of the normal distribution. Required if
+                distribution is "normal".
+            stddev: The standard deviation of the normal distribution.
+                Required if distribution is "normal".
         """
         super().__init__(feature_name)
         if min_value >= max_value:
@@ -35,6 +48,22 @@ class Uniform(ValueRange):
             raise ValueError(
                 msg,
             )
+        self.distribution = distribution
+        if self.distribution == "normal":
+            if mean is None or stddev is None:
+                msg = (
+                    "mean and stddev must be provided for normal distribution"
+                )
+                raise ValueError(msg)
+            if not (min_value <= mean <= max_value):
+                msg = (
+                    f"mean ({mean}) must be between min_value ({min_value})"
+                    f"and max_value ({max_value})"
+                )
+                raise ValueError(msg)
+            self.mean = mean
+            self.stddev = stddev
+
         self.min_value = min_value
         self.max_value = max_value
         self.rng = random.Random()
@@ -46,6 +75,11 @@ class Uniform(ValueRange):
             A random value uniformly distributed between min_value and
             max_value.
         """
+        if self.distribution == "normal":
+            value = self.rng.gauss(self.mean, self.stddev)
+            while not (self.min_value <= value <= self.max_value):
+                value = self.rng.gauss(self.mean, self.stddev)
+            return value
         return (
             self.min_value
             + (self.max_value - self.min_value) * self.rng.random()
