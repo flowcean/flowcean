@@ -6,3 +6,5 @@ last_scan_points.png
 /scan_images*
 /map_images*
 *.parquet
+cached_ros_data.parquet
+/simulation
