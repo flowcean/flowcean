@@ -1,6 +1,6 @@
 import unittest
 
-from flowcean.core.tool.testing.generator.range import Continuous
+from flowcean.core.tool.testing.domain import Continuous
 
 
 class TestContinuous(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestContinuous(unittest.TestCase):
         assert discrete.values[-1] == 10
 
         assert len(discrete.values) == 11, (
-            "Discrete range should have 11 values"
+            "Discrete domain should have 11 values"
         )
 
     def test_to_discrete_odd(self) -> None:
@@ -35,7 +35,7 @@ class TestContinuous(unittest.TestCase):
         assert discrete.values[-1] == 9
 
         assert len(discrete.values) == 4, (
-            "Discrete range should have 4 values",
+            "Discrete domain should have 4 values",
         )
 
 
