@@ -2,16 +2,16 @@ from .discrete import Discrete
 
 
 class Fixed(Discrete):
-    """A fixed range with a single value.
+    """A domain with a single value.
 
-    This range describes a fixed value for the given feature.
+    This domain contains a single fixed value for a feature.
     """
 
     def __init__(self, feature_name: str, value: float) -> None:
-        """Initialize the fixed range.
+        """Initialize the fixed domain.
 
         Args:
-            feature_name: The name of the feature the range belongs to.
+            feature_name: The name of the feature the domain belongs to.
             value: The fixed value to return.
         """
         super().__init__(feature_name, [value])

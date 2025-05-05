@@ -2,16 +2,16 @@ import random
 from typing import Literal
 
 from .discrete import Discrete
-from .feature_value import ValueRange
+from .domain import Domain
 
 Distribution = Literal["uniform", "normal"]
 
 
-class Continuous(ValueRange):
-    """A range of continuous values.
+class Continuous(Domain):
+    """A domain of continuous values.
 
-    This range describes a continuous distribution of values between a minimum
-    and maximum value for the given feature.
+    This domain describes a continuous distribution of values between a minimum
+    and maximum value for a feature.
     """
 
     rng: random.Random
@@ -26,14 +26,14 @@ class Continuous(ValueRange):
         mean: float | None = None,
         stddev: float | None = None,
     ) -> None:
-        """Initialize the uniform range.
+        """Initialize the uniform feature domain.
 
         Args:
-            feature_name: The name of the feature the range belongs to.
-            min_value: The minimum value of the range.
-            max_value: The maximum value of the range.
-            distribution: The distribution of the range. Can be either
-                "uniform" or "normal". Defaults to "uniform".
+            feature_name: The name of the feature the domain belongs to.
+            min_value: The minimum value of the domain.
+            max_value: The maximum value of the domain.
+            distribution: The distribution of values inside the domain.
+                Can be either "uniform" or "normal". Defaults to "uniform".
             mean: The mean of the normal distribution. Required if
                 distribution is "normal".
             stddev: The standard deviation of the normal distribution.
@@ -69,7 +69,7 @@ class Continuous(ValueRange):
         self.rng = random.Random()
 
     def get_value(self) -> float:
-        """Get a random value from the range.
+        """Get a random value from the domain.
 
         Returns:
             A random value uniformly distributed between min_value and
@@ -77,7 +77,7 @@ class Continuous(ValueRange):
         """
         if self.distribution == "normal":
             # We ignore the min and max values for the normal distribution
-            # They are only used to check the mean and when the range is
+            # They are only used to check the mean and when the domain is
             # converted to discrete.
             return self.rng.gauss(self.mean, self.stddev)
         return (
@@ -89,13 +89,13 @@ class Continuous(ValueRange):
         self.rng.seed(seed)
 
     def to_discrete(self, sampling_distance: float) -> Discrete:
-        """Convert the range to a discrete range.
+        """Discretize the continuous domain into a discrete domain.
 
         Args:
             sampling_distance: The distance between two discrete values.
 
         Returns:
-            A discrete range with the same feature name and a list of
+            A discrete domain with the same feature name and a list of
             uniformly distributed values.
         """
         return Discrete(

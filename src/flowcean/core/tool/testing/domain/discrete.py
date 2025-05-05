@@ -1,14 +1,13 @@
 import random
 from collections.abc import Iterable, Iterator
 
-from .feature_value import ValueRange
+from .domain import Domain
 
 
-class Discrete(ValueRange, Iterable[tuple[str, float]]):
-    """A range of discrete values.
+class Discrete(Domain, Iterable[tuple[str, float]]):
+    """A domain of discrete values.
 
-    This range describes a discrete distribution of values from the given set
-    for the given feature.
+    This domain describes a discrete set of values for a feature.
     """
 
     rng: random.Random
@@ -18,11 +17,11 @@ class Discrete(ValueRange, Iterable[tuple[str, float]]):
         feature_name: str,
         values: list[float],
     ) -> None:
-        """Initialize the discrete range.
+        """Initialize the discrete domain.
 
         Args:
-            feature_name: The name of the feature the range belongs to.
-            values: The list of values of the range.
+            feature_name: The name of the feature the domain belongs to.
+            values: The list of values of the domain.
         """
         super().__init__(feature_name)
         self.values = values
@@ -30,20 +29,15 @@ class Discrete(ValueRange, Iterable[tuple[str, float]]):
         self.rng = random.Random()
 
     def __len__(self) -> int:
-        """Get the number of values in the range.
+        """Get the number of discrete values in the domain.
 
         Returns:
-            The number of values in the range.
+            The number of discrete values in the domain.
         """
         return len(self.values)
 
     def get_value(self) -> float:
-        """Get a random value from the range.
-
-        Returns:
-            A random value uniformly distributed between min_value and
-            max_value.
-        """
+        """Get a random value from the domain."""
         return self.rng.choice(self.values)
 
     def set_seed(self, seed: int) -> None:

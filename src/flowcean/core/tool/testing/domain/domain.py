@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 
-class ValueRange(ABC):
-    """An abstract base class for describing value ranges for features."""
+class Domain(ABC):
+    """An abstract base class for describing the value domain for a feature."""
 
     feature_name: str
 
@@ -10,19 +10,19 @@ class ValueRange(ABC):
         self,
         feature_name: str,
     ) -> None:
-        """Initialize the value range.
+        """Initialize the domain.
 
         Args:
-            feature_name: The name of the feature the range belongs to.
+            feature_name: The name of the feature the domain belongs to.
         """
         self.feature_name = feature_name
 
     @abstractmethod
     def get_value(self) -> float:
-        """Get a random value from the range for the feature."""
+        """Get a random value from the domain for the feature."""
 
     def __call__(self) -> float:
-        """Get a random value from the range for the feature."""
+        """Get a random value from the domain for the feature."""
         return self.get_value()
 
     def set_seed(self, seed: int) -> None:  # noqa: ARG002

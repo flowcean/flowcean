@@ -1,11 +1,11 @@
 __all__ = [
     "Continuous",
     "Discrete",
+    "Domain",
     "Fixed",
-    "ValueRange",
 ]
 
 from .continuous import Continuous
 from .discrete import Discrete
-from .feature_value import ValueRange
+from .domain import Domain
 from .fixed import Fixed

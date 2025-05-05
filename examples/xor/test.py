@@ -4,8 +4,8 @@ import polars as pl
 
 from flowcean.core.model import Model
 from flowcean.core.tool import test_model
+from flowcean.core.tool.testing.domain import Discrete
 from flowcean.core.tool.testing.generator import CombinationGenerator
-from flowcean.core.tool.testing.generator.range import Discrete
 from flowcean.core.tool.testing.predicates import PolarsPredicate
 
 
