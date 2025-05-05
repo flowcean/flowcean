@@ -24,7 +24,7 @@ class CombinationGenerator(IncrementalEnvironment):
         """Initialize the combination generator.
 
         Args:
-            value_ranges: A list of value ranges to generate random values
+            value_ranges: A list of value ranges to generate test cases
                 from. Each entry must be associated with exactly one input
                 feature of the model that shall be tested.
         """
