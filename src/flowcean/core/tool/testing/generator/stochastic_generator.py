@@ -5,18 +5,18 @@ import polars as pl
 from flowcean.core.data import Data
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.environment.stepable import Finished
-from flowcean.core.tool.testing.generator.range import ValueRange
+from flowcean.core.tool.testing.domain import Domain
 
 
 class StochasticGenerator(IncrementalEnvironment):
-    """A generator that produces random tests based on given ranges."""
+    """A generator that produces random tests based on given domains."""
 
     data: pl.DataFrame
     count: int
 
     def __init__(
         self,
-        value_ranges: list[ValueRange],
+        domains: list[Domain],
         *,
         number_test_cases: int | None = None,
         seed: int = 0,
@@ -24,8 +24,8 @@ class StochasticGenerator(IncrementalEnvironment):
         """Initialize the stochastic generator.
 
         Args:
-            value_ranges: A list of value ranges to generate random values
-                from. Each entry must be associated with exactly one input
+            domains: A list of domains to generate random values for.
+                Each domain must be associated with exactly one input
                 feature of the model that shall be tested.
             number_test_cases: The number of test cases to generate. If None,
                 the generator will run indefinitely.
@@ -36,16 +36,16 @@ class StochasticGenerator(IncrementalEnvironment):
 
         # Check if no duplicate feature names are present
         feature_names_count: dict[str, int] = {}
-        for value_range in value_ranges:
-            feature_names_count[value_range.feature_name] = (
+        for domain in domains:
+            feature_names_count[domain.feature_name] = (
                 feature_names_count.get(
-                    value_range.feature_name,
+                    domain.feature_name,
                     0,
                 )
                 + 1
             )
-        if len(feature_names_count) != len(value_ranges):
-            msg = "Duplicate feature names found: "
+        if len(feature_names_count) != len(domains):
+            msg = "Duplicate features found: "
             msg += ", ".join(
                 f"{feature_name}: {count}"
                 for feature_name, count in feature_names_count.items()
@@ -53,12 +53,12 @@ class StochasticGenerator(IncrementalEnvironment):
             )
             raise ValueError(msg)
 
-        # Seed all ranges
+        # Seed all domains
         rng = random.Random(seed) if seed != 0 else random.Random()
-        for value_range in value_ranges:
-            value_range.set_seed(rng.randint(0, 2**32 - 1))
+        for domain in domains:
+            domain.set_seed(rng.randint(0, 2**32 - 1))
 
-        self.value_ranges = value_ranges
+        self.domains = domains
         self.count = 0
         self.number_test_cases = number_test_cases
         # Perform the first step to initialize the generator
@@ -75,10 +75,7 @@ class StochasticGenerator(IncrementalEnvironment):
         ):
             raise Finished
         self.data = pl.DataFrame(
-            {
-                value_range.feature_name: value_range()
-                for value_range in self.value_ranges
-            },
+            {domain.feature_name: domain() for domain in self.domains},
         )
 
     def _observe(self) -> Data:
