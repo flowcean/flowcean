@@ -10,7 +10,12 @@ from flowcean.core.tool.testing.generator.range import Discrete
 
 
 class CombinationGenerator(IncrementalEnvironment):
-    """A generator that produces random tests based on given ranges."""
+    """A generator that produces tests based on combination of ranges.
+
+    This generator creates a test case for each combination of the provided
+    value ranges. Each value range must be associated with exactly one input
+    feature of the model that shall be tested.
+    """
 
     data: pl.DataFrame
     number_test_cases: int
