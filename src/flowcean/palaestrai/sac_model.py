@@ -4,14 +4,12 @@ from harl.sac.muscle import SACMuscle
 from typing_extensions import Self, override
 
 from flowcean.core.model import Model
-from flowcean.core.strategies.active import Action, Interface, Observation
+from flowcean.core.strategies.active import Action, Observation
 from flowcean.palaestrai.util import (
     convert_to_actuator_informations,
     convert_to_interface,
     convert_to_sensor_informations,
 )
-
-# from flowcean.palaestrai.sac_learner import convert_to_actuator_informations
 
 
 class SACModel(Model):
