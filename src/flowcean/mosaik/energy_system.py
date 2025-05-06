@@ -220,7 +220,7 @@ def read_min_and_max_from_space(
 
             value_min = float(val)
 
-        if "high" in parts:
+        if "high" in part:
             _, val = part.split("=")
             try:
                 value_max = int(val)
