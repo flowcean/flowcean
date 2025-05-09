@@ -14,6 +14,7 @@ from tqdm import tqdm
 from typing_extensions import Self, override
 
 from flowcean.core import OfflineEnvironment
+from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
 
 
 class DataFrame(OfflineEnvironment):
@@ -50,6 +51,17 @@ class DataFrame(OfflineEnvironment):
 
         self._hash = data_hash
         super().__init__()
+
+    def to_incremental(
+        self,
+        batch_size: int = 1,
+    ) -> StreamingOfflineEnvironment:
+        """Convert the DataFrame to an incremental environment.
+
+        Args:
+            batch_size: The size of each batch. Defaults to 1.
+        """
+        return StreamingOfflineEnvironment(self, batch_size, size=len(self))
 
     @classmethod
     def from_csv(cls, path: str | Path, separator: str = ",") -> Self:
@@ -129,7 +141,7 @@ class DataFrame(OfflineEnvironment):
         if self._length is None:
             # This operation is potentially very slow / costly
             self._length = cast(
-                int,
+                "int",
                 self.data.select(pl.len()).collect().item(),
             )
         return self._length
