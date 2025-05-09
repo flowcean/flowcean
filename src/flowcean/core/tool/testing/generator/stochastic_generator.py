@@ -18,7 +18,7 @@ class StochasticGenerator(IncrementalEnvironment):
         self,
         domains: list[Domain],
         *,
-        number_test_cases: int | None = None,
+        test_case_count: int | None = None,
         seed: int = 0,
     ) -> None:
         """Initialize the stochastic generator.
@@ -27,7 +27,7 @@ class StochasticGenerator(IncrementalEnvironment):
             domains: A list of domains to generate random values for.
                 Each domain must be associated with exactly one input
                 feature of the model that shall be tested.
-            number_test_cases: The number of test cases to generate. If None,
+            test_case_count: The number of test cases to generate. If None,
                 the generator will run indefinitely.
             seed: The seed for the random number generator. The default is 0,
                 which means a random seed will be used.
@@ -60,7 +60,7 @@ class StochasticGenerator(IncrementalEnvironment):
 
         self.domains = domains
         self.count = 0
-        self.number_test_cases = number_test_cases
+        self.number_test_cases = test_case_count
         # Perform the first step to initialize the generator
         self.step()
 
