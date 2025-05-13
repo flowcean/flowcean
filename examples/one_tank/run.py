@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 import polars as pl
+import torch
 from numpy.typing import NDArray
 from typing_extensions import Self, override
 
@@ -129,6 +130,7 @@ def main() -> None:
                 input_size=len(inputs),
                 output_size=len(outputs),
                 hidden_dimensions=[10, 10],
+                activation_function=torch.nn.Tanh,
             ),
             max_epochs=10,
         ),
