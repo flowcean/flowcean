@@ -51,4 +51,4 @@ class SliceTimeSeries(Transform):
         return pl.concat(
             [data.drop(self.time_series), collapsed],
             how="horizontal",
-        )
+        ).explode(self.time_series)
