@@ -1,199 +1,72 @@
-import logging
-from pathlib import Path
-
 import cv2
 import numpy as np
-import polars as pl
-from PIL import Image
-from scipy.spatial.transform import Rotation
-from tqdm import tqdm
-
-from flowcean.core.transform import Transform
-
-logger = logging.getLogger(__name__)
 
 
-class MapImage(Transform):
-    """Generates grayscale images from an occupancy map in the robot's frame.
+def crop_map(
+    map_image: np.ndarray,
+    translation: np.ndarray,
+    rotation_matrix: np.ndarray,
+    map_resolution: float,
+    cropped_resolution: float,
+    crop_width: int,
+    crop_height: int,
+    border_mode: int = cv2.BORDER_REPLICATE,
+) -> np.ndarray:
+    map_height, _map_width = map_image.shape[:2]
 
-    Transforms the occupancy map into the robot's sensor coordinate
-    frame using the latest pose from `/amcl_pose`, with sensor x (forward)
-    pointing upwards and sensor y (left) pointing rightward to match RViz.
-    The map is cropped around the robot and resized to the specified pixel
-    size. Images are optionally saved to disk and embedded in a Polars
-    DataFrame under `/map_image`.
-    """
+    u = translation[0] / map_resolution
+    v = map_height - (translation[1] / map_resolution)
+    p_robot = np.array([u, v])
 
-    def __init__(
-        self,
-        occupancy_map: dict,
-        sensor_pose_topic: str = "/amcl_pose",
-        crop_region_size: float = 15.0,
-        image_pixel_size: int = 300,
-        *,
-        save_images: bool = False,
-    ) -> None:
-        """Initialize the MapImage transform.
+    scale = map_resolution / cropped_resolution
+    rotation = rotation_matrix * scale
 
-        Args:
-            occupancy_map: Occupancy map data.
-            sensor_pose_topic: Topic name for the sensor pose data.
-            crop_region_size: Side length of square region for cropping (m).
-            image_pixel_size: Output image resolution (both width and height).
-            save_images: Whether to save images to disk.
-        """
-        self.occupancy_map = occupancy_map
-        self.sensor_pose_topic = sensor_pose_topic
-        self.crop_region_size = crop_region_size
-        self.image_pixel_size = image_pixel_size
-        self.save_images = save_images
+    center_out = np.array([crop_width / 2.0, crop_height / 2.0])
+    t_pix = center_out - rotation @ p_robot
 
-    def _transform_map_to_sensor_frame(
-        self,
-        map_data: dict,
-        robot_pose: tuple[float, float, float],
-    ) -> np.ndarray:
-        """Transform the occupancy map to the robot's sensor frame.
+    affine_transform = np.zeros((2, 3), dtype=np.float32)
+    affine_transform[:, :2] = rotation
+    affine_transform[:, 2] = t_pix
 
-        Args:
-            map_data: Dictionary containing map data and metadata.
-            robot_pose: Tuple of (x, y, theta) representing robot position and
-                orientation.
+    return cv2.warpAffine(
+        map_image,
+        affine_transform,
+        dsize=(crop_width, crop_height),
+        flags=cv2.INTER_NEAREST,
+        borderMode=border_mode,
+    )
 
-        Returns:
-            np.ndarray: Transformed grayscale image.
-        """
-        # Extract map info
-        map_array = np.array(map_data["data"]).reshape(
-            map_data["info.height"],
-            map_data["info.width"],
-        )
-        resolution = map_data["info.resolution"]
-        origin_x = map_data["info.origin.position.x"]
-        origin_y = map_data["info.origin.position.y"]
 
-        # Convert to grayscale: -1 to 255, 0 to 255, 100 to 0
-        gray_map = np.where(
-            map_array == -1,
-            255,
-            255 - (map_array * 2.55).astype(np.uint8),
-        )
-
-        # Robot pose
-        x_r, y_r, theta_r = robot_pose  # theta_r in radians
-
-        # Robot position in pixel coordinates
-        robot_px_x = (x_r - origin_x) / resolution
-        robot_px_y = (y_r - origin_y) / resolution
-
-        # Output image size in pixels before resizing
-        pixels_per_side = int(self.crop_region_size / resolution)
-
-        # Affine transformation: rotate around robot, then center it
-        theta_deg = np.degrees(theta_r) + 180
-        affine_transformation_matrix = cv2.getRotationMatrix2D(
-            (robot_px_x, robot_px_y),
-            theta_deg,
-            1.0,
-        )
-        affine_transformation_matrix = affine_transformation_matrix.astype(
-            np.float32,
-        )  # Ensure float32 for OpenCV compatibility
-
-        # Translate robot to center
-        center_px = pixels_per_side / 2.0
-        affine_transformation_matrix[0, 2] += center_px - robot_px_x
-        affine_transformation_matrix[1, 2] += center_px - robot_px_y
-
-        # Warp the map
-        warped_map = cv2.warpAffine(
-            gray_map,
-            affine_transformation_matrix,
-            (pixels_per_side, pixels_per_side),
-            flags=cv2.INTER_NEAREST,
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=(255,),  # Scalar tuple for grayscale
-        )
-
-        # Resize to final image size
-        return cv2.resize(
-            warped_map,
-            (self.image_pixel_size, self.image_pixel_size),
-            interpolation=cv2.INTER_NEAREST,
-        )
-
-    def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        """Apply the transformation to generate map images for each robot pose.
-
-        Args:
-            data: LazyFrame containing map and pose data.
-
-        Returns:
-            pl.LazyFrame: Updated DataFrame with map images.
-        """
-        logger.debug("Processing pose data to generate images.")
-
-        region_str = str(self.crop_region_size).replace(".", "_")
-        output_dir = f"map_images_{region_str}m_{self.image_pixel_size}p"
-        if self.save_images:
-            Path(output_dir).mkdir(parents=True, exist_ok=True)
-
-        collected_data = data.collect()
-        amcl_pose_data = collected_data[0, self.sensor_pose_topic]
-
-        # Extract pose data
-        pose_entries = []
-        for entry in amcl_pose_data:
-            pose_data = entry["value"]
-            x = pose_data["pose.pose.position.x"]
-            y = pose_data["pose.pose.position.y"]
-            orientation_x = pose_data["pose.pose.orientation.x"]
-            orientation_y = pose_data["pose.pose.orientation.y"]
-            orientation_z = pose_data["pose.pose.orientation.z"]
-            orientation_w = pose_data["pose.pose.orientation.w"]
-            theta = Rotation.from_quat(
-                [orientation_x, orientation_y, orientation_z, orientation_w],
-            ).as_euler("xyz", degrees=False)[2]
-            pose_entries.append((entry["time"], x, y, theta))
-
-        # Process each pose message
-        image_records = []
-        for message_number, (
-            timestamp,
-            x_robot,
-            y_robot,
-            theta_robot,
-        ) in enumerate(
-            tqdm(pose_entries, desc="Generating map images"),
-        ):
-            logger.debug(
-                "Processing pose message %d at time %s",
-                message_number,
-                timestamp,
-            )
-
-            # Transform map to sensor frame
-            transformed_image = self._transform_map_to_sensor_frame(
-                self.occupancy_map,
-                (x_robot, y_robot, theta_robot),
-            )
-
-            # Flip horizontally to match RViz orientation
-            gray_image = transformed_image[:, ::-1]
-
-            # Save image to disk if enabled
-            if self.save_images:
-                filename = (
-                    Path(output_dir) / f"map_image_{message_number:04d}.png"
-                )
-                Image.fromarray(gray_image).save(filename)
-
-            # Store image data
-            image_records.append(
-                {"time": timestamp, "value": gray_image.tolist()},
-            )
-
-        # Create DataFrame with images and combine with original data
-        df_images = pl.DataFrame({"/map_image": [image_records]})
-        logger.debug("Processed map images schema: %s", df_images.schema)
-        return collected_data.hstack(df_images).lazy()
+# import matplotlib.pyplot as plt
+# import numpy as np
+#
+# H, W = 600, 800
+# map_img = np.zeros((H, W), dtype=np.uint8)
+# cv2.rectangle(map_img, (150, 100), (700, 500), color=1, thickness=10)
+# cv2.rectangle(map_img, (200, 150), (50, 450), color=1, thickness=10)
+# cv2.circle(map_img, (140, 100), 50, color=1, thickness=10)
+#
+# theta = np.deg2rad(30)
+# R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+# t = np.array([3.0, 1.5])
+#
+# map_res = 0.02
+# crop_res = 0.01
+# crop_w, crop_h = 400, 400
+#
+# patch = crop_map(
+#     map_image=map_img,
+#     translation=t,
+#     rotation_matrix=R,
+#     map_resolution=map_res,
+#     cropped_resolution=crop_res,
+#     crop_width=crop_w,
+#     crop_height=crop_h,
+# )
+#
+# # 5) Visualize:
+# fig, ax = plt.subplots(1, 2)
+# ax[0].imshow(map_img, cmap="gray_r")
+# ax[1].imshow(patch, cmap="gray_r")
+# plt.title("Robot-centric occupancy patch")
+# plt.show()

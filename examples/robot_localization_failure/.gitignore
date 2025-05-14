@@ -4,4 +4,4 @@ last_scan_points.png
 /particle_images*
 /scan_images*
 /map_images*
-cached_ros_data.parquet
+*.parquet
