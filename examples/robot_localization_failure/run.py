@@ -4,10 +4,16 @@ import logging
 from pathlib import Path
 
 from custom_transforms.collapse import Collapse
+from custom_transforms.detect_delocalizations import DetectDelocalizations
+from custom_transforms.localization_status import LocalizationStatus
+from custom_transforms.map_image import MapImage
+from custom_transforms.particle_cloud_image import ParticleCloudImage
+from custom_transforms.slice_time_series import SliceTimeSeries
 from custom_transforms.zero_order_hold_matching import ZeroOrderHoldMatching
 from rosbag import load_or_cache_ros_data
 
 import flowcean.cli
+from flowcean.polars import Explode
 from flowcean.polars.transforms.drop import Drop
 
 logger = logging.getLogger(__name__)
@@ -22,8 +28,8 @@ ROS_MESSAGE_TYPES = [
 ]
 
 SAVE_IMAGES = True
-IMAGE_PIXEL_SIZE = 100
-CROP_REGION_SIZE = 10.0
+IMAGE_PIXEL_SIZE = 10
+CROP_REGION_SIZE = 5.0
 
 
 flowcean.cli.initialize_logging()
@@ -45,35 +51,27 @@ transform = (
             "/momo/pose",
             "/amcl_pose",
         ],
+        name="measurements",
     )
-    | Drop(["/scan", "/particle_cloud", "/momo/pose", "/amcl_pose"])
-    | Drop(["/map"])
-    # | SliceTimeSeries(
-    #     time_series="aligned",
-    #     counter_feature="/delocalizations",
-    # )
-    # | LocalizationStatus(
-    #     ground_truth_pose="/momo/pose",
-    #     estimated_pose="/amcl_pose",
-    #     position_threshold=0.4,
-    #     heading_threshold=0.4,
-    # )
-    # | ShiftTimestamps(
-    #     shift=1.0,
-    #     feature="isDelocalized",
-    # )
-    # | Drop(["position_error", "heading_error", "/delocalizations"])
-    # | ZeroOrderHoldMatching(
-    #     topics=[
-    #         "/scan",
-    #         "/particle_cloud",
-    #         "/momo/pose",
-    #         "/amcl_pose",
-    #         "isDelocalized",
-    #     ],
-    # )
+    | Drop("/scan", "/particle_cloud", "/momo/pose", "/amcl_pose")
+    | DetectDelocalizations("/delocalizations", name="slice_points")
+    | Drop("/delocalizations")
+    | LocalizationStatus(
+        time_series="measurements",
+        ground_truth_pose="/momo/pose",
+        estimated_pose="/amcl_pose",
+        position_threshold=0.4,
+        heading_threshold=0.4,
+    )
+    | SliceTimeSeries(
+        time_series="measurements",
+        slice_points="slice_points",
+    )
+    | Drop("slice_points")
     # | MapImage(
-    #     occupancy_map=occupancy_map,
+    #     map_feature="/map",
+    #     time_series="measurements",
+    #     pose_topic="/amcl_pose",
     #     crop_region_size=CROP_REGION_SIZE,
     #     image_pixel_size=IMAGE_PIXEL_SIZE,
     #     save_images=SAVE_IMAGES,
@@ -86,9 +84,10 @@ transform = (
     #     save_images=SAVE_IMAGES,
     # )
     # | ParticleCloudImage(
-    #     crop_region_size=CROP_REGION_SIZE,
-    #     image_pixel_size=IMAGE_PIXEL_SIZE,
-    #     save_images=SAVE_IMAGES,
+    #     time_series="measurements",
+    #     width=IMAGE_PIXEL_SIZE,
+    #     height=IMAGE_PIXEL_SIZE,
+    #     width_meters=CROP_REGION_SIZE,
     # )
     # | Drop(
     #     features=[
@@ -104,7 +103,74 @@ transform = (
     # )
 )
 
-transformed_data = transform(data)
+transformed_data = transform(
+    data,
+    # data.collect().sample(2, with_replacement=True).lazy(),
+)
+collected = transformed_data.collect(engine="streaming")
+print(collected)
+
+# import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates
+# import polars as pl
+#
+# collected = collected.with_columns(
+#     pl.col("measurements").list.eval(
+#         pl.element().struct.with_fields(
+#             pl.from_epoch(pl.field("time"), time_unit="ns"),
+#         ),
+#     ),
+# )
+#
+#
+# def exploded(i: int) -> pl.DataFrame:
+#     return collected.select(
+#         pl.col("measurements").get(i).explode().struct.unnest()
+#     ).unnest("value")
+#
+#
+# fig, ax = plt.subplots()
+# ax.plot(
+#     *[
+#         exploded(i).select(feature).to_series().to_numpy()
+#         for i in range(31)
+#         for feature in ("time", "position_error")
+#     ],
+# )
+# # plt.xlabel("Time")
+# time_format = mdates.DateFormatter("%H:%M:%S")
+# ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=1))
+# ax.xaxis.set_major_formatter(time_format)
+# ax.set_ylabel("Position Error")
+#
+# ax.axhline(
+#     y=0.4,
+#     color="red",
+#     linestyle="--",
+#     linewidth=1,
+#     label="delocalization threshold",
+# )
+# ax.legend()
+#
+# plt.xticks(rotation=45)
+# plt.tight_layout()
+# plt.show()
+
+# collected.drop("/delocalizations").with_row_index().explode("aligned").unnest(
+#     "aligned"
+# ).join_asof(
+#     collected.with_row_index()
+#     .select(
+#         pl.col("index"), pl.col("/delocalizations").explode().struct.unnest()
+#     )
+#     .unnest("value")
+#     .filter(pl.col("data").diff() > 0)
+#     .drop("data")
+#     .with_row_index("slice_i"),
+#     on="time",
+#     by="index",
+#     strategy="forward",
+# ).group_by("slice_i", maintain_order=True).agg(pl.len())
 
 
 # transformed_dataframes = []

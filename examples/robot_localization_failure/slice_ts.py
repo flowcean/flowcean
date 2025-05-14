@@ -1,86 +1,188 @@
-from collections.abc import Callable
-
+from typing import Iterable
 import polars as pl
 
-
-def slice_time_series(
-    time_series: pl.Expr,
-    slices: pl.Expr,
-) -> pl.Expr:
-    """Slice a list-of-structs time series into multiple segments.
-
-    For each struct in `slices` (with fields `from` and `to`), this function
-    extracts all samples from `time_series` (structs with `time` and `value`)
-    whose `time` lies in `[from, to)`.
-
-    Args:
-        time_series: Expression of a list column containing structs with fields
-            `time` and `value`.
-        slices: Expression of a list column containing structs with fields
-            `from` and `to`.
-
-    Returns:
-        A list-of-lists expression: for each row, an outer list over slices,
-        each element is the sub-series (a list of structs) for that slice.
-    """
-
-    def _list_eval(
-        list_col: pl.Expr | str,
-        func: Callable[..., pl.Expr],
-        *refs: pl.Expr | str,
-    ) -> pl.Expr:
-        """Evaluate `func` on elements of a list column, with references."""
-        elements = pl.element().struct[0].explode()
-        references = [pl.element().struct[i + 1] for i in range(len(refs))]
-        return pl.concat_list(pl.struct(list_col, *refs)).list.eval(
-            func(elements, *references),
-        )
-
-    def _filter_between(
-        sample: pl.Expr,
-        lower: pl.Expr,
-        upper: pl.Expr,
-    ) -> pl.Expr:
-        return sample.filter(
-            sample.struct.field("time").is_between(
-                lower,
-                upper,
-                closed="left",
-            ),
-        )
-
-    return _list_eval(
-        slices,
-        lambda slice_range, series: _list_eval(
-            series,
-            lambda sample, slice_range: _filter_between(
-                sample,
-                slice_range.struct.field("from"),
-                slice_range.struct.field("to"),
-            ),
-            slice_range,
-        ),
-        time_series,
-    )
-
-
+N = 100
 df = pl.DataFrame(
     {
-        "a": [[{"time": i * 2, "value": i * 10} for i in range(100_000)]],
-        "slices": [
+        "a": [
             [
-                {"from": 10, "to": 20},
-                {"from": 20, "to": 36},
-                {"from": 36, "to": 58},
-                {"from": 58, "to": 75},
-                {"from": 75, "to": 100},
+                {"time": i * 2, "value": {"data": i * 10}}
+                for i in range(1, N // 2)
+            ],
+        ],
+        "b": [
+            [{"time": i * 3, "value": {"data": i * 1}} for i in range(N // 3)],
+        ],
+        "c": [
+            [
+                {"time": i * 7, "value": {"foo": i * 1, "bar": i / 2}}
+                for i in range(10, N // 7)
             ],
         ],
         "map": [True],
+        "event_counter": [
+            [
+                {"time": 2, "value": {"data": 0}},
+                {"time": 3, "value": {"data": 0}},
+                {"time": 4, "value": {"data": 0}},
+                {"time": 10, "value": {"data": 1}},
+                {"time": 11, "value": {"data": 1}},
+                {"time": 20, "value": {"data": 2}},
+                {"time": 22, "value": {"data": 2}},
+                {"time": 36, "value": {"data": 3}},
+                {"time": 40, "value": {"data": 3}},
+                {"time": 58, "value": {"data": 4}},
+                {"time": 63, "value": {"data": 4}},
+                {"time": 75, "value": {"data": 5}},
+                {"time": 84, "value": {"data": 5}},
+                {"time": 100, "value": {"data": 6}},
+            ],
+        ],
     },
 )
-df = df.with_columns(
-    a_sliced=slice_time_series(pl.col("a"), pl.col("slices")).alias(
-        "a_sliced",
+print(df)
+
+# zoh = ZeroOrderHoldMatching(["a", "b"])
+# after = zoh(df)
+
+
+pl.Config().set_tbl_rows(100)
+
+# df = df.sample(3, with_replacement=True)
+df = df.lazy()
+after = df.select(
+    pl.col("event_counter")
+    .list.eval(
+        pl.element().struct.with_fields(
+            pl.field("value").struct.field("data").diff().alias("value"),
+        ),
+    )
+    .list.eval(
+        pl.element()
+        .struct.field("time")
+        .filter(pl.element().struct.field("value") > 0),
     ),
-)
+).collect()
+print(after)
+
+
+def zero_order_hold_align(
+    df: pl.LazyFrame,
+    columns: Iterable[str],
+    new_column: str = "aligned",
+) -> pl.LazyFrame:
+    """Perform zero-order-hold alignment of multiple time-series features.
+
+    Args:
+        df: Input DataFrame containing struct-type time-series columns.
+        columns: Names of struct columns to align using zero-order-hold.
+        new_column: Name of the output struct column. Defaults to "aligned".
+
+    Returns:
+        DataFrame with an additional column containing zero-order-hold aligned
+        time-series.
+    """
+    exploded = (
+        df.with_row_index()
+        .explode(column)
+        .select(
+            pl.col("index"),
+            pl.col(column).struct.field("time"),
+            pl.col(column)
+            .struct.field("value")
+            .name.prefix_fields(f"{column}/")
+            .struct.unnest(),
+        )
+        for column in columns
+    )
+
+    aligned = (
+        pl.concat(exploded, how="align")
+        .with_columns(pl.exclude("index", "time").forward_fill().over("index"))
+        .drop_nulls()
+        .select(
+            pl.struct(
+                pl.col("time"),
+                pl.struct(
+                    pl.exclude("index", "time"),
+                ).alias("value"),
+            )
+            .implode()
+            .over("index")
+            .alias(new_column),
+        )
+    )
+
+    return pl.concat([df, aligned], how="horizontal")
+
+
+# after = zero_order_hold_align(
+#     df,
+#     columns=["a", "b", "c"],
+#     new_column="aligned",
+# ).collect(engine="streaming")
+# print(after)
+
+
+# columns = ["a", "b", "c"]
+# name = "aligned"
+#
+#
+# def prefix_values(expr: pl.Expr, prefix: str) -> pl.Expr:
+#     return expr.struct.with_fields(
+#         pl.field("value").name.prefix_fields(f"{prefix}/"),
+#     )
+#
+#
+# after = pl.concat(
+#     (
+#         df.with_row_index()
+#         .explode(column)
+#         .select(
+#             pl.col("index"),
+#             prefix_values(pl.col(column), column).struct.field("time"),
+#             prefix_values(pl.col(column), column)
+#             .struct.field("value")
+#             .struct.unnest(),
+#         )
+#         for column in columns
+#     ),
+#     how="align",
+# ).select(
+#     pl.struct(
+#         pl.col("time"),
+#         pl.struct(pl.exclude("index", "time")).alias("value"),
+#     )
+#     .implode()
+#     .over("index")
+#     .alias(name),
+# )
+#
+# full = pl.concat([df, after], how="horizontal")
+#
+# collected = full.collect(engine="streaming")
+# print(collected.schema)
+# print(collected)
+
+# after = (
+#     df
+#     # .sample(3, with_replacement=True)
+#     .with_columns(
+#         slice_time_series(
+#             pl.col("a"),
+#             collect_slices(
+#                 pl.col("event_counter"),
+#                 condition=pl.element()
+#                 .struct.field("value")
+#                 .struct.field("data")
+#                 .diff()
+#                 > 0,
+#             ),
+#         ).alias(
+#             "a",
+#         ),
+#     )
+#     .drop("event_counter")
+#     .explode("a")
+# )
+# print(after)
