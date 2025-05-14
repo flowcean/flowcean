@@ -78,6 +78,8 @@ class MultilayerPerceptron(lightning.LightningModule):
         input_size: int,
         output_size: int,
         hidden_dimensions: list[int] | None = None,
+        *,
+        activation_function: type[torch.nn.Module] | None = None,
     ) -> None:
         """Initialize the model.
 
@@ -86,6 +88,8 @@ class MultilayerPerceptron(lightning.LightningModule):
             input_size: The size of the input.
             output_size: The size of the output.
             hidden_dimensions: The dimensions of the hidden layers.
+            activation_function: The activation function to use.
+                Defaults to ReLU if not provided.
         """
         super().__init__()
         if hidden_dimensions is None:
@@ -99,7 +103,9 @@ class MultilayerPerceptron(lightning.LightningModule):
             layers.extend(
                 (
                     torch.nn.Linear(hidden_size, dimension),
-                    torch.nn.LeakyReLU(),
+                    activation_function()
+                    if activation_function
+                    else torch.nn.ReLU(),
                 ),
             )
             hidden_size = dimension
