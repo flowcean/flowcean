@@ -1,26 +1,22 @@
 import logging
-import random
-from copy import copy
 from statistics import mean, median, stdev
-from typing import Any
 
 import numpy as np
-from typing_extensions import Self, override
+from midas_palaestrai import ArlDefenderObjective
 
 import flowcean.cli
-from flowcean.core import ActiveLearner, Model
 from flowcean.core.strategies.active import Interface, learn_active
 from flowcean.mosaik.energy_system import (
-    Action,
     EnergySystemActive,
-    Observation,
 )
+from flowcean.palaestrai.sac_learner import SACLearner
 
-logger = logging.getLogger("energy_example")
+# from flowcean.palaestrai.sac_model import SA
+logger = logging.getLogger("energy_example_sac")
 
 
 def run_active() -> None:
-    flowcean.cli.initialize_logging(log_level="INFO")
+    flowcean.cli.initialize_logging(log_level="WARNING")
     environment = EnergySystemActive(
         "midasmv_der",
         "my_results.csv",
@@ -41,9 +37,13 @@ def run_active() -> None:
         "Powergrid-0.0-bus-5.vm_pu",
         "Powergrid-0.0-bus-6.vm_pu",
     ]
-
-    learner = MyLearner(actuator_ids, sensor_ids)
-    learner.load(environment.action, environment.observation)
+    try:
+        learner = SACLearner(actuator_ids, sensor_ids, ArlDefenderObjective())
+        learner.load(environment.action, environment.observation)
+    except Exception:
+        logger.exception("Failed to load learner")
+        environment.shutdown()
+        return
 
     try:
         learn_active(environment, learner)
@@ -52,120 +52,12 @@ def run_active() -> None:
         print({r.uid: r.value for r in observation.rewards})
     except Exception:
         logger.exception("Error during environment operation.")
+    except KeyboardInterrupt:
+        print("Interrupted. Attempting to terminate environment.")
 
     environment.shutdown()
+    print(learner.objective_values)
     logger.info("Finished!")
-
-
-class MyModel(Model):
-    best_action: float
-    action: Action
-    observation: Observation
-
-    def __init__(
-        self,
-        action: Action,
-        observation: Observation,
-    ) -> None:
-        self.action = action
-        self.observation = observation
-
-    @override
-    def predict(self, input_features: Observation) -> Action:
-        _ = input_features
-
-        actuators = []
-        for actuator in self.action.actuators:
-            new_actuator = copy(actuator)
-            if (
-                new_actuator.value_min is not None
-                and isinstance(
-                    new_actuator.value_min,
-                    int | float | np.ndarray,
-                )
-                and new_actuator.value_max is not None
-                and isinstance(
-                    new_actuator.value_max,
-                    int | float | np.ndarray,
-                )
-                and not isinstance(actuator.value, str)
-            ):
-                new_actuator.value = (
-                    new_actuator.value_min
-                    + random.random()
-                    * (new_actuator.value_max - new_actuator.value_min)
-                )
-
-            actuators.append(new_actuator)
-        return Action(actuators=actuators)
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> Self:
-        _ = state
-        raise NotImplementedError
-
-
-class MyLearner(ActiveLearner):
-    model: MyModel
-    rewards: list[Interface]
-    actuator_ids: list[str]
-    sensor_ids: list[str]
-    action: Action
-    observation: Observation
-
-    def __init__(
-        self,
-        actuator_ids: list[str],
-        sensor_ids: list[str],
-    ) -> None:
-        self.actuator_ids = actuator_ids
-        self.sensor_ids = sensor_ids
-        self.rewards = []
-
-    def load(self, action: Action, observation: Observation) -> None:
-        self.action = filter_action(action, self.actuator_ids)
-        self.observation = filter_observation(observation, self.sensor_ids)
-
-        self.model = MyModel(self.action, self.observation)
-
-    @override
-    def learn_active(
-        self,
-        action: Action,
-        observation: Observation,
-    ) -> Model:
-        _ = action
-
-        self.rewards.append(observation.rewards[0])
-
-        return self.model
-
-    @override
-    def propose_action(self, observation: Observation) -> Action:
-        filtered = filter_observation(observation, self.sensor_ids)
-
-        return self.model.predict(filtered)
-
-
-def filter_action(action: Action, available_ids: list[str]) -> Action:
-    return Action(
-        actuators=[a for a in action.actuators if a.uid in available_ids],
-    )
-
-
-def filter_observation(
-    observation: Observation,
-    available_ids: list[str],
-) -> Observation:
-    return Observation(
-        sensors=[s for s in observation.sensors if s.uid in available_ids],
-        rewards=observation.rewards,
-    )
 
 
 def calculate_reward(sensors: list) -> list:

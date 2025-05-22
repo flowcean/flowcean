@@ -3,7 +3,7 @@ name = "flowcean"
 version = "0.4.0"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.10,<3.13"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -23,11 +23,13 @@ dependencies = [
   "grpcio>=1.67.0",
   "joblib>=1.4.2",
   "lightning>=2.4.0",
-  "midas-mosaik[base]>=2.0.2",
+  "midas-mosaik[arl]>=2.0.2",
   "midas-store>=2.1.0a1",
   "mosaik>=3.5.0",
   "mosaik_api_v3>=3.0.13",
   "numpy>=1.26.4",
+  "palaestrai>=3.5.8",
+  "palaestrai-agents",
   "polars>=1.25.0",
   "protobuf>=5.28.2",
   "rosbags>=0.10.4",
@@ -82,6 +84,7 @@ members = [
   "examples/automatic_lashing_platform",
   "examples/boiler",
   "examples/coffee_machine",
+  "examples/energy_system",
   "examples/failure_time_prediction",
   "examples/linear_data",
   "examples/one_tank",
