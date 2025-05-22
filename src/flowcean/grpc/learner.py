@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import docker
 import grpc
@@ -193,8 +193,11 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
             inputs=[_row_to_proto(row) for row in inputs.collect().rows()],
             outputs=[_row_to_proto(row) for row in outputs.collect().rows()],
         )
-        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(
-            proto_datapackage,
+        stream: grpc.UnaryStreamMultiCallable = cast(
+            "grpc.UnaryStreamMultiCallable",
+            self._stub.Train(
+                proto_datapackage,
+            ),
         )
         for status_message in stream:  # type: ignore[type]
             _log_messages(status_message.messages)
