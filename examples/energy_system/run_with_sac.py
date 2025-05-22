@@ -1,20 +1,13 @@
 import logging
-import random
-from copy import copy
 from statistics import mean, median, stdev
-from typing import Any
 
 import numpy as np
 from midas_palaestrai import ArlDefenderObjective
-from typing_extensions import Self, override
 
 import flowcean.cli
-from flowcean.core import ActiveLearner, Model
 from flowcean.core.strategies.active import Interface, learn_active
 from flowcean.mosaik.energy_system import (
-    Action,
     EnergySystemActive,
-    Observation,
 )
 from flowcean.palaestrai.sac_learner import SACLearner
 
