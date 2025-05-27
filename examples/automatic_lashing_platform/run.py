@@ -303,7 +303,7 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
             plt.yticks([])
             plt.xlabel("")
             plt.ylabel("")
-        else:
+        elif not args.plot_no_notations:
             weight = round(
                 observed_data.select("containerWeight").row(index)[0],
                 3,
@@ -925,7 +925,12 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--plot_plain",
         action="store_true",
-        help=("Plot only the graph without notations."),
+        help=("Plot only the graph without notations and axis labels."),
+    )
+    data_inspection_group.add_argument(
+        "--plot_no_notations",
+        action="store_true",
+        help=("Plot the graph with axis labels, but without notations."),
     )
     data_inspection_group.add_argument(
         "--plot_distributed",
