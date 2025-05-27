@@ -16,7 +16,10 @@ import logging
 import math
 import os
 import time
+import tkinter as tk
+from os import environ
 from pathlib import Path
+from sys import base_prefix
 from typing import Any
 
 # third-party libraries
@@ -50,6 +53,10 @@ from flowcean.torch.lightning_learner import (
     LightningLearner,
     MultilayerPerceptron,
 )
+
+# set matplotlib backend Tcl/Tk libraries for the usage in uv
+environ["TCL_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tcl8.6")
+environ["TK_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tk8.6")
 
 # constants
 NATIVE_SAMPLE_RATE = 0.01 # 1500 values per second
