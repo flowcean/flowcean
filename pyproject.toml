@@ -82,6 +82,7 @@ members = [
   "examples/automatic_lashing_platform",
   "examples/boiler",
   "examples/coffee_machine",
+  "examples/energy_system",
   "examples/failure_time_prediction",
   "examples/linear_data",
   "examples/one_tank",
