@@ -8,3 +8,6 @@ dependencies = ["flowcean"]
 
 [tool.pyright]
 extends = "../../pyproject.toml"
+
+[tool.uv.sources]
+flowcean = { path = "../../" }
