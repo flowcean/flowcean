@@ -9,4 +9,4 @@ dependencies = ["flowcean"]
 extends = "../../pyproject.toml"
 
 [tool.uv.sources]
-flowcean = { workspace = true }
+flowcean = { path = "../.." }
