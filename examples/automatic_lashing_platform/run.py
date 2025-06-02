@@ -15,6 +15,7 @@ import argparse
 import logging
 import math
 import os
+import random
 import time
 import tkinter as tk
 from os import environ
@@ -315,6 +316,11 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
             observed_data.select("^p_accumulator_.*$").row(int(index))
         )
 
+        weight = round(
+            observed_data.select("containerWeight").row(index)[0],
+            3,
+        )
+
         # normalization of the pressure data
         if args.plot_normalized:
             pressure_data = np.array(pressure_data)
@@ -346,10 +352,6 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
             plt.ylabel("")
         elif not args.plot_without_notations:
             if args.plot_subplots:
-                weight = round(
-                    observed_data.select("containerWeight").row(index)[0],
-                    3,
-                )
                 plt.title(
                     f"Weight: {weight}, Index: {index}",
                 )
@@ -357,7 +359,32 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
                 set_plot_labels()
 
         # plot the data
-        plt.plot(time, pressure_data)
+        if args.plot_legend:
+            plt.plot(time, pressure_data, label=f"{int(weight)} tons")
+            handles, labels = plt.gca().get_legend_handles_labels()
+            sorted_handles_labels = sorted(
+                zip(labels, handles, strict=False),
+                key=lambda x: x[0],
+            )
+            labels, handles = zip(*sorted_handles_labels, strict=False)
+            plt.legend(handles, labels)
+        else:
+            plt.plot(time, pressure_data)
+
+        # mark plots with similar weight
+        if args.plot_mark_similar_weight != 0:
+            epsilon = args.plot_mark_similar_weight_range / 2
+            if (
+                weight < args.plot_mark_similar_weight + epsilon and
+                weight > args.plot_mark_similar_weight - epsilon
+            ):
+                marker_position = random.randint(100, 150)
+                plt.plot(
+                    time[marker_position],
+                    pressure_data[marker_position],
+                    "ro",
+                    markersize=6,
+                )
 
     plt.show()
 
@@ -445,10 +472,10 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
                 and args.apply_derivative
                 and index == "18"
             ):
-                plt.plot(170, pressure_data[17], "ro", markersize=6)
+                plt.plot(time[17], pressure_data[17], "ro", markersize=6)
                 plt.annotate(
                     "≤ 0.07\n⇒ False",
-                    xy=(170, pressure_data[17]),
+                    xy=(time[17], pressure_data[17]),
                     xytext=(20, 20),
                     textcoords="offset points",
                     arrowprops={"arrowstyle": "->", "color": "black"},
@@ -970,20 +997,54 @@ if __name__ == "__main__":
         help=("Plot only the graph without notations and axis labels."),
     )
     data_inspection_group.add_argument(
+        "--plot_legend",
+        action="store_true",
+        help=(
+            "Plot the legend with the weight of the container in the graph."
+        ),
+    )
+    data_inspection_group.add_argument(
         "--plot_without_notations",
         action="store_true",
-        help=("Plot the graph without notations."),
+        help=(
+            "Plot the graph without notations."
+            "(for --plot_data only=)"
+        ),
     )
     data_inspection_group.add_argument(
         "--plot_subplots",
         action="store_true",
-        help=("Plot the graphs as subplots."),
+        help=(
+            "Plot the graphs as subplots."
+            "(for --plot_data only=)"
+        ),
     )
     data_inspection_group.add_argument(
         "--plot_normalized",
         action="store_true",
         help=(
             "Plot the pressure data normalized to the first value."
+        ),
+    )
+    data_inspection_group.add_argument(
+        "--plot_mark_similar_weight",
+        type=int,
+        default=0,
+        metavar="WEIGHT [tons]",
+        help=(
+            "Plot a red dot to the curve, that leads to the given weight. "
+            "(for --plot_data only)"
+        ),
+    )
+    data_inspection_group.add_argument(
+        "--plot_mark_similar_weight_range",
+        type=int,
+        default=10,
+        metavar="RANGE [tons]",
+        help=(
+            "Range of the marked weight in the plot. "
+            "(default: 10, meaning the weight is in the range of "
+            "marked_weight ± range/2)"
         ),
     )
     data_inspection_group.add_argument(
