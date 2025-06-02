@@ -281,6 +281,20 @@ def print_row(observed_data: Any) -> None:
         )
 
 
+# set plot labels depending on the arguments
+def set_plot_labels() -> None:
+    if args.sample_rate == NATIVE_SAMPLE_RATE:
+        plt.xlabel("Time [ms]")
+    else:
+        plt.xlabel("Time [samples]")
+    if args.plot_normalized:
+        plt.ylabel("Normalized Accumulator Pressure [bar]")
+    elif args.apply_derivative:
+        plt.ylabel("Derivative of Accumulator Pressure [bar]")
+    else:
+        plt.ylabel("Accumulator Pressure [bar]")
+
+
 def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     logger.info("Plotting %d rows:", args.plots)
 
@@ -300,6 +314,11 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
         pressure_data = (
             observed_data.select("^p_accumulator_.*$").row(int(index))
         )
+
+        # normalization of the pressure data
+        if args.plot_normalized:
+            pressure_data = np.array(pressure_data)
+            pressure_data = pressure_data - pressure_data[0]
 
         # scale x-achsis to milliseconds if sample rate is native
         if args.sample_rate == NATIVE_SAMPLE_RATE:
@@ -335,11 +354,7 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
                     f"Weight: {weight}, Index: {index}",
                 )
             else:
-                if args.sample_rate == NATIVE_SAMPLE_RATE:
-                    plt.xlabel("Time [ms]")
-                else:
-                    plt.xlabel("Time [samples]")
-                plt.ylabel("Accumulator Pressure [bar]")
+                set_plot_labels()
 
         # plot the data
         plt.plot(time, pressure_data)
@@ -373,6 +388,17 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
             observed_data.select("^p_accumulator_.*$").row(int(index))
         )
 
+        # normalization of the pressure data
+        if args.plot_normalized:
+            pressure_data = np.array(pressure_data)
+            pressure_data = pressure_data - pressure_data[0]
+
+        # scale x-achsis to milliseconds if sample rate is native
+        if args.sample_rate == NATIVE_SAMPLE_RATE:
+            time = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+        else:
+            time = np.arange(len(pressure_data))
+
         if args.plot_plain:
             # only plot the plain graph
             plt.plot(pressure_data)
@@ -381,14 +407,7 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
             plt.xlabel("")
             plt.ylabel("")
         else:
-            # scale x-achsis to milliseconds if sample rate is native
-            if args.sample_rate == NATIVE_SAMPLE_RATE:
-                time = np.arange(len(pressure_data)) * 10    # 10 ms per sample
-                plt.xlabel("Time [ms]")
-            else:
-                time = np.arange(len(pressure_data))
-                plt.xlabel("Time [samples]")
-            plt.ylabel("Accumulator Pressure [bar]")
+            set_plot_labels()
             plt.plot(time, pressure_data)
 
             # table with parameter of the simulation run
@@ -959,6 +978,13 @@ if __name__ == "__main__":
         "--plot_subplots",
         action="store_true",
         help=("Plot the graphs as subplots."),
+    )
+    data_inspection_group.add_argument(
+        "--plot_normalized",
+        action="store_true",
+        help=(
+            "Plot the pressure data normalized to the first value."
+        ),
     )
     data_inspection_group.add_argument(
         "--plot_distributed",
