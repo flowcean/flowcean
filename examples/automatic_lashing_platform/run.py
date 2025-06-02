@@ -59,7 +59,7 @@ environ["TCL_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tcl8.6")
 environ["TK_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tk8.6")
 
 # constants
-NATIVE_SAMPLE_RATE = 0.01 # 1500 values per second
+NATIVE_SAMPLE_RATE = 0.01  # 1500 values per second
 
 # start logger
 logger = logging.getLogger(__name__)
@@ -302,9 +302,7 @@ def get_pressure_data(
     *,
     normalized: bool = False,
 ) -> Any:
-    pressure_data = (
-        observed_data.select("^p_accumulator_.*$").row(int(index))
-    )
+    pressure_data = observed_data.select("^p_accumulator_.*$").row(int(index))
     # normalization of the pressure data
     if normalized:
         pressure_data = np.array(pressure_data)
@@ -341,7 +339,7 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
 
         # scale x-achsis to milliseconds if sample rate is native
         if args.sample_rate == NATIVE_SAMPLE_RATE:
-            time = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+            time = np.arange(len(pressure_data)) * 10  # 10 ms per sample
         else:
             time = np.arange(len(pressure_data))
 
@@ -388,8 +386,8 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
         if args.plot_mark_similar_weight != 0:
             epsilon = args.plot_mark_similar_weight_range / 2
             if (
-                weight < args.plot_mark_similar_weight + epsilon and
-                weight > args.plot_mark_similar_weight - epsilon
+                weight < args.plot_mark_similar_weight + epsilon
+                and weight > args.plot_mark_similar_weight - epsilon
             ):
                 marker_position = random.randint(100, 150)
                 plt.plot(
@@ -433,7 +431,7 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
 
         # scale x-achsis to milliseconds if sample rate is native
         if args.sample_rate == NATIVE_SAMPLE_RATE:
-            time = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+            time = np.arange(len(pressure_data)) * 10  # 10 ms per sample
         else:
             time = np.arange(len(pressure_data))
 
@@ -1017,25 +1015,17 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--plot_without_notations",
         action="store_true",
-        help=(
-            "Plot the graph without notations."
-            "(for --plot_data only=)"
-        ),
+        help=("Plot the graph without notations.(for --plot_data only=)"),
     )
     data_inspection_group.add_argument(
         "--plot_subplots",
         action="store_true",
-        help=(
-            "Plot the graphs as subplots."
-            "(for --plot_data only=)"
-        ),
+        help=("Plot the graphs as subplots.(for --plot_data only=)"),
     )
     data_inspection_group.add_argument(
         "--plot_normalized",
         action="store_true",
-        help=(
-            "Plot the pressure data normalized to the first value."
-        ),
+        help=("Plot the pressure data normalized to the first value."),
     )
     data_inspection_group.add_argument(
         "--plot_mark_similar_weight",
