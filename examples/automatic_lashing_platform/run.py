@@ -17,7 +17,6 @@ import math
 import os
 import random
 import time
-import tkinter as tk
 from os import environ
 from pathlib import Path
 from sys import base_prefix
@@ -318,7 +317,7 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     plot_rows = math.ceil(math.sqrt(plots))
     plot_cols = math.ceil(plots / plot_rows)
 
-    plt.figure()
+    plt.figure(figsize=(15, 10))
     for i, c in zip(
         range(0, dimension, int(dimension / plots)),
         range(plots),
@@ -403,7 +402,7 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
 def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
     logger.info("Plotting rows interactively:")
 
-    plt.figure()
+    plt.figure(figsize=(8, 6))
     plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1)
 
     while True:
