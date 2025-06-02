@@ -295,32 +295,55 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
         range(plots),
         strict=False,
     ):
-        plt.subplot(plot_rows, plot_cols, c + 1)
         index = i if args.plot_distributed else c
 
+        pressure_data = (
+            observed_data.select("^p_accumulator_.*$").row(int(index))
+        )
+
+        # scale x-achsis to milliseconds if sample rate is native
+        if args.sample_rate == NATIVE_SAMPLE_RATE:
+            time = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+        else:
+            time = np.arange(len(pressure_data))
+
+        # define subplot
+        if args.plot_subplots:
+            plt.subplot(plot_rows, plot_cols, c + 1)
+            plt.subplots_adjust(
+                hspace=0.5,
+                wspace=0.5,
+                left=0.1,
+                right=0.95,
+                top=0.9,
+                bottom=0.1,
+            )
+
+        # style the plot
         if args.plot_plain:
             plt.xticks([])
             plt.yticks([])
             plt.xlabel("")
             plt.ylabel("")
-        elif not args.plot_no_notations:
-            weight = round(
-                observed_data.select("containerWeight").row(index)[0],
-                3,
-            )
-            plt.title(
-                f"Weight: {weight}, Index: {index}",
-            )
-        plt.plot(observed_data.select("^p_accumulator_.*$").row(index))
+        elif not args.plot_without_notations:
+            if args.plot_subplots:
+                weight = round(
+                    observed_data.select("containerWeight").row(index)[0],
+                    3,
+                )
+                plt.title(
+                    f"Weight: {weight}, Index: {index}",
+                )
+            else:
+                if args.sample_rate == NATIVE_SAMPLE_RATE:
+                    plt.xlabel("Time [ms]")
+                else:
+                    plt.xlabel("Time [samples]")
+                plt.ylabel("Accumulator Pressure [bar]")
 
-    plt.subplots_adjust(
-        hspace=0.5,
-        wspace=0.5,
-        left=0.1,
-        right=0.95,
-        top=0.9,
-        bottom=0.1,
-    )
+        # plot the data
+        plt.plot(time, pressure_data)
+
     plt.show()
 
 
@@ -360,13 +383,13 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
         else:
             # scale x-achsis to milliseconds if sample rate is native
             if args.sample_rate == NATIVE_SAMPLE_RATE:
-                time_ms = np.arange(len(pressure_data)) * 10    # 10 ms per sample
+                time = np.arange(len(pressure_data)) * 10    # 10 ms per sample
                 plt.xlabel("Time [ms]")
             else:
-                time_ms = np.arange(len(pressure_data))
+                time = np.arange(len(pressure_data))
                 plt.xlabel("Time [samples]")
             plt.ylabel("Accumulator Pressure [bar]")
-            plt.plot(time_ms, pressure_data)
+            plt.plot(time, pressure_data)
 
             # table with parameter of the simulation run
             parameter_table = [
@@ -928,9 +951,14 @@ if __name__ == "__main__":
         help=("Plot only the graph without notations and axis labels."),
     )
     data_inspection_group.add_argument(
-        "--plot_no_notations",
+        "--plot_without_notations",
         action="store_true",
-        help=("Plot the graph with axis labels, but without notations."),
+        help=("Plot the graph without notations."),
+    )
+    data_inspection_group.add_argument(
+        "--plot_subplots",
+        action="store_true",
+        help=("Plot the graphs as subplots."),
     )
     data_inspection_group.add_argument(
         "--plot_distributed",
