@@ -172,7 +172,7 @@ def print_overview(observed_data: DataFrame) -> None:
     print(observed_data)
 
 
-def check_redundancy(observed_data: DataFrame) -> None:
+def check_redundancy(observed_data: Any) -> None:
     logger.info("Checking for duplicated and unique output-values:")
     rows = {}
     duplicates = {}
@@ -204,7 +204,7 @@ def check_redundancy(observed_data: DataFrame) -> None:
 
 def print_data(
     args: argparse.Namespace,
-    observed_data: DataFrame,
+    observed_data: Any,
 ) -> None:
     logger.info("Printing %d rows:", args.prints)
 
@@ -245,7 +245,7 @@ def print_data(
         )
 
 
-def print_row(observed_data: DataFrame) -> None:
+def print_row(observed_data: Any) -> None:
     logger.info("Printing rows interactively:")
     while True:
         index = input("Enter the row index to print or 'x' to quit: ")
@@ -281,7 +281,7 @@ def print_row(observed_data: DataFrame) -> None:
         )
 
 
-def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
+def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     logger.info("Plotting %d rows:", args.plots)
 
     dimension = observed_data.shape[0]
@@ -324,7 +324,7 @@ def plot_data(args: argparse.Namespace, observed_data: DataFrame) -> None:
     plt.show()
 
 
-def plot_row(args: argparse.Namespace, observed_data: DataFrame) -> None:
+def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
     logger.info("Plotting rows interactively:")
 
     plt.figure()
@@ -560,7 +560,7 @@ def train_depth_vs_error(
         tree_params = {
             "max_depth": depth,
         }
-        learner = build_tree_learner(args, **tree_params)
+        learner: Any = build_tree_learner(args, **tree_params)
         model = learn_offline(train_env, learner, inputs, outputs)
         report = evaluate_offline(
             model,
@@ -643,7 +643,7 @@ def train_time_vs_error(
         tree_params = {
             "max_depth": depth_count,
         }
-        learner = build_tree_learner(args, **tree_params)
+        learner: Any = build_tree_learner(args, **tree_params)
         model = learn_offline(train_env, learner, inputs, outputs)
         report = evaluate_offline(
             model,
