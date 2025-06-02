@@ -28,7 +28,6 @@ import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.table import Table
-from matplotlib.ticker import FormatStrFormatter
 
 # flowcean libraries
 import flowcean.cli
@@ -296,6 +295,23 @@ def set_plot_labels() -> None:
         plt.ylabel("Accumulator Pressure [bar]")
 
 
+# get pressure data from the observed data
+def get_pressure_data(
+    observed_data: Any,
+    index: int,
+    *,
+    normalized: bool = False,
+) -> Any:
+    pressure_data = (
+        observed_data.select("^p_accumulator_.*$").row(int(index))
+    )
+    # normalization of the pressure data
+    if normalized:
+        pressure_data = np.array(pressure_data)
+        pressure_data = pressure_data - pressure_data[0]
+    return pressure_data
+
+
 def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     logger.info("Plotting %d rows:", args.plots)
 
@@ -312,19 +328,16 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     ):
         index = i if args.plot_distributed else c
 
-        pressure_data = (
-            observed_data.select("^p_accumulator_.*$").row(int(index))
+        pressure_data = get_pressure_data(
+            observed_data,
+            index,
+            normalized=args.plot_normalized,
         )
 
         weight = round(
             observed_data.select("containerWeight").row(index)[0],
             3,
         )
-
-        # normalization of the pressure data
-        if args.plot_normalized:
-            pressure_data = np.array(pressure_data)
-            pressure_data = pressure_data - pressure_data[0]
 
         # scale x-achsis to milliseconds if sample rate is native
         if args.sample_rate == NATIVE_SAMPLE_RATE:
@@ -411,14 +424,12 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
             observed_data.select("p_initial").row(int(index))[0],
             3,
         )
-        pressure_data = (
-            observed_data.select("^p_accumulator_.*$").row(int(index))
-        )
 
-        # normalization of the pressure data
-        if args.plot_normalized:
-            pressure_data = np.array(pressure_data)
-            pressure_data = pressure_data - pressure_data[0]
+        pressure_data = get_pressure_data(
+            observed_data,
+            int(index),
+            normalized=args.plot_normalized,
+        )
 
         # scale x-achsis to milliseconds if sample rate is native
         if args.sample_rate == NATIVE_SAMPLE_RATE:
