@@ -4,11 +4,10 @@ import plotly.graph_objects as go
 import polars as pl
 from custom_transforms.map_image import crop_map
 from custom_transforms.particle_cloud_image import particles_to_image
+from custom_transforms.scan_image import lidar_to_image
 from dash import Dash, Input, Output, callback, dcc, html
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
-
-from custom_transforms.scan_image import lidar_to_image
 
 MAP_RESOLUTION = 0.02
 
@@ -47,6 +46,7 @@ def compute_particle_image(
         .inv()
         .as_matrix()[:2, :2]
     )
+    rotation = np.eye(2)  # TODO: use the actual rotation
     map_to_robot = (rotation, rotation @ -position)
     return particles_to_image(
         particles,
@@ -76,26 +76,31 @@ def compute_map_image(
             x["/amcl_pose/pose.pose.position.y"],
         ],
     )
-    rotation = (
-        Rotation.from_quat(
-            (
-                x["/amcl_pose/pose.pose.orientation.x"],
-                x["/amcl_pose/pose.pose.orientation.y"],
-                x["/amcl_pose/pose.pose.orientation.z"],
-                x["/amcl_pose/pose.pose.orientation.w"],
-            ),
-        )
-        .inv()
-        .as_matrix()[:2, :2]
+    rotation = Rotation.from_quat(
+        (
+            x["/amcl_pose/pose.pose.orientation.x"],
+            x["/amcl_pose/pose.pose.orientation.y"],
+            x["/amcl_pose/pose.pose.orientation.z"],
+            x["/amcl_pose/pose.pose.orientation.w"],
+        ),
+    ).as_matrix()[:2, :2]
+    rotation = np.eye(2)
+    map_origin = np.array(
+        [
+            x["/map"]["info.origin.position.x"],
+            x["/map"]["info.origin.position.y"],
+        ],
     )
+
     return crop_map(
         map_image,
-        translation=rotation @ -position,
-        rotation_matrix=rotation,
+        robot_position=position,
+        robot_rotation=rotation,
+        map_origin=map_origin,
         map_resolution=MAP_RESOLUTION,
         crop_width=image_width,
         crop_height=image_height,
-        cropped_resolution=MAP_RESOLUTION,
+        width_meters=width_meters,
     )
 
 
@@ -191,7 +196,7 @@ app.layout = [
     ),
     dcc.Input(
         id="width_meters",
-        value=5,
+        value=15,
         type="number",
         min=0.1,
         max=100,
@@ -297,21 +302,51 @@ def update_full_map(
         pl.col("/momo/pose/pose.position.x"),
         pl.col("/momo/pose/pose.position.y"),
     ).row(sample_i)
+    rotation = data.select(
+        pl.col("/amcl_pose/pose.pose.orientation.x"),
+        pl.col("/amcl_pose/pose.pose.orientation.y"),
+        pl.col("/amcl_pose/pose.pose.orientation.z"),
+        pl.col("/amcl_pose/pose.pose.orientation.w"),
+    ).row(sample_i)
+    rotation = Rotation.from_quat(rotation).as_matrix()[:2, :2]
+    map_origin = data.select(
+        pl.col("/map").struct.field(
+            "info.origin.position.x",
+            "info.origin.position.y",
+        ),
+    ).row(sample_i)
     fig = px.imshow(
         np.array(map_data["data"]).reshape((-1, map_data["info.width"])),
     )
     fig.add_trace(
         go.Scatter(
-            x=[amcl_position[0] / MAP_RESOLUTION],
-            y=[amcl_position[1] / MAP_RESOLUTION],
+            x=[(amcl_position[0] - map_origin[0]) / MAP_RESOLUTION],
+            y=[(amcl_position[1] - map_origin[1]) / MAP_RESOLUTION],
             marker={"color": "red", "size": 16},
         ),
     )
     fig.add_trace(
         go.Scatter(
-            x=[momo_position[0] / MAP_RESOLUTION],
-            y=[momo_position[1] / MAP_RESOLUTION],
+            x=[(momo_position[0] - map_origin[0]) / MAP_RESOLUTION],
+            y=[(momo_position[1] - map_origin[1]) / MAP_RESOLUTION],
             marker={"color": "blue", "size": 16},
+        ),
+    )
+    # show_heading
+    fig.add_trace(
+        go.Scatter(
+            x=[
+                (amcl_position[0] - map_origin[0]) / MAP_RESOLUTION,
+                (amcl_position[0] - map_origin[0]) / MAP_RESOLUTION
+                + rotation[0, 0] / MAP_RESOLUTION,
+            ],
+            y=[
+                (amcl_position[1] - map_origin[1]) / MAP_RESOLUTION,
+                (amcl_position[1] - map_origin[1]) / MAP_RESOLUTION
+                + rotation[1, 0] / MAP_RESOLUTION,
+            ],
+            mode="lines",
+            line={"color": "red", "width": 2},
         ),
     )
     fig.update_layout(showlegend=False)
