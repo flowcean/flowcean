@@ -4,12 +4,13 @@ import itertools
 import polars as pl
 
 from flowcean.core.data import Data
-from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.environment.stepable import Finished
 from flowcean.core.tool.testing.domain import Discrete
 
+from .generator import TestcaseGenerator
 
-class CombinationGenerator(IncrementalEnvironment):
+
+class CombinationGenerator(TestcaseGenerator):
     """A generator that produces tests based on combination of ranges.
 
     This generator creates a test case for each combination of the provided
@@ -58,16 +59,20 @@ class CombinationGenerator(IncrementalEnvironment):
             1,
         )
 
+        # Call reset to initialize the generator
+        self.reset()
+
+    def num_steps(self) -> int | None:
+        return self.number_test_cases
+
+    def reset(self) -> None:
+        """Reset the generator to the initial state."""
         # Build the product iterator
         self.product_iterator = itertools.product(
             *self.domains,
         )
-
-        # Perform the first step
+        # Perform a first step to initialize the data
         self.step()
-
-    def num_steps(self) -> int | None:
-        return self.number_test_cases
 
     def step(self) -> None:
         try:
