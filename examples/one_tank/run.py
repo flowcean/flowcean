@@ -132,7 +132,7 @@ def main() -> None:
                 hidden_dimensions=[10, 10],
                 activation_function=torch.nn.Tanh,
             ),
-            max_epochs=10,
+            max_epochs=1000,
         ),
     ]:
         t_start = datetime.now(tz=timezone.utc)
