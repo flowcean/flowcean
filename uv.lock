@@ -1190,6 +1190,7 @@ dependencies = [
     { name = "joblib" },
     { name = "lightning" },
     { name = "midas-mosaik", extra = ["base"] },
+    { name = "midas-palaestrai" },
     { name = "midas-store" },
     { name = "mosaik" },
     { name = "mosaik-api-v3" },
@@ -1243,6 +1244,7 @@ requires-dist = [
     { name = "joblib", specifier = ">=1.4.2" },
     { name = "lightning", specifier = ">=2.4.0" },
     { name = "midas-mosaik", extras = ["base"], specifier = ">=2.0.2" },
+    { name = "midas-palaestrai", specifier = ">=3.5.6.post1" },
     { name = "midas-store", specifier = ">=2.1.0a1" },
     { name = "mosaik", specifier = ">=3.5.0" },
     { name = "mosaik-api-v3", specifier = ">=3.0.13" },
@@ -2185,6 +2187,20 @@ base = [
     { name = "midas-store" },
     { name = "midas-weather" },
     { name = "pysimmods" },
+]
+
+[[package]]
+name = "midas-palaestrai"
+version = "3.5.6.post1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "funcy" },
+    { name = "midas-mosaik" },
+    { name = "mosaik-api" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f3/86/2a31e3d16d9d39a0faa0faa677f0d8349f25f5db8ea19d0ced0c6950b828/midas_palaestrai-3.5.6.post1.tar.gz", hash = "sha256:81d07a188660027c89484e91c072ec76ff8c0b92a5c9c7d4326768cb6bd1afa7", size = 17393 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/4a/6cf42e7e7cf04c8f2c7e794c4052add4e35c5b5ec118186fc9a3aca4311e/midas_palaestrai-3.5.6.post1-py3-none-any.whl", hash = "sha256:1de2161c5bed4db2872790cb11edcad334230ff680c6248f961564b564b82ed7", size = 20005 },
 ]
 
 [[package]]
