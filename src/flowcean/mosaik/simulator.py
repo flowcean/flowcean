@@ -4,6 +4,7 @@ import threading
 from typing import Any
 
 import mosaik_api_v3
+import numpy as np
 from mosaik.exceptions import SimulationError
 from mosaik_api_v3.types import Meta
 from typing_extensions import override
@@ -51,6 +52,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         # self.sync_terminate: threading.Event | None = None
         self.sensors = {}
         self.timeout = 20
+        self._notified_done: bool = False
 
     @override
     def init(
@@ -172,10 +174,16 @@ class SyncSimulator(mosaik_api_v3.Simulator):
                 raise SimulationError(msg)
             if self.sync_terminate.is_set():
                 msg = "Stop was requested (actq). Terminating simulation."
-                self.actuator_queue.task_done()
+                if not self._notified_done:
+                    self.actuator_queue.task_done()
+                    self._notified_done = True
                 raise SimulationError(msg)
         for uid, value in actuator_data.items():
-            self.models[self.a_uid_dict[uid]]["value"] = value
+            if isinstance(value, np.ndarray) and value.shape == ():
+                self.models[self.a_uid_dict[uid]]["value"] = value.item()
+            else:
+                self.models[self.a_uid_dict[uid]]["value"] = value
+
         for eid in outputs:
             data[eid] = {"setpoint": self.models[eid]["value"]}
         return data

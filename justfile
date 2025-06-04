@@ -63,7 +63,7 @@ examples-robot_localization_failure:
 
 examples-energy_system:
   echo "🚀 Running example: Energy System"
-  @uv run --directory ./examples/energy_system/ run.py
+  @uv run --directory ./examples/energy_system/ run_with_sac.py
 
 examples-xor:
   @echo "🚀 Running example: XOR"
