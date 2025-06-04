@@ -1,8 +1,6 @@
 [project]
 name = "boiler"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.10, <4.0"
 dependencies = ["flowcean"]
 
@@ -10,4 +8,4 @@ dependencies = ["flowcean"]
 extends = "../../pyproject.toml"
 
 [tool.uv.sources]
-flowcean = { path = "../.." }
+flowcean = { workspace = true }
