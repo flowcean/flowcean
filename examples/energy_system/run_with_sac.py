@@ -11,7 +11,6 @@ from flowcean.mosaik.energy_system import (
 )
 from flowcean.palaestrai.sac_learner import SACLearner
 
-# from flowcean.palaestrai.sac_model import SA
 logger = logging.getLogger("energy_example_sac")
 
 
