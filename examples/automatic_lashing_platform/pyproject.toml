@@ -3,11 +3,11 @@ name = "automatic-lashing-platform"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 dependencies = ["flowcean"]
 
 [tool.pyright]
 extends = "../../pyproject.toml"
 
 [tool.uv.sources]
-flowcean = { path = "../.." }
+flowcean = { workspace = true }
