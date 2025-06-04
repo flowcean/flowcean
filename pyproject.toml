@@ -3,7 +3,7 @@ name = "flowcean"
 version = "0.4.0"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.10, <4.0"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -82,6 +82,7 @@ members = [
   "examples/automatic_lashing_platform",
   "examples/boiler",
   "examples/coffee_machine",
+  "examples/energy_system",
   "examples/failure_time_prediction",
   "examples/linear_data",
   "examples/one_tank",
