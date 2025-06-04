@@ -1112,10 +1112,14 @@ version = "0.1.0"
 source = { virtual = "examples/energy_system" }
 dependencies = [
     { name = "flowcean" },
+    { name = "midas-palaestrai" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "flowcean", editable = "." }]
+requires-dist = [
+    { name = "flowcean", editable = "." },
+    { name = "midas-palaestrai", specifier = ">=3.5.6.post1" },
+]
 
 [[package]]
 name = "entrypoints"
@@ -1190,7 +1194,6 @@ dependencies = [
     { name = "joblib" },
     { name = "lightning" },
     { name = "midas-mosaik", extra = ["base"] },
-    { name = "midas-palaestrai" },
     { name = "midas-store" },
     { name = "mosaik" },
     { name = "mosaik-api-v3" },
@@ -1244,7 +1247,6 @@ requires-dist = [
     { name = "joblib", specifier = ">=1.4.2" },
     { name = "lightning", specifier = ">=2.4.0" },
     { name = "midas-mosaik", extras = ["base"], specifier = ">=2.0.2" },
-    { name = "midas-palaestrai", specifier = ">=3.5.6.post1" },
     { name = "midas-store", specifier = ">=2.1.0a1" },
     { name = "mosaik", specifier = ">=3.5.0" },
     { name = "mosaik-api-v3", specifier = ">=3.0.13" },

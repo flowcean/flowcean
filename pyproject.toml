@@ -23,7 +23,6 @@ dependencies = [
   "joblib>=1.4.2",
   "lightning>=2.4.0",
   "midas-mosaik[base]>=2.0.2",
-  "midas-palaestrai>=3.5.6.post1",
   "midas-store>=2.1.0a1",
   "mosaik>=3.5.0",
   "mosaik_api_v3>=3.0.13",
