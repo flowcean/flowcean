@@ -193,7 +193,7 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
             inputs=[_row_to_proto(row) for row in inputs.collect().rows()],
             outputs=[_row_to_proto(row) for row in outputs.collect().rows()],
         )
-        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(
+        stream = self._stub.Train(  # type: ignore[type]
             proto_datapackage,
         )
         for status_message in stream:  # type: ignore[type]
