@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 import lightning
 import polars as pl
 import torch
+from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.utils.data import DataLoader
@@ -64,6 +65,13 @@ class LightningLearner(SupervisedLearner):
         trainer = lightning.Trainer(
             accelerator=self.accelerator,
             max_epochs=self.max_epochs,
+            callbacks=[
+                EarlyStopping(
+                    monitor="train_loss",
+                    patience=10,
+                    mode="min",
+                ),
+            ],
         )
         trainer.fit(self.module, dataloader)
         return PyTorchModel(self.module, collected_outputs.columns)
@@ -121,7 +129,13 @@ class MultilayerPerceptron(lightning.LightningModule):
     def training_step(self, batch: Any) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
-        return torch.nn.functional.mse_loss(outputs, targets)
+        loss = torch.nn.functional.mse_loss(outputs, targets)
+        self.log(
+            "train_loss",
+            loss,
+            prog_bar=True,
+        )
+        return loss
 
     @override
     def configure_optimizers(self) -> Any:
