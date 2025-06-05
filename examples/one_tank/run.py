@@ -24,6 +24,7 @@ from flowcean.sklearn import (
     RegressionTree,
 )
 from flowcean.torch import LightningLearner, MultilayerPerceptron
+from flowcean.utils.random import initialize_random
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,8 @@ class OneTank(OdeSystem[TankState]):
 
 def main() -> None:
     initialize_logging()
+
+    initialize_random(seed=42)
 
     system = OneTank(
         area=5.0,
