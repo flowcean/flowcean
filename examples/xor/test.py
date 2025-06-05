@@ -18,6 +18,9 @@ def main() -> None:
         Discrete("y", [0, 1]),
     )
 
+    test_generator.save_excel("xor_test_cases.xlsx")
+    test_generator.reset()
+
     # Define a predicate to check with the data
     predicate = PolarsPredicate(
         pl.col("x").xor(pl.col("y")) == pl.col("z"),
