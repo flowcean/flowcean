@@ -9,8 +9,6 @@ from dash import Dash, Input, Output, callback, dcc, html
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
 
-MAP_RESOLUTION = 0.02
-
 
 def compute_map_image(
     x: dict,
@@ -224,11 +222,12 @@ def update_full_map(
     sample_i: int,
 ) -> go.Figure:
     map_data = data.select(
-        pl.col("/map").struct.field("data", "info.width"),
+        pl.col("/map").struct.field("data", "info.width", "info.resolution"),
     ).row(
         sample_i,
         named=True,
     )
+    map_resolution = map_data["info.resolution"]
     amcl_position = data.select(
         pl.col("/amcl_pose/pose.pose.position.x"),
         pl.col("/amcl_pose/pose.pose.position.y"),
@@ -256,15 +255,15 @@ def update_full_map(
     ).update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
     fig.add_trace(
         go.Scatter(
-            x=[(amcl_position[0] - map_origin[0]) / MAP_RESOLUTION],
-            y=[(amcl_position[1] - map_origin[1]) / MAP_RESOLUTION],
+            x=[(amcl_position[0] - map_origin[0]) / map_resolution],
+            y=[(amcl_position[1] - map_origin[1]) / map_resolution],
             marker={"color": "blue", "size": 16},
         ),
     )
     fig.add_trace(
         go.Scatter(
-            x=[(momo_position[0] - map_origin[0]) / MAP_RESOLUTION],
-            y=[(momo_position[1] - map_origin[1]) / MAP_RESOLUTION],
+            x=[(momo_position[0] - map_origin[0]) / map_resolution],
+            y=[(momo_position[1] - map_origin[1]) / map_resolution],
             marker={"color": "red", "size": 16},
         ),
     )
@@ -272,14 +271,14 @@ def update_full_map(
     fig.add_trace(
         go.Scatter(
             x=[
-                (amcl_position[0] - map_origin[0]) / MAP_RESOLUTION,
-                (amcl_position[0] - map_origin[0]) / MAP_RESOLUTION
-                + rotation[0, 0] / MAP_RESOLUTION,
+                (amcl_position[0] - map_origin[0]) / map_resolution,
+                (amcl_position[0] - map_origin[0]) / map_resolution
+                + rotation[0, 0] / map_resolution,
             ],
             y=[
-                (amcl_position[1] - map_origin[1]) / MAP_RESOLUTION,
-                (amcl_position[1] - map_origin[1]) / MAP_RESOLUTION
-                + rotation[1, 0] / MAP_RESOLUTION,
+                (amcl_position[1] - map_origin[1]) / map_resolution,
+                (amcl_position[1] - map_origin[1]) / map_resolution
+                + rotation[1, 0] / map_resolution,
             ],
             mode="lines",
             line={"color": "blue", "width": 2},
@@ -288,14 +287,14 @@ def update_full_map(
     fig.add_trace(
         go.Scatter(
             x=[
-                (momo_position[0] - map_origin[0]) / MAP_RESOLUTION,
-                (momo_position[0] - map_origin[0]) / MAP_RESOLUTION
-                + rotation[0, 0] / MAP_RESOLUTION,
+                (momo_position[0] - map_origin[0]) / map_resolution,
+                (momo_position[0] - map_origin[0]) / map_resolution
+                + rotation[0, 0] / map_resolution,
             ],
             y=[
-                (momo_position[1] - map_origin[1]) / MAP_RESOLUTION,
-                (momo_position[1] - map_origin[1]) / MAP_RESOLUTION
-                + rotation[1, 0] / MAP_RESOLUTION,
+                (momo_position[1] - map_origin[1]) / map_resolution,
+                (momo_position[1] - map_origin[1]) / map_resolution
+                + rotation[1, 0] / map_resolution,
             ],
             mode="lines",
             line={"color": "red", "width": 2},
