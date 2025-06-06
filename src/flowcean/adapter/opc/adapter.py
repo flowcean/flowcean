@@ -130,13 +130,29 @@ class OPCAdapter(Adapter):
         )
         self.streaming_sub.subscribe_data_change(self.streaming_flag_node)
         # Set the connection flag to True to indicate successful connection
-        self.connection_flag_node.set_value(True)
+        self.connection_flag_node.set_attribute(
+            ua.AttributeIds.Value,
+            ua.DataValue(
+                ua.Variant(
+                    value=True,
+                    varianttype=ua.VariantType.Boolean,
+                ),
+            ),
+        )
         logger.info("OPC client successfully connected to server")
 
     def stop(self) -> None:
         self.streaming_sub.delete()
         # Set the connection flag to False to indicate disconnection
-        self.connection_flag_node.set_value(False)
+        self.connection_flag_node.set_attribute(
+            ua.AttributeIds.Value,
+            ua.DataValue(
+                ua.Variant(
+                    value=False,
+                    varianttype=ua.VariantType.Boolean,
+                ),
+            ),
+        )
         self.client.disconnect()
         logger.info("OPC client disconnected from server")
 
@@ -223,18 +239,39 @@ class OPCAdapter(Adapter):
             raise ValueError(msg)
 
         # Send the data to the OPC server
-        self.client.set_values(
-            list(self.output_features.values()),
-            list(
-                df.select(
-                    [pl.col(feature) for feature in self.output_features],
-                ).row(0),
-            ),
-        )
+        data = df.row(0, named=True)
+        for feature_name, node in self.output_features.items():
+            if feature_name not in df.columns:
+                msg = (
+                    f"Output feature '{feature_name}' is missing in the data."
+                )
+                raise ValueError(msg)
+
+            # Get the value for the feature from the DataFrame
+            value = data[feature_name]
+
+            # Set the nodes value
+            node.set_attribute(
+                ua.AttributeIds.Value,
+                ua.DataValue(
+                    ua.Variant(
+                        value=value,
+                        varianttype=_opc_from_polars(df.schema[feature_name]),
+                    ),
+                ),
+            )
 
         # Set the prediction flag to True to indicate that new data has been
         # sent
-        self.prediction_flag_node.set_value(True)
+        self.prediction_flag_node.set_attribute(
+            ua.AttributeIds.Value,
+            ua.DataValue(
+                ua.Variant(
+                    value=True,
+                    varianttype=ua.VariantType.Boolean,
+                ),
+            ),
+        )
 
     @staticmethod
     def _timed_loop(
