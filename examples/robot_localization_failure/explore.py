@@ -2,14 +2,80 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import polars as pl
-from custom_transforms.map_image import crop_map
+from custom_transforms.map_image import crop_map_image
 from custom_transforms.particle_cloud_image import particles_to_image
-from custom_transforms.scan_image import lidar_to_image
+from custom_transforms.scan_image import scan_to_image
 from dash import Dash, Input, Output, callback, dcc, html
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
 
 MAP_RESOLUTION = 0.02
+
+
+def compute_map_image(
+    x: dict,
+    image_width: int,
+    image_height: int,
+    width_meters: float,
+) -> NDArray:
+    map_image = (
+        np.array(x["/map"]["data"])
+        .reshape(
+            (-1, x["/map"]["info.width"]),
+        )
+        .astype(np.uint8)
+    )
+    position = np.array(
+        [
+            x["/amcl_pose/pose.pose.position.x"],
+            x["/amcl_pose/pose.pose.position.y"],
+        ],
+    )
+    orientation = Rotation.from_quat(
+        (
+            x["/amcl_pose/pose.pose.orientation.x"],
+            x["/amcl_pose/pose.pose.orientation.y"],
+            x["/amcl_pose/pose.pose.orientation.z"],
+            x["/amcl_pose/pose.pose.orientation.w"],
+        ),
+    ).as_matrix()[:2, :2]
+    map_resolution = x["/map"]["info.resolution"]
+    map_origin = np.array(
+        [
+            x["/map"]["info.origin.position.x"],
+            x["/map"]["info.origin.position.y"],
+        ],
+    )
+
+    return crop_map_image(
+        map_image,
+        robot_position=position,
+        robot_orientation=orientation,
+        map_resolution=map_resolution,
+        map_origin=map_origin,
+        width=image_width,
+        height=image_height,
+        width_meters=width_meters,
+    )
+
+
+def compute_scan_image(
+    x: dict,
+    image_width: int,
+    image_height: int,
+    width_meters: float,
+) -> NDArray:
+    distances = np.array(x["/scan/ranges"])
+    return scan_to_image(
+        distances,
+        angle_min=x["/scan/angle_min"],
+        angle_increment=x["/scan/angle_increment"],
+        width=image_width,
+        height=image_height,
+        width_meters=width_meters,
+        hit_value=1,
+        background_value=0,
+    )
 
 
 def compute_particle_image(
@@ -34,49 +100,7 @@ def compute_particle_image(
             x["/amcl_pose/pose.pose.position.y"],
         ],
     )
-    rotation = (
-        Rotation.from_quat(
-            (
-                x["/amcl_pose/pose.pose.orientation.x"],
-                x["/amcl_pose/pose.pose.orientation.y"],
-                x["/amcl_pose/pose.pose.orientation.z"],
-                x["/amcl_pose/pose.pose.orientation.w"],
-            ),
-        )
-        .inv()
-        .as_matrix()[:2, :2]
-    )
-    rotation = np.eye(2)  # TODO: use the actual rotation
-    map_to_robot = (rotation, rotation @ -position)
-    return particles_to_image(
-        particles,
-        width=image_width,
-        height=image_height,
-        width_meters=width_meters,
-        isometry=map_to_robot,
-    )
-
-
-def compute_map_image(
-    x: dict,
-    image_width: int,
-    image_height: int,
-    width_meters: float,
-) -> NDArray:
-    map_image = (
-        np.array(x["/map"]["data"])
-        .reshape(
-            (-1, x["/map"]["info.width"]),
-        )
-        .astype(np.uint8)
-    )
-    position = np.array(
-        [
-            x["/amcl_pose/pose.pose.position.x"],
-            x["/amcl_pose/pose.pose.position.y"],
-        ],
-    )
-    rotation = Rotation.from_quat(
+    orientation = Rotation.from_quat(
         (
             x["/amcl_pose/pose.pose.orientation.x"],
             x["/amcl_pose/pose.pose.orientation.y"],
@@ -84,43 +108,13 @@ def compute_map_image(
             x["/amcl_pose/pose.pose.orientation.w"],
         ),
     ).as_matrix()[:2, :2]
-    rotation = np.eye(2)
-    map_origin = np.array(
-        [
-            x["/map"]["info.origin.position.x"],
-            x["/map"]["info.origin.position.y"],
-        ],
-    )
-
-    return crop_map(
-        map_image,
-        robot_position=position,
-        robot_rotation=rotation,
-        map_origin=map_origin,
-        map_resolution=MAP_RESOLUTION,
-        crop_width=image_width,
-        crop_height=image_height,
+    return particles_to_image(
+        particles,
+        width=image_width,
+        height=image_height,
         width_meters=width_meters,
-    )
-
-
-def compute_scan_image(
-    x: dict,
-    image_width: int,
-    image_height: int,
-    width_meters: float,
-) -> NDArray:
-    distances = np.array(x["/scan/ranges"])
-    return lidar_to_image(
-        distances,
-        angle_min=x["/scan/angle_min"],
-        angle_increment=x["/scan/angle_increment"],
-        width_px=image_width,
-        height_px=image_height,
-        width_m=width_meters,
-        height_m=width_meters,
-        hit_value=1,
-        background_value=0,
+        robot_position=position,
+        robot_orientation=orientation,
     )
 
 
@@ -149,36 +143,13 @@ app.layout = [
         children="Inspecting Robot Localization Data",
         style={"textAlign": "center"},
     ),
-    html.Div(
-        children=[
-            html.Div(
-                children=[dcc.Graph(id="full_map_image")],
-                className="three columns",
-            ),
-            html.Div(
-                children=[dcc.Graph(id="map_image")],
-                className="three columns",
-            ),
-            html.Div(
-                children=[dcc.Graph(id="particle_image")],
-                className="three columns",
-            ),
-            html.Div(
-                children=[dcc.Graph(id="scan_image")],
-                className="three columns",
-            ),
-        ],
-        className="row",
-    ),
-    dcc.Graph(id="position_error"),
-    html.P("Sample i:"),
-    dcc.Slider(
-        id="slider-position",
+    dcc.Input(
+        id="sample_i",
+        value=0,
+        type="number",
         min=0,
         max=n_samples,
-        value=0,
         step=1,
-        marks={0: "0", n_samples: f"{n_samples}"},
     ),
     dcc.Input(
         id="image_width",
@@ -202,12 +173,34 @@ app.layout = [
         max=100,
         step=0.1,
     ),
+    html.Div(
+        children=[
+            html.Div(
+                children=[dcc.Graph(id="full_map_image")],
+                className="three columns",
+            ),
+            html.Div(
+                children=[dcc.Graph(id="map_image")],
+                className="three columns",
+            ),
+            html.Div(
+                children=[dcc.Graph(id="scan_image")],
+                className="three columns",
+            ),
+            html.Div(
+                children=[dcc.Graph(id="particle_image")],
+                className="three columns",
+            ),
+        ],
+        className="row",
+    ),
+    dcc.Graph(id="position_error"),
 ]
 
 
 @callback(
     Output("position_error", "figure"),
-    Input("slider-position", "value"),
+    Input("sample_i", "value"),
 )
 def update_line(
     sample_i: int,
@@ -224,69 +217,11 @@ def update_line(
 
 
 @callback(
-    Output("particle_image", "figure"),
-    Input("slider-position", "value"),
-    Input("image_width", "value"),
-    Input("image_height", "value"),
-    Input("width_meters", "value"),
-)
-def update_particles(
-    sample_i: int,
-    image_width: int,
-    image_height: int,
-    width_meters: float,
-) -> go.Figure:
-    fig = px.imshow(
-        compute_particle_image(
-            data.row(sample_i, named=True),
-            image_width=image_width,
-            image_height=image_height,
-            width_meters=width_meters,
-        ),
-    )
-    fig.update_layout(showlegend=False)
-    fig.update_coloraxes(showscale=False)
-    return fig
-
-
-@callback(
-    Output("map_image", "figure"),
-    Input("slider-position", "value"),
-    Input("image_width", "value"),
-    Input("image_height", "value"),
-    Input("width_meters", "value"),
-)
-def update_map(
-    sample_i: int,
-    image_width: int,
-    image_height: int,
-    width_meters: float,
-) -> go.Figure:
-    fig = px.imshow(
-        compute_map_image(
-            data.row(sample_i, named=True),
-            image_width=image_width,
-            image_height=image_height,
-            width_meters=width_meters,
-        ),
-    )
-    fig.update_layout(showlegend=False)
-    fig.update_coloraxes(showscale=False)
-    return fig
-
-
-@callback(
     Output("full_map_image", "figure"),
-    Input("slider-position", "value"),
-    Input("image_width", "value"),
-    Input("image_height", "value"),
-    Input("width_meters", "value"),
+    Input("sample_i", "value"),
 )
 def update_full_map(
     sample_i: int,
-    image_width: int,
-    image_height: int,
-    width_meters: float,
 ) -> go.Figure:
     map_data = data.select(
         pl.col("/map").struct.field("data", "info.width"),
@@ -317,19 +252,20 @@ def update_full_map(
     ).row(sample_i)
     fig = px.imshow(
         np.array(map_data["data"]).reshape((-1, map_data["info.width"])),
-    )
+        origin="lower",
+    ).update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
     fig.add_trace(
         go.Scatter(
             x=[(amcl_position[0] - map_origin[0]) / MAP_RESOLUTION],
             y=[(amcl_position[1] - map_origin[1]) / MAP_RESOLUTION],
-            marker={"color": "red", "size": 16},
+            marker={"color": "blue", "size": 16},
         ),
     )
     fig.add_trace(
         go.Scatter(
             x=[(momo_position[0] - map_origin[0]) / MAP_RESOLUTION],
             y=[(momo_position[1] - map_origin[1]) / MAP_RESOLUTION],
-            marker={"color": "blue", "size": 16},
+            marker={"color": "red", "size": 16},
         ),
     )
     # show_heading
@@ -346,6 +282,22 @@ def update_full_map(
                 + rotation[1, 0] / MAP_RESOLUTION,
             ],
             mode="lines",
+            line={"color": "blue", "width": 2},
+        ),
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[
+                (momo_position[0] - map_origin[0]) / MAP_RESOLUTION,
+                (momo_position[0] - map_origin[0]) / MAP_RESOLUTION
+                + rotation[0, 0] / MAP_RESOLUTION,
+            ],
+            y=[
+                (momo_position[1] - map_origin[1]) / MAP_RESOLUTION,
+                (momo_position[1] - map_origin[1]) / MAP_RESOLUTION
+                + rotation[1, 0] / MAP_RESOLUTION,
+            ],
+            mode="lines",
             line={"color": "red", "width": 2},
         ),
     )
@@ -355,8 +307,35 @@ def update_full_map(
 
 
 @callback(
+    Output("map_image", "figure"),
+    Input("sample_i", "value"),
+    Input("image_width", "value"),
+    Input("image_height", "value"),
+    Input("width_meters", "value"),
+)
+def update_map(
+    sample_i: int,
+    image_width: int,
+    image_height: int,
+    width_meters: float,
+) -> go.Figure:
+    fig = px.imshow(
+        compute_map_image(
+            data.row(sample_i, named=True),
+            image_width=image_width,
+            image_height=image_height,
+            width_meters=width_meters,
+        ),
+        origin="lower",
+    ).update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
+    fig.update_layout(showlegend=False)
+    fig.update_coloraxes(showscale=False)
+    return fig
+
+
+@callback(
     Output("scan_image", "figure"),
-    Input("slider-position", "value"),
+    Input("sample_i", "value"),
     Input("image_width", "value"),
     Input("image_height", "value"),
     Input("width_meters", "value"),
@@ -374,7 +353,35 @@ def update_scan(
             image_height=image_height,
             width_meters=width_meters,
         ),
-    )
+        origin="lower",
+    ).update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
+    fig.update_layout(showlegend=False)
+    fig.update_coloraxes(showscale=False)
+    return fig
+
+
+@callback(
+    Output("particle_image", "figure"),
+    Input("sample_i", "value"),
+    Input("image_width", "value"),
+    Input("image_height", "value"),
+    Input("width_meters", "value"),
+)
+def update_particles(
+    sample_i: int,
+    image_width: int,
+    image_height: int,
+    width_meters: float,
+) -> go.Figure:
+    fig = px.imshow(
+        compute_particle_image(
+            data.row(sample_i, named=True),
+            image_width=image_width,
+            image_height=image_height,
+            width_meters=width_meters,
+        ),
+        origin="lower",
+    ).update_layout(margin={"l": 0, "r": 0, "t": 0, "b": 0})
     fig.update_layout(showlegend=False)
     fig.update_coloraxes(showscale=False)
     return fig

@@ -2,39 +2,67 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def lidar_to_image(
-    distances: np.ndarray,
+class ScaleArgumentError(ValueError):
+    """Error raised when an invalid number of scale arguments are provided."""
+
+    def __init__(self) -> None:
+        message = (
+            "Specify exactly one of"
+            "meters_per_pixel, width_meters, or height_meters"
+        )
+        super().__init__(message)
+
+
+def scan_to_image(
+    distances: NDArray[np.floating],
     angle_min: float,
     angle_increment: float,
-    width_px: int,
-    height_px: int,
-    width_m: float,
-    height_m: float,
+    *,
+    width: int,
+    height: int,
+    meters_per_pixel: float | None = None,
+    width_meters: float | None = None,
+    height_meters: float | None = None,
     hit_value: int = 255,
     background_value: int = 0,
-) -> NDArray:
+) -> NDArray[np.uint8]:
     num_angles = distances.shape[0]
     angles = angle_min + np.arange(num_angles) * angle_increment
 
-    xs = distances * np.cos(angles)
-    ys = distances * np.sin(angles)
+    specified_scales = sum(
+        argument is not None
+        for argument in (
+            meters_per_pixel,
+            width_meters,
+            height_meters,
+        )
+    )
+    if specified_scales != 1:
+        raise ScaleArgumentError
 
-    x_px = ((xs + width_m / 2) / width_m) * width_px
-    y_px = ((height_m / 2 - ys) / height_m) * height_px
+    if meters_per_pixel is None:
+        if width_meters is not None:
+            meters_per_pixel = width_meters / width
+        elif height_meters is not None:
+            meters_per_pixel = height_meters / height
+        else:
+            raise ScaleArgumentError
+
+    is_hit = (distances > 0) & np.isfinite(distances)
+    xs = distances[is_hit] * np.sin(angles[is_hit])
+    ys = distances[is_hit] * np.cos(angles[is_hit])
+
+    x_px = (xs / meters_per_pixel) + (width / 2)
+    y_px = (ys / meters_per_pixel) + (height / 2)
 
     x_idx = np.round(x_px).astype(int)
     y_idx = np.round(y_px).astype(int)
 
-    image = np.full((height_px, width_px), background_value, dtype=np.uint8)
+    image = np.full((width, height), background_value, dtype=np.uint8)
 
     in_bounds = (
-        (x_idx >= 0)
-        & (x_idx < width_px)
-        & (y_idx >= 0)
-        & (y_idx < height_px)
-        & (distances > 0)
-        & (np.isfinite(distances))
+        (x_idx >= 0) & (x_idx < width) & (y_idx >= 0) & (y_idx < height)
     )
 
-    image[y_idx[in_bounds], x_idx[in_bounds]] = hit_value
+    image[x_idx[in_bounds], y_idx[in_bounds]] = hit_value
     return image
