@@ -6,13 +6,29 @@ from pathlib import Path
 from typing import Any, cast
 
 import polars as pl
-from opcua import Client, Node, Subscription
+from opcua import Client, Node, Subscription, ua
 from ruamel.yaml import YAML
 
 from flowcean.core.adapter import Adapter
 from flowcean.core.data import Data
 
 logger = logging.getLogger(__name__)
+
+_type_mapping_pl2ua = {
+    pl.Float32: ua.VariantType.Float,
+    pl.Float64: ua.VariantType.Double,
+    pl.Int32: ua.VariantType.Int32,
+    pl.Int64: ua.VariantType.Int64,
+    pl.Boolean: ua.VariantType.Boolean,
+}
+
+_type_mapping_str2pl = {
+    "int32": pl.Int32,
+    "int64": pl.Int64,
+    "float32": pl.Float32,
+    "float64": pl.Float64,
+    "bool": pl.Boolean,
+}
 
 
 class StreamingHandler:
@@ -74,12 +90,7 @@ class OPCAdapter(Adapter):
                 feature["opc-id"],
             )
             # Build the input schema from opc to flowcean
-            if feature["feature"] == "float64":
-                schema[feature["feature"]] = pl.Float64
-            elif feature["feature"] == "int64":
-                schema[feature["feature"]] = pl.Int64
-            elif feature["feature"] == "bool":
-                schema[feature["feature"]] = pl.Boolean
+            schema[feature["feature"]] = _type_mapping_str2pl[feature["type"]]
 
         for feature in yaml_data["outputs"]:
             self.output_features[feature["feature"]] = self.client.get_node(
@@ -251,3 +262,15 @@ class OPCAdapter(Adapter):
             sleep_time = max(0, (1 / targget_frequency) - elapsed_time)
             time.sleep(sleep_time)
             start_time = time.time()
+
+
+def _opc_from_polars(t: pl.DataType) -> ua.VariantType:
+    possible_types = [
+        opc_type
+        for pl_type, opc_type in _type_mapping_pl2ua.items()
+        if t.is_(pl_type)
+    ]
+    if len(possible_types) == 0:
+        msg = "No matching OPC UA type found for Polars type: {t}"
+        raise ValueError(msg)
+    return possible_types[0]
