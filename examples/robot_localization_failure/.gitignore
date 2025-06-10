@@ -8,3 +8,4 @@ last_scan_points.png
 *.parquet
 cached_ros_data.parquet
 /simulation
+/recordings
