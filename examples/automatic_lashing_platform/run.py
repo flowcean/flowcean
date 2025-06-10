@@ -280,7 +280,6 @@ def print_row(observed_data: Any) -> None:
         )
 
 
-# set plot labels depending on the arguments
 def set_plot_labels() -> None:
     if args.sample_rate == NATIVE_SAMPLE_RATE:
         plt.xlabel("Time [ms]")
@@ -294,7 +293,25 @@ def set_plot_labels() -> None:
         plt.ylabel("Accumulator Pressure [bar]")
 
 
-# get pressure data from the observed data
+def set_plot_style(
+    args: argparse.Namespace,
+    weight: float,
+    index: int,
+) -> None:
+    if args.plot_plain:
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel("")
+        plt.ylabel("")
+    elif not args.plot_without_notations:
+        if args.plot_subplots:
+            plt.title(
+                f"Weight: {weight}, Index: {index}",
+            )
+        else:
+            set_plot_labels()
+
+
 def get_pressure_data(
     observed_data: Any,
     index: int,
@@ -309,6 +326,25 @@ def get_pressure_data(
     return pressure_data
 
 
+def plot_with_legend(
+    time: np.ndarray,
+    pressure_data: Any,
+    weight: float,
+    color: str = "",
+) -> None:
+    if color:
+        plt.plot(time, pressure_data, color=color, label=f"{int(weight)} tons")
+    else:
+        plt.plot(time, pressure_data, label=f"{int(weight)} tons")
+    handles, labels = plt.gca().get_legend_handles_labels()
+    sorted_handles_labels = sorted(
+        zip(labels, handles, strict=False),
+        key=lambda x: x[0],
+    )
+    labels, handles = zip(*sorted_handles_labels, strict=False)
+    plt.legend(handles, labels)
+
+
 def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     logger.info("Plotting %d rows:", args.plots)
 
@@ -317,7 +353,7 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     plot_rows = math.ceil(math.sqrt(plots))
     plot_cols = math.ceil(plots / plot_rows)
 
-    plt.figure(figsize=(15, 10))
+    plt.figure(figsize=(8, 6))
     for i, c in zip(
         range(0, dimension, int(dimension / plots)),
         range(plots),
@@ -355,46 +391,22 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
             )
 
         # style the plot
-        if args.plot_plain:
-            plt.xticks([])
-            plt.yticks([])
-            plt.xlabel("")
-            plt.ylabel("")
-        elif not args.plot_without_notations:
-            if args.plot_subplots:
-                plt.title(
-                    f"Weight: {weight}, Index: {index}",
-                )
-            else:
-                set_plot_labels()
+        set_plot_style(args, weight, index)
 
         # plot the data
-        if args.plot_legend:
-            plt.plot(time, pressure_data, label=f"{int(weight)} tons")
-            handles, labels = plt.gca().get_legend_handles_labels()
-            sorted_handles_labels = sorted(
-                zip(labels, handles, strict=False),
-                key=lambda x: x[0],
-            )
-            labels, handles = zip(*sorted_handles_labels, strict=False)
-            plt.legend(handles, labels)
+        epsilon = args.plot_highlight_similar_weight_range / 2
+        if args.plot_highlight_similar_weight == 0 or (
+            weight < args.plot_highlight_similar_weight + epsilon
+            and weight > args.plot_highlight_similar_weight - epsilon
+        ):
+            if args.plot_legend:
+                plot_with_legend(time, pressure_data, weight)
+            else:
+                plt.plot(time, pressure_data)
+        elif args.plot_legend:
+            plot_with_legend(time, pressure_data, weight, color="gray")
         else:
-            plt.plot(time, pressure_data)
-
-        # mark plots with similar weight
-        if args.plot_mark_similar_weight != 0:
-            epsilon = args.plot_mark_similar_weight_range / 2
-            if (
-                weight < args.plot_mark_similar_weight + epsilon
-                and weight > args.plot_mark_similar_weight - epsilon
-            ):
-                marker_position = random.randint(100, 150)
-                plt.plot(
-                    time[marker_position],
-                    pressure_data[marker_position],
-                    "ro",
-                    markersize=6,
-                )
+            plt.plot(time, pressure_data, color="gray")
 
     plt.show()
 
@@ -1027,7 +1039,7 @@ if __name__ == "__main__":
         help=("Plot the pressure data normalized to the first value."),
     )
     data_inspection_group.add_argument(
-        "--plot_mark_similar_weight",
+        "--plot_highlight_similar_weight",
         type=int,
         default=0,
         metavar="WEIGHT [tons]",
@@ -1037,7 +1049,7 @@ if __name__ == "__main__":
         ),
     )
     data_inspection_group.add_argument(
-        "--plot_mark_similar_weight_range",
+        "--plot_highlight_similar_weight_range",
         type=int,
         default=10,
         metavar="RANGE [tons]",
