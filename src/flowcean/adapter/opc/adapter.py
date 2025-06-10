@@ -186,7 +186,9 @@ class OPCAdapter(Adapter):
                         schema=self.input_schema,
                         orient="row",
                     ).with_columns(
-                        _recorded_time=datetime.now(timezone.utc),
+                        _recorded_time=pl.lit(datetime.now(timezone.utc)).cast(
+                            pl.Datetime,
+                        ),
                     ),
                 ],
             )
@@ -197,9 +199,10 @@ class OPCAdapter(Adapter):
             else:
                 # Still pre-recording
                 # Discard old data that is older than `capture_time`.
-                self.recorded_data = self.recorded_data.select(
+                self.recorded_data = self.recorded_data.filter(
                     pl.col("_recorded_time")
-                    >= datetime.now(timezone.utc) - self.capture_time,
+                    >= pl.lit(datetime.now(timezone.utc)).cast(pl.Datetime)
+                    - self.capture_time,
                 )
 
             return True
@@ -223,7 +226,7 @@ class OPCAdapter(Adapter):
     def send_data(self, data: Data) -> None:
         """Send data to the OPC server."""
         # Convert the data into a Dataframe
-        df = cast("pl.DataFrame | pl.LazyFrame", data.data).lazy().collect()
+        df = cast("pl.DataFrame | pl.LazyFrame", data).lazy().collect()
 
         # Check if the data contains all required output features
         if not all(feature in df.columns for feature in self.output_features):
