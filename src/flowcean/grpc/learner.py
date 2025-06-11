@@ -85,10 +85,10 @@ class _DockerBackend(_Backend):
             raise TypeError(message)
         self._docker_container.reload()
         client = docker.APIClient()
+        time.sleep(2)
         ports = client.inspect_container(self._docker_container.id)[  # type: ignore[type]
             "NetworkSettings"
         ]["Ports"]
-        time.sleep(2)
         host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
         host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
         self._server_address = f"{host_ip}:{host_port}"
