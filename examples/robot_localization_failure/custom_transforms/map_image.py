@@ -1,9 +1,8 @@
-import logging
-
+import cv2
 import numpy as np
 from numpy.typing import NDArray
 
-logger = logging.getLogger(__name__)
+from custom_transforms.affine import Affine
 
 
 class ScaleArgumentError(ValueError):
@@ -17,8 +16,10 @@ class ScaleArgumentError(ValueError):
         super().__init__(message)
 
 
-def particles_to_image(
-    particles: NDArray[np.floating],
+def crop_map_image(
+    map_image: NDArray[np.uint8],
+    map_resolution: float,
+    map_origin: NDArray[np.floating],
     width: int,
     height: int,
     *,
@@ -27,7 +28,8 @@ def particles_to_image(
     meters_per_pixel: float | None = None,
     width_meters: float | None = None,
     height_meters: float | None = None,
-) -> NDArray[np.floating]:
+    interpolation_flags: int = cv2.INTER_NEAREST,
+) -> NDArray:
     if robot_position is None:
         robot_position = np.zeros(2, dtype=np.float64)
     if robot_orientation is None:
@@ -35,7 +37,11 @@ def particles_to_image(
 
     specified_scales = sum(
         argument is not None
-        for argument in (meters_per_pixel, width_meters, height_meters)
+        for argument in (
+            meters_per_pixel,
+            width_meters,
+            height_meters,
+        )
     )
     if specified_scales != 1:
         raise ScaleArgumentError
@@ -48,21 +54,29 @@ def particles_to_image(
         else:
             raise ScaleArgumentError
 
-    image = np.zeros((height, width), dtype=float)
-
-    positions = particles[:, :2].T
-    x_trans, y_trans = (
-        robot_orientation.T @ positions
-        + robot_orientation.T @ -robot_position[:, None]
+    map_pixel_to_map = Affine.from_parts(scale=map_resolution)
+    map_to_world = Affine.from_parts(translation=map_origin)
+    robot_to_world = Affine.from_parts(
+        translation=robot_position,
+        rotation=robot_orientation,
+    )
+    world_to_robot = robot_to_world.inverse()
+    robot_to_crop = Affine.from_parts(scale=1 / meters_per_pixel)
+    crop_to_crop_centered = Affine.from_parts(
+        translation=np.array([width / 2, height / 2]),
     )
 
-    x_idx = np.round((x_trans / meters_per_pixel) + (height / 2)).astype(int)
-    y_idx = np.round((y_trans / meters_per_pixel) + (width / 2)).astype(int)
-    ws = particles[:, 2]
-
-    in_bounds = (
-        (x_idx >= 0) & (x_idx < width) & (y_idx >= 0) & (y_idx < height)
+    transform = (
+        crop_to_crop_centered
+        @ robot_to_crop
+        @ world_to_robot
+        @ map_to_world
+        @ map_pixel_to_map
     )
-    np.add.at(image, (x_idx[in_bounds], y_idx[in_bounds]), ws[in_bounds])
 
-    return image
+    return cv2.warpAffine(
+        map_image,
+        transform.to_homogeneous()[:2, :],
+        (width, height),
+        flags=interpolation_flags,
+    )

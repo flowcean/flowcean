@@ -1,135 +1,76 @@
 #!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-#     "matplotlib",
-#     "opencv-python",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../../", editable = true }
-# ///
 
+import logging
 from pathlib import Path
 
-import polars as pl
-from custom_transforms.particle_image import ParticleImage
+from custom_transforms.collapse import Collapse
+from custom_transforms.detect_delocalizations import DetectDelocalizations
+from custom_transforms.localization_status import LocalizationStatus
+from custom_transforms.slice_time_series import SliceTimeSeries
+from custom_transforms.zero_order_hold_matching import ZeroOrderHold
+from rosbag import load_or_cache_ros_data
 
 import flowcean.cli
-from flowcean.polars.transforms.time_window import TimeWindow
-from flowcean.ros.rosbag import RosbagLoader
+from flowcean.polars.transforms.drop import Drop
 
-USE_ROSBAG = False
+logger = logging.getLogger(__name__)
+
 WS = Path(__file__).resolve().parent
-CACHE_FILE = WS / "cached_ros_data.parquet"
-ROS_BAG_PATH = WS / "rec_20241021_152106"
+ROSBAG_NAME = "rec_20241021_152106"
+ROSBAG_PATH = WS / ROSBAG_NAME
+ROS_MESSAGE_TYPES = [
+    WS / "ros_msgs/LaserScan.msg",
+    WS / "ros_msgs/nav2_msgs/msg/Particle.msg",
+    WS / "ros_msgs/nav2_msgs/msg/ParticleCloud.msg",
+]
+
+SAVE_IMAGES = True
+IMAGE_PIXEL_SIZE = 100
+CROP_REGION_SIZE = 5.0
 
 
-def load_or_cache_ros_data(
-    *,
-    force_refresh: bool = False,
-) -> pl.LazyFrame:
-    """Load data from ROS bag or cache, with optional refresh.
+flowcean.cli.initialize_logging(log_level=logging.DEBUG)
 
-    Args:
-        force_refresh: If True, reload from ROS bag and overwrite cache.
+data = load_or_cache_ros_data(
+    ROSBAG_PATH,
+    message_definitions=ROS_MESSAGE_TYPES,
+    ignore_cache=True,
+)
+logger.info("Loaded data from ROS bag")
 
-    Returns:
-        LazyFrame containing the ROS bag data.
-    """
-    # Check if cache exists and is valid
-    cache_exists = CACHE_FILE.exists()
 
-    if cache_exists and not force_refresh:
-        # Load cached data
-        print("Loading data from cache.")
-        data = pl.read_parquet(CACHE_FILE).lazy()
-        # Optional: Validate cache (e.g., check metadata or row count)
-        if data.collect().height > 0:
-            return data
-        print("Cache invalid; reloading from ROS bag.")
-
-    # Load from ROS bag
-    print("Loading data from ROS bag.")
-    environment = RosbagLoader(
-        path=ROS_BAG_PATH,
-        topics={
-            "/amcl_pose": [
-                "pose.pose.position.x",
-                "pose.pose.position.y",
-                "pose.pose.orientation.x",
-                "pose.pose.orientation.y",
-                "pose.pose.orientation.z",
-                "pose.pose.orientation.w",
-            ],
-            "/momo/pose": [
-                "pose.position.x",
-                "pose.position.y",
-            ],
-            "/scan": [
-                "ranges",
-                "angle_min",
-                "angle_max",
-                "angle_increment",
-                "range_min",
-                "range_max",
-            ],
-            "/map": [
-                "data",
-                "info.resolution",
-                "info.width",
-                "info.height",
-                "info.origin.position.x",
-                "info.origin.position.y",
-                "info.origin.position.z",
-                "info.origin.orientation.x",
-                "info.origin.orientation.y",
-                "info.origin.orientation.z",
-                "info.origin.orientation.w",
-            ],
-            "/delocalizations": ["data"],
-            "/particle_cloud": ["particles"],
-            "/position_error": ["data"],
-            "/heading_error": ["data"],
-        },
-        msgpaths=[
-            str(WS / "ros_msgs/LaserScan.msg"),
-            str(WS / "ros_msgs/nav2_msgs/msg/Particle.msg"),
-            str(WS / "ros_msgs/nav2_msgs/msg/ParticleCloud.msg"),
+transform = (
+    # collapse map time series to a single value
+    Collapse("/map", element=1)
+    # align all time series features using zero-order hold
+    | ZeroOrderHold(
+        features=[
+            "/scan",
+            "/particle_cloud",
+            "/momo/pose",
+            "/amcl_pose",
         ],
+        name="measurements",
     )
-    data = environment.observe()
-
-    # Cache the data
-    print("Caching data to Parquet.")
-    collected_data = data.collect()
-    collected_data.write_parquet(CACHE_FILE, compression="snappy")
-    print(f"Cache created/updated at {CACHE_FILE}")
-    return data
-
-
-def main() -> None:
-    flowcean.cli.initialize_logging()
-
-    # Load data with caching (set force_refresh=True to always reload)
-    data = load_or_cache_ros_data(force_refresh=USE_ROSBAG)
-
-    transform = TimeWindow(
-        features=["/particle_cloud", "/amcl_pose", "/map"],
-        time_start=1729516868012553090,
-        time_end=1729516908012553090,
-    ) | ParticleImage(
-        particle_topic="/particle_cloud",
-        amcl_pose_topic="/amcl_pose",
-        crop_region_size=20.0,
-        image_pixel_size=200,
-        save_images=True,
+    | Drop("/scan", "/particle_cloud", "/momo/pose", "/amcl_pose")
+    # detect experiment slice points based on delocalization events
+    | DetectDelocalizations("/delocalizations", name="slice_points")
+    | Drop("/delocalizations")
+    | SliceTimeSeries(
+        time_series="measurements",
+        slice_points="slice_points",
     )
+    | Drop("slice_points")
+    # detect localization status based on position and heading errors
+    | LocalizationStatus(
+        time_series="measurements",
+        ground_truth="/momo/pose",
+        estimation="/amcl_pose",
+        position_threshold=0.4,
+        heading_threshold=0.4,
+    )
+)
 
-    transformed_data = transform(data)
-
-    print(transformed_data.collect())
-
-
-if __name__ == "__main__":
-    main()
+# transformed_data = transform(data)
+# collected = transformed_data.collect(engine="streaming")
+# print(collected)
