@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import polars as pl
-from rosbags.highlevel import AnyReader as AnyRosbagReader
+from rosbags.highlevel import AnyReader
 from rosbags.interfaces import Msgdef, Nodetype
 from rosbags.typesys import Stores, get_types_from_msg, get_typestore
 from tqdm import tqdm
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
     from os import PathLike
 
-    from rosbags.interfaces.typing import FieldDesc
+    from rosbags.interfaces.typing import FieldDesc, Typesdict
 
     AttrValue = str | bool | int | float | object
 
@@ -61,7 +61,7 @@ class RosbagLoader(DataFrame):
 
     def __init__(
         self,
-        path: str | Path,
+        path: PathLike,
         topics: dict[str, list[str]],
         message_paths: Iterable[PathLike] | None = None,
     ) -> None:
@@ -78,224 +78,150 @@ class RosbagLoader(DataFrame):
             topics: Dictionary of topics to load (`topic: [keys]`).
             message_paths: List of paths to additional message definitions.
         """
-        if message_paths is None:
-            message_paths = []
+        typestore = get_typestore(Stores.ROS2_HUMBLE)
+        if message_paths is not None:
+            additional_types = _collect_type_definitions(message_paths)
+            typestore.register(additional_types)
 
-        self.path = Path(path)
-        self.topics = topics
-        self.typestore = get_typestore(Stores.ROS2_HUMBLE)
-
-        add_types = {}
-        for path_like in message_paths:
-            msgpath = Path(path_like)
-            msgdef = msgpath.read_text(encoding="utf-8")
-            add_types.update(
-                get_types_from_msg(msgdef, self.guess_msgtype(msgpath)),
-            )
-            debug_msg = f"Added message type: {self.guess_msgtype(msgpath)}"
-            logger.debug(debug_msg)
-        self.typestore.register(add_types)
-
-        with AnyRosbagReader(
-            [self.path],
-            default_typestore=self.typestore,
+        with AnyReader(
+            [Path(path)],
+            default_typestore=typestore,
         ) as reader:
             features = [
-                self.get_dataframe(reader, topic, keys)
-                for topic, keys in tqdm(self.topics.items(), "Loading topics")
+                _get_dataframe(reader, topic, keys)
+                for topic, keys in tqdm(topics.items(), "Loading topics")
             ]
-            super().__init__(pl.concat(features, how="horizontal"))
 
-    def guess_msgtype(self, path: Path) -> str:
-        """Guess message type name from path.
+        super().__init__(pl.concat(features, how="horizontal"))
 
-        Args:
-            path: Path to the message file.
 
-        Returns:
-            The message definition string.
-        """
-        name = path.relative_to(path.parents[2]).with_suffix("")
-        if "msg" not in name.parts:
-            name = name.parent / "msg" / name.name
-        return str(name)
+def _get_dataframe(
+    reader: AnyReader,
+    topicname: str,
+    keys: Sequence[str],
+) -> pl.DataFrame:
+    if topicname not in reader.topics:
+        msg = f"Requested unknown topic {topicname!r}."
+        raise RosbagError(msg)
+    topic = reader.topics[topicname]
+    msgdef = reader.typestore.get_msgdef(str(topic.msgtype))
 
-    def get_dataframe(
-        self,
-        reader: AnyRosbagReader,
-        topicname: str,
-        keys: Sequence[str],
-    ) -> pl.DataFrame:
-        """Convert messages from a topic into a polars dataframe.
+    getters = []
+    for key in keys:
+        subkeys = key.split(".")
 
-        Read all messages from a topic and extract referenced keys into
-        a polars dataframe. The timestamps of messages are automatically added
-        as the dataframe index.
+        subdef = msgdef
+        for subkey in subkeys[:-1]:
+            subfield = next(
+                (x for x in subdef.fields if x[0] == subkey),
+                None,
+            )
+            subdef = _get_subdef(reader, subdef, subkey, subfield)
 
-        Keys support a dotted syntax to traverse nested messages. Here is an
-        example of a nested ROS message structure:
-        ```
-        /amcl_pose (geometry_msgs/PoseWithCovarianceStamped)
-        ├── pose (PoseWithCovariance)
-        │   ├── pose (Pose)
-        │   │   ├── position (Point)
-        │   │   │   ├── x (float)
-        │   │   │   ├── y (float)
-        │   │   │   └── z (float)
-        │   │   └── orientation (Quaternion)
-        │   └── covariance (array[36])
-        ```
+        if subkeys[-1] not in {x[0] for x in subdef.fields}:
+            msg = f"Field {subkeys[-1]!r} does not exist on {subdef.name!r}."
+            raise RosbagError(msg)
+        getters.append(_create_getter(subkeys))
 
-        The first key is `pose.pose.position.x`. The subkeys are
-        separated by dots. So, in this case, the subkeys are
-        `['pose', 'pose', 'position', 'x']`. Each subkey is used to
-        traverse the nested message structure. If a subkey matches
-        a field name, the next subkey is used to traverse deeper
-        into the nested structure.
+    timestamps = []
+    data = []
+    for connection, timestamp, rawdata in reader.messages(
+        connections=topic.connections,
+    ):
+        dmsg = reader.deserialize(rawdata, connection.msgtype)
+        timestamps.append(timestamp)
+        row = []
 
-        Args:
-            reader: Opened rosbags reader.
-            topicname: Topic name of messages to process.
-            keys: Field names to get from each message.
+        for x in getters:
+            value = x(dmsg)
+            if isinstance(value, list):
+                row.append([_ros_msg_to_dict(i) for i in value])
+            elif hasattr(value, "__dict__"):
+                row.append(_ros_msg_to_dict(value))
+            else:
+                row.append(value)
+        data.append(row)
 
-        Raises:
-            RosbagError: Reader not opened or topic or field does not exist.
+    # data = [
+    #     [x.tolist() if isinstance(x, np.ndarray) else x for x in row]
+    #     for row in data
+    # ]
+    df = pl.DataFrame(data, schema=keys, orient="row")
+    breakpoint()
+    time = pl.Series("time", timestamps)
+    nest_into_timeseries = pl.struct(
+        [
+            pl.col("time"),
+            pl.struct(pl.exclude("time")).alias("value"),
+        ],
+    )
+    return df.with_columns(time).select(
+        nest_into_timeseries.implode().alias(topicname),
+    )
 
-        Returns:
-            Polars dataframe.
 
-        """
-        self.verify_topics(reader, topicname)
-        topic = reader.topics[topicname]
-        msgdef = reader.typestore.get_msgdef(str(topic.msgtype))
+def _get_subdef(
+    reader: AnyReader,
+    subdef: Msgdef[object],
+    subkey: str,
+    subfield: tuple[str, FieldDesc] | None,
+) -> Msgdef[object]:
+    if not subfield:
+        msg = f"Field {subkey!r} does not exist on {subdef.name!r}."
+        raise RosbagError(msg)
+    if subfield[1][0] != Nodetype.NAME:
+        msg = f"Field {subkey!r} of {subdef.name!r} is not a message."
+        raise RosbagError(msg)
+    return reader.typestore.get_msgdef(subfield[1][1])
 
-        getters = []
-        # Iterate through each key provided by the user
-        # e.g., "pose.pose.position.x")
+
+def _create_getter(keys: list[str]) -> Callable[[object], AttrValue]:
+    """Create getter for nested lookups."""
+
+    def getter(msg: object) -> AttrValue:
+        value = msg
         for key in keys:
-            # Split the key into subkeys at dots
-            # (e.g., ["pose", "pose", "position", "x"])
-            subkeys = key.split(".")
+            value = getattr(value, key)
+        return value
 
-            # Start with the top-level message definition
-            subdef = msgdef
+    return getter
 
-            # Process all subkeys except the last one
-            # (e.g., ["pose", "pose", "position"])
-            for subkey in subkeys[:-1]:
-                # Find the field in the current message definition that matches
-                # the subkey. x[0] is the field name, returns None if not found
-                subfield = next(
-                    (x for x in subdef.fields if x[0] == subkey),
-                    None,
-                )
 
-                # Get the message definition for this subfield to continue
-                # traversing e.g., get definition of a 'pose' message
-                subdef = self.get_subdef(reader, subdef, subkey, subfield)
+def _ros_msg_to_dict(obj: dict) -> dict:
+    """Recursively convert a ROS message object into a dictionary.
 
-            # Verify the final subkey exists in the last message definition
-            # e.g. check that 'x' exists in the 'position' message
-            if subkeys[-1] not in {x[0] for x in subdef.fields}:
-                msg = (
-                    f"Field {subkeys[-1]!r} does not exist on {subdef.name!r}."
-                )
-                raise RosbagError(msg)
-            # Create a getter function to extract the value from the message
-            getters.append(self.create_getter(subkeys))
+    Args:
+        obj: A ROS message object represented as a dictionary where keys
+            are field names and values are their corresponding data.
 
-        timestamps = []
-        data = []
-        for _, timestamp, rawdata in reader.messages(
-            connections=topic.connections,
-        ):
-            dmsg = reader.deserialize(rawdata, str(topic.msgtype))
-            timestamps.append(timestamp)
-            row = []
+    Returns:
+        A dictionary representation of the ROS message, with all nested
+        fields converted to dictionaries.
+    """
+    if not hasattr(obj, "__dict__"):
+        return obj
 
-            for x in getters:
-                value = x(dmsg)
-                if isinstance(value, list):
-                    # Convert list items to dicts but keep them in the row
-                    row.append([self.ros_msg_to_dict(i) for i in value])
-                elif hasattr(value, "__dict__"):
-                    row.append(self.ros_msg_to_dict(value))
-                else:
-                    row.append(value)
-            data.append(row)
+    result = {}
+    for key, value in obj.__dict__.items():
+        if key == "__msgtype__":
+            continue
+        result[key] = _ros_msg_to_dict(value)
+    return result
 
-        # Handle any numpy arrays
-        data = [
-            [x.tolist() if isinstance(x, np.ndarray) else x for x in row]
-            for row in data
-        ]
-        df = pl.DataFrame(data, schema=tuple(keys), orient="row")
-        time = pl.Series("time", timestamps)
-        nest_into_timeseries = pl.struct(
-            [
-                pl.col("time"),
-                pl.struct(pl.exclude("time")).alias("value"),
-            ],
-        )
-        return df.with_columns(time).select(
-            nest_into_timeseries.implode().alias(topicname),
-        )
 
-    def get_subdef(
-        self,
-        reader: AnyRosbagReader,
-        subdef: Msgdef[object],
-        subkey: str,
-        subfield: tuple[str, FieldDesc] | None,
-    ) -> Msgdef[object]:
-        if not subfield:
-            msg = f"Field {subkey!r} does not exist on {subdef.name!r}."
-            raise RosbagError(msg)
-        if subfield[1][0] != Nodetype.NAME:
-            msg = f"Field {subkey!r} of {subdef.name!r} is not a message."
-            raise RosbagError(msg)
-        return reader.typestore.get_msgdef(subfield[1][1])
+def _collect_type_definitions(message_paths: Iterable[PathLike]) -> Typesdict:
+    return {
+        k: v
+        for path in message_paths
+        for k, v in get_types_from_msg(
+            Path(path).read_text(),
+            _guess_msgtype(Path(path)),
+        ).items()
+    }
 
-    def verify_topics(
-        self,
-        reader: AnyRosbagReader,
-        topicname: str,
-    ) -> None:
-        if not reader.isopen:
-            msg = "RosbagReader needs to be opened before accessing messages."
-            raise RosbagError(msg)
 
-        if topicname not in reader.topics:
-            msg = f"Requested unknown topic {topicname!r}."
-            raise RosbagError(msg)
-
-    def create_getter(self, keys: list[str]) -> Callable[[object], AttrValue]:
-        """Create getter for nested lookups."""
-
-        def getter(msg: object) -> AttrValue:
-            value = msg
-            for key in keys:
-                value = getattr(value, key)
-            return value
-
-        return getter
-
-    def ros_msg_to_dict(self, obj: dict) -> dict:
-        """Recursively convert a ROS message object into a dictionary.
-
-        Args:
-            obj (dict): A ROS message object represented as a dictionary where
-                keys are field names and values are their corresponding data.
-
-        Returns:
-            dict: A dictionary representation of the ROS message, with all
-                nested fields converted to dictionaries.
-        """
-        if hasattr(obj, "__dict__"):  # Check if the object has attributes
-            result = {}
-            for key, value in obj.__dict__.items():
-                if key == "__msgtype__":
-                    continue
-                result[key] = self.ros_msg_to_dict(value)
-            return result
-        return obj  # Return the base value if it's not an object
+def _guess_msgtype(path: Path) -> str:
+    name = path.relative_to(path.parents[2]).with_suffix("")
+    if "msg" not in name.parts:
+        name = name.parent / "msg" / name.name
+    return str(name)

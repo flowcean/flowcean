@@ -56,6 +56,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import cloudpickle  # type:ignore[reportMissingTypeStubs]
+from tqdm import tqdm
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -191,7 +192,10 @@ class ChainedTransforms(Transform, FitOnce, FitIncremetally):
 
     @override
     def apply(self, data: Data) -> Data:
-        for transform in self.transforms:
+        for transform in tqdm(
+            self.transforms,
+            desc="Applying transforms",
+        ):
             data = transform.apply(data)
         return data
 

@@ -9,23 +9,22 @@ logger = logging.getLogger(__name__)
 
 
 def zero_order_hold_align(
-    df: pl.LazyFrame,
+    data: pl.LazyFrame,
     columns: Iterable[str],
     name: str,
 ) -> pl.LazyFrame:
-    """Perform zero-order-hold alignment of multiple time-series features.
+    """Perform zero-order-hold alignment of multiple time series features.
 
     Args:
-        df: Input DataFrame containing struct-type time-series columns.
+        data: Input DataFrame containing struct-type time series columns.
         columns: Names of struct columns to align using zero-order-hold.
         name: Name of the output struct column.
 
     Returns:
-        DataFrame with an additional column containing zero-order-hold aligned
-        time-series.
+        zero-order-hold aligned time series
     """
     exploded = (
-        df.with_row_index()
+        data.with_row_index()
         .explode(column)
         .select(
             pl.col("index"),
@@ -38,7 +37,7 @@ def zero_order_hold_align(
         for column in columns
     )
 
-    aligned = (
+    return (
         pl.concat(exploded, how="align")
         .with_columns(pl.exclude("index", "time").forward_fill().over("index"))
         .drop_nulls()
@@ -55,29 +54,30 @@ def zero_order_hold_align(
         )
     )
 
-    return pl.concat([df, aligned], how="horizontal")
 
+class ZeroOrderHold(Transform):
+    """Aligns multiple time series features using zero-order-hold."""
 
-class ZeroOrderHoldMatching(Transform):
     def __init__(
         self,
-        topics: list[str],
+        features: list[str],
         name: str = "aligned",
     ) -> None:
         """Initialize the ZeroOrderHoldMatching transform.
 
         Args:
-            topics: List of topics to align.
-            name: Name of the output time-series column.
+            features: List of topics to align.
+            name: Name of the output time series feature.
         """
         super().__init__()
-        self.topics = topics
+        self.features = features
         self.name = name
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug("Applying ZeroOrderHoldMatching transform")
-        return zero_order_hold_align(
+        aligned = zero_order_hold_align(
             data,
-            columns=self.topics,
+            columns=self.features,
             name=self.name,
         )
+        return pl.concat([data, aligned], how="horizontal")
