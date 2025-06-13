@@ -1,4 +1,5 @@
 from .cast import Cast
+from .discrete_derivative import DiscreteDerivative, DiscreteDerivativeType
 from .drop import Drop
 from .explode import Explode
 from .filter import Filter
@@ -26,6 +27,8 @@ from .unnest import Unnest
 
 __all__ = [
     "Cast",
+    "DiscreteDerivative",
+    "DiscreteDerivativeType",
     "Drop",
     "Explode",
     "FeatureLengthVaryError",
