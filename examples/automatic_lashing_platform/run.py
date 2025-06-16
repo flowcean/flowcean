@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-
 # system libraries
 import argparse
 import logging
 import math
-import os
 import time
 from os import environ
 from pathlib import Path
@@ -821,9 +818,11 @@ def get_graph(args: argparse.Namespace) -> graphviz.Source:
     graph_path = None
 
     if args.show_latest_graph:
-        list_of_graphs = os.listdir("./graphs")
-        if list_of_graphs:
-            graph_path = Path("./graphs/" + max(list_of_graphs))
+        graph_dir = Path("./graphs")
+        graph_files = [f for f in graph_dir.iterdir() if f.suffix == ".dot"]
+        if graph_files:
+            latest_graph = max(graph_files, key=lambda p: p.stat().st_mtime)
+            graph_path = latest_graph
         else:
             logger.warning("No dot-graphs found in './graphs'.")
 
