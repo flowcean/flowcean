@@ -45,8 +45,8 @@ class MeanAbsolutePercentageError(OfflineMetric):
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
         return (
             metrics.mean_absolute_percentage_error(
-                true.collect(streaming=True),
-                predicted.collect(streaming=True),
+                true.collect(engine="streaming"),
+                predicted.collect(engine="streaming"),
             )
             * 100
         )
