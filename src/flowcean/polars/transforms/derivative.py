@@ -14,13 +14,15 @@ class Derivative(Transform):
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         columns = [
-            col for col in data.collect_schema().names()
+            col
+            for col in data.collect_schema().names()
             if col.startswith(self.column)
         ]
         if columns:
             derivatives = [
                 (
-                    pl.lit(0) if i == 0
+                    pl.lit(0)
+                    if i == 0
                     else (pl.col(columns[i]) - pl.col(columns[i - 1]))
                 ).alias(columns[i])
                 for i in range(len(columns))

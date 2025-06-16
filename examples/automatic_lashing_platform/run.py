@@ -15,7 +15,6 @@ import argparse
 import logging
 import math
 import os
-import random
 import time
 from os import environ
 from pathlib import Path
@@ -326,6 +325,13 @@ def get_pressure_data(
     return pressure_data
 
 
+def get_scaled_time(pressure_data: Any, sample_rate: float) -> np.ndarray:
+    # scale x-achsis to milliseconds if sample rate is native
+    if sample_rate == NATIVE_SAMPLE_RATE:
+        return np.arange(len(pressure_data)) * 10  # 10 ms per sample
+    return np.arange(len(pressure_data))
+
+
 def plot_with_legend(
     time: np.ndarray,
     pressure_data: Any,
@@ -354,6 +360,7 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
     plot_cols = math.ceil(plots / plot_rows)
 
     plt.figure(figsize=(8, 6))
+
     for i, c in zip(
         range(0, dimension, int(dimension / plots)),
         range(plots),
@@ -372,11 +379,10 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
             3,
         )
 
-        # scale x-achsis to milliseconds if sample rate is native
-        if args.sample_rate == NATIVE_SAMPLE_RATE:
-            time = np.arange(len(pressure_data)) * 10  # 10 ms per sample
-        else:
-            time = np.arange(len(pressure_data))
+        time = get_scaled_time(
+            pressure_data,
+            args.sample_rate,
+        )
 
         # define subplot
         if args.plot_subplots:
@@ -390,7 +396,6 @@ def plot_data(args: argparse.Namespace, observed_data: Any) -> None:
                 bottom=0.1,
             )
 
-        # style the plot
         set_plot_style(args, weight, index)
 
         # plot the data
@@ -440,11 +445,10 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
             normalized=args.plot_normalized,
         )
 
-        # scale x-achsis to milliseconds if sample rate is native
-        if args.sample_rate == NATIVE_SAMPLE_RATE:
-            time = np.arange(len(pressure_data)) * 10  # 10 ms per sample
-        else:
-            time = np.arange(len(pressure_data))
+        time = get_scaled_time(
+            pressure_data,
+            args.sample_rate,
+        )
 
         if args.plot_plain:
             # only plot the plain graph
@@ -484,43 +488,6 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
                     table_cell.set_facecolor("white")
             ax.add_table(table)
 
-            #### could be deprecated ####
-            # special annotation for the application of the model
-            if (
-                args.filter == '"activeValveCount > 0"'
-                and args.training_data == "alp_sim_data.parquet"
-                and args.apply_derivative
-                and index == "18"
-            ):
-                plt.plot(time[17], pressure_data[17], "ro", markersize=6)
-                plt.annotate(
-                    "≤ 0.07\n⇒ False",
-                    xy=(time[17], pressure_data[17]),
-                    xytext=(20, 20),
-                    textcoords="offset points",
-                    arrowprops={"arrowstyle": "->", "color": "black"},
-                    fontsize=10,
-                    bbox={
-                        "boxstyle": "round,pad=0.3",
-                        "edgecolor": "gray",
-                        "facecolor": "white",
-                    },
-                )
-                plt.plot(350, pressure_data[35], "ro", markersize=6)
-                plt.annotate(
-                    "≤ 0.09\n⇒ True",
-                    xy=(350, pressure_data[35]),
-                    xytext=(20, 20),
-                    textcoords="offset points",
-                    arrowprops={"arrowstyle": "->", "color": "black"},
-                    fontsize=10,
-                    bbox={
-                        "boxstyle": "round,pad=0.3",
-                        "edgecolor": "gray",
-                        "facecolor": "white",
-                    },
-                )
-            #############################
             plt.grid(visible=True, linestyle="--", alpha=0.5)
         plt.show()
 
@@ -905,15 +872,15 @@ if __name__ == "__main__":
     # parameter
 
     parameter_group = parser.add_argument_group(
-        "Parameter",
-        "Parameter options for the training-data.",
+        "Parameters",
+        "Parameter options for the training data.",
     )
     parameter_group.add_argument(
         "--training_data",
         type=str,
         default="alp_sim_data.parquet",
         metavar="FILE",
-        help="Set the training-data file. (default: alp_sim_data.parquet)",
+        help="Set the training data file. (default: alp_sim_data.parquet)",
     )
     parameter_group.add_argument(
         "--time_window_start",
@@ -944,13 +911,13 @@ if __name__ == "__main__":
         help=(
             """Filter the data with a condition like """
             """\'And(["activeValveCount > 0", "activeValveCount < 3"])\' """
-            """or simple something like \'"activeValveCount > 0"\'."""
+            """or simply something like \'"activeValveCount > 0"\'."""
         ),
     )
     parameter_group.add_argument(
         "--apply_derivative",
         action="store_true",
-        help="Applying the derivative to the data.",
+        help="Apply the derivative to the data.",
     )
     parameter_group.add_argument(
         "--only_pressure_curve",
@@ -958,29 +925,29 @@ if __name__ == "__main__":
         help="Use only the pressure curve as input for training.",
     )
 
-    # training-data inspection
+    # training data inspection
 
     data_inspection_group = parser.add_argument_group(
-        "Training-Data",
-        "Tools to inspect the training-data.",
+        "Training Data",
+        "Tools to inspect the training data.",
     )
     data_inspection_group.add_argument(
         "--print_overview",
         action="store_true",
-        help="Print a short overview ot the training-data.",
+        help="Print a short overview of the training data.",
     )
     data_inspection_group.add_argument(
         "--check_redundancy",
         action="store_true",
         help=(
-            "Checking for duplicated and unique output-values in the "
-            "training-data. (only for containerWeight)"
+            "Check for duplicated and unique output values in the "
+            "training data. (only for containerWeight)"
         ),
     )
     data_inspection_group.add_argument(
         "--print_data",
         action="store_true",
-        help="Print a number of rows of the training-data.",
+        help="Print a number of rows of the training data.",
     )
     data_inspection_group.add_argument(
         "--prints",
@@ -992,17 +959,17 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--print_distributed",
         action="store_true",
-        help="Print from distributed training-data.",
+        help="Print from distributed training data.",
     )
     data_inspection_group.add_argument(
         "--print_row",
         action="store_true",
-        help="Print a row of the training-data interactively.",
+        help="Print a row of the training data interactively.",
     )
     data_inspection_group.add_argument(
         "--plot_data",
         action="store_true",
-        help="Plot the training-data.",
+        help="Plot the training data.",
     )
     data_inspection_group.add_argument(
         "--plots",
@@ -1014,7 +981,7 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--plot_plain",
         action="store_true",
-        help=("Plot only the graph without notations and axis labels."),
+        help="Plot only the graph without notations and axis labels.",
     )
     data_inspection_group.add_argument(
         "--plot_legend",
@@ -1026,17 +993,17 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--plot_without_notations",
         action="store_true",
-        help=("Plot the graph without notations.(for --plot_data only=)"),
+        help="Plot the graph without notations. (for --plot_data only)",
     )
     data_inspection_group.add_argument(
         "--plot_subplots",
         action="store_true",
-        help=("Plot the graphs as subplots.(for --plot_data only=)"),
+        help="Plot the graphs as subplots. (for --plot_data only)",
     )
     data_inspection_group.add_argument(
         "--plot_normalized",
         action="store_true",
-        help=("Plot the pressure data normalized to the first value."),
+        help="Plot the pressure data normalized to the first value.",
     )
     data_inspection_group.add_argument(
         "--plot_highlight_similar_weight",
@@ -1044,7 +1011,8 @@ if __name__ == "__main__":
         default=0,
         metavar="WEIGHT [tons]",
         help=(
-            "Plot a red dot to the curve, that leads to the given weight. "
+            "Plot only those curves colorfully which correspond "
+            "to the given weight in range. "
             "(for --plot_data only)"
         ),
     )
@@ -1054,7 +1022,7 @@ if __name__ == "__main__":
         default=10,
         metavar="RANGE [tons]",
         help=(
-            "Range of the marked weight in the plot. "
+            "Range around the weight to highlight in the plot. "
             "(default: 10, meaning the weight is in the range of "
             "marked_weight ± range/2)"
         ),
@@ -1062,30 +1030,30 @@ if __name__ == "__main__":
     data_inspection_group.add_argument(
         "--plot_distributed",
         action="store_true",
-        help="Plot from distributed training-data.",
+        help="Plot from distributed training data.",
     )
     data_inspection_group.add_argument(
         "--plot_row",
         action="store_true",
-        help="Plot a row of the training-data interactively.",
+        help="Plot a row of the training data interactively.",
     )
 
     # training
 
     training_group = parser.add_argument_group(
-        "Model-Training",
+        "Model Training",
         "Options to train the model.",
     )
     training_group.add_argument(
         "--no_training",
         action="store_true",
-        help="Apply no training.",
+        help="Do not train.",
     )
     training_group.add_argument(
         "--train_nodes_vs_error",
         action="store_true",
         help=(
-            "Train the model with different number of nodes, plot the "
+            "Train the model with different numbers of nodes, plot the "
             "error and give the optimal number of nodes."
         ),
     )
@@ -1096,7 +1064,7 @@ if __name__ == "__main__":
         metavar="NODES",
         help=(
             "Set the maximum number of leaf nodes for the training. "
-            "(default: 20)"
+            "(default: 16)"
         ),
     )
     training_group.add_argument(
@@ -1113,7 +1081,7 @@ if __name__ == "__main__":
         "--train_depth_vs_error",
         action="store_true",
         help=(
-            "Train the model with different depth of the tree, plot the "
+            "Train the model with different tree depths, plot the "
             "error and give the optimal depth."
         ),
     )
@@ -1122,7 +1090,7 @@ if __name__ == "__main__":
         type=int,
         default=20,
         metavar="DEPTH",
-        help=("Set the maximum depth of the regression-tree. (default: 20)"),
+        help="Set the maximum depth of the regression tree. (default: 20)",
     )
     training_group.add_argument(
         "--train_depth_vs_error_steps",
@@ -1130,7 +1098,7 @@ if __name__ == "__main__":
         default=1,
         metavar="STEPS",
         help=(
-            "Set the number of depth to increment after each iteration. "
+            "Set the number of depth increments after each iteration. "
             "(default: 1)"
         ),
     )
@@ -1138,7 +1106,7 @@ if __name__ == "__main__":
         "--train_time_vs_error",
         action="store_true",
         help=(
-            "Train the model with different time to train, plot the error "
+            "Train the model with different training times, plot the error "
             "and give the optimal time and nodes to train."
         ),
     )
@@ -1156,7 +1124,7 @@ if __name__ == "__main__":
         type=int,
         default=None,
         metavar="DEPTH",
-        help="Set the maximum depth of the regression-tree. (default: None)",
+        help="Set the maximum depth of the regression tree. (default: None)",
     )
     training_group.add_argument(
         "--tree_min_samples_split",
@@ -1164,7 +1132,7 @@ if __name__ == "__main__":
         default=2,
         metavar="SAMPLES",
         help=(
-            "Set the minimum samples to split the regression-tree. "
+            "Set the minimum samples to split the regression tree. "
             "(default: 2)"
         ),
     )
@@ -1174,7 +1142,7 @@ if __name__ == "__main__":
         default=1,
         metavar="SAMPLES",
         help=(
-            "Set the minimum samples in a leaf of the regression-tree. "
+            "Set the minimum samples in a leaf of the regression tree. "
             "(default: 1)"
         ),
     )
@@ -1183,7 +1151,7 @@ if __name__ == "__main__":
         type=int,
         default=None,
         metavar="NODES",
-        help="Set the maximum leaf nodes of the regression-tree. "
+        help="Set the maximum leaf nodes of the regression tree. "
         "(default: None)",
     )
     training_group.add_argument(
@@ -1192,7 +1160,7 @@ if __name__ == "__main__":
         default=0.0,
         metavar="DECREASE",
         help=(
-            "Set the minimum impurity decrease of the regression-tree. "
+            "Set the minimum impurity decrease of the regression tree. "
             "(default: 0.0)"
         ),
     )
@@ -1202,7 +1170,7 @@ if __name__ == "__main__":
         default=0.0,
         metavar="ALPHA",
         help=(
-            "Set the complexity parameter of the regression-tree. "
+            "Set the complexity parameter of the regression tree. "
             "(default: 0.0)"
         ),
     )
@@ -1210,8 +1178,8 @@ if __name__ == "__main__":
         "--use_lightning_learner",
         action="store_true",
         help=(
-            "Use the Lightning Learner with Multilayer-Perceptron "
-            "instead of Regression-Tree."
+            "Use the Lightning Learner with Multilayer Perceptron "
+            "instead of Regression Tree."
         ),
     )
     training_group.add_argument(
@@ -1219,19 +1187,19 @@ if __name__ == "__main__":
         type=float,
         default=0.1,
         metavar="RATE",
-        help="Set the learning rate for the lightning-model. (default: 0.1)",
+        help="Set the learning rate for the lightning model. (default: 0.1)",
     )
 
     # training evaluation
 
     evaluation_group = parser.add_argument_group(
-        "Model-Evaluation",
+        "Model Evaluation",
         "Options to evaluate the model.",
     )
     evaluation_group.add_argument(
         "--store_graph",
         action="store_true",
-        help="Store the regression-tree as dot-graph at './graphs'.",
+        help="Store the regression tree as a dot-graph at './graphs'.",
     )
     evaluation_group.add_argument(
         "--show_latest_graph",
