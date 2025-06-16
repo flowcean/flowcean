@@ -85,10 +85,10 @@ class _DockerBackend(_Backend):
             raise TypeError(message)
         self._docker_container.reload()
         client = docker.APIClient()
+        time.sleep(2)
         ports = client.inspect_container(self._docker_container.id)[  # type: ignore[type]
             "NetworkSettings"
         ]["Ports"]
-        time.sleep(2)
         host_ip = ports[f"{internal_port}/tcp"][0]["HostIp"]
         host_port = ports[f"{internal_port}/tcp"][0]["HostPort"]
         self._server_address = f"{host_ip}:{host_port}"
@@ -193,7 +193,7 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
             inputs=[_row_to_proto(row) for row in inputs.collect().rows()],
             outputs=[_row_to_proto(row) for row in outputs.collect().rows()],
         )
-        stream: grpc.UnaryStreamMultiCallable = self._stub.Train(
+        stream = self._stub.Train(  # type: ignore[type]
             proto_datapackage,
         )
         for status_message in stream:  # type: ignore[type]

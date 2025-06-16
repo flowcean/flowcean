@@ -1,30 +1,31 @@
-#!/usr/bin/env python
-
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import numpy as np
 import polars as pl
-import torch
 from numpy.typing import NDArray
+from river import tree
 from typing_extensions import Self, override
 
-from flowcean.cli import initialize_logging
-from flowcean.core import evaluate_offline, learn_offline
+import flowcean.cli
+from flowcean.core import evaluate_offline, learn_incremental
 from flowcean.ode import (
     OdeEnvironment,
     OdeState,
     OdeSystem,
 )
-from flowcean.polars import SlidingWindow, TrainTestSplit, collect
+from flowcean.polars import (
+    SlidingWindow,
+    StreamingOfflineEnvironment,
+    TrainTestSplit,
+)
+from flowcean.polars.environments.dataframe import collect
+from flowcean.river import RiverLearner  # , TrainTestSplit
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanSquaredError,
-    RegressionTree,
 )
-from flowcean.torch import LightningLearner, MultilayerPerceptron
-from flowcean.utils.random import initialize_random
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +95,7 @@ class OneTank(OdeSystem[TankState]):
 
 
 def main() -> None:
-    initialize_logging()
-
-    initialize_random(seed=42)
+    flowcean.cli.initialize_logging()
 
     system = OneTank(
         area=5.0,
@@ -116,46 +115,46 @@ def main() -> None:
         ),
     )
 
-    data = collect(data_incremental, 250).with_transform(
-        SlidingWindow(window_size=3),
-    )
-
-    train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
+    # Initialize the sliding window transformation (using window size 3)
+    window_transform = SlidingWindow(window_size=3)
 
     inputs = ["h_0", "h_1"]
     outputs = ["h_2"]
 
-    for learner in [
-        RegressionTree(max_depth=5),
-        LightningLearner(
-            module=MultilayerPerceptron(
-                learning_rate=1e-3,
-                input_size=len(inputs),
-                output_size=len(outputs),
-                hidden_dimensions=[10, 10],
-                activation_function=torch.nn.Tanh,
-            ),
-            max_epochs=1000,
-        ),
-    ]:
-        t_start = datetime.now(tz=timezone.utc)
-        model = learn_offline(
-            train,
-            learner,
-            inputs,
-            outputs,
-        )
-        delta_t = datetime.now(tz=timezone.utc) - t_start
-        print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
+    # Collect the data first
+    data = collect(data_incremental, 250).with_transform(window_transform)
 
-        report = evaluate_offline(
-            model,
-            test,
-            inputs,
-            outputs,
-            [MeanAbsoluteError(), MeanSquaredError()],
-        )
-        print(report)
+    # Split the data into train and test sets
+    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
+
+    train = StreamingOfflineEnvironment(train, batch_size=1)
+
+    learner = RiverLearner(
+        model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5),
+    )
+
+    t_start = datetime.now(tz=timezone.utc)
+    model = learn_incremental(
+        train,
+        learner,
+        inputs,
+        outputs,
+    )
+    delta_t = datetime.now(tz=timezone.utc) - t_start
+    print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
+
+    # Have to not use the evaluate_offline function for now
+    # because it does not support the RiverModel
+
+    report = evaluate_offline(
+        model,
+        test,
+        inputs,
+        outputs,
+        [MeanAbsoluteError(), MeanSquaredError()],
+    )
+    print(report)
+    logger.info("Model learning succesful.")
 
 
 if __name__ == "__main__":

@@ -3,12 +3,13 @@ import random
 import polars as pl
 
 from flowcean.core.data import Data
-from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.environment.stepable import Finished
 from flowcean.core.tool.testing.domain import Domain
 
+from .generator import TestcaseGenerator
 
-class StochasticGenerator(IncrementalEnvironment):
+
+class StochasticGenerator(TestcaseGenerator):
     """A generator that produces random tests based on given domains."""
 
     data: pl.DataFrame
@@ -66,6 +67,11 @@ class StochasticGenerator(IncrementalEnvironment):
 
     def num_steps(self) -> int | None:
         return self.number_test_cases
+
+    def reset(self) -> None:
+        """Reset the generator to its initial state."""
+        self.count = 0
+        self.step()
 
     def step(self) -> None:
         self.count += 1
