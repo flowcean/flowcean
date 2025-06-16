@@ -814,7 +814,7 @@ def train_and_evaluate_model(
     print(report)
 
 
-def get_graph(args: argparse.Namespace) -> graphviz.Source:
+def get_graph(args: argparse.Namespace) -> graphviz.Source | None:
     graph_path = None
 
     if args.show_latest_graph:
