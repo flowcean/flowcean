@@ -28,6 +28,7 @@ class LightningLearner(SupervisedLearner):
         num_workers: int | None = None,
         batch_size: int = 32,
         max_epochs: int = 100,
+        accelerator: str = "auto",
     ) -> None:
         """Initialize the learner.
 
@@ -36,12 +37,14 @@ class LightningLearner(SupervisedLearner):
             num_workers: The number of workers to use for the DataLoader.
             batch_size: The batch size to use for training.
             max_epochs: The maximum number of epochs to train for.
+            accelerator: The accelerator to use.
         """
         self.module = module
         self.num_workers = num_workers or os.cpu_count() or 0
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.optimizer = None
+        self.accelerator = accelerator
 
     @override
     def learn(
@@ -59,6 +62,7 @@ class LightningLearner(SupervisedLearner):
             persistent_workers=platform.system() == "Windows",
         )
         trainer = lightning.Trainer(
+            accelerator=self.accelerator,
             max_epochs=self.max_epochs,
         )
         trainer.fit(self.module, dataloader)
@@ -74,6 +78,8 @@ class MultilayerPerceptron(lightning.LightningModule):
         input_size: int,
         output_size: int,
         hidden_dimensions: list[int] | None = None,
+        *,
+        activation_function: type[torch.nn.Module] | None = None,
     ) -> None:
         """Initialize the model.
 
@@ -82,6 +88,8 @@ class MultilayerPerceptron(lightning.LightningModule):
             input_size: The size of the input.
             output_size: The size of the output.
             hidden_dimensions: The dimensions of the hidden layers.
+            activation_function: The activation function to use.
+                Defaults to ReLU if not provided.
         """
         super().__init__()
         if hidden_dimensions is None:
@@ -95,7 +103,9 @@ class MultilayerPerceptron(lightning.LightningModule):
             layers.extend(
                 (
                     torch.nn.Linear(hidden_size, dimension),
-                    torch.nn.LeakyReLU(),
+                    activation_function()
+                    if activation_function
+                    else torch.nn.ReLU(),
                 ),
             )
             hidden_size = dimension

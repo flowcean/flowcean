@@ -1,14 +1,4 @@
 #!/usr/bin/env python
-# /// script
-# dependencies = [
-#     "flowcean",
-#     "matplotlib",
-#     "graphviz",
-# ]
-#
-# [tool.uv.sources]
-# flowcean = { path = "../.." , editable = true }
-# ///
 
 # system libraries
 import argparse

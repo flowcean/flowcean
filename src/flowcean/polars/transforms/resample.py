@@ -47,7 +47,7 @@ class Resample(Transform):
                 if is_timeseries_feature(data, column_name)
             }
             if isinstance(self.sampling_rate, float)
-            else cast(dict[str, float], self.sampling_rate)
+            else cast("dict[str, float]", self.sampling_rate)
         )
 
         for feature, dt in sampling_mapping.items():

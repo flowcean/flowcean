@@ -1,9 +1,8 @@
 import logging
 import time
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-import polars as pl
 from tqdm import tqdm
 
 import flowcean.cli
@@ -13,6 +12,9 @@ from flowcean.polars import (
     JoinedOfflineEnvironment,
     ToTimeSeries,
 )
+
+if TYPE_CHECKING:
+    import polars as pl
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,7 @@ def main() -> None:
     time_end = time.time()
     logger.info("took %.5f s to load data", time_end - time_start)
 
-    cast(pl.LazyFrame, data.observe()).collect(
+    cast("pl.LazyFrame", data.observe()).collect(
         engine="streaming",
     ).write_parquet(
         Path("./alp_sim_data.parquet"),

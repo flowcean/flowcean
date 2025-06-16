@@ -4,22 +4,31 @@ import cv2
 import numpy as np
 import polars as pl
 from matplotlib import pyplot as plt
+from numba import njit
 from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 from typing_extensions import override
 
 from flowcean.core.transform import Transform
 
+# Constants for raycasting optimization
+RAYCAST_BATCH_SIZE = (
+    512  # Process rays in batches for better cache utilization
+)
+# Threshold for considering a cell occupied in the occupancy grid (0-100)
+OCCUPANCY_THRESHOLD = 50
+
+# Constants for line feature computation
+MAX_LINE_DISTANCE = 0.1  # Maximum distance for matching lines (meters)
+MAX_ANGLE_DIFF = 5  # Maximum angle difference for matching lines (degrees)
+
+# Constants for raycasting feature computation
+RAYCAST_TOLERANCE = 0.1  # meters
+RAYCAST_EPSILON = 0.05  # meters
+
 
 class ScanMap(Transform):
-    """Computes features based on comparing a Laserscan to an occupancy map.
-
-    The ScanMap class is responsible for transforming and analyzing LaserScan
-    data in conjunction with an occupancy grid map. By combining pose
-    information from the sensor and scan data, this class computes scan point
-    coordinates in the map frame and calculates distances between scan points
-    and detected lines in the occupancy grid.
-    """
+    """Computes features based on comparing a Laserscan to an occupancy map."""
 
     def __init__(
         self,
@@ -40,19 +49,185 @@ class ScanMap(Transform):
         self.scan_topic = scan_topic
         self.sensor_pose_topic = sensor_pose_topic
         self.plotting = plotting
+        self.precomputed_map_lines: dict[str, np.ndarray] | None = None
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         collected_data = data.collect()
         collected_data = self.compute_lidar_scan_points(collected_data)
-        collected_data = self.compute_scan_point_distances(collected_data)
+
+        # Precompute map line parameters once
+        if self.precomputed_map_lines is None:
+            self._precompute_map_line_parameters(collected_data)
+
+        collected_data = self.derive_scan_point_features(collected_data)
         return collected_data.lazy()
+
+    def _precompute_map_line_parameters(self, data: pl.DataFrame) -> dict:
+        """Precompute all map-related line parameters once."""
+        map_entry = data["/map"].to_list()[0][0]["value"]
+        map_array = map_entry["data"]
+        width = map_entry["info.width"]
+        height = map_entry["info.height"]
+        occupancy_grid = np.array(map_array).reshape((height, width))
+        detected_lines = self.detect_lines_from_grid(occupancy_grid)
+        lines_np = (
+            np.array(detected_lines) if detected_lines else np.empty((0, 4))
+        )
+        if lines_np.size == 0:
+            self.precomputed_map_lines = {
+                "lines_np": np.empty((0, 4)),
+                "x1": np.empty(0),
+                "y1": np.empty(0),
+                "x2": np.empty(0),
+                "y2": np.empty(0),
+                "line_vec": np.empty((0, 2)),
+                "line_normals": np.empty((0, 2)),
+                "line_start": np.empty((0, 2)),
+                "line_length_squared": np.empty(0),
+            }
+        # Convert to float64 when extracting coordinates
+        x1 = lines_np[:, 0].astype(np.float64)
+        y1 = lines_np[:, 1].astype(np.float64)
+        x2 = lines_np[:, 2].astype(np.float64)
+        y2 = lines_np[:, 3].astype(np.float64)
+        line_vec = np.column_stack((x2 - x1, y2 - y1))
+        line_normals = np.column_stack((-line_vec[:, 1], line_vec[:, 0]))
+        line_normals /= np.linalg.norm(line_normals, axis=1, keepdims=True)
+        self.precomputed_map_lines = {
+            "lines_np": lines_np,
+            "x1": x1,
+            "y1": y1,
+            "x2": x2,
+            "y2": y2,
+            "line_vec": line_vec,
+            "line_normals": line_normals,
+            "line_start": lines_np[:, :2],
+            "line_length_squared": np.sum(line_vec**2, axis=1),
+        }
+        return self.precomputed_map_lines
+
+    @staticmethod
+    @njit(cache=True, fastmath=True)
+    def _vectorized_distance_calculation(
+        points: np.ndarray,
+        line_start: np.ndarray,
+        line_vec: np.ndarray,
+        line_length_squared: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Numba-optimized distance calculation."""
+        n_points = points.shape[0]
+        n_lines = line_start.shape[0]
+        min_distances = np.empty(n_points, dtype=np.float32)
+        closest_indices = np.empty(n_points, dtype=np.int32)
+
+        for i in range(n_points):
+            point = points[i]
+            min_dist = float("inf")
+            min_idx = -1
+            for j in range(n_lines):
+                vec_to_point = point - line_start[j]
+                t = np.dot(vec_to_point, line_vec[j]) / line_length_squared[j]
+                t = max(0.0, min(1.0, t))
+                projection = line_start[j] + t * line_vec[j]
+                dx = point[0] - projection[0]
+                dy = point[1] - projection[1]
+                dist = np.sqrt(dx**2 + dy**2)
+
+                if dist < min_dist:
+                    min_dist = dist
+                    min_idx = j
+
+            min_distances[i] = min_dist
+            closest_indices[i] = min_idx
+
+        return min_distances, closest_indices
+
+    def _get_closest_line_distance_details(
+        self,
+        scan_pts: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Optimized version using precomputed map lines."""
+        if self.precomputed_map_lines is None or scan_pts.size == 0:
+            return np.array([]), np.array([])
+
+        params = self.precomputed_map_lines
+        return self._vectorized_distance_calculation(
+            points=scan_pts.astype(np.float32),
+            line_start=params["line_start"].astype(np.float32),
+            line_vec=params["line_vec"].astype(np.float32),
+            line_length_squared=params["line_length_squared"].astype(
+                np.float32,
+            ),
+        )
+
+    @staticmethod
+    @njit(cache=True)
+    def _batched_raycast(
+        sensor_x: float,
+        sensor_y: float,
+        angles: np.ndarray,
+        map_origin_x: float,
+        map_origin_y: float,
+        map_resolution: float,
+        grid: np.ndarray,
+        max_range: float,
+    ) -> np.ndarray:
+        """Numba-optimized batched raycasting."""
+        ranges = np.empty(len(angles), dtype=np.float32)
+        grid_height, grid_width = grid.shape
+
+        for i in range(len(angles)):
+            angle = angles[i]
+            x0 = (sensor_x - map_origin_x) / map_resolution
+            y0 = (sensor_y - map_origin_y) / map_resolution
+            x1 = x0 + (max_range * np.cos(angle)) / map_resolution
+            y1 = y0 + (max_range * np.sin(angle)) / map_resolution
+
+            # Bresenham's algorithm implementation
+            dx = abs(int(x1) - int(x0))
+            dy = -abs(int(y1) - int(y0))
+            sx = 1 if x0 < x1 else -1
+            sy = 1 if y0 < y1 else -1
+            err = dx + dy
+            current_x, current_y = int(x0), int(y0)
+            found = False
+
+            for _ in range(max(dx, dy) * 2):
+                if (
+                    0 <= current_x < grid_width
+                    and 0 <= current_y < grid_height
+                ) and (grid[current_y, current_x] > OCCUPANCY_THRESHOLD):
+                    found = True
+                    break
+                if current_x == int(x1) and current_y == int(y1):
+                    break
+                e2 = 2 * err
+                if e2 >= dy:
+                    err += dy
+                    current_x += sx
+                if e2 <= dx:
+                    err += dx
+                    current_y += sy
+
+            ranges[i] = (
+                (
+                    np.hypot(
+                        current_x * map_resolution + map_origin_x - sensor_x,
+                        current_y * map_resolution + map_origin_y - sensor_y,
+                    )
+                )
+                if found
+                else max_range
+            )
+
+        return ranges
 
     def compute_lidar_scan_points(
         self,
         data: pl.DataFrame,
     ) -> pl.DataFrame:
-        scan_timeseries = data[self.scan_topic].to_list()[0]
+        self.scan_timeseries = data[self.scan_topic].to_list()[0]
         amcl_pose_timeseries = data[self.sensor_pose_topic].to_list()[0]
 
         # Precompute poses into (time, x, y, theta)
@@ -77,7 +252,8 @@ class ScanMap(Transform):
         pose_times = [entry[0] for entry in pose_entries]
 
         scan_points_timeseries = []
-        for scan in tqdm(scan_timeseries, "Computing scan points"):
+        self.synced_sensor_poses = []
+        for scan in tqdm(self.scan_timeseries, "Computing scan points"):
             timestamp = scan["time"]
             # Binary search for the latest pose before timestamp
             idx = bisect.bisect_right(pose_times, timestamp) - 1
@@ -93,86 +269,10 @@ class ScanMap(Transform):
                     range_min=scan["value"]["range_min"],
                 )
                 scan["value"] = scan_points.tolist()
-                scan["time"] = timestamp
                 scan_points_timeseries.append(scan)
-            else:
-                continue
+                self.synced_sensor_poses.append((x, y, theta))
         return data.hstack(
             pl.DataFrame({"scan_points": [scan_points_timeseries]}),
-        )
-
-    def compute_scan_point_distances(self, data: pl.DataFrame) -> pl.DataFrame:
-        map_entry = data["/map"].to_list()[0][1]["value"]
-        map_array = map_entry["data"]
-        width = map_entry["info.width"]
-        height = map_entry["info.height"]
-        occupancy_grid = np.array(map_array).reshape((height, width))
-        detected_lines = self.detect_lines_from_grid(
-            occupancy_grid,
-            threshold1=50,
-            threshold2=150,
-            hough_threshold=75,
-            min_line_length=10,
-            max_line_gap=10,
-        )
-        lines_np = (
-            np.array(detected_lines) if detected_lines else np.empty((0, 4))
-        )
-
-        # Predefine arrays to avoid unbound errors
-        line_length_squared = np.array([])
-        line_vec_expanded = np.array([])
-        line_start_expanded = np.array([])
-
-        # Precompute line parameters
-        if lines_np.size > 0:
-            x1 = lines_np[:, 0]
-            y1 = lines_np[:, 1]
-            x2 = lines_np[:, 2]
-            y2 = lines_np[:, 3]
-            line_vec = np.column_stack((x2 - x1, y2 - y1))
-            line_length_squared = np.sum(line_vec**2, axis=1)
-            line_start = lines_np[:, :2]
-            has_zero_length = line_length_squared == 0
-            line_vec_expanded = line_vec[np.newaxis, :, :]
-            line_start_expanded = line_start[np.newaxis, :, :]
-        else:
-            has_zero_length = np.zeros(0, dtype=bool)
-            line_vec_expanded = np.zeros((1, 0, 2))
-            line_start_expanded = np.zeros((1, 0, 2))
-            line_length_squared = np.array([])
-
-        if self.plotting:
-            self.plot_detected_lines(occupancy_grid, detected_lines)
-
-        scan_points_timeseries = data["scan_points"][0].to_list()
-        point_distance_timeseries = []
-
-        for scan in tqdm(
-            scan_points_timeseries,
-            desc="Computing point distances",
-        ):
-            scan_pts = np.array(scan["value"])
-            distance = self._get_closest_line_distance(
-                lines_np,
-                line_length_squared,
-                line_vec_expanded,
-                line_start_expanded,
-                has_zero_length,
-                scan_pts,
-            )
-            point_distance_timeseries.append(
-                {"time": scan["time"], "value": distance},
-            )
-
-        if self.plotting:
-            last_scan_pts = np.array(scan_points_timeseries[-1]["value"])
-            plt.figure()
-            plt.scatter(last_scan_pts[:, 0], last_scan_pts[:, 1])
-            plt.savefig("last_scan_points.png")
-
-        return data.hstack(
-            pl.DataFrame({"point_distance": [point_distance_timeseries]}),
         )
 
     def _get_closest_line_distance(
@@ -272,7 +372,7 @@ class ScanMap(Transform):
         detected_lines = []
         if lines is not None:
             for line in lines:
-                x1, y1, x2, y2 = line[0]
+                x1, y1, x2, y2 = line.ravel()
                 detected_lines.append((x1, y1, x2, y2))
 
         return detected_lines
@@ -313,7 +413,7 @@ class ScanMap(Transform):
             )
 
             # Projection point on the line segment
-            projection = np.array([x1, y1]) + t * line_vec
+            projection = np.array([x1, y1]) + np.array(t) * line_vec
             return float(np.linalg.norm(np.array([px, py]) - projection))
 
         total_distance = 0.0
@@ -407,3 +507,493 @@ class ScanMap(Transform):
         plt.axis("off")
         plt.tight_layout()
         plt.savefig("detected_lines.png")
+
+    def derive_scan_point_features(self, data: pl.DataFrame) -> pl.DataFrame:  # noqa: PLR0915 this cannot be split
+        """Derive features based on the scan points and the occupancy map."""
+        map_entry = data["/map"].to_list()[0][0]["value"]
+        map_array = map_entry["data"]
+        width = map_entry["info.width"]
+        height = map_entry["info.height"]
+        map_resolution = map_entry["info.resolution"]
+        map_origin_x = map_entry["info.origin.position.x"]
+        map_origin_y = map_entry["info.origin.position.y"]
+        occupancy_grid = np.array(map_array).reshape((height, width))
+        detected_lines = self.detect_lines_from_grid(
+            occupancy_grid,
+            threshold1=50,
+            threshold2=150,
+            hough_threshold=75,
+            min_line_length=10,
+            max_line_gap=10,
+        )
+        if self.precomputed_map_lines is None:
+            lines_np = self._precompute_map_line_parameters(data)["lines_np"]
+        else:
+            lines_np = self.precomputed_map_lines["lines_np"]
+        complete_scan_timeseries = data[self.scan_topic].to_list()[0]
+        scan_points_timeseries = data["scan_points"][0].to_list()
+        point_distance_timeseries = []
+        point_fitting_timeseries = []
+        point_inlier_timeseries = []
+        point_quality_timeseries = []
+        ray_inlier_timeseries = []
+        ray_inlier_percent_timeseries = []
+        ray_matching_percent_timeseries = []
+        ray_outlier_percent_timeseries = []
+        ray_quality_timeseries = []
+        angle_inlier_timeseries = []
+        angle_quality_timeseries = []
+        line_angle_timeseries = []
+        line_distance_timeseries = []
+        line_fitting_timeseries = []
+        line_length_timeseries = []
+        for i, scan in enumerate(
+            tqdm(
+                scan_points_timeseries,
+                desc="Computing features",
+            ),
+        ):
+            scan_pts = np.array(scan["value"])
+
+            valid_mask = complete_scan_timeseries[i]["value"]["ranges"] != 0
+            valid_angles = np.arange(
+                complete_scan_timeseries[i]["value"]["angle_min"],
+                complete_scan_timeseries[i]["value"]["angle_max"],
+                complete_scan_timeseries[i]["value"]["angle_increment"],
+            )
+            sensor_x, sensor_y, theta_sensor = self.synced_sensor_poses[i]
+            min_distances, closest_line_indices = (
+                self._get_closest_line_distance_details(
+                    scan_pts,
+                )
+            )
+            n_points = len(min_distances)
+
+            avg_distance = np.mean(min_distances) if n_points > 0 else 0.0
+            # Feature 15: Point distance
+            point_distance_timeseries.append(
+                {"time": scan["time"], "value": avg_distance},
+            )
+
+            # Feature 16: Point fitting percentage
+            threshold = np.median(min_distances) if n_points > 0 else 0.0
+            fitting_percent = (
+                np.sum(min_distances <= threshold) / n_points * 100
+                if n_points > 0
+                else 0.0
+            )
+            point_fitting_timeseries.append(
+                {"time": scan["time"], "value": fitting_percent},
+            )
+
+            # Feature 17: Point inlier percentage
+            inlier_count = self._compute_point_inliers(
+                scan_pts,
+                lines_np,
+                closest_line_indices,
+                sensor_x,
+                sensor_y,
+            )
+            inlier_percent = (
+                (inlier_count / n_points * 100) if n_points > 0 else 0.0
+            )
+            point_inlier_timeseries.append(
+                {"time": scan["time"], "value": inlier_percent},
+            )
+
+            # Feature 18: Point quality
+            qualities = 1.0 / (1.0 + min_distances)
+            avg_quality = np.mean(qualities) if n_points > 0 else 0.0
+            point_quality_timeseries.append(
+                {"time": scan["time"], "value": avg_quality},
+            )
+
+            # Raycasting features (19-23)
+            raycasted_ranges = self._perform_raycasting(
+                sensor_x,
+                sensor_y,
+                theta_sensor,
+                valid_angles,
+                map_resolution,
+                map_origin_x,
+                map_origin_y,
+                occupancy_grid,
+                complete_scan_timeseries[i]["value"]["range_max"],
+            )
+            actual_ranges = np.array(
+                complete_scan_timeseries[i]["value"]["ranges"],
+            )[valid_mask]
+
+            if len(actual_ranges) == 0:
+                ray_inlier = ray_inlier_percent = ray_matching = (
+                    ray_outlier
+                ) = ray_quality = 0.0
+            else:
+                # Feature 19: Raycasting inlier
+                inlier_mask = (
+                    actual_ranges >= (raycasted_ranges - RAYCAST_TOLERANCE)
+                ) & (actual_ranges <= (raycasted_ranges + RAYCAST_TOLERANCE))
+                ray_inlier = np.sum(inlier_mask) / len(actual_ranges) * 100
+                # Feature 20: Raycasting inlier percentage (actual < expected)
+                ray_inlier_percent = (
+                    np.sum(actual_ranges < raycasted_ranges)
+                    / len(actual_ranges)
+                    * 100
+                )
+                # Feature 21: Raycasting matching percentage
+                matching_mask = (
+                    np.abs(actual_ranges - raycasted_ranges) < RAYCAST_EPSILON
+                )
+                ray_matching = np.sum(matching_mask) / len(actual_ranges) * 100
+                # Feature 22: Raycasting outlier percentage
+                outlier_mask = actual_ranges > (
+                    raycasted_ranges + RAYCAST_TOLERANCE
+                )
+                ray_outlier = np.sum(outlier_mask) / len(actual_ranges) * 100
+                # Feature 23: Raycasting quality
+                ray_quality = (
+                    (np.sum(inlier_mask) + np.sum(matching_mask))
+                    / len(actual_ranges)
+                    * 100
+                )
+
+            ray_inlier_timeseries.append(
+                {"time": scan["time"], "value": ray_inlier},
+            )
+            ray_inlier_percent_timeseries.append(
+                {"time": scan["time"], "value": ray_inlier_percent},
+            )
+            ray_matching_percent_timeseries.append(
+                {"time": scan["time"], "value": ray_matching},
+            )
+            ray_outlier_percent_timeseries.append(
+                {"time": scan["time"], "value": ray_outlier},
+            )
+            ray_quality_timeseries.append(
+                {"time": scan["time"], "value": ray_quality},
+            )
+
+            # Line-based features (24-29)
+            detected_scan_lines = self.detect_lines_from_points(
+                scan_pts,
+                map_origin_x,
+                map_origin_y,
+                map_resolution,
+                width,
+                height,
+            )
+
+            # Feature 24: Angle inliers
+            angle_inlier = self._compute_angle_inliers(
+                detected_scan_lines,
+                detected_lines,
+                sensor_x,
+                sensor_y,
+            )
+            angle_inlier_timeseries.append(
+                {"time": scan["time"], "value": angle_inlier},
+            )
+
+            # Feature 25: Angle quality (simplified as average angle match)
+            angle_quality = self._compute_angle_quality(
+                detected_scan_lines,
+                detected_lines,
+            )
+            angle_quality_timeseries.append(
+                {"time": scan["time"], "value": angle_quality},
+            )
+
+            # Features 26-29
+            line_angle, line_distance, line_fitting, line_length = (
+                self._compute_line_features(
+                    detected_scan_lines,
+                    detected_lines,
+                )
+            )
+            line_angle_timeseries.append(
+                {"time": scan["time"], "value": line_angle},
+            )
+            line_distance_timeseries.append(
+                {"time": scan["time"], "value": line_distance},
+            )
+            line_fitting_timeseries.append(
+                {"time": scan["time"], "value": line_fitting},
+            )
+            line_length_timeseries.append(
+                {"time": scan["time"], "value": line_length},
+            )
+
+        return data.hstack(
+            pl.DataFrame(
+                {
+                    "point_distance": [point_distance_timeseries],
+                    "point_fitting": [point_fitting_timeseries],
+                    "point_inlier": [point_inlier_timeseries],
+                    "point_quality": [point_quality_timeseries],
+                    "ray_inlier": [ray_inlier_timeseries],
+                    "ray_inlier_percent": [ray_inlier_percent_timeseries],
+                    "ray_matching_percent": [ray_matching_percent_timeseries],
+                    "ray_outlier_percent": [ray_outlier_percent_timeseries],
+                    "ray_quality": [ray_quality_timeseries],
+                    "angle_inlier": [angle_inlier_timeseries],
+                    "angle_quality": [angle_quality_timeseries],
+                    "line_angle": [line_angle_timeseries],
+                    "line_distance": [line_distance_timeseries],
+                    "line_fitting": [line_fitting_timeseries],
+                    "line_length": [line_length_timeseries],
+                },
+            ),
+        )
+
+    def _compute_point_inliers(
+        self,
+        scan_pts: np.ndarray,
+        lines_np: np.ndarray,
+        closest_line_indices: np.ndarray,
+        sensor_x: float,
+        sensor_y: float,
+    ) -> int:
+        """Compute the number of inliers for each scan point."""
+        if lines_np.size == 0 or scan_pts.size == 0:
+            return 0
+        # Convert to float64 when creating line_normals
+        line_normals = np.column_stack(
+            (
+                -(lines_np[:, 3] - lines_np[:, 1]),
+                lines_np[:, 2] - lines_np[:, 0],
+            ),
+        ).astype(np.float64)  # Add this explicit conversion
+
+        line_normals /= np.linalg.norm(line_normals, axis=1, keepdims=True)
+        sensor_vec = np.array(
+            [sensor_x, sensor_y],
+            dtype=np.float64,
+        ) - lines_np[:, :2].astype(np.float64)
+        sensor_signs = np.einsum("ij,ij->i", sensor_vec, line_normals)
+        point_vec = scan_pts.astype(np.float64) - lines_np[
+            closest_line_indices,
+            :2,
+        ].astype(np.float64)
+        point_signs = np.einsum(
+            "ij,ij->i",
+            point_vec,
+            line_normals[closest_line_indices],
+        )
+        inlier_mask = np.sign(point_signs) == np.sign(
+            sensor_signs[closest_line_indices],
+        )
+        return np.sum(inlier_mask)
+
+    def _perform_raycasting(
+        self,
+        sensor_x: float,
+        sensor_y: float,
+        theta_sensor: float,
+        valid_angles: np.ndarray,
+        map_resolution: float,
+        map_origin_x: float,
+        map_origin_y: float,
+        occupancy_grid: np.ndarray,
+        range_max: float,
+    ) -> np.ndarray:
+        """Optimized raycasting using numba-accelerated batch processing."""
+        global_angles = theta_sensor + valid_angles
+        return self._batched_raycast(
+            sensor_x=sensor_x,
+            sensor_y=sensor_y,
+            angles=global_angles.astype(np.float32),
+            map_origin_x=map_origin_x,
+            map_origin_y=map_origin_y,
+            map_resolution=map_resolution,
+            grid=occupancy_grid.astype(np.uint8),
+            max_range=range_max,
+        )
+
+    def _raycast(
+        self,
+        sensor_x: float,
+        sensor_y: float,
+        angle: float,
+        map_origin_x: float,
+        map_origin_y: float,
+        map_resolution: float,
+        grid: np.ndarray,
+        max_range: float,
+    ) -> float:
+        """Raycast from the sensor to the map."""
+        x0 = (sensor_x - map_origin_x) / map_resolution
+        y0 = (sensor_y - map_origin_y) / map_resolution
+        x1 = (
+            sensor_x + max_range * np.cos(angle) - map_origin_x
+        ) / map_resolution
+        y1 = (
+            sensor_y + max_range * np.sin(angle) - map_origin_y
+        ) / map_resolution
+        x0, y0, x1, y1 = map(int, [x0, y0, x1, y1])
+
+        dx = abs(x1 - x0)
+        dy = -abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx + dy
+        current_x, current_y = x0, y0
+
+        while True:
+            if (
+                0 <= current_x < grid.shape[1]
+                and 0 <= current_y < grid.shape[0]
+            ) and grid[current_y, current_x] > OCCUPANCY_THRESHOLD:
+                return np.hypot(
+                    (current_x * map_resolution + map_origin_x - sensor_x),
+                    (current_y * map_resolution + map_origin_y - sensor_y),
+                )
+            if current_x == x1 and current_y == y1:
+                break
+            e2 = 2 * err
+            if e2 >= dy:
+                err += dy
+                current_x += sx
+            if e2 <= dx:
+                err += dx
+                current_y += sy
+        return max_range
+
+    def detect_lines_from_points(
+        self,
+        points: np.ndarray,
+        map_origin_x: float,
+        map_origin_y: float,
+        map_resolution: float,
+        width: int,
+        height: int,
+    ) -> list[tuple[float, float, float, float]]:
+        if len(points) == 0:
+            return []
+        image = np.zeros((height, width), dtype=np.uint8)
+        xs = ((points[:, 0] - map_origin_x) / map_resolution).astype(int)
+        ys = ((points[:, 1] - map_origin_y) / map_resolution).astype(int)
+        valid = (xs >= 0) & (xs < width) & (ys >= 0) & (ys < height)
+        np.add.at(image, (ys[valid], xs[valid]), 255)
+        lines = cv2.HoughLinesP(
+            image,
+            1,
+            np.pi / 180,
+            50,
+            minLineLength=10,
+            maxLineGap=5,
+        )
+        if lines is None:
+            return []
+        detected = []
+        for line in lines:
+            x1, y1, x2, y2 = line.ravel()
+            detected.append(
+                (
+                    x1 * map_resolution + map_origin_x,
+                    y1 * map_resolution + map_origin_y,
+                    x2 * map_resolution + map_origin_x,
+                    y2 * map_resolution + map_origin_y,
+                ),
+            )
+        return detected
+
+    def _compute_angle_inliers(
+        self,
+        scan_lines: list[tuple[float, float, float, float]],
+        map_lines: list[tuple[float, float, float, float]],
+        sensor_x: float,
+        sensor_y: float,
+    ) -> float:
+        if not scan_lines or not map_lines:
+            return 0.0
+        inlier_count = 0
+        for s_line in scan_lines:
+            s_mid = ((s_line[0] + s_line[2]) / 2, (s_line[1] + s_line[3]) / 2)
+            s_dist = np.hypot(s_mid[0] - sensor_x, s_mid[1] - sensor_y)
+            closest_dist = np.inf
+            for m_line in map_lines:
+                m_mid = (
+                    (m_line[0] + m_line[2]) / 2,
+                    (m_line[1] + m_line[3]) / 2,
+                )
+                m_dist = np.hypot(m_mid[0] - sensor_x, m_mid[1] - sensor_y)
+                closest_dist = min(m_dist, closest_dist)
+            if s_dist < closest_dist:
+                inlier_count += 1
+        return (inlier_count / len(scan_lines)) * 100
+
+    def _compute_angle_quality(
+        self,
+        scan_lines: list[tuple[float, float, float, float]],
+        map_lines: list[tuple[float, float, float, float]],
+    ) -> float:
+        if not scan_lines or not map_lines:
+            return 0.0
+        angles = []
+        for s_line in scan_lines:
+            s_angle = np.arctan2(s_line[3] - s_line[1], s_line[2] - s_line[0])
+            closest_angle_diff = np.inf
+            for m_line in map_lines:
+                m_angle = np.arctan2(
+                    m_line[3] - m_line[1],
+                    m_line[2] - m_line[0],
+                )
+                angle_diff = np.abs(s_angle - m_angle)
+                closest_angle_diff = min(angle_diff, closest_angle_diff)
+            angles.append(closest_angle_diff)
+        return np.degrees(np.mean(angles)) if angles else 0.0
+
+    def _compute_line_features(
+        self,
+        scan_lines: list,
+        map_lines: list,
+    ) -> tuple:
+        if not scan_lines:
+            return 0.0, 0.0, 0.0, 0.0
+        angle_diffs = []
+        line_distances = []
+        matching = 0
+        lengths = []
+        for s_line in scan_lines:
+            s_angle = np.arctan2(s_line[3] - s_line[1], s_line[2] - s_line[0])
+            s_length = np.hypot(s_line[2] - s_line[0], s_line[3] - s_line[1])
+            lengths.append(s_length)
+            min_dist = np.inf
+            min_angle_diff = np.inf
+            for m_line in map_lines:
+                m_angle = np.arctan2(
+                    m_line[3] - m_line[1],
+                    m_line[2] - m_line[0],
+                )
+                angle_diff = np.abs(s_angle - m_angle)
+                dist = self._line_distance(s_line, m_line)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_angle_diff = angle_diff
+            angle_diffs.append(min_angle_diff)
+            line_distances.append(min_dist)
+            if (
+                min_dist < MAX_LINE_DISTANCE
+                and np.degrees(min_angle_diff) < MAX_ANGLE_DIFF
+            ):
+                matching += 1
+        avg_angle = np.degrees(np.mean(angle_diffs)) if angle_diffs else 0.0
+        avg_distance = np.mean(line_distances) if line_distances else 0.0
+        fitting = (matching / len(scan_lines)) * 100 if scan_lines else 0.0
+        avg_length = np.mean(lengths) if lengths else 0.0
+        return avg_angle, avg_distance, fitting, avg_length
+
+    def _line_distance(
+        self,
+        line1: tuple[float, float, float, float],
+        line2: tuple[float, float, float, float],
+    ) -> float:
+        def dist(p1: tuple[float, float], p2: tuple[float, float]) -> float:
+            return np.hypot(p1[0] - p2[0], p1[1] - p2[1])
+
+        return min(
+            dist(line1[:2], line2[:2]),
+            dist(line1[:2], line2[2:]),
+            dist(line1[2:], line2[:2]),
+            dist(line1[2:], line2[2:]),
+        )

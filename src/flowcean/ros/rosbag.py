@@ -131,6 +131,7 @@ class RosbagLoader(DataFrame):
 
         Keys support a dotted syntax to traverse nested messages. Here is an
         example of a nested ROS message structure:
+        ```
         /amcl_pose (geometry_msgs/PoseWithCovarianceStamped)
         ├── pose (PoseWithCovariance)
         │   ├── pose (Pose)
@@ -140,10 +141,11 @@ class RosbagLoader(DataFrame):
         │   │   │   └── z (float)
         │   │   └── orientation (Quaternion)
         │   └── covariance (array[36])
+        ```
 
-        The first key is 'pose.pose.position.x'. The subkeys are
+        The first key is `pose.pose.position.x`. The subkeys are
         separated by dots. So, in this case, the subkeys are
-        ['pose', 'pose', 'position', 'x']. Each subkey is used to
+        `['pose', 'pose', 'position', 'x']`. Each subkey is used to
         traverse the nested message structure. If a subkey matches
         a field name, the next subkey is used to traverse deeper
         into the nested structure.

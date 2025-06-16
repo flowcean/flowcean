@@ -13,8 +13,6 @@ preview = false
 select = ["ALL"]
 ignore = [
   "A005",    # module shadows standard library imports
-  "ANN101",  # deprecated
-  "ANN102",  # deprecated
   "ANN401",  # dynamically typed expressions (typing.Any) are disallowed
   "ERA001",  # commented-out code
   "D10",     # missing docstrings

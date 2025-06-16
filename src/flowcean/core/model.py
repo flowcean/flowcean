@@ -33,7 +33,7 @@ class Model(ABC):
         """
 
     @final
-    def save(self, file: Path | BinaryIO) -> None:
+    def save(self, file: Path | str | BinaryIO) -> None:
         """Save the model to the file.
 
         This method can be used to save a flowcean model to a file or a
@@ -54,14 +54,14 @@ class Model(ABC):
             "model": self.save_state(),
             "model_type": fullname(self),
         }
-        if isinstance(file, Path):
-            with file.open("wb") as f:
+        if isinstance(file, Path | str):
+            with Path(file).open("wb") as f:
                 pickle.dump(data, f)
         else:
             pickle.dump(data, file)
 
     @staticmethod
-    def load(file: Path | BinaryIO) -> Model:
+    def load(file: Path | str | BinaryIO) -> Model:
         """Load a model from file.
 
         This method can be used to load a previously saved flowcean model from
@@ -85,15 +85,17 @@ class Model(ABC):
             file: The file like object to load the model from.
         """
         # Read the general model from the file
-        if isinstance(file, Path):
-            with file.open("rb") as f:
+        if isinstance(file, Path | str):
+            with Path(file).open(
+                "rb",
+            ) as f:
                 data = pickle.load(f)  # noqa: S301
         else:
             data = pickle.load(file)  # noqa: S301
         if not isinstance(data, dict):
             msg = "Invalid model file"
             raise ValueError(msg)  # noqa: TRY004, it's really a value error and not a type error
-        data = cast(dict[str, Any], data)
+        data = cast("dict[str, Any]", data)
 
         # Create a model based on the type
         model_type = data["model_type"]

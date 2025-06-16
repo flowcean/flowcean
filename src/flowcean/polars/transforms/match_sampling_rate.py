@@ -26,7 +26,18 @@ class MatchSamplingRate(Transform):
     """Matches the sampling rate of all time series in the DataFrame.
 
     Interpolates the time series to match the sampling rate of the reference
-    time series. The below example shows the usage of a `MatchSamplingRate`
+    time series. The `feature_interpolation_map` parameter is a dictionary that
+    specifies the interpolation method for each feature. The keys are
+    the feature names, and the values are the interpolation methods.
+    The interpolation method can be 'linear' or 'nearest'. If the
+    `feature_interpolation_map` parameter is not provided, all features
+    except the reference feature will be interpolated using the
+    'nearest' method. The `fill_strategy` parameter specifies the
+    strategy to fill missing values after interpolation. The default
+    value is 'both_ways', which means that missing values will be
+    filled using both forward and backward filling. Other options
+    include 'forward', 'backward', 'min', 'max', 'mean', 'zero', and
+    'one'.The below example shows the usage of a `MatchSamplingRate`
     transform in a `run.py` file. Assuming the loaded data is
     represented by the table:
 
@@ -77,7 +88,8 @@ class MatchSamplingRate(Transform):
     def __init__(
         self,
         reference_feature_name: str,
-        feature_interpolation_map: dict[str, MatchSamplingRateMethod],
+        feature_interpolation_map: dict[str, MatchSamplingRateMethod]
+        | None = None,
         fill_strategy: FillStrategy = "both_ways",
     ) -> None:
         """Initialize the transform.
@@ -115,6 +127,14 @@ class MatchSamplingRate(Transform):
         return transformed_data.lazy()
 
     def _transform_row(self, data: pl.DataFrame) -> pl.DataFrame:
+        if self.feature_interpolation_map is None:
+            # use all columns that are not the reference feature with "nearest"
+            # interpolation
+            self.feature_interpolation_map = {
+                feature: "nearest"
+                for feature in data.columns
+                if feature != self.reference_feature_name
+            }
         non_timeseries_features = data.select(
             pl.exclude(
                 *self.feature_interpolation_map.keys(),
@@ -145,8 +165,11 @@ class MatchSamplingRate(Transform):
                     feature,
                     data,
                     reference_feature,
-                    self.feature_interpolation_map[feature],
-                    cast(FillStrategy | None, self.fill_strategy),
+                    cast(
+                        "Literal['linear', 'nearest']",
+                        self.feature_interpolation_map[feature],
+                    ),
+                    cast("FillStrategy | None", self.fill_strategy),
                 )
                 for feature in features
             ],
@@ -176,31 +199,39 @@ def interpolate_feature(
     feature_df = data.select(pl.col(target_feature_name).explode()).unnest(
         cs.all(),
     )
-    # Handle scalar 'value' by wrapping into a struct
+    # Get the original time type from the reference feature
+    original_time_type = reference_feature.schema["time"]
+
+    # Cast time to Float64 for interpolation
+    feature_df = feature_df.with_columns(pl.col("time").cast(pl.Float64))
+
+    # Handle 'value' field
     if "value" in feature_df.columns:
-        if not isinstance(feature_df.schema["value"], pl.Struct):
-            # Wrap scalar 'value' into a struct with a single field
-            feature_df = feature_df.with_columns(
-                pl.struct([pl.col("value").alias("value")]).alias("value"),
+        value_schema = feature_df.schema["value"]
+        if isinstance(value_schema, pl.Struct):
+            # Get the schema of 'value' and extract field names for structs
+            original_field_names = [
+                field.name for field in value_schema.fields
+            ]
+            feature_df = feature_df.unnest("value")
+            value_is_struct = True
+        else:
+            # Rename non-struct 'value' to a temporary name to avoid conflicts
+            feature_df = feature_df.rename(
+                {"value": f"{target_feature_name}_value"},
             )
-        # Now unnest the 'value' struct
-        feature_df = feature_df.unnest("value")
+            original_field_names = [f"{target_feature_name}_value"]
+            value_is_struct = False
     else:
         msg = f"Feature {target_feature_name} is missing 'value' field."
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
-    # Rename columns except 'time' to include the feature name
-    feature_df = feature_df.rename(
-        lambda name: f"{target_feature_name}_{name}"
-        if name != "time"
-        else name,
-    )
+    # Store column names after unnesting (or renaming for non-struct 'value')
+    value_columns = [col for col in feature_df.columns if col != "time"]
 
-    # Get reference times and feature times
-    reference_times = reference_feature.get_column("time")
-    feature_times = feature_df.get_column("time")
+    # Get reference times and feature times, cast to Float64 for interpolation
+    reference_times = reference_feature.get_column("time").cast(pl.Float64)
+    feature_times = feature_df.get_column("time").cast(pl.Float64)
 
     # Combine all unique times and sort
     all_times = (
@@ -208,13 +239,11 @@ def interpolate_feature(
         .unique()
         .sort()
         .to_frame("time")
+        .with_columns(pl.col("time").cast(pl.Float64))
     )
 
     # Join with feature data
     joined_df = all_times.join(feature_df, on="time", how="left")
-
-    # Get value columns (excluding time)
-    value_columns = [col for col in feature_df.columns if col != "time"]
 
     # Interpolate missing values
     interpolated = joined_df.with_columns(
@@ -248,22 +277,32 @@ def interpolate_feature(
 
     # Filter to only include reference times
     interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
-    # Determine if the original 'value' was a scalar
-    is_scalar_value = (
-        len(value_columns) == 1
-        and value_columns[0] == f"{target_feature_name}_value"
+
+    # Restore original time type
+    interpolated = interpolated.with_columns(
+        pl.col("time").cast(original_time_type),
     )
 
-    # Restructure to nested format, preserving scalar 'value' if needed
-    if is_scalar_value:
-        restructure_value = pl.col(value_columns[0]).alias("value")
+    # Restructure to nested format
+    if value_is_struct:
+        # Struct case: map original field names to their respective columns
+        restructure_value = pl.struct(
+            {
+                name: pl.col(col)
+                for name, col in zip(
+                    original_field_names,
+                    value_columns,
+                    strict=False,
+                )
+            },
+        ).alias("value")
     else:
-        restructure_value = pl.struct(value_columns).alias("value")
+        # Scalar case: restore the original scalar 'value' field
+        restructure_value = pl.col(value_columns[0]).alias("value")
 
-    restructure = pl.struct(
-        pl.col("time"),
-        restructure_value,
-    ).alias(target_feature_name)
+    restructure = pl.struct(pl.col("time"), restructure_value).alias(
+        target_feature_name,
+    )
 
     return interpolated.select(restructure).select(pl.all().implode())
 

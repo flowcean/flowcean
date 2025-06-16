@@ -38,7 +38,7 @@ class Mode(Transform):
             # Check if the feature is a floating point number and issue a
             # warning as the mode is not well defined for those.
             time_series_type = get_time_series_type(
-                cast(pl.DataType, schema.get(feature)),
+                cast("pl.DataType", schema.get(feature)),
             )
             if time_series_type in (pl.Float32, pl.Float64):
                 logger.warning(

@@ -79,7 +79,7 @@ jobs:
     name: Examples
     strategy:
       matrix:
-        example: ["boiler", "failure_time_prediction", "linear_data", "one_tank"]
+        example: ["boiler", "failure_time_prediction", "linear_data", "one_tank", "energy_system", "xor"]
     runs-on:
       - self-hosted
       - itl
