@@ -73,7 +73,7 @@ class SACModel(Model):
 
         return cls(
             Action(
-                actuators=[interface_from_dict(a) for a in state["action"]]
+                actuators=[interface_from_dict(a) for a in state["action"]],
             ),
             Observation(
                 sensors=[interface_from_dict(s) for s in state["observation"]],
