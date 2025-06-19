@@ -1111,13 +1111,13 @@ name = "energy-system"
 version = "0.1.0"
 source = { virtual = "examples/energy_system" }
 dependencies = [
-    { name = "flowcean" },
+    { name = "flowcean", extra = ["palaestrai"] },
     { name = "midas-palaestrai" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "flowcean", editable = "." },
+    { name = "flowcean", extras = ["palaestrai"], editable = "." },
     { name = "midas-palaestrai", specifier = ">=3.5.6.post1" },
 ]
 
