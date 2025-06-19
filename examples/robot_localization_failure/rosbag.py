@@ -87,5 +87,5 @@ def load_or_cache_ros_data(
     data = environment.observe()
 
     logger.info("Caching data...")
-    data.sink_parquet(cache_path, compression="snappy")
+    data.sink_parquet(cache_path)
     return data
