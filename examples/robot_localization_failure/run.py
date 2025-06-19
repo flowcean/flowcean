@@ -16,7 +16,7 @@ from flowcean.polars.transforms.drop import Drop
 logger = logging.getLogger(__name__)
 
 WS = Path(__file__).resolve().parent
-ROSBAG_NAME = "rec_20241021_152106"
+ROSBAG_NAME = "recordings/rec_20241021_152106"
 ROSBAG_PATH = WS / ROSBAG_NAME
 ROS_MESSAGE_TYPES = [
     WS / "ros_msgs/LaserScan.msg",
@@ -37,7 +37,7 @@ data = load_or_cache_ros_data(
     ignore_cache=True,
 )
 logger.info("Loaded data from ROS bag")
-
+exit()
 
 transform = (
     # collapse map time series to a single value
