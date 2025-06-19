@@ -168,11 +168,7 @@ class Resample(Transform):
                     )
                     .interpolate_by(
                         # Unpack the time feature to seconds
-                        pl.col(_time_feature).dt.hour() * pl.lit(60 * 60)
-                        + pl.col(_time_feature).dt.minute() * pl.lit(60)
-                        + pl.col(_time_feature).dt.second(
-                            fractional=True,
-                        ),
+                        _time_to_seconds(_time_feature),
                     )
                     .over(_index_feature),
                 )
@@ -198,17 +194,9 @@ class Resample(Transform):
                         joined_df.group_by(pl.col(_index_feature))
                         .agg(
                             pl.struct(
-                                (
-                                    # Convert the polars.Time back to a float
-                                    # of seconds
-                                    pl.col(_time_feature).dt.hour()
-                                    * pl.lit(60 * 60)
-                                    + pl.col(_time_feature).dt.minute()
-                                    * pl.lit(60)
-                                    + pl.col(_time_feature).dt.second(
-                                        fractional=True,
-                                    )
-                                ).alias("time"),
+                                # Convert the polars.Time back to a float
+                                # of seconds
+                                _time_to_seconds(_time_feature).alias("time"),
                                 pl.col(_value_feature).alias("value"),
                             )
                             .implode()
@@ -272,3 +260,12 @@ class Resample(Transform):
             .implode()
             .item()
         )
+
+
+def _time_to_seconds(feature: str) -> pl.Expr:
+    """Converts a time feature to seconds."""
+    return (
+        pl.col(feature).dt.hour() * pl.lit(60 * 60)
+        + pl.col(feature).dt.minute() * pl.lit(60)
+        + pl.col(feature).dt.second(fractional=True)
+    )
