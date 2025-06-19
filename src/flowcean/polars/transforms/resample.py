@@ -151,7 +151,8 @@ class Resample(Transform):
                     # Unfortunately, we need to sort the DataFrame
                     # to ensure that the interpolation works correctly.
                     .sort(
-                        by=[_index_feature, _time_feature],
+                        _index_feature,
+                        _time_feature,
                     )
                 )
 
