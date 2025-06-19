@@ -22,13 +22,7 @@ dependencies = [
   "grpcio>=1.67.0",
   "joblib>=1.4.2",
   "lightning>=2.4.0",
-  "midas-mosaik[base]>=2.0.2",
-  "midas-store>=2.1.0a1",
-  "mosaik>=3.5.0",
-  "mosaik_api_v3>=3.0.13",
   "numpy>=1.26.4",
-  "palaestrai>=3.5.8",
-  "palaestrai-agents>=3.5.4",
   "polars[xlsxwriter]>=1.25.0",
   "protobuf>=5.28.2",
   "river>=0.21.0",
@@ -40,6 +34,16 @@ dependencies = [
   "torch>=2.5.0",
   "tqdm>=4.66.5",
   "typing_extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+palaestrai = [
+  "midas-mosaik[base]>=2.0.2",
+  "midas-store>=2.1.0a1",
+  "mosaik>=3.5.0",
+  "mosaik_api_v3>=3.0.13",
+  "palaestrai>=3.5.8",
+  "palaestrai-agents>=3.5.4",
 ]
 
 [project.urls]
