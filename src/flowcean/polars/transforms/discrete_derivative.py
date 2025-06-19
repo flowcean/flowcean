@@ -24,6 +24,7 @@ class DiscreteDerivative(Transform):
         features: str | Iterable[str],
         *,
         method: DiscreteDerivativeKind = "central",
+        derivative_suffix: str = "_derivative",
     ) -> None:
         """Initializes the DiscreteDerivative transform.
 
@@ -33,17 +34,20 @@ class DiscreteDerivative(Transform):
             method: Method to use for calculating the derivative. Valid options
                 are "forward", "backward", and "central".
                 Defaults to "central".
+            derivative_suffix: Suffix to append to the feature name for the
+                resulting derivative feature. Defaults to "_derivative".
         """
         self.features = [features] if isinstance(features, str) else features
         self.method = method
+        self.derivative_suffix = derivative_suffix
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         for feature in self.features:
-            value_feature = f"{feature}_value"
-            time_feature = f"{feature}_t"
-            dt_feature = f"{feature}_dt"
-            dvalue_feature = f"{feature}_derivative"
+            value_feature = f"_{feature}_value"
+            time_feature = f"_{feature}_t"
+            dt_feature = f"_{feature}_dt"
+            dvalue_feature = f"{feature}{self.derivative_suffix}"
             index_feature = "_index"
 
             working_df = (
