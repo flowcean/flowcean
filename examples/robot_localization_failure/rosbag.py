@@ -43,12 +43,13 @@ def load_or_cache_ros_data(
         path=path,
         topics={
             "/amcl_pose": [
-                "pose.pose.position.x",
-                "pose.pose.position.y",
-                "pose.pose.orientation.x",
-                "pose.pose.orientation.y",
-                "pose.pose.orientation.z",
-                "pose.pose.orientation.w",
+                "pose.pose",
+                # "pose.pose.position.x",
+                # "pose.pose.position.y",
+                # "pose.pose.orientation.x",
+                # "pose.pose.orientation.y",
+                # "pose.pose.orientation.z",
+                # "pose.pose.orientation.w",
             ],
             "/momo/pose": [
                 "pose.position.x",
