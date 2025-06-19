@@ -158,25 +158,23 @@ class Resample(Transform):
 
                 # Combine the target times with the working DataFrame
                 # and interpolate the values
-                joined_df = (
-                    target_times_extended_df.join(
-                        exploded_feature_df,
-                        how="left",
-                        on=[pl.col(_index_feature), pl.col(_time_feature)],
+                joined_df = target_times_extended_df.join(
+                    exploded_feature_df,
+                    how="left",
+                    on=[pl.col(_index_feature), pl.col(_time_feature)],
+                ).with_columns(
+                    pl.col(
+                        _value_feature,
                     )
-                    .with_columns(
-                        pl.col(
-                            _value_feature,
-                        ).interpolate_by(
-                            # Unpack the time feature to seconds
-                            pl.col(_time_feature).dt.hour() * pl.lit(60 * 60)
-                            + pl.col(_time_feature).dt.minute() * pl.lit(60)
-                            + pl.col(_time_feature).dt.second(
-                                fractional=True,
-                            ),
+                    .interpolate_by(
+                        # Unpack the time feature to seconds
+                        pl.col(_time_feature).dt.hour() * pl.lit(60 * 60)
+                        + pl.col(_time_feature).dt.minute() * pl.lit(60)
+                        + pl.col(_time_feature).dt.second(
+                            fractional=True,
                         ),
                     )
-                    .fill_null(strategy="forward")
+                    .over(_index_feature),
                 )
 
                 # Only keep the rows matching the target times - other rows
