@@ -9,7 +9,7 @@ from flowcean.core import Transform
 
 logger = logging.getLogger(__name__)
 
-DiscreteDerivativeType: TypeAlias = Literal["forward", "backward", "central"]
+DiscreteDerivativeKind: TypeAlias = Literal["forward", "backward", "central"]
 
 
 class DiscreteDerivative(Transform):
@@ -23,7 +23,7 @@ class DiscreteDerivative(Transform):
         self,
         features: str | Iterable[str],
         *,
-        method: DiscreteDerivativeType = "central",
+        method: DiscreteDerivativeKind = "central",
     ) -> None:
         """Initializes the DiscreteDerivative transform.
 
