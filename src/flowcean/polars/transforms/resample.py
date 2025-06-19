@@ -164,13 +164,19 @@ class Resample(Transform):
                         how="left",
                         on=[pl.col(_index_feature), pl.col(_time_feature)],
                     )
-                    .interpolate()
-                    .fill_null(strategy="forward")
                     .with_columns(
-                        # Interpolate converts the index to a float, but we
-                        # need an uint32
-                        pl.col(_index_feature).cast(pl.UInt32),
+                        pl.col(
+                            _value_feature,
+                        ).interpolate_by(
+                            # Unpack the time feature to seconds
+                            pl.col(_time_feature).dt.hour() * pl.lit(60 * 60)
+                            + pl.col(_time_feature).dt.minute() * pl.lit(60)
+                            + pl.col(_time_feature).dt.second(
+                                fractional=True,
+                            ),
+                        ),
                     )
+                    .fill_null(strategy="forward")
                 )
 
                 # Only keep the rows matching the target times - other rows
