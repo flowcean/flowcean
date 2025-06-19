@@ -51,10 +51,10 @@ class DiscreteDerivative(Transform):
                 data.with_columns(
                     [
                         pl.col(feature)
-                        .list.eval(pl.first().struct.field("value"))
+                        .list.eval(pl.element().struct.field("value"))
                         .alias(value_feature),
                         pl.col(feature)
-                        .list.eval(pl.first().struct.field("time"))
+                        .list.eval(pl.element().struct.field("time"))
                         .alias(time_feature),
                     ],
                 )
