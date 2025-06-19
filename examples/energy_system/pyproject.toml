@@ -3,7 +3,7 @@ name = "energy-system"
 version = "0.1.0"
 requires-python = ">=3.10, <3.13"
 dependencies = [
-    "flowcean",
+    "flowcean[palaestrai]",
     "midas-palaestrai>=3.5.6.post1",
 ]
 
