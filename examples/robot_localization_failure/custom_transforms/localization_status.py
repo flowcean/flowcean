@@ -11,17 +11,29 @@ logger = logging.getLogger(__name__)
 
 
 class LocalizationStatus(Transform):
+    """Detects localization status based on position and heading errors."""
+
     def __init__(
         self,
         time_series: str,
-        ground_truth_pose: str = "/momo/pose",
-        estimated_pose: str = "/amcl_pose",
-        position_threshold: float = 0.7,
-        heading_threshold: float = 0.7,
+        position_threshold: float,
+        heading_threshold: float,
+        *,
+        ground_truth: str = "/momo/pose",
+        estimation: str = "/amcl_pose",
     ) -> None:
+        """Initialize the localization status transform.
+
+        Args:
+            time_series: Feature name containing time series data.
+            position_threshold: Position error to consider delocalized.
+            heading_threshold: Heading error to consider delocalized.
+            ground_truth: Name of the ground truth pose feature.
+            estimation: Name of the estimated pose feature.
+        """
         self.time_series = time_series
-        self.ground_truth_pose = ground_truth_pose
-        self.estimated_pose = estimated_pose
+        self.ground_truth = ground_truth
+        self.estimation = estimation
         self.position_threshold = position_threshold
         self.heading_threshold = heading_threshold
 
@@ -45,19 +57,19 @@ class LocalizationStatus(Transform):
             (
                 (
                     pl.field(
-                        f"{self.ground_truth_pose}/pose.position.x",
+                        f"{self.ground_truth}/pose.position.x",
                     )
                     - pl.field(
-                        f"{self.estimated_pose}/pose.pose.position.x",
+                        f"{self.estimation}/pose.pose.position.x",
                     )
                 )
                 ** 2
                 + (
                     pl.field(
-                        f"{self.ground_truth_pose}/pose.position.y",
+                        f"{self.ground_truth}/pose.position.y",
                     )
                     - pl.field(
-                        f"{self.estimated_pose}/pose.pose.position.y",
+                        f"{self.estimation}/pose.pose.position.y",
                     )
                 )
                 ** 2
@@ -70,31 +82,31 @@ class LocalizationStatus(Transform):
         return (
             pl.struct(
                 pl.field(
-                    f"{self.ground_truth_pose}/pose.orientation.x",
+                    f"{self.ground_truth}/pose.orientation.x",
                 ).alias("ground_truth_x"),
                 pl.field(
-                    f"{self.ground_truth_pose}/pose.orientation.y",
+                    f"{self.ground_truth}/pose.orientation.y",
                 ).alias("ground_truth_y"),
                 pl.field(
-                    f"{self.ground_truth_pose}/pose.orientation.z",
+                    f"{self.ground_truth}/pose.orientation.z",
                 ).alias("ground_truth_z"),
                 pl.field(
-                    f"{self.ground_truth_pose}/pose.orientation.w",
+                    f"{self.ground_truth}/pose.orientation.w",
                 ).alias("ground_truth_w"),
                 pl.field(
-                    f"{self.estimated_pose}/pose.pose.orientation.x",
+                    f"{self.estimation}/pose.pose.orientation.x",
                 ).alias("estimated_x"),
                 pl.field(
-                    f"{self.estimated_pose}/pose.pose.orientation.y",
+                    f"{self.estimation}/pose.pose.orientation.y",
                 ).alias("estimated_y"),
                 pl.field(
-                    f"{self.estimated_pose}/pose.pose.orientation.z",
+                    f"{self.estimation}/pose.pose.orientation.z",
                 ).alias("estimated_z"),
                 pl.field(
-                    f"{self.estimated_pose}/pose.pose.orientation.w",
+                    f"{self.estimation}/pose.pose.orientation.w",
                 ).alias("estimated_w"),
             )
-            .map_elements(_calculate_yaw_error, return_dtype=pl.Float64)
+            .map_elements(_calculate_yaw_error, return_dtype=pl.Float32)
             .alias("yaw_error")
         )
 
