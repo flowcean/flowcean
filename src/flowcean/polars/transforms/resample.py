@@ -178,7 +178,15 @@ class Resample(Transform):
                         joined_df.group_by(pl.col(_index_feature))
                         .agg(
                             pl.struct(
-                                pl.col(_time_feature).alias("time"),
+                                (
+                                    pl.col(_time_feature).dt.hour()
+                                    * pl.lit(60 * 60)
+                                    + pl.col(_time_feature).dt.minute()
+                                    * pl.lit(60)
+                                    + pl.col(_time_feature).dt.second(
+                                        fractional=True,
+                                    )
+                                ).alias("time"),
                                 pl.col(_value_feature).alias("value"),
                             )
                             .implode()

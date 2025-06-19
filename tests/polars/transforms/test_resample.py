@@ -1,5 +1,4 @@
 import unittest
-from datetime import time
 
 import polars as pl
 from polars.testing import assert_frame_equal
@@ -15,21 +14,21 @@ class ResampleTransform(unittest.TestCase):
                 "feature_a": [
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 1,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2,
                         },
                     ],
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 0,
                         },
                         {
-                            "time": time(second=3),
+                            "time": 3.0,
                             "value": 3,
                         },
                     ],
@@ -44,33 +43,33 @@ class ResampleTransform(unittest.TestCase):
                 "feature_a": [
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 1.0,
                         },
                         {
-                            "time": time(second=1),
+                            "time": 1.0,
                             "value": 1.5,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2.0,
                         },
                     ],
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 0.0,
                         },
                         {
-                            "time": time(second=1),
+                            "time": 1.0,
                             "value": 1.0,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2.0,
                         },
                         {
-                            "time": time(second=3),
+                            "time": 3.0,
                             "value": 3.0,
                         },
                     ],
@@ -92,11 +91,11 @@ class ResampleTransform(unittest.TestCase):
                 "feature_a": [
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 1,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2,
                         },
                     ],
@@ -104,15 +103,15 @@ class ResampleTransform(unittest.TestCase):
                 "feature_b": [
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 0,
                         },
                         {
-                            "time": time(second=1),
+                            "time": 1.0,
                             "value": 1,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2,
                         },
                     ],
@@ -127,15 +126,15 @@ class ResampleTransform(unittest.TestCase):
                 "feature_a": [
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 1.0,
                         },
                         {
-                            "time": time(second=1),
+                            "time": 1.0,
                             "value": 1.5,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2.0,
                         },
                     ],
@@ -143,11 +142,11 @@ class ResampleTransform(unittest.TestCase):
                 "feature_b": [
                     [
                         {
-                            "time": time(second=0),
+                            "time": 0.0,
                             "value": 0.0,
                         },
                         {
-                            "time": time(second=2),
+                            "time": 2.0,
                             "value": 2.0,
                         },
                     ],
