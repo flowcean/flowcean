@@ -89,9 +89,7 @@ class DiscreteDerivative(Transform):
                 logger.warning("Unknown derivative method %s", self.method)
 
             # Calculate the derivative
-            data = data.filter(
-                pl.col(value_feature).is_not_null(),
-            ).with_columns(
+            data = data.drop_nulls().with_columns(
                 (pl.col(value_feature) / pl.col(dt_feature)).alias(
                     dvalue_feature,
                 ),
