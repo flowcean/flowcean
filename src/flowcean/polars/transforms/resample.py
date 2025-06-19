@@ -68,8 +68,9 @@ class Resample(Transform):
         for feature, dt in sampling_mapping.items():
             if self.interpolation_method == "linear":
                 # Use polars' expressions for linear interpolation
-                # Build a working DataFrame with the exploded time series
-                working_df = (
+                # Convert all time series to a "normal" dataframe with an
+                # additional index feature
+                exploded_feature_df = (
                     data.select(
                         [
                             pl.col(feature)
@@ -86,18 +87,20 @@ class Resample(Transform):
 
                 # Convert the time feature to a polars time type if
                 # it is not already
-                if not working_df.collect_schema()[
+                if not exploded_feature_df.collect_schema()[
                     _time_feature
                 ].is_temporal():
-                    working_df = working_df.with_columns(
+                    exploded_feature_df = exploded_feature_df.with_columns(
                         (pl.col(_time_feature) * 1_000_000_000).cast(
                             pl.Time(),
                         ),
                     )
 
-                # Build a target time range for the feature
+                # Build the target time vectors for the feature.
+                # Those are the times at which we want to
+                # have the values after resampling.
                 target_times_df = (
-                    working_df.select(
+                    exploded_feature_df.select(
                         [
                             pl.col(_index_feature).over(_index_feature),
                             pl.col(_time_feature)
@@ -124,7 +127,8 @@ class Resample(Transform):
                 )
 
                 # Extend the target times by the times from the
-                # working DataFrame
+                # working DataFrame. This is necessary to include
+                # the original data points in the interpolation.
                 target_times_extended_df = (
                     pl.concat(
                         [
@@ -133,7 +137,7 @@ class Resample(Transform):
                             ).rename(
                                 {_time_range_feature: _time_feature},
                             ),
-                            working_df.select(
+                            exploded_feature_df.select(
                                 [
                                     pl.col(_index_feature),
                                     pl.col(_time_feature),
@@ -141,27 +145,36 @@ class Resample(Transform):
                             ),
                         ],
                     )
+                    # Remove duplicate entries. Those can occur if a original
+                    # datapoint and a sampling timestep are the same.
                     .unique()
-                    # We need to to sort to allow interpolate to work correctly
+                    # Unfortunately, we need to sort the DataFrame
+                    # to ensure that the interpolation works correctly.
                     .sort(
                         by=[_index_feature, _time_feature],
                     )
                 )
 
+                # Combine the target times with the working DataFrame
+                # and interpolate the values
                 joined_df = (
                     target_times_extended_df.join(
-                        working_df,
+                        exploded_feature_df,
                         how="left",
                         on=[pl.col(_index_feature), pl.col(_time_feature)],
                     )
                     .interpolate()
                     .fill_null(strategy="forward")
                     .with_columns(
+                        # Interpolate converts the index to a float, but we
+                        # need an uint32
                         pl.col(_index_feature).cast(pl.UInt32),
                     )
                 )
 
-                # Only keep the rows matching the target times
+                # Only keep the rows matching the target times - other rows
+                # were just needed for the interpolation and are not part of
+                # the resampled data
                 joined_df = joined_df.join(
                     target_times_df,
                     on=pl.col(_index_feature),
@@ -170,6 +183,8 @@ class Resample(Transform):
                     pl.col(_time_feature).is_in(pl.col(_time_range_feature)),
                 )
 
+                # Convert the resampled data back to the time series format and
+                # join it back to the rest of the data
                 data = pl.concat(
                     [
                         data.drop(
@@ -179,6 +194,8 @@ class Resample(Transform):
                         .agg(
                             pl.struct(
                                 (
+                                    # Convert the polars.Time back to a float
+                                    # of seconds
                                     pl.col(_time_feature).dt.hour()
                                     * pl.lit(60 * 60)
                                     + pl.col(_time_feature).dt.minute()
