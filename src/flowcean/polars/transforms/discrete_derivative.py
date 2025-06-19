@@ -39,7 +39,6 @@ class DiscreteDerivative(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        feature_names = data.collect_schema().names()
         for feature in self.features:
             value_feature = f"{feature}_value"
             time_feature = f"{feature}_t"
@@ -47,8 +46,8 @@ class DiscreteDerivative(Transform):
             dvalue_feature = f"{feature}_derivative"
             index_feature = "_index"
 
-            data = (
-                data.with_columns(
+            working_df = (
+                data.select(
                     [
                         pl.col(feature)
                         .list.eval(pl.element().struct.field("value"))
@@ -61,9 +60,10 @@ class DiscreteDerivative(Transform):
                 .with_row_index(name=index_feature)
                 .explode([value_feature, time_feature])
             )
+
             if self.method in {"forward", "backward"}:
                 shift = -1 if self.method == "forward" else 1
-                data = data.with_columns(
+                working_df = working_df.with_columns(
                     [
                         pl.col(value_feature)
                         .diff(n=shift)
@@ -75,7 +75,7 @@ class DiscreteDerivative(Transform):
                     ],
                 )
             elif self.method == "central":
-                data = data.with_columns(
+                working_df = working_df.with_columns(
                     [
                         pl.col(value_feature).shift(-1).over(index_feature)
                         - pl.col(value_feature).shift(1).over(index_feature),
@@ -89,26 +89,27 @@ class DiscreteDerivative(Transform):
                 logger.warning("Unknown derivative method %s", self.method)
 
             # Calculate the derivative
-            data = data.drop_nulls().with_columns(
+            working_df = working_df.drop_nulls().with_columns(
                 (pl.col(value_feature) / pl.col(dt_feature)).alias(
                     dvalue_feature,
                 ),
             )
 
             # Collapse the data back to time series format
-            data = data.group_by(pl.col(index_feature)).agg(
+            working_df = working_df.group_by(pl.col(index_feature)).agg(
                 pl.struct(
                     pl.col(time_feature).alias("time"),
                     pl.col(dvalue_feature).alias("value"),
                 )
                 .implode()
                 .alias(dvalue_feature),
-                # Retain the original feature values
-                *[pl.col(feature).first() for feature in feature_names],
             )
 
-            # Drop the index feature. The other features are implicitly
-            # dropped by the group_by operation.
-            data = data.drop(index_feature)
+            # Join the newly created derivative feature back to the
+            # original data
+            data = pl.concat(
+                [data, working_df.drop(index_feature)],
+                how="horizontal",
+            )
 
         return data
