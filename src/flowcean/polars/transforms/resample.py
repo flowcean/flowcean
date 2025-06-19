@@ -1,5 +1,6 @@
 import logging
 import math
+from datetime import timedelta
 from typing import Literal, TypeAlias, cast
 
 import numpy as np
@@ -13,6 +14,14 @@ from flowcean.polars.is_time_series import is_timeseries_feature
 logger = logging.getLogger(__name__)
 
 InterpolationMethod: TypeAlias = Literal["linear", "cubic"]
+
+_value_feature = "_value"
+_time_feature = "_time"
+_time_range_feature = "_time_range"
+_index_feature = "_index"
+
+_min_time_feature = "_min_time"
+_max_time_feature = "_max_time"
 
 
 class Resample(Transform):
@@ -37,6 +46,12 @@ class Resample(Transform):
         """
         self.sampling_rate = sampling_rate
         self.interpolation_method = interpolation_method
+        if interpolation_method not in {"linear", "cubic"}:
+            msg = (
+                f"Unsupported interpolation method: {interpolation_method}. "
+                "Supported methods are 'linear' and 'cubic'.",
+            )
+            raise ValueError(msg)
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
@@ -51,34 +66,158 @@ class Resample(Transform):
         )
 
         for feature, dt in sampling_mapping.items():
-            data = data.with_columns(
-                pl.struct(
-                    pl.col(feature)
-                    .list.eval(pl.first().struct.field("time"))
-                    .alias("time"),
-                    pl.col(feature)
-                    .list.eval(pl.first().struct.field("value"))
-                    .alias("value"),
+            if self.interpolation_method == "linear":
+                # Use polars' expressions for linear interpolation
+                # Build a working DataFrame with the exploded time series
+                working_df = (
+                    data.select(
+                        [
+                            pl.col(feature)
+                            .list.eval(pl.element().struct.field("value"))
+                            .alias(_value_feature),
+                            pl.col(feature)
+                            .list.eval(pl.element().struct.field("time"))
+                            .alias(_time_feature),
+                        ],
+                    )
+                    .with_row_index(name=_index_feature)
+                    .explode([_value_feature, _time_feature])
                 )
-                .map_elements(
-                    lambda series, dt=dt: self.resample_data(
-                        series,
-                        dt,
-                    ),
-                    return_dtype=pl.List(
-                        pl.Struct(
-                            {
-                                "time": pl.Float64,
-                                "value": pl.Float64,
-                            },
+
+                # Convert the time feature to a polars time type if
+                # it is not already
+                if not working_df.collect_schema()[
+                    _time_feature
+                ].is_temporal():
+                    working_df = working_df.with_columns(
+                        (pl.col(_time_feature) * 1_000_000_000).cast(
+                            pl.Time(),
                         ),
-                    ),
+                    )
+
+                # Build a target time range for the feature
+                target_times_df = (
+                    working_df.select(
+                        [
+                            pl.col(_index_feature).over(_index_feature),
+                            pl.col(_time_feature)
+                            .min()
+                            .alias(_min_time_feature)
+                            .over(_index_feature),
+                            pl.col(_time_feature)
+                            .max()
+                            .alias(_max_time_feature)
+                            .over(_index_feature),
+                        ],
+                    )
+                    .unique(subset=[_index_feature])
+                    .select(
+                        [
+                            pl.col(_index_feature),
+                            pl.time_ranges(
+                                pl.col(_min_time_feature),
+                                pl.col(_max_time_feature),
+                                interval=timedelta(seconds=dt),
+                            ).alias(_time_range_feature),
+                        ],
+                    )
                 )
-                .alias(feature),
-            )
+
+                # Extend the target times by the times from the
+                # working DataFrame
+                target_times_extended_df = (
+                    pl.concat(
+                        [
+                            target_times_df.explode(
+                                _time_range_feature,
+                            ).rename(
+                                {_time_range_feature: _time_feature},
+                            ),
+                            working_df.select(
+                                [
+                                    pl.col(_index_feature),
+                                    pl.col(_time_feature),
+                                ],
+                            ),
+                        ],
+                    )
+                    .unique()
+                    # We need to to sort to allow interpolate to work correctly
+                    .sort(
+                        by=[_index_feature, _time_feature],
+                    )
+                )
+
+                joined_df = (
+                    target_times_extended_df.join(
+                        working_df,
+                        how="left",
+                        on=[pl.col(_index_feature), pl.col(_time_feature)],
+                    )
+                    .interpolate()
+                    .fill_null(strategy="forward")
+                    .with_columns(
+                        pl.col(_index_feature).cast(pl.UInt32),
+                    )
+                )
+
+                # Only keep the rows matching the target times
+                joined_df = joined_df.join(
+                    target_times_df,
+                    on=pl.col(_index_feature),
+                    how="left",
+                ).filter(
+                    pl.col(_time_feature).is_in(pl.col(_time_range_feature)),
+                )
+
+                data = pl.concat(
+                    [
+                        data.drop(
+                            feature,
+                        ),  # `feature` comes from the resampled frame
+                        joined_df.group_by(pl.col(_index_feature))
+                        .agg(
+                            pl.struct(
+                                pl.col(_time_feature).alias("time"),
+                                pl.col(_value_feature).alias("value"),
+                            )
+                            .implode()
+                            .alias(feature),
+                        )
+                        .drop(_index_feature),
+                    ],
+                    how="horizontal",
+                )
+            else:
+                # Use map_elements with scipy for cubic interpolation
+                data = data.with_columns(
+                    pl.struct(
+                        pl.col(feature)
+                        .list.eval(pl.first().struct.field("time"))
+                        .alias("time"),
+                        pl.col(feature)
+                        .list.eval(pl.first().struct.field("value"))
+                        .alias("value"),
+                    )
+                    .map_elements(
+                        lambda series, dt=dt: self.cubic_resample(
+                            series,
+                            dt,
+                        ),
+                        return_dtype=pl.List(
+                            pl.Struct(
+                                {
+                                    "time": pl.Float64,
+                                    "value": pl.Float64,
+                                },
+                            ),
+                        ),
+                    )
+                    .alias(feature),
+                )
         return data
 
-    def resample_data(
+    def cubic_resample(
         self,
         data: dict[str, list[float]],
         dt: float,
@@ -95,17 +234,8 @@ class Resample(Transform):
         )
 
         # Interpolate the value vector to match the new time vector
-        value_interp = None
-        if self.interpolation_method == "linear":
-            value_interp = np.interp(t_interp, time, value)
-        elif self.interpolation_method == "cubic":
-            interpolator = CubicSpline(time, value)
-            value_interp = interpolator(t_interp)
-        else:
-            logger.warning(
-                "Unknown interpolation method %s. Defaulting to linear",
-                self.interpolation_method,
-            )
+        interpolator = CubicSpline(time, value)
+        value_interp = interpolator(t_interp)
         return (
             pl.DataFrame({"time": t_interp, "value": value_interp})
             .to_struct()
