@@ -51,10 +51,10 @@ class SignalFilter(Transform):
             data = data.with_columns(
                 pl.struct(
                     pl.col(feature)
-                    .list.eval(pl.first().struct.field("time"))
+                    .list.eval(pl.element().struct.field("time"))
                     .alias("time"),
                     pl.col(feature)
-                    .list.eval(pl.first().struct.field("value"))
+                    .list.eval(pl.element().struct.field("value"))
                     .alias("value"),
                 )
                 .map_elements(
