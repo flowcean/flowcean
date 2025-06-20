@@ -22,7 +22,7 @@ class Affine:
         rotation: NDArray[np.floating] | None = None,
         scale: float | None = None,
     ) -> Affine:
-        """Creates an affine transformation from translation, rotation, and scale.
+        """Creates an affine transformation from translation, rotation, scale.
 
         Args:
             translation: A 2D vector representing the translation.
@@ -53,5 +53,5 @@ class Affine:
         return Affine(inv_matrix)
 
     def to_homogeneous(self) -> NDArray[np.floating]:
-        """Converts this transform into its equivalent homogeneous transformation matrix."""
+        """Convert into equivalent homogeneous transformation matrix."""
         return self.matrix
