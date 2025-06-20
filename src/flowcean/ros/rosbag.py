@@ -61,7 +61,11 @@ class RosbagLoader(DataFrame):
         self,
         path: PathLike,
         topics: dict[str, list[str]],
+        *,
         message_paths: Iterable[PathLike] | None = None,
+        create_cache: bool = True,
+        load_from_cache: bool = True,
+        cache_path: PathLike | None = None,
     ) -> None:
         """Initialize the RosbagEnvironment.
 
@@ -74,20 +78,41 @@ class RosbagLoader(DataFrame):
             path: Path to the rosbag.
             topics: Dictionary of topics to load (`topic: [paths]`).
             message_paths: List of paths to additional message definitions.
+            create_cache: If True, cache the data to a Parquet file.
+            load_from_cache: If True, load data from the cache if it exists.
+            cache_path: Path to the cache file. If None, defaults to the same
+                directory as the rosbag file with a .parquet extension.
         """
+        path = Path(path)
+        cache_path = (
+            Path(cache_path)
+            if cache_path is not None
+            else path.with_suffix(".parquet")
+        )
+
+        if load_from_cache and cache_path.exists():
+            logger.info("Loading data from cache...")
+            super().__init__(pl.scan_parquet(cache_path))
+            return
+
         typestore = get_typestore(Stores.ROS2_HUMBLE)
         if message_paths is not None:
             additional_types = _collect_type_definitions(message_paths)
             typestore.register(additional_types)
 
         with AnyReader(
-            [Path(path)],
+            [path],
             default_typestore=typestore,
         ) as reader:
             data = pl.concat(
                 _generate_features(reader, topics),
                 how="horizontal",
             )
+
+        if create_cache:
+            logger.info("Caching ROS data to Parquet file...")
+            data.sink_parquet(Path(cache_path))
+
         super().__init__(data)
 
 

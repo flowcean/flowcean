@@ -42,16 +42,17 @@ def zero_order_hold_align(
         .with_columns(pl.exclude("index", "time").forward_fill().over("index"))
         .drop_nulls()
         .select(
+            pl.col("index"),
             pl.struct(
                 pl.col("time"),
                 pl.struct(
                     pl.exclude("index", "time"),
                 ).alias("value"),
-            )
-            .implode()
-            .over("index")
-            .alias(name),
+            ).alias(name),
         )
+        .group_by("index", maintain_order=True)
+        .agg(pl.all().implode())
+        .drop("index")
     )
 
 
@@ -74,7 +75,10 @@ class ZeroOrderHold(Transform):
         self.name = name
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        logger.debug("Applying ZeroOrderHoldMatching transform")
+        logger.debug(
+            "Aligning features %s using zero-order-hold",
+            self.features,
+        )
         aligned = zero_order_hold_align(
             data,
             columns=self.features,

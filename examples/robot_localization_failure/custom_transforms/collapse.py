@@ -29,6 +29,11 @@ class Collapse(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        logger.debug(
+            "Collapsing feature '%s' at element %d",
+            self.feature,
+            self.element,
+        )
         return data.with_columns(
             pl.col(self.feature)
             .list.get(self.element)

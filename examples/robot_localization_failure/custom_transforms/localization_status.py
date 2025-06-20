@@ -39,6 +39,13 @@ class LocalizationStatus(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        logger.debug(
+            "Calculating localization status for time series '%s' with "
+            "position threshold %.2f and heading threshold %.2f",
+            self.time_series,
+            self.position_threshold,
+            self.heading_threshold,
+        )
         return data.with_columns(
             pl.col(self.time_series).list.eval(
                 pl.element().struct.with_fields(

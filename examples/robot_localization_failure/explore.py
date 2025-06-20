@@ -116,8 +116,9 @@ def compute_particle_image(
     )
 
 
+data_source = "recordings/rec_20250618_113817.processed.parquet"
 data = (
-    pl.read_parquet("sliced.parquet")
+    pl.read_parquet(data_source)
     .with_columns(
         pl.col("/map").struct.with_fields(
             pl.field("data").list.eval(pl.element() != 0),
