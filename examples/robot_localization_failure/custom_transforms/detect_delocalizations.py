@@ -1,7 +1,11 @@
+import logging
+
 import polars as pl
 from typing_extensions import override
 
 from flowcean.core.transform import Transform
+
+logger = logging.getLogger(__name__)
 
 
 class DetectDelocalizations(Transform):
@@ -16,6 +20,11 @@ class DetectDelocalizations(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        logger.debug(
+            "Detecting delocalizations in column '%s' with output name '%s'",
+            self.counter_column,
+            self.name,
+        )
         return data.with_columns(
             pl.col(self.counter_column)
             .list.eval(

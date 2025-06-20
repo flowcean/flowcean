@@ -1,7 +1,11 @@
+import logging
+
 import polars as pl
 from typing_extensions import override
 
 from flowcean.core.transform import Transform
+
+logger = logging.getLogger(__name__)
 
 
 class SliceTimeSeries(Transform):
@@ -12,6 +16,11 @@ class SliceTimeSeries(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        logger.debug(
+            "Slicing time series '%s' at points '%s'",
+            self.time_series,
+            self.slice_points,
+        )
         time_series = (
             data.select(self.time_series)
             .with_row_index("experiment_i")

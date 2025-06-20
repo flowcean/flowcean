@@ -8,40 +8,65 @@ from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.slice_time_series import SliceTimeSeries
 from custom_transforms.zero_order_hold_matching import ZeroOrderHold
-from rosbag import load_or_cache_ros_data
 
 import flowcean.cli
 from flowcean.polars.transforms.drop import Drop
+from flowcean.ros.rosbag import RosbagLoader
 
 logger = logging.getLogger(__name__)
 
 WS = Path(__file__).resolve().parent
-ROSBAG_NAME = "recordings/rec_20241021_152106"
-ROSBAG_PATH = WS / ROSBAG_NAME
+ROSBAG = WS / "recordings/rec_20250618_113817"
 ROS_MESSAGE_TYPES = [
     WS / "ros_msgs/LaserScan.msg",
     WS / "ros_msgs/nav2_msgs/msg/Particle.msg",
     WS / "ros_msgs/nav2_msgs/msg/ParticleCloud.msg",
 ]
 
-SAVE_IMAGES = True
-IMAGE_PIXEL_SIZE = 100
-CROP_REGION_SIZE = 5.0
-
 
 flowcean.cli.initialize_logging(log_level=logging.DEBUG)
 
-data = load_or_cache_ros_data(
-    ROSBAG_PATH,
-    message_definitions=ROS_MESSAGE_TYPES,
-    ignore_cache=True,
+rosbag = RosbagLoader(
+    path=ROSBAG,
+    topics={
+        "/amcl_pose": [
+            "pose.pose.position.x",
+            "pose.pose.position.y",
+            "pose.pose.orientation.x",
+            "pose.pose.orientation.y",
+            "pose.pose.orientation.z",
+            "pose.pose.orientation.w",
+        ],
+        "/momo/pose": [
+            "pose.position.x",
+            "pose.position.y",
+            "pose.orientation.x",
+            "pose.orientation.y",
+            "pose.orientation.z",
+            "pose.orientation.w",
+        ],
+        "/scan": [
+            "ranges",
+            "angle_min",
+            "angle_max",
+            "angle_increment",
+            "range_min",
+            "range_max",
+        ],
+        "/map": ["data", "info"],
+        "/delocalizations": ["data"],
+        "/particle_cloud": ["particles"],
+    },
+    message_paths=ROS_MESSAGE_TYPES,
 )
 logger.info("Loaded data from ROS bag")
-exit()
 
-transform = (
+rc = rosbag.data.collect()
+
+data = (
+    rosbag
     # collapse map time series to a single value
-    Collapse("/map", element=1)
+    | Collapse("/map", element=0)
     # align all time series features using zero-order hold
     | ZeroOrderHold(
         features=[
@@ -71,6 +96,7 @@ transform = (
     )
 )
 
-# transformed_data = transform(data)
-# collected = transformed_data.collect(engine="streaming")
-# print(collected)
+logger.info("Writing processed data to Parquet file...")
+out_path = ROSBAG.with_suffix(".processed.parquet")
+data.observe().sink_parquet(out_path)
+logger.info("Data processing complete. Processed data saved to %s", out_path)
