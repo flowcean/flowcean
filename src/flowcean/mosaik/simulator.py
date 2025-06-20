@@ -24,72 +24,60 @@ META = {
 
 
 class SyncSimulator(mosaik_api_v3.Simulator):
-    sid: str
-    step_size: int
-    end: int
-    timeout: int
-    a_uid_dict: dict[str, str]
-    s_uid_dict: dict[str, str]
-    sensor_queue: queue.Queue
-    actuator_queue: queue.Queue
-    sync_finished: threading.Event
-    sync_terminate: threading.Event
-    sensors: dict[str, Any]
-
     def __init__(self) -> None:
         super().__init__(META)
 
-        # self.sid: str | None = None
-        self.step_size = 0
-        self.end = 0
+        self.sid: str = ""
+        self.step_size: int = 0
+        self.end: int = 0
+        self.timeout: int = 20
         self.models = {}
-        self.a_uid_dict = {}
-        self.s_uid_dict = {}
-        self.model_ctr = {"Sensor": 0, "Actuator": 0}
-        # self.sensor_queue: queue.Queue | None = None
-        # self.actuator_queue: queue.Queue | None = None
-        # self.sync_finished: threading.Event | None = None
-        # self.sync_terminate: threading.Event | None = None
-        self.sensors = {}
-        self.timeout = 20
+        self.a_uid_dict: dict[str, str] = {}
+        self.s_uid_dict: dict[str, str] = {}
+        self.model_ctr: dict[str, int] = {"Sensor": 0, "Actuator": 0}
+        self.sensors: dict[str, Any] = {}
         self._notified_done: bool = False
+
+        self.sensor_queue: queue.Queue
+        self.actuator_queue: queue.Queue
+        self.sync_finished: threading.Event
+        self.sync_terminate: threading.Event
 
     @override
     def init(
         self,
         sid: str,
         time_resolution: float = 1.0,
+        *,
+        step_size: int = 0,
+        end: int = 0,
+        sensor_queue: queue.Queue | None = None,
+        actuator_queue: queue.Queue | None = None,
+        sync_finished: threading.Event | None = None,
+        sync_terminate: threading.Event | None = None,
         **sim_params: dict[str, Any],
     ) -> Meta:
+        if sensor_queue is None:
+            msg = "sensor_queue is None. Terminating!"
+            raise ValueError(msg)
+        if actuator_queue is None:
+            msg = "actuator_queue is None. Terminating!"
+            raise ValueError(msg)
+        if sync_finished is None:
+            msg = "sync_finished is None. Terminating!"
+            raise ValueError(msg)
+        if sync_terminate is None:
+            msg = "sync_terminate is None. Terminating!"
+            raise ValueError(msg)
+
         self.sid = sid
-        self.step_size = (
-            sim_params["step_size"]
-            if isinstance(sim_params["step_size"], int)
-            else 0
-        )
-        self.sensor_queue = (
-            sim_params["sensor_queue"]
-            if isinstance(sim_params["sensor_queue"], queue.Queue)
-            else queue.Queue()
-        )
-        self.actuator_queue = (
-            sim_params["actuator_queue"]
-            if isinstance(sim_params["actuator_queue"], queue.Queue)
-            else queue.Queue()
-        )
-        self.sync_finished = (
-            sim_params["sync_finished"]
-            if isinstance(sim_params["sync_finished"], threading.Event)
-            else threading.Event()
-        )
-        self.sync_terminate = (
-            sim_params["sync_terminate"]
-            if isinstance(sim_params["sync_terminate"], threading.Event)
-            else threading.Event()
-        )
-        self.end = (
-            sim_params["end"] if isinstance(sim_params["end"], int) else 0
-        )
+        self.step_size = step_size
+        self.end = end
+        self.sensor_queue = sensor_queue
+        self.actuator_queue = actuator_queue
+        self.sync_finished = sync_finished
+        self.sync_terminate = sync_terminate
+
         return self.meta
 
     @override
@@ -130,6 +118,7 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         if self.sync_terminate.is_set():
             msg = "Stop was requested (step). Terminating simulation."
             raise SimulationError(msg)
+
         for sensor_eid, readings in inputs.items():
             reading = readings["reading"]
             for value in reading.values():

@@ -66,6 +66,28 @@ class Action:
     actuators: list[Interface]
 
 
+def interface_dict(itf: Interface) -> dict[str, Any]:
+    return {
+        "uid": itf.uid,
+        "value": itf.value,
+        "value_min": itf.value_min,
+        "value_max": itf.value_max,
+        "shape": itf.shape,
+        "dtype": itf.dtype,
+    }
+
+
+def interface_from_dict(state: dict[str, Any]) -> Interface:
+    return Interface(
+        uid=state["uid"],
+        value=state["value"],
+        value_min=state["value_min"],
+        value_max=state["value_max"],
+        shape=state["shape"],
+        dtype=state["dtype"],
+    )
+
+
 class StopLearning(Exception):
     """Stop learning.
 

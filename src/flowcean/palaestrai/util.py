@@ -1,6 +1,16 @@
 from typing import Any
 
 import numpy as np
+import torch
+from harl.sac.action_type import ActionType
+from harl.sac.network import (
+    Actor,
+    Critic,
+    DiscreteMLPActor,
+    MLPActorCritic,
+    MLPQFunction,
+    SquashedGaussianMLPActor,
+)
 from palaestrai.agent.actuator_information import ActuatorInformation
 from palaestrai.agent.reward_information import RewardInformation
 from palaestrai.agent.sensor_information import SensorInformation
@@ -9,6 +19,22 @@ from palaestrai.types import Box
 from flowcean.core.strategies.active import Action, Interface, Observation
 
 BOX_SPACE = "Box(low=%s, high=%s, shape=%s, dtype=%s)"
+
+torch.serialization.add_safe_globals(
+    [
+        Actor,
+        Critic,
+        SquashedGaussianMLPActor,
+        DiscreteMLPActor,
+        MLPActorCritic,
+        MLPQFunction,
+        torch.nn.modules.container.Sequential,
+        torch.nn.modules.linear.Linear,
+        torch.nn.modules.activation.ReLU,
+        torch.nn.modules.linear.Identity,
+        ActionType,
+    ],
+)
 
 
 def filter_action(action: Action, available_ids: list[str]) -> Action:

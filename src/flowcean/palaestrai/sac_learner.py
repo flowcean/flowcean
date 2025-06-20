@@ -1,6 +1,9 @@
+import io
 from collections.abc import Sequence
+from pathlib import Path
 
 import numpy as np
+import torch
 from harl.sac.brain import SACBrain
 from palaestrai.agent.objective import Objective
 from typing_extensions import override
@@ -96,7 +99,7 @@ class SACLearner(ActiveLearner):
             "update_every": update_every,
         }
 
-    def load(self, action: Action, observation: Observation) -> None:
+    def setup(self, action: Action, observation: Observation) -> None:
         self.action = filter_action(action, self.actuator_ids)
         self.observation = filter_observation(observation, self.sensor_ids)
 
@@ -144,3 +147,67 @@ class SACLearner(ActiveLearner):
     def propose_action(self, observation: Observation) -> Action:
         filtered = filter_observation(observation, self.sensor_ids)
         return self.model.predict(filtered)
+
+    def save(self, file_path: str) -> None:
+        Path(file_path).mkdir(parents=True, exist_ok=True)
+
+        bio = io.BytesIO()
+        torch.save(self.brain.actor, bio)
+        bio.seek(0)
+        with (Path(file_path) / "sac_actor").open("wb") as fp:
+            fp.write(bio.read())
+
+        bio.seek(0)
+        bio.truncate(0)
+        torch.save(self.brain.actor_target, bio)
+        bio.seek(0)
+        with (Path(file_path) / "sac_actor_target").open("wb") as fp:
+            fp.write(bio.read())
+
+        bio.seek(0)
+        bio.truncate(0)
+        torch.save(self.brain.critic, bio)
+        bio.seek(0)
+        with (Path(file_path) / "sac_critic").open("wb") as fp:
+            fp.write(bio.read())
+
+        bio.seek(0)
+        bio.truncate(0)
+        torch.save(self.brain.critic_target, bio)
+        bio.seek(0)
+        with (Path(file_path) / "sac_critic_target").open("wb") as fp:
+            fp.write(bio.read())
+
+    def load(self, file_path: str) -> None:
+        with (Path(file_path) / "sac_actor").open("rb") as fp:
+            bio = io.BytesIO()
+            bio.write(fp.read())
+        bio.seek(0)
+        self.brain.actor = torch.load(bio, map_location=self.brain._device)  # noqa: SLF001
+
+        bio.seek(0)
+        self.model.update(bio)
+
+        with (Path(file_path) / "sac_actor_target").open("rb") as fp:
+            bio = io.BytesIO()
+            bio.write(fp.read())
+        bio.seek(0)
+        self.brain.actor_target = torch.load(
+            bio,
+            map_location=self.brain._device,  # noqa: SLF001
+        )
+
+        with (Path(file_path) / "sac_critic").open("rb") as fp:
+            bio = io.BytesIO()
+            bio.write(fp.read())
+        bio.seek(0)
+        self.brain.critic = torch.load(bio, map_location=self.brain._device)  # noqa: SLF001
+
+        with (Path(file_path) / "sac_critic_target").open("rb") as fp:
+            bio = io.BytesIO()
+            bio.write(fp.read())
+        bio.seek(0)
+        self.brain.critic_target = torch.load(
+            bio,
+            map_location=self.brain._device,  # noqa: SLF001
+        )
