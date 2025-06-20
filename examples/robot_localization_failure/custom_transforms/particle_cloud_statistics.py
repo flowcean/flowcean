@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import polars as pl
 from sklearn.cluster import DBSCAN
+from tqdm import tqdm
 
 from flowcean.core.transform import Transform
 
@@ -43,7 +44,10 @@ class ParticleCloudStatistics(Transform):
 
         all_features = []
 
-        for i in range(number_of_messages):
+        for i in tqdm(
+            range(number_of_messages),
+            desc="Processing particle cloud messages",
+        ):
             message_dictionary = particle_cloud[i]
 
             message_time = message_dictionary["time"]
