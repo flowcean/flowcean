@@ -28,7 +28,7 @@ def crop_map_image(
     meters_per_pixel: float | None = None,
     width_meters: float | None = None,
     height_meters: float | None = None,
-    interpolation_flags: int = cv2.INTER_NEAREST,
+    interpolation_flags: int = cv2.INTER_AREA,
 ) -> NDArray:
     if robot_position is None:
         robot_position = np.zeros(2, dtype=np.float64)
