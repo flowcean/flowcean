@@ -41,7 +41,7 @@ class SignalFilterTransform(unittest.TestCase):
         transformed_values = (
             transformed_values.select(
                 pl.col("feature_a").list.eval(
-                    pl.first().struct.field("value"),
+                    pl.element().struct.field("value"),
                 ),
             )
             .item()
@@ -92,7 +92,7 @@ class SignalFilterTransform(unittest.TestCase):
         transformed_values = (
             transformed_values.select(
                 pl.col("feature_a").list.eval(
-                    pl.first().struct.field("value"),
+                    pl.element().struct.field("value"),
                 ),
             )
             .item()

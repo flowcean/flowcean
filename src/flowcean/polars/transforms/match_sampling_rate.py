@@ -287,14 +287,14 @@ def interpolate_feature(
     if value_is_struct:
         # Struct case: map original field names to their respective columns
         restructure_value = pl.struct(
-            {
-                name: pl.col(col)
+            (
+                pl.col(col).alias(name)
                 for name, col in zip(
                     original_field_names,
                     value_columns,
                     strict=False,
                 )
-            },
+            ),
         ).alias("value")
     else:
         # Scalar case: restore the original scalar 'value' field

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from statistics import mean, median, stdev
 
 import numpy as np
@@ -38,7 +39,7 @@ def run_active() -> None:
     ]
     try:
         learner = SACLearner(actuator_ids, sensor_ids, ArlDefenderObjective())
-        learner.load(environment.action, environment.observation)
+        learner.setup(environment.action, environment.observation)
     except Exception:
         logger.exception("Failed to load learner")
         environment.shutdown()
@@ -55,6 +56,8 @@ def run_active() -> None:
         print("Interrupted. Attempting to terminate environment.")
 
     environment.shutdown()
+    learner.save(str(Path.cwd() / "_outputs"))
+    learner.model.save(str(Path.cwd() / "_outputs" / "sac_model_only"))
     print(learner.objective_values)
     logger.info("Finished!")
 
