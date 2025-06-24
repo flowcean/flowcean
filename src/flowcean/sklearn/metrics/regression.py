@@ -35,6 +35,23 @@ class MeanAbsoluteError(OfflineMetric):
         )
 
 
+class MeanAbsolutePercentageError(OfflineMetric):
+    """Mean absolute percentage error (MAPE) regression loss.
+
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_percentage_error.html).
+    """
+
+    @override
+    def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
+        return (
+            metrics.mean_absolute_percentage_error(
+                true.collect(engine="streaming"),
+                predicted.collect(engine="streaming"),
+            )
+            * 100
+        )
+
+
 class MeanSquaredError(OfflineMetric):
     """Mean squared error (MSE) regression loss.
 
