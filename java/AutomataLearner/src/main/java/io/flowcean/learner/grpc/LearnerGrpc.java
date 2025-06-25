@@ -3,10 +3,13 @@ package io.flowcean.learner.grpc;
 import static io.grpc.MethodDescriptor.generateFullMethodName;
 
 /**
+ * <pre>
+ * The Learner service provides RPCs for training, prediction, and export.
+ * </pre>
  */
 @javax.annotation.Generated(
     value = "by gRPC proto compiler (version 1.66.0)",
-    comments = "Source: learner.proto")
+    comments = "Source: src/flowcean/grpc/proto/learner.proto")
 @io.grpc.stub.annotations.GrpcGenerated
 public final class LearnerGrpc {
 
@@ -153,6 +156,9 @@ public final class LearnerGrpc {
   }
 
   /**
+   * <pre>
+   * The Learner service provides RPCs for training, prediction, and export.
+   * </pre>
    */
   public interface AsyncService {
 
@@ -180,6 +186,9 @@ public final class LearnerGrpc {
 
   /**
    * Base class for the server implementation of the service Learner.
+   * <pre>
+   * The Learner service provides RPCs for training, prediction, and export.
+   * </pre>
    */
   public static abstract class LearnerImplBase
       implements io.grpc.BindableService, AsyncService {
@@ -191,6 +200,9 @@ public final class LearnerGrpc {
 
   /**
    * A stub to allow clients to do asynchronous rpc calls to service Learner.
+   * <pre>
+   * The Learner service provides RPCs for training, prediction, and export.
+   * </pre>
    */
   public static final class LearnerStub
       extends io.grpc.stub.AbstractAsyncStub<LearnerStub> {
@@ -232,6 +244,9 @@ public final class LearnerGrpc {
 
   /**
    * A stub to allow clients to do synchronous rpc calls to service Learner.
+   * <pre>
+   * The Learner service provides RPCs for training, prediction, and export.
+   * </pre>
    */
   public static final class LearnerBlockingStub
       extends io.grpc.stub.AbstractBlockingStub<LearnerBlockingStub> {
@@ -271,6 +286,9 @@ public final class LearnerGrpc {
 
   /**
    * A stub to allow clients to do ListenableFuture-style rpc calls to service Learner.
+   * <pre>
+   * The Learner service provides RPCs for training, prediction, and export.
+   * </pre>
    */
   public static final class LearnerFutureStub
       extends io.grpc.stub.AbstractFutureStub<LearnerFutureStub> {

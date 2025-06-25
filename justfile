@@ -69,3 +69,9 @@ examples-xor:
   @echo "🚀 Running example: XOR"
   @uv run --directory ./examples/xor/ learn.py
   @uv run --directory ./examples/xor/ predict.py
+
+generate-proto:
+  @echo "🚀 Generating Python and Java definitions from gRPC proto files"
+  @uv run python -m grpc_tools.protoc --proto_path=. --python_out=. --mypy_out=. --grpc_python_out=. --mypy_grpc_out=. src/flowcean/grpc/proto/learner.proto
+  @protoc --plugin=protoc-gen-grpc-java=src/flowcean/grpc/proto/protoc-gen-grpc-java --grpc-java_out=. --experimental_allow_proto3_optional=true ./src/flowcean/grpc/proto/learner.proto
+  @protoc --plugin=protoc-gen-grpc-java=src/flowcean/grpc/proto/protoc-gen-grpc-java --java_out=. --experimental_allow_proto3_optional=true ./src/flowcean/grpc/proto/learner.proto
