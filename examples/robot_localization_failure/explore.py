@@ -10,19 +10,7 @@ from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
 
 
-def compute_map_image(
-    x: dict,
-    image_width: int,
-    image_height: int,
-    width_meters: float,
-) -> NDArray:
-    map_image = (
-        np.array(x["/map"]["data"])
-        .reshape(
-            (-1, x["/map"]["info.width"]),
-        )
-        .astype(np.uint8)
-    )
+def extract_position_and_orientation(x: dict) -> tuple[NDArray, NDArray]:
     position = np.array(
         [
             x["/amcl_pose/pose.pose.position.x"],
@@ -37,6 +25,23 @@ def compute_map_image(
             x["/amcl_pose/pose.pose.orientation.w"],
         ),
     ).as_matrix()[:2, :2]
+    return (position, orientation)
+
+
+def compute_map_image(
+    x: dict,
+    image_width: int,
+    image_height: int,
+    width_meters: float,
+) -> NDArray:
+    map_image = (
+        np.array(x["/map"]["data"])
+        .reshape(
+            (-1, x["/map"]["info.width"]),
+        )
+        .astype(np.uint8)
+    )
+    position, orientation = extract_position_and_orientation(x)
     map_resolution = x["/map"]["info.resolution"]
     map_origin = np.array(
         [
@@ -92,20 +97,7 @@ def compute_particle_image(
             for particle in x["/particle_cloud/particles"]
         ],
     )
-    position = np.array(
-        [
-            x["/amcl_pose/pose.pose.position.x"],
-            x["/amcl_pose/pose.pose.position.y"],
-        ],
-    )
-    orientation = Rotation.from_quat(
-        (
-            x["/amcl_pose/pose.pose.orientation.x"],
-            x["/amcl_pose/pose.pose.orientation.y"],
-            x["/amcl_pose/pose.pose.orientation.z"],
-            x["/amcl_pose/pose.pose.orientation.w"],
-        ),
-    ).as_matrix()[:2, :2]
+    position, orientation = extract_position_and_orientation(x)
     return particles_to_image(
         particles,
         width=image_width,
