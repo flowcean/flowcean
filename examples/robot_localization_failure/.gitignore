@@ -1,5 +1,1 @@
-cached_ros_data.json
-detected_lines.png
-last_scan_points.png
-/particle_images*
-cached_ros_data.parquet
+*.parquet

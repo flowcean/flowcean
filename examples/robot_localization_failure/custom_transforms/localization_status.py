@@ -1,6 +1,9 @@
 import logging
+from math import nan
 
 import polars as pl
+from scipy.spatial.transform import Rotation
+from typing_extensions import override
 
 from flowcean.core.transform import Transform
 
@@ -8,126 +11,146 @@ logger = logging.getLogger(__name__)
 
 
 class LocalizationStatus(Transform):
-    """Checks if the robot is delocalized based on position and heading errors.
-
-    Compares the position and heading errors to determine if the robot is
-    delocalized. The robot is considered delocalized if any error is above
-    a certain threshold.
-
-    As an example, consider the following time series input data with position
-    and heading error thresholds as 1.2 m and 1.2 rad respectively:
-
-    ┌────────────────────┬─────────────────┐
-    │ /position_error    ┆ /heading_error  │
-    │ list[struct[2]]    ┆ list[struct[2]] |
-    ╞════════════════════╪═════════════════|
-    │ [                  ┆ [               │
-    │   {1000, {0.9}},   ┆   {1000, {1.1}},│
-    │   {2000, {1.5}}    ┆   {2000, {0.8}} │
-    │ ]                  ┆ ]               │
-    └────────────────────┴─────────────────┘
-
-    After applying the transform, the output will be:
-
-    ┌────────────────────┬─────────────────┬─────────────────┐
-    │ /position_error    ┆ /heading_error  ┆ isDelocalized   │
-    │ list[struct[2]]    ┆ list[struct[2]] ┆ list[struct[2]] |
-    ╞════════════════════╪═════════════════╪═════════════════|
-    │ [                  ┆ [               ┆ [               │
-    │   {1000, {0.9}},   ┆   {1000, {1.1}},┆   {1000, {0}},  │
-    │   {2000, {1.5}}    ┆   {2000, {0.8}} ┆   {2000, {1}}   │
-    │ ]                  ┆ ]               ┆ ]               │
-    └────────────────────┴─────────────────┴─────────────────┘
-
-    The `isDelocalized` column is computed based on the position and heading
-    errors. If both errors are below the threshold, the robot is considered
-    localized. Otherwise, it is considered delocalized.
-
-    Note:
-        Align the time stamps of the position and heading errors using
-        MatchSamplingRate transform before applying this transform.
-    """
+    """Detects localization status based on position and heading errors."""
 
     def __init__(
         self,
-        position_error_feature_name: str = "/position_error",
-        heading_error_feature_name: str = "/heading_error",
-        position_threshold: float = 1.2,
-        heading_threshold: float = 1.2,
+        time_series: str,
+        position_threshold: float,
+        heading_threshold: float,
+        *,
+        ground_truth: str = "/momo/pose",
+        estimation: str = "/amcl_pose",
     ) -> None:
-        """Initialize the ParticleCloudImage transform.
+        """Initialize the localization status transform.
 
         Args:
-            position_error_feature_name: Name of the position error feature.
-            heading_error_feature_name: Name of the heading error feature.
-            position_threshold: Max position error to be considered localized.
-            heading_threshold: Max heading error to be considered localized.
+            time_series: Feature name containing time series data.
+            position_threshold: Position error to consider delocalized.
+            heading_threshold: Heading error to consider delocalized.
+            ground_truth: Name of the ground truth pose feature.
+            estimation: Name of the estimated pose feature.
         """
-        self.position_error_feature_name = position_error_feature_name
-        self.heading_error_feature_name = heading_error_feature_name
+        self.time_series = time_series
+        self.ground_truth = ground_truth
+        self.estimation = estimation
         self.position_threshold = position_threshold
         self.heading_threshold = heading_threshold
 
+    @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        logger.debug("Computing localization status")
-
-        data = data.with_columns(
-            pl.struct(
-                [
-                    self.position_error_feature_name,
-                    self.heading_error_feature_name,
-                ],
-            )
-            .map_elements(
-                lambda s: self.compute_localization_status(
-                    s[self.position_error_feature_name],
-                    s[self.heading_error_feature_name],
+        logger.debug(
+            "Calculating localization status for time series '%s' with "
+            "position threshold %.2f and heading threshold %.2f",
+            self.time_series,
+            self.position_threshold,
+            self.heading_threshold,
+        )
+        return data.with_columns(
+            pl.col(self.time_series).list.eval(
+                pl.element().struct.with_fields(
+                    pl.field("value")
+                    .struct.with_fields(
+                        self._position_error(),
+                        self._heading_error(),
+                    )
+                    .struct.with_fields(self._is_delocalized()),
                 ),
-                return_dtype=pl.List(
-                    pl.Struct(
-                        [
-                            pl.Field("time", pl.Float64()),
-                            pl.Field(
-                                "value",
-                                pl.Struct([pl.Field("data", pl.Int64())]),
-                            ),
-                        ],
-                    ),
-                ),
-            )
-            .alias("isDelocalized"),
+            ),
         )
 
-        logger.debug("Localization status computation completed")
-        return data.collect().lazy()
+    def _position_error(self) -> pl.Expr:
+        return (
+            (
+                (
+                    pl.field(
+                        f"{self.ground_truth}/pose.position.x",
+                    )
+                    - pl.field(
+                        f"{self.estimation}/pose.pose.position.x",
+                    )
+                )
+                ** 2
+                + (
+                    pl.field(
+                        f"{self.ground_truth}/pose.position.y",
+                    )
+                    - pl.field(
+                        f"{self.estimation}/pose.pose.position.y",
+                    )
+                )
+                ** 2
+            )
+            .sqrt()
+            .alias("position_error")
+        )
 
-    def compute_localization_status(
-        self,
-        pos_list: list,
-        head_list: list,
-    ) -> list:
-        """Compute localization status based on position and heading errors."""
-        return [
-            {
-                "time": pos["time"],
-                "value": {
-                    "data": 0
-                    if (
-                        isinstance(pos["value"], dict)
-                        and isinstance(head["value"], dict)
-                        and pos["value"].get("data", float("inf"))
-                        < self.position_threshold
-                        and head["value"].get("data", float("inf"))
-                        < self.heading_threshold
-                    )
-                    or (
-                        not isinstance(pos["value"], dict)
-                        and not isinstance(head["value"], dict)
-                        and pos["value"] < self.position_threshold
-                        and head["value"] < self.heading_threshold
-                    )
-                    else 1,
-                },
-            }
-            for pos, head in zip(pos_list, head_list, strict=False)
-        ]
+    def _heading_error(self) -> pl.Expr:
+        return (
+            pl.struct(
+                pl.field(
+                    f"{self.ground_truth}/pose.orientation.x",
+                ).alias("ground_truth_x"),
+                pl.field(
+                    f"{self.ground_truth}/pose.orientation.y",
+                ).alias("ground_truth_y"),
+                pl.field(
+                    f"{self.ground_truth}/pose.orientation.z",
+                ).alias("ground_truth_z"),
+                pl.field(
+                    f"{self.ground_truth}/pose.orientation.w",
+                ).alias("ground_truth_w"),
+                pl.field(
+                    f"{self.estimation}/pose.pose.orientation.x",
+                ).alias("estimated_x"),
+                pl.field(
+                    f"{self.estimation}/pose.pose.orientation.y",
+                ).alias("estimated_y"),
+                pl.field(
+                    f"{self.estimation}/pose.pose.orientation.z",
+                ).alias("estimated_z"),
+                pl.field(
+                    f"{self.estimation}/pose.pose.orientation.w",
+                ).alias("estimated_w"),
+            )
+            .map_elements(_calculate_heading_error, return_dtype=pl.Float32)
+            .alias("heading_error")
+        )
+
+    def _is_delocalized(self) -> pl.Expr:
+        return (
+            (pl.field("position_error") > self.position_threshold)
+            | (pl.field("heading_error") > self.heading_threshold)
+        ).alias("is_delocalized")
+
+
+def _calculate_heading_error(sample: dict[str, float]) -> float:
+    try:
+        ground_truth = Rotation.from_quat(
+            [
+                sample["ground_truth_x"],
+                sample["ground_truth_y"],
+                sample["ground_truth_z"],
+                sample["ground_truth_w"],
+            ],
+        )
+        estimated = Rotation.from_quat(
+            [
+                sample["estimated_x"],
+                sample["estimated_y"],
+                sample["estimated_z"],
+                sample["estimated_w"],
+            ],
+        )
+        error = ground_truth.inv() * estimated
+        _, _, yaw = error.as_euler("xyz")
+    except ValueError as e:
+        msg = (
+            "Invalid quaternion encountered. "
+            f"Ground truth: {sample}, "
+            f"Estimated: {sample}. Error: {e}"
+        )
+        logger.debug(msg)
+        return nan
+    else:
+        return yaw
