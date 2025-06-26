@@ -73,8 +73,6 @@ rosbag = RosbagLoader(
 )
 logger.info("Loaded data from ROS bag")
 
-rc = rosbag.data.collect()
-
 data = (
     rosbag
     # collapse map time series to a single value
