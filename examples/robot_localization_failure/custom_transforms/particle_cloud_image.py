@@ -28,6 +28,30 @@ def particles_to_image(
     width_meters: float | None = None,
     height_meters: float | None = None,
 ) -> NDArray[np.floating]:
+    """Converts a set of weighted particles into a 2D image representation.
+
+    Each particle is a 3-element vector representing (x, y, weight). The
+    function projects particle positions into an image frame using the robot's
+    position and orientation, and accumulates their weights into corresponding
+    image pixels.
+
+    Exactly one of `meters_per_pixel`, `width_meters`, or `height_meters` must
+    be specified to define the spatial scale of the image.
+
+    Args:
+        particles: An (N, 3) array of particles, with (x, y, weight).
+        width: Width of the output image in pixels.
+        height: Height of the output image in pixels.
+        robot_position: Vector representing the robot's (x, y) position.
+        robot_orientation: Rotation matrix representing robot orientation.
+        meters_per_pixel: Spatial resolution of the image in meters per pixel.
+        width_meters: Width of the image in meters.
+        height_meters: height of the image in meters.
+
+    Returns:
+        A (height, width) array representing the image, where each pixel
+        contains the accumulated weight of particles mapped to that location.
+    """
     if robot_position is None:
         robot_position = np.zeros(2, dtype=np.float64)
     if robot_orientation is None:

@@ -26,6 +26,31 @@ def scan_to_image(
     hit_value: int = 255,
     background_value: int = 0,
 ) -> NDArray[np.uint8]:
+    """Converts a 1D range scan into a 2D image representation.
+
+    The function projects range measurements (distances) into Cartesian space
+    using the given angle parameters, then maps these points into an image
+    frame. Hit locations are assigned a specified value in the image.
+
+    Exactly one of `meters_per_pixel`, `width_meters`, or `height_meters` must
+    be specified to define the spatial scale of the image.
+
+    Args:
+        distances: A 1D array of range measurements.
+        angle_min: Starting angle of the scan in radians.
+        angle_increment: Angular increment between consecutive measurements.
+        width: Width of the output image in pixels.
+        height: Height of the output image in pixels.
+        meters_per_pixel: Spatial resolution of the image in meters per pixel.
+        width_meters: Width of the image in meters.
+        height_meters: Height of the image in meters.
+        hit_value: Pixel value assigned to valid scan hits.
+        background_value: Pixel value for all other locations.
+
+    Returns:
+        A (width, height) array representing the image, with hit locations
+        marked by `hit_value` and all other pixels set to `background_value`.
+    """
     num_angles = distances.shape[0]
     angles = angle_min + np.arange(num_angles) * angle_increment
 

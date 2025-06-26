@@ -30,6 +30,32 @@ def crop_map_image(
     height_meters: float | None = None,
     interpolation_flags: int = cv2.INTER_AREA,
 ) -> NDArray:
+    """Crops and resamples a section of a map image centered on the robot.
+
+    The function extracts a region from a global map image based on the robot's
+    position and orientation, using affine transformations to align and scale
+    the output. The cropped image is resampled to the specified output size.
+
+    Exactly one of `meters_per_pixel`, `width_meters`, or `height_meters` must
+    be specified to define the spatial scale of the output image.
+
+    Args:
+        map_image: The input map as a 2D array.
+        map_resolution: Resolution of the map in meters per pixel.
+        map_origin: Origin of the map in world coordinates.
+        width: Width of the output image in pixels.
+        height: Height of the output image in pixels.
+        robot_position: Robot's position in world coordinates.
+        robot_orientation: Rotation matrix representing robot orientation.
+        meters_per_pixel: Spatial resolution of the output in meters per pixel.
+        width_meters: Width of the output image in meters.
+        height_meters: Height of the output image in meters.
+        interpolation_flags: OpenCV interpolation flags for resampling.
+
+    Returns:
+        A (height, width) array representing the cropped and resampled region
+        of the map centered on the robot.
+    """
     if robot_position is None:
         robot_position = np.zeros(2, dtype=np.float64)
     if robot_orientation is None:
