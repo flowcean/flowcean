@@ -25,20 +25,17 @@ class DetectDelocalizations(Transform):
             self.counter_column,
             self.name,
         )
+        compute_difference = pl.element().struct.with_fields(
+            pl.field("value").struct.field("data").diff().alias("value"),
+        )
+        filter_events = (
+            pl.element()
+            .struct.field("time")
+            .filter(pl.element().struct.field("value") > 0)
+        )
         return data.with_columns(
             pl.col(self.counter_column)
-            .list.eval(
-                pl.element().struct.with_fields(
-                    pl.field("value")
-                    .struct.field("data")
-                    .diff()
-                    .alias("value"),
-                ),
-            )
-            .list.eval(
-                pl.element()
-                .struct.field("time")
-                .filter(pl.element().struct.field("value") > 0),
-            )
+            .list.eval(compute_difference)
+            .list.eval(filter_events)
             .alias(self.name),
         )
