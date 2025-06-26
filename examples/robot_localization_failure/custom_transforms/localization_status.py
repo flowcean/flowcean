@@ -52,7 +52,7 @@ class LocalizationStatus(Transform):
                     pl.field("value")
                     .struct.with_fields(
                         self._position_error(),
-                        self._orientation_error(),
+                        self._heading_error(),
                     )
                     .struct.with_fields(self._is_delocalized()),
                 ),
@@ -85,7 +85,7 @@ class LocalizationStatus(Transform):
             .alias("position_error")
         )
 
-    def _orientation_error(self) -> pl.Expr:
+    def _heading_error(self) -> pl.Expr:
         return (
             pl.struct(
                 pl.field(
@@ -113,18 +113,18 @@ class LocalizationStatus(Transform):
                     f"{self.estimation}/pose.pose.orientation.w",
                 ).alias("estimated_w"),
             )
-            .map_elements(_calculate_yaw_error, return_dtype=pl.Float32)
-            .alias("yaw_error")
+            .map_elements(_calculate_heading_error, return_dtype=pl.Float32)
+            .alias("heading_error")
         )
 
     def _is_delocalized(self) -> pl.Expr:
         return (
             (pl.field("position_error") > self.position_threshold)
-            | (pl.field("yaw_error") > self.heading_threshold)
+            | (pl.field("heading_error") > self.heading_threshold)
         ).alias("is_delocalized")
 
 
-def _calculate_yaw_error(sample: dict[str, float]) -> float:
+def _calculate_heading_error(sample: dict[str, float]) -> float:
     try:
         ground_truth = Rotation.from_quat(
             [
