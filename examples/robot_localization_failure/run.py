@@ -15,19 +15,10 @@ from flowcean.ros.rosbag import RosbagLoader
 
 logger = logging.getLogger(__name__)
 
-WS = Path(__file__).resolve().parent
-ROSBAG = WS / "recordings/rec_20250704_173434"
-ROS_MESSAGE_TYPES = [
-    WS / "ros_msgs/LaserScan.msg",
-    WS / "ros_msgs/nav2_msgs/msg/Particle.msg",
-    WS / "ros_msgs/nav2_msgs/msg/ParticleCloud.msg",
-]
-
-
-flowcean.cli.initialize_logging(log_level=logging.DEBUG)
+config = flowcean.cli.initialize()
 
 rosbag = RosbagLoader(
-    path=ROSBAG,
+    path=config.rosbag.path,
     topics={
         "/amcl_pose": [
             "pose.pose.position.x",
@@ -69,7 +60,7 @@ rosbag = RosbagLoader(
         "/delocalizations": ["data"],
         "/particle_cloud": ["particles"],
     },
-    message_paths=ROS_MESSAGE_TYPES,
+    message_paths=config.rosbag.message_paths,
 )
 logger.info("Loaded data from ROS bag")
 
@@ -101,12 +92,12 @@ data = (
         time_series="measurements",
         ground_truth="/momo/pose",
         estimation="/amcl_pose",
-        position_threshold=0.4,
-        heading_threshold=0.4,
+        position_threshold=config.localization.position_threshold,
+        heading_threshold=config.localization.heading_threshold,
     )
 )
 
 logger.info("Writing processed data to Parquet file...")
-out_path = ROSBAG.with_suffix(".processed.parquet")
+out_path = Path(config.rosbag.path).with_suffix(".processed.parquet")
 data.observe().sink_parquet(out_path)
 logger.info("Data processing complete. Processed data saved to %s", out_path)
