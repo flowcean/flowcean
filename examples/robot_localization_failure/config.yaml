@@ -1,5 +1,5 @@
 rosbag:
-  path: recordings/rec_20250618_113817
+  path: ???
   message_paths:
     - ros_msgs/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
