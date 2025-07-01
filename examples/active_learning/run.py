@@ -120,7 +120,7 @@ class MyLearner(ActiveLearner):
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    flowcean.cli.initialize()
 
     environment = MyEnvironment(
         initial_state=0.0,
