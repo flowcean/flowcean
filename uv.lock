@@ -1226,6 +1226,7 @@ dependencies = [
     { name = "joblib" },
     { name = "lightning" },
     { name = "numpy" },
+    { name = "opcua" },
     { name = "polars", extra = ["xlsxwriter"] },
     { name = "protobuf" },
     { name = "river" },
@@ -1288,6 +1289,7 @@ requires-dist = [
     { name = "mosaik", marker = "extra == 'palaestrai'", specifier = ">=3.5.0" },
     { name = "mosaik-api-v3", marker = "extra == 'palaestrai'", specifier = ">=3.0.13" },
     { name = "numpy", specifier = ">=1.26.4" },
+    { name = "opcua", specifier = ">=0.98.13" },
     { name = "palaestrai", marker = "extra == 'palaestrai'", specifier = ">=3.5.8" },
     { name = "palaestrai-agents", marker = "extra == 'palaestrai'", specifier = ">=3.5.4" },
     { name = "polars", extras = ["xlsxwriter"], specifier = ">=1.25.0" },
@@ -3016,6 +3018,17 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "flowcean", editable = "." }]
+
+[[package]]
+name = "opcua"
+version = "0.98.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "lxml" },
+    { name = "python-dateutil" },
+    { name = "pytz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/77/b1/5788cf02d4527ec816998ecd8b066242877f1b1ca6fcc07d7d4c0317fd04/opcua-0.98.13.tar.gz", hash = "sha256:3352f30b5fed863146a82778aaf09faa5feafcb9dd446a4f49ff34c0c3ebbde6", size = 572837, upload-time = "2021-03-03T10:40:31.607Z" }
 
 [[package]]
 name = "opencv-python"
