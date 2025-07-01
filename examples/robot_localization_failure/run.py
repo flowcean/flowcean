@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-
 import logging
 from pathlib import Path
 
+import polars as pl
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
@@ -10,24 +10,16 @@ from custom_transforms.slice_time_series import SliceTimeSeries
 from custom_transforms.zero_order_hold_matching import ZeroOrderHold
 
 import flowcean.cli
+from flowcean.core.transform import Lambda
 from flowcean.polars.transforms.drop import Drop
 from flowcean.ros.rosbag import RosbagLoader
 
 logger = logging.getLogger(__name__)
 
-WS = Path(__file__).resolve().parent
-ROSBAG = WS / "recordings/rec_20250618_113817"
-ROS_MESSAGE_TYPES = [
-    WS / "ros_msgs/LaserScan.msg",
-    WS / "ros_msgs/nav2_msgs/msg/Particle.msg",
-    WS / "ros_msgs/nav2_msgs/msg/ParticleCloud.msg",
-]
-
-
-flowcean.cli.initialize_logging(log_level=logging.DEBUG)
+config = flowcean.cli.initialize()
 
 rosbag = RosbagLoader(
-    path=ROSBAG,
+    path=config.rosbag.path,
     topics={
         "/amcl_pose": [
             "pose.pose.position.x",
@@ -69,7 +61,7 @@ rosbag = RosbagLoader(
         "/delocalizations": ["data"],
         "/particle_cloud": ["particles"],
     },
-    message_paths=ROS_MESSAGE_TYPES,
+    message_paths=config.rosbag.message_paths,
 )
 logger.info("Loaded data from ROS bag")
 
@@ -77,6 +69,13 @@ data = (
     rosbag
     # collapse map time series to a single value
     | Collapse("/map", element=0)
+    | Lambda(
+        lambda data: data.with_columns(
+            pl.col("/map").struct.with_fields(
+                pl.field("data").list.eval(pl.element() != 0),
+            ),
+        ),
+    )
     # align all time series features using zero-order hold
     | ZeroOrderHold(
         features=[
@@ -101,12 +100,12 @@ data = (
         time_series="measurements",
         ground_truth="/momo/pose",
         estimation="/amcl_pose",
-        position_threshold=0.4,
-        heading_threshold=0.4,
+        position_threshold=config.localization.position_threshold,
+        heading_threshold=config.localization.heading_threshold,
     )
 )
 
 logger.info("Writing processed data to Parquet file...")
-out_path = ROSBAG.with_suffix(".processed.parquet")
+out_path = Path(config.rosbag.path).with_suffix(".processed.parquet")
 data.observe().sink_parquet(out_path)
 logger.info("Data processing complete. Processed data saved to %s", out_path)

@@ -95,7 +95,7 @@ class OneTank(OdeSystem[TankState]):
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    flowcean.cli.initialize()
 
     system = OneTank(
         area=5.0,
