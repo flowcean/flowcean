@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    flowcean.cli.initialize()
     time_start = time.time()
 
     data = (

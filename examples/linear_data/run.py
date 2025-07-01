@@ -20,7 +20,7 @@ N = 1_000
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    flowcean.cli.initialize()
 
     data = DataFrame(
         pl.DataFrame(
