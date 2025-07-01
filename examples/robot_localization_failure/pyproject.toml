@@ -8,6 +8,9 @@ dependencies = [
   "opencv-python>=4.11.0.86",
   "pillow>=11.1.0",
   "numba>=0.61.0",
+  "pyqt6>=6.9.0",
+  "plotly>=6.0.1",
+  "dash>=3.0.4",
 ]
 
 [tool.pyright]
