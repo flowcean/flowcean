@@ -6,12 +6,8 @@ experiments.
 """
 
 __all__ = [
-    "DEFAULT_RUNTIME_CONFIGURATION_PATH",
-    "initialize_logging",
+    "initialize",
 ]
 
 
-from .logging import (
-    DEFAULT_RUNTIME_CONFIGURATION_PATH,
-    initialize_logging,
-)
+from .config import initialize

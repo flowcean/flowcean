@@ -9,7 +9,7 @@ import polars as pl
 from numpy.typing import NDArray
 from typing_extensions import Self, override
 
-from flowcean.cli.logging import initialize_logging
+from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
 from flowcean.ode import (
     DifferentialMode,
@@ -103,7 +103,7 @@ def randomly_changing_values(
 
 
 def main() -> None:
-    initialize_logging()
+    initialize()
     initialize_random(seed=42)
     target_temperatures = (
         (0.1 * i, temperature)

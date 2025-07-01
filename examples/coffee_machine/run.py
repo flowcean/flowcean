@@ -22,7 +22,7 @@ from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    flowcean.cli.initialize()
 
     data = ChainedOfflineEnvironments(
         [

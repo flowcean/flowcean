@@ -20,7 +20,7 @@ logger = logging.getLogger("energy_example")
 
 
 def run_active() -> None:
-    flowcean.cli.initialize_logging(log_level="INFO")
+    flowcean.cli.initialize()
     environment = EnergySystemActive(
         "midasmv_der",
         "my_results.csv",
