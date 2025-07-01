@@ -8,6 +8,7 @@ from .metrics.classification import (
 from .metrics.regression import (
     MaxError,
     MeanAbsoluteError,
+    MeanAbsolutePercentageError,
     MeanSquaredError,
     R2Score,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "FBetaScore",
     "MaxError",
     "MeanAbsoluteError",
+    "MeanAbsolutePercentageError",
     "MeanSquaredError",
     "PrecisionScore",
     "R2Score",
