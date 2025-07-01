@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-
 import logging
 from pathlib import Path
 
+import polars as pl
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
@@ -10,6 +10,7 @@ from custom_transforms.slice_time_series import SliceTimeSeries
 from custom_transforms.zero_order_hold_matching import ZeroOrderHold
 
 import flowcean.cli
+from flowcean.core.transform import Lambda
 from flowcean.polars.transforms.drop import Drop
 from flowcean.ros.rosbag import RosbagLoader
 
@@ -68,6 +69,13 @@ data = (
     rosbag
     # collapse map time series to a single value
     | Collapse("/map", element=0)
+    | Lambda(
+        lambda data: data.with_columns(
+            pl.col("/map").struct.with_fields(
+                pl.field("data").list.eval(pl.element() != 0),
+            ),
+        ),
+    )
     # align all time series features using zero-order hold
     | ZeroOrderHold(
         features=[

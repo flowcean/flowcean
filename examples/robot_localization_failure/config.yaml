@@ -7,3 +7,9 @@ rosbag:
 localization:
   position_threshold: 0.4
   heading_threshold: 0.4
+architecture:
+  image_size: 64
+  width_meters: 15.0
+learning:
+  batch_size: 32
+  learning_rate: 0.0001
