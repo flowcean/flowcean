@@ -16,7 +16,7 @@ from flowcean.ros.rosbag import RosbagLoader
 logger = logging.getLogger(__name__)
 
 WS = Path(__file__).resolve().parent
-ROSBAG = WS / "recordings/rec_20250618_113817"
+ROSBAG = WS / "recordings/rec_20250704_173434"
 ROS_MESSAGE_TYPES = [
     WS / "ros_msgs/LaserScan.msg",
     WS / "ros_msgs/nav2_msgs/msg/Particle.msg",
