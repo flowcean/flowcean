@@ -108,7 +108,7 @@ def compute_particle_image(
     )
 
 
-data_source = "/home/workstation/ros2_ws/src/flowcean/examples/robot_localization_failure/recordings/rec_20250624_131033.processed.parquet"
+data_source = "/recordings/rec_20250624_131033.processed.parquet"
 data = (
     pl.read_parquet(data_source)
     .with_columns(
