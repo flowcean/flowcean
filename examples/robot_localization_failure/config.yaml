@@ -1,0 +1,9 @@
+rosbag:
+  path: ???
+  message_paths:
+    - ros_msgs/LaserScan.msg
+    - ros_msgs/nav2_msgs/msg/Particle.msg
+    - ros_msgs/nav2_msgs/msg/ParticleCloud.msg
+localization:
+  position_threshold: 0.4
+  heading_threshold: 0.4
