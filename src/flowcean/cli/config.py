@@ -40,8 +40,10 @@ DEFAULT_CONFIG = {
 def load_experiment_config(**script_config: Any) -> DictConfig | ListConfig:
     """Load and merge experiment configuration.
 
-    Merges default settings, user config from XDG directory, project config,
-    CLI overrides, and script-provided arguments into a single config.
+    Merges configuration sources into a single object, with the following
+    precedence (lowest to highest): default settings, user config from XDG
+    directory, project config (`config.yaml` or specified via CLI), CLI
+    arguments, and script-provided overrides.
 
     Args:
         **script_config: Additional configuration overrides.
