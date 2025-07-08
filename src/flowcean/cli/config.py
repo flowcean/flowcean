@@ -25,7 +25,7 @@ def xdg_config_home() -> Path:
     return _path_from_env("XDG_CONFIG_HOME", Path.home() / ".config")
 
 
-def load_config(path: Path) -> DictConfig | ListConfig:
+def _load_config(path: Path) -> DictConfig | ListConfig:
     return OmegaConf.load(path) if path.exists() else OmegaConf.create()
 
 
@@ -38,15 +38,26 @@ DEFAULT_CONFIG = {
 
 
 def load_experiment_config(**script_config: Any) -> DictConfig | ListConfig:
+    """Load and merge experiment configuration.
+
+    Merges default settings, user config from XDG directory, project config,
+    CLI overrides, and script-provided arguments into a single config.
+
+    Args:
+        **script_config: Additional configuration overrides.
+
+    Returns:
+        The merged configuration object.
+    """
     cli = OmegaConf.from_cli()
     if "conf" in cli:
         experiment = OmegaConf.load(cli.pop("conf"))
     else:
-        experiment = load_config(Path.cwd() / "config.yaml")
+        experiment = _load_config(Path.cwd() / "config.yaml")
 
     return OmegaConf.unsafe_merge(
         OmegaConf.create(DEFAULT_CONFIG),
-        load_config(xdg_config_home() / "flowcean" / "config.yaml"),
+        _load_config(xdg_config_home() / "flowcean" / "config.yaml"),
         experiment,
         cli,
         OmegaConf.create(script_config),
@@ -54,6 +65,16 @@ def load_experiment_config(**script_config: Any) -> DictConfig | ListConfig:
 
 
 def initialize(**kwargs: Any) -> DictConfig | ListConfig:
+    """Initialize the experiment environment.
+
+    Loads the configuration and sets up logging according to its settings.
+
+    Args:
+        **kwargs: Additional configuration overrides.
+
+    Returns:
+        The initialized configuration object.
+    """
     conf = load_experiment_config(**kwargs)
     logging.basicConfig(**conf.logging)
     return conf
