@@ -1,0 +1,6 @@
+outs:
+- md5: f567e28097bc1d53d349c109e3b4f121.dir
+  size: 70422954850
+  nfiles: 48
+  hash: md5
+  path: rec_20250704_173434_sliced
