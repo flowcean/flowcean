@@ -69,8 +69,8 @@ jobs:
           java-version: '21'
           maven-version: '3.9.3'
 
-      - name: Verify Maven
-        run: mvn --version
+      - name: Verify java
+        run: java --version
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v3
