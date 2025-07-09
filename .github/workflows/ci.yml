@@ -67,7 +67,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-          maven-version: '3.9.3'
+          cache: 'maven'
 
       - name: Verify java
         run: java --version
