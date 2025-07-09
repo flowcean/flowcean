@@ -62,8 +62,9 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# MkDocs documentation
+# Documentation
 site
+docs/examples/java-automata/
 
 # PyBuilder
 target/

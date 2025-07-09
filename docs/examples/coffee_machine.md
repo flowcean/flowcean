@@ -3,6 +3,7 @@
 This example shows how to train a model to predict the behavior of an automaton.
 Inspired by the work of Steffen et al.[^1], we consider a simple coffee machine.
 LearnLib[^2], a framework for automata learning written in Java, is used for the inference of the automaton.
+Please find the documentation of the Java project [here](./java-automata/index.html).
 
 ## Run this example
 

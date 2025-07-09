@@ -25,10 +25,12 @@ test:
 
 docs:
   @echo "🚀 Building documentation: Running mkdocs"
+  @mvn javadoc:javadoc -f ./java/AutomataLearner/pom.xml -Djavadoc.dest.dir=../../../../../docs/examples/java-automata/
   @uv run mkdocs build --strict
 
 docs-serve:
   @echo "🚀 Serving documentation: Running mkdocs"
+  @mvn javadoc:javadoc -f ./java/AutomataLearner/pom.xml -Djavadoc.dest.dir=../../../../../docs/examples/java-automata/
   @uv run mkdocs serve
 
 examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
