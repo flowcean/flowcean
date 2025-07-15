@@ -1,9 +1,16 @@
 rosbag:
-  path: ???
+  path: recordings/test_folder
   message_paths:
-    - ros_msgs/LaserScan.msg
+    - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
     - ros_msgs/nav2_msgs/msg/ParticleCloud.msg
 localization:
   position_threshold: 0.4
   heading_threshold: 0.4
+architecture:
+  image_size: 64
+  width_meters: 15.0
+learning:
+  batch_size: 32
+  learning_rate: 0.0001
+  epochs: 2
