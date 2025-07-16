@@ -1,39 +1,12 @@
-import logging
-import os
-import sys
-from pathlib import Path
-
-import lightning
 import numpy as np
 import polars as pl
-import torch
-from architectures.cnn import CNN
 from custom_transforms.map_image import crop_map_image
 from custom_transforms.particle_cloud_image import particles_to_image
 from custom_transforms.scan_image import scan_to_image
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
 from torch import Tensor
-from torch.utils.data import ConcatDataset, DataLoader, Dataset
-
-import flowcean.cli
-from flowcean.core.transform import Lambda
-from flowcean.polars import DataFrame
-
-_ = pl
-
-logger = logging.getLogger(__name__)
-
-config = flowcean.cli.initialize()
-rosbag_dir = Path(config.rosbag.path)
-
-parquet_files = list(rosbag_dir.glob("*.processed.parquet"))
-if not parquet_files:
-    msg = f"No processed Parquet files found in {rosbag_dir}. Check the path."
-    logger.error(msg)
-    sys.exit(1)
-msg = f"Found {len(parquet_files)} processed Parquet files in {rosbag_dir}"
-logger.info(msg)
+from torch.utils.data import Dataset
 
 
 class FeatureImagesData(Dataset):
@@ -180,51 +153,3 @@ def compute_particle_image(
         robot_position=position,
         robot_orientation=orientation,
     )
-
-
-datasets = []
-for parquet_path in parquet_files:
-    msg = f"Loading Parquet file: {parquet_path}"
-    logger.info(msg)
-    try:
-        environment = DataFrame.from_parquet(parquet_path)
-    except Exception as e:
-        msg = f"Error loading Parquet file {parquet_path}: {e}"
-        logger.exception(msg)
-        continue
-    environment.with_transform(
-        Lambda(
-            lambda data: data.explode("measurements")
-            .unnest("measurements")
-            .unnest("value"),
-        ),
-    )
-    data = environment.observe().collect()
-    dataset = FeatureImagesData(
-        data,
-        image_size=config.architecture.image_size,
-        width_meters=config.architecture.width_meters,
-    )
-    datasets.append(dataset)
-
-combined_dataset = ConcatDataset(datasets)
-msg = f"Combined dataset size: {len(combined_dataset)} samples"
-logger.info(msg)
-
-robot_data = DataLoader(
-    combined_dataset,
-    batch_size=config.learning.batch_size,
-    num_workers=os.cpu_count() or 0,
-)
-
-module = CNN(
-    image_size=config.architecture.image_size,
-    in_channels=3,
-    learning_rate=config.learning.learning_rate,
-)
-trainer = lightning.Trainer(max_epochs=config.learning.epochs)
-trainer.fit(module, robot_data)
-out_path = "models/" + rosbag_dir.name + ".pt"
-msg = f"Saving model to {out_path}"
-logger.info(msg)
-torch.save(module.state_dict(), out_path)
