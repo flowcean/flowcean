@@ -19,6 +19,8 @@ from torch.utils.data import ConcatDataset, DataLoader
 
 import flowcean.cli
 from flowcean.core.transform import Lambda
+from flowcean.polars import DataFrame
+from flowcean.polars.environments.train_test_split import TrainTestSplit
 from flowcean.polars.transforms.drop import Drop
 from flowcean.ros.rosbag import RosbagLoader
 
@@ -142,7 +144,8 @@ def main() -> None:
     msg = f"Found {len(parquet_files)} processed Parquet files in {rosbag_dir}"
     logger.info(msg)
 
-    datasets = []
+    train_datasets = []
+    test_datasets = []
     for parquet_path in parquet_files:
         msg = f"Loading Parquet file: {parquet_path}"
         logger.info(msg)
@@ -153,43 +156,55 @@ def main() -> None:
                 .unnest("measurements")
                 .unnest("value")
             )
-            dataset = FeatureImagesData(
-                data,
+            # Split the data into train and test
+            data = DataFrame(data)
+            train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
+            train_images = FeatureImagesData(
+                train.data.collect(),
                 image_size=config.architecture.image_size,
                 width_meters=config.architecture.width_meters,
             )
-            datasets.append(dataset)
+            train_datasets.append(train_images)
+            test_images = FeatureImagesData(
+                test.data.collect(),
+                image_size=config.architecture.image_size,
+                width_meters=config.architecture.width_meters,
+            )
+            test_datasets.append(test_images)
         except Exception as e:
             msg = f"Error loading {parquet_path}: {e}"
             logger.exception(msg)
             continue
 
-    if not datasets:
+    if not train_datasets:
         logger.error("No datasets loaded, cannot proceed with training.")
         sys.exit(1)
 
-    # Combine datasets and train
-    combined_dataset = ConcatDataset(datasets)
-
-    robot_data = DataLoader(
-        combined_dataset,
+    combined_training_dataset = ConcatDataset(train_datasets)
+    combined_test_dataset = ConcatDataset(test_datasets)
+    train_loader = DataLoader(
+        combined_training_dataset,
         batch_size=config.learning.batch_size,
         num_workers=os.cpu_count() or 0,
     )
-
-    module = CNN(
+    test_loader = DataLoader(
+        combined_test_dataset,
+        batch_size=config.learning.batch_size,
+        num_workers=os.cpu_count() or 0,
+    )
+    model = CNN(
         image_size=config.architecture.image_size,
         in_channels=3,
         learning_rate=config.learning.learning_rate,
     )
     trainer = lightning.Trainer(max_epochs=config.learning.epochs)
-    trainer.fit(module, robot_data)
+    trainer.fit(model, train_loader, test_loader)
 
     # Save the model
     out_path = f"models/{rosbag_dir.name}.pt"
     msg = f"Saving model to {out_path}"
     logger.info(msg)
-    torch.save(module.state_dict(), out_path)
+    torch.save(model.state_dict(), out_path)
 
 
 def get_rosbag_paths(
