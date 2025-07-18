@@ -57,19 +57,58 @@ class FeatureImagesData(Dataset):
         return len(self.data)
 
 
+class FeatureImagesPredictionData(Dataset):
+    def __init__(
+        self,
+        data: pl.DataFrame,
+        image_size: int,
+        width_meters: float,
+    ) -> None:
+        self.data = data
+        self.image_size = image_size
+        self.width_meters = width_meters
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, index: int) -> Tensor:
+        row = self.data.row(index, named=True)
+        map_image = compute_map_image(
+            row,
+            image_width=self.image_size,
+            image_height=self.image_size,
+            width_meters=self.width_meters,
+        )
+        scan_image = compute_scan_image(
+            row,
+            image_width=self.image_size,
+            image_height=self.image_size,
+            width_meters=self.width_meters,
+        )
+        particle_image = compute_particle_image(
+            row,
+            image_width=self.image_size,
+            image_height=self.image_size,
+            width_meters=self.width_meters,
+        )
+        inputs = np.stack([map_image, scan_image, particle_image], axis=0)
+        return Tensor(inputs)
+
+
 def extract_position_and_orientation(x: dict) -> tuple[NDArray, NDArray]:
+    amcl_pose = x["/amcl_pose"]["pose"]
     position = np.array(
         [
-            x["/amcl_pose/pose.pose.position.x"],
-            x["/amcl_pose/pose.pose.position.y"],
+            amcl_pose["position.x"],
+            amcl_pose["position.y"],
         ],
     )
     orientation = Rotation.from_quat(
         (
-            x["/amcl_pose/pose.pose.orientation.x"],
-            x["/amcl_pose/pose.pose.orientation.y"],
-            x["/amcl_pose/pose.pose.orientation.z"],
-            x["/amcl_pose/pose.pose.orientation.w"],
+            amcl_pose["orientation.x"],
+            amcl_pose["orientation.y"],
+            amcl_pose["orientation.z"],
+            amcl_pose["orientation.w"],
         ),
     ).as_matrix()[:2, :2]
     return (position, orientation)
@@ -81,22 +120,22 @@ def compute_map_image(
     image_height: int,
     width_meters: float,
 ) -> NDArray:
+    map_data = x["/map"]
     map_image = (
-        np.array(x["/map"]["data"])
+        np.array(map_data["data"])
         .reshape(
-            (-1, x["/map"]["info.width"]),
+            (-1, map_data["info.width"]),
         )
         .astype(np.uint8)
     )
     position, orientation = extract_position_and_orientation(x)
-    map_resolution = x["/map"]["info.resolution"]
+    map_resolution = map_data["info.resolution"]
     map_origin = np.array(
         [
-            x["/map"]["info.origin.position.x"],
-            x["/map"]["info.origin.position.y"],
+            map_data["info.origin.position.x"],
+            map_data["info.origin.position.y"],
         ],
     )
-
     return crop_map_image(
         map_image,
         robot_position=position,
@@ -115,11 +154,12 @@ def compute_scan_image(
     image_height: int,
     width_meters: float,
 ) -> NDArray:
-    distances = np.array(x["/scan/ranges"])
+    scan = x["/scan"]
+    distances = np.array(scan["ranges"])
     return scan_to_image(
         distances,
-        angle_min=x["/scan/angle_min"],
-        angle_increment=x["/scan/angle_increment"],
+        angle_min=scan["angle_min"],
+        angle_increment=scan["angle_increment"],
         width=image_width,
         height=image_height,
         width_meters=width_meters,
@@ -134,6 +174,7 @@ def compute_particle_image(
     image_height: int,
     width_meters: float,
 ) -> NDArray:
+    particle_cloud = x["/particle_cloud"]
     particles = np.array(
         [
             [
@@ -141,7 +182,7 @@ def compute_particle_image(
                 particle["pose"]["position"]["y"],
                 particle["weight"],
             ]
-            for particle in x["/particle_cloud/particles"]
+            for particle in particle_cloud  # Assumes particle_cloud is a list of particle dicts
         ],
     )
     position, orientation = extract_position_and_orientation(x)
