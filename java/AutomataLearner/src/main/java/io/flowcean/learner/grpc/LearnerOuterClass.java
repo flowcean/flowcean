@@ -299,7 +299,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>
         getInputsList();
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
@@ -312,7 +312,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getInputsOrBuilderList();
     /**
      * <code>repeated .TimeSeries inputs = 1;</code>
@@ -323,7 +323,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>
         getOutputsList();
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
@@ -336,7 +336,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getOutputsOrBuilderList();
     /**
      * <code>repeated .TimeSeries outputs = 2;</code>
@@ -465,7 +465,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSeries inputs = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getInputsOrBuilderList() {
       return inputs_;
     }
@@ -505,7 +505,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSeries outputs = 2;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getOutputsOrBuilderList() {
       return outputs_;
     }
@@ -869,7 +869,7 @@ public final class LearnerOuterClass {
               inputsBuilder_ = null;
               inputs_ = other.inputs_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              inputsBuilder_ = 
+              inputsBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getInputsFieldBuilder() : null;
             } else {
@@ -895,7 +895,7 @@ public final class LearnerOuterClass {
               outputsBuilder_ = null;
               outputs_ = other.outputs_;
               bitField0_ = (bitField0_ & ~0x00000002);
-              outputsBuilder_ = 
+              outputsBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getOutputsFieldBuilder() : null;
             } else {
@@ -1128,7 +1128,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
            getInputsOrBuilderList() {
         if (inputsBuilder_ != null) {
           return inputsBuilder_.getMessageOrBuilderList();
@@ -1154,12 +1154,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries inputs = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder>
            getInputsBuilderList() {
         return getInputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
           getInputsFieldBuilder() {
         if (inputsBuilder_ == null) {
           inputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1368,7 +1368,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
            getOutputsOrBuilderList() {
         if (outputsBuilder_ != null) {
           return outputsBuilder_.getMessageOrBuilderList();
@@ -1394,12 +1394,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries outputs = 2;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder>
            getOutputsBuilderList() {
         return getOutputsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
           getOutputsFieldBuilder() {
         if (outputsBuilder_ == null) {
           outputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1472,7 +1472,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries>
         getPredictionsList();
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
@@ -1485,7 +1485,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getPredictionsOrBuilderList();
     /**
      * <code>repeated .TimeSeries predictions = 1;</code>
@@ -1629,7 +1629,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSeries predictions = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
         getPredictionsOrBuilderList() {
       return predictions_;
     }
@@ -2017,7 +2017,7 @@ public final class LearnerOuterClass {
               predictionsBuilder_ = null;
               predictions_ = other.predictions_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              predictionsBuilder_ = 
+              predictionsBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getPredictionsFieldBuilder() : null;
             } else {
@@ -2253,7 +2253,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
            getPredictionsOrBuilderList() {
         if (predictionsBuilder_ != null) {
           return predictionsBuilder_.getMessageOrBuilderList();
@@ -2279,12 +2279,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSeries predictions = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder>
            getPredictionsBuilderList() {
         return getPredictionsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeries.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSeriesOrBuilder>
           getPredictionsFieldBuilder() {
         if (predictionsBuilder_ == null) {
           predictionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -2385,7 +2385,7 @@ public final class LearnerOuterClass {
        * <code>.StatusMessage status = 2;</code>
        */
       public io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder getStatusBuilder() {
-        
+
         onChanged();
         return getStatusFieldBuilder().getBuilder();
       }
@@ -2404,7 +2404,7 @@ public final class LearnerOuterClass {
        * <code>.StatusMessage status = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage, io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder, io.flowcean.learner.grpc.LearnerOuterClass.StatusMessageOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage, io.flowcean.learner.grpc.LearnerOuterClass.StatusMessage.Builder, io.flowcean.learner.grpc.LearnerOuterClass.StatusMessageOrBuilder>
           getStatusFieldBuilder() {
         if (statusBuilder_ == null) {
           statusBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2476,7 +2476,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSample samples = 1;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample>
         getSamplesList();
     /**
      * <code>repeated .TimeSample samples = 1;</code>
@@ -2489,7 +2489,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .TimeSample samples = 1;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
         getSamplesOrBuilderList();
     /**
      * <code>repeated .TimeSample samples = 1;</code>
@@ -2605,7 +2605,7 @@ public final class LearnerOuterClass {
      * <code>repeated .TimeSample samples = 1;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
         getSamplesOrBuilderList() {
       return samples_;
     }
@@ -2940,7 +2940,7 @@ public final class LearnerOuterClass {
               samplesBuilder_ = null;
               samples_ = other.samples_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              samplesBuilder_ = 
+              samplesBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getSamplesFieldBuilder() : null;
             } else {
@@ -3173,7 +3173,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSample samples = 1;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
            getSamplesOrBuilderList() {
         if (samplesBuilder_ != null) {
           return samplesBuilder_.getMessageOrBuilderList();
@@ -3199,12 +3199,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .TimeSample samples = 1;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder>
            getSamplesBuilderList() {
         return getSamplesFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.TimeSample, io.flowcean.learner.grpc.LearnerOuterClass.TimeSample.Builder, io.flowcean.learner.grpc.LearnerOuterClass.TimeSampleOrBuilder>
           getSamplesFieldBuilder() {
         if (samplesBuilder_ == null) {
           samplesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -3784,7 +3784,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setTime(double value) {
-        
+
         time_ = value;
         onChanged();
         return this;
@@ -3794,7 +3794,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearTime() {
-        
+
         time_ = 0D;
         onChanged();
         return this;
@@ -3887,7 +3887,7 @@ public final class LearnerOuterClass {
        * <code>.DataField value = 2;</code>
        */
       public io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder getValueBuilder() {
-        
+
         onChanged();
         return getValueFieldBuilder().getBuilder();
       }
@@ -3906,7 +3906,7 @@ public final class LearnerOuterClass {
        * <code>.DataField value = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.DataField, io.flowcean.learner.grpc.LearnerOuterClass.DataField.Builder, io.flowcean.learner.grpc.LearnerOuterClass.DataFieldOrBuilder>
           getValueFieldBuilder() {
         if (valueBuilder_ == null) {
           valueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -4180,7 +4180,7 @@ public final class LearnerOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (fieldCase_ == 3) {
@@ -4200,7 +4200,7 @@ public final class LearnerOuterClass {
         ref = field_;
       }
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         if (fieldCase_ == 3) {
@@ -4708,7 +4708,7 @@ public final class LearnerOuterClass {
           ref = field_;
         }
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           if (fieldCase_ == 3) {
@@ -4833,7 +4833,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .Message messages = 2;</code>
      */
-    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.Message> 
+    java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.Message>
         getMessagesList();
     /**
      * <code>repeated .Message messages = 2;</code>
@@ -4846,7 +4846,7 @@ public final class LearnerOuterClass {
     /**
      * <code>repeated .Message messages = 2;</code>
      */
-    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder> 
+    java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder>
         getMessagesOrBuilderList();
     /**
      * <code>repeated .Message messages = 2;</code>
@@ -5005,7 +5005,7 @@ public final class LearnerOuterClass {
      * <code>repeated .Message messages = 2;</code>
      */
     @java.lang.Override
-    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder> 
+    public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder>
         getMessagesOrBuilderList() {
       return messages_;
     }
@@ -5399,7 +5399,7 @@ public final class LearnerOuterClass {
               messagesBuilder_ = null;
               messages_ = other.messages_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              messagesBuilder_ = 
+              messagesBuilder_ =
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getMessagesFieldBuilder() : null;
             } else {
@@ -5454,7 +5454,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setStatusValue(int value) {
-        
+
         status_ = value;
         onChanged();
         return this;
@@ -5478,7 +5478,7 @@ public final class LearnerOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         status_ = value.getNumber();
         onChanged();
         return this;
@@ -5488,7 +5488,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearStatus() {
-        
+
         status_ = 0;
         onChanged();
         return this;
@@ -5689,7 +5689,7 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .Message messages = 2;</code>
        */
-      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder> 
+      public java.util.List<? extends io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder>
            getMessagesOrBuilderList() {
         if (messagesBuilder_ != null) {
           return messagesBuilder_.getMessageOrBuilderList();
@@ -5715,12 +5715,12 @@ public final class LearnerOuterClass {
       /**
        * <code>repeated .Message messages = 2;</code>
        */
-      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.Message.Builder> 
+      public java.util.List<io.flowcean.learner.grpc.LearnerOuterClass.Message.Builder>
            getMessagesBuilderList() {
         return getMessagesFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilderV3<
-          io.flowcean.learner.grpc.LearnerOuterClass.Message, io.flowcean.learner.grpc.LearnerOuterClass.Message.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder> 
+          io.flowcean.learner.grpc.LearnerOuterClass.Message, io.flowcean.learner.grpc.LearnerOuterClass.Message.Builder, io.flowcean.learner.grpc.LearnerOuterClass.MessageOrBuilder>
           getMessagesFieldBuilder() {
         if (messagesBuilder_ == null) {
           messagesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -5997,7 +5997,7 @@ public final class LearnerOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         sender_ = s;
@@ -6013,7 +6013,7 @@ public final class LearnerOuterClass {
         getSenderBytes() {
       java.lang.Object ref = sender_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         sender_ = b;
@@ -6035,7 +6035,7 @@ public final class LearnerOuterClass {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs = 
+        com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         message_ = s;
@@ -6051,7 +6051,7 @@ public final class LearnerOuterClass {
         getMessageBytes() {
       java.lang.Object ref = message_;
       if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         message_ = b;
@@ -6414,7 +6414,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder setLogLevelValue(int value) {
-        
+
         logLevel_ = value;
         onChanged();
         return this;
@@ -6438,7 +6438,7 @@ public final class LearnerOuterClass {
         if (value == null) {
           throw new NullPointerException();
         }
-        
+
         logLevel_ = value.getNumber();
         onChanged();
         return this;
@@ -6448,7 +6448,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearLogLevel() {
-        
+
         logLevel_ = 0;
         onChanged();
         return this;
@@ -6479,7 +6479,7 @@ public final class LearnerOuterClass {
           getSenderBytes() {
         java.lang.Object ref = sender_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           sender_ = b;
@@ -6498,7 +6498,7 @@ public final class LearnerOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         sender_ = value;
         onChanged();
         return this;
@@ -6508,7 +6508,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearSender() {
-        
+
         sender_ = getDefaultInstance().getSender();
         onChanged();
         return this;
@@ -6524,7 +6524,7 @@ public final class LearnerOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         sender_ = value;
         onChanged();
         return this;
@@ -6555,7 +6555,7 @@ public final class LearnerOuterClass {
           getMessageBytes() {
         java.lang.Object ref = message_;
         if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString b =
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           message_ = b;
@@ -6574,7 +6574,7 @@ public final class LearnerOuterClass {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         message_ = value;
         onChanged();
         return this;
@@ -6584,7 +6584,7 @@ public final class LearnerOuterClass {
        * @return This builder for chaining.
        */
       public Builder clearMessage() {
-        
+
         message_ = getDefaultInstance().getMessage();
         onChanged();
         return this;
@@ -6600,7 +6600,7 @@ public final class LearnerOuterClass {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         message_ = value;
         onChanged();
         return this;
@@ -7086,42 +7086,42 @@ public final class LearnerOuterClass {
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_DataPackage_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_DataPackage_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Prediction_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Prediction_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_TimeSeries_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_TimeSeries_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_TimeSample_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_TimeSample_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_DataField_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_DataField_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_StatusMessage_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_StatusMessage_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Message_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Message_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Empty_descriptor;
-  private static final 
+  private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_Empty_fieldAccessorTable;
 

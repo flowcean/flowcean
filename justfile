@@ -30,7 +30,7 @@ docs:
   @uv run mkdocs build --strict
 
 docs-serve:
-  @echo "🚀 Serving documentation: Running mkdocs"
+  @echo "🚀 Serving documentation: Running javadoc and mkdocs"
   @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs serve
