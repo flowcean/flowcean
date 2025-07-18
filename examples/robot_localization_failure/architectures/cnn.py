@@ -6,9 +6,10 @@ from torch import nn
 class CNN(lightning.LightningModule):
     def __init__(
         self,
-        image_size: int = 36,
-        in_channels: int = 3,  # New parameter for input channels
-        learning_rate: float = 0.001,
+        *,
+        image_size: int,
+        in_channels: int,
+        learning_rate: float,
     ) -> None:
         super().__init__()
         self.image_size = image_size
@@ -22,22 +23,21 @@ class CNN(lightning.LightningModule):
                 32,
                 kernel_size=3,
                 padding=1,
-            ),  # Input: in_channels, Output: 32 channels
+            ),
             nn.ReLU(),
-            nn.MaxPool2d(2),  # Reduces 36x36 to 18x18
+            nn.MaxPool2d(2),
             nn.Conv2d(
                 32,
                 64,
                 kernel_size=3,
                 padding=1,
-            ),  # Input: 32 channels, Output: 64 channels
+            ),
             nn.ReLU(),
-            nn.MaxPool2d(2),  # Reduces 18x18 to 9x9
+            nn.MaxPool2d(2),
         )
 
         # Compute flattened size dynamically
         dummy_input = torch.zeros(
-            1,
             in_channels,
             image_size,
             image_size,
@@ -57,11 +57,8 @@ class CNN(lightning.LightningModule):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Squeeze the extra dimension
-        # (e.g., [4, 1, 2, 200, 200] -> [4, 2, 200, 200])
-        x = x.squeeze(1)  # Remove dimension at index 1 (the extra 1)
         x = self.conv_layers(x)
-        x = x.view(x.size(0), -1)  # Flatten
+        x = x.view(x.size(0), -1)
         x = self.fc_layers(x)
         return torch.sigmoid(x)
 
