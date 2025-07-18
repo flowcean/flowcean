@@ -25,6 +25,7 @@ test:
 
 docs:
   @echo "🚀 Building documentation: Running mkdocs"
+  @mkdir -p docs/examples/java-automata/options
   @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml -Djavadoc.dest.dir=../../../../../docs/examples/java-automata/
   @uv run mkdocs build --strict
 
