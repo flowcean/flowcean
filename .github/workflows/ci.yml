@@ -69,14 +69,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Install Maven
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y maven
-
-      - name: Verify java
-        run: java --version
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v3
         with:
