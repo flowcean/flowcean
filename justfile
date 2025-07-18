@@ -26,12 +26,14 @@ test:
 docs:
   @echo "🚀 Building documentation: Running mkdocs"
   @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml
+  @rm -r docs/examples/java-automata/
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs build --strict
 
 docs-serve:
   @echo "🚀 Serving documentation: Running javadoc and mkdocs"
   @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml
+  @rm -r docs/examples/java-automata/
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs serve
 
