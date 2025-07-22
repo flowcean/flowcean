@@ -246,12 +246,6 @@ class OPCAdapter(Adapter):
         # Send the data to the OPC server
         data = df.row(0, named=True)
         for feature_name, node in self.output_features.items():
-            if feature_name not in df.columns:
-                msg = (
-                    f"Output feature '{feature_name}' is missing in the data."
-                )
-                raise ValueError(msg)
-
             # Get the value for the feature from the DataFrame
             value = data[feature_name]
 
