@@ -65,7 +65,73 @@ class OPCAdapter(Adapter):
     streaming_sub: Subscription
 
     def __init__(self, config_path: str | Path) -> None:
-        """Initialize the OPC adapter."""
+        r"""Initialize the OPC adapter.
+
+        Initializes a new OPC to Flowcean adapter instance.
+        The adapter reads its configuration from a YAML file.
+        The path to this file is provided in the config_path argument and the
+        file has the following structure:
+        ```
+        # Path to the OPC Server
+        server-url: "opc.tcp://127.0.0.1:4840"
+
+        # Specify the time window to record before the recording flag is set.
+        # This enables the capture and processing of data that triggers the
+        # recording flag.
+        pre_capture_window_length: 2
+
+        # Define Flowcean inputs which their respective feature name, the
+        # opc-id and the datatype of the feature.
+        # All inputs will be passed on to the Flowcean model when triggering an
+        # inference.
+        # Available data types are: float32, float64, int32, int64 and bool.
+        inputs:
+            - feature: "feature_a"
+              opc-id: "<OPC-ID String>"
+              type: "int32"
+            - feature: "feature_b"
+              opc-id: "<OPC-ID String>"
+              type: "float64"
+            - ...
+
+        # Define the outputs from the Flowcean Model to the OPC Server.
+        # All outputs need to be mapped to on OPC field for the adapter to work
+        # correctly. If certain outputs are not needed / used, those should be
+        # dropped using transforms. The available datatypes are the same as for
+        # the input features.
+        outputs:
+            - feature: "result_feature"
+            opc-id: "<OPC-ID String>"
+            type: "int32"
+
+        # Flags are special OPC fields, which are used to communicate between
+        # the adapter and the OPC server.
+
+        # The streaming flag is set by the OPC server to `True` when Flowcean
+        # should start to record data. Once set back to `False`, the data is
+        # forwarded to the model, an inference step is executed and the results
+        # are send back to the OPC server.
+        stream_flag: "<OPC-ID String>"
+
+        # The prediction flag is set to `True` by the adapter when it
+        # successfully sends data to the OPC server.
+        # This can be used on the OPC side to process the newly received data.
+        # The flag is *not* reset by the adapter, so it will remain `True`
+        # until the OPC server resets it.
+        prediction_flag: "<OPC-ID String>"
+
+        # The connection flag is set to `True` by the adapter when it
+        # successfully connects to the OPC server and set to `False` when it
+        # disconnects from the server.
+        # This can be used to monitor the connection status of the adapter from
+        # the OPC side.
+        connection_flag: "<OPC-ID String>"
+        ```
+
+        Args:
+            config_path: Path to the YAML configuration file containing
+                    the OPC server URL and feature definitions.
+        """
         super().__init__()
 
         # Load the configuration from the provided path
@@ -97,9 +163,9 @@ class OPCAdapter(Adapter):
                 feature["opc-id"],
             )
 
-        streaming_flag_opc_id = yaml_data["stream_flagID"]
-        connection_flag_opc_id = yaml_data["connection_flagID"]
-        prediction_flag_opc_id = yaml_data["prediction_flagID"]
+        streaming_flag_opc_id = yaml_data["stream_flag"]
+        connection_flag_opc_id = yaml_data["connection_flag"]
+        prediction_flag_opc_id = yaml_data["prediction_flag"]
         self.pre_capture_window_length = timedelta(
             seconds=yaml_data["pre_capture_window_length"],
         )
