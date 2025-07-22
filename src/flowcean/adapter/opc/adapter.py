@@ -275,7 +275,7 @@ class OPCAdapter(Adapter):
     @staticmethod
     def _timed_loop(
         func: Callable[[], bool],
-        targget_frequency: float,
+        target_frequency: float,
     ) -> None:
         """Run a function in a loop with a target frequency.
 
@@ -287,7 +287,7 @@ class OPCAdapter(Adapter):
         Args:
             func: Callback function to run in the loop. Returns a boolean
                 indicating whether to continue looping.
-            targget_frequency: Target frequency in Hz (times per second) at
+            target_frequency: Target frequency in Hz (times per second) at
                 which to run the function.
         """
         start_time = time.time()
@@ -295,7 +295,7 @@ class OPCAdapter(Adapter):
             if not func():
                 break
             elapsed_time = time.time() - start_time
-            sleep_time = max(0, (1 / targget_frequency) - elapsed_time)
+            sleep_time = max(0, (1 / target_frequency) - elapsed_time)
             time.sleep(sleep_time)
             start_time = time.time()
 
