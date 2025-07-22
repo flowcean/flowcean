@@ -52,7 +52,7 @@ class OPCAdapter(Adapter):
     opc_client: Client
     recorded_data: pl.DataFrame
     input_schema: dict[str, Any]
-    capture_time: timedelta
+    pre_capture_window_length: timedelta
 
     input_features: dict[str, Node]
     output_features: dict[str, Node]
@@ -100,7 +100,9 @@ class OPCAdapter(Adapter):
         streaming_flag_opc_id = yaml_data["stream_flagID"]
         connection_flag_opc_id = yaml_data["connection_flagID"]
         prediction_flag_opc_id = yaml_data["prediction_flagID"]
-        self.capture_time = timedelta(seconds=yaml_data["capture_time"])
+        self.pre_capture_window_length = timedelta(
+            seconds=yaml_data["pre_capture_window_length"],
+        )
 
         # Setup the remaining opc nodes
         self.streaming_flag_node = self.client.get_node(
@@ -202,7 +204,7 @@ class OPCAdapter(Adapter):
                 self.recorded_data = self.recorded_data.filter(
                     pl.col("_recorded_time")
                     >= pl.lit(datetime.now(timezone.utc)).cast(pl.Datetime)
-                    - self.capture_time,
+                    - self.pre_capture_window_length,
                 )
 
             return True
