@@ -225,8 +225,16 @@ class OPCAdapter(Adapter):
             )
         )
 
-    def send_data(self, data: Data) -> None:
-        """Send data to the OPC server."""
+    def send_data(self, data: pl.DataFrame | pl.LazyFrame) -> None:
+        """Send data to the OPC server.
+
+        Send a polars DataFrame or LazyFrame to the OPC server.
+        The data must contain all required output features, otherwise
+        a ValueError is raised.
+
+        Args:
+            data: Polars DataFrame or LazyFrame containing the data to send.
+        """
         # Convert the data into a Dataframe
         df = cast("pl.DataFrame | pl.LazyFrame", data).lazy().collect()
 
@@ -244,10 +252,10 @@ class OPCAdapter(Adapter):
             raise ValueError(msg)
 
         # Send the data to the OPC server
-        data = df.row(0, named=True)
+        data_dict = df.row(0, named=True)
         for feature_name, node in self.output_features.items():
             # Get the value for the feature from the DataFrame
-            value = data[feature_name]
+            value = data_dict[feature_name]
 
             # Set the nodes value
             node.set_attribute(
@@ -301,6 +309,14 @@ class OPCAdapter(Adapter):
 
 
 def _opc_from_polars(t: pl.DataType) -> ua.VariantType:
+    """Get the OPC UA type corresponding to a Polars data type.
+
+    Args:
+        t: Polars data type.
+
+    Returns:
+        The corresponding OPC UA type.
+    """
     possible_types = [
         opc_type
         for pl_type, opc_type in _type_mapping_pl2ua.items()
