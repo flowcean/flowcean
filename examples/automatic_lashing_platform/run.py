@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(args: argparse.Namespace) -> None:
-    flowcean.cli.initialize_logging(parse_arguments=False)
+    flowcean.cli.initialize(parse_arguments=False)
 
     data, inputs, outputs = load_and_prepare_data(args)
     inspect_data(args, data)

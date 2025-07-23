@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    flowcean.cli.initialize_logging()
+    flowcean.cli.initialize()
 
     data = DataFrame.from_uri(
         uri="file:./data/processed_data.csv",
