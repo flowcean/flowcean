@@ -1,5 +1,6 @@
 *.parquet
 /data
 /graphs
+/models
 *.gv
 *.pdf

@@ -794,6 +794,14 @@ def train_and_evaluate_model(
         outputs,
     )
 
+    if args.store_model:
+        Path.mkdir(Path("./models"), exist_ok=True)
+        model_path = Path(
+            f"./models/model_{time.strftime('%Y%m%d-%H%M%S')}.fml",
+        )
+        with (model_path.open("wb") as f):
+            model.save(f)
+
     report = evaluate_offline(
         model,
         test_env,
@@ -1189,6 +1197,11 @@ if __name__ == "__main__":
         "--store_graph",
         action="store_true",
         help="Store the regression tree as a dot-graph at './graphs'.",
+    )
+    evaluation_group.add_argument(
+        "--store_model",
+        action="store_true",
+        help="Store the trained model as a fml file at './models'.",
     )
     evaluation_group.add_argument(
         "--show_latest_graph",
