@@ -799,7 +799,7 @@ def train_and_evaluate_model(
         model_path = Path(
             f"./models/model_{time.strftime('%Y%m%d-%H%M%S')}.fml",
         )
-        with (model_path.open("wb") as f):
+        with model_path.open("wb") as f:
             model.save(f)
 
     report = evaluate_offline(
