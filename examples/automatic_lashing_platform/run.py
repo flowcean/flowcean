@@ -15,11 +15,12 @@ import numpy as np
 from matplotlib.table import Table
 
 # flowcean libraries
+from transforms.derivative import Derivative
+
 import flowcean.cli
 from flowcean.core import SupervisedLearner, evaluate_offline, learn_offline
 from flowcean.polars import (
     DataFrame,
-    Derivative,
     Filter,
     Flatten,
     Resample,

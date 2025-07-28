@@ -11,7 +11,6 @@ from .environments.streaming import StreamingOfflineEnvironment
 from .environments.train_test_split import TrainTestSplit
 from .is_time_series import is_timeseries_feature
 from .transforms.cast import Cast
-from .transforms.derivative import Derivative
 from .transforms.drop import Drop
 from .transforms.explode import Explode
 from .transforms.filter import And, CollectionExpr, Filter, FilterExpr, Not, Or
@@ -47,7 +46,6 @@ __all__ = [
     "CollectionExpr",
     "DataFrame",
     "DatasetPredictionEnvironment",
-    "Derivative",
     "Drop",
     "DummyLearner",
     "DummyModel",
