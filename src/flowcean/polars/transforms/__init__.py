@@ -13,6 +13,7 @@ from .median import Median
 from .mode import Mode
 from .one_cold import OneCold
 from .one_hot import NoCategoriesError, NoMatchingCategoryError, OneHot
+from .pad import Pad
 from .rename import Rename
 from .resample import Resample
 from .scale_to_range import ScaleToRange
@@ -47,6 +48,7 @@ __all__ = [
     "NoTimeSeriesFeatureError",
     "OneCold",
     "OneHot",
+    "Pad",
     "Rename",
     "Resample",
     "ScaleToRange",

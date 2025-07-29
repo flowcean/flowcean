@@ -30,6 +30,7 @@ from .transforms.one_hot import (
     NoMatchingCategoryError,
     OneHot,
 )
+from .transforms.pad import Pad
 from .transforms.rename import Rename
 from .transforms.resample import Resample
 from .transforms.select import Select
@@ -66,6 +67,7 @@ __all__ = [
     "OneCold",
     "OneHot",
     "Or",
+    "Pad",
     "Rename",
     "Resample",
     "Select",
