@@ -18,6 +18,7 @@ class PadTransform(unittest.TestCase):
                     [
                         {"time": 2, "value": 44},
                         {"time": 3, "value": 45},
+                        {"time": 6, "value": 46},
                     ],
                 ],
             },
@@ -40,7 +41,7 @@ class PadTransform(unittest.TestCase):
                         [
                             {"time": 2, "value": 44},
                             {"time": 3, "value": 45},
-                            {"time": 5, "value": 45},
+                            {"time": 6, "value": 46},
                         ],
                     ],
                 },
