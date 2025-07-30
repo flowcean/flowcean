@@ -20,7 +20,7 @@ class Pad(Transform):
 
     Pad time-series features to the specified end-time by holding their last
     value for one more sample.
-    This is useful for ensuring that all time-series features cover atleast a
+    This is useful for ensuring that all time-series features cover at least a
     time interval of the specified length. Time-series that are already longer
     than the specified will not be modified.
     The resulting features will **not** be equidistant in time. To achieve
