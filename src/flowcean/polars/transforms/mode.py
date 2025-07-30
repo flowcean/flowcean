@@ -6,7 +6,7 @@ import polars as pl
 from typing_extensions import override
 
 from flowcean.core import Transform
-from flowcean.polars.time_series_type import get_time_series_type
+from flowcean.polars.time_series_type import get_time_series_value_type
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class Mode(Transform):
         for feature in self.features:
             # Check if the feature is a floating point number and issue a
             # warning as the mode is not well defined for those.
-            time_series_type = get_time_series_type(
+            time_series_type = get_time_series_value_type(
                 cast("pl.DataType", schema.get(feature)),
             )
             if time_series_type in (pl.Float32, pl.Float64):
