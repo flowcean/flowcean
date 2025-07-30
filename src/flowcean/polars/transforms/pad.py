@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 class Pad(Transform):
     """Pad time-series features to the specified length.
 
-    Pad time-series features to the specified length by holding their last
-    value.
-    This is useful for ensuring that all time-series features have the same
-    minimum length. Time-series that are already longer than the specified
-    length will not be modified.
+    Pad time-series features to the specified end-time by holding their last
+    value for one more sample.
+    This is useful for ensuring that all time-series features cover atleast a
+    time interval of the specified length. Time-series that are already longer
+    than the specified will not be modified.
     The resulting features will **not** be equidistant in time. To achieve
     equidistant time-series, consider using the `Resample` transform after
     padding.
