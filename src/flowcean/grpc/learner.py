@@ -189,9 +189,10 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> GrpcPassiveAutomataLearner:
+        dfs = pl.collect_all([inputs, outputs])
         proto_datapackage = DataPackage(
-            inputs=[_row_to_proto(row) for row in inputs.collect().rows()],
-            outputs=[_row_to_proto(row) for row in outputs.collect().rows()],
+            inputs=[_row_to_proto(row) for row in dfs[0].rows()],
+            outputs=[_row_to_proto(row) for row in dfs[1].rows()],
         )
         stream = self._stub.Train(  # type: ignore[type]
             proto_datapackage,

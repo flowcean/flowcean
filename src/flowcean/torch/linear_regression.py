@@ -41,8 +41,9 @@ class LinearRegression(SupervisedIncrementalLearner):
         outputs: pl.LazyFrame,
     ) -> PyTorchModel:
         self.optimizer.zero_grad()
-        features = torch.from_numpy(inputs.collect().to_numpy(writable=True))
-        labels = torch.from_numpy(outputs.collect().to_numpy(writable=True))
+        dfs = pl.collect_all([inputs, outputs])
+        features = torch.from_numpy(dfs[0].to_numpy(writable=True))
+        labels = torch.from_numpy(dfs[1].to_numpy(writable=True))
         prediction = self.model(features)
         loss = self.loss(prediction, labels)
         loss.backward()
