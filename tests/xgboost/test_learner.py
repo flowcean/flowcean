@@ -3,10 +3,10 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.xgboost.learner import XGBoostLearner
+from flowcean.xgboost.learner import XGBoostClassifierLearner
 
 
-class XGBoostLearnerTest(unittest.TestCase):
+class XGBoostClassifierLearnerTest(unittest.TestCase):
     def test_learn_and_predict(self) -> None:
         df = pl.DataFrame(
             {
@@ -15,7 +15,7 @@ class XGBoostLearnerTest(unittest.TestCase):
             },
         )
 
-        model = XGBoostLearner(
+        model = XGBoostClassifierLearner(
             objective="reg:squarederror",
         ).learn(
             df.lazy().select("x"),

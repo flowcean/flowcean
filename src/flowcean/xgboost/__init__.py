@@ -1,7 +1,9 @@
 __all__ = [
-    "XGBoostLearner",
-    "XGBoostModel",
+    "XGBoostClassifierLearner",
+    "XGBoostClassifierModel",
+    "XGBoostRegressorLearner",
+    "XGBoostRegressorModel",
 ]
 
-from .learner import XGBoostLearner
-from .model import XGBoostModel
+from .learner import XGBoostClassifierLearner, XGBoostRegressorLearner
+from .model import XGBoostClassifierModel, XGBoostRegressorModel
