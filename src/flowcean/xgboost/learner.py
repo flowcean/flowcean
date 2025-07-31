@@ -1,3 +1,5 @@
+from typing import Any
+
 import polars as pl
 from xgboost import XGBClassifier
 
@@ -9,12 +11,13 @@ from .model import XGBoostModel
 class XGBoostLearner(SupervisedLearner):
     """Wrapper for XGBoost classifiers."""
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         self.classifier = XGBClassifier(
-            n_estimators=2,
-            max_depth=2,
-            learning_rate=1,
-            objective="binary:logistic",
+            **kwargs,
+            # n_estimators=2,
+            # max_depth=2,
+            # learning_rate=1,
+            # objective="binary:logistic",
         )
         super().__init__()
 
