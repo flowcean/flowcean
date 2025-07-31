@@ -7,7 +7,7 @@ from flowcean.xgboost.learner import XGBoostLearner
 
 
 class XGBoostLearnerTest(unittest.TestCase):
-    def test_learn_and_predict(self):
+    def test_learn_and_predict(self) -> None:
         df = pl.DataFrame(
             {
                 "x": [1, 2, 3, 4],
@@ -15,7 +15,9 @@ class XGBoostLearnerTest(unittest.TestCase):
             },
         )
 
-        model = XGBoostLearner().learn(
+        model = XGBoostLearner(
+            objective="reg:squarederror",
+        ).learn(
             df.lazy().select("x"),
             df.lazy().select("y"),
         )
