@@ -5,7 +5,7 @@ import warnings
 
 from . import learner_pb2 as learner__pb2
 
-GRPC_GENERATED_VERSION = '1.66.0'
+GRPC_GENERATED_VERSION = '1.72.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in learner_pb2_grpc.py depends on'
+        + f' but the generated code in src/flowcean/grpc/proto/learner_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class LearnerStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """The Learner service provides RPCs for training, prediction, and export.
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -52,7 +53,8 @@ class LearnerStub(object):
 
 
 class LearnerServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """The Learner service provides RPCs for training, prediction, and export.
+    """
 
     def Train(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -77,18 +79,18 @@ def add_LearnerServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Train': grpc.unary_stream_rpc_method_handler(
                     servicer.Train,
-                    request_deserializer=learner__pb2.DataPackage.FromString,
-                    response_serializer=learner__pb2.StatusMessage.SerializeToString,
+                    request_deserializer=src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.DataPackage.FromString,
+                    response_serializer=src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.StatusMessage.SerializeToString,
             ),
             'Predict': grpc.unary_unary_rpc_method_handler(
                     servicer.Predict,
-                    request_deserializer=learner__pb2.DataPackage.FromString,
-                    response_serializer=learner__pb2.Prediction.SerializeToString,
+                    request_deserializer=src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.DataPackage.FromString,
+                    response_serializer=src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.Prediction.SerializeToString,
             ),
             'Export': grpc.unary_unary_rpc_method_handler(
                     servicer.Export,
-                    request_deserializer=learner__pb2.Empty.FromString,
-                    response_serializer=learner__pb2.Empty.SerializeToString,
+                    request_deserializer=src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.Empty.FromString,
+                    response_serializer=src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -99,7 +101,8 @@ def add_LearnerServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class Learner(object):
-    """Missing associated documentation comment in .proto file."""
+    """The Learner service provides RPCs for training, prediction, and export.
+    """
 
     @staticmethod
     def Train(request,
@@ -116,8 +119,8 @@ class Learner(object):
             request,
             target,
             '/Learner/Train',
-            learner__pb2.DataPackage.SerializeToString,
-            learner__pb2.StatusMessage.FromString,
+            src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.DataPackage.SerializeToString,
+            src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.StatusMessage.FromString,
             options,
             channel_credentials,
             insecure,
@@ -143,8 +146,8 @@ class Learner(object):
             request,
             target,
             '/Learner/Predict',
-            learner__pb2.DataPackage.SerializeToString,
-            learner__pb2.Prediction.FromString,
+            src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.DataPackage.SerializeToString,
+            src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.Prediction.FromString,
             options,
             channel_credentials,
             insecure,
@@ -170,8 +173,8 @@ class Learner(object):
             request,
             target,
             '/Learner/Export',
-            learner__pb2.Empty.SerializeToString,
-            learner__pb2.Empty.FromString,
+            src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.Empty.SerializeToString,
+            src_dot_flowcean_dot_grpc_dot_proto_dot_learner__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,

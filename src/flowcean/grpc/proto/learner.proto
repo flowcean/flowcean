@@ -1,26 +1,57 @@
+/*
+ * learner.proto
+ *
+ * Protocol Buffers definitions for the Flowcean Learner gRPC service.
+ *
+ * This file defines messages and services for exchanging time series data,
+ * predictions, and status information between clients and the Learner service.
+ *
+ * Messages:
+ *   - DataPackage: Contains input and output time series data.
+ *   - Prediction: Contains predicted time series and a status message.
+ *   - TimeSeries: Represents a sequence of time samples.
+ *   - TimeSample: Represents a single data point with a timestamp.
+ *   - DataField: Represents a value that can be int, double, or string.
+ *   - StatusMessage: Communicates the status and progress of operations.
+ *   - Message: Contains log messages with levels and sender info.
+ *   - Empty: An empty message for RPCs that require no data.
+ *
+ * Enums:
+ *   - Status: Indicates the current status of an operation.
+ *   - LogLevel: Specifies the severity of log messages.
+ *
+ * Service:
+ *   - Learner: Provides RPCs for training, prediction, and export.
+ */
+
 syntax = "proto3";
 option java_package = "io.flowcean.learner.grpc";
 
+// The data package containing input and output time series.
 message DataPackage {
   repeated TimeSeries inputs = 1;
   repeated TimeSeries outputs = 2;
 
 }
 
+// The prediction message containing predicted time series and status.
 message Prediction {
   repeated TimeSeries predictions = 1;
   StatusMessage status = 2;
 }
 
+// A time series message containing multiple time samples.
 message TimeSeries {
   repeated TimeSample samples = 1;
 }
 
+// A time sample message representing a single data point with a timestamp.
 message TimeSample {
   double time = 1;
   DataField value = 2;
 }
 
+// A data field message that can hold different types of values.
 message DataField {
   oneof field {
     int32 int = 1;
@@ -29,18 +60,21 @@ message DataField {
   }
 }
 
+// A status message that contains the current status and log messages as well as progress information.
 message StatusMessage {
   Status status = 1;
   repeated Message messages = 2;
   optional int32 progress = 3;
 }
 
+// A message that contains log level, sender information, and the actual message content.
 message Message {
   LogLevel log_level = 1;
   string sender = 2;
   string message = 3;
 }
 
+// Enums for status messages.
 enum Status {
   STATUS_UNDEFINED = 0;
   STATUS_RUNNING = 1;
@@ -48,6 +82,7 @@ enum Status {
   STATUS_FAILED = 3;
 }
 
+// Log levels for messages.
 enum LogLevel {
   LOGLEVEL_UNDEFINED = 0;
   LOGLEVEL_DEBUG = 1;
@@ -57,8 +92,10 @@ enum LogLevel {
   LOGLEVEL_FATAL = 5;
 }
 
+// An empty message for RPCs that do not require any data.
 message Empty {}
 
+// The Learner service provides RPCs for training, prediction, and export.
 service Learner {
   rpc Train(DataPackage) returns (stream StatusMessage) {}
   rpc Predict(DataPackage) returns (Prediction) {}
