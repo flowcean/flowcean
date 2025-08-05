@@ -12,17 +12,19 @@ from torch.utils.data import Dataset
 class FeatureImagesData(Dataset):
     def __init__(
         self,
-        data: pl.DataFrame,
+        inputs: pl.DataFrame,
+        outputs: pl.DataFrame | None = None,
         *,
         image_size: int,
         width_meters: float,
     ) -> None:
-        self.data = data
+        self.inputs = inputs
+        self.outputs = outputs
         self.image_size = image_size
         self.width_meters = width_meters
 
-    def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
-        row = self.data.row(index, named=True)
+    def __getitem__(self, index: int) -> tuple[Tensor, Tensor] | Tensor:
+        row = self.inputs.row(index, named=True)
         map_image = compute_map_image(
             row,
             image_width=self.image_size,
@@ -50,49 +52,16 @@ class FeatureImagesData(Dataset):
             axis=0,
         )
         inputs = Tensor(inputs)
-        outputs = Tensor([row["is_delocalized"]])
+
+        if self.outputs is None:
+            return inputs
+
+        output_row = self.outputs.row(index, named=True)
+        outputs = Tensor([output_row["is_delocalized"]])
         return inputs, outputs
 
     def __len__(self) -> int:
-        return len(self.data)
-
-
-class FeatureImagesPredictionData(Dataset):
-    def __init__(
-        self,
-        data: pl.DataFrame,
-        image_size: int,
-        width_meters: float,
-    ) -> None:
-        self.data = data
-        self.image_size = image_size
-        self.width_meters = width_meters
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, index: int) -> Tensor:
-        row = self.data.row(index, named=True)
-        map_image = compute_map_image(
-            row,
-            image_width=self.image_size,
-            image_height=self.image_size,
-            width_meters=self.width_meters,
-        )
-        scan_image = compute_scan_image(
-            row,
-            image_width=self.image_size,
-            image_height=self.image_size,
-            width_meters=self.width_meters,
-        )
-        particle_image = compute_particle_image(
-            row,
-            image_width=self.image_size,
-            image_height=self.image_size,
-            width_meters=self.width_meters,
-        )
-        inputs = np.stack([map_image, scan_image, particle_image], axis=0)
-        return Tensor(inputs)
+        return len(self.inputs)
 
 
 def extract_position_and_orientation(x: dict) -> tuple[NDArray, NDArray]:

@@ -10,7 +10,7 @@ from typing import Any
 import lightning
 import polars as pl
 import torch
-from feature_images import FeatureImagesData, FeatureImagesPredictionData
+from feature_images import FeatureImagesData
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from torch.utils.data import DataLoader, Dataset
 from typing_extensions import override
@@ -32,12 +32,8 @@ class ImageBasedLightningLearner(SupervisedLearner):
         batch_size: int = 32,
         max_epochs: int = 100,
         accelerator: str = "auto",
-        dataset_factory: DatasetFactory = lambda data: FeatureImagesData(
-            data,
-            image_size=32,
-            width_meters=15.0,
-        ),
-        dataset_kwargs: dict[str, Any] | None = None,
+        image_size: int = 32,
+        width_meters: float = 15.0,
     ) -> None:
         """Initialize the learner.
 
@@ -47,18 +43,16 @@ class ImageBasedLightningLearner(SupervisedLearner):
             batch_size: The batch size to use for training.
             max_epochs: The maximum number of epochs to train for.
             accelerator: The accelerator to use.
-            dataset_factory: Takes a DataFrame and returns a FeatureImagesData Dataset.
-            dataset_kwargs: Keyword arguments to pass to the dataset factory (optional).
+            image_size: The size of the image (height and width).
+            width_meters: The width of the image in meters.
         """
-        if dataset_kwargs is None:
-            dataset_kwargs = {}
         self.module = module
         self.num_workers = num_workers or os.cpu_count() or 0
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.accelerator = accelerator
-        self.dataset_factory = dataset_factory
-        self.dataset_kwargs = dataset_kwargs
+        self.image_size = image_size
+        self.width_meters = width_meters
 
     @override
     def learn(
@@ -66,19 +60,12 @@ class ImageBasedLightningLearner(SupervisedLearner):
         inputs: pl.DataFrame,
         outputs: pl.DataFrame,
     ) -> ImageBasedPyTorchModel:
-        """Learn from the input and output data.
-
-        Args:
-            inputs: Input features as a DataFrame with structured columns.
-            outputs: Output labels as a DataFrame.
-
-        Returns:
-            An ImageBasedPyTorchModel instance.
-        """
-        data = inputs.with_columns(
-            outputs.to_series(0).alias("is_delocalized"),
+        dataset = FeatureImagesData(
+            inputs,
+            outputs,
+            image_size=self.image_size,
+            width_meters=self.width_meters,
         )
-        dataset = self.dataset_factory(data)
         dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -140,15 +127,7 @@ class ImageBasedPyTorchModel(Model):
 
     @override
     def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
-        """Predict outputs for the given input features.
-
-        Args:
-            input_features: The input features as a LazyFrame.
-
-        Returns:
-            A LazyFrame containing the predicted outputs.
-        """
-        dataset = FeatureImagesPredictionData(
+        dataset = FeatureImagesData(
             input_features.collect(),
             image_size=self.image_size,
             width_meters=self.width_meters,

@@ -1,5 +1,10 @@
+model_name: "robot_localization"
 rosbag:
-  path: ???
+  training_paths:
+    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_01
+    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_02
+  evaluation_paths:
+    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_03
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
@@ -13,4 +18,5 @@ architecture:
 learning:
   batch_size: 32
   learning_rate: 0.0001
-  epochs: 2
+  epochs: 1
+
