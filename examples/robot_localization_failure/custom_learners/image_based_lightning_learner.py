@@ -209,14 +209,6 @@ class ImageBasedPyTorchModel(Model):
     @override
     @classmethod
     def load_from_state(cls, state: dict[str, Any]) -> ImageBasedPyTorchModel:
-        """Load the model from a state dictionary.
-
-        Args:
-            state: A dictionary containing the model state.
-
-        Returns:
-            An Instance of ImageBasedPyTorchModel.
-        """
         from architectures.cnn import (
             CNN,  # Lazy import to avoid circular dependencies
         )
