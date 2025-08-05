@@ -44,11 +44,9 @@ def main() -> None:
     for rosbag_path in rosbag_dirs:
         out_path = rosbag_path.with_suffix(".processed.parquet")
         if out_path.exists():
-            msg = f"Processed data exists for {rosbag_path}, skipping."
+            msg = "Processed data exists for a rosbag, skipping."
             logger.info(msg)
             continue
-        msg = f"Processing {rosbag_path} to {out_path}"
-        logger.info(msg)
 
         rosbag = RosbagLoader(
             path=rosbag_path,
@@ -134,25 +132,22 @@ def main() -> None:
         )
         try:
             data.observe().sink_parquet(out_path)
-            msg = f"Processed data saved to {out_path}"
-            logger.info(msg)
-        except Exception as e:
-            msg = f"Error processing {rosbag_path}: {e}"
+            logger.info("Processed data saved to parqet")
+        except Exception:
+            msg = "Error processing rosbag"
             logger.exception(msg)
             continue
 
     # Training: Load all processed Parquet files
     parquet_files = list(rosbag_dir.glob("*.processed.parquet"))
     if not parquet_files:
-        msg = f"No processed Parquet files found in {rosbag_dir}."
+        msg = "No processed Parquet files found in specified directory."
         logger.error(msg)
         sys.exit(1)
-    msg = f"Found {len(parquet_files)} processed Parquet files in {rosbag_dir}"
-    logger.info(msg)
 
     train_datasets, test_datasets = [], []
     for parquet_path in parquet_files:
-        msg = f"Loading Parquet file: {parquet_path}"
+        msg = "Loading Parquet file"
         logger.info(msg)
         try:
             data = pl.read_parquet(parquet_path)
@@ -221,19 +216,24 @@ def main() -> None:
                 width_meters=config.architecture.width_meters,
             )
             test_datasets.append(test_images)
-        except Exception as e:
-            msg = f"Error loading {parquet_path}: {e}"
+        except Exception:
+            msg = "Error loading parquet file"
             logger.exception(msg)
-            continue
 
     # Combinedatasets
     train_data = pl.concat([train.data for train in train_datasets])
     test_data = pl.concat([test.data for test in test_datasets])
 
-    # Debug: Print columns to verify structure
-    logger.info(f"Train data columns: {train_data.columns}")
-    logger.info(f"Test data columns: {test_data.columns}")
+    out_path = f"models/{rosbag_dir.name}.pt"
+    train_and_evaluate(train_data, test_data, config, out_path)
 
+
+def train_and_evaluate(
+    train_data: pl.DataFrame,
+    test_data: pl.DataFrame,
+    config: DictConfig | ListConfig,
+    out_path: str,
+) -> None:
     # Create and train the learner
     learner = ImageBasedLightningLearner(
         module=CNN(
@@ -275,8 +275,7 @@ def main() -> None:
     )
     print(report)
     # Save the model
-    out_path = f"models/{rosbag_dir.name}.pt"
-    msg = f"Saving model to {out_path}"
+    msg = "Saving model."
     logger.info(msg)
     torch.save(model.module.state_dict(), out_path)
 
@@ -287,9 +286,9 @@ def get_rosbag_paths(
     rosbag_dir = Path(config.rosbag.path)
 
     if not rosbag_dir.is_dir():
-        msg = f"Specified ROS2 bag directory {rosbag_dir} does not exist."
+        msg = "Specified ROS2 bag directory does not exist."
         logger.error(msg)
-        sys.exit(1)
+        raise FileNotFoundError(msg)
 
     # Find ROS2 bag subdirectories
     rosbag_dirs = [
@@ -298,11 +297,9 @@ def get_rosbag_paths(
         if d.is_dir() and (d / "metadata.yaml").exists()
     ]
     if not rosbag_dirs:
-        msg = f"No ROS2 bag directories found in {rosbag_dir}. Check the path."
+        msg = "No ROS2 bag directories found in specified directory."
         logger.error(msg)
         sys.exit(1)
-    msg = f"Found {len(rosbag_dirs)} ROS2 bag directories in {rosbag_dir}"
-    logger.info(msg)
 
     return rosbag_dir, rosbag_dirs
 

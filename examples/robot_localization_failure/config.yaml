@@ -1,5 +1,5 @@
 rosbag:
-  path: recordings/test_folder
+  path: ???
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg

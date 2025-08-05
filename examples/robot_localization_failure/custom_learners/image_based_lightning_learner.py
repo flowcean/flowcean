@@ -99,8 +99,8 @@ class ImageBasedLightningLearner(SupervisedLearner):
         trainer.fit(self.module, dataloader)
         return ImageBasedPyTorchModel(
             self.module,
-            image_size=self.dataset_kwargs.get("image_size", 32),
-            width_meters=self.dataset_kwargs.get("width_meters", 15.0),
+            image_size=self.image_size,
+            width_meters=self.width_meters,
             output_names=outputs.columns,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
@@ -118,6 +118,7 @@ class ImageBasedPyTorchModel(Model):
         output_names: list[str],
         batch_size: int = 32,
         num_workers: int = 1,
+        binary_classification_threshold: float = 0.5,
     ) -> None:
         """Initialize the model.
 
@@ -135,35 +136,18 @@ class ImageBasedPyTorchModel(Model):
         self.output_names = output_names
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.BINARY_CLASSIFICATION_THRESHOLD = 0.5
+        self.binary_classification_threshold = binary_classification_threshold
 
     @override
     def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         """Predict outputs for the given input features.
 
         Args:
-            input_features: The input features as a LazyFrame with structured columns.
+            input_features: The input features as a LazyFrame.
 
         Returns:
             A LazyFrame containing the predicted outputs.
         """
-        # Validate required columns
-        required_columns = [
-            "/map",
-            "/scan",
-            "/particle_cloud",
-            "/amcl_pose",
-        ]
-        input_columns = input_features.columns
-        missing_columns = [
-            col for col in required_columns if col not in input_columns
-        ]
-        if missing_columns:
-            logger.error(
-                f"Missing required columns in input_features: {missing_columns}",
-            )
-            raise ValueError(f"Missing required columns: {missing_columns}")
-
         dataset = FeatureImagesPredictionData(
             input_features.collect(),
             image_size=self.image_size,
@@ -181,7 +165,7 @@ class ImageBasedPyTorchModel(Model):
             for batch in dataloader:
                 outputs = self.module(batch)
                 preds = (
-                    outputs > self.BINARY_CLASSIFICATION_THRESHOLD
+                    outputs > self.binary_classification_threshold
                 ).float()
                 predictions.append(preds)
         predictions = torch.cat(predictions, dim=0).numpy()
