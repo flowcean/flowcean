@@ -209,9 +209,8 @@ class ImageBasedPyTorchModel(Model):
     @override
     @classmethod
     def load_from_state(cls, state: dict[str, Any]) -> ImageBasedPyTorchModel:
-        from architectures.cnn import (
-            CNN,  # Lazy import to avoid circular dependencies
-        )
+        # Lazy import to avoid circular dependencies
+        from architectures.cnn import CNN
 
         module = CNN(
             image_size=state["image_size"],

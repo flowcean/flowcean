@@ -182,7 +182,7 @@ def compute_particle_image(
                 particle["pose"]["position"]["y"],
                 particle["weight"],
             ]
-            for particle in particle_cloud  # Assumes particle_cloud is a list of particle dicts
+            for particle in particle_cloud
         ],
     )
     position, orientation = extract_position_and_orientation(x)
