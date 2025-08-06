@@ -215,13 +215,13 @@ def main() -> None:
         path=config.rosbag.evaluation_paths,
         config=config,
     )
+    logger.info("Creating image datasets from processed data")
     train_image_dataset = create_image_dataset(
         processed_train_data,
     )
     test_image_dataset = create_image_dataset(
         processed_evaluation_data,
     )
-    # today = pl.datetime.now().strftime("%Y%m%d_%H%M%S")
     out_path = f"models/{config.model_name}.pt"
     train_and_evaluate(
         train_image_dataset,

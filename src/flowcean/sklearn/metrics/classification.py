@@ -29,7 +29,7 @@ class ClassificationReport(OfflineMetric):
 
     @override
     def __call__(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> Any:
-        return metrics.classification_report(
+        return "\n" + metrics.classification_report(
             true.collect(engine="streaming"),
             predicted.collect(engine="streaming"),
         )
