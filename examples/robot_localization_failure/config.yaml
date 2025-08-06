@@ -4,7 +4,6 @@ rosbag:
     - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_01
     - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_02
     - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_03
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_07
     - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_08
     - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_09
     - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_10
