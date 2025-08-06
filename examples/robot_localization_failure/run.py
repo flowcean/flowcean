@@ -43,8 +43,8 @@ def load_and_process_data(
         if out_path.exists():
             processed_data.append(pl.scan_parquet(out_path))
             logger.info(
-                "Loading already processed rosbag from parquet",
-                extra={"path": out_path},
+                "Loading already processed rosbag from parquet %s",
+                out_path,
             )
             continue
 
@@ -133,15 +133,15 @@ def load_and_process_data(
         )
         try:
             logger.info(
-                "Processing rosbag",
-                extra={"path": out_path},
+                "Processing rosbag: %s",
+                out_path,
             )
             data.observe().sink_parquet(out_path)
             processed_data.append(data.observe())
         except Exception:
             logger.exception(
-                "Error processing rosbag",
-                extra={"path": out_path},
+                "Error processing rosbag: %s",
+                out_path,
             )
             continue
     return pl.concat(processed_data)
@@ -222,7 +222,8 @@ def main() -> None:
     test_image_dataset = create_image_dataset(
         processed_evaluation_data,
     )
-    out_path = f"models/{config.model_name}.pt"
+    out_path = f"models/{config.model_name}_{config.architecture.image_size}p_" + \
+        f"{config.architecture.width_meters}m.pt"
     train_and_evaluate(
         train_image_dataset,
         test_image_dataset,
