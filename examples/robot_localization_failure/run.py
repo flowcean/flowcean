@@ -5,10 +5,10 @@ from os import PathLike
 from pathlib import Path
 
 import polars as pl
-import torch
 from architectures.cnn import CNN
 from custom_learners.image_based_lightning_learner import (
     ImageBasedLightningLearner,
+    ImageBasedPyTorchModel,
 )
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
@@ -85,14 +85,14 @@ def load_and_process_data(
         cache_path = Path(path).with_suffix(".processed.parquet")
         if cache_path.exists():
             logger.info(
-                "Loading already processed rosbag from cache",
-                extra={"path": cache_path},
+                "Loading already processed rosbag from cache: %s",
+                cache_path,
             )
             data = pl.scan_parquet(cache_path)
             processed_data.append(data)
             continue
 
-        logger.info("Processing rosbag", extra={"path": path})
+        logger.info("Processing rosbag: %s", path)
         data = load_rosbag(
             path=path,
             topics={
@@ -148,7 +148,7 @@ def load_and_process_data(
     return pl.concat(processed_data)
 
 
-def create_image_dataset(
+def explode_to_samples(
     data: pl.LazyFrame,
 ) -> pl.LazyFrame:
     return (
@@ -204,12 +204,10 @@ def create_image_dataset(
 
 
 def train_and_evaluate(
-    train_data: pl.LazyFrame,
-    test_data: pl.LazyFrame,
+    train_data: pl.DataFrame,
+    test_data: pl.DataFrame,
     config: DictConfig | ListConfig,
-    out_path: str,
-) -> None:
-    # Create and train the learner
+) -> ImageBasedPyTorchModel:
     learner = ImageBasedLightningLearner(
         module=CNN(
             image_size=config.architecture.image_size,
@@ -221,13 +219,12 @@ def train_and_evaluate(
         image_size=config.architecture.image_size,
         width_meters=config.architecture.width_meters,
     )
-    logger.info("Training model with %s epochs", config.learning.epochs)
+    logger.info("Training model for %s epochs", config.learning.epochs)
     model = learner.learn(
-        inputs=train_data.drop(["is_delocalized"]).collect(engine="streaming"),
-        outputs=train_data.select(["is_delocalized"]).collect(
-            engine="streaming",
-        ),
+        inputs=train_data.drop(["is_delocalized"]),
+        outputs=train_data.select(["is_delocalized"]),
     )
+
     # Evaluate the model
     metrics = [
         Accuracy(),
@@ -240,44 +237,41 @@ def train_and_evaluate(
     report = evaluate_offline(
         model,
         DataFrame(test_data),
-        inputs=test_data.drop(["is_delocalized"]).columns,
+        inputs=["/map", "/scan", "/particle_cloud", "/amcl_pose"],
         outputs=["is_delocalized"],
         metrics=metrics,
     )
     print(report)
-    # Save the model
-    logger.info("Saving model to %s", out_path)
-    torch.save(model.module.state_dict(), out_path)
+    return model
 
 
 def main() -> None:
     config = flowcean.cli.initialize()
 
-    processed_train_data = load_and_process_data(
+    runs_train = load_and_process_data(
         rosbags=config.rosbag.training_paths,
         config=config,
     )
-    processed_evaluation_data = load_and_process_data(
+    logger.info("Collecting training data")
+    samples_train = explode_to_samples(runs_train).collect(engine="streaming")
+
+    runs_eval = load_and_process_data(
         rosbags=config.rosbag.evaluation_paths,
         config=config,
     )
-    logger.info("Creating image datasets from processed data")
-    train_image_dataset = create_image_dataset(
-        processed_train_data,
+    logger.info("Collecting evaluation data")
+    samples_eval = explode_to_samples(runs_eval).collect(engine="streaming")
+
+    model = train_and_evaluate(
+        train_data=samples_train,
+        test_data=samples_eval,
+        config=config,
     )
-    test_image_dataset = create_image_dataset(
-        processed_evaluation_data,
-    )
-    out_path = (
-        f"models/{config.model_name}_{config.architecture.image_size}p_"
-        f"{config.architecture.width_meters}m.pt"
-    )
-    train_and_evaluate(
-        train_image_dataset,
-        test_image_dataset,
-        config,
-        out_path,
-    )
+    # Save the model
+    model_path = Path(config.learning.model_path)
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Saving model to %s", model_path)
+    model.save(model_path)
 
 
 if __name__ == "__main__":
