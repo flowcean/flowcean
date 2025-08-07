@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+import functools
 import logging
-from collections.abc import Iterable
 from multiprocessing import Pool
 from os import PathLike
 from pathlib import Path
@@ -74,84 +74,83 @@ def define_transforms(
             position_threshold=position_threshold,
             heading_threshold=heading_threshold,
         )
+        | Lambda(explode_and_collect_samples)
     )
 
 
-def load_and_process_data(
-    rosbags: Iterable[str | PathLike],
+def load_and_process_rosbag(
+    path: str | PathLike,
     config: DictConfig | ListConfig,
-) -> list[pl.LazyFrame]:
-    processed_data = []
-    for path in rosbags:
-        cache_path = Path(path).with_suffix(".processed.parquet")
-        if cache_path.exists():
-            logger.info(
-                "Loading already processed rosbag from cache: %s",
-                cache_path,
-            )
-            data = pl.scan_parquet(cache_path)
-            processed_data.append(data)
-            continue
-
-        logger.info("Processing rosbag: %s", path)
-        data = load_rosbag(
-            path=path,
-            topics={
-                "/amcl_pose": [
-                    "pose.pose.position.x",
-                    "pose.pose.position.y",
-                    "pose.pose.orientation.x",
-                    "pose.pose.orientation.y",
-                    "pose.pose.orientation.z",
-                    "pose.pose.orientation.w",
-                ],
-                "/momo/pose": [
-                    "pose.position.x",
-                    "pose.position.y",
-                    "pose.orientation.x",
-                    "pose.orientation.y",
-                    "pose.orientation.z",
-                    "pose.orientation.w",
-                ],
-                "/scan": [
-                    "ranges",
-                    "angle_min",
-                    "angle_max",
-                    "angle_increment",
-                    "range_min",
-                    "range_max",
-                ],
-                "/map": [
-                    "data",
-                    "info.resolution",
-                    "info.width",
-                    "info.height",
-                    "info.origin.position.x",
-                    "info.origin.position.y",
-                    "info.origin.position.z",
-                    "info.origin.orientation.x",
-                    "info.origin.orientation.y",
-                    "info.origin.orientation.z",
-                    "info.origin.orientation.w",
-                ],
-                "/delocalizations": ["data"],
-                "/particle_cloud": ["particles"],
-            },
-            message_paths=config.rosbag.message_paths,
-        )
-        transform = define_transforms(
-            config.localization.position_threshold,
-            config.localization.heading_threshold,
-        )
-        data = transform.apply(data)
-        data.sink_parquet(cache_path)
-        processed_data.append(data)
-    return processed_data
-
-
-def explode_and_collect_samples(
-    data: pl.LazyFrame,
 ) -> pl.DataFrame:
+    cache_path = Path(path).with_suffix(".processed.parquet")
+    if cache_path.exists():
+        logger.info(
+            "Loading already processed rosbag from cache: %s",
+            cache_path,
+        )
+        return pl.read_parquet(cache_path)
+
+    logger.info("Processing rosbag: %s", path)
+    data = load_rosbag(
+        path=path,
+        topics={
+            "/amcl_pose": [
+                "pose.pose.position.x",
+                "pose.pose.position.y",
+                "pose.pose.orientation.x",
+                "pose.pose.orientation.y",
+                "pose.pose.orientation.z",
+                "pose.pose.orientation.w",
+            ],
+            "/momo/pose": [
+                "pose.position.x",
+                "pose.position.y",
+                "pose.orientation.x",
+                "pose.orientation.y",
+                "pose.orientation.z",
+                "pose.orientation.w",
+            ],
+            "/scan": [
+                "ranges",
+                "angle_min",
+                "angle_max",
+                "angle_increment",
+                "range_min",
+                "range_max",
+            ],
+            "/map": [
+                "data",
+                "info.resolution",
+                "info.width",
+                "info.height",
+                "info.origin.position.x",
+                "info.origin.position.y",
+                "info.origin.position.z",
+                "info.origin.orientation.x",
+                "info.origin.orientation.y",
+                "info.origin.orientation.z",
+                "info.origin.orientation.w",
+            ],
+            "/delocalizations": ["data"],
+            "/particle_cloud": ["particles"],
+        },
+        message_paths=config.rosbag.message_paths,
+    )
+    transform = define_transforms(
+        config.localization.position_threshold,
+        config.localization.heading_threshold,
+    )
+    transformed_data: pl.DataFrame = transform.apply(data).collect(
+        engine="streaming",
+    )
+
+    logger.info("Caching processed data to Parquet file: %s", cache_path)
+    transformed_data.write_parquet(cache_path)
+
+    return transformed_data
+
+
+def explode_and_collect_samples(data: pl.LazyFrame) -> pl.LazyFrame:
     return (
         data.explode("measurements")
         .unnest("measurements")
@@ -201,7 +200,7 @@ def explode_and_collect_samples(
             ).alias("/amcl_pose"),
             pl.col("is_delocalized"),
         )
-    ).collect(engine="streaming")
+    )
 
 
 def train_and_evaluate(
@@ -249,23 +248,18 @@ def train_and_evaluate(
 def main() -> None:
     config = flowcean.cli.initialize()
 
-    runs_train = load_and_process_data(
-        rosbags=config.rosbag.training_paths,
-        config=config,
-    )
     logger.info("Collecting training data")
+    loader = functools.partial(load_and_process_rosbag, config=config)
     with Pool() as pool:
-        exploded_runs_train = pool.map(explode_and_collect_samples, runs_train)
-    samples_train = pl.concat(exploded_runs_train, how="vertical")
+        runs_train = pool.map(loader, config.rosbag.training_paths)
+    logger.info("Combining training data")
+    samples_train = pl.concat(runs_train, how="vertical")
 
-    runs_eval = load_and_process_data(
-        rosbags=config.rosbag.evaluation_paths,
-        config=config,
-    )
     logger.info("Collecting evaluation data")
     with Pool() as pool:
-        exploded_runs_eval = pool.map(explode_and_collect_samples, runs_eval)
-    samples_eval = pl.concat(exploded_runs_eval, how="vertical")
+        runs_train = pool.map(loader, config.rosbag.evaluation_paths)
+    logger.info("Combining evaluation data")
+    samples_eval = pl.concat(runs_train, how="vertical")
 
     model = train_and_evaluate(
         train_data=samples_train,
