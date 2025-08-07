@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 from collections.abc import Iterable
+from multiprocessing import Pool
 from os import PathLike
 from pathlib import Path
 
@@ -79,7 +80,7 @@ def define_transforms(
 def load_and_process_data(
     rosbags: Iterable[str | PathLike],
     config: DictConfig | ListConfig,
-) -> pl.LazyFrame:
+) -> list[pl.LazyFrame]:
     processed_data = []
     for path in rosbags:
         cache_path = Path(path).with_suffix(".processed.parquet")
@@ -145,12 +146,12 @@ def load_and_process_data(
         data = transform.apply(data)
         data.sink_parquet(cache_path)
         processed_data.append(data)
-    return pl.concat(processed_data)
+    return processed_data
 
 
-def explode_to_samples(
+def explode_and_collect_samples(
     data: pl.LazyFrame,
-) -> pl.LazyFrame:
+) -> pl.DataFrame:
     return (
         data.explode("measurements")
         .unnest("measurements")
@@ -200,7 +201,7 @@ def explode_to_samples(
             ).alias("/amcl_pose"),
             pl.col("is_delocalized"),
         )
-    )
+    ).collect(engine="streaming")
 
 
 def train_and_evaluate(
@@ -253,14 +254,18 @@ def main() -> None:
         config=config,
     )
     logger.info("Collecting training data")
-    samples_train = explode_to_samples(runs_train).collect(engine="streaming")
+    with Pool() as pool:
+        exploded_runs_train = pool.map(explode_and_collect_samples, runs_train)
+    samples_train = pl.concat(exploded_runs_train, how="vertical")
 
     runs_eval = load_and_process_data(
         rosbags=config.rosbag.evaluation_paths,
         config=config,
     )
     logger.info("Collecting evaluation data")
-    samples_eval = explode_to_samples(runs_eval).collect(engine="streaming")
+    with Pool() as pool:
+        exploded_runs_eval = pool.map(explode_and_collect_samples, runs_eval)
+    samples_eval = pl.concat(exploded_runs_eval, how="vertical")
 
     model = train_and_evaluate(
         train_data=samples_train,
