@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import logging
+from collections.abc import Iterable
+from os import PathLike
 from pathlib import Path
 
 import polars as pl
@@ -16,11 +18,12 @@ from custom_transforms.zero_order_hold_matching import ZeroOrderHold
 from omegaconf import DictConfig, ListConfig
 
 import flowcean.cli
+from flowcean.core import Transform
 from flowcean.core.strategies import evaluate_offline
 from flowcean.core.transform import Lambda
 from flowcean.polars import DataFrame
 from flowcean.polars.transforms.drop import Drop
-from flowcean.ros.rosbag import RosbagLoader
+from flowcean.ros import load_rosbag
 from flowcean.sklearn.metrics.classification import (
     Accuracy,
     ClassificationReport,
@@ -32,24 +35,66 @@ from flowcean.sklearn.metrics.classification import (
 logger = logging.getLogger(__name__)
 
 
+def define_transforms(
+    position_threshold: float,
+    heading_threshold: float,
+) -> Transform:
+    def convert_map_to_bool(df: pl.LazyFrame) -> pl.LazyFrame:
+        return df.with_columns(
+            pl.col("/map").struct.with_fields(
+                pl.field("data").list.eval(pl.element() != 0),
+            ),
+        )
+
+    return (
+        Collapse("/map", element=0)
+        | Lambda(convert_map_to_bool)
+        | ZeroOrderHold(
+            features=[
+                "/scan",
+                "/particle_cloud",
+                "/momo/pose",
+                "/amcl_pose",
+            ],
+            name="measurements",
+        )
+        | Drop("/scan", "/particle_cloud", "/momo/pose", "/amcl_pose")
+        | DetectDelocalizations("/delocalizations", name="slice_points")
+        | Drop("/delocalizations")
+        | SliceTimeSeries(
+            time_series="measurements",
+            slice_points="slice_points",
+        )
+        | Drop("slice_points")
+        | LocalizationStatus(
+            time_series="measurements",
+            ground_truth="/momo/pose",
+            estimation="/amcl_pose",
+            position_threshold=position_threshold,
+            heading_threshold=heading_threshold,
+        )
+    )
+
+
 def load_and_process_data(
-    path: str | list[str],
+    rosbags: Iterable[str | PathLike],
     config: DictConfig | ListConfig,
 ) -> pl.LazyFrame:
     processed_data = []
-    # Process each ROS2 bag directory if not already processed
-    for rosbag_path in path:
-        out_path = Path(rosbag_path).with_suffix(".processed.parquet")
-        if out_path.exists():
-            processed_data.append(pl.scan_parquet(out_path))
+    for path in rosbags:
+        cache_path = Path(path).with_suffix(".processed.parquet")
+        if cache_path.exists():
             logger.info(
-                "Loading already processed rosbag from parquet %s",
-                out_path,
+                "Loading already processed rosbag from cache",
+                extra={"path": cache_path},
             )
+            data = pl.scan_parquet(cache_path)
+            processed_data.append(data)
             continue
 
-        rosbag = RosbagLoader(
-            path=rosbag_path,
+        logger.info("Processing rosbag", extra={"path": path})
+        data = load_rosbag(
+            path=path,
             topics={
                 "/amcl_pose": [
                     "pose.pose.position.x",
@@ -93,64 +138,20 @@ def load_and_process_data(
             },
             message_paths=config.rosbag.message_paths,
         )
-
-        convert_map_to_bool = Lambda(
-            lambda df: df.with_columns(
-                pl.col("/map").struct.with_fields(
-                    pl.field("data").list.eval(pl.element() != 0),
-                ),
-            ),
+        transform = define_transforms(
+            config.localization.position_threshold,
+            config.localization.heading_threshold,
         )
-        # Apply preprocessing pipeline
-        data = (
-            rosbag
-            | Collapse("/map", element=0)
-            | convert_map_to_bool
-            | ZeroOrderHold(
-                features=[
-                    "/scan",
-                    "/particle_cloud",
-                    "/momo/pose",
-                    "/amcl_pose",
-                ],
-                name="measurements",
-            )
-            | Drop("/scan", "/particle_cloud", "/momo/pose", "/amcl_pose")
-            | DetectDelocalizations("/delocalizations", name="slice_points")
-            | Drop("/delocalizations")
-            | SliceTimeSeries(
-                time_series="measurements",
-                slice_points="slice_points",
-            )
-            | Drop("slice_points")
-            | LocalizationStatus(
-                time_series="measurements",
-                ground_truth="/momo/pose",
-                estimation="/amcl_pose",
-                position_threshold=config.localization.position_threshold,
-                heading_threshold=config.localization.heading_threshold,
-            )
-        )
-        try:
-            logger.info(
-                "Processing rosbag: %s",
-                out_path,
-            )
-            data.observe().sink_parquet(out_path)
-            processed_data.append(data.observe())
-        except Exception:
-            logger.exception(
-                "Error processing rosbag: %s",
-                out_path,
-            )
-            continue
+        data = transform.apply(data)
+        data.sink_parquet(cache_path)
+        processed_data.append(data)
     return pl.concat(processed_data)
 
 
 def create_image_dataset(
     data: pl.LazyFrame,
-) -> pl.DataFrame:
-    processed_data = (
+) -> pl.LazyFrame:
+    return (
         data.explode("measurements")
         .unnest("measurements")
         .unnest("value")
@@ -200,41 +201,11 @@ def create_image_dataset(
             pl.col("is_delocalized"),
         )
     )
-    return processed_data.collect(engine="streaming")
-
-
-def main() -> None:
-    # Initialize configuration and logging
-    config = flowcean.cli.initialize()
-
-    processed_train_data = load_and_process_data(
-        path=config.rosbag.training_paths,
-        config=config,
-    )
-    processed_evaluation_data = load_and_process_data(
-        path=config.rosbag.evaluation_paths,
-        config=config,
-    )
-    logger.info("Creating image datasets from processed data")
-    train_image_dataset = create_image_dataset(
-        processed_train_data,
-    )
-    test_image_dataset = create_image_dataset(
-        processed_evaluation_data,
-    )
-    out_path = f"models/{config.model_name}_{config.architecture.image_size}p_" + \
-        f"{config.architecture.width_meters}m.pt"
-    train_and_evaluate(
-        train_image_dataset,
-        test_image_dataset,
-        config,
-        out_path,
-    )
 
 
 def train_and_evaluate(
-    train_data: pl.DataFrame,
-    test_data: pl.DataFrame,
+    train_data: pl.LazyFrame,
+    test_data: pl.LazyFrame,
     config: DictConfig | ListConfig,
     out_path: str,
 ) -> None:
@@ -252,8 +223,10 @@ def train_and_evaluate(
     )
     logger.info("Training model with %s epochs", config.learning.epochs)
     model = learner.learn(
-        inputs=train_data.drop(["is_delocalized"]),
-        outputs=train_data.select(["is_delocalized"]),
+        inputs=train_data.drop(["is_delocalized"]).collect(engine="streaming"),
+        outputs=train_data.select(["is_delocalized"]).collect(
+            engine="streaming",
+        ),
     )
     # Evaluate the model
     metrics = [
@@ -275,6 +248,36 @@ def train_and_evaluate(
     # Save the model
     logger.info("Saving model to %s", out_path)
     torch.save(model.module.state_dict(), out_path)
+
+
+def main() -> None:
+    config = flowcean.cli.initialize()
+
+    processed_train_data = load_and_process_data(
+        rosbags=config.rosbag.training_paths,
+        config=config,
+    )
+    processed_evaluation_data = load_and_process_data(
+        rosbags=config.rosbag.evaluation_paths,
+        config=config,
+    )
+    logger.info("Creating image datasets from processed data")
+    train_image_dataset = create_image_dataset(
+        processed_train_data,
+    )
+    test_image_dataset = create_image_dataset(
+        processed_evaluation_data,
+    )
+    out_path = (
+        f"models/{config.model_name}_{config.architecture.image_size}p_"
+        f"{config.architecture.width_meters}m.pt"
+    )
+    train_and_evaluate(
+        train_image_dataset,
+        test_image_dataset,
+        config,
+        out_path,
+    )
 
 
 if __name__ == "__main__":
