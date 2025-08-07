@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-import functools
 import logging
-from multiprocessing import Pool
 from os import PathLike
 from pathlib import Path
 
@@ -249,17 +247,26 @@ def main() -> None:
     config = flowcean.cli.initialize()
 
     logger.info("Collecting training data")
-    loader = functools.partial(load_and_process_rosbag, config=config)
-    with Pool() as pool:
-        runs_train = pool.map(loader, config.rosbag.training_paths)
+    runs_train = [
+        load_and_process_rosbag(
+            path=path,
+            config=config,
+        )
+        for path in config.learning.train_data
+    ]
     logger.info("Combining training data")
     samples_train = pl.concat(runs_train, how="vertical")
 
     logger.info("Collecting evaluation data")
-    with Pool() as pool:
-        runs_train = pool.map(loader, config.rosbag.evaluation_paths)
+    runs_eval = [
+        load_and_process_rosbag(
+            path=path,
+            config=config,
+        )
+        for path in config.learning.eval_data
+    ]
     logger.info("Combining evaluation data")
-    samples_eval = pl.concat(runs_train, how="vertical")
+    samples_eval = pl.concat(runs_eval, how="vertical")
 
     model = train_and_evaluate(
         train_data=samples_train,
