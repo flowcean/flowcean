@@ -22,8 +22,13 @@ class FeatureImagesData(Dataset):
         self.outputs = outputs
         self.image_size = image_size
         self.width_meters = width_meters
+        self.cache = [None] * len(inputs)
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor] | Tensor:
+
+        if self.cache[index] is not None:
+            return self.cache[index]
+
         row = self.inputs.row(index, named=True)
         map_image = compute_map_image(
             row,
@@ -58,6 +63,7 @@ class FeatureImagesData(Dataset):
 
         output_row = self.outputs.row(index, named=True)
         outputs = Tensor([output_row["is_delocalized"]])
+        self.cache[index] = (inputs, outputs)
         return inputs, outputs
 
     def __len__(self) -> int:

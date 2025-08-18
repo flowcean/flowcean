@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tqdm import tqdm
 import logging
 import os
 import platform
@@ -66,6 +67,10 @@ class ImageBasedLightningLearner(SupervisedLearner):
             image_size=self.image_size,
             width_meters=self.width_meters,
         )
+        # Preload the dataset to ensure all images are loaded into memory
+        for i in tqdm(range(len(dataset)), desc="Preloading dataset"):
+            dataset[i]
+
         dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -82,6 +87,7 @@ class ImageBasedLightningLearner(SupervisedLearner):
                     mode="min",
                 ),
             ],
+            devices=1,
         )
         trainer.fit(self.module, dataloader)
         return ImageBasedPyTorchModel(

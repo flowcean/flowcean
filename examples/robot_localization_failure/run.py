@@ -72,7 +72,6 @@ def define_transforms(
             position_threshold=position_threshold,
             heading_threshold=heading_threshold,
         )
-        | Lambda(explode_and_collect_samples)
     )
 
 
@@ -255,8 +254,7 @@ def main() -> None:
         for path in config.rosbag.training_paths
     ]
     logger.info("Combining training data")
-    samples_train = pl.concat(runs_train, how="vertical")
-    breakpoint()
+    samples_train = explode_and_collect_samples(pl.concat(runs_train, how="vertical"))
 
     logger.info("Collecting evaluation data")
     runs_eval = [
@@ -267,7 +265,7 @@ def main() -> None:
         for path in config.rosbag.evaluation_paths
     ]
     logger.info("Combining evaluation data")
-    samples_eval = pl.concat(runs_eval, how="vertical")
+    samples_eval = explode_and_collect_samples(pl.concat(runs_eval, how="vertical"))
 
     model = train_and_evaluate(
         train_data=samples_train,
