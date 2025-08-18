@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from tqdm import tqdm
 import logging
 import os
 import platform
@@ -14,6 +13,7 @@ import torch
 from feature_images import FeatureImagesData
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 from typing_extensions import override
 
 from flowcean.core import Model, SupervisedLearner

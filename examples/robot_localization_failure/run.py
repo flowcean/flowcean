@@ -147,7 +147,7 @@ def load_and_process_rosbag(
     return transformed_data
 
 
-def explode_and_collect_samples(data: pl.LazyFrame) -> pl.LazyFrame:
+def explode_and_collect_samples(data: pl.DataFrame) -> pl.DataFrame:
     return (
         data.explode("measurements")
         .unnest("measurements")
@@ -254,7 +254,9 @@ def main() -> None:
         for path in config.rosbag.training_paths
     ]
     logger.info("Combining training data")
-    samples_train = explode_and_collect_samples(pl.concat(runs_train, how="vertical"))
+    samples_train = explode_and_collect_samples(
+        pl.concat(runs_train, how="vertical"),
+    )
 
     logger.info("Collecting evaluation data")
     runs_eval = [
@@ -265,7 +267,9 @@ def main() -> None:
         for path in config.rosbag.evaluation_paths
     ]
     logger.info("Combining evaluation data")
-    samples_eval = explode_and_collect_samples(pl.concat(runs_eval, how="vertical"))
+    samples_eval = explode_and_collect_samples(
+        pl.concat(runs_eval, how="vertical"),
+    )
 
     model = train_and_evaluate(
         train_data=samples_train,

@@ -22,16 +22,35 @@ class FeatureImagesData(Dataset):
         self.outputs = outputs
         self.image_size = image_size
         self.width_meters = width_meters
-        self.cache = [None] * len(inputs)
+        self.cache: list[None | tuple[Tensor, Tensor]] = [None] * len(inputs)
+        self.single_inputs_row = self.inputs.row(0, named=True)
+        if self.outputs is not None:
+            self.single_outputs_row = self.outputs.row(0, named=True)
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor] | Tensor:
+        cache_entry = self.cache[index]
+        if cache_entry is not None:
+            return cache_entry
 
-        if self.cache[index] is not None:
-            return self.cache[index]
-
-        row = self.inputs.row(index, named=True)
+        row = self.inputs.select(
+            pl.exclude("/map"),
+            pl.col("/map").struct.field(
+                "info.width",
+                "info.resolution",
+                "info.origin.position.x",
+                "info.origin.position.y",
+            ),
+        ).row(index, named=True)
+        # row = self.single_inputs_row
+        map_data = (
+            self.inputs.slice(index, 1)
+            .select(pl.col("/map").struct.field("data"))
+            .to_series()
+            .to_numpy()[0]
+        )
         map_image = compute_map_image(
             row,
+            map_data,
             image_width=self.image_size,
             image_height=self.image_size,
             width_meters=self.width_meters,
@@ -62,6 +81,7 @@ class FeatureImagesData(Dataset):
             return inputs
 
         output_row = self.outputs.row(index, named=True)
+        # output_row = self.single_outputs_row
         outputs = Tensor([output_row["is_delocalized"]])
         self.cache[index] = (inputs, outputs)
         return inputs, outputs
@@ -91,24 +111,21 @@ def extract_position_and_orientation(x: dict) -> tuple[NDArray, NDArray]:
 
 def compute_map_image(
     x: dict,
+    map_data: NDArray,
     image_width: int,
     image_height: int,
     width_meters: float,
 ) -> NDArray:
-    map_data = x["/map"]
-    map_image = (
-        np.array(map_data["data"])
-        .reshape(
-            (-1, map_data["info.width"]),
-        )
-        .astype(np.uint8)
-    )
+    map_topic = x
+    map_image = map_data.reshape(
+        (-1, map_topic["info.width"]),
+    ).astype(np.uint8)
     position, orientation = extract_position_and_orientation(x)
-    map_resolution = map_data["info.resolution"]
+    map_resolution = map_topic["info.resolution"]
     map_origin = np.array(
         [
-            map_data["info.origin.position.x"],
-            map_data["info.origin.position.y"],
+            map_topic["info.origin.position.x"],
+            map_topic["info.origin.position.y"],
         ],
     )
     return crop_map_image(
