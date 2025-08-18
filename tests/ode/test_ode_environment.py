@@ -99,8 +99,8 @@ class TestOdeEnvironment(unittest.TestCase):
             data,
             loaded_data,
             check_exact=False,
-            atol=1e-2,
-            rtol=1e-2,
+            abs_tol=1e-2,
+            rel_tol=1e-2,
         )
 
     def test_time_dependent_ode(self) -> None:
@@ -133,8 +133,8 @@ class TestOdeEnvironment(unittest.TestCase):
             data,
             loaded_data,
             check_exact=False,
-            atol=1e-2,
-            rtol=1e-2,
+            abs_tol=1e-2,
+            rel_tol=1e-2,
         )
 
     @pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt")

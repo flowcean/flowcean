@@ -56,7 +56,7 @@ class XGBoostRegressorLearnerTest(unittest.TestCase):
         assert_frame_equal(
             predictions,
             df.select("y"),
-            atol=1e-3,  # Allow small numerical differences
+            abs_tol=1e-3,  # Allow small numerical differences
         )
 
 
