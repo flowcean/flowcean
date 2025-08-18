@@ -252,10 +252,11 @@ def main() -> None:
             path=path,
             config=config,
         )
-        for path in config.learning.train_data
+        for path in config.rosbag.training_paths
     ]
     logger.info("Combining training data")
     samples_train = pl.concat(runs_train, how="vertical")
+    breakpoint()
 
     logger.info("Collecting evaluation data")
     runs_eval = [
@@ -263,7 +264,7 @@ def main() -> None:
             path=path,
             config=config,
         )
-        for path in config.learning.eval_data
+        for path in config.rosbag.evaluation_paths
     ]
     logger.info("Combining evaluation data")
     samples_eval = pl.concat(runs_eval, how="vertical")
