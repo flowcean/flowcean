@@ -116,12 +116,13 @@ class ImageBasedPyTorchModel(Model):
         """Initialize the model.
 
         Args:
-            module: The PyTorch Lightning module.
-            image_size: The size of the image (height and width).
-            width_meters: The width of the image in meters.
-            output_names: The names of the output columns.
-            batch_size: The batch size to use for predictions.
-            num_workers: The number of workers to use for the DataLoader.
+            module: PyTorch Lightning module.
+            image_size: size of the image (height and width).
+            width_meters: width of the image in meters.
+            output_names: names of the output columns.
+            batch_size: batch size to use for predictions.
+            num_workers: number of workers to use for the DataLoader.
+            binary_classification_threshold: threshold for classification.
         """
         self.module = module
         self.image_size = image_size
