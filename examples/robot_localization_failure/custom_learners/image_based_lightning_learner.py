@@ -10,10 +10,9 @@ from typing import Any
 import lightning
 import polars as pl
 import torch
-from feature_images import FeatureImagesData
+from feature_images import FeatureImagesData, InMemoryCaching
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
 from typing_extensions import override
 
 from flowcean.core import Model, SupervisedLearner
@@ -61,15 +60,15 @@ class ImageBasedLightningLearner(SupervisedLearner):
         inputs: pl.DataFrame,
         outputs: pl.DataFrame,
     ) -> ImageBasedPyTorchModel:
-        dataset = FeatureImagesData(
-            inputs,
-            outputs,
-            image_size=self.image_size,
-            width_meters=self.width_meters,
+        dataset = InMemoryCaching(
+            FeatureImagesData(
+                inputs,
+                outputs,
+                image_size=self.image_size,
+                width_meters=self.width_meters,
+            ),
         )
-        # Preload the dataset to ensure all images are loaded into memory
-        for i in tqdm(range(len(dataset)), desc="Preloading dataset"):
-            dataset[i]
+        dataset.warmup(show_progress=True)
 
         dataloader = DataLoader(
             dataset,
