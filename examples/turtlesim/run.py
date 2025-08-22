@@ -17,6 +17,7 @@ from flowcean.sklearn.metrics.regression import (
     MeanSquaredError,
     R2Score,
 )
+from flowcean.sklearn.random_forest import RandomForestRegressorLearner
 from flowcean.sklearn.regression_tree import RegressionTree
 
 logger = logging.getLogger(__name__)
@@ -110,6 +111,21 @@ def main() -> None:
         inputs=input_names,
         outputs=output_names,
     )
+    forest_params = {
+        "n_estimators": 100,
+        "max_depth": 10,
+    }
+    random_forest_learner = RandomForestRegressorLearner(**forest_params)
+    random_forest_model = learn_offline(
+        DataFrame(samples_train),
+        random_forest_learner,
+        inputs=input_names,
+        outputs=output_names,
+    )
+    models = {
+        "regression_tree": regression_tree_model,
+        "random_forest": random_forest_model,
+    }
     metrics = [
         MaxError(),
         MeanAbsoluteError(),
@@ -122,27 +138,27 @@ def main() -> None:
         samples_eval.select(input_names).limit(10).lazy(),
     )
     logger.info("Example output: %s", example_output.collect())
-
-    for output_name in output_names:
-        print(f"\nEvaluating {output_name}:")
-        report = evaluate_offline(
-            model=regression_tree_model,
-            environment=DataFrame(samples_eval),
-            metrics=metrics,
-            inputs=input_names,
-            outputs=[output_name],
-        )
-        formatted_report = "\n".join(
-            f"  {metric_name}: {value:.2e}"
-            if metric_name == "MeanAbsolutePercentageError"
-            else f"  {metric_name}: {value:.4f}"
-            for metric_name, value in report[output_name].items()
-        )
-        logger.info(
-            "Evaluation report for %s:\n%s",
-            output_name,
-            formatted_report,
-        )
+    for model_name, model in models.items():
+        for output_name in output_names:
+            print(f"\nEvaluating {output_name} with {model_name}:")
+            report = evaluate_offline(
+                model=model,
+                environment=DataFrame(samples_eval),
+                metrics=metrics,
+                inputs=input_names,
+                outputs=[output_name],
+            )
+            formatted_report = "\n".join(
+                f"  {metric_name}: {value:.2e}"
+                if metric_name == "MeanAbsolutePercentageError"
+                else f"  {metric_name}: {value:.4f}"
+                for metric_name, value in report[output_name].items()
+            )
+            logger.info(
+                "Evaluation report for %s:\n%s",
+                output_name,
+                formatted_report,
+            )
 
 
 if __name__ == "__main__":
