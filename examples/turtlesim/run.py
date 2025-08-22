@@ -9,7 +9,6 @@ import flowcean
 import flowcean.cli
 from flowcean.core.strategies import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
-from flowcean.polars.transforms.unnest import Unnest
 from flowcean.ros.rosbag import load_rosbag
 from flowcean.sklearn.metrics.regression import (
     MaxError,
@@ -102,7 +101,7 @@ def main() -> None:
         "/turtle1/pose/theta_next",
     ).columns
     tree_params = {
-        "max_leaf_nodes": 10,
+        "max_leaf_nodes": 1000,
     }
     regression_tree_learner = RegressionTree(**tree_params)
     regression_tree_model = learn_offline(
@@ -110,7 +109,7 @@ def main() -> None:
         regression_tree_learner,
         inputs=input_names,
         outputs=output_names,
-    ).with_output_transform(Unnest("/turtle1/pose/x_next"))
+    )
     metrics = [
         MaxError(),
         MeanAbsoluteError(),
@@ -123,15 +122,27 @@ def main() -> None:
         samples_eval.select(input_names).limit(10).lazy(),
     )
     logger.info("Example output: %s", example_output.collect())
-    return
-    report = evaluate_offline(
-        model=regression_tree_model,
-        environment=DataFrame(samples_eval),
-        metrics=metrics,
-        inputs=input_names,
-        outputs=output_names,
-    )
-    print(report)
+
+    for output_name in output_names:
+        print(f"\nEvaluating {output_name}:")
+        report = evaluate_offline(
+            model=regression_tree_model,
+            environment=DataFrame(samples_eval),
+            metrics=metrics,
+            inputs=input_names,
+            outputs=[output_name],
+        )
+        formatted_report = "\n".join(
+            f"  {metric_name}: {value:.2e}"
+            if metric_name == "MeanAbsolutePercentageError"
+            else f"  {metric_name}: {value:.4f}"
+            for metric_name, value in report[output_name].items()
+        )
+        logger.info(
+            "Evaluation report for %s:\n%s",
+            output_name,
+            formatted_report,
+        )
 
 
 if __name__ == "__main__":

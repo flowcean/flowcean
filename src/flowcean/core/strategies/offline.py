@@ -105,9 +105,14 @@ def evaluate_offline(
         and model.output_transform is not None
     ):
         output_features = model.output_transform.apply(output_features)
-    return Report(
-        {
-            metric.name: metric(output_features, predictions.lazy())
+    report = {}
+    for output_name in outputs:
+        logger.info("Evaluating output: %s", output_name)
+        single_output_true = output_features.select([output_name])
+        single_output_pred = predictions.select([output_name])
+        report[output_name] = {
+            metric.name: metric(single_output_true, single_output_pred)
             for metric in metrics
-        },
-    )
+        }
+
+    return Report(report)
