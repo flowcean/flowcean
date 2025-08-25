@@ -20,6 +20,13 @@ class Report:
         """
         self.entries = entries
 
+    def __getitem__(self, name: str) -> Reportable:
+        """Return a report entry by name.
+
+        Usage: report["accuracy"]
+        """
+        return self.entries[name]
+
     def __str__(self) -> str:
         """Return a string representation of the report."""
         return "\n".join(

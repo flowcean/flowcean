@@ -59,7 +59,7 @@ import cloudpickle  # type:ignore[reportMissingTypeStubs]
 from typing_extensions import override
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     from flowcean.core.data import Data
 
@@ -234,3 +234,21 @@ class Identity(Transform):
         other: Transform,
     ) -> Transform:
         return other
+
+
+class Lambda(Transform):
+    """A transform that applies a lambda function to data."""
+
+    func: Callable[[Data], Data]
+
+    def __init__(self, func: Callable[[Data], Data]) -> None:
+        """Initialize the lambda transform.
+
+        Args:
+            func: The function to apply to data.
+        """
+        self.func = func
+
+    @override
+    def apply(self, data: Data) -> Data:
+        return self.func(data)
