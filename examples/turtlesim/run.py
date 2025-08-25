@@ -3,22 +3,30 @@ from os import PathLike
 
 import polars as pl
 from custom_transforms.zero_order_hold_matching import ZeroOrderHold
+from matplotlib import pyplot as plt
 from omegaconf import DictConfig, ListConfig
 
 import flowcean
 import flowcean.cli
+from examples.turtlesim.custom_metrics.euclidean_distance import (
+    EuclideanDistance,
+)
+from flowcean.core.model import Model
 from flowcean.core.strategies import evaluate_offline, learn_offline
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.ros.rosbag import load_rosbag
 from flowcean.sklearn.metrics.regression import (
     MaxError,
     MeanAbsoluteError,
-    MeanAbsolutePercentageError,
     MeanSquaredError,
     R2Score,
 )
 from flowcean.sklearn.random_forest import RandomForestRegressorLearner
 from flowcean.sklearn.regression_tree import RegressionTree
+from flowcean.torch.lightning_learner import (
+    LightningLearner,
+    MultilayerPerceptron,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +89,40 @@ def load_and_process_rosbag(
     return transformed_data
 
 
+def plot_predictions_vs_ground_truth(
+    samples_eval: pl.DataFrame,
+    models: dict[str, Model],
+    input_names: list[str],
+    output_names: list[str],
+) -> None:
+    for model_name, model in models.items():
+        predictions = model.predict(
+            samples_eval.select(input_names).lazy(),
+        ).collect()
+        for output_name in output_names:
+            plt.figure(figsize=(12, 6))
+            plt.plot(
+                samples_eval.select(pl.col(output_name)).to_series(),
+                label="Ground Truth",
+                color="blue",
+            )
+            plt.plot(
+                predictions.select(pl.col(output_name)).to_series(),
+                label="Predictions",
+                color="red",
+            )
+            plt.title(
+                f"Predictions vs Ground Truth - {model_name} - {output_name}",
+            )
+            plt.xlabel("Sample Index")
+            plt.ylabel(output_name)
+            plt.legend()
+            plt.savefig(
+                f"plots/{model_name}_{output_name.replace('/', '_')}_plot.png",
+            )
+            plt.close()
+
+
 def main() -> None:
     config = flowcean.cli.initialize()
     train_path = config.rosbag.training_paths[0]
@@ -122,25 +164,49 @@ def main() -> None:
         inputs=input_names,
         outputs=output_names,
     )
+    mlp_learner = LightningLearner(
+        module=MultilayerPerceptron(
+            learning_rate=1e-3,
+            input_size=len(input_names),
+            output_size=len(output_names),
+        ),
+        batch_size=64,
+        max_epochs=5,
+    )
+    mlp_model = learn_offline(
+        DataFrame(samples_train),
+        mlp_learner,
+        inputs=input_names,
+        outputs=output_names,
+    )
     models = {
         "regression_tree": regression_tree_model,
         "random_forest": random_forest_model,
+        "multilayer_perceptron": mlp_model,
     }
     metrics = [
         MaxError(),
         MeanAbsoluteError(),
-        MeanAbsolutePercentageError(),
         MeanSquaredError(),
         R2Score(),
     ]
-
-    example_output = regression_tree_model.predict(
+    example_rt_output = regression_tree_model.predict(
         samples_eval.select(input_names).limit(10).lazy(),
     )
-    logger.info("Example output: %s", example_output.collect())
+    logger.info("Example output: %s", example_rt_output.collect())
+    example_rf_output = random_forest_model.predict(
+        samples_eval.select(input_names).limit(10).lazy(),
+    )
+    logger.info("Example output: %s", example_rf_output.collect())
+    example_mlp_output = mlp_model.predict(
+        samples_eval.select(input_names).limit(10).lazy(),
+    )
+    logger.info("Example output: %s", example_mlp_output.collect())
+
+    reports = {}
     for model_name, model in models.items():
         for output_name in output_names:
-            print(f"\nEvaluating {output_name} with {model_name}:")
+            logger.info("\nEvaluating %s with %s:", output_name, model_name)
             report = evaluate_offline(
                 model=model,
                 environment=DataFrame(samples_eval),
@@ -148,10 +214,9 @@ def main() -> None:
                 inputs=input_names,
                 outputs=[output_name],
             )
+            reports[(model_name, output_name)] = report
             formatted_report = "\n".join(
                 f"  {metric_name}: {value:.2e}"
-                if metric_name == "MeanAbsolutePercentageError"
-                else f"  {metric_name}: {value:.4f}"
                 for metric_name, value in report[output_name].items()
             )
             logger.info(
@@ -159,6 +224,39 @@ def main() -> None:
                 output_name,
                 formatted_report,
             )
+
+    # Evaluate EuclideanDistance metric
+    euclidean_distances = {}
+    for model_name, model in models.items():
+        columns = ["/turtle1/pose/x_next", "/turtle1/pose/y_next"]
+        print(f"\nEvaluating Euclidean Distance with {model_name}:")
+        report = evaluate_offline(
+            model=model,
+            environment=DataFrame(samples_eval),
+            metrics=[EuclideanDistance(columns=columns)],
+            inputs=input_names,
+            outputs=columns,
+        )
+        print(report)
+        value = report["multi_output"]["EuclideanDistance"]
+        formatted_report = f"  EuclideanDistance: {value:.4f}"
+        print(formatted_report)
+        logger.info(
+            "Evaluation report for %s with %s:\n%s",
+            "EuclideanDistance",
+            model_name,
+            formatted_report,
+        )
+        euclidean_distances[model_name] = value
+
+    print("euclidean_distances:", euclidean_distances)
+    best_model = min(
+        euclidean_distances,
+        key=euclidean_distances.get,
+    )
+    logger.info("Best model: %s", best_model)
+    # save the best model
+    models[best_model].save("best_model.fml")
 
 
 if __name__ == "__main__":

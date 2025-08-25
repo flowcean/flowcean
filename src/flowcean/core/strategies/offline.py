@@ -106,13 +106,22 @@ def evaluate_offline(
     ):
         output_features = model.output_transform.apply(output_features)
     report = {}
-    for output_name in outputs:
-        logger.info("Evaluating output: %s", output_name)
-        single_output_true = output_features.select([output_name])
-        single_output_pred = predictions.select([output_name])
-        report[output_name] = {
-            metric.name: metric(single_output_true, single_output_pred)
-            for metric in metrics
-        }
-
+    multi_output_report = {}
+    for metric in metrics:
+        if hasattr(metric, "multi_output") and metric.multi_output:
+            value = metric(output_features, predictions)
+            multi_output_report[metric.name] = value
+        else:
+            for output_name in outputs:
+                logger.info("Evaluating output: %s", output_name)
+                single_output_true = output_features.select([output_name])
+                single_output_pred = predictions.select([output_name])
+                if output_name not in report:
+                    report[output_name] = {}
+                report[output_name][metric.name] = metric(
+                    single_output_true,
+                    single_output_pred,
+                )
+    if multi_output_report:
+        report["multi_output"] = multi_output_report
     return Report(report)
