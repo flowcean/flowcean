@@ -11,6 +11,7 @@ import flowcean
 import flowcean.cli
 from flowcean.core import Lambda, evaluate_offline, learn_offline
 from flowcean.core.model import Model
+from flowcean.core.strategies.offline import select_best_model
 from flowcean.polars import DataFrame, ExplodeTimeSeries, ZeroOrderHold
 from flowcean.ros import load_rosbag
 from flowcean.sklearn import (
@@ -216,6 +217,12 @@ def main() -> None:
         print(report)
         reports[model_name] = report
 
+    best_model_name = select_best_model(
+        reports,
+        output_name="multi_output",
+        metric_name="MeanEuclideanDistance",
+    )
+    logger.info("Best model: %s", best_model_name)
     plot_predictions_vs_ground_truth(
         samples_eval=samples_eval.observe().collect(),
         input_names=inputs,

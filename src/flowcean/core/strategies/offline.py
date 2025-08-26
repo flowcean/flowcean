@@ -126,3 +126,29 @@ def evaluate_offline(
     if multi_output_report:
         report["multi_output"] = multi_output_report
     return Report(report)
+
+
+def select_best_model(
+    reports: dict[str, Report],
+    metric_name: str,
+    output_name: str,
+) -> str | None:
+    """Select the best model based on a given metric.
+
+    Args:
+        reports: A dictionary of model names to their evaluation reports.
+        metric_name: The name of the metric to use for model selection.
+        output_name: The name of the output to consider for the metric.
+            Choose "multi_output" for multi-output metrics.
+
+    Returns:
+        The name of the best model.
+    """
+    best_model_name = None
+    best_metric_value = float("inf")
+    for model_name, report in reports.items():
+        if report[output_name][metric_name] < best_metric_value:
+            best_metric_value = report[output_name][metric_name]
+            best_model_name = model_name
+
+    return best_model_name
