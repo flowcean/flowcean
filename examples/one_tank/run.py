@@ -12,11 +12,7 @@ from typing_extensions import Self, override
 
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
-from flowcean.ode import (
-    OdeEnvironment,
-    OdeState,
-    OdeSystem,
-)
+from flowcean.ode import OdeEnvironment, OdeState, OdeSystem
 from flowcean.polars import SlidingWindow, TrainTestSplit, collect
 from flowcean.sklearn import (
     MeanAbsoluteError,
@@ -130,8 +126,6 @@ def main() -> None:
         LightningLearner(
             module=MultilayerPerceptron(
                 learning_rate=1e-3,
-                input_size=len(inputs),
-                output_size=len(outputs),
                 hidden_dimensions=[10, 10],
                 activation_function=torch.nn.Tanh,
             ),

@@ -16,16 +16,16 @@ class SciKitModel(Model):
     def __init__(
         self,
         model: Any,
-        output_name: str,
+        output_names: list[str],
     ) -> None:
         """Initialize the model.
 
         Args:
             model: The scikit-learn model.
-            output_name: The name of the output column.
+            output_names: The names of the output columns.
         """
         self.model = model
-        self.output_name = output_name
+        self.output_names = output_names
 
     @override
     def predict(
@@ -33,7 +33,14 @@ class SciKitModel(Model):
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
         outputs = self.model.predict(input_features.collect())
-        return pl.DataFrame({self.output_name: outputs}).lazy()
+        if len(self.output_names) == 1:
+            data = {self.output_names[0]: outputs}
+        else:
+            data = {
+                self.output_names[i]: outputs[:, i]
+                for i in range(len(self.output_names))
+            }
+        return pl.DataFrame(data).lazy()
 
     @override
     def save_state(self) -> dict[str, Any]:
@@ -42,7 +49,7 @@ class SciKitModel(Model):
         model_bytes.seek(0)
         return {
             "data": model_bytes.read(),
-            "output_name": self.output_name,
+            "output_names": self.output_names,
         }
 
     @override
@@ -50,5 +57,5 @@ class SciKitModel(Model):
     def load_from_state(cls, state: dict[str, Any]) -> SciKitModel:
         return cls(
             joblib.load(BytesIO(state["data"])),
-            state["output_name"],
+            state["output_names"],
         )
