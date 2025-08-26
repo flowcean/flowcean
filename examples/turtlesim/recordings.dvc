@@ -1,0 +1,6 @@
+outs:
+- md5: c89f0985f572a8cdfadd43df609b3794.dir
+  size: 2370727
+  nfiles: 6
+  hash: md5
+  path: recordings

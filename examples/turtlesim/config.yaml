@@ -1,0 +1,8 @@
+rosbag:
+  training_paths:
+    - recordings/turtle_training
+  evaluation_paths:
+    - recordings/turtle_evaluation
+  message_paths:
+    - ros_msgs/geometry_msgs/msg/Twist.msg
+    - ros_msgs/turtlesim/msg/Pose.msg

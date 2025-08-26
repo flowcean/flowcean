@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
@@ -105,9 +106,23 @@ def evaluate_offline(
         and model.output_transform is not None
     ):
         output_features = model.output_transform.apply(output_features)
-    return Report(
-        {
-            metric.name: metric(output_features, predictions.lazy())
-            for metric in metrics
-        },
-    )
+    report: dict[str, Any] = {}
+    multi_output_report: dict[str, Any] = {}
+    for metric in metrics:
+        if hasattr(metric, "multi_output") and metric.multi_output:
+            value = metric(output_features, predictions)
+            multi_output_report[metric.name] = value
+        else:
+            for output_name in outputs:
+                logger.info("Evaluating output: %s", output_name)
+                single_output_true = output_features.select([output_name])
+                single_output_pred = predictions.select([output_name])
+                if output_name not in report:
+                    report[output_name] = {}
+                report[output_name][metric.name] = metric(
+                    single_output_true,
+                    single_output_pred,
+                )
+    if multi_output_report:
+        report["multi_output"] = multi_output_report
+    return Report(report)

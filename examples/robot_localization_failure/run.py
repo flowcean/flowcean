@@ -3,11 +3,7 @@
 import logging
 from pathlib import Path
 
-from training import (
-    collect_data,
-    evaluate,
-    train,
-)
+from training import collect_data, evaluate, train
 
 import flowcean.cli
 
