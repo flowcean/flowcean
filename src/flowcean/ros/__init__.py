@@ -1,3 +1,3 @@
-from .rosbag import RosbagError, RosbagLoader
+from .rosbag import RosbagError, load_rosbag
 
-__all__ = ["RosbagError", "RosbagLoader"]
+__all__ = ["RosbagError", "load_rosbag"]

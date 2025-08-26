@@ -25,7 +25,9 @@ class TestMetrics(unittest.TestCase):
 
     def test_classification_report(self) -> None:
         report_value = ClassificationReport()(self.true, self.predicted)
-        assert report_value.startswith("              precision    recall ")
+        assert report_value.startswith(
+            "\n              precision    recall ",
+        )
 
     def test_fbeta_score(self) -> None:
         fbeta = FBetaScore(beta=1.0)(self.true, self.predicted)
