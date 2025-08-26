@@ -1,13 +1,16 @@
 import logging
 from collections.abc import Iterable
 from os import PathLike
+from pathlib import Path
 
 import polars as pl
 from custom_metrics.euclidean_distance import MeanEuclideanDistance
+from matplotlib import pyplot as plt
 
 import flowcean
 import flowcean.cli
 from flowcean.core import Lambda, evaluate_offline, learn_offline
+from flowcean.core.model import Model
 from flowcean.polars import DataFrame, ExplodeTimeSeries, ZeroOrderHold
 from flowcean.ros import load_rosbag
 from flowcean.sklearn import (
@@ -18,10 +21,7 @@ from flowcean.sklearn import (
     RandomForestRegressorLearner,
     RegressionTree,
 )
-from flowcean.torch import (
-    LightningLearner,
-    MultilayerPerceptron,
-)
+from flowcean.torch import LightningLearner, MultilayerPerceptron
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,75 @@ def load_and_process_rosbag(
         | ExplodeTimeSeries("measurements")
         | Lambda(shift_in_time)
     )
+
+
+def plot_predictions_vs_ground_truth(
+    samples_eval: pl.DataFrame,
+    models: dict[str, Model],
+    input_names: list[str],
+    output_names: list[str],
+) -> None:
+    # check if plots directory exists
+    Path("plots").mkdir(exist_ok=True)
+    for model_name, model in models.items():
+        predictions = model.predict(
+            samples_eval.select(input_names).lazy(),
+        ).collect()
+        # create x-y plot
+        plt.figure(figsize=(12, 12))
+        plt.scatter(
+            samples_eval.select(
+                pl.col("/turtle1/pose/x_next"),
+            ).to_series(),
+            samples_eval.select(
+                pl.col("/turtle1/pose/y_next"),
+            ).to_series(),
+            label="Ground Truth",
+            color="red",
+        )
+        plt.scatter(
+            model.predict(samples_eval.select(input_names).lazy())
+            .collect()
+            .select(pl.col("/turtle1/pose/x_next"))
+            .to_series(),
+            model.predict(samples_eval.select(input_names).lazy())
+            .collect()
+            .select(pl.col("/turtle1/pose/y_next"))
+            .to_series(),
+            label="Predictions",
+            color="blue",
+        )
+        plt.title(f"2D Trajectory - {model_name}")
+        plt.xlabel("x position")
+        plt.ylabel("y position")
+        plt.legend()
+        plt.savefig(Path(f"plots/{model_name}_2d_trajectory.png"))
+        plt.close()
+        # create time series plots
+        for output_name in output_names:
+            plt.figure(figsize=(12, 6))
+            plt.plot(
+                samples_eval.select(pl.col(output_name)).to_series(),
+                label="Ground Truth",
+                color="blue",
+            )
+            plt.plot(
+                predictions.select(pl.col(output_name)).to_series(),
+                label="Predictions",
+                color="red",
+            )
+            plt.title(
+                f"Predictions vs Ground Truth - {model_name} - {output_name}",
+            )
+            plt.xlabel("Sample Index")
+            plt.ylabel(output_name)
+            plt.legend()
+            plt.savefig(
+                Path(
+                    f"plots/{model_name}_{output_name.replace('/', '_')}.png",
+                ),
+            )
+            plt.close()
 
 
 def main() -> None:
@@ -149,6 +218,13 @@ def main() -> None:
         )
         print(report)
         reports[model_name] = report
+
+    plot_predictions_vs_ground_truth(
+        samples_eval=samples_eval.observe().collect(),
+        input_names=inputs,
+        output_names=outputs,
+        models=models,
+    )
 
 
 if __name__ == "__main__":
