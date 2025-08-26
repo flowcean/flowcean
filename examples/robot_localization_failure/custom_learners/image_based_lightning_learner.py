@@ -141,8 +141,8 @@ class ImageBasedPyTorchModel(Model):
         dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
-            num_workers=0, #self.num_workers,
-            persistent_workers=False, # platform.system() == "Linux",
+            num_workers=0,
+            persistent_workers=False,
         )
         predictions = []
         self.module.eval()
