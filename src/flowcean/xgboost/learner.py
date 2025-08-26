@@ -50,10 +50,6 @@ class XGBoostRegressorLearner(SupervisedLearner):
     def __init__(self, **kwargs: Any) -> None:
         self.regressor = XGBRegressor(
             **kwargs,
-            # n_estimators=2,
-            # max_depth=2,
-            # learning_rate=1,
-            # objective="binary:logistic",
         )
         super().__init__()
 
