@@ -2,28 +2,27 @@ import logging
 from os import PathLike
 
 import polars as pl
-from custom_transforms.zero_order_hold_matching import ZeroOrderHold
+from custom_metrics.euclidean_distance import (
+    EuclideanDistance,
+)
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig, ListConfig
 
 import flowcean
 import flowcean.cli
-from examples.turtlesim.custom_metrics.euclidean_distance import (
-    EuclideanDistance,
-)
 from flowcean.core.model import Model
 from flowcean.core.strategies import evaluate_offline, learn_offline
-from flowcean.polars.environments.dataframe import DataFrame
-from flowcean.ros.rosbag import load_rosbag
-from flowcean.sklearn.metrics.regression import (
+from flowcean.polars import DataFrame, ZeroOrderHold
+from flowcean.ros import load_rosbag
+from flowcean.sklearn import (
     MaxError,
     MeanAbsoluteError,
     MeanSquaredError,
     R2Score,
+    RandomForestRegressorLearner,
+    RegressionTree,
 )
-from flowcean.sklearn.random_forest import RandomForestRegressorLearner
-from flowcean.sklearn.regression_tree import RegressionTree
-from flowcean.torch.lightning_learner import (
+from flowcean.torch import (
     LightningLearner,
     MultilayerPerceptron,
 )
