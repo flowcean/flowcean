@@ -156,9 +156,6 @@ def main() -> None:
     mlp = LightningLearner(
         module=MultilayerPerceptron(
             learning_rate=config.training.mlp.learning_rate,
-            # TODO: remove magic value by lazily infering from data
-            input_size=5,
-            output_size=3,
         ),
         batch_size=config.training.mlp.batch_size,
         max_epochs=config.training.mlp.max_epochs,
