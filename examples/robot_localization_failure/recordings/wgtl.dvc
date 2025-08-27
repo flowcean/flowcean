@@ -1,0 +1,6 @@
+outs:
+- md5: 4fe7f1eb495b19ffb9e379db0bb87692.dir
+  size: 125120977102
+  nfiles: 63
+  hash: md5
+  path: wgtl
