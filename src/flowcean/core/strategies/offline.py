@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from tabulate import tabulate
+
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import OfflineMetric
@@ -152,3 +154,18 @@ def select_best_model(
             best_model_name = model_name
 
     return best_model_name
+
+
+def print_report_table(report: Report) -> None:
+    # Print the report as a table using tabulate
+    table: list[list[str | float]] = []
+    for output_name in report.entries:
+        for metric_name, metric_value in report.entries[output_name].items():
+            table.append([output_name, metric_name, metric_value])
+    print(
+        tabulate(
+            table,
+            headers=["Output", "Metric", "Value"],
+            tablefmt="rounded_grid",
+        ),
+    )
