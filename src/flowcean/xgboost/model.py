@@ -61,7 +61,7 @@ class XGBoostClassifierModel(Model):
         classifier = XGBClassifier(
             booster=state["booster"],
         )
-        classifier._Booster = Booster({"n_jobs": 1})  # noqa: SLF001
+        classifier._Booster = Booster()  # noqa: SLF001
         classifier.get_booster().load_model(cast("bytearray", state["data"]))
 
         return cls(
@@ -125,7 +125,7 @@ class XGBoostRegressorModel(Model):
         classifier = XGBRegressor(
             booster=state["booster"],
         )
-        classifier._Booster = Booster({"n_jobs": 1})  # noqa: SLF001
+        classifier._Booster = Booster()  # noqa: SLF001
         classifier.get_booster().load_model(cast("bytearray", state["data"]))
 
         return cls(
