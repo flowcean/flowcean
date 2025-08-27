@@ -50,6 +50,7 @@ class OPCAdapter(Adapter):
     """Flowcean adapter for OPC (Open Platform Communications) protocol."""
 
     opc_client: Client
+    pull_frequency: float
     recorded_data: pl.DataFrame
     input_schema: dict[str, Any]
     pre_capture_window_length: timedelta
@@ -64,7 +65,12 @@ class OPCAdapter(Adapter):
     streaming_handler: StreamingHandler
     streaming_sub: Subscription
 
-    def __init__(self, config_path: str | Path) -> None:
+    def __init__(
+        self,
+        config_path: str | Path,
+        *,
+        pull_frequency: float = 150.0,
+    ) -> None:
         r"""Initialize the OPC adapter.
 
         Initializes a new OPC to Flowcean adapter instance.
@@ -131,8 +137,12 @@ class OPCAdapter(Adapter):
         Args:
             config_path: Path to the YAML configuration file containing
                     the OPC server URL and feature definitions.
+            pull_frequency: Frequency in Hz at which to poll the OPC server
+                for new data.
         """
         super().__init__()
+
+        self.pull_frequency = pull_frequency
 
         # Load the configuration from the provided path
         with Path(config_path).open() as yaml_file:
@@ -276,10 +286,7 @@ class OPCAdapter(Adapter):
             return True
 
         # Run the `stream_data` function in a timed loop
-        OPCAdapter._timed_loop(
-            stream_data,
-            150.0,
-        )
+        OPCAdapter._timed_loop(stream_data, self.pull_frequency)
 
         # Get rid of any duplicates and the `_recorded_time` feature column
         # in the recorded data
