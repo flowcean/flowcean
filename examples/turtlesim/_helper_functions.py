@@ -1,10 +1,13 @@
-import polars as pl
-from flowcean.core.model import Model
-from matplotlib import pyplot as plt
-from pathlib import Path
+import random
 import sys
 import time
-import random
+from pathlib import Path
+
+import polars as pl
+from matplotlib import pyplot as plt
+
+from flowcean.core.model import Model
+
 
 def shift_in_time(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
@@ -12,6 +15,7 @@ def shift_in_time(df: pl.LazyFrame) -> pl.LazyFrame:
         .shift(-1)
         .name.suffix("_next"),
     ).filter(pl.col("/turtle1/pose/x_next").is_not_null())
+
 
 def plot_predictions_vs_ground_truth(
     samples_eval: pl.DataFrame,
@@ -81,17 +85,18 @@ def plot_predictions_vs_ground_truth(
             )
             plt.close()
 
+
 def surprise() -> None:
     confetti = ["✨", "🎉", "🎊", "🌟", "💫"]
     message = "🎉 Congratulations! You finished the tutorial! 🎉"
-    
+
     # Print message with typing effect
     for char in message:
         sys.stdout.write(char)
         sys.stdout.flush()
         time.sleep(0.05)
     print("\n")
-    
+
     # Animation: falling confetti
     for _ in range(15):
         line = "".join(random.choice(confetti) for _ in range(50))
@@ -99,5 +104,6 @@ def surprise() -> None:
         time.sleep(0.1)
 
     print("\n🎯 Great job! Keep learning & experimenting! 🚀")
+
 
 surprise()
