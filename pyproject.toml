@@ -36,6 +36,7 @@ dependencies = [
   "torch>=2.5.0",
   "tqdm>=4.66.5",
   "typing_extensions>=4.0.0",
+  "xgboost>=3.0.2",
 ]
 
 [project.optional-dependencies]
