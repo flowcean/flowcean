@@ -81,7 +81,7 @@ def plot_predictions_vs_ground_truth(
             )
             plt.close()
 
-def surprise():
+def surprise() -> None:
     confetti = ["✨", "🎉", "🎊", "🌟", "💫"]
     message = "🎉 Congratulations! You finished the tutorial! 🎉"
     
