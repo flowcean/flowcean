@@ -6,14 +6,15 @@ from pathlib import Path
 import polars as pl
 from custom_metrics.euclidean_distance import MeanEuclideanDistance
 from matplotlib import pyplot as plt
-from tabulate import tabulate
 
 import flowcean
 import flowcean.cli
 from flowcean.core import Lambda, evaluate_offline, learn_offline
 from flowcean.core.model import Model
-from flowcean.core.report import Report
-from flowcean.core.strategies.offline import print_report_table, select_best_model
+from flowcean.core.strategies.offline import (
+    print_report_table,
+    select_best_model,
+)
 from flowcean.polars import DataFrame, ExplodeTimeSeries, ZeroOrderHold
 from flowcean.ros import load_rosbag
 from flowcean.sklearn import (
