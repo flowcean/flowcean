@@ -157,7 +157,7 @@ def select_best_model(
 
 
 def print_report_table(report: Report) -> None:
-    # Print the report as a table using tabulate
+    """Print the report as a table using tabulate."""
     table: list[list[str | float]] = []
     for output_name in report.entries:
         for metric_name, metric_value in report.entries[output_name].items():
