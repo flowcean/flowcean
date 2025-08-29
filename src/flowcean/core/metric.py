@@ -7,6 +7,8 @@ from .report import Reportable
 class OfflineMetric(ABC):
     """Base class for metrics."""
 
+    multi_output: bool = False
+
     @property
     def name(self) -> str:
         """Return the name of the metric.

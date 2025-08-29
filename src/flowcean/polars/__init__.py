@@ -13,6 +13,7 @@ from .is_time_series import is_timeseries_feature
 from .transforms.cast import Cast
 from .transforms.drop import Drop
 from .transforms.explode import Explode
+from .transforms.explode_time_series import ExplodeTimeSeries
 from .transforms.filter import And, CollectionExpr, Filter, FilterExpr, Not, Or
 from .transforms.flatten import (
     FeatureLengthVaryError,
@@ -40,6 +41,7 @@ from .transforms.standardize import Standardize
 from .transforms.time_window import TimeWindow
 from .transforms.to_time_series import ToTimeSeries
 from .transforms.unnest import Unnest
+from .transforms.zero_order_hold_matching import ZeroOrderHold
 
 __all__ = [
     "And",
@@ -51,6 +53,7 @@ __all__ = [
     "DummyLearner",
     "DummyModel",
     "Explode",
+    "ExplodeTimeSeries",
     "FeatureLengthVaryError",
     "FeatureNotFoundError",
     "Filter",
@@ -81,6 +84,7 @@ __all__ = [
     "TrainTestSplit",
     "Unnest",
     "UnsupportedFileTypeError",
+    "ZeroOrderHold",
     "collect",
     "is_timeseries_feature",
 ]

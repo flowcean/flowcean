@@ -1,4 +1,7 @@
 import logging
+from typing import Any
+
+from tabulate import tabulate
 
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
@@ -105,9 +108,64 @@ def evaluate_offline(
         and model.output_transform is not None
     ):
         output_features = model.output_transform.apply(output_features)
-    return Report(
-        {
-            metric.name: metric(output_features, predictions.lazy())
-            for metric in metrics
-        },
+    report: dict[str, Any] = {}
+    multi_output_report: dict[str, Any] = {}
+    for metric in metrics:
+        if hasattr(metric, "multi_output") and metric.multi_output:
+            value = metric(output_features, predictions)
+            multi_output_report[metric.name] = value
+        else:
+            for output_name in outputs:
+                logger.info("Evaluating output: %s", output_name)
+                single_output_true = output_features.select([output_name])
+                single_output_pred = predictions.select([output_name])
+                if output_name not in report:
+                    report[output_name] = {}
+                report[output_name][metric.name] = metric(
+                    single_output_true,
+                    single_output_pred,
+                )
+    if multi_output_report:
+        report["multi_output"] = multi_output_report
+    return Report(report)
+
+
+def select_best_model(
+    reports: dict[str, Report],
+    metric_name: str,
+    output_name: str,
+) -> str | None:
+    """Select the best model based on a given metric.
+
+    Args:
+        reports: A dictionary of model names to their evaluation reports.
+        metric_name: The name of the metric to use for model selection.
+        output_name: The name of the output to consider for the metric.
+            Choose "multi_output" for multi-output metrics.
+
+    Returns:
+        The name of the best model.
+    """
+    best_model_name = None
+    best_metric_value = float("inf")
+    for model_name, report in reports.items():
+        if report[output_name][metric_name] < best_metric_value:
+            best_metric_value = report[output_name][metric_name]
+            best_model_name = model_name
+
+    return best_model_name
+
+
+def print_report_table(report: Report) -> None:
+    """Print the report as a table using tabulate."""
+    table: list[list[str | float]] = []
+    for output_name in report.entries:
+        for metric_name, metric_value in report.entries[output_name].items():
+            table.append([output_name, metric_name, metric_value])
+    print(
+        tabulate(
+            table,
+            headers=["Output", "Metric", "Value"],
+            tablefmt="rounded_grid",
+        ),
     )
