@@ -46,4 +46,79 @@ The `RosbagLoader` requires a list of ROS topics to be loaded along with a speci
 - `/position_error`: The position error calculated using the euclidean distance.
 - `/heading_error`: The heading error in degrees.
 
-This example is still under development. The learning pipeline and the documentation of it will be completed in the future.
+## Learning Approach
+
+The goal of this example is to predict localization failures in robotic systems by analyzing sensor data and localization information. To achieve this, we process rosbag recordings into visual representations and train a Convolutional Neural Network (CNN) to classify whether a robot is experiencing localization issues.
+
+### Data Processing
+
+The localization data is processed in several steps:
+
+1. The raw rosbag data is loaded and transformed using a series of custom transforms:
+   - `Collapse`: Handles map data from multiple messages
+   - `DetectDelocalizations`: Identifies points where localization quality drops
+   - `SliceTimeSeries`: Divides data into segments without containing localization reset events
+   - `LocalizationStatus`: Determines if the robot is properly localized based on position and heading thresholds
+
+2. The transformed data is converted into image-based features for the CNN cropped around the robot's position:
+   - **Map Image**: A top-down view of the occupancy grid map
+   - **Scan Image**: A visualization of the LiDAR scan data
+   - **Particle Cloud Image**: A representation of the AMCL particle distribution
+
+These three images are stacked together as input channels for the CNN model.
+
+### Model Architecture
+
+The model uses a CNN architecture specifically designed to analyze the spatial relationships in the image data:
+
+```python
+CNN(
+    image_size=config.architecture.image_size,
+    in_channels=3,  # map, scan, particles
+    learning_rate=config.learning.learning_rate,
+)
+```
+
+The hyperparameters for training are defined in the configuration file, including:
+
+- Image size: 150x150 pixels
+- Physical width: 15 meters
+- Learning rate: 0.0001
+- Batch size: 128
+- Training epochs: 50
+
+### Evaluation
+
+The model is evaluated on a separate test dataset using several classification metrics:
+
+- Accuracy
+- F1-Score
+- Precision
+- Recall
+- Detailed classification report
+
+## Data Exploration
+
+The example also provides a visualization tool using Dash to explore the dataset interactively:
+
+```sh
+cd examples/robot_localization_failure
+uv run explore.py
+```
+
+This interactive dashboard allows you to:
+
+- View the full map with robot positions
+- See the cropped map, scan, and particle images used for training
+- Track the position error over time
+- Analyze individual data points throughout the recording
+
+## Run this example
+
+To run this example first make sure you followed the [installation instructions](../getting_started/prerequisites.md) to setup python and `uv`.
+Now you can run the example using
+
+```sh
+cd examples/robot_localization_failure
+uv run run.py
+```
