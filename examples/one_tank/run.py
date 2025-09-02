@@ -130,8 +130,6 @@ def main() -> None:
         LightningLearner(
             module=MultilayerPerceptron(
                 learning_rate=1e-3,
-                input_size=len(inputs),
-                output_size=len(outputs),
                 hidden_dimensions=[10, 10],
                 activation_function=torch.nn.Tanh,
             ),

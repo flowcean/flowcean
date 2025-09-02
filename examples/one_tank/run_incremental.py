@@ -143,9 +143,6 @@ def main() -> None:
     delta_t = datetime.now(tz=timezone.utc) - t_start
     print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
-    # Have to not use the evaluate_offline function for now
-    # because it does not support the RiverModel
-
     report = evaluate_offline(
         model,
         test,
@@ -154,7 +151,7 @@ def main() -> None:
         [MeanAbsoluteError(), MeanSquaredError()],
     )
     print(report)
-    logger.info("Model learning succesful.")
+    logger.info("Model learning successful.")
 
 
 if __name__ == "__main__":

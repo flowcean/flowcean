@@ -11,7 +11,7 @@ from flowcean.core.model import Model
 
 
 @dataclass
-class Interface:
+class ActiveInterface:
     """Interface to a feature in an active environment.
 
     Represents a single feature of the environment, which can be
@@ -48,8 +48,8 @@ class Observation:
 
     """
 
-    sensors: list[Interface]
-    rewards: list[Interface]
+    sensors: list[ActiveInterface]
+    rewards: list[ActiveInterface]
 
 
 @dataclass
@@ -63,10 +63,10 @@ class Action:
         actuators: List of interface objects, which are setpoints
     """
 
-    actuators: list[Interface]
+    actuators: list[ActiveInterface]
 
 
-def interface_dict(itf: Interface) -> dict[str, Any]:
+def interface_dict(itf: ActiveInterface) -> dict[str, Any]:
     return {
         "uid": itf.uid,
         "value": itf.value,
@@ -77,8 +77,8 @@ def interface_dict(itf: Interface) -> dict[str, Any]:
     }
 
 
-def interface_from_dict(state: dict[str, Any]) -> Interface:
-    return Interface(
+def interface_from_dict(state: dict[str, Any]) -> ActiveInterface:
+    return ActiveInterface(
         uid=state["uid"],
         value=state["value"],
         value_min=state["value_min"],

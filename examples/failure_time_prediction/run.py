@@ -32,8 +32,6 @@ def main() -> None:
     learner = LightningLearner(
         module=MultilayerPerceptron(
             learning_rate=1e-3,
-            input_size=3,
-            output_size=1,
             hidden_dimensions=[10, 10],
         ),
         max_epochs=5,

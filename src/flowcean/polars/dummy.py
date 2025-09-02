@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import polars as pl
 from typing_extensions import override
 
@@ -50,19 +48,10 @@ class DummyModel(Model):
         self.output_names = output_names
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         return pl.DataFrame(
             {
                 output_name: [0.0] * input_features.collect().height
                 for output_name in self.output_names
             },
         ).lazy()
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        return {"output_names": self.output_names}
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> DummyModel:
-        return cls(state["output_names"])

@@ -1,25 +1,21 @@
-"""This module provides base classes for transforms.
+"""This module provides abstractions for transforms.
 
-Pre-processing of data, feature engineering, or augmentation, are fundamental
-processes in machine learning.
-AGenC generalizes these processes under the term _transforms_.
-This page will guide through the concept of transforms and demonstrate how to
-use them within AGenC.
+Transforms are reusable, composable operations that modify data in preparation
+for machine learning or analysis. Transforms unify pre-processing, feature
+engineering, and augmentation under a single protocol-based interface.
 
 ## Nomenclature
 
-Transforms are a set of operations that modify data.
-They can include operations such as data normalization, dimensionality
-reduction, data augmentation, and much more.
-These transformations are essential for preparing data for machine learning
-tasks and improving model performance.
+Transforms are a set of operations that modify data. They can include
+operations such as data normalization, dimensionality reduction, data
+augmentation, and much more. These transformations are essential for preparing
+data for machine learning tasks and improving model performance.
 
-In AGenC, we use the generalized term _transform_ for all types of
-_pre-processing of data_, _feature engineering_, and _data augmentation_, as
-they all involve the same fundamental concept of transforming data to obtain a
-modified dataset.
+We use the generalized term _transform_ for all types of _pre-processing of
+data_, _feature engineering_, and _data augmentation_, as they all involve the
+same fundamental concept of transforming data to obtain a modified dataset.
 
-AGenC provides a flexible and unified interface to apply transforms to data.
+flowcean provides a flexible and unified interface to apply transforms to data.
 The framework allows to combine these transforming steps steps as needed.
 
 ## Using Transforms
@@ -27,36 +23,34 @@ The framework allows to combine these transforming steps steps as needed.
 Here's a basic example:
 
 ```python
-from flowcean.transforms import Select, Standardize
+from flowcean.polars import Select, Standardize
+from flowcean.core import Lambda
 
-# Load the dataset
-dataset = ...
-
-# Define transforms by chaining a selection and a standardization
-transforms = Select(features=["reference", "temperature"]) | Standardize(
-    mean={
-        "reference": 0.0,
-        "temperature": 0.0,
-    },
-    std={
-        "reference": 1.0,
-        "temperature": 1.0,
-    },
+# Define a simple pipeline
+transform = (
+    Select(features=["x", "y"])
+    | Standardize()
+    | Lambda(lambda df: df.with_columns(z=df["x"] * df["y"]))
 )
 
-# Apply the transforms to data
-transformed_data = transforms(dataset)
+# Fit and apply
+transform.fit(dataset)
+transformed = transform(dataset)
+
+# Invert (if supported)
+restored = transform.inverse()(transformed)
 ```
 """
 
 from __future__ import annotations
 
-import hashlib
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol, cast, final, runtime_checkable
 
-import cloudpickle  # type:ignore[reportMissingTypeStubs]
-from typing_extensions import override
+from typing_extensions import Self, override
+
+from .hashable import Hashable
+from .named import Named
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -64,8 +58,22 @@ if TYPE_CHECKING:
     from flowcean.core.data import Data
 
 
-class Transform(ABC):
-    """Base class for all transforms."""
+class Transform(Hashable, Named, Protocol):
+    """Base protocol for all transforms in Flowcean.
+
+    A transform is a reusable operation that modifies data. Examples include
+    preprocessing (e.g., standardization), feature engineering (e.g., feature
+    selection, PCA), or augmentation (noise injection, synthetic features).
+
+    Transforms are composable via the ``|`` operator, allowing complex
+    transformation pipelines to be expressed in a clean and functional style:
+
+    Example:
+        ```
+        >>> transform = Select(features=["x"]) | Standardize()
+        >>> transformed = transform(dataset)
+        ```
+    """
 
     @abstractmethod
     def apply(self, data: Data) -> Data:
@@ -78,18 +86,11 @@ class Transform(ABC):
             The transformed data.
         """
 
-    def hash(self) -> bytes:
-        """Get the hash of the transform.
-
-        Returns:
-            The hash of the transform.
-        """
-        hasher = hashlib.sha256()
-        hasher.update(cloudpickle.dumps(self))  # type: ignore[reportUnknownMember]
-        return hasher.digest()
-
+    @final
     def __call__(self, data: Data) -> Data:
         """Apply the transform to data.
+
+        Equivalent to ``self.apply(data)``.
 
         Args:
             data: The data to transform.
@@ -103,21 +104,22 @@ class Transform(ABC):
         self,
         other: Transform,
     ) -> Transform:
-        """Chain this transform with other transforms.
+        """Chain this transform with ``other``.
 
-        This can be used to chain multiple transforms together.
-        Chained transforms are applied left to right.
+        This can be used to chain multiple transforms together. Chained
+        transforms are applied left-to-right:
 
         Example:
             ```python
-            chained_transform = TransformA().chain(TransformB())
+            chained = TransformA().chain(TransformB())
+            chained(data)  # Equivalent to TransformB(TransformA(data))
             ```
 
         Args:
             other: The transforms to chain.
 
         Returns:
-            A new Chain transform.
+            A new chained transform.
         """
         return ChainedTransforms(self, other)
 
@@ -129,7 +131,7 @@ class Transform(ABC):
 
         Example:
             ```python
-            chained_transform = TransformA() | TransformB()
+            chained = TransformA() | TransformB()
             ```
 
         Args:
@@ -140,41 +142,60 @@ class Transform(ABC):
         """
         return self.chain(other)
 
+    def fit(self, data: Data) -> Self:
+        """Fit the transform to data.
+
+        Many transforms (e.g. scaling, PCA) require statistics from the dataset
+        before applying. Default implementation is a no-op.
+        This is meant to be idempotent, i.e., calling ``fit()`` multiple times
+        should have the same effect as calling it once.
+
+        Args:
+            data: The data to fit to.
+        """
+        _ = data
+        return self
+
+    def fit_incremental(self, data: Data) -> Self:
+        """Incrementally fit the transform to streaming/batched data.
+
+        Default implementation is a no-op.
+
+        Args:
+            data: The data to fit to.
+        """
+        _ = data
+        return self
+
+
+@runtime_checkable
+class Invertible(Protocol):
+    """Protocol for transforms that support inversion.
+
+    An invertible transform can undo its effect via ``inverse()``.
+
+    Example:
+        ```
+        >>> scaler = Standardize().fit(data)
+        >>> restored = scaler.inverse()(scaler(data))
+        ```
+    """
+
+    @abstractmethod
     def inverse(self) -> Transform:
-        """Get the inverse of the transform.
+        """Return a new transform that inverts this one.
 
         Returns:
             The inverse of the transform.
         """
-        raise NotImplementedError
 
 
-class FitOnce(ABC):
-    """A mixin for transforms that need to be fitted to data once."""
+class ChainedTransforms(Invertible, Transform):
+    """A composition of multiple transforms applied sequentially.
 
-    @abstractmethod
-    def fit(self, data: Data) -> None:
-        """Fit to the data.
-
-        Args:
-            data: The data to fit to.
-        """
-
-
-class FitIncremetally(ABC):
-    """A mixin for transforms that need to be fitted to data incrementally."""
-
-    @abstractmethod
-    def fit_incremental(self, data: Data) -> None:
-        """Fit to the data incrementally.
-
-        Args:
-            data: The data to fit to.
-        """
-
-
-class ChainedTransforms(Transform, FitOnce, FitIncremetally):
-    """A transform that is a chain of other transforms."""
+    Chained transforms are applied left-to-right. Useful for building
+    preprocessing pipelines.
+    """
 
     transforms: Sequence[Transform]
 
@@ -203,22 +224,39 @@ class ChainedTransforms(Transform, FitOnce, FitIncremetally):
         return ChainedTransforms(*self.transforms, other)
 
     @override
-    def fit(self, data: Data) -> None:
+    def fit(self, data: Data) -> Self:
         for transform in self.transforms:
-            if isinstance(transform, FitOnce):
-                transform.fit(data)
+            transform.fit(data)
             data = transform.apply(data)
+        return self
 
     @override
-    def fit_incremental(self, data: Data) -> None:
+    def fit_incremental(self, data: Data) -> Self:
         for transform in self.transforms:
-            if isinstance(transform, FitIncremetally):
-                transform.fit_incremental(data)
+            transform.fit_incremental(data)
             data = transform.apply(data)
+        return self
+
+    @override
+    def inverse(self) -> Transform:
+        non_inv = [t for t in self.transforms if not isinstance(t, Invertible)]
+        if non_inv:
+            msg = f"Transforms {non_inv} do not support inversion."
+            raise NotImplementedError(msg)
+        transforms = cast("Sequence[Invertible]", self.transforms)
+        return ChainedTransforms(
+            *(t.inverse() for t in reversed(transforms)),
+        )
 
 
-class Identity(Transform):
-    """A transform that does nothing."""
+class InvertibleTransform(Transform, Invertible, Protocol): ...
+
+
+class Identity(Invertible, Transform):
+    """A no-op transform that returns data unchanged.
+
+    Often used as a placeholder or default transform.
+    """
 
     def __init__(self) -> None:
         """Initialize the identity transform."""
@@ -229,6 +267,10 @@ class Identity(Transform):
         return data
 
     @override
+    def inverse(self) -> Transform:
+        return self
+
+    @override
     def chain(
         self,
         other: Transform,
@@ -236,19 +278,46 @@ class Identity(Transform):
         return other
 
 
-class Lambda(Transform):
-    """A transform that applies a lambda function to data."""
+class Lambda(Transform, Invertible):
+    """A transform wrapping a function.
+
+    Useful for quick one-off transformations without creating a dedicated
+    class.
+
+    Example:
+        ```
+        >>> to_float = Lambda(lambda df: df.cast(pl.Float64))
+        >>> normalized = Lambda(
+        ...     lambda df: (df - df.mean()) / df.std(),
+        ...     inverse_func=lambda df: df * df.std() + df.mean(),
+        ... )
+        ```
+    """
 
     func: Callable[[Data], Data]
+    inverse_func: Callable[[Data], Data] | None
 
-    def __init__(self, func: Callable[[Data], Data]) -> None:
+    def __init__(
+        self,
+        func: Callable[[Data], Data],
+        *,
+        inverse_func: Callable[[Data], Data] | None = None,
+    ) -> None:
         """Initialize the lambda transform.
 
         Args:
-            func: The function to apply to data.
+            func: Function that transforms data.
+            inverse_func: Optional function that inverts ``func``.
         """
         self.func = func
+        self.inverse_func = inverse_func
 
     @override
     def apply(self, data: Data) -> Data:
         return self.func(data)
+
+    def inverse(self) -> Transform:
+        if self.inverse_func is None:
+            msg = "This transform does not have an inverse."
+            raise NotImplementedError(msg)
+        return Lambda(self.inverse_func, inverse_func=self.func)

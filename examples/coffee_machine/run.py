@@ -5,9 +5,11 @@ from pathlib import Path
 from tqdm import tqdm
 
 import flowcean.cli
-from flowcean.core import evaluate_offline, learn_offline
-from flowcean.core.environment.chained import ChainedOfflineEnvironments
-from flowcean.core.model import ModelWithTransform
+from flowcean.core import (
+    ChainedOfflineEnvironments,
+    evaluate_offline,
+    learn_offline,
+)
 from flowcean.grpc import GrpcPassiveAutomataLearner
 from flowcean.polars import (
     DataFrame,
@@ -53,10 +55,8 @@ def main() -> None:
         outputs,
     )
 
-    model = ModelWithTransform(
-        model,
-        None,
-        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
+    model.post_transform |= (
+        Explode(["output"]) | Unnest(["output"]) | Select(["value"])
     )
 
     report = evaluate_offline(

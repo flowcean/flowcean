@@ -79,6 +79,6 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-# Including or leaving project and classpath files seems to be an acitve discussion
+# Including or leaving project and classpath files seems to be an active discussion
 .project
 .classpath

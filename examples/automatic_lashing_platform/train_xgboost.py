@@ -3,26 +3,21 @@ import time
 
 import flowcean
 import flowcean.cli
-from flowcean.core.strategies.offline import evaluate_offline, learn_offline
-from flowcean.polars.environments.dataframe import DataFrame
-from flowcean.polars.environments.train_test_split import TrainTestSplit
-from flowcean.polars.transforms import (
+from flowcean.core import evaluate_offline, learn_offline
+from flowcean.polars import (
+    DataFrame,
     Filter,
     Flatten,
     Lambda,
     Resample,
     Select,
     TimeWindow,
+    TrainTestSplit,
 )
-from flowcean.sklearn.metrics.regression import (
-    MeanAbsoluteError,
-    MeanSquaredError,
-)
-from flowcean.xgboost.learner import (
-    XGBoostRegressorLearner,
-)
+from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
+from flowcean.xgboost import XGBoostRegressorLearner
 
-logger = logging.getLogger("main")
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:

@@ -12,9 +12,7 @@ class XGBoostClassifierLearner(SupervisedLearner):
     """Wrapper for XGBoost classifiers."""
 
     def __init__(self, **kwargs: Any) -> None:
-        self.classifier = XGBClassifier(
-            **kwargs,
-        )
+        self.classifier = XGBClassifier(**kwargs)
         super().__init__()
 
     def learn(
@@ -44,9 +42,7 @@ class XGBoostRegressorLearner(SupervisedLearner):
     """Wrapper for XGBoost regressor."""
 
     def __init__(self, **kwargs: Any) -> None:
-        self.regressor = XGBRegressor(
-            **kwargs,
-        )
+        self.regressor = XGBRegressor(**kwargs)
         super().__init__()
 
     def learn(
@@ -54,8 +50,6 @@ class XGBoostRegressorLearner(SupervisedLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> XGBoostRegressorModel:
-        # Collect the inputs and outputs. Using collect_all ensures that polars
-        # can apply optimizations to both dataframes simultaneously.
         dfs = pl.collect_all([inputs, outputs])
         inputs_collected = dfs[0]
         outputs_collected = dfs[1]

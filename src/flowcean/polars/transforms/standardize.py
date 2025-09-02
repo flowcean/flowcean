@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 
 import polars as pl
-from polars.type_aliases import PythonLiteral
-from typing_extensions import override
+from polars._typing import PythonLiteral
+from typing_extensions import Self, override
 
-from flowcean.core import FitOnce, Transform
+from flowcean.core import Data, Invertible, Transform
 
 
 @dataclass
-class Standardize(Transform, FitOnce):
+class Standardize(Invertible, Transform):
     r"""Standardize features by removing the mean and scaling to unit variance.
 
     A sample $x$ is standardized as:
@@ -32,7 +32,7 @@ class Standardize(Transform, FitOnce):
     std: dict[str, float] | None = None
 
     @override
-    def fit(self, data: pl.LazyFrame) -> None:
+    def fit(self, data: pl.LazyFrame) -> Self:
         df = data.collect(engine="streaming")
 
         self.mean = {
@@ -42,6 +42,12 @@ class Standardize(Transform, FitOnce):
             c: _as_float(df[c].std()) for c in data.collect_schema().names()
         }
         self.counts = len(df)
+        return self
+
+    @override
+    def fit_incremental(self, data: Data) -> Self:
+        msg = "Incremental fitting is not supported for Standardize transform"
+        raise NotImplementedError(msg)
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:

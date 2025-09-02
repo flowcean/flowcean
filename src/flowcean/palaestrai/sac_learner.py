@@ -10,12 +10,16 @@ from typing_extensions import override
 
 from flowcean.core.learner import ActiveLearner
 from flowcean.core.model import Model
-from flowcean.core.strategies.active import Action, Interface, Observation
+from flowcean.core.strategies.active import (
+    Action,
+    ActiveInterface,
+    Observation,
+)
 from flowcean.palaestrai.sac_model import SACModel
 from flowcean.palaestrai.util import (
-    convert_to_actuator_informations,
-    convert_to_reward_informations,
-    convert_to_sensor_informations,
+    convert_to_actuator_information,
+    convert_to_reward_information,
+    convert_to_sensor_information,
     filter_action,
     filter_observation,
 )
@@ -30,7 +34,7 @@ class SACLearner(ActiveLearner):
     brain: SACBrain
     agent_objective: Objective
     objectives: list[float]
-    rewards: list[list[Interface]]
+    rewards: list[list[ActiveInterface]]
     actuator_ids: list[str]
     sensor_ids: list[str]
     action: Action
@@ -105,8 +109,8 @@ class SACLearner(ActiveLearner):
 
         self.brain = SACBrain(**self.brain_params)
         self.brain._seed = 0  # noqa: SLF001
-        self.brain._sensors = convert_to_sensor_informations(self.observation)  # noqa: SLF001
-        self.brain._actuators = convert_to_actuator_informations(self.action)  # noqa: SLF001
+        self.brain._sensors = convert_to_sensor_information(self.observation)  # noqa: SLF001
+        self.brain._actuators = convert_to_actuator_information(self.action)  # noqa: SLF001
         self.brain.setup()
 
         self.model = SACModel(
@@ -119,14 +123,14 @@ class SACLearner(ActiveLearner):
     def learn_active(self, action: Action, observation: Observation) -> Model:
         filtered_action = filter_action(action, self.actuator_ids)
         filtered_observation = filter_observation(observation, self.sensor_ids)
-        rewards = convert_to_reward_informations(observation)
+        rewards = convert_to_reward_information(observation)
 
         self.brain.memory.append(
             muscle_uid=MODEL_ID,
-            sensor_readings=convert_to_sensor_informations(
+            sensor_readings=convert_to_sensor_information(
                 filtered_observation,
             ),
-            actuator_setpoints=convert_to_actuator_informations(
+            actuator_setpoints=convert_to_actuator_information(
                 filtered_action,
             ),
             rewards=rewards,

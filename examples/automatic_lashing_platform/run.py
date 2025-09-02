@@ -3,9 +3,7 @@ import argparse
 import logging
 import math
 import time
-from os import environ
 from pathlib import Path
-from sys import base_prefix
 from typing import Any
 
 # third-party libraries
@@ -28,7 +26,6 @@ from flowcean.polars import (
     TimeWindow,
     TrainTestSplit,
 )
-from flowcean.polars.transforms.filter import And, Not, Or  # noqa: F401
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
@@ -39,10 +36,6 @@ from flowcean.torch.lightning_learner import (
     LightningLearner,
     MultilayerPerceptron,
 )
-
-# set matplotlib backend Tcl/Tk libraries for the usage in uv
-environ["TCL_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tcl8.6")
-environ["TK_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tk8.6")
 
 # constants
 NATIVE_SAMPLE_RATE = 0.01  # 1500 values per second
@@ -540,7 +533,7 @@ def train_nodes_vs_error(
             "Took %.5f s to learn model",
             time_after_learning - time_start,
         )
-        errors.append(report.entries["MeanSquaredError"])
+        errors.append(report["RegressionTree"]["MeanSquaredError"])
         node_numbers.append(nodes)
 
     # calculate optimal number of nodes
@@ -619,7 +612,7 @@ def train_depth_vs_error(
             "Took %.5f s to learn model",
             time_after_learning - time_start,
         )
-        errors.append(report.entries["MeanSquaredError"])
+        errors.append(report["RegressionTree"]["MeanSquaredError"])
         depth_numbers.append(depth)
 
         if learner.regressor.get_depth() < depth:
@@ -702,7 +695,7 @@ def train_time_vs_error(
             "Took %.5f s to learn model",
             time_to_learn,
         )
-        errors.append(report.entries["MeanSquaredError"])
+        errors.append(report["RegressionTree"]["MeanSquaredError"])
         times.append(time_to_learn)
         depths.append(depth_count)
 
@@ -771,11 +764,7 @@ def train_and_evaluate_model(
 
     if args.use_lightning_learner:
         learner = LightningLearner(
-            MultilayerPerceptron(
-                learning_rate=args.lightning_learning_rate,
-                input_size=len(inputs),
-                output_size=len(outputs),
-            ),
+            MultilayerPerceptron(learning_rate=args.lightning_learning_rate),
         )
     else:
         tree_params = {
