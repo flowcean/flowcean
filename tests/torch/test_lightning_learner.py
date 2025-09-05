@@ -34,11 +34,7 @@ def _create_simple_module() -> MultilayerPerceptron:
     Returns:
         A configured MultilayerPerceptron instance.
     """
-    return MultilayerPerceptron(
-        learning_rate=0.001,
-        input_size=2,
-        output_size=1,
-    )
+    return MultilayerPerceptron(learning_rate=0.001)
 
 
 class TestLightningLearner(unittest.TestCase):

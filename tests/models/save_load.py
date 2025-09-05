@@ -4,12 +4,7 @@ from io import BytesIO
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core import (
-    Model,
-    ModelWithTransform,
-    learn_incremental,
-    learn_offline,
-)
+from flowcean.core import Model, learn_incremental, learn_offline
 from flowcean.polars import (
     DataFrame,
     Select,
@@ -129,13 +124,11 @@ class TestSaveLoad(unittest.TestCase):
             input_transform=Select(pl.col("x") * 2),
         )
 
-        assert isinstance(model, ModelWithTransform)
         model_bytes = BytesIO()
         model.save(model_bytes)
         model_bytes.seek(0)
 
         loaded_model = Model.load(model_bytes)
-        assert isinstance(loaded_model, ModelWithTransform)
 
         # Test a random prediction
         test_frame = pl.DataFrame(

@@ -132,12 +132,8 @@ def main() -> None:
     data = collect(environment, 10_000)
     train, test = TrainTestSplit(ratio=0.8).split(data)
 
-    train = train.with_transform(
-        SlidingWindow(window_size=10),
-    )
-    test = test.with_transform(
-        SlidingWindow(window_size=10),
-    )
+    train = train | SlidingWindow(window_size=10)
+    test = test | SlidingWindow(window_size=10)
 
     learner = RegressionTree(max_depth=5, dot_graph_export_path="tree.dot")
 

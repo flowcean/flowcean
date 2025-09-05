@@ -18,9 +18,7 @@ class TestToTimeSeries(unittest.TestCase):
             ).lazy(),
         )
 
-        time_series_dataset = dataset.with_transform(
-            ToTimeSeries("time_feature"),
-        )
+        time_series_dataset = dataset | ToTimeSeries("time_feature")
 
         assert_frame_equal(
             time_series_dataset.observe().collect(),

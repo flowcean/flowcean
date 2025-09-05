@@ -276,7 +276,9 @@ def interpolate_feature(
         )
 
     # Filter to only include reference times
-    interpolated = interpolated.filter(pl.col("time").is_in(reference_times))
+    interpolated = interpolated.filter(
+        pl.col("time").is_in(reference_times.implode()),
+    )
 
     # Restore original time type
     interpolated = interpolated.with_columns(

@@ -81,23 +81,6 @@ class CastTransform(unittest.TestCase):
             ),
         )
 
-    def test_hashing(self) -> None:
-        transform_a = Cast(
-            {
-                "a": pl.Boolean,
-                "b": pl.Float64,
-            },
-        )
-
-        transform_b = Cast(
-            {
-                "a": pl.Boolean,
-                "b": pl.Float64,
-            },
-        )
-
-        assert transform_a.hash() == transform_b.hash()
-
 
 if __name__ == "__main__":
     unittest.main()

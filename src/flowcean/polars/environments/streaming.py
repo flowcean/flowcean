@@ -34,7 +34,6 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
             size: The number of samples in the environment. If provided, the
                 number of steps will be calculated based on this value.
         """
-        super().__init__()
         self.environment = environment
         self.batch_size = batch_size
         self.sample_count = size

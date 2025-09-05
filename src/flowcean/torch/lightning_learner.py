@@ -44,7 +44,6 @@ class LightningLearner(SupervisedLearner):
         self.num_workers = num_workers or os.cpu_count() or 0
         self.max_epochs = max_epochs
         self.batch_size = batch_size
-        self.optimizer = None
         self.accelerator = accelerator
 
     @override
@@ -53,6 +52,14 @@ class LightningLearner(SupervisedLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> PyTorchModel:
+        # Infer input_size and output_size from the data
+        input_size = len(inputs.collect_schema().names())
+        output_size = len(outputs.collect_schema().names())
+
+        # If the module is a MultilayerPerceptron, initialize its layers
+        if isinstance(self.module, MultilayerPerceptron):
+            self.module.initialize_layers(input_size, output_size)
+
         dfs = pl.collect_all([inputs, outputs])
         collected_inputs = dfs[0]
         collected_outputs = dfs[1]
@@ -84,18 +91,14 @@ class MultilayerPerceptron(lightning.LightningModule):
     def __init__(
         self,
         learning_rate: float,
-        input_size: int,
-        output_size: int,
         hidden_dimensions: list[int] | None = None,
         *,
         activation_function: type[torch.nn.Module] | None = None,
     ) -> None:
-        """Initialize the model.
+        """Initialize the model without building layers.
 
         Args:
             learning_rate: The learning rate.
-            input_size: The size of the input.
-            output_size: The size of the output.
             hidden_dimensions: The dimensions of the hidden layers.
             activation_function: The activation function to use.
                 Defaults to ReLU if not provided.
@@ -105,15 +108,24 @@ class MultilayerPerceptron(lightning.LightningModule):
             hidden_dimensions = []
         self.save_hyperparameters()
         self.learning_rate = learning_rate
+        self.hidden_dimensions = hidden_dimensions
+        self.activation_function = activation_function
 
+    def initialize_layers(self, input_size: int, output_size: int) -> None:
+        """Build the model layers with the given input and output sizes.
+
+        Args:
+            input_size: The size of the input.
+            output_size: The size of the output.
+        """
         layers: list[Module] = []
         hidden_size = input_size
-        for dimension in hidden_dimensions:
+        for dimension in self.hidden_dimensions:
             layers.extend(
                 (
                     torch.nn.Linear(hidden_size, dimension),
-                    activation_function()
-                    if activation_function
+                    self.activation_function()
+                    if self.activation_function
                     else torch.nn.ReLU(),
                 ),
             )

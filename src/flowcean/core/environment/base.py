@@ -1,40 +1,24 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, final, runtime_checkable
 
-from typing_extensions import Self, override
+from typing_extensions import Self
 
+from flowcean.core.named import Named
 from flowcean.core.transform import Identity, Transform
 
 if TYPE_CHECKING:
     from flowcean.core.data import Data
 
 
-class Observable(Protocol):
-    """Protocol for observations."""
+@runtime_checkable
+class Environment(Named, Protocol):
+    """Base class adding transform support."""
 
-    @abstractmethod
-    def observe(self) -> Data:
-        """Observe and return the observation."""
-        raise NotImplementedError
+    transform: Transform = Identity()
 
-
-class TransformedObservable(Observable):
-    """Base class for observations that carry a transform.
-
-    Attributes:
-        transform: Transform
-    """
-
-    transform: Transform
-
-    def __init__(self) -> None:
-        """Initialize the observable."""
-        super().__init__()
-        self.transform = Identity()
-
-    def with_transform(
+    def append_transform(
         self,
         transform: Transform,
     ) -> Self:
@@ -59,13 +43,14 @@ class TransformedObservable(Observable):
             The raw observation.
         """
 
-    @override
     def observe(self) -> Data:
+        """Observe and return the observation."""
         return self.transform(self._observe())
 
+    @final
     def __or__(
         self,
         transform: Transform,
     ) -> Self:
         """Shortcut for `with_transform`."""
-        return self.with_transform(transform)
+        return self.append_transform(transform)

@@ -1,30 +1,48 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import Iterable, Iterator
+from typing import Protocol, runtime_checkable
 
 from typing_extensions import override
 
 from flowcean.core.data import Data
-from flowcean.core.environment.observable import (
-    TransformedObservable,
-)
-from flowcean.core.environment.stepable import Finished, Stepable
+from flowcean.core.environment.base import Environment
 
 
+@runtime_checkable
+class Stepable(Protocol):
+    """Base class for stepable environments.
+
+    Stepable environments are environments that can be advanced by a step.
+    Usually, this is combined with an observable to provide a stream of data.
+    """
+
+    @abstractmethod
+    def step(self) -> None:
+        """Advance the environment by one step."""
+
+
+class Finished(Exception):
+    """Exception raised when the environment is finished.
+
+    This exception is raised when the environment is finished, and no more data
+    can be retrieved.
+    """
+
+
+@runtime_checkable
 class IncrementalEnvironment(
-    TransformedObservable,
+    Environment,
     Stepable,
     Iterable[Data],
+    Protocol,
 ):
     """Base class for incremental environments.
 
     Incremental environments are environments that can be advanced by a step
     and provide a stream of data. The data can be observed at each step.
     """
-
-    def __init__(self) -> None:
-        """Initialize the incremental environment."""
-        super().__init__()
 
     @override
     def __iter__(self) -> Iterator[Data]:

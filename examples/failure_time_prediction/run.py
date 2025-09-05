@@ -14,26 +14,21 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     flowcean.cli.initialize()
 
-    data = DataFrame.from_uri(
-        uri="file:./data/processed_data.csv",
-    ).with_transform(
-        Select(
-            [
-                "y-Amplitude",
-                "z-Amplitude",
-                "Growth-rate",
-                "Estimated-Failure-Time",
-            ],
-        ),
+    data = DataFrame.from_uri(uri="file:./data/processed_data.csv") | Select(
+        [
+            "y-Amplitude",
+            "z-Amplitude",
+            "Growth-rate",
+            "Estimated-Failure-Time",
+        ],
     )
+
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
     transform = Standardize()
     learner = LightningLearner(
         module=MultilayerPerceptron(
             learning_rate=1e-3,
-            input_size=3,
-            output_size=1,
             hidden_dimensions=[10, 10],
         ),
         max_epochs=5,

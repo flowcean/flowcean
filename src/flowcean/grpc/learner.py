@@ -205,7 +205,7 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
         return self
 
     @override
-    def predict(self, input_features: Data) -> Data:
+    def _predict(self, input_features: Data) -> Data:
         proto_datapackage = DataPackage(
             inputs=[
                 _row_to_proto(row)
@@ -220,19 +220,6 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
     def __del__(self) -> None:
         """Close the gRPC channel."""
         self.channel.close()
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    @override
-    @classmethod
-    def load_from_state(
-        cls,
-        state: dict[str, Any],
-    ) -> GrpcPassiveAutomataLearner:
-        _ = state
-        raise NotImplementedError
 
 
 def _log_messages(messages: Iterable[Message]) -> None:
