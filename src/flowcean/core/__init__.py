@@ -5,7 +5,6 @@ from .environment.active import ActiveEnvironment
 from .environment.base import Environment
 from .environment.incremental import Finished, IncrementalEnvironment, Stepable
 from .environment.offline import ChainedOfflineEnvironments, OfflineEnvironment
-from .hashable import Hashable
 from .learner import (
     ActiveLearner,
     SupervisedIncrementalLearner,
@@ -44,7 +43,6 @@ __all__ = [
     "Data",
     "Environment",
     "Finished",
-    "Hashable",
     "Identity",
     "IncrementalEnvironment",
     "Invertible",

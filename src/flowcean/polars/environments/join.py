@@ -14,7 +14,6 @@ class JoinedOfflineEnvironment(OfflineEnvironment):
     """
 
     environments: Iterable[OfflineEnvironment]
-    _hash: bytes | None = None
 
     def __init__(self, environments: Iterable[OfflineEnvironment]) -> None:
         """Initialize the joined offline environment.
@@ -31,13 +30,3 @@ class JoinedOfflineEnvironment(OfflineEnvironment):
             (environment.observe() for environment in self.environments),
             how="horizontal",
         )
-
-    # TO-DO:
-    # @override
-    # def hash(self) -> bytes:
-    #     if self._hash is None:
-    #         hasher = hashlib.sha256()
-    #         for env in self.environments:
-    #             hasher.update(env.hash())
-    #         self._hash = hasher.digest()
-    #     return self._hash

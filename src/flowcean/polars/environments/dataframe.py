@@ -1,23 +1,21 @@
 from __future__ import annotations
 
-import hashlib
-from collections.abc import Collection, Generator, Iterable
+from collections.abc import Collection, Iterable
 from itertools import islice
 from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlparse
 
-import cloudpickle
 import polars as pl
 from ruamel.yaml import YAML
 from tqdm import tqdm
 from typing_extensions import Self, override
 
-from flowcean.core import Hashable, OfflineEnvironment
+from flowcean.core import OfflineEnvironment
 from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
 
 
-class DataFrame(Hashable, OfflineEnvironment):
+class DataFrame(OfflineEnvironment):
     """A dataset environment.
 
     This environment represents static tabular datasets.
@@ -119,10 +117,6 @@ class DataFrame(Hashable, OfflineEnvironment):
     def _observe(self) -> pl.LazyFrame:
         return self.data
 
-    @override
-    def hash(self) -> bytes:
-        return _hash_from_dataframe(self.data)
-
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
         if self._length is None:
@@ -139,44 +133,6 @@ def _file_uri_to_path(uri: str) -> Path:
     if url.scheme != "file":
         raise InvalidUriSchemeError(url.scheme)
     return Path(url.path)
-
-
-def _hash_from_dataframe(data: pl.LazyFrame) -> bytes:
-    hasher = hashlib.sha256()
-    schema = data.collect_schema()
-    hasher.update(cloudpickle.dumps(schema))
-
-    for batch in _iter_slices(data, 42):
-        # This is a workaround for the fact that Polars does not support
-        # hashing DataFrames directly
-        hasher.update(batch.to_numpy().dumps())
-    return hasher.digest()
-
-
-def _iter_slices(
-    df: pl.LazyFrame,
-    batch_size: int,
-) -> Generator[pl.DataFrame, Any, None]:
-    def get_batch(
-        df: pl.LazyFrame,
-        offset: int,
-        batch_size: int,
-    ) -> pl.DataFrame:
-        return df.slice(offset, batch_size).collect(engine="streaming")
-
-    batch = get_batch(df, 0, batch_size)
-    # Yield once even if we got passed an empty LazyFrame
-    yield batch
-    offset = len(batch)
-    if offset:
-        while True:
-            batch = get_batch(df, offset, batch_size)
-            len_ = len(batch)
-            if len_:
-                offset += len_
-                yield batch
-            else:
-                break
 
 
 class InvalidUriSchemeError(Exception):
