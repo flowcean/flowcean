@@ -13,11 +13,11 @@ from ruamel.yaml import YAML
 from tqdm import tqdm
 from typing_extensions import Self, override
 
-from flowcean.core import OfflineEnvironment
+from flowcean.core import Hashable, OfflineEnvironment
 from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
 
 
-class DataFrame(OfflineEnvironment):
+class DataFrame(Hashable, OfflineEnvironment):
     """A dataset environment.
 
     This environment represents static tabular datasets.
@@ -27,30 +27,19 @@ class DataFrame(OfflineEnvironment):
     """
 
     data: pl.LazyFrame
-    _hash: bytes | None = None
     _length: int | None = None
 
-    def __init__(
-        self,
-        data: pl.DataFrame | pl.LazyFrame,
-        *,
-        data_hash: bytes | None = None,
-    ) -> None:
+    def __init__(self, data: pl.DataFrame | pl.LazyFrame) -> None:
         """Initialize the dataset environment.
 
         Args:
             data: The data to represent.
-            data_hash: The hash of the data. If None, it will be computed from
-                the dataframe which is potentially slow and expensive.
         """
         if isinstance(data, pl.DataFrame):
             self.data = data.lazy()
             self._length = len(data)
         else:
             self.data = data
-
-        self._hash = data_hash
-        super().__init__()
 
     def to_incremental(
         self,
@@ -73,7 +62,7 @@ class DataFrame(OfflineEnvironment):
         """
         data = pl.scan_csv(path, separator=separator)
         data = data.rename(lambda column_name: column_name.strip())
-        return cls(data, data_hash=_hash_from_path(path))
+        return cls(data)
 
     @classmethod
     def from_json(cls, path: str | Path) -> Self:
@@ -83,7 +72,7 @@ class DataFrame(OfflineEnvironment):
             path: Path to the JSON file.
         """
         data = pl.read_json(path)
-        return cls(data, data_hash=_hash_from_path(path))
+        return cls(data)
 
     @classmethod
     def from_parquet(cls, path: str | Path) -> Self:
@@ -93,7 +82,7 @@ class DataFrame(OfflineEnvironment):
             path: Path to the Parquet file.
         """
         data = pl.scan_parquet(path)
-        return cls(data, data_hash=_hash_from_path(path))
+        return cls(data)
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> Self:
@@ -103,7 +92,7 @@ class DataFrame(OfflineEnvironment):
             path: Path to the YAML file.
         """
         data = pl.LazyFrame(YAML(typ="safe").load(path))
-        return cls(data, data_hash=_hash_from_path(path))
+        return cls(data)
 
     @classmethod
     def from_uri(cls, uri: str) -> Self:
@@ -132,9 +121,7 @@ class DataFrame(OfflineEnvironment):
 
     @override
     def hash(self) -> bytes:
-        if self._hash is None:
-            self._hash = _hash_from_dataframe(self.data)
-        return self._hash
+        return _hash_from_dataframe(self.data)
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
@@ -163,14 +150,6 @@ def _hash_from_dataframe(data: pl.LazyFrame) -> bytes:
         # This is a workaround for the fact that Polars does not support
         # hashing DataFrames directly
         hasher.update(batch.to_numpy().dumps())
-    return hasher.digest()
-
-
-def _hash_from_path(path: str | Path) -> bytes:
-    hasher = hashlib.sha256()
-    with Path(path).open("rb") as file:
-        for chunk in iter(lambda: file.read(4096), b""):
-            hasher.update(chunk)
     return hasher.digest()
 
 

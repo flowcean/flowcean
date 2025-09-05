@@ -1,11 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import Protocol
 
-from flowcean.core.data import Data
-
+from .data import Data
 from .model import Model
+from .named import Named
 
 
-class SupervisedLearner(ABC):
+class SupervisedLearner(Named, Protocol):
     """Base class for supervised learners.
 
     A supervised learner learns from input-output pairs.
@@ -24,7 +25,7 @@ class SupervisedLearner(ABC):
         """
 
 
-class SupervisedIncrementalLearner(ABC):
+class SupervisedIncrementalLearner(Named, Protocol):
     """Base class for incremental supervised learners.
 
     An incremental supervised learner learns from input-output pairs
@@ -44,7 +45,7 @@ class SupervisedIncrementalLearner(ABC):
         """
 
 
-class ActiveLearner(ABC):
+class ActiveLearner(Named, Protocol):
     """Base class for active learners.
 
     Active learners require actions to be taken to learn.

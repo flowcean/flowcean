@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import random
 from math import nan
-from typing import Any
 
 import polars as pl
 from typing_extensions import override
@@ -72,7 +71,7 @@ class MyModel(Model):
         self.best_action = best_action
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         return pl.DataFrame(
             {
                 "action": [
@@ -81,16 +80,6 @@ class MyModel(Model):
                 ],
             },
         ).lazy()
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> MyModel:
-        _ = state
-        raise NotImplementedError
 
 
 class MyLearner(ActiveLearner):

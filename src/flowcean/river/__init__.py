@@ -1,4 +1,4 @@
-from .river_learner import RiverLearner, RiverModel
+from .learner import RiverLearner, RiverModel
 
 __all__ = [
     "RiverLearner",

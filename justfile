@@ -12,8 +12,8 @@ check-pre-commit:
   @uv run pre-commit run --all-files
 
 check-types:
-  @echo "🚀 Static type checking: Running pyright"
-  @uv run --all-packages --all-extras pyright
+  @echo "🚀 Static type checking: Running basedpyright"
+  @uv run --all-packages --all-extras basedpyright
 
 check-deptry:
   @echo "🚀 Checking for obsolete dependencies: Running deptry"
@@ -24,10 +24,12 @@ test:
   @uv run python -m pytest tests --cov --cov-config=pyproject.toml
 
 docs:
-  @echo "🚀 Building documentation: Running mkdocs"
-  @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml
+  @echo "🚀 Building documentation..."
+  @echo "   - Running javadoc"
+  @mvn javadoc:javadoc -q -f java/AutomataLearner/pom.xml
   @rm -rf docs/examples/java-automata/
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
+  @echo "   - Running mkdocs"
   @uv run mkdocs build --strict
 
 docs-serve:

@@ -7,7 +7,6 @@ from typing import Any, cast
 
 import polars as pl
 from opcua import Client, Node, Subscription, ua
-from opcua.client.client import KeepAlive
 from ruamel.yaml import YAML
 
 from flowcean.core.adapter import Adapter
@@ -160,17 +159,6 @@ class OPCAdapter(Adapter):
         self.client.connect()
         self.client.load_type_definitions()
 
-        # Start a keep-alive mechanism to ensure the connection stays alive
-        self.client.keepalive = KeepAlive(
-            self.client,
-            min(
-                self.client.session_timeout,
-                self.client.secure_channel_timeout,
-            )
-            * 0.7,
-        )
-        self.client.keepalive.start()
-
         # Get inputs from the YAML configuration
         # Each input has a feature name, an opc-id, and a type
         for feature in yaml_data["inputs"]:
@@ -243,8 +231,6 @@ class OPCAdapter(Adapter):
                 ),
             ),
         )
-        if self.client.keepalive is not None:
-            self.client.keepalive.stop()
         self.client.disconnect()
         logger.info("OPC client disconnected from server")
 

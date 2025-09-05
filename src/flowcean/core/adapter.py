@@ -1,9 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import Protocol
 
-from flowcean.core.data import Data
+from .data import Data
 
 
-class Adapter(ABC):
+class Adapter(Protocol):
     """Abstract base class for adapters."""
 
     @abstractmethod
@@ -47,7 +48,3 @@ class Adapter(ABC):
         Args:
             data: The data to send.
         """
-
-
-class Stop(Exception):
-    """Exception raised when the tool loop should be stopped."""

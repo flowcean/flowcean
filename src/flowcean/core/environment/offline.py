@@ -1,15 +1,23 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, final, runtime_checkable
 
-from flowcean.core.environment.observable import TransformedObservable
+from typing_extensions import override
+
+from flowcean.core.environment.base import Environment
+from flowcean.core.environment.incremental import (
+    Finished,
+    IncrementalEnvironment,
+)
 
 if TYPE_CHECKING:
-    from flowcean.core.environment.chained import ChainedOfflineEnvironments
+    from collections.abc import Iterable, Iterator
+
+    from flowcean.core.data import Data
 
 
-class OfflineEnvironment(TransformedObservable):
+@runtime_checkable
+class OfflineEnvironment(Environment, Protocol):
     """Base class for offline environments.
 
     Offline environments are used to represent datasets. They can be used to
@@ -17,11 +25,7 @@ class OfflineEnvironment(TransformedObservable):
     joined together to create new datasets.
     """
 
-    def __init__(self) -> None:
-        """Initialize the offline environment."""
-        super().__init__()
-
-    def chain(self, *other: OfflineEnvironment) -> ChainedOfflineEnvironments:
+    def chain(self, *other: Environment) -> ChainedOfflineEnvironments:
         """Chain this offline environment with other offline environments.
 
         Chaining offline environments will create a new incremental environment
@@ -34,36 +38,41 @@ class OfflineEnvironment(TransformedObservable):
         Returns:
             The chained offline environments.
         """
-        from flowcean.core.environment.chained import (
-            ChainedOfflineEnvironments,
-        )
-
         return ChainedOfflineEnvironments([self, *other])
 
-    def __add__(self, other: OfflineEnvironment) -> ChainedOfflineEnvironments:
+    @final
+    def __add__(self, other: Environment) -> ChainedOfflineEnvironments:
         """Shorthand for `chain`."""
         return self.chain(other)
 
-    @abstractmethod
-    def hash(self) -> bytes:
-        """Return the hash of the offline environment.
 
-        The hash of the offline environment is used to uniquely identify the
-        data of an environment, mainly for caching purposes. The following
-        properties should be considered when computing the hash:
+class ChainedOfflineEnvironments(IncrementalEnvironment):
+    """Chained offline environments.
 
-        - If two environments are equal (e.g. are the same object),
-          they must have the same hash.
-        - If two environments of the same type have the same hash, their data
-          must be equal.
-        - If two environments have different data, their hashes must be
-          different.
+    This environment chains multiple offline environments together. The
+    environment will first observe the data from the first environment and then
+    the data from the other environments.
+    """
 
-        These properties leave one special case open: If two environments share
-        the same data, the hash may be different even if the data is not.
-        The hash is just a way of quickly checking if there is a chance that
-        the data is different between two environments.
+    _environments: Iterator[Environment]
+    _element: Environment
 
-        Returns:
-            The hash of the offline environment.
+    def __init__(self, environments: Iterable[Environment]) -> None:
+        """Initialize the chained offline environments.
+
+        Args:
+            environments: The offline environments to chain.
         """
+        self._environments = iter(environments)
+        self._element = next(self._environments)
+
+    @override
+    def _observe(self) -> Data:
+        return self._element.observe()
+
+    @override
+    def step(self) -> None:
+        try:
+            self._element = next(self._environments)
+        except StopIteration:
+            raise Finished from StopIteration

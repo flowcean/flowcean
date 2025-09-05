@@ -25,6 +25,7 @@ class TestMetrics(unittest.TestCase):
 
     def test_classification_report(self) -> None:
         report_value = ClassificationReport()(self.true, self.predicted)
+        assert isinstance(report_value, str)
         assert report_value.startswith(
             "\n              precision    recall ",
         )

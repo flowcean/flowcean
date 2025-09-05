@@ -1,10 +1,9 @@
-import hashlib
 from collections.abc import Iterable
 
 import polars as pl
 from typing_extensions import override
 
-from flowcean.core.environment.offline import OfflineEnvironment
+from flowcean.core import OfflineEnvironment
 
 
 class JoinedOfflineEnvironment(OfflineEnvironment):
@@ -33,11 +32,12 @@ class JoinedOfflineEnvironment(OfflineEnvironment):
             how="horizontal",
         )
 
-    @override
-    def hash(self) -> bytes:
-        if self._hash is None:
-            hasher = hashlib.sha256()
-            for env in self.environments:
-                hasher.update(env.hash())
-            self._hash = hasher.digest()
-        return self._hash
+    # TO-DO:
+    # @override
+    # def hash(self) -> bytes:
+    #     if self._hash is None:
+    #         hasher = hashlib.sha256()
+    #         for env in self.environments:
+    #             hasher.update(env.hash())
+    #         self._hash = hasher.digest()
+    #     return self._hash

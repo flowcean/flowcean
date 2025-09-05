@@ -16,7 +16,11 @@ from palaestrai.agent.reward_information import RewardInformation
 from palaestrai.agent.sensor_information import SensorInformation
 from palaestrai.types import Box
 
-from flowcean.core.strategies.active import Action, Interface, Observation
+from flowcean.core.strategies.active import (
+    Action,
+    ActiveInterface,
+    Observation,
+)
 
 BOX_SPACE = "Box(low=%s, high=%s, shape=%s, dtype=%s)"
 
@@ -53,7 +57,7 @@ def filter_observation(
     )
 
 
-def convert_to_actuator_informations(
+def convert_to_actuator_information(
     action: Action,
 ) -> list[ActuatorInformation]:
     infos = []
@@ -76,7 +80,7 @@ def convert_to_actuator_informations(
     return infos
 
 
-def convert_to_sensor_informations(
+def convert_to_sensor_information(
     observation: Observation,
 ) -> list[SensorInformation]:
     infos = []
@@ -99,7 +103,7 @@ def convert_to_sensor_informations(
     return infos
 
 
-def convert_to_reward_informations(
+def convert_to_reward_information(
     observation: Observation,
 ) -> list[RewardInformation]:
     infos = []
@@ -126,7 +130,7 @@ def convert_to_interface(
     information_objects: list[SensorInformation]
     | list[ActuatorInformation]
     | list[RewardInformation],
-) -> list[Interface]:
+) -> list[ActiveInterface]:
     """Convert a list of information objects to interface objects.
 
     Takes a list of SensorInformation, ActuatorInformation or
@@ -138,7 +142,7 @@ def convert_to_interface(
         space = obj.space
         if isinstance(space, Box):
             interfaces.append(
-                Interface(
+                ActiveInterface(
                     uid=obj.uid if isinstance(obj.uid, str) else "",
                     value=obj.value,
                     value_min=space.low,

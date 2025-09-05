@@ -12,11 +12,7 @@ from typing_extensions import Self, override
 
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
-from flowcean.ode import (
-    OdeEnvironment,
-    OdeState,
-    OdeSystem,
-)
+from flowcean.ode import OdeEnvironment, OdeState, OdeSystem
 from flowcean.polars import SlidingWindow, TrainTestSplit, collect
 from flowcean.sklearn import (
     MeanAbsoluteError,
@@ -116,9 +112,7 @@ def main() -> None:
         ),
     )
 
-    data = collect(data_incremental, 250).with_transform(
-        SlidingWindow(window_size=3),
-    )
+    data = collect(data_incremental, 250) | SlidingWindow(window_size=3)
 
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 
@@ -130,8 +124,6 @@ def main() -> None:
         LightningLearner(
             module=MultilayerPerceptron(
                 learning_rate=1e-3,
-                input_size=len(inputs),
-                output_size=len(outputs),
                 hidden_dimensions=[10, 10],
                 activation_function=torch.nn.Tanh,
             ),

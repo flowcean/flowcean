@@ -1,12 +1,12 @@
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.core.model import ModelWithTransform
+from flowcean.core.model import Model
 from flowcean.core.transform import Identity, Transform
 
 
 def deploy(
     environment: ActiveEnvironment | IncrementalEnvironment,
-    model: ModelWithTransform,
+    model: Model,
     input_transforms: Transform | None = None,
     output_transforms: Transform | None = None,
 ) -> None:

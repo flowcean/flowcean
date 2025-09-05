@@ -8,11 +8,7 @@ import optuna
 import polars as pl
 from omegaconf import DictConfig, ListConfig
 from optuna import Trial
-from training import (
-    collect_data,
-    evaluate,
-    train,
-)
+from training import collect_data, evaluate, train
 
 import flowcean.cli
 

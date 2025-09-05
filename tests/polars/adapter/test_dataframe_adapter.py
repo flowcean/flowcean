@@ -4,7 +4,7 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core.adapter import Stop
+from flowcean.core.environment.incremental import Finished
 from flowcean.polars import DataFrame
 from flowcean.polars.adapter import DataFrameAdapter
 
@@ -40,7 +40,7 @@ class TestDataFrameAdapter(unittest.TestCase):
                         [pulled_data, adapter.get_data().collect()],
                         how="vertical",
                     )
-            except Stop:
+            except Finished:
                 pass
 
             # Send some data back to the adapter

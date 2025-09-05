@@ -26,9 +26,7 @@ def main() -> None:
         [
             JoinedOfflineEnvironment(
                 (
-                    DataFrame.from_parquet(path).with_transform(
-                        ToTimeSeries("t"),
-                    ),
+                    DataFrame.from_parquet(path) | ToTimeSeries("t"),
                     DataFrame.from_json(path.with_suffix(".json")),
                 ),
             )
