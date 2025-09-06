@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Sized
+from pathlib import Path
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 import polars as pl
+import torch
 from custom_transforms.map_image import crop_map_image
 from custom_transforms.particle_cloud_image import particles_to_image
 from custom_transforms.scan_image import scan_to_image
@@ -54,6 +56,53 @@ class InMemoryCaching(Dataset[T], Generic[T]):
 
         for i in indices:
             self[i]
+
+
+class DiskCaching(Dataset[T], Generic[T]):
+    """Wraps any sized Dataset and caches items on disk per-index.
+
+    Items are serialized with torch.save/torch.load. This is suitable when
+    items are Tensors or tuples of Tensors.
+    """
+
+    def __init__(
+        self,
+        dataset: Dataset[T],
+        cache_dir: str | Path,
+    ) -> None:
+        if not isinstance(dataset, Sized):
+            msg = "requires a Sized dataset (__len__ implemented)"
+            raise TypeError(msg)
+        self._dataset = dataset
+        self._cache_dir = Path(cache_dir)
+        self._cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def __len__(self) -> int:
+        return len(self._dataset)
+
+    def _path_for_index(self, index: int) -> Path:
+        return self._cache_dir / f"{index}.pt"
+
+    @override
+    def __getitem__(self, index: int) -> T:
+        path = self._path_for_index(index)
+        if path.exists():
+            return torch.load(path, map_location="cpu")
+
+        item = self._dataset[index]
+        # Best effort: write atomically via tmp file then rename
+        tmp_path = path.with_suffix(".pt.tmp")
+        torch.save(item, tmp_path)
+        tmp_path.replace(path)
+        return item
+
+    def warmup(self, *, show_progress: bool = False) -> None:
+        """Precompute and cache all items to disk."""
+        indices = range(len(self))
+        if show_progress:
+            indices = tqdm(indices, desc="Precomputing disk cache")
+        for i in indices:
+            _ = self[i]
 
 
 class FeatureImagesData(Dataset, Sized):

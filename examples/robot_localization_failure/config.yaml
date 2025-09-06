@@ -1,26 +1,50 @@
 rosbag:
   training_paths:
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_01
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_02
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_03
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_08
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_09
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_10
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_11
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_12
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_13
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_14
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_15
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_16
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_17
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_19
+    # - recordings/wgtl_half_split/rec_20250821_104113_id_01
+    # - recordings/wgtl_half_split/rec_20250821_132354_id_01
+    # - recordings/wgtl_half_split/rec_20250821_132354_id_02
+    - recordings/wgtl_half_split/rec_20250821_141846_id_01
+    # - recordings/wgtl_half_split/rec_20250821_141846_id_02
+    - recordings/wgtl_half_split/rec_20250821_151429_id_01
+    # - recordings/wgtl_half_split/rec_20250822_123916_id_01
+    # - recordings/wgtl_half_split/rec_20250822_123916_id_02
+    - recordings/wgtl_half_split/rec_20250822_132819_id_01
+    # - recordings/wgtl_half_split/rec_20250822_132819_id_02
+    - recordings/wgtl_half_split/rec_20250822_135308_id_01
+    # - recordings/wgtl_half_split/rec_20250822_135308_id_02
+    - recordings/wgtl_half_split/rec_20250825_100748_id_01
+    # - recordings/wgtl_half_split/rec_20250825_100748_id_02
+    - recordings/wgtl_half_split/rec_20250825_133605_id_01
+    # - recordings/wgtl_half_split/rec_20250825_133605_id_02
+    - recordings/wgtl_half_split/rec_20250825_135829_id_01
+    # - recordings/wgtl_half_split/rec_20250825_135829_id_02
+    - recordings/wgtl_half_split/rec_20250825_145941_id_01
+    # - recordings/wgtl_half_split/rec_20250825_145941_id_02
+    - recordings/wgtl_half_split/rec_20250825_153216_id_01
+    # - recordings/wgtl_half_split/rec_20250825_153216_id_02
+    - recordings/wgtl_half_split/rec_20250825_161940_id_01
+    # - recordings/wgtl_half_split/rec_20250825_161940_id_02
+    - recordings/wgtl_half_split/rec_20250826_095810_id_01
+    - recordings/wgtl_half_split/rec_20250826_102611_id_01
+    # - recordings/wgtl_half_split/rec_20250826_102611_id_02
+    - recordings/wgtl_half_split/rec_20250826_104543_id_01
+    # - recordings/wgtl_half_split/rec_20250826_104543_id_02
+    # - recordings/wgtl_half_split/rec_20250827_161251_id_01
+    # - recordings/wgtl_half_split/rec_20250827_161251_id_02
+    # - recordings/wgtl_half_split/rec_20250828_102407_id_01
+    # - recordings/wgtl_half_split/rec_20250828_102407_id_02
+    - recordings/wgtl_half_split/rec_20250828_105714_id_01
+    # - recordings/wgtl_half_split/rec_20250828_105714_id_02
+    - recordings/wgtl_half_split/rec_20250828_161448_id_01
+    # - recordings/wgtl_half_split/rec_20250829_104641_id_01
+    # - recordings/wgtl_half_split/rec_20250829_104641_id_02
+
   evaluation_paths:
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_20
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_21
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_22
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_23
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_24
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_26
+    # - recordings/wgtl_half_split/rec_20250821_104113_id_02
+    - recordings/wgtl_half_split/rec_20250821_151429_id_02
+    - recordings/wgtl_half_split/rec_20250826_095810_id_02
+    - recordings/wgtl_half_split/rec_20250828_161448_id_02
+
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
@@ -29,12 +53,15 @@ localization:
   position_threshold: 0.4
   heading_threshold: 0.4
 architecture:
-  image_size: 150
-  width_meters: 15.0
+  image_size: 420
+  width_meters: 20.0
 learning:
-  batch_size: 128
+  batch_size: 64
   learning_rate: 0.0001
-  epochs: 2
-  model_path: "models/robot_localization.model"
+  epochs: 50
+  preload: true
+  disk_cache_dir: "learning_cache"
+  model_path: "models/robot_localization.fml"
 optuna:
   storage: "sqlite:///optuna.db"
+  trials: 30
