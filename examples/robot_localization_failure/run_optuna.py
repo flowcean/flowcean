@@ -8,11 +8,7 @@ import optuna
 import polars as pl
 from omegaconf import DictConfig, ListConfig
 from optuna import Trial
-from training import (
-    collect_data,
-    evaluate,
-    train,
-)
+from training import collect_data, evaluate, train
 
 import flowcean.cli
 
@@ -78,7 +74,7 @@ def main() -> None:
             eval_data=samples_eval,
             config=config,
         ),
-        n_trials=2,
+        n_trials=config.optuna.trials,
     )
 
     logger.info("Best trial: %s", study.best_trial.params)
