@@ -8,7 +8,7 @@ from collections.abc import Callable
 import lightning
 import polars as pl
 import torch
-from feature_images import FeatureImagesData, InMemoryCaching
+from feature_images import DiskCaching, FeatureImagesData, InMemoryCaching
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from torch.utils.data import DataLoader, Dataset
 from typing_extensions import override
@@ -32,6 +32,10 @@ class ImageBasedLightningLearner(SupervisedLearner):
         accelerator: str = "auto",
         image_size: int = 32,
         width_meters: float = 15.0,
+        *,
+        preload: bool = False,
+        cache: bool = False,
+        disk_cache_dir: str | None = None,
     ) -> None:
         """Initialize the learner.
 
@@ -43,6 +47,12 @@ class ImageBasedLightningLearner(SupervisedLearner):
             accelerator: The accelerator to use.
             image_size: The size of the image (height and width).
             width_meters: The width of the image in meters.
+            preload: If True, preload and cache the entire dataset in memory.
+                This can speed up training but may cause OOM on large datasets.
+            cache: If True, use an in-memory caching dataset wrapper. When
+                False, items are generated on the fly and not retained.
+            disk_cache_dir: If provided, enable disk-based caching at this
+                directory. Ignored if empty.
         """
         self.module = module
         self.num_workers = num_workers or os.cpu_count() or 0
@@ -51,6 +61,9 @@ class ImageBasedLightningLearner(SupervisedLearner):
         self.accelerator = accelerator
         self.image_size = image_size
         self.width_meters = width_meters
+        self.preload = preload
+        self.cache = cache
+        self.disk_cache_dir = disk_cache_dir
 
     @override
     def learn(
@@ -58,15 +71,33 @@ class ImageBasedLightningLearner(SupervisedLearner):
         inputs: pl.DataFrame,
         outputs: pl.DataFrame,
     ) -> ImageBasedPyTorchModel:
-        dataset = InMemoryCaching(
-            FeatureImagesData(
-                inputs,
-                outputs,
-                image_size=self.image_size,
-                width_meters=self.width_meters,
-            ),
+        base_dataset = FeatureImagesData(
+            inputs,
+            outputs,
+            image_size=self.image_size,
+            width_meters=self.width_meters,
         )
-        dataset.warmup(show_progress=True)
+
+        dataset: Dataset
+        if self.disk_cache_dir:
+            dataset = DiskCaching(base_dataset, self.disk_cache_dir)
+            if self.preload:
+                logger.info("Precomputing disk cache...")
+                dataset.warmup(show_progress=True)
+        elif self.cache:
+            dataset = InMemoryCaching(base_dataset)
+            if self.preload:
+                logger.info(
+                    "Preloading dataset into memory (may use a lot of RAM)...",
+                )
+                dataset.warmup(show_progress=True)
+        else:
+            dataset = base_dataset
+            if self.preload:
+                logger.warning(
+                    "preload=True ignored because neither cache nor disk cache"
+                    " is enabled.",
+                )
 
         dataloader = DataLoader(
             dataset,

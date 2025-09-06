@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from os import PathLike
 from pathlib import Path
@@ -71,14 +73,14 @@ def define_transforms(
 def load_and_process_rosbag(
     path: str | PathLike,
     config: DictConfig | ListConfig,
-) -> pl.DataFrame:
+) -> pl.LazyFrame:
     cache_path = Path(path).with_suffix(".processed.parquet")
     if cache_path.exists():
         logger.info(
             "Loading already processed rosbag from cache: %s",
             cache_path,
         )
-        return pl.read_parquet(cache_path)
+        return pl.scan_parquet(cache_path)
 
     logger.info("Processing rosbag: %s", path)
     data = load_rosbag(
@@ -137,10 +139,10 @@ def load_and_process_rosbag(
     logger.info("Caching processed data to Parquet file: %s", cache_path)
     transformed_data.write_parquet(cache_path)
 
-    return transformed_data
+    return pl.scan_parquet(cache_path)
 
 
-def explode_and_collect_samples(data: pl.DataFrame) -> pl.DataFrame:
+def explode_and_collect_samples(data: pl.LazyFrame) -> pl.LazyFrame:
     return (
         data.explode("measurements")
         .unnest("measurements")
@@ -197,30 +199,28 @@ def collect_data(
     config: DictConfig | ListConfig,
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
     logger.info("Collecting training data")
-    runs_train = [
-        load_and_process_rosbag(
-            path=path,
-            config=config,
-        )
+    runs_train_lf = [
+        load_and_process_rosbag(path=path, config=config)
         for path in config.rosbag.training_paths
     ]
-    logger.info("Combining training data")
-    samples_train = explode_and_collect_samples(
-        pl.concat(runs_train, how="vertical"),
+    logger.info(
+        "Lazily combining training data. This takes 8 min for 130 GB of data",
     )
+    samples_train_lf = explode_and_collect_samples(
+        pl.concat(runs_train_lf, how="vertical"),
+    )
+    samples_train = samples_train_lf.collect(engine="streaming")
 
     logger.info("Collecting evaluation data")
-    runs_eval = [
-        load_and_process_rosbag(
-            path=path,
-            config=config,
-        )
+    runs_eval_lf = [
+        load_and_process_rosbag(path=path, config=config)
         for path in config.rosbag.evaluation_paths
     ]
-    logger.info("Combining evaluation data")
-    samples_eval = explode_and_collect_samples(
-        pl.concat(runs_eval, how="vertical"),
+    logger.info("Combining evaluation data (lazy)")
+    samples_eval_lf = explode_and_collect_samples(
+        pl.concat(runs_eval_lf, how="vertical"),
     )
+    samples_eval = samples_eval_lf.collect(engine="streaming")
     return (samples_train, samples_eval)
 
 
@@ -238,6 +238,8 @@ def train(
         max_epochs=config.learning.epochs,
         image_size=config.architecture.image_size,
         width_meters=config.architecture.width_meters,
+        preload=config.learning.preload,
+        disk_cache_dir=config.learning.disk_cache_dir,
     )
     logger.info("Training model for %s epochs", config.learning.epochs)
     return learner.learn(
