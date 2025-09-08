@@ -21,7 +21,7 @@ from flowcean.polars import (
     TrainTestSplit,
 )
 from flowcean.polars.environments.dataframe import collect
-from flowcean.river import RiverLearner  # , TrainTestSplit
+from flowcean.river import RiverLearner
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -154,7 +154,7 @@ def main() -> None:
         [MeanAbsoluteError(), MeanSquaredError()],
     )
     print(report)
-    logger.info("Model learning succesful.")
+    logger.info("Model learning successful.")
 
 
 if __name__ == "__main__":
