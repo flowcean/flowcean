@@ -29,7 +29,7 @@ def main() -> None:
 
     time_start = time.time()
     data = (
-        DataFrame.from_parquet("./data/alp_sim_data_compressed.parquet")
+        DataFrame.from_parquet("./data/alp_sim_data.parquet")
         | Lambda(lambda df: df.limit(50_000))
         | Select(
             [
