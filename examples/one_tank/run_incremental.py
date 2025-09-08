@@ -115,14 +115,11 @@ def main() -> None:
         ),
     )
 
-    # Initialize the sliding window transformation (using window size 3)
-    window_transform = SlidingWindow(window_size=3)
-
     inputs = ["h_0", "h_1"]
     outputs = ["h_2"]
 
     # Collect the data first
-    data = collect(data_incremental, 250).with_transform(window_transform)
+    data = collect(data_incremental, 250) | SlidingWindow(window_size=3)
 
     # Split the data into train and test sets
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)

@@ -116,9 +116,7 @@ def main() -> None:
         ),
     )
 
-    data = collect(data_incremental, 250).with_transform(
-        SlidingWindow(window_size=3),
-    )
+    data = collect(data_incremental, 250) | SlidingWindow(window_size=3)
 
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 
