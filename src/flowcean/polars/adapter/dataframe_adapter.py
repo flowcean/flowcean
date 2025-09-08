@@ -3,8 +3,7 @@ from typing import cast
 
 import polars as pl
 
-from flowcean.core.adapter import Adapter
-from flowcean.core.adapter.adapter import Stop
+from flowcean.core import Adapter, Stop
 from flowcean.polars.environments.dataframe import DataFrame
 
 

@@ -14,13 +14,10 @@ from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.slice_time_series import SliceTimeSeries
 from omegaconf import DictConfig, ListConfig
 
-from flowcean.core import Report, Transform
-from flowcean.core.strategies import evaluate_offline
-from flowcean.core.transform import Lambda
-from flowcean.polars import DataFrame, ZeroOrderHold
-from flowcean.polars.transforms.drop import Drop
+from flowcean.core import Lambda, Report, Transform, evaluate_offline
+from flowcean.polars import DataFrame, Drop, ZeroOrderHold
 from flowcean.ros import load_rosbag
-from flowcean.sklearn.metrics.classification import (
+from flowcean.sklearn import (
     Accuracy,
     ClassificationReport,
     FBetaScore,

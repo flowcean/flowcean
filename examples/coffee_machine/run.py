@@ -5,9 +5,12 @@ from pathlib import Path
 from tqdm import tqdm
 
 import flowcean.cli
-from flowcean.core import evaluate_offline, learn_offline
-from flowcean.core.environment.chained import ChainedOfflineEnvironments
-from flowcean.core.model import ModelWithTransform
+from flowcean.core import (
+    ChainedOfflineEnvironments,
+    ModelWithTransform,
+    evaluate_offline,
+    learn_offline,
+)
 from flowcean.grpc import GrpcPassiveAutomataLearner
 from flowcean.polars import (
     DataFrame,

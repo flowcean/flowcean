@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from flowcean.core.data import Data
+from .data import Data
 
 
 class Adapter(ABC):

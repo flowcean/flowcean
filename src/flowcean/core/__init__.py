@@ -1,10 +1,10 @@
+from .adapter import Adapter, Stop
+from .data import Data
 from .environment.actable import Actable
 from .environment.active import ActiveEnvironment
 from .environment.chained import ChainedOfflineEnvironments
-from .environment.incremental import IncrementalEnvironment
-from .environment.observable import Observable, TransformedObservable
+from .environment.incremental import Finished, IncrementalEnvironment, Stepable
 from .environment.offline import OfflineEnvironment
-from .environment.stepable import Finished, Stepable
 from .learner import (
     ActiveLearner,
     SupervisedIncrementalLearner,
@@ -12,7 +12,7 @@ from .learner import (
 )
 from .metric import OfflineMetric
 from .model import Model, ModelWithTransform
-from .report import Report
+from .report import Report, Reportable
 from .strategies.active import (
     Action,
     ActiveInterface,
@@ -28,6 +28,7 @@ from .transform import (
     FitIncremetally,
     FitOnce,
     Identity,
+    Lambda,
     Transform,
 )
 
@@ -37,26 +38,29 @@ __all__ = [
     "ActiveEnvironment",
     "ActiveInterface",
     "ActiveLearner",
+    "Adapter",
     "ChainedOfflineEnvironments",
     "ChainedTransforms",
+    "Data",
     "Finished",
     "FitIncremetally",
     "FitOnce",
     "Identity",
     "IncrementalEnvironment",
+    "Lambda",
     "Model",
     "ModelWithTransform",
-    "Observable",
     "Observation",
     "OfflineEnvironment",
     "OfflineMetric",
     "Report",
+    "Reportable",
     "Stepable",
+    "Stop",
     "StopLearning",
     "SupervisedIncrementalLearner",
     "SupervisedLearner",
     "Transform",
-    "TransformedObservable",
     "deploy",
     "evaluate_offline",
     "learn_active",

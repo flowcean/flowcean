@@ -28,14 +28,13 @@ from flowcean.polars import (
     TimeWindow,
     TrainTestSplit,
 )
-from flowcean.polars.transforms.filter import And, Not, Or  # noqa: F401
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanSquaredError,
     RegressionTree,
 )
-from flowcean.torch.lightning_learner import (
+from flowcean.torch import (
     LightningLearner,
     MultilayerPerceptron,
 )

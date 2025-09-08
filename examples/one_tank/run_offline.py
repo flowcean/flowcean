@@ -12,11 +12,7 @@ from typing_extensions import Self, override
 
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
-from flowcean.ode import (
-    OdeEnvironment,
-    OdeState,
-    OdeSystem,
-)
+from flowcean.ode import OdeEnvironment, OdeState, OdeSystem
 from flowcean.polars import SlidingWindow, TrainTestSplit, collect
 from flowcean.sklearn import (
     MeanAbsoluteError,
