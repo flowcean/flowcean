@@ -1,7 +1,7 @@
 # One-Tank Example
 
 This example shows how to train two different models to predict the time-series behavior of a single water tank with a height-dependent outflow and a time-varying inflow.
-It is inspired by the one-tank simulink model used for control design [^1].
+It is inspired by the one-tank Simulink model used for control design[^1].
 A schematic drawing of the system is shown in the following figure.
 
 ![The one-tank system](./images/one_tank.svg)
@@ -14,10 +14,10 @@ ODEs describe the derivative of a variable (e.g. it's change over time) as a fun
 
 For this example the system is described by the equation
 
-$$ \dot{x} = \frac{b V(t) - a \sqrt{x}}{A} $$
+$$ \dot{x} = \frac{b V(t) - a \sqrt{x}}{A} $$,
 
 where $x$ is the water level in the tank, $\dot{x}$ is the change of the water level over time, $V(t)$ is the time-dependent inflow, $A$ is the tank area, and $a$ and $b$ are scaling constants for the equation.
-The solution of an ODE is not a single value, but a function (here $x(t)$) or a series of it's values for different times $t$.
+The solution of an ODE is not a single value, but a function (here $x(t)$) or a series of its values for different times $t$.
 As solving this ODE analytically is quite complicated, a numerical solver is used which compute solution points starting from an initial value.
 In this example, the initial value is the initial level of the liquid $x(0) = x_0$ in the tank.
 
@@ -42,7 +42,7 @@ The unknown function we are looking for and that we want to learn is
 
 $$ x*n = f\left(V_n, x*{n-1}, V*{n-1}, x*{n-2}, V\_{n-2}\right). $$
 
-To do this, we first need data to learn the functions representation in Flowcean.
+To do this, we first need data to learn the function's representation in flowcean.
 Normally this data would be recorded from a real CPS and imported into the framework as a CSV, ROS bag or something similar.
 However, since we know the differential equation describing the system behavior, we can also use this equation to generate data.
 We can do this by using an [`ODEEnvironment`](../reference/flowcean/ode/index.md#flowcean.ode.OdeEnvironment) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/index.md#flowcean.core.IncrementalEnvironment) within the framework.
@@ -237,7 +237,7 @@ perceptron_report = evaluate_offline(
 
 For this example, the resulting metrics are about
 
-| Learner typ            | Runtime              | Mean Absolute Error | Mean Squared Error |
+| Learner                | Runtime              | Mean Absolute Error | Mean Squared Error |
 | ---------------------- | -------------------- | ------------------- | ------------------ |
 | Regression Tree        | $15.5\: \mathrm{ms}$ | $0.0206$            | $0.0006$           |
 | Multi-layer Perceptron | $813\: \mathrm{ms}$  | $0.0639$            | $0.00054$          |

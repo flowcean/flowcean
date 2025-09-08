@@ -131,7 +131,7 @@ While `uv` manages the necessary Python interpreters for you, you might want to 
       wsl --install
       ```
 
-    2. Follow the instructions, for step-by-step guide, refer to the [offical documentation](https://learn.microsoft.com/en-us/windows/wsl/install-manual)
+    2. Follow the instructions, for step-by-step guide, refer to the [official documentation](https://learn.microsoft.com/en-us/windows/wsl/install-manual)
 
     3. Now follow the instructions for Linux
 

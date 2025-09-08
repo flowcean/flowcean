@@ -53,7 +53,7 @@ def filter_observation(
     )
 
 
-def convert_to_actuator_informations(
+def convert_to_actuator_information(
     action: Action,
 ) -> list[ActuatorInformation]:
     infos = []
@@ -76,7 +76,7 @@ def convert_to_actuator_informations(
     return infos
 
 
-def convert_to_sensor_informations(
+def convert_to_sensor_information(
     observation: Observation,
 ) -> list[SensorInformation]:
     infos = []
@@ -99,7 +99,7 @@ def convert_to_sensor_informations(
     return infos
 
 
-def convert_to_reward_informations(
+def convert_to_reward_information(
     observation: Observation,
 ) -> list[RewardInformation]:
     infos = []

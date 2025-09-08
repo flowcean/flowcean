@@ -151,7 +151,7 @@ public class GRPCServerLearner extends LearnerGrpc.LearnerImplBase {
     public void export(io.flowcean.learner.grpc.LearnerOuterClass.Empty request,
                        io.grpc.stub.StreamObserver<io.flowcean.learner.grpc.LearnerOuterClass.Empty> responseObserver) {
         try {
-            FileOutputStream fileOut = new FileOutputStream("model.ser");
+            FileOutputStream fileOut = new FileOutputStream("model.fml");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             out.writeObject(model);
             out.close();
