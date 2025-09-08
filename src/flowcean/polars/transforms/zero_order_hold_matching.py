@@ -63,16 +63,20 @@ class ZeroOrderHold(Transform):
         self,
         features: list[str],
         name: str = "aligned",
+        *,
+        drop: bool = True,
     ) -> None:
         """Initialize the ZeroOrderHoldMatching transform.
 
         Args:
             features: List of topics to align.
             name: Name of the output time series feature.
+            drop: Whether to drop the original features after alignment.
         """
         super().__init__()
         self.features = features
         self.name = name
+        self.drop = drop
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug(
@@ -84,4 +88,6 @@ class ZeroOrderHold(Transform):
             columns=self.features,
             name=self.name,
         )
+        if self.drop:
+            data = data.drop(self.features)
         return pl.concat([data, aligned], how="horizontal")
