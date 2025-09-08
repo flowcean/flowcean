@@ -47,7 +47,3 @@ class Adapter(ABC):
         Args:
             data: The data to send.
         """
-
-
-class Stop(Exception):
-    """Exception raised when the tool loop should be stopped."""
