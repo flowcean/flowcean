@@ -61,6 +61,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
   "asyncssh>=2.18.0",
+  "basedpyright>=1.31.3",
   "deptry>=0.22.0",
   "dvc>=3.59.0",
   "dvc-ssh>=4.1.1",
