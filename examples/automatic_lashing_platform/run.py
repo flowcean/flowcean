@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    flowcean.cli.initialize()
+    _config = flowcean.cli.initialize()
     logger.info("Loading data...")
 
     time_start = time.time()

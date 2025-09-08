@@ -4,12 +4,12 @@ import polars as pl
 from polars._typing import PythonLiteral
 from typing_extensions import Self, override
 
-from flowcean.core import FitOnce, Transform
+from flowcean.core import Data, Invertible, Transform
 from flowcean.polars import is_timeseries_feature
 
 
 @dataclass
-class ScaleToRange(Transform, FitOnce):
+class ScaleToRange(Invertible, Transform):
     r"""Scale features to a fixed range using a linear mapping.
 
     A sample $x$ is scaled as:
@@ -52,7 +52,7 @@ class ScaleToRange(Transform, FitOnce):
         self.upper_range = upper_range
 
     @override
-    def fit(self, data: pl.LazyFrame) -> None:
+    def fit(self, data: pl.LazyFrame) -> Self:
         schema = data.collect_schema()
         target_features = self.features or [
             name
@@ -85,6 +85,12 @@ class ScaleToRange(Transform, FitOnce):
             )
             for feature in target_features
         }
+        return self
+
+    @override
+    def fit_incremental(self, data: Data) -> Self:
+        msg = "Incremental fitting is not supported for ScaleToRange transform"
+        raise NotImplementedError(msg)
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:

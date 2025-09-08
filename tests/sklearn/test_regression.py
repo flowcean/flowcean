@@ -21,15 +21,15 @@ class TestMetrics(unittest.TestCase):
 
     def test_mean_absolute_error(self) -> None:
         mae = MeanAbsoluteError()(self.true, self.predicted)
-        assert mae == 0.5
+        assert mae == {"a": 0.5}
 
     def test_mean_squared_error(self) -> None:
         mse = MeanSquaredError()(self.true, self.predicted)
-        assert mse == 0.5
+        assert mse == {"a": 0.5}
 
     def test_r2_score(self) -> None:
         r2 = R2Score()(self.true, self.predicted)
-        assert r2 == -1.0
+        assert r2 == {"a": -1.0}
 
 
 if __name__ == "__main__":

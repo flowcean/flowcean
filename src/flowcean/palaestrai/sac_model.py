@@ -34,7 +34,7 @@ class SACModel(Model):
         self.data_for_brain = {}
 
     @override
-    def predict(self, input_features: Observation) -> Action:
+    def _predict(self, input_features: Observation) -> Action:
         actuators_available = convert_to_actuator_information(self.action)
         sensors = convert_to_sensor_information(
             filter_observation(input_features, self.sensor_ids),

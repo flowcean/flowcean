@@ -10,6 +10,7 @@ from .environments.join import JoinedOfflineEnvironment
 from .environments.streaming import StreamingOfflineEnvironment
 from .environments.train_test_split import TrainTestSplit
 from .is_time_series import is_timeseries_feature
+from .metric import LazyMixin, SelectMixin
 from .transforms.cast import Cast
 from .transforms.discrete_derivative import DiscreteDerivative
 from .transforms.drop import Drop
@@ -71,6 +72,7 @@ __all__ = [
     "JoinedOfflineEnvironment",
     "Lambda",
     "Last",
+    "LazyMixin",
     "MatchSamplingRate",
     "Mean",
     "Median",
@@ -87,6 +89,7 @@ __all__ = [
     "Resample",
     "ScaleToRange",
     "Select",
+    "SelectMixin",
     "SignalFilter",
     "SignalFilterType",
     "SlidingWindow",

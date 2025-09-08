@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol
 
-Action = TypeVar("Action")
+if TYPE_CHECKING:
+    from flowcean.core.data import Data
 
 
-class Actable(Generic[Action], ABC):
+class Actable(Protocol):
     """Base class for active environments.
 
     Active environments require actions to be taken to advance.
     """
 
     @abstractmethod
-    def act(self, action: Action) -> None:
+    def act(self, action: Data) -> None:
         """Act on the environment.
 
         Args:

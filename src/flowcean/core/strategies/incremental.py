@@ -1,7 +1,7 @@
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.core.learner import SupervisedIncrementalLearner
-from flowcean.core.model import Model, ModelWithTransform
-from flowcean.core.transform import FitIncremetally, Transform
+from flowcean.core.model import Model
+from flowcean.core.transform import Identity, InvertibleTransform, Transform
 
 
 def learn_incremental(
@@ -10,7 +10,7 @@ def learn_incremental(
     inputs: list[str],
     outputs: list[str],
     input_transform: Transform | None = None,
-    output_transform: Transform | None = None,
+    output_transform: InvertibleTransform | None = None,
 ) -> Model:
     """Learn from a incremental environment.
 
@@ -30,22 +30,21 @@ def learn_incremental(
     Returns:
         The model learned from the environment.
     """
+    if input_transform is None:
+        input_transform = Identity()
+    if output_transform is None:
+        output_transform = Identity()
+
     model = None
     for data in environment:
         input_features = data.select(inputs)
         output_features = data.select(outputs)
 
-        if isinstance(input_transform, FitIncremetally):
-            input_transform.fit_incremental(input_features)
+        input_transform.fit_incremental(input_features)
+        input_features = input_transform.apply(input_features)
 
-        if input_transform is not None:
-            input_features = input_transform.apply(input_features)
-
-        if isinstance(output_transform, FitIncremetally):
-            output_transform.fit_incremental(output_features)
-
-        if output_transform is not None:
-            output_features = output_transform.apply(output_features)
+        output_transform.fit_incremental(output_features)
+        output_features = output_transform.apply(output_features)
 
         model = learner.learn_incremental(
             input_features,
@@ -56,14 +55,6 @@ def learn_incremental(
         message = "No data found in environment."
         raise ValueError(message)
 
-    if input_transform is None and output_transform is None:
-        return model
+    model.post_transform |= output_transform.inverse()
 
-    if output_transform is not None:
-        output_transform = output_transform.inverse()
-
-    return ModelWithTransform(
-        model=model,
-        input_transform=input_transform,
-        output_transform=output_transform,
-    )
+    return model

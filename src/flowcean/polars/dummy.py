@@ -48,7 +48,7 @@ class DummyModel(Model):
         self.output_names = output_names
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         return pl.DataFrame(
             {
                 output_name: [0.0] * input_features.collect().height

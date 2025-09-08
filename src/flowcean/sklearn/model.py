@@ -46,7 +46,7 @@ class SciKitModel(Model):
         self.output_names = list(output_names)
 
     @override
-    def predict(
+    def _predict(
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
     ) -> pl.LazyFrame:

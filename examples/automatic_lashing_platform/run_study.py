@@ -313,9 +313,9 @@ def get_pressure_data(
 
 
 def get_scaled_time(pressure_data: Any, sample_rate: float) -> np.ndarray:
-    # scale x-achsis to milliseconds if sample rate is native
+    # Scale x-axis to milliseconds if sample rate is native
     if sample_rate == NATIVE_SAMPLE_RATE:
-        return np.arange(len(pressure_data)) * 10  # 10 ms per sample
+        return np.arange(len(pressure_data)) * 10  # 10 milliseconds per sample
     return np.arange(len(pressure_data))
 
 
@@ -448,7 +448,7 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
             set_plot_labels()
             plt.plot(time, pressure_data)
 
-            # table with parameter of the simulation run
+            # Table with parameter of the simulation run
             parameter_table = [
                 ["Container Weight", f"{weight:.2f} tons"],
                 ["Active Valves", f"{active_valves}"],
@@ -539,7 +539,7 @@ def train_nodes_vs_error(
             "Took %.5f s to learn model",
             time_after_learning - time_start,
         )
-        errors.append(report.entries["MeanSquaredError"])
+        errors.append(report["MeanSquaredError"])
         node_numbers.append(nodes)
 
     # calculate optimal number of nodes
@@ -618,7 +618,7 @@ def train_depth_vs_error(
             "Took %.5f s to learn model",
             time_after_learning - time_start,
         )
-        errors.append(report.entries["MeanSquaredError"])
+        errors.append(report["MeanSquaredError"])
         depth_numbers.append(depth)
 
         if learner.regressor.get_depth() < depth:
@@ -701,7 +701,7 @@ def train_time_vs_error(
             "Took %.5f s to learn model",
             time_to_learn,
         )
-        errors.append(report.entries["MeanSquaredError"])
+        errors.append(report["MeanSquaredError"])
         times.append(time_to_learn)
         depths.append(depth_count)
 

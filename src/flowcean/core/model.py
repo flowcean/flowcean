@@ -1,26 +1,33 @@
 from __future__ import annotations
 
 import pickle
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, final
+from typing import TYPE_CHECKING, BinaryIO, Protocol, final, runtime_checkable
 
-from typing_extensions import override
+from .named import Named
+from .transform import Identity, Transform
 
 if TYPE_CHECKING:
     from .data import Data
-    from .transform import Transform
 
 
-class Model(ABC):
+@runtime_checkable
+class Model(Named, Protocol):
     """Base class for models.
 
     A model is used to predict outputs for given inputs.
     """
 
+    pre_transform: Transform = Identity()
+    post_transform: Transform = Identity()
+
+    def preprocess(self, input_features: Data) -> Data:
+        """Preprocess pipeline step."""
+        return self.pre_transform.apply(input_features)
+
     @abstractmethod
-    def predict(self, input_features: Data) -> Data:
+    def _predict(self, input_features: Data) -> Data:
         """Predict outputs for the given inputs.
 
         Args:
@@ -30,7 +37,21 @@ class Model(ABC):
             The predicted outputs.
         """
 
+    def predict(self, input_features: Data) -> Data:
+        """Predict outputs for given inputs, applying transforms and hooks."""
+        input_features = self.preprocess(input_features)
+        result = self._predict(input_features)
+        return self.postprocess(result)
+
     @final
+    def __call__(self, input_features: Data) -> Data:
+        """Predict outputs for given inputs, applying transforms and hooks."""
+        return self.predict(input_features)
+
+    def postprocess(self, output: Data) -> Data:
+        """Postprocess pipeline step."""
+        return self.post_transform.apply(output)
+
     def save(self, file: Path | str | BinaryIO) -> None:
         """Save the model to the file.
 
@@ -90,29 +111,3 @@ class Model(ABC):
             instance = pickle.load(file)
 
         return instance
-
-
-@dataclass
-class ModelWithTransform(Model):
-    """Model that carries a transform.
-
-    Attributes:
-        model: Model
-        transform: Transform
-    """
-
-    model: Model
-    input_transform: Transform | None
-    output_transform: Transform | None
-
-    @override
-    def predict(self, input_features: Data) -> Data:
-        if self.input_transform is not None:
-            input_features = self.input_transform.apply(input_features)
-
-        prediction = self.model.predict(input_features)
-
-        if self.output_transform is not None:
-            return self.output_transform.apply(prediction)
-
-        return prediction

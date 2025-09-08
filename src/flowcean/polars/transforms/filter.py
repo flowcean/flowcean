@@ -1,7 +1,8 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Iterable
 from functools import reduce
+from typing import Protocol, runtime_checkable
 
 import polars as pl
 import sympy
@@ -12,7 +13,8 @@ from flowcean.core import Transform
 logger = logging.getLogger(__name__)
 
 
-class FilterExpr(ABC):
+@runtime_checkable
+class FilterExpr(Protocol):
     """Expression to be used in a Filter transform."""
 
     @abstractmethod
