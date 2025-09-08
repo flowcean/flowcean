@@ -152,7 +152,7 @@ class ScaleToRange(Transform, FitOnce):
         return transform
 
 
-def _as_float(value: PythonLiteral | None) -> float:
+def _as_float(value: PythonLiteral | pl.Series | None) -> float:
     if isinstance(value, pl.Series):
         value = value.item()
     if value is None:

@@ -12,8 +12,8 @@ check-pre-commit:
   @uv run pre-commit run --all-files
 
 check-types:
-  @echo "🚀 Static type checking: Running pyright"
-  @uv run --all-packages --all-extras pyright
+  @echo "🚀 Static type checking: Running basedpyright"
+  @uv run --all-packages --all-extras basedpyright
 
 check-deptry:
   @echo "🚀 Checking for obsolete dependencies: Running deptry"
