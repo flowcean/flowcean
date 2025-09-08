@@ -26,9 +26,7 @@ def main() -> None:
 
     data = ChainedOfflineEnvironments(
         [
-            DataFrame.from_uri("file:" + path.as_posix()).with_transform(
-                ToTimeSeries("t"),
-            )
+            DataFrame.from_uri("file:" + path.as_posix()) | ToTimeSeries("t")
             for path in tqdm(
                 list(Path("./data").glob("*.csv")),
                 desc="Loading environments",
