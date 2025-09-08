@@ -72,7 +72,7 @@ class MyModel(Model):
         self.observation = observation
 
     @override
-    def predict(self, input_features: Observation) -> Action:
+    def _predict(self, input_features: Observation) -> Action:
         _ = input_features
 
         actuators = []

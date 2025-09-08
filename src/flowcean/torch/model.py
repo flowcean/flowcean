@@ -39,7 +39,7 @@ class PyTorchModel(Model):
         self.num_workers = num_workers
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         dataloader = DataLoader(
             TorchDataset(input_features.collect()),
             batch_size=self.batch_size,

@@ -41,11 +41,14 @@ class RandomForestRegressorLearner(SupervisedLearner):
     @override
     def learn(
         self,
-        inputs: pl.DataFrame,
-        outputs: pl.DataFrame,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
     ) -> Model:
         """Fit the random forest regressor on the given inputs and outputs."""
-        self.regressor.fit(inputs, outputs)
+        dfs = pl.collect_all([inputs, outputs])
+        collected_inputs = dfs[0]
+        collected_outputs = dfs[1]
+        self.regressor.fit(collected_inputs, collected_outputs)
         logger.info("Using Random Forest Regressor")
         return SciKitModel(
             self.regressor,

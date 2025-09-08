@@ -26,7 +26,7 @@ class XGBoostClassifierModel(Model):
         self.output_features = output_features
 
     @override
-    def predict(
+    def _predict(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
@@ -61,7 +61,7 @@ class XGBoostRegressorModel(Model):
         self.output_features = output_features
 
     @override
-    def predict(
+    def _predict(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:

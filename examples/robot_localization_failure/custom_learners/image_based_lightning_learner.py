@@ -130,7 +130,7 @@ class ImageBasedPyTorchModel(Model):
         self.binary_classification_threshold = binary_classification_threshold
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         dataset = FeatureImagesData(
             input_features.collect(),
             image_size=self.image_size,

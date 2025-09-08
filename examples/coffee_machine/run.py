@@ -7,7 +7,6 @@ from tqdm import tqdm
 import flowcean.cli
 from flowcean.core import (
     ChainedOfflineEnvironments,
-    ModelWithTransform,
     evaluate_offline,
     learn_offline,
 )
@@ -54,10 +53,8 @@ def main() -> None:
         outputs,
     )
 
-    model = ModelWithTransform(
-        model,
-        None,
-        Explode(["output"]) | Unnest(["output"]) | Select(["value"]),
+    model.post_transform |= (
+        Explode(["output"]) | Unnest(["output"]) | Select(["value"])
     )
 
     report = evaluate_offline(

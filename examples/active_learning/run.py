@@ -72,7 +72,7 @@ class MyModel(Model):
         self.best_action = best_action
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         return pl.DataFrame(
             {
                 "action": [

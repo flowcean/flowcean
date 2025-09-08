@@ -15,7 +15,7 @@ class RiverModel(Model):
         self.output_column = output_column
 
     @override
-    def predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         df = (
             input_features.collect()
             if isinstance(input_features, pl.LazyFrame)

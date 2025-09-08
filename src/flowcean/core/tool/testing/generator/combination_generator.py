@@ -4,7 +4,7 @@ import itertools
 import polars as pl
 
 from flowcean.core.data import Data
-from flowcean.core.environment.stepable import Finished
+from flowcean.core.environment.incremental import Finished
 from flowcean.core.tool.testing.domain import Discrete
 
 from .generator import TestcaseGenerator
