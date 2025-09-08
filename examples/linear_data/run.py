@@ -3,6 +3,7 @@
 import logging
 
 import polars as pl
+import torch
 
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_incremental
@@ -30,18 +31,23 @@ def main() -> None:
             },
         ),
     )
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
+    train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
+
+    print(data.data.collect())
 
     learner = LinearRegression(
-        input_size=1,
-        output_size=1,
-        learning_rate=0.01,
+        1,
+        1,
+        learning_rate=0.1,
+        a=torch.tensor([[-2.0]]),
+        b=torch.tensor([0.0]),
     )
+
     inputs = ["x"]
     outputs = ["y"]
 
     model = learn_incremental(
-        StreamingOfflineEnvironment(train, batch_size=1),
+        StreamingOfflineEnvironment(train, batch_size=2),
         learner,
         inputs,
         outputs,

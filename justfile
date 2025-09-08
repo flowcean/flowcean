@@ -37,7 +37,7 @@ docs-serve:
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs serve
 
-examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
+examples: examples-alp examples-boiler examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
@@ -51,17 +51,14 @@ examples-coffee_machine:
   @echo "🚀 Running example: Coffee Machine"
   @uv run --directory ./examples/coffee_machine/ run.py
 
-examples-failure_time_prediction:
-  @echo "🚀 Running example: Failure Time Prediction"
-  @uv run --directory ./examples/failure_time_prediction/ run.py
-
 examples-linear_data:
   @echo "🚀 Running example: Linear Data"
   @uv run --directory ./examples/linear_data/ run.py
 
 examples-one_tank:
   @echo "🚀 Running example: One Tank"
-  @uv run --directory ./examples/one_tank/ run.py
+  @uv run --directory ./examples/one_tank/ run_offline.py
+  @uv run --directory ./examples/one_tank/ run_incremental.py
 
 examples-robot_localization_failure:
   @echo "🚀 Running example: Robot Localization Failure"
@@ -73,8 +70,7 @@ examples-energy_system:
 
 examples-xor:
   @echo "🚀 Running example: XOR"
-  @uv run --directory ./examples/xor/ learn.py
-  @uv run --directory ./examples/xor/ predict.py
+  @uv run --directory ./examples/xor/ run.py
 
 generate-proto:
   @echo "🚀 Generating Python and Java definitions from gRPC proto files"
