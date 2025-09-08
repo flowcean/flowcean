@@ -104,6 +104,3 @@ def surprise() -> None:
         time.sleep(0.1)
 
     print("\n🎯 Great job! Keep learning & experimenting! 🚀")
-
-
-surprise()
