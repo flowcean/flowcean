@@ -13,9 +13,9 @@ from flowcean.core.strategies.active import (
     interface_from_dict,
 )
 from flowcean.palaestrai.util import (
-    convert_to_actuator_informations,
+    convert_to_actuator_information,
     convert_to_interface,
-    convert_to_sensor_informations,
+    convert_to_sensor_information,
     filter_observation,
 )
 
@@ -42,8 +42,8 @@ class SACModel(Model):
 
     @override
     def predict(self, input_features: Observation) -> Action:
-        actuators_available = convert_to_actuator_informations(self.action)
-        sensors = convert_to_sensor_informations(
+        actuators_available = convert_to_actuator_information(self.action)
+        sensors = convert_to_sensor_information(
             filter_observation(input_features, self.sensor_ids),
         )
 

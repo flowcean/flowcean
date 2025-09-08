@@ -32,7 +32,7 @@ This in-situ testing demonstrates the model's applicability and capabilities.
 
 With an increasing number of volatile participants, like photovoltaic, wind energy, or electric vehicles, operating the power grid becomes more and more challenging.
 Keeping the voltage level within the allowed limits requires manual effort by operators, which mostly decide based on experience, what actions to take.
-Those include changing the position of switches, increasing or descreasing the amount of generation or load from a few controllable units or using the tap changer.
+Those include changing the position of switches, increasing or decreasing the amount of generation or load from a few controllable units or using the tap changer.
 In the worst case, some units or parts of the grid have to be disconnected but, generally, this is a situation that is to be avoided.
 
 Monitoring the state of the power grid with AI can help the operator to keep an overview what is going on in the power grid.
