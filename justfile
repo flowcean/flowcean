@@ -37,7 +37,7 @@ docs-serve:
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs serve
 
-examples: examples-alp examples-boiler examples-coffee_machine examples-failure_time_prediction examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
+examples: examples-alp examples-boiler examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
