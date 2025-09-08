@@ -61,7 +61,8 @@ examples-linear_data:
 
 examples-one_tank:
   @echo "🚀 Running example: One Tank"
-  @uv run --directory ./examples/one_tank/ run.py
+  @uv run --directory ./examples/one_tank/ run_offline.py
+  @uv run --directory ./examples/one_tank/ run_incremental.py
 
 examples-robot_localization_failure:
   @echo "🚀 Running example: Robot Localization Failure"
