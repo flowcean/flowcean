@@ -22,6 +22,7 @@ from flowcean.ros import load_rosbag
 from flowcean.sklearn import (
     Accuracy,
     ClassificationReport,
+    ConfusionMatrix,
     FBetaScore,
     PrecisionScore,
     Recall,
@@ -256,6 +257,7 @@ def evaluate(model: ImageBasedPyTorchModel, test_data: pl.DataFrame) -> Report:
         FBetaScore(beta=1.0),
         PrecisionScore(),
         Recall(),
+        ConfusionMatrix(normalize=True),
     ]
     logger.info("Evaluating model on test data")
     return evaluate_offline(
