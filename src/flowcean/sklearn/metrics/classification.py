@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from sklearn import metrics
 from typing_extensions import override
@@ -126,3 +126,36 @@ class Recall(SelectMixin, LazyMixin, Metric):
     @override
     def _compute(self, true: Data, predicted: Data) -> Any:
         return metrics.recall_score(true, predicted)
+
+
+class ConfusionMatrix(SelectMixin, LazyMixin, Metric):
+    """Compute confusion matrix to evaluate the accuracy of a classification.
+
+    As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html).
+    """
+
+    normalize: Literal["true", "pred", "all"] | None
+
+    def __init__(
+        self,
+        features: list[str] | None = None,
+        *,
+        normalize: Literal["true", "pred", "all"] | None = None,
+    ) -> None:
+        """Initialize the metric.
+
+        Args:
+            features: The features to calculate the metric for. If None, the
+                metric uses all features in the data.
+            normalize: Whether to normalize the confusion matrix.
+        """
+        super().__init__(features=features)
+        self.normalize = normalize
+
+    @override
+    def _compute(self, true: Data, predicted: Data) -> Any:
+        return metrics.confusion_matrix(
+            true,
+            predicted,
+            normalize=self.normalize,
+        )
