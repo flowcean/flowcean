@@ -10,7 +10,11 @@ from typing_extensions import override
 
 from flowcean.core.learner import ActiveLearner
 from flowcean.core.model import Model
-from flowcean.core.strategies.active import Action, Interface, Observation
+from flowcean.core.strategies.active import (
+    Action,
+    ActiveInterface,
+    Observation,
+)
 from flowcean.palaestrai.sac_model import SACModel
 from flowcean.palaestrai.util import (
     convert_to_actuator_informations,
@@ -30,7 +34,7 @@ class SACLearner(ActiveLearner):
     brain: SACBrain
     agent_objective: Objective
     objectives: list[float]
-    rewards: list[list[Interface]]
+    rewards: list[list[ActiveInterface]]
     actuator_ids: list[str]
     sensor_ids: list[str]
     action: Action

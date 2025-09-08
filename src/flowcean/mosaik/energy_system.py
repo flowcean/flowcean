@@ -17,10 +17,10 @@ from numpy.random import RandomState
 from numpy.typing import NDArray
 from typing_extensions import override
 
-from flowcean.core.environment.active import ActiveEnvironment
-from flowcean.core.strategies.active import (
+from flowcean.core import (
     Action,
-    Interface,
+    ActiveEnvironment,
+    ActiveInterface,
     Observation,
     StopLearning,
 )
@@ -76,10 +76,10 @@ class EnergySystemActive(ActiveEnvironment):
             no_run=True,
         )
 
-        self.sensors: dict[str, Interface] = create_interface(
+        self.sensors: dict[str, ActiveInterface] = create_interface(
             self.scenario.sensors,
         )
-        self.actuators: dict[str, Interface] = create_interface(
+        self.actuators: dict[str, ActiveInterface] = create_interface(
             self.scenario.actuators,
         )
 
@@ -173,7 +173,7 @@ class EnergySystemActive(ActiveEnvironment):
 
 def create_interface(
     defs: list[dict[str, int | float | str | None]],
-) -> dict[str, Interface]:
+) -> dict[str, ActiveInterface]:
     object_map = {}
 
     for interf in defs:
@@ -184,7 +184,7 @@ def create_interface(
             value = None
         vmin, vmax, shape, dtype = read_min_and_max_from_space(space)
 
-        object_map[uid] = Interface(
+        object_map[uid] = ActiveInterface(
             value=value,
             uid=uid,
             shape=shape,
@@ -314,10 +314,10 @@ def start_mosaik(
     sim_finished.set()
 
 
-def default_reward(sensors: list[Interface]) -> list[Interface]:
+def default_reward(sensors: list[ActiveInterface]) -> list[ActiveInterface]:
     _ = sensors
     return [
-        Interface(
+        ActiveInterface(
             value=0,
             uid="default",
             shape=(),
