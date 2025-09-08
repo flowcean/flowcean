@@ -24,10 +24,12 @@ test:
   @uv run python -m pytest tests --cov --cov-config=pyproject.toml
 
 docs:
-  @echo "🚀 Building documentation: Running mkdocs"
-  @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml
+  @echo "🚀 Building documentation..."
+  @echo "   - Running javadoc"
+  @mvn javadoc:javadoc -q -f java/AutomataLearner/pom.xml
   @rm -rf docs/examples/java-automata/
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
+  @echo "   - Running mkdocs"
   @uv run mkdocs build --strict
 
 docs-serve:
