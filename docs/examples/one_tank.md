@@ -157,7 +157,7 @@ data = data.with_transform(SlidingWindow(window_size=3))
 ```
 
 Now that the data is in the correct format, it can be split into a test set with 80% of the samples and a training set with the remaining 20%.
-This is done by using a [`TrainTestSplit`](../reference/flowcean/polars/index.md#flowcean.polars.train_test_split) operation and helps with evaluating the learned models performance after training.
+This is done by using a [`TrainTestSplit`](../reference/flowcean/polars/index.md#flowcean.polars.TrainTestSplit) operation and helps with evaluating the learned models performance after training.
 To make the learning less biased, the samples are shuffled before splitting.
 
 ```python
