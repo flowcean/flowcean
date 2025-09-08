@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from flowcean.core.environment.observable import TransformedObservable
@@ -43,27 +42,3 @@ class OfflineEnvironment(TransformedObservable):
     def __add__(self, other: OfflineEnvironment) -> ChainedOfflineEnvironments:
         """Shorthand for `chain`."""
         return self.chain(other)
-
-    @abstractmethod
-    def hash(self) -> bytes:
-        """Return the hash of the offline environment.
-
-        The hash of the offline environment is used to uniquely identify the
-        data of an environment, mainly for caching purposes. The following
-        properties should be considered when computing the hash:
-
-        - If two environments are equal (e.g. are the same object),
-          they must have the same hash.
-        - If two environments of the same type have the same hash, their data
-          must be equal.
-        - If two environments have different data, their hashes must be
-          different.
-
-        These properties leave one special case open: If two environments share
-        the same data, the hash may be different even if the data is not.
-        The hash is just a way of quickly checking if there is a chance that
-        the data is different between two environments.
-
-        Returns:
-            The hash of the offline environment.
-        """

@@ -1300,7 +1300,6 @@ name = "flowcean"
 version = "0.4.0"
 source = { editable = "." }
 dependencies = [
-    { name = "cloudpickle" },
     { name = "docker" },
     { name = "grpcio" },
     { name = "joblib" },
@@ -1365,7 +1364,6 @@ examples = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cloudpickle", specifier = ">=3.1.1" },
     { name = "docker", specifier = ">=7.1.0" },
     { name = "grpcio", specifier = ">=1.67.0" },
     { name = "joblib", specifier = ">=1.4.2" },
