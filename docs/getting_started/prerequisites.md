@@ -123,7 +123,7 @@ While `uv` manages the necessary Python interpreters for you, you might want to 
 
     5. You may need to restart your computer.
 
-=== "Windows (WSL)
+=== "Windows (WSL)"
 
     1. Open a powershell in administrator mode and run the command
 
