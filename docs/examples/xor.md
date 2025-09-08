@@ -1,12 +1,12 @@
 # XOR Function
 
-In this example, we demonstrate how to learn the XOR function using a regression tree model.
+In this example, we demonstrate how to learn the XOR (exclusive OR) function using a regression tree model.
 The resulting model is then used to predict the output of the XOR function for given binary inputs and is checked by automatic generated test cases.
 
 ## The XOR Function
 
-The XOR (exclusive OR) function is a fundamental binary operation that outputs true only when the inputs differ.
-Its truth table is
+The XOR function is a fundamental binary operation that outputs true only when the inputs differ and false otherwise.
+Its truth table is given by
 
 | Input A | Input B | Output (A XOR B) |
 |---------|---------|------------------|
