@@ -1,4 +1,5 @@
-from flowcean.core.adapter import Adapter, Stop
+from flowcean.core.adapter import Adapter
+from flowcean.core.environment.incremental import Finished
 from flowcean.core.model import Model
 from flowcean.core.transform import Identity, Transform
 
@@ -32,7 +33,7 @@ def start_prediction_loop(
             )
             # Send the prediction to the adapter
             adapter.send_data(transformed_prediction)
-    except Stop:
+    except Finished:
         pass
     except KeyboardInterrupt:
         pass

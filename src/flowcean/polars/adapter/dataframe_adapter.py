@@ -3,7 +3,7 @@ from typing import cast
 
 import polars as pl
 
-from flowcean.core import Adapter, Stop
+from flowcean.core import Adapter, Finished
 from flowcean.polars.environments.dataframe import DataFrame
 
 
@@ -43,7 +43,7 @@ class DataFrameAdapter(Adapter):
     def get_data(self) -> pl.LazyFrame:
         self.count += 1
         if self.count > self.df_len:
-            raise Stop
+            raise Finished
         return self.df.slice(self.count - 1, 1)
 
     def send_data(self, data: pl.LazyFrame) -> None:

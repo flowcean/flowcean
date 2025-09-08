@@ -1,4 +1,4 @@
-from .adapter import Adapter, Stop
+from .adapter import Adapter
 from .data import Data
 from .environment.actable import Actable
 from .environment.active import ActiveEnvironment
@@ -56,7 +56,6 @@ __all__ = [
     "Report",
     "Reportable",
     "Stepable",
-    "Stop",
     "StopLearning",
     "SupervisedIncrementalLearner",
     "SupervisedLearner",
