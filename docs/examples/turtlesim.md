@@ -1,6 +1,9 @@
 # Turtlesim Example
 
-This example trains models to predict the next pose of the turtle based on the current pose and velocity commands.
+The package [turtlesim](http://wiki.ros.org/turtlesim) is a tool made for teaching the Robot Operating System (ROS). This example trains models to predict the next pose of the turtle $\textbf{x}_{k+1}$ based on the current pose $\textbf{x}_{k}$ and velocity commands $\textbf{u}_{k}$.
+
+![Motion model for turtlesim](./images/turtlesim_model.svg)
+
 It uses ROS bag data recorded from turtlesim, processes it into supervised samples, learns multiple models, evaluates them with several metrics, and plots predictions versus ground truth.
 
 ![Turtlesim simulation](./images/turtlesim.png)
@@ -28,7 +31,18 @@ The pipeline:
 - Explode the time series into per-sample rows.
 - Shift pose one step into the future to form supervised labels.
 
-Key transform for shifting labels:
+The following table shows how the values of the current pose vector $\textbf{x}_{k}$ are shifted to form the next pose vector $\textbf{x}_{k+1}$.
+
+| $ \textbf{x}_{k} $ | $ \textbf{u}_{k} $     | $ \textbf{x}_{k+1} $   |
+|----------------------|----------------------|----------------------  |
+| [0, 0, 0]            | [1, 0]               | <span style="color:red">[5, 0, 0]</span>            |
+| <span style="color:red">[5, 0, 0]</span>          | [0, 1]               | <span style="color:green">[5, 0, 2]</span>          |
+| <span style="color:green">[5, 0, 2]</span>       | [5, 0]               | [7, 4, 2]            |
+| ...                    | ...                | ...                    |
+| [4, 2, 2]     | [0, 0]                | null                    |
+
+Note that this results in a null value for the next pose vector in the last row, which is filtered out.
+The shift is performed using this function:
 
 ```python
 def shift_in_time(df: pl.LazyFrame) -> pl.LazyFrame:
