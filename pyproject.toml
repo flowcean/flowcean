@@ -19,7 +19,6 @@ authors = [{ name = "The AGenC Team", email = "agenc.team@tuhh.de" }]
 dependencies = [
   "docker>=7.1.0",
   "grpcio>=1.67.0",
-  "joblib>=1.4.2",
   "lightning>=2.4.0",
   "numpy>=1.26.4",
   "omegaconf>=2.3.0",

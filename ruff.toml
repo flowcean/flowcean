@@ -14,17 +14,18 @@ select = ["ALL"]
 ignore = [
   "A005",    # module shadows standard library imports
   "ANN401",  # dynamically typed expressions (typing.Any) are disallowed
-  "ERA001",  # commented-out code
+  "CPY001",  # missing copyright notice
   "D10",     # missing docstrings
+  "ERA001",  # commented-out code
+  "ISC001",  # implicit string concatenation
   "N818",    # Error suffix on exceptions
   "PD",      # pandas
+  "PLC0415", # import at top of file
   "PLR0913", # too many arguments
+  "S301",    # pickle usage
   "S311",    # pseudo-random number generation
   "T201",    # allow print
-  "TD",      # TODO rules
-  "ISC001",  # implicit string concatenation
-  "CPY001",  # missing copyright notice
-  "PLC0415", # import at top of file
+  "TD",      # To-Do rules
 ]
 
 [lint.per-file-ignores]

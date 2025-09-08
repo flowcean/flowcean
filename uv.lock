@@ -1302,7 +1302,6 @@ source = { editable = "." }
 dependencies = [
     { name = "docker" },
     { name = "grpcio" },
-    { name = "joblib" },
     { name = "lightning" },
     { name = "numpy" },
     { name = "omegaconf" },
@@ -1366,7 +1365,6 @@ examples = [
 requires-dist = [
     { name = "docker", specifier = ">=7.1.0" },
     { name = "grpcio", specifier = ">=1.67.0" },
-    { name = "joblib", specifier = ">=1.4.2" },
     { name = "lightning", specifier = ">=2.4.0" },
     { name = "midas-mosaik", extras = ["base"], marker = "extra == 'palaestrai'", specifier = ">=2.0.2" },
     { name = "midas-store", marker = "extra == 'palaestrai'", specifier = ">=2.1.0a1" },

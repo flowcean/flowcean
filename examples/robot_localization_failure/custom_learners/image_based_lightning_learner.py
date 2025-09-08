@@ -4,8 +4,6 @@ import logging
 import os
 import platform
 from collections.abc import Callable
-from io import BytesIO
-from typing import Any
 
 import lightning
 import polars as pl
@@ -155,45 +153,3 @@ class ImageBasedPyTorchModel(Model):
                 predictions.append(preds)
         predictions = torch.cat(predictions, dim=0).numpy()
         return pl.DataFrame(predictions, schema=self.output_names).lazy()
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        """Save the model state to a dictionary.
-
-        Returns:
-            A dictionary containing the model state.
-        """
-        model_bytes = BytesIO()
-        torch.save(self.module.state_dict(), model_bytes)
-        model_bytes.seek(0)
-        return {
-            "data": model_bytes.read(),
-            "output_names": self.output_names,
-            "image_size": self.image_size,
-            "width_meters": self.width_meters,
-            "batch_size": self.batch_size,
-            "num_workers": self.num_workers,
-        }
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> ImageBasedPyTorchModel:
-        # Lazy import to avoid circular dependencies
-        from architectures.cnn import CNN
-
-        module = CNN(
-            image_size=state["image_size"],
-            in_channels=3,
-            learning_rate=0.0001,  # Default value, adjust if needed
-        )
-        module.load_state_dict(
-            torch.load(BytesIO(state["data"]), weights_only=True),
-        )
-        return cls(
-            module,
-            image_size=state["image_size"],
-            width_meters=state["width_meters"],
-            output_names=state["output_names"],
-            batch_size=state["batch_size"],
-            num_workers=state["num_workers"],
-        )
