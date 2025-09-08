@@ -15,6 +15,7 @@ from .transforms.cast import Cast
 from .transforms.discrete_derivative import DiscreteDerivative
 from .transforms.drop import Drop
 from .transforms.explode import Explode
+from .transforms.explode_time_series import ExplodeTimeSeries
 from .transforms.filter import And, CollectionExpr, Filter, FilterExpr, Not, Or
 from .transforms.first import First
 from .transforms.flatten import (
@@ -62,6 +63,7 @@ __all__ = [
     "DummyLearner",
     "DummyModel",
     "Explode",
+    "ExplodeTimeSeries",
     "FeatureLengthVaryError",
     "FeatureNotFoundError",
     "Filter",
