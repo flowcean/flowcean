@@ -55,7 +55,6 @@ We therefore skip validating the model with a test set and metrics.
 
 ## Using the Model for Prediction
 
-
 The learned -- and saved -- model can now be used to predict the output of the XOR function for given binary inputs.
 Flowcean offers a simple way to connect a model with a cyber-physical system (CPS) in the loop through so-called `Adapters`.
 `Adapters` are components that establish a connection between the model and the CPS.
@@ -79,13 +78,11 @@ start_prediction_loop(
 )
 ```
 
-
 The `prediction_loop` runs until the adapter signals that there is no more data to process -- in this case, when all samples from the environment have been read.
 
 After running the prediction loop and examining the `result.csv` file, we can see that the model correctly predicts the output of the XOR function for all input combinations.
 
 ## Testing the Model
-
 
 Besides using the model for prediction, we can also automatically generate test cases to verify that the model -- and therefore the CPS -- behaves as expected.
 Testing a model with flowcean is a two-step process.
@@ -119,7 +116,6 @@ test_model(
     stop_after=0,
 )
 ```
-
 
 First, a `CombinationGenerator` is used to create all possible combinations of the binary input features `x` and `y`.
 Then, the generated test cases are saved to an Excel file for documentation purposes, and the generator is reset to start generating test cases from the beginning.
