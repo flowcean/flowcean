@@ -13,7 +13,13 @@ from .learner import (
 from .metric import OfflineMetric
 from .model import Model, ModelWithTransform
 from .report import Report
-from .strategies.active import StopLearning, learn_active
+from .strategies.active import (
+    Action,
+    ActiveInterface,
+    Observation,
+    StopLearning,
+    learn_active,
+)
 from .strategies.deploy import deploy
 from .strategies.incremental import learn_incremental
 from .strategies.offline import evaluate_offline, learn_offline
@@ -27,7 +33,9 @@ from .transform import (
 
 __all__ = [
     "Actable",
+    "Action",
     "ActiveEnvironment",
+    "ActiveInterface",
     "ActiveLearner",
     "ChainedOfflineEnvironments",
     "ChainedTransforms",
@@ -39,6 +47,7 @@ __all__ = [
     "Model",
     "ModelWithTransform",
     "Observable",
+    "Observation",
     "OfflineEnvironment",
     "OfflineMetric",
     "Report",

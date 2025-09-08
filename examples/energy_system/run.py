@@ -8,13 +8,15 @@ import numpy as np
 from typing_extensions import Self, override
 
 import flowcean.cli
-from flowcean.core import ActiveLearner, Model
-from flowcean.core.strategies.active import Interface, learn_active
-from flowcean.mosaik.energy_system import (
+from flowcean.core import (
     Action,
-    EnergySystemActive,
+    ActiveInterface,
+    ActiveLearner,
+    Model,
     Observation,
+    learn_active,
 )
+from flowcean.mosaik import EnergySystemActive
 
 logger = logging.getLogger("energy_example")
 
@@ -112,7 +114,7 @@ class MyModel(Model):
 
 class MyLearner(ActiveLearner):
     model: MyModel
-    rewards: list[Interface]
+    rewards: list[ActiveInterface]
     actuator_ids: list[str]
     sensor_ids: list[str]
     action: Action
@@ -171,7 +173,7 @@ def filter_observation(
 def calculate_reward(sensors: list) -> list:
     voltages = sorted([s.value for s in sensors if "vm_pu" in s.uid])
     voltage_rewards = [
-        Interface(
+        ActiveInterface(
             value=voltages[0],
             uid="vm_pu-min",
             shape=(),
@@ -179,7 +181,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=1.5,
         ),
-        Interface(
+        ActiveInterface(
             value=voltages[-1],
             uid="vm_pu-max",
             shape=(),
@@ -187,7 +189,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=1.5,
         ),
-        Interface(
+        ActiveInterface(
             value=median(voltages),
             uid="vm_pu-median",
             shape=(),
@@ -195,7 +197,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=1.5,
         ),
-        Interface(
+        ActiveInterface(
             value=mean(voltages),
             uid="vm_pu-mean",
             shape=(),
@@ -203,7 +205,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=1.5,
         ),
-        Interface(
+        ActiveInterface(
             value=stdev(voltages),
             uid="vm_pu-std",
             shape=(),
@@ -218,7 +220,7 @@ def calculate_reward(sensors: list) -> list:
     )
 
     lineload_rewards = [
-        Interface(
+        ActiveInterface(
             value=lineloads[0],
             uid="lineload-min",
             shape=(),
@@ -226,7 +228,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=200.0,
         ),
-        Interface(
+        ActiveInterface(
             value=lineloads[-1],
             uid="lineload-max",
             shape=(),
@@ -234,7 +236,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=200.0,
         ),
-        Interface(
+        ActiveInterface(
             value=median(lineloads),
             uid="lineload-median",
             shape=(),
@@ -242,7 +244,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=200.0,
         ),
-        Interface(
+        ActiveInterface(
             value=mean(lineloads),
             uid="lineload-mean",
             shape=(),
@@ -250,7 +252,7 @@ def calculate_reward(sensors: list) -> list:
             value_min=0.0,
             value_max=200.0,
         ),
-        Interface(
+        ActiveInterface(
             value=stdev(lineloads),
             uid="lineload-std",
             shape=(),
