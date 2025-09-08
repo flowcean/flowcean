@@ -12,13 +12,12 @@ from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.slice_time_series import SliceTimeSeries
-from custom_transforms.zero_order_hold_matching import ZeroOrderHold
 from omegaconf import DictConfig, ListConfig
 
 from flowcean.core import Report, Transform
 from flowcean.core.strategies import evaluate_offline
 from flowcean.core.transform import Lambda
-from flowcean.polars import DataFrame
+from flowcean.polars import DataFrame, ZeroOrderHold
 from flowcean.polars.transforms.drop import Drop
 from flowcean.ros import load_rosbag
 from flowcean.sklearn.metrics.classification import (
