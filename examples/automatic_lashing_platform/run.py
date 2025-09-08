@@ -18,11 +18,9 @@ from flowcean.sklearn.metrics.regression import (
     MeanAbsoluteError,
     MeanSquaredError,
 )
-from flowcean.xgboost.learner import (
-    XGBoostRegressorLearner,
-)
+from flowcean.xgboost.learner import XGBoostRegressorLearner
 
-logger = logging.getLogger("main")
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
