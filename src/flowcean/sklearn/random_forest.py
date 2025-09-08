@@ -47,4 +47,7 @@ class RandomForestRegressorLearner(SupervisedLearner):
         """Fit the random forest regressor on the given inputs and outputs."""
         self.regressor.fit(inputs, outputs)
         logger.info("Using Random Forest Regressor")
-        return SciKitModel(self.regressor, outputs.columns[0])
+        return SciKitModel(
+            self.regressor,
+            output_names=outputs.columns,
+        )
