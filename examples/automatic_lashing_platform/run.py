@@ -771,11 +771,7 @@ def train_and_evaluate_model(
 
     if args.use_lightning_learner:
         learner = LightningLearner(
-            MultilayerPerceptron(
-                learning_rate=args.lightning_learning_rate,
-                input_size=len(inputs),
-                output_size=len(outputs),
-            ),
+            MultilayerPerceptron(learning_rate=args.lightning_learning_rate),
         )
     else:
         tree_params = {
