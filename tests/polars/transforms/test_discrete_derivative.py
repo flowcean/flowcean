@@ -4,7 +4,7 @@ from typing import ClassVar
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars.transforms import DiscreteDerivative
+from flowcean.polars import DiscreteDerivative
 
 
 class DiscreteDerivativeTransform(unittest.TestCase):

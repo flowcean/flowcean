@@ -3,7 +3,7 @@ import unittest
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.polars.transforms import Pad
+from flowcean.polars import Pad
 
 
 class PadTransform(unittest.TestCase):

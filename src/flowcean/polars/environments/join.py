@@ -3,7 +3,7 @@ from collections.abc import Iterable
 import polars as pl
 from typing_extensions import override
 
-from flowcean.core.environment.offline import OfflineEnvironment
+from flowcean.core import OfflineEnvironment
 
 
 class JoinedOfflineEnvironment(OfflineEnvironment):
