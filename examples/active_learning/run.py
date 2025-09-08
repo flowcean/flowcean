@@ -34,6 +34,7 @@ class MyEnvironment(ActiveEnvironment):
         max_value: float,
         max_num_iterations: int,
     ) -> None:
+        super().__init__()
         self.state = initial_state
         self.max_value = max_value
         self.last_action = None
@@ -62,7 +63,7 @@ class MyEnvironment(ActiveEnvironment):
     def _calculate_reward(self) -> float:
         if self.last_action is None:
             return nan
-        return self.max_value - abs(self.state - self.last_action["sensor"][0])
+        return self.max_value - abs(self.state - self.last_action["action"][0])
 
 
 class MyModel(Model):
@@ -104,19 +105,25 @@ class MyLearner(ActiveLearner):
     @override
     def learn_active(
         self,
-        action: pl.DataFrame,
-        observation: pl.DataFrame,
+        action: pl.LazyFrame,
+        observation: pl.LazyFrame,
     ) -> Model:
         _ = action
         self.model = MyModel(best_action=random.random())
-        self.rewards.append(observation["reward"][0])
+        self.rewards.append(
+            observation.select("reward").first().collect().item(),
+        )
         return self.model
 
     @override
-    def propose_action(self, observation: pl.DataFrame) -> pl.DataFrame:
-        sensor = observation["sensor"]
-        action = self.model.predict(pl.DataFrame({"sensor": sensor}).lazy())
-        return action.collect()["action"][0]
+    def propose_action(self, observation: pl.LazyFrame) -> pl.DataFrame:
+        sensor = observation.select("sensor").first().collect().item()
+        sensor_df = pl.DataFrame({"sensor": sensor})
+        action = self.model.predict(sensor_df.lazy())
+        return pl.concat(
+            [sensor_df, action.collect()],
+            how="horizontal",
+        )
 
 
 def main() -> None:
