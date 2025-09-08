@@ -17,7 +17,7 @@ def main() -> None:
     # Learn a model for the XOR function
 
     # Load the data from a CSV file
-    data = DataFrame.from_csv("data.csv")
+    data = DataFrame.from_csv("./data/data.csv")
 
     # Create a regression tree model and train it on the data
     learner = RegressionTree()
