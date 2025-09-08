@@ -42,7 +42,7 @@ def main() -> None:
     model = Model.load(Path("xor_model.fml"))
     # Create a fake adapter from a DataFrame
     adapter = DataFrameAdapter(
-        DataFrame.from_csv("data.csv"),
+        DataFrame.from_csv("./data/data.csv"),
         input_features=["x", "y"],
         result_path="result.csv",
     )
