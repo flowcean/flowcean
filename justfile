@@ -73,9 +73,8 @@ examples-energy_system:
 
 examples-xor:
   @echo "🚀 Running example: XOR"
-  @uv run --directory ./examples/xor/ learn.py
-  @uv run --directory ./examples/xor/ predict.py
-
+  @uv run --directory ./examples/xor/ run.py
+  
 generate-proto:
   @echo "🚀 Generating Python and Java definitions from gRPC proto files"
   @uv run python -m grpc_tools.protoc --proto_path=. --python_out=. --mypy_out=. --grpc_python_out=. --mypy_grpc_out=. src/flowcean/grpc/proto/learner.proto
