@@ -133,7 +133,7 @@ class OneHot(Transform):
         # Derive categories from the data frame
         feature_categories: dict[str, list[Any]] = {}
         for feature in features:
-            if data.schema[feature].is_float():
+            if data.collect_schema()[feature].is_float():
                 logger.warning(
                     (
                         "Feature %s is of type float. Applying a one-hot",
