@@ -1,11 +1,19 @@
 from abc import abstractmethod
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class Reportable(Protocol):
     @abstractmethod
     def __str__(self) -> str:
         """Return a string representation."""
+        raise NotImplementedError
+
+    def __getitem__(self, key: str) -> Any:
+        """Return a reportable item by key."""
+        raise NotImplementedError
+
+    def items(self) -> dict[str, Any]:
+        """Return items if applicable."""
         raise NotImplementedError
 
 

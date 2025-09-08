@@ -22,6 +22,7 @@ from .transform import (
     FitIncremetally,
     FitOnce,
     Identity,
+    Lambda,
     Transform,
 )
 
@@ -36,6 +37,7 @@ __all__ = [
     "FitOnce",
     "Identity",
     "IncrementalEnvironment",
+    "Lambda",
     "Model",
     "ModelWithTransform",
     "Observable",
