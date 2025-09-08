@@ -90,25 +90,25 @@ nav:
   - Flowcean: index.md
   - Research Project: agenc/
   - Getting Started:
-    - Prerequisites: getting_started/prerequisites.md
-    - Installation: getting_started/installation.md
-    - New Project: getting_started/new_project.md
-    - Documentation: getting_started/documentation.md
-    - DVC: getting_started/dvc.md
+      - Prerequisites: getting_started/prerequisites.md
+      - Installation: getting_started/installation.md
+      - New Project: getting_started/new_project.md
+      - Documentation: getting_started/documentation.md
+      - DVC: getting_started/dvc.md
   - User Guide:
-    - Overview: user_guide/overview.md
-    - Modules: user_guide/modules.md
-    - Environment: user_guide/environment.md
-    - Transform: user_guide/transform.md
-    - Learning Strategies: user_guide/learning_strategies.md
-    - Model: user_guide/model.md
-    - Evaluation: user_guide/evaluation.md
-    - Experiment: user_guide/experiment.md
-    - Tools: user_guide/tools.md
-    - Adapter: user_guide/adapter.md
+      - Overview: user_guide/overview.md
+      - Modules: user_guide/modules.md
+      - Environment: user_guide/environment.md
+      - Transform: user_guide/transform.md
+      - Learning Strategies: user_guide/learning_strategies.md
+      - Model: user_guide/model.md
+      - Evaluation: user_guide/evaluation.md
+      - Experiment: user_guide/experiment.md
+      - Tools: user_guide/tools.md
+      - Adapter: user_guide/adapter.md
   - Examples:
-    - Coffee Machine: examples/coffee_machine.md
-    - One Tank: examples/one_tank.md
-    - One Tank Incremental: examples/one_tank_incremental.md
-    - Robot Localization Failure: examples/robot_localization_failure.md
+      - Coffee Machine: examples/coffee_machine.md
+      - One Tank: examples/one_tank.md
+      - One Tank Incremental: examples/one_tank_incremental.md
+      - Robot Localization Failure: examples/robot_localization_failure.md
   - Reference: reference/
