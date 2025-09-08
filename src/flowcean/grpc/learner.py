@@ -221,19 +221,6 @@ class GrpcPassiveAutomataLearner(SupervisedLearner, Model):
         """Close the gRPC channel."""
         self.channel.close()
 
-    @override
-    def save_state(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    @override
-    @classmethod
-    def load_from_state(
-        cls,
-        state: dict[str, Any],
-    ) -> GrpcPassiveAutomataLearner:
-        _ = state
-        raise NotImplementedError
-
 
 def _log_messages(messages: Iterable[Message]) -> None:
     for log_message in messages:

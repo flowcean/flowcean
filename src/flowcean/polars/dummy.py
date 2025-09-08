@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import polars as pl
 from typing_extensions import override
 
@@ -57,12 +55,3 @@ class DummyModel(Model):
                 for output_name in self.output_names
             },
         ).lazy()
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        return {"output_names": self.output_names}
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> DummyModel:
-        return cls(state["output_names"])

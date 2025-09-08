@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 import polars as pl
 from river.base import Regressor
@@ -24,19 +23,6 @@ class RiverModel(Model):
         )
         predictions = [self.model.predict_one(row) for row in df.to_dicts()]
         return pl.LazyFrame({self.output_column: predictions})
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        return {
-            "model": self.model,
-            "output_column": self.output_column,
-        }
-
-    @classmethod
-    @override
-    def load_from_state(cls, state: dict) -> "RiverModel":
-        data = state
-        return cls(model=data["model"], output_column=data["output_column"])
 
 
 class RiverLearner(SupervisedIncrementalLearner):

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from io import BytesIO
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import polars as pl
-import torch
 from torch.utils.data import DataLoader
 from typing_extensions import override
 
@@ -54,21 +52,3 @@ class PyTorchModel(Model):
             predictions.append(self.module(inputs).detach().numpy())
         predictions = np.concatenate(predictions, axis=0)
         return pl.DataFrame(predictions, self.output_names).lazy()
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        model_bytes = BytesIO()
-        torch.save(self.module, model_bytes)
-        model_bytes.seek(0)
-        return {
-            "data": model_bytes.read(),
-            "output_names": self.output_names,
-        }
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> PyTorchModel:
-        return cls(
-            torch.load(BytesIO(state["data"]), weights_only=False),
-            state["output_names"],
-        )

@@ -1,6 +1,6 @@
 [project]
 name = "flowcean"
-version = "0.4.0"
+version = "0.5.0"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
 requires-python = ">=3.10, <4.0"
@@ -17,14 +17,14 @@ keywords = []
 authors = [{ name = "The AGenC Team", email = "agenc.team@tuhh.de" }]
 
 dependencies = [
+  "cloudpickle>=3.1.1",
   "docker>=7.1.0",
   "grpcio>=1.67.0",
-  "joblib>=1.4.2",
   "lightning>=2.4.0",
   "numpy>=1.26.4",
   "omegaconf>=2.3.0",
-  "polars[xlsxwriter]>=1.25.0",
   "opcua>=0.98.13",
+  "polars[xlsxwriter]>=1.25.0",
   "protobuf>=5.28.2",
   "river>=0.21.0",
   "rosbags>=0.10.4",

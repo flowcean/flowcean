@@ -2,10 +2,9 @@ import logging
 import random
 from copy import copy
 from statistics import mean, median, stdev
-from typing import Any
 
 import numpy as np
-from typing_extensions import Self, override
+from typing_extensions import override
 
 import flowcean.cli
 from flowcean.core import (
@@ -100,16 +99,6 @@ class MyModel(Model):
 
             actuators.append(new_actuator)
         return Action(actuators=actuators)
-
-    @override
-    def save_state(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    @override
-    @classmethod
-    def load_from_state(cls, state: dict[str, Any]) -> Self:
-        _ = state
-        raise NotImplementedError
 
 
 class MyLearner(ActiveLearner):

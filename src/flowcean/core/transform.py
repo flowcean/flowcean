@@ -54,6 +54,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import cloudpickle
 from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -240,3 +241,9 @@ class Lambda(Transform):
     @override
     def apply(self, data: Data) -> Data:
         return self.func(data)
+
+    def __getstate__(self) -> dict[str, bytes]:
+        return {"func": cloudpickle.dumps(self.func)}
+
+    def __setstate__(self, state: dict[str, bytes]) -> None:
+        self.func = cloudpickle.loads(state["func"])
