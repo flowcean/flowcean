@@ -26,12 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 def load_rosbag(
-    path: str | PathLike,
+    path: str | PathLike[str],
     topics: dict[str, list[str]],
     *,
-    message_paths: Iterable[str | PathLike] | None = None,
+    message_paths: Iterable[str | PathLike[str]] | None = None,
     cache: bool = True,
-    cache_path: str | PathLike | None = None,
+    cache_path: str | PathLike[str] | None = None,
 ) -> pl.LazyFrame:
     """Load a ROS2 Humble rosbag file and convert it to a Polars LazyFrame.
 

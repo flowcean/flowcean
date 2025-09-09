@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Collection, Iterable
 from itertools import islice
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
 import polars as pl
@@ -13,6 +13,9 @@ from typing_extensions import Self, override
 
 from flowcean.core import OfflineEnvironment
 from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
+
+if TYPE_CHECKING:
+    from os import PathLike
 
 
 class DataFrame(OfflineEnvironment):
@@ -52,35 +55,35 @@ class DataFrame(OfflineEnvironment):
         return StreamingOfflineEnvironment(self, batch_size, size=len(self))
 
     @classmethod
-    def from_csv(cls, path: str | Path, separator: str = ",") -> Self:
+    def from_csv(cls, path: str | PathLike[str], separator: str = ",") -> Self:
         """Load a dataset from a CSV file.
 
         Args:
             path: Path to the CSV file.
             separator: Value separator. Defaults to ",".
         """
-        data = pl.scan_csv(path, separator=separator)
+        data = pl.scan_csv(Path(path), separator=separator)
         data = data.rename(lambda column_name: column_name.strip())
         return cls(data)
 
     @classmethod
-    def from_json(cls, path: str | Path) -> Self:
+    def from_json(cls, path: str | PathLike[str]) -> Self:
         """Load a dataset from a JSON file.
 
         Args:
             path: Path to the JSON file.
         """
-        data = pl.read_json(path)
+        data = pl.read_json(Path(path))
         return cls(data)
 
     @classmethod
-    def from_parquet(cls, path: str | Path) -> Self:
+    def from_parquet(cls, path: str | PathLike[str]) -> Self:
         """Load a dataset from a Parquet file.
 
         Args:
             path: Path to the Parquet file.
         """
-        data = pl.scan_parquet(path)
+        data = pl.scan_parquet(Path(path))
         return cls(data)
 
     @classmethod
@@ -113,6 +116,43 @@ class DataFrame(OfflineEnvironment):
             return cls.from_yaml(path)
 
         raise UnsupportedFileTypeError(suffix)
+
+    @classmethod
+    def from_rosbag(
+        cls,
+        path: str | PathLike[str],
+        topics: dict[str, list[str]],
+        *,
+        message_paths: Iterable[str | PathLike[str]] | None = None,
+        cache: bool = True,
+        cache_path: str | PathLike[str] | None = None,
+    ) -> Self:
+        """Load a dataset from a ROS2 Humble rosbag file.
+
+        The structure of the data is inferred from the message definitions. If
+        a message definition is not found in the ROS2 Humble typestore, it is
+        added from the provided paths. Once all the message definitions are
+        added, the data is loaded from the rosbag file.
+
+        Args:
+            path: Path to the rosbag.
+            topics: Dictionary of topics to load (`topic: [paths]`).
+            message_paths: List of paths to additional message definitions.
+            cache: Whether to cache the data to a Parquet file.
+            cache_path: Path to the cache file. If None, defaults to the same
+                directory as the rosbag file with a .parquet extension.
+        """
+        from flowcean.ros import load_rosbag
+
+        return cls(
+            load_rosbag(
+                path,
+                topics,
+                message_paths=message_paths,
+                cache=cache,
+                cache_path=cache_path,
+            ),
+        )
 
     @override
     def _observe(self) -> pl.LazyFrame:
