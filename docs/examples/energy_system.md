@@ -32,7 +32,7 @@ environment = EnergySystemActive(
 
 Here, `calculate_reward` is a function that turns a list of sensors objects into a list of rewards (which are both `Interface` objects in flowcean).
 This function is environment-specific and even use-case-specific, as it describes the state of the environment with a certain goal in mind.
-Among other things, the specific function here calculates the average voltage magnitude over all buses. 
+Among other things, the specific function here calculates the average voltage magnitude over all buses.
 
 Next, the learner has to be created
 
