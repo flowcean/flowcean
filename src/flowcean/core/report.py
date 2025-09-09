@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from great_tables import GT
     from rich.style import StyleType
 
+    from flowcean.core.model import Model
+
 
 class Reportable(Protocol):
     @abstractmethod
@@ -134,6 +136,68 @@ class Report(dict[str, ReportEntry]):
                 expand=False,
             )
             console.print(panel)
+
+    def select_best_model(
+        self,
+        metric_name: str,
+        *,
+        mode: str = "maximize",
+    ) -> Model:
+        """Return the best model according to a metric.
+
+        Args:
+            metric_name: Name of the metric to select by.
+            mode: One of {"maximize", "minimize", "max", "min"}.
+
+        Returns:
+            The best Model instance. Requires that a mapping of models was
+            attached to the report under `models_by_name` (as done by
+            evaluate_offline).
+        """
+        mode_norm = mode.lower()
+        if mode_norm in ("maximize", "max"):
+            factor = 1.0
+        elif mode_norm in ("minimize", "min"):
+            factor = -1.0
+        else:
+            msg = "mode must be one of: maximize, minimize, max, min"
+            raise ValueError(msg)
+
+        best_name: str | None = None
+        best_score = float("-inf")
+
+        for model_name, entry in self.items():
+            if metric_name not in entry:
+                continue
+            value = entry[metric_name]
+            if isinstance(value, Mapping):
+                value = cast("Mapping[str, Reportable]", value)
+                vals = [float(v) for v in value.values()]  # type: ignore[arg-type]
+                if not vals:
+                    continue
+                score = sum(vals) / len(vals)
+            else:
+                score = float(value)  # type: ignore[arg-type]
+
+            if factor * score > best_score:
+                best_score = factor * score
+                best_name = model_name
+
+        if best_name is None:
+            msg = f"Metric '{metric_name}' not found in report for any model."
+            raise ValueError(msg)
+
+        models_by_name = getattr(self, "models_by_name", None)
+        if isinstance(models_by_name, dict) and best_name in models_by_name:
+            return cast("Model", models_by_name[best_name])
+
+        msg = (
+            "The report does not contain attached models. "
+            "Re-run evaluation with "
+            "evaluate_offline so that models are attached, "
+            "or select using the model name from report keys."
+        )
+        raise ValueError(msg)
 
 
 def _format_value(value: Reportable) -> str:
