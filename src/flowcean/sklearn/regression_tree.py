@@ -1,7 +1,7 @@
 import logging
-from typing import Any
 
 import polars as pl
+from numpy.typing import NDArray
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
 from typing_extensions import override
 
@@ -23,21 +23,38 @@ class RegressionTree(SupervisedLearner):
 
     def __init__(
         self,
-        *args: Any,
+        *,
         dot_graph_export_path: None | str = None,
-        **kwargs: Any,
+        criterion: str = "squared_error",
+        splitter: str = "best",
+        max_depth: int | None = None,
+        min_samples_split: int = 2,
+        min_samples_leaf: int = 1,
+        min_weight_fraction_leaf: float = 0.0,
+        max_features: float | None = None,
+        random_state: int | None = None,
+        max_leaf_nodes: int | None = None,
+        min_impurity_decrease: float = 0.0,
+        ccp_alpha: float = 0.0,
+        monotonic_cst: NDArray | None = None,
     ) -> None:
         """Initialize the regression tree learner.
 
-        Args:
-            *args: Positional arguments to pass to the DecisionTreeRegressor.
-            dot_graph_export_path: Path to export the decision tree graph to.
-            **kwargs: Keyword arguments to pass to the DecisionTreeRegressor.
+        Reference: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html
         """
         self.regressor = DecisionTreeRegressor(
-            *args,
-            **kwargs,
-            random_state=get_seed(),
+            criterion=criterion,
+            splitter=splitter,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            random_state=random_state or get_seed(),
+            ccp_alpha=ccp_alpha,
+            monotonic_cst=monotonic_cst,
         )
         self.dot_graph_export_path = dot_graph_export_path
 
@@ -57,7 +74,7 @@ class RegressionTree(SupervisedLearner):
                 self.dot_graph_export_path,
             )
             export_graphviz(
-                self.regressor,  # type: ignore[reportArgumentType]
+                self.regressor,
                 out_file=self.dot_graph_export_path,
             )
         return SciKitModel(

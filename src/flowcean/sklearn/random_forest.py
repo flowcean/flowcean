@@ -1,7 +1,7 @@
 import logging
-from typing import Any
 
 import polars as pl
+from numpy.typing import NDArray
 from sklearn.ensemble import RandomForestRegressor
 from typing_extensions import override
 
@@ -23,19 +23,49 @@ class RandomForestRegressorLearner(SupervisedLearner):
 
     def __init__(
         self,
-        *args: Any,
-        **kwargs: Any,
+        n_estimators: int = 100,
+        *,
+        criterion: str = "squared_error",
+        max_depth: int | None = None,
+        min_samples_split: int = 2,
+        min_samples_leaf: int = 1,
+        min_weight_fraction_leaf: float = 0.0,
+        max_features: float = 1.0,
+        max_leaf_nodes: int | None = None,
+        min_impurity_decrease: float = 0.0,
+        bootstrap: bool = True,
+        oob_score: bool = False,
+        n_jobs: int | None = None,
+        random_state: int | None = None,
+        verbose: int = 0,
+        warm_start: bool = False,
+        ccp_alpha: float = 0.0,
+        max_samples: int | float | None = None,  # noqa: PYI041
+        monotonic_cst: NDArray | None = None,
     ) -> None:
         """Initialize the random forest learner.
 
-        Args:
-            *args: Positional arguments to pass to the RandomForestRegressor.
-            **kwargs: Keyword arguments to pass to the RandomForestRegressor.
+        Reference: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
         """
         self.regressor = RandomForestRegressor(
-            *args,
-            **kwargs,
-            random_state=get_seed(),
+            n_estimators=n_estimators,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            bootstrap=bootstrap,
+            oob_score=oob_score,
+            n_jobs=n_jobs,
+            random_state=random_state or get_seed(),
+            verbose=verbose,
+            warm_start=warm_start,
+            ccp_alpha=ccp_alpha,
+            max_samples=max_samples,
+            monotonic_cst=monotonic_cst,
         )
 
     @override
