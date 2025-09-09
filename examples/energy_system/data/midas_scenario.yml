@@ -8,7 +8,7 @@ agenc_demo:
     filename: uc_energy.csv
   powergrid_params:
     midasmv:
-      grid_params: 
+      grid_params:
         constant_storage_p_mw: 0.00001
         constant_storage_q_mvar: 0.000004
       actuator_multiplier: 100000
