@@ -72,7 +72,6 @@ class TestSaveLoad(unittest.TestCase):
         )
 
         learner = LinearRegression(
-            input_size=1,
             output_size=1,
             learning_rate=0.01,
         )

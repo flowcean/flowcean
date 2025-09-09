@@ -195,7 +195,6 @@ The implementation of this learner uses the [lightning framework](https://lightn
 perceptron_learner = LightningLearner(
     module=MultilayerPerceptron(
         learning_rate=1e-3,
-        input_size=len(inputs),
         output_size=len(outputs),
         hidden_dimensions=[10, 10],
         ),

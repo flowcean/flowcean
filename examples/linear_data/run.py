@@ -36,8 +36,7 @@ def main() -> None:
     print(data.data.collect())
 
     learner = LinearRegression(
-        1,
-        1,
+        output_size=1,
         learning_rate=0.1,
         a=torch.tensor([[-2.0]]),
         b=torch.tensor([0.0]),

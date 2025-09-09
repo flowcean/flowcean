@@ -36,7 +36,6 @@ def _create_simple_module() -> MultilayerPerceptron:
     """
     return MultilayerPerceptron(
         learning_rate=0.001,
-        input_size=2,
         output_size=1,
     )
 

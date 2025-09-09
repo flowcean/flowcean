@@ -14,25 +14,23 @@ class LinearRegression(SupervisedIncrementalLearner):
 
     def __init__(
         self,
-        input_size: int,
+        *,
         output_size: int,
         learning_rate: float = 1e-3,
         loss: nn.Module | None = None,
-        *,
         a: Tensor | None = None,
         b: Tensor | None = None,
     ) -> None:
         """Initialize the learner.
 
         Args:
-            input_size: The size of the input.
             output_size: The size of the output.
             learning_rate: The learning rate.
             loss: The loss function.
             a: Initial weights. If None (the default), random weights are used.
             b: Initial bias. If None (the default), random bias is used.
         """
-        self.model = nn.Linear(input_size, output_size)
+        self.model = nn.LazyLinear(output_size)
         if a is not None:
             self.model.weight.data = a
         if b is not None:
