@@ -292,7 +292,9 @@ class OPCAdapter(Adapter):
             # Check if we are still pre-recording
             if self.streaming_handler.is_streaming():
                 prerecording_in_progress = False
+                print("Recording...")
             else:
+                print("Pre-recording...")
                 # Still pre-recording
                 # Discard old data that is older than `capture_time`.
                 self.recorded_data = self.recorded_data.filter(
