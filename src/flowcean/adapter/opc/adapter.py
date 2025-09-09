@@ -288,7 +288,7 @@ class OPCAdapter(Adapter):
             # Check if we are still pre-recording
             if self.streaming_handler.is_streaming():
                 prerecording_in_progress = False
-            else:
+            elif prerecording_in_progress:
                 # Still pre-recording
                 # Discard old data that is older than `capture_time`.
                 self.recorded_data = self.recorded_data.filter(
@@ -296,6 +296,9 @@ class OPCAdapter(Adapter):
                     >= pl.lit(datetime.now(timezone.utc)).cast(pl.Datetime)
                     - self.pre_capture_window_length,
                 )
+            else:
+                # Done with pre-recording and streaming
+                return False
 
             return True
 
