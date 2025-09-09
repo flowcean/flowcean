@@ -160,6 +160,10 @@ class OPCAdapter(Adapter):
         self.client.connect()
         self.client.load_type_definitions()
 
+        # Set the log level of the opcua library to WARNING to reduce
+        # verbosity
+        logging.getLogger("opcua").setLevel(logging.WARNING)
+
         # Start a keep-alive mechanism to ensure the connection stays alive
         self.client.keepalive = KeepAlive(
             self.client,
@@ -270,6 +274,7 @@ class OPCAdapter(Adapter):
 
             # Record a sample of data
             results = self.client.get_values(self.input_features.values())
+            now = datetime.now(tz=timezone.utc)
             self.recorded_data = pl.concat(
                 [
                     self.recorded_data,
@@ -278,7 +283,7 @@ class OPCAdapter(Adapter):
                         schema=self.input_schema,
                         orient="row",
                     ).with_columns(
-                        _recorded_time=pl.lit(datetime.now(timezone.utc)).cast(
+                        _recorded_time=pl.lit(now).cast(
                             pl.Datetime,
                         ),
                     ),
@@ -288,14 +293,17 @@ class OPCAdapter(Adapter):
             # Check if we are still pre-recording
             if self.streaming_handler.is_streaming():
                 prerecording_in_progress = False
-            else:
+            elif prerecording_in_progress:
                 # Still pre-recording
                 # Discard old data that is older than `capture_time`.
                 self.recorded_data = self.recorded_data.filter(
                     pl.col("_recorded_time")
-                    >= pl.lit(datetime.now(timezone.utc)).cast(pl.Datetime)
+                    >= pl.lit(now).cast(pl.Datetime)
                     - self.pre_capture_window_length,
                 )
+            else:
+                # Done with pre-recording and streaming
+                return False
 
             return True
 
