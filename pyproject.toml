@@ -43,6 +43,8 @@ dependencies = [
 [project.optional-dependencies]
 palaestrai = [
   "midas-mosaik[base]>=2.1.0",
+  "midas-store>=2.1.0",
+  "mosaik-api-v3>=3.0.13",
   "mosaik>=3.5.0",
   "palaestrai>=3.5.8",
   "palaestrai-agents>=3.5.4",
