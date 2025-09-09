@@ -2,6 +2,7 @@ from .adapter import Adapter
 from .data import Data
 from .environment.actable import Actable
 from .environment.active import ActiveEnvironment
+from .environment.base import Environment
 from .environment.incremental import Finished, IncrementalEnvironment, Stepable
 from .environment.offline import ChainedOfflineEnvironments, OfflineEnvironment
 from .learner import (
@@ -41,6 +42,7 @@ __all__ = [
     "ChainedOfflineEnvironments",
     "ChainedTransforms",
     "Data",
+    "Environment",
     "Finished",
     "Identity",
     "IncrementalEnvironment",
