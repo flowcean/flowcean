@@ -68,7 +68,7 @@ class EnergySystemActive(ActiveEnvironment):
             },
         }
 
-        midas.configure(autocfg=True)
+        midas.configure(autocfg=True, update=True)
         midas.download()
         self.scenario: Scenario = midas.run(
             scenario_name,
