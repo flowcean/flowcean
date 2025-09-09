@@ -1,0 +1,18 @@
+agenc_demo:
+  parent: midasmv_der_tar
+  step_size: 15*60
+  end: 30*24*60*60
+  start_date: 2022-08-14 22:00:00+0100
+  store_params:
+    keep_old_files: true
+    filename: uc_energy.csv
+  powergrid_params:
+    midasmv:
+      grid_params: 
+        constant_storage_p_mw: 0.00001
+        constant_storage_q_mvar: 0.000004
+      actuator_multiplier: 100000
+agenc_demo_training:
+  parent: agenc_demo
+  start_date: 2021-04-15 00:00:00+0100
+  step_size: 60

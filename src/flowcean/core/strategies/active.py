@@ -1,69 +1,11 @@
-from collections.abc import Sequence
-from dataclasses import dataclass
-from typing import Any, SupportsFloat
+from typing import Any
 
-import numpy as np
-from numpy.typing import NDArray
-
+from flowcean.core.data import Action, ActiveInterface, Observation
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.learner import ActiveLearner
+from flowcean.core.metric import ActiveMetric
 from flowcean.core.model import Model
-
-
-@dataclass
-class ActiveInterface:
-    """Interface to a feature in an active environment.
-
-    Represents a single feature of the environment, which can be
-    either an input, an output, or the reward of the environment.
-
-    Args:
-        uid: Identifier of the feature inside the environment
-        value: The value of the feature
-        value_min: Simple representation of the minimum value
-        value_max: Simple representation of the maximum value
-        shape: Tuple representing the shape of the value
-        dtype: Data type of this interface, e.g., numpy.float32
-    """
-
-    uid: str
-    value: int | float | NDArray[Any] | None
-    value_min: SupportsFloat | NDArray[Any] | list[Any]
-    value_max: SupportsFloat | NDArray[Any] | list[Any]
-    shape: Sequence[int]
-    dtype: type[np.floating[Any]] | type[np.integer[Any]]
-
-
-@dataclass
-class Observation:
-    """An observation of an active environment.
-
-    The observation contains 'sensors', which are the raw observations
-    of featured values, and rewards, which are a rated quantification
-    of the environment state.
-
-    Args:
-        sensors: List of interface objects, i.e., raw observations
-        rewards: List of interface objects, i.e., rated state
-
-    """
-
-    sensors: list[ActiveInterface]
-    rewards: list[ActiveInterface]
-
-
-@dataclass
-class Action:
-    """An action in an active environment.
-
-    The action contains 'actuators', which represent setpoints in the
-    environment. Each actuator targets exactly one input feature.
-
-    Args:
-        actuators: List of interface objects, which are setpoints
-    """
-
-    actuators: list[ActiveInterface]
+from flowcean.core.report import Report, ReportEntry
 
 
 def interface_dict(itf: ActiveInterface) -> dict[str, Any]:
@@ -128,3 +70,49 @@ def learn_active(
         message = "No model was learned."
         raise RuntimeError(message)
     return model
+
+
+def evaluate_active(
+    environment: ActiveEnvironment,
+    model: Model,
+    metrics: list[ActiveMetric],
+) -> Report:
+    """Evaluate on an active environment.
+
+    Evaluate a model that was trained for an active environment. The
+    optimal output of the model is not known (unlike in supervised
+    settings), therefore, the evaluation function(s) have to be
+    provided manually. The evaluation function(s) are specific to an
+    environment.
+
+    Action and observations going into the metric function with the
+    relation that the nth entries of both lists contain the Action and
+    the Observation that results from this action. Therefore, the first
+    entry of Actions will not contain any values and the first entry of
+    Observations contains the initial state of the environment.
+
+    Args:
+        environment: The active environment
+        model: The model to evaluate
+        metrics: list of metrics to evaluate against
+
+    Returns:
+        The evaluation report.
+
+    """
+    observations: list[Observation] = []
+    actions: list[Action] = [Action(actuators=[])]
+    try:
+        while True:
+            observations.append(environment.observe())
+            actions.append(model.predict(observations[-1]))
+            environment.act(actions[-1])
+            environment.step()
+    except StopLearning:
+        pass
+    observations.append(environment.observe())
+    entries: dict[str, ReportEntry] = {}
+    entries[model.name] = ReportEntry(
+        {metric.name: metric(observations, actions) for metric in metrics},
+    )
+    return Report(entries)
