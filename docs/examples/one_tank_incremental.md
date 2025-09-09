@@ -137,7 +137,6 @@ With the training data generated, fully transformed, and split, it's time to use
 
 ```python
 learner = LinearRegression(
-    input_size=2,
     output_size=1,
     learning_rate=0.01,
 )
@@ -166,9 +165,9 @@ print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
 For this example, the resulting metrics are about
 
-| Learner type           | Runtime              | Mean Absolute Error | Mean Squared Error |
-| ---------------------- | -------------------- | ------------------- | ------------------ |
-| Linear Regression      | $15.5\: \mathrm{ms}$ | $0.0919$            | $0.01215$           |
+| Learner type      | Runtime              | Mean Absolute Error | Mean Squared Error |
+| ----------------- | -------------------- | ------------------- | ------------------ |
+| Linear Regression | $15.5\: \mathrm{ms}$ | $0.0919$            | $0.01215$          |
 
 Depending on the size of the dataset, the way the train and test set are split and shuffled, the learner's configuration, and other random factors, these values may vary. However, it is clear that the learner produced a model with relatively small errors ($\sim 2\%$) which could be used for tasks such as prediction.
 

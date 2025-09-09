@@ -3,10 +3,10 @@
 An **Experiment** is a structure definition.
 It defines
 
-- which *Environment* to load (i.e. are we learning based on a data set, a simulation or a data stream?),
-- which *learning strategy* to apply,
-- which *learner* should be selected and how it is configured,
-- which *transforms* should be applied to the data,
+- which _Environment_ to load (i.e. are we learning based on a data set, a simulation or a data stream?),
+- which _learning strategy_ to apply,
+- which _learner_ should be selected and how it is configured,
+- which _transforms_ should be applied to the data,
 - if previously trained models should be loaded and from where,
 - where to save the model that is being trained,
 - and how to evaluate the performance of the models.
@@ -15,7 +15,7 @@ The definition is done via a Python script, which is usually called `run.py`.
 
 The following flow chart shows the procedure inside a `run.py`.
 
-``` mermaid
+```mermaid
 graph LR
   A(CLI initialize) --> B(Specify
   Environment);
@@ -39,7 +39,7 @@ More information on learning strategies can be found [here](https://flowcean.me/
 How the evaluation of models is done in Flowcean, is explained [here](https://flowcean.me/user_guide/evaluation/).
 
 Below, is a basic code implementation of an environment definition.
-In this case, the environment is a *DataSet* which is a type of [OfflineEnvironment](https://flowcean.me/reference/flowcean/core/environment/offline/).
+In this case, the environment is a _DataSet_ which is a type of [OfflineEnvironment](https://flowcean.me/reference/flowcean/core/environment/offline/).
 Its [learner](https://flowcean.me/user_guide/model/) is a linear regression algorithm.
 It uses an incremental [Learning Strategy](https://flowcean.me/user_guide/learning_strategies/).
 In this example, no model is saved or loaded.
@@ -77,7 +77,6 @@ def main() -> None:
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)
 
     learner = LinearRegression(
-        input_size=1,
         output_size=1,
         learning_rate=0.01,
     )
