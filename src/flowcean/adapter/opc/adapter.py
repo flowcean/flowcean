@@ -308,6 +308,8 @@ class OPCAdapter(Adapter):
 
         # Get rid of any duplicates and the `_recorded_time` feature column
         # in the recorded data
+        print("Flowcean data unprocessed:")
+        print(self.recorded_data)
         return (
             self.recorded_data.lazy()
             .drop("_recorded_time")
