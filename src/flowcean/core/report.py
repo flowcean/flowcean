@@ -4,10 +4,15 @@ from abc import abstractmethod
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, cast
 
+import numpy as np
 import polars as pl
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 if TYPE_CHECKING:
     from great_tables import GT
+    from rich.style import StyleType
 
 
 class Reportable(Protocol):
@@ -78,3 +83,60 @@ class Report(dict[str, ReportEntry]):
             .fmt_number(decimals=2)
             .opt_stylize(style=3)
         )
+
+    def __repr__(self) -> str:
+        return f"Report(models={list(self.keys())})"
+
+    def __str__(self) -> str:
+        lines: list[str] = []
+        for model, entry in self.items():
+            lines.append(f"=== {model} ===")
+            for metric, value in entry.items():
+                if isinstance(value, Mapping):
+                    value = cast("Mapping[str, Reportable]", value)
+                    for submetric, subvalue in value.items():
+                        reportable = _format_value(subvalue)
+                        lines.append(f"{metric} -> {submetric} {reportable}")
+                else:
+                    reportable = _format_value(value)
+                    lines.append(f"{metric} {reportable}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def pretty_print(
+        self,
+        header_style: StyleType = "bold magenta",
+        metric_style: StyleType = "cyan",
+        value_style: StyleType = "green",
+        title_style: StyleType = "bold yellow",
+    ) -> None:
+        """Pretty print the report to the terminal."""
+        console = Console()
+        for model, entry in self.items():
+            table = Table(show_header=True, header_style=header_style)
+            table.add_column("Metric", style=metric_style, no_wrap=True)
+            table.add_column("Value", style=value_style)
+
+            for metric, value in entry.items():
+                if isinstance(value, Mapping):
+                    value = cast("Mapping[str, Reportable]", value)
+                    for submetric, subvalue in value.items():
+                        table.add_row(
+                            f"{metric} → {submetric}",
+                            _format_value(subvalue),
+                        )
+                else:
+                    table.add_row(metric, _format_value(value))
+
+            panel = Panel(
+                table,
+                title=f"[{title_style}]{model}[/]",
+                expand=False,
+            )
+            console.print(panel)
+
+
+def _format_value(value: Reportable) -> str:
+    if isinstance(value, (float, np.floating)):
+        return f"{value:.4f}"
+    return str(value)
