@@ -160,6 +160,10 @@ class OPCAdapter(Adapter):
         self.client.connect()
         self.client.load_type_definitions()
 
+        # Set the log level of the opcua library to WARNING to reduce
+        # verbosity
+        logging.getLogger("opcua").setLevel(logging.WARNING)
+
         # Start a keep-alive mechanism to ensure the connection stays alive
         self.client.keepalive = KeepAlive(
             self.client,
