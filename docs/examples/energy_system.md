@@ -9,7 +9,7 @@ For this example, a specific use case in the electrical power grid will be demon
 Power grids are basically graphs, with nodes being bus bars and edges being lines, which connect the bus bars with each other.
 Knowing the voltage at these bus bars is essential for load and generation forecast, but usually the voltage is not available as measurement, only power.
 To perform a power flow calculation to retrieve the voltages, one node will be declared as slack node.
-The voltage of the other nodes will be calculated in relation to the slack node. 
+The voltage of the other nodes will be calculated in relation to the slack node.
 Therefore, those voltages will be handled as *Voltage magnitude per unit*, with the optimal value generally being 1.0.
 
 ## Task
@@ -28,8 +28,8 @@ environment = EnergySystemActive(
     reward_func=calculate_reward,
     end=1800,
 )
-
 ```
+
 Here, `calculate_reward` is a function that turns a list of sensors objects into a list of rewards (which are both `Interface` objects in flowcean).
 This function is environment-specific and even use-case-specific, as it describes the state of the environment with a certain goal in mind.
 Among other things, the specific function here calculates the average voltage magnitude over all buses. 
@@ -39,16 +39,16 @@ Next, the learner has to be created
 ```python
 from midas_palaestrai import ArlDefenderObjective
 
-# Names of the actuators in the environment; 
+# Names of the actuators in the environment;
 # these define what the model can DO
 actuator_ids = [
     "Powergrid-0.0-storage-0-1.p_mw",
     "Powergrid-0.0-storage-1-3.p_mw",
-    # ... skipped 
+    # ... skipped
     "Powergrid-0.0-trafo-1.delta_tap_pos",
 ]
 
-# Names of the sensors in the environment; 
+# Names of the sensors in the environment;
 # these define what the model can SEE
 sensor_ids = [
     "Powergrid-0.0-bus-0.vm_pu",
@@ -74,7 +74,6 @@ learner = SACLearner(
 As with the other examples, running the learning and evaluation processes with flowcean is rather simple.
 But first, at least one metric for the evaluation is required.
 For this example, a metric will be created that calculates the RMSE between each buses' voltage magnitude p.u. and 1.0.
-
 
 ```python
 from flowcean.core.metrics import ActiveMetric
@@ -113,7 +112,9 @@ report = evaluate_active(environment2, model, [VoltageDeviation()])
 
 print(report)
 ```
-Result: 
+
+Result:
+
 ```bash
 VoltageDeviation: 0.022040343118938252
 ```
@@ -140,11 +141,10 @@ learning_params = [
 ]
 ```
 
-First, in the training process the models calculate the rewards in each step. 
+First, in the training process the models calculate the rewards in each step.
 This is shown in the following figure for each model
 
 ![](images/objectives.png)
-
 
 For the evaluation, three more metrics will be created.
 
