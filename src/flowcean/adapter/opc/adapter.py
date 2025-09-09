@@ -270,6 +270,7 @@ class OPCAdapter(Adapter):
 
             # Record a sample of data
             results = self.client.get_values(self.input_features.values())
+            now = datetime.now(tz=timezone.utc)
             self.recorded_data = pl.concat(
                 [
                     self.recorded_data,
@@ -278,7 +279,7 @@ class OPCAdapter(Adapter):
                         schema=self.input_schema,
                         orient="row",
                     ).with_columns(
-                        _recorded_time=pl.lit(datetime.now(timezone.utc)).cast(
+                        _recorded_time=pl.lit(now).cast(
                             pl.Datetime,
                         ),
                     ),
@@ -293,7 +294,7 @@ class OPCAdapter(Adapter):
                 # Discard old data that is older than `capture_time`.
                 self.recorded_data = self.recorded_data.filter(
                     pl.col("_recorded_time")
-                    >= pl.lit(datetime.now(timezone.utc)).cast(pl.Datetime)
+                    >= pl.lit(now).cast(pl.Datetime)
                     - self.pre_capture_window_length,
                 )
             else:
