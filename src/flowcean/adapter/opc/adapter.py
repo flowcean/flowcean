@@ -21,11 +21,15 @@ _type_mapping_pl2ua = {
     pl.Int32: ua.VariantType.Int32,
     pl.Int64: ua.VariantType.Int64,
     pl.Boolean: ua.VariantType.Boolean,
+    pl.UInt32: ua.VariantType.UInt32,
+    pl.UInt64: ua.VariantType.UInt64,
 }
 
 _type_mapping_str2pl = {
     "int32": pl.Int32,
     "int64": pl.Int64,
+    "uint32": pl.UInt32,
+    "uint64": pl.UInt64,
     "float32": pl.Float32,
     "float64": pl.Float64,
     "bool": pl.Boolean,
