@@ -1,6 +1,6 @@
 [project]
 name = "flowcean"
-version = "0.7.0"
+version = "0.7.0b2"
 description = "Automatic generation of models for cyber-physical systems."
 readme = "README.md"
 requires-python = ">=3.10, <4.0"
