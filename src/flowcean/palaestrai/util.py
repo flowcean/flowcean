@@ -16,7 +16,7 @@ from palaestrai.agent.reward_information import RewardInformation
 from palaestrai.agent.sensor_information import SensorInformation
 from palaestrai.types import Box
 
-from flowcean.core.data import (
+from flowcean.core import (
     Action,
     ActiveInterface,
     Observation,

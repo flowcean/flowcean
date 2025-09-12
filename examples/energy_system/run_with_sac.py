@@ -11,7 +11,7 @@ from midas_palaestrai import ArlDefenderObjective
 from typing_extensions import override
 
 import flowcean.cli
-from flowcean.core.data import Action, ActiveInterface, Observation
+from flowcean.core import Action, ActiveInterface, Observation
 from flowcean.core.metric import ActiveMetric
 from flowcean.core.report import Report
 from flowcean.core.strategies.active import (

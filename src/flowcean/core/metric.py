@@ -10,8 +10,9 @@ from typing import (
 from flowcean.core.named import Named
 
 if TYPE_CHECKING:
-    from .data import Action, Data, Observation
+    from .data import Data
     from .report import Reportable
+    from .strategies.active import Action, Observation
 
 
 class Metric(Named, Protocol):

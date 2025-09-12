@@ -6,7 +6,7 @@ from harl.sac.muscle import SACMuscle
 from palaestrai.types.mode import Mode
 from typing_extensions import Self, override
 
-from flowcean.core.data import (
+from flowcean.core import (
     Action,
     Observation,
 )
