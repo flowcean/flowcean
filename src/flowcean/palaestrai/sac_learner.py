@@ -114,9 +114,13 @@ class SACLearner(ActiveLearner):
         self.brain.setup()
 
         self.model = SACModel(
-            self.action,
-            self.observation,
+            action,
+            observation,
+            self.sensor_ids,
+            self.actuator_ids,
             self.brain.thinking(MODEL_ID, None),
+            start_steps=self.brain_params["update_after"],
+            training_mode=True,
         )
 
     @override

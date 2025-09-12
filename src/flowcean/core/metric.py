@@ -12,6 +12,7 @@ from flowcean.core.named import Named
 if TYPE_CHECKING:
     from .data import Data
     from .report import Reportable
+    from .strategies.active import Action, Observation
 
 
 class Metric(Named, Protocol):
@@ -46,3 +47,23 @@ class Metric(Named, Protocol):
         t = self.prepare(true)
         p = self.prepare(predicted)
         return self._compute(t, p)
+
+
+class ActiveMetric(Named, Protocol):
+    """Base class for metrics for active environments."""
+
+    @abstractmethod
+    def __call__(
+        self,
+        observations: list[Observation],
+        actions: list[Action],
+    ) -> Reportable | dict[str, Reportable]:
+        """Calculate the metric value based on the observations.
+
+        Args:
+            observations: list of observations of the environment
+            actions: list of actions of the learner
+
+        Returns:
+            Metric value
+        """
