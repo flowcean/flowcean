@@ -48,6 +48,10 @@ class StreamingHandler:
         return self._is_streaming
 
     def datachange_notification(self, _: Node, val: Any, __: Any) -> None:
+        print(
+            f"Streaming flag changed to {val} at "
+            f"{datetime.now(tz=timezone.utc)}",
+        )
         self._is_streaming = val
 
 
@@ -316,6 +320,7 @@ class OPCAdapter(Adapter):
 
         # Get rid of any duplicates and the `_recorded_time` feature column
         # in the recorded data
+        print(self.recorded_data)
         return (
             self.recorded_data.lazy()
             .drop("_recorded_time")
