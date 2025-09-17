@@ -23,6 +23,7 @@ class SciKitModel(Model):
     """A model that wraps a scikit-learn model."""
 
     estimator: SupportsPredict
+    input_names: list[str] | None
     output_names: list[str]
 
     def __init__(
@@ -30,13 +31,16 @@ class SciKitModel(Model):
         estimator: SupportsPredict,
         *,
         output_names: Iterable[str],
+        input_names: Iterable[str] | None = None,
         name: str | None = None,
     ) -> None:
         """Initialize the model.
 
         Args:
             estimator: The scikit-learn estimator.
-            output_names: The names of the output columns.
+            output_names: The names of the output features.
+            input_names: The names of the input features.
+                If None, all features are used.
             name: The name of the model.
         """
         if name is None:
@@ -44,6 +48,9 @@ class SciKitModel(Model):
         self._name = name
         self.estimator = estimator
         self.output_names = list(output_names)
+        self.input_names = (
+            list(input_names) if input_names is not None else None
+        )
 
     @override
     def _predict(
@@ -52,6 +59,9 @@ class SciKitModel(Model):
     ) -> pl.LazyFrame:
         if isinstance(input_features, pl.LazyFrame):
             input_features = input_features.collect()
+
+        if self.input_names is not None:
+            input_features = input_features.select(self.input_names)
 
         outputs = self.estimator.predict(input_features)
         if len(self.output_names) == 1:
