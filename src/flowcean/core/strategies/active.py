@@ -7,7 +7,9 @@ from numpy.typing import NDArray
 
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.learner import ActiveLearner
+from flowcean.core.metric import ActiveMetric
 from flowcean.core.model import Model
+from flowcean.core.report import Report, ReportEntry
 
 
 @dataclass
@@ -128,3 +130,49 @@ def learn_active(
         message = "No model was learned."
         raise RuntimeError(message)
     return model
+
+
+def evaluate_active(
+    environment: ActiveEnvironment,
+    model: Model,
+    metrics: list[ActiveMetric],
+) -> Report:
+    """Evaluate on an active environment.
+
+    Evaluate a model that was trained for an active environment. The
+    optimal output of the model is not known (unlike in supervised
+    settings), therefore, the evaluation function(s) have to be
+    provided manually. The evaluation function(s) are specific to an
+    environment.
+
+    Action and observations going into the metric function with the
+    relation that the nth entries of both lists contain the Action and
+    the Observation that results from this action. Therefore, the first
+    entry of Actions will not contain any values and the first entry of
+    Observations contains the initial state of the environment.
+
+    Args:
+        environment: The active environment
+        model: The model to evaluate
+        metrics: list of metrics to evaluate against
+
+    Returns:
+        The evaluation report.
+
+    """
+    observations: list[Observation] = []
+    actions: list[Action] = [Action(actuators=[])]
+    try:
+        while True:
+            observations.append(environment.observe())
+            actions.append(model.predict(observations[-1]))
+            environment.act(actions[-1])
+            environment.step()
+    except StopLearning:
+        pass
+    observations.append(environment.observe())
+    entries: dict[str, ReportEntry] = {}
+    entries[model.name] = ReportEntry(
+        {metric.name: metric(observations, actions) for metric in metrics},
+    )
+    return Report(entries)
