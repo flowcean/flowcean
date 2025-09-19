@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 from copy import copy
 from typing import Any
 
-import midas.api
+import midas
 import mosaik
 import numpy as np
 import polars as pl
@@ -68,7 +68,9 @@ class EnergySystemActive(ActiveEnvironment):
             },
         }
 
-        self.scenario: Scenario = midas.api.run(
+        midas.configure(autocfg=True, update=True)
+        midas.download()
+        self.scenario: Scenario = midas.run(
             scenario_name,
             params,
             scenario_file,
@@ -363,7 +365,7 @@ class EnergySystemOffline(DataFrame):
         if end > 0:
             params["end"] = end
 
-        midas.api.run(scenario_name, params, scenario_file)
+        midas.run(scenario_name, params, scenario_file)
         data = pl.scan_csv(data_file)
         super().__init__(data)
 
