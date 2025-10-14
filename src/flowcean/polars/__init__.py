@@ -44,6 +44,7 @@ from .transforms.resample import Resample
 from .transforms.scale_to_range import ScaleToRange
 from .transforms.select import Select
 from .transforms.signal_filter import SignalFilter, SignalFilterType
+from .transforms.slice_time_series import SliceTimeSeries
 from .transforms.sliding_window import SlidingWindow
 from .transforms.sliding_window_ts import TimeSeriesSlidingWindow
 from .transforms.standardize import Standardize
@@ -94,6 +95,7 @@ __all__ = [
     "SelectMixin",
     "SignalFilter",
     "SignalFilterType",
+    "SliceTimeSeries",
     "SlidingWindow",
     "Standardize",
     "StreamingOfflineEnvironment",
