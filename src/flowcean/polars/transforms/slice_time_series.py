@@ -1,8 +1,9 @@
 import logging
 
 import polars as pl
-from flowcean.core import Transform
 from typing_extensions import override
+
+from flowcean.core import Transform
 
 logger = logging.getLogger(__name__)
 
