@@ -11,6 +11,8 @@ from custom_learners.image_based_lightning_learner import (
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
+from omegaconf import DictConfig, ListConfig
+
 from flowcean.core import Lambda, Report, Transform, evaluate_offline
 from flowcean.polars import DataFrame, Drop, SliceTimeSeries, ZeroOrderHold
 from flowcean.ros import load_rosbag
@@ -21,7 +23,6 @@ from flowcean.sklearn import (
     PrecisionScore,
     Recall,
 )
-from omegaconf import DictConfig, ListConfig
 
 logger = logging.getLogger(__name__)
 
