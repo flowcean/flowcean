@@ -1,11 +1,13 @@
 import logging
-from collections.abc import Iterable, Sequence
+import numbers
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Literal, cast
 
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import Metric
 from flowcean.core.model import Model
-from flowcean.core.report import Report, ReportEntry
+from flowcean.core.report import Report, Reportable, ReportEntry
 from flowcean.core.transform import Identity, InvertibleTransform, Transform
 
 logger = logging.getLogger(__name__)
@@ -103,4 +105,79 @@ def evaluate_offline(
                 for metric in metrics
             },
         )
-    return Report(entries)
+
+    report = Report(entries)
+    # Attach models by name for later retrieval (used by select_best_model)
+    report.models_by_name = {m.name: m for m in models}  # type: ignore[attr-defined]
+    return report
+
+
+# Helper to convert various reportable values to float
+
+
+def _to_float(value: object) -> float:
+    if isinstance(value, numbers.Real):
+        return float(value)
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError) as err:
+        msg = f"Cannot convert metric value {value!r} to float"
+        raise TypeError(msg) from err
+
+
+def _score_from_entry(entry: ReportEntry, metric_name: str) -> float | None:
+    if metric_name not in entry:
+        return None
+    raw = entry[metric_name]
+    if isinstance(raw, Mapping):
+        # Average over sub-metrics
+        mapped = cast("Mapping[str, Reportable]", raw)
+        values = [_to_float(v) for v in mapped.values()]
+        return None if not values else sum(values) / len(values)
+    return _to_float(raw)
+
+
+def select_best_model(
+    report: Report,
+    metric_name: str,
+    *,
+    mode: Literal["max", "min"] = "max",
+) -> Model:
+    """Select the best model from a report.
+
+    Args:
+        report: The evaluation report.
+        metric_name: The metric name to select by.
+        mode: Whether to select the maximum ("max") or minimum ("min").
+
+    Returns:
+        The best model according to the metric and mode.
+    """
+    factor = 1.0 if mode == "max" else -1.0
+    best_name: str | None = None
+    best_score = float("-inf")
+
+    for model_name, entry in report.items():
+        score = _score_from_entry(entry, metric_name)
+        if score is None:
+            continue
+        norm = factor * score
+        if norm > best_score:
+            best_score = norm
+            best_name = model_name
+
+    if best_name is None:
+        msg = f"Metric '{metric_name}' not found in report for any model."
+        raise ValueError(msg)
+
+    models_by_name = getattr(report, "models_by_name", None)
+    if isinstance(models_by_name, dict) and best_name in models_by_name:
+        model = models_by_name[best_name]
+        return cast("Model", model)
+
+    msg = (
+        "The report does not contain attached models. "
+        "Re-run evaluation with evaluate_offline so that models are attached, "
+        "or select using the model name from report keys."
+    )
+    raise ValueError(msg)
