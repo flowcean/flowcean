@@ -1,15 +1,54 @@
 import logging
 
 import polars as pl
+from flowcean.core import Transform
 from typing_extensions import override
-
-from flowcean.core.transform import Transform
 
 logger = logging.getLogger(__name__)
 
 
 class SliceTimeSeries(Transform):
+    """Slices a time series at given slice points.
+
+    The transform takes two columns as input: 'time_series' and 'slice_points.'
+    The 'time_series' column is sliced at the points specified by the 'time'
+    entry of the 'slice_points' column. The result is a new time series column
+    where each entry contains only the values from the original time series
+    that fall between the specified slice points.
+
+    Suppose you have a dataframe with a single line entry as follows:
+
+    |time_series                |slice_points               |
+    |---------------------------|---------------------------|
+    |[(00:00:03, 1),            |[(00:00:05, 0),            |
+    | (00:00:04, 2),            | (00:00:08, 1)]            |
+    | (00:00:06, 7),            |                           |
+    | (00:00:09, 0)]            |                           |
+
+    Applying the slice time series transform results in a multi-line dataframe,
+    where each line corresponds to a slice point:
+
+    |time_series                |slice_points               |
+    |---------------------------|---------------------------|
+    |[(00:00:03, 1),            |[(00:00:05, 0)]            |
+    | (00:00:04, 2)]            |                           |
+    |[(00:00:06, 7)]            |[(00:00:08, 1)]            |
+
+    The transform operates line-wise, meaning that each line in the input
+    dataframe is processed independently. The resulting dataframe will have
+    multiple lines depending on the number of slice points specified in each
+    line.
+
+    """
+
     def __init__(self, time_series: str, slice_points: str) -> None:
+        """Initialize the SliceTimeSeries transform.
+
+        Args:
+            time_series: the time series column to slice.
+            slice_points: the column that specifies the slice points.
+
+        """
         super().__init__()
         self.time_series = time_series
         self.slice_points = slice_points

@@ -11,7 +11,7 @@ from custom_learners.image_based_lightning_learner import (
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
-from custom_transforms.slice_time_series import SliceTimeSeries
+from flowcean.polars.transforms.slice_time_series import SliceTimeSeries
 from omegaconf import DictConfig, ListConfig
 
 from flowcean.core import Lambda, Report, Transform, evaluate_offline
