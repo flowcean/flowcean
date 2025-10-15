@@ -10,4 +10,4 @@ These are networked computer systems (*cyber*) that interact directly with the e
 The goal of the AGenC project is to create a toolkit with standardized methods and interoperable technology solutions for modeling CPS across various application areas.
 AGenC stands for *A*utomatic *Gen*eration of Models for Prediction, Testing, and Monitoring of *C*yber-Physical Systems.
 
-This work is funded by BMBF project AGenC no. 01IS22047A.
+This work is funded by BMBF project AGenC no. 16IS22047A.

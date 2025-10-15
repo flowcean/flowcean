@@ -50,7 +50,7 @@ If you use Flowcean in your research or project, please consider citing the foll
 
 ## Acknowledgement
 
-This work has been funded by BMBF project AGenC no. 01IS22047A
+This work has been funded by BMBF project AGenC no. 16IS22047A
 
 ![BMBF](assets/BMBF-light.svg#only-light)
 ![BMBF](assets/BMBF-dark.svg#only-dark)
