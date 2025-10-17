@@ -69,7 +69,7 @@ def map_to_dataframe(
 class TestOdeEnvironment(unittest.TestCase):
     def test_length(self) -> None:
         environment = OdeEnvironment(
-            SimpleSystem(t=0.0, state=SimpleState(x=1.0)),
+            SimpleSystem(t0=0.0, x0=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
         loaded_data = collect(environment, 11)
@@ -85,7 +85,7 @@ class TestOdeEnvironment(unittest.TestCase):
         )
 
         environment = OdeEnvironment(
-            SimpleSystem(t=0.0, state=SimpleState(x=1.0)),
+            SimpleSystem(t0=0.0, x0=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
         loaded_data = collect(environment, 5).observe().collect()
@@ -119,7 +119,7 @@ class TestOdeEnvironment(unittest.TestCase):
         )
 
         environment = OdeEnvironment(
-            TimeDependentSystem(t=0.0, state=SimpleState(x=1.0)),
+            TimeDependentSystem(t0=0.0, x0=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
         loaded_data = collect(environment, 4).observe().collect()
@@ -135,7 +135,7 @@ class TestOdeEnvironment(unittest.TestCase):
     @pytest.mark.filterwarnings("ignore:invalid value encountered in sqrt")
     def test_integration_error(self) -> None:
         environment = OdeEnvironment(
-            NonIntegrableSystem(t=0.0, state=SimpleState(x=1.0)),
+            NonIntegrableSystem(t0=0.0, x0=SimpleState(x=1.0)),
             map_to_dataframe=map_to_dataframe,
         )
         with pytest.raises(IntegrationError):

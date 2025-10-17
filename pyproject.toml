@@ -38,6 +38,7 @@ dependencies = [
   "polars-u64-idx>=1.32.3",
   "cloudpickle>=3.1.1",
   "rich>=14.1.0",
+  "diffrax>=0.7.0",
 ]
 
 [project.optional-dependencies]
