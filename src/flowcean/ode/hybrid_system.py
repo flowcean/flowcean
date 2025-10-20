@@ -165,7 +165,8 @@ class SimulationResult:
         Returns:
             Tuple of times and states.
         """
-        ts = jnp.arange(self.solution.t0, self.solution.t1, dt)
+        t0, t1 = self.solution.ts[0], self.solution.ts[1]
+        ts = jnp.arange(t0, t1, dt)
         ys = jax.vmap(self.evaluate)(ts)
         return ts, ys
 
