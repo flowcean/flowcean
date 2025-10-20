@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -15,6 +16,8 @@ from diffrax import AbstractSolver, SaveAt, diffeqsolve
 from jaxtyping import PyTree
 
 from flowcean.ode.ode_environment import IntegrationError
+
+logger = logging.getLogger(__name__)
 
 RealScalarLike = bool | int | float | jax.Array | np.ndarray
 State = PyTree
@@ -95,6 +98,17 @@ class HybridSystem:
                     )
                     if fired
                 )
+                event_mask = jnp.array(jtu.tree_leaves(solution.event_mask))
+                triggered = jnp.nonzero(event_mask)[0]
+                if len(triggered) == 0:
+                    msg = "no guard triggered, but solver reported event"
+                    raise RuntimeError(msg)
+                if len(triggered) > 1:
+                    logger.warning(
+                        "taking the first of multiple guards triggered: %s",
+                        triggered,
+                    )
+                event_i = int(triggered[0])
                 if solution.ts is None or solution.ys is None:
                     msg = "Expected solution data to be available after event"
                     raise RuntimeError(msg)
@@ -105,6 +119,8 @@ class HybridSystem:
                 mode = guard.target_mode
                 if guard.reset is not None:
                     x = guard.reset(t_event, x_event, None)
+                else:
+                    x = x_event
 
                 t += t_event - t0_mode
                 t0_mode = 0
@@ -207,16 +223,76 @@ if __name__ == "__main__":
         _h, v = x
         return jnp.array([0.000001, -0.9 * v])
 
-    guard = Guard(
-        condition=guard_height,
-        target_mode="falling",
-        reset=event_bounce,
+    bouncing_ball = HybridSystem(
+        {
+            "falling": Mode(
+                flow=flow_falling,
+                guards=[
+                    Guard(
+                        condition=guard_height,
+                        target_mode="falling",
+                        reset=event_bounce,
+                    ),
+                ],
+            ),
+        },
     )
 
-    system = HybridSystem({"falling": Mode(flow=flow_falling, guards=[guard])})
-    traces = system.simulate(
-        mode0="falling",
-        x0=jnp.array([8.0, 12.0]),
+    def flow_cooling(t: RealScalarLike, x: PyTree, args: PyTree) -> PyTree:
+        _ = t, x, args
+        return jnp.array([-2])
+
+    def flow_heating(t: RealScalarLike, x: PyTree, args: PyTree) -> PyTree:
+        _ = t, x, args
+        return jnp.array([10])
+
+    def guard_temp_high(
+        t: RealScalarLike,
+        x: PyTree,
+        args: PyTree,
+        **kwargs: PyTree,
+    ) -> PyTree:
+        _ = args, kwargs
+        temp = x[0]
+        return jnp.maximum(temp - 22.0, t - 0.5)
+
+    def guard_temp_low(
+        t: RealScalarLike,
+        x: PyTree,
+        args: PyTree,
+        **kwargs: PyTree,
+    ) -> PyTree:
+        _ = args, kwargs
+        temp = x[0]
+        return jnp.minimum(18.0 - temp, t - 1.0)
+
+    guard_low = Guard(
+        condition=guard_temp_low,
+        target_mode="heating",
+        reset=None,
+    )
+
+    guard_high = Guard(
+        condition=guard_temp_high,
+        target_mode="cooling",
+        reset=None,
+    )
+
+    boiler = HybridSystem(
+        {
+            "heating": Mode(
+                flow=flow_heating,
+                guards=[guard_high],
+            ),
+            "cooling": Mode(
+                flow=flow_cooling,
+                guards=[guard_low],
+            ),
+        },
+    )
+    traces = boiler.simulate(
+        mode0="heating",
+        x0=jnp.array([12.0]),
         t0=0.0,
         t1=10.0,
         dt0=0.01,
