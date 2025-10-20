@@ -1,5 +1,6 @@
 from collections.abc import Callable, Sequence
 
+import diffrax
 from diffrax import (
     AbstractSolver,
     AbstractStepSizeController,
@@ -14,6 +15,22 @@ from jaxtyping import PyTree
 from typing_extensions import override
 
 from flowcean.core.environment.offline import OfflineEnvironment
+
+
+class IntegrationError(Exception):
+    """Error while integrating an ODE.
+
+    This exception is raised when an error occurs while integrating an ordinary
+    differential equation.
+    """
+
+    def __init__(self, result: diffrax.RESULTS) -> None:
+        """Initialize the exception.
+
+        Args:
+            result: The result of the integration attempt.
+        """
+        super().__init__(f"ODE integration failed with result: {result}")
 
 
 class OdeEnvironment(OfflineEnvironment):
@@ -80,4 +97,6 @@ class OdeEnvironment(OfflineEnvironment):
             saveat=SaveAt(ts=self.ts),
             stepsize_controller=self.stepsize_controller,
         )
+        if solution.result != diffrax.RESULTS.successful:
+            raise IntegrationError(solution.result)
         return (solution.ts, solution.ys)
