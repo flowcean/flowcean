@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 RealScalarLike = bool | int | float | jax.Array | np.ndarray
 State = PyTree
 FlowFn = Callable[[RealScalarLike, State, Any], State]
-CondFn = Callable[[float, State, Any], float | bool]
-ResetFn = Callable[[float, State, Any], State]
+CondFn = Callable[[RealScalarLike, State, Any], RealScalarLike | bool]
+ResetFn = Callable[[RealScalarLike, State, Any], State]
 
 
 @dataclass
@@ -36,7 +36,6 @@ class Guard:
 class Mode(eqx.Module):
     flow: FlowFn
     guards: Sequence[Guard]
-    args: Any | None = None
 
 
 class HybridSystem:
@@ -165,6 +164,9 @@ class SimulationResult:
         Returns:
             Tuple of times and states.
         """
+        if self.solution.ts is None:
+            msg = "solution times are not available"
+            raise RuntimeError(msg)
         t0, t1 = self.solution.ts[0], self.solution.ts[1]
         ts = jnp.arange(t0, t1, dt)
         ys = jax.vmap(self.evaluate)(ts)
@@ -192,7 +194,8 @@ def rollout(
         modes = pl.Series([trace.mode] * n)
         df = pl.DataFrame(
             {
-                "time": np.array(ts + trace.t0),
+                "t": np.array(ts + trace.t0),
+                "t_mode": np.array(ts),
                 **{f"x{i}": np.array(ys[:, i]) for i in range(ys.shape[1])},
                 "mode": modes,
             },
@@ -200,115 +203,3 @@ def rollout(
         data = pl.concat([data, df], how="vertical")
 
     return data
-
-
-if __name__ == "__main__":
-
-    def flow_falling(t: RealScalarLike, x: PyTree, args: PyTree) -> PyTree:
-        _ = t, args
-        _, v = x
-        return jnp.array([v, -9.81])
-
-    def guard_height(
-        t: RealScalarLike,
-        x: PyTree,
-        args: PyTree,
-        **kwargs: PyTree,
-    ) -> PyTree:
-        _ = t, args, kwargs
-        h, _ = x
-        return h
-
-    def event_bounce(t: RealScalarLike, x: PyTree, args: PyTree) -> PyTree:
-        _ = t, args
-        _h, v = x
-        return jnp.array([0.000001, -0.9 * v])
-
-    bouncing_ball = HybridSystem(
-        {
-            "falling": Mode(
-                flow=flow_falling,
-                guards=[
-                    Guard(
-                        condition=guard_height,
-                        target_mode="falling",
-                        reset=event_bounce,
-                    ),
-                ],
-            ),
-        },
-    )
-
-    def flow_cooling(t: RealScalarLike, x: PyTree, args: PyTree) -> PyTree:
-        _ = t, x, args
-        return jnp.array([-2])
-
-    def flow_heating(t: RealScalarLike, x: PyTree, args: PyTree) -> PyTree:
-        _ = t, x, args
-        return jnp.array([10])
-
-    def guard_temp_high(
-        t: RealScalarLike,
-        x: PyTree,
-        args: PyTree,
-        **kwargs: PyTree,
-    ) -> PyTree:
-        _ = args, kwargs
-        temp = x[0]
-        return jnp.maximum(temp - 22.0, t - 0.5)
-
-    def guard_temp_low(
-        t: RealScalarLike,
-        x: PyTree,
-        args: PyTree,
-        **kwargs: PyTree,
-    ) -> PyTree:
-        _ = args, kwargs
-        temp = x[0]
-        return jnp.minimum(18.0 - temp, t - 1.0)
-
-    guard_low = Guard(
-        condition=guard_temp_low,
-        target_mode="heating",
-        reset=None,
-    )
-
-    guard_high = Guard(
-        condition=guard_temp_high,
-        target_mode="cooling",
-        reset=None,
-    )
-
-    boiler = HybridSystem(
-        {
-            "heating": Mode(
-                flow=flow_heating,
-                guards=[guard_high],
-            ),
-            "cooling": Mode(
-                flow=flow_cooling,
-                guards=[guard_low],
-            ),
-        },
-    )
-    traces = boiler.simulate(
-        mode0="heating",
-        x0=jnp.array([12.0]),
-        t0=0.0,
-        t1=10.0,
-        dt0=0.01,
-    )
-    data = rollout(traces, dt=0.1)
-
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots()
-    ax.scatter(
-        x=data["time"],
-        y=data["x0"],
-        c=data["mode"].cast(pl.Categorical).to_physical(),
-        cmap="viridis",
-        label="Height",
-    )
-
-    plt.show()

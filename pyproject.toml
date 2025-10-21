@@ -97,6 +97,7 @@ members = [
   "examples/linear_data",
   "examples/one_tank",
   "examples/robot_localization_failure",
+  "examples/hybrid_systems",
 ]
 
 [tool.hatch.build.targets.wheel]

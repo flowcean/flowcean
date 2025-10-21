@@ -1,0 +1,26 @@
+bouncing_ball:
+  system:
+    restitution: 0.9
+    gravity: 9.81
+    epsilon: 1e-6
+  x0:
+    - 10.0 # height
+    - 0.0 # velocity
+  t0: 0.0
+  t1: 5.0
+  dt0: 0.01
+  dt: 0.1
+
+boiler:
+  system:
+    x_ref: 20.0
+    t_on: 1.0
+    t_off: 1.5
+    heating_rate: 10.0
+    cooling_rate: -2.0
+  mode0: heating
+  x0: 12.0 # temperature
+  t0: 0.0
+  t1: 10.0
+  dt0: 0.01
+  dt: 0.1
