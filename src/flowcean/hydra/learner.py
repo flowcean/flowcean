@@ -1,5 +1,5 @@
 import logging
-from copy import deepcopy
+from collections.abc import Callable
 
 import numpy as np
 import polars as pl
@@ -16,18 +16,24 @@ logger = logging.getLogger(__name__)
 
 
 class HyDRALearner(SupervisedLearner):
-    regressor: SupervisedIncrementalLearner
+    regressor_factory: Callable[[], SupervisedIncrementalLearner]
     threshold: float
+    start_width: int
+    step_width: int
 
     def __init__(
         self,
-        regressor: SupervisedIncrementalLearner,
+        regressor_factory: Callable[[], SupervisedIncrementalLearner],
         threshold: float,
+        start_width: int = 10,
+        step_width: int = 5,
     ) -> None:
         # Additional initialization for HyDRA if needed
         super().__init__()
-        self.regressor = regressor
+        self.regressor_factory = regressor_factory
         self.threshold = threshold
+        self.start_width = start_width
+        self.step_width = step_width
 
     def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> HyDRAModel:
         # Implement the learning process specific to HyDRA
@@ -49,11 +55,11 @@ class HyDRALearner(SupervisedLearner):
                 output_columns,
                 input_columns,
                 threshold=self.threshold,
-                start_width=10,
-                step_width=5,
+                start_width=self.start_width,
+                step_width=self.step_width,
             )
 
-            regressor_instance = deepcopy(self.regressor)
+            regressor_instance = self.regressor_factory()
 
             model = segmentor.segment(trajectory, regressor_instance)
 

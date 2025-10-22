@@ -20,9 +20,9 @@ class Segmentor:
         self,
         target: list[str],
         inputs: list[str],
-        start_width: int = 10,
-        step_width: int = 5,
-        threshold: float = 0.01,
+        start_width: int,
+        step_width: int,
+        threshold: float,
     ) -> None:
         self.start_width = start_width
         self.step_width = step_width
