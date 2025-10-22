@@ -10,12 +10,20 @@ class CNN(lightning.LightningModule):
         image_size: int,
         in_channels: int,
         learning_rate: float,
-        pos_weight: torch.Tensor | None = None,
+        pos_weight: torch.Tensor | None = None,  ############# New param added
     ) -> None:
         super().__init__()
         self.image_size = image_size
         self.in_channels = in_channels
         self.learning_rate = learning_rate
+        # self.pos_weight = torch.tensor(3.0)  #################
+        ################################################
+        default_pos_weight = torch.tensor([1.0])  # must be a 1D tensor
+        self.register_buffer(
+            "pos_weight",
+            pos_weight if pos_weight is not None else default_pos_weight,
+        )
+        ################################################
         self.conv_layers = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -24,7 +32,6 @@ class CNN(lightning.LightningModule):
             nn.ReLU(),
             nn.MaxPool2d(2),
         )
-        self.pos_weight = pos_weight
 
         # Make it resolution-agnostic
         self.gap = nn.AdaptiveAvgPool2d(1)  # -> [B, 64, 1, 1]
@@ -48,15 +55,29 @@ class CNN(lightning.LightningModule):
     ) -> torch.Tensor:
         inputs, targets = batch
         outputs = self(inputs)
-
+        #####
+        with torch.no_grad():
+            probs = torch.sigmoid(outputs)
+            # print(
+            #     f"Batch stats → logits: mean={outputs.mean().item():.3f}, "
+            #     f"min={outputs.min().item():.3f}, max={outputs.max().item():.3f}, "
+            #     f"sigmoid_mean={probs.mean().item():.3f}",
+            # )
+            print(
+                f"Positives>0.5: {(probs > 0.5).float().mean().item():.3f}, "
+                f"Sigmoid mean={probs.mean().item():.3f}",
+            )
+        ###
         if targets.dim() == 1:
             targets = targets.unsqueeze(1)
         targets = targets.float()
-
+        # print(
+        #     f"Device check — outputs: {outputs.device}, pos_weight: {self.pos_weight.device}"
+        # )  #############
         loss = nn.functional.binary_cross_entropy_with_logits(
             outputs,
             targets,
-            pos_weight=self.pos_weight,
+            pos_weight=self.pos_weight * 10.0,  ####
         )
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         return loss
