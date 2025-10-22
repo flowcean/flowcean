@@ -161,18 +161,16 @@ class ImageBasedPyTorchModel(Model):
         self.binary_classification_threshold = binary_classification_threshold
 
     @override
-<<<<<<< HEAD
-    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
-=======
     def predict(
-        self, input_features: pl.LazyFrame, threshold: float | None = None
+        self,
+        input_features: pl.LazyFrame,
+        threshold: float | None = None,
     ) -> pl.LazyFrame:
         current_threshold = (
             threshold
             if threshold is not None
             else self.binary_classification_threshold
         )
->>>>>>> 6b39cec (Save work (wip))
         dataset = FeatureImagesData(
             input_features.collect(),
             image_size=self.image_size,
