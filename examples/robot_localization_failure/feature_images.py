@@ -255,7 +255,7 @@ class FeatureImagesData(Dataset, Sized):
             particles,
             width=image_width,
             height=image_height,
-            width_meters=width_meters,
+            width_meters=width_meters,  # 1,  # width_meters,
             robot_position=position,
             robot_orientation=orientation,
         )
@@ -284,6 +284,43 @@ class FeatureImagesData(Dataset, Sized):
             image_height=self.image_size,
             width_meters=self.width_meters,
         )
+
+        #######
+        # Normalize each channel
+        map_image = map_image.astype(np.float32)
+        scan_image = scan_image.astype(np.float32)
+        particle_image = particle_image.astype(np.float32)
+
+        # Map: boolean → 0/1
+        if map_image.max() > 1:
+            map_image /= 255.0
+
+        # Scan: normalize to [0,1]
+        if scan_image.max() > 0:
+            scan_image /= scan_image.max()
+
+        # Particle: normalize to [0,1] with contrast amplification
+        if particle_image.max() > 0:
+            particle_image /= particle_image.max()
+
+            # Amplify visibility (tune factor)
+            # amplification_factor = 20.0  # try 5, 10, 20
+            # particle_image = np.clip(
+            #     particle_image * amplification_factor,
+            #     0,
+            #     1.0,
+            # )
+
+            # Optional: apply small Gaussian blur to make clusters continuous
+            # (uncomment if available)
+            # import cv2
+            # particle_image = cv2.GaussianBlur(particle_image, (3, 3), 0)
+
+            # Optional: log-scale boost to highlight faint regions
+            # particle_image = np.log1p(particle_image * 20) / np.log1p(20)
+
+        #######
+
         inputs = np.stack(
             [
                 map_image,

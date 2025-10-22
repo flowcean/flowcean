@@ -4762,6 +4762,7 @@ dependencies = [
     { name = "plotly" },
     { name = "polars-u64-idx" },
     { name = "pyqt6" },
+    { name = "scikit-learn" },
 ]
 
 [package.metadata]
@@ -4776,6 +4777,7 @@ requires-dist = [
     { name = "plotly", specifier = ">=6.0.1" },
     { name = "polars-u64-idx", specifier = ">=1.32.3" },
     { name = "pyqt6", specifier = ">=6.9.0" },
+    { name = "scikit-learn", specifier = ">=1.7.1" },
 ]
 
 [[package]]

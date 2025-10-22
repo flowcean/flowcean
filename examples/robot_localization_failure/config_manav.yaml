@@ -1,0 +1,49 @@
+rosbag:
+  training_paths:
+    # - recordings/test_data/test_1/training_data_half/rec_20250922_152613_id_01 # warehouse
+    # - recordings/test_data/test_1/training_data_half/rec_20250922_152613_id_02 # warehouse
+    # - recordings/test_data/test_1/training_data_half/rec_20250923_133420_id_01   # symmetric map 1
+    # - recordings/test_data/test_1/training_data_half/rec_20250923_133420_id_02   # symmetric map 1
+    - recordings/test_data/test_1/training_data_half/rec_20250923_135805_id_01     # unsymmetric map 1
+    - recordings/test_data/test_1/training_data_half/rec_20250923_135805_id_02     # unsymmetric map 1
+
+  evaluation_paths:
+    # - recordings/test_data/test_1/testing_data_half/rec_20250922_155923_id_01 # warehouse
+    # - recordings/test_data/test_1/testing_data_half/rec_20250922_155923_id_02 # warehouse
+    # - recordings/test_data/test_1/testing_data_half/rec_20250923_112433_id_01   # symmetric map 1
+    # - recordings/test_data/test_1/testing_data_half/rec_20250923_112433_id_02   # symmetric map 1 
+    - recordings/test_data/test_1/testing_data_half/rec_20250923_142005_id_01     # unsymmetric map 1
+    - recordings/test_data/test_1/testing_data_half/rec_20250923_142005_id_02    # unsymmetric map 1
+
+
+  message_paths:
+    - ros_msgs/sensor_msgs/msg/LaserScan.msg
+    - ros_msgs/nav2_msgs/msg/Particle.msg
+    - ros_msgs/nav2_msgs/msg/ParticleCloud.msg
+localization:
+  position_threshold: 0.4
+  heading_threshold: 0.4
+architecture:
+  image_size: 512
+  width_meters: 20.0 #2.0 #20.0
+learning:
+  batch_size: 64
+  learning_rate: 0.0001
+  epochs: 50
+  preload: true
+  disk_cache_dir: "learning_cache"
+  model_path: "models/robot_localization.fml"
+optuna:
+  storage: "sqlite:///optuna.db"
+  trials: 30 #30
+  hyperparameters:
+    learning_rate:
+      low: 1e-5
+      high: 1e-2
+    batch_size:
+      choices: [16,32,64,128] #[32, 64, 128] # 256
+    image_size:
+      choices: [256, 512, 768]
+    width_meters:
+      low: 5.0
+      high: 50.0

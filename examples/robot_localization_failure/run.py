@@ -19,7 +19,7 @@ def main() -> None:
         train_data=samples_train,
         config=config,
     )
-    report = evaluate(model=model, test_data=samples_eval)
+    report = evaluate(model=model, test_data=samples_eval, config=config)
     print(report)
     # Save the model
     model_path = Path(config.learning.model_path)

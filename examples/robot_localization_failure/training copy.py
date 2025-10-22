@@ -5,7 +5,6 @@ from os import PathLike
 from pathlib import Path
 
 import polars as pl
-import torch
 from architectures.cnn import CNN
 from custom_learners.image_based_lightning_learner import (
     ImageBasedLightningLearner,
@@ -14,12 +13,17 @@ from custom_learners.image_based_lightning_learner import (
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
+from custom_transforms.slice_time_series import SliceTimeSeries
+from custom_transforms.zero_order_hold_matching import ZeroOrderHold
 from omegaconf import DictConfig, ListConfig
 
-from flowcean.core import Lambda, Report, Transform, evaluate_offline
-from flowcean.polars import DataFrame, Drop, SliceTimeSeries, ZeroOrderHold
+from flowcean.core import Report, Transform
+from flowcean.core.strategies import evaluate_offline
+from flowcean.core.transform import Lambda
+from flowcean.polars import DataFrame
+from flowcean.polars.transforms.drop import Drop
 from flowcean.ros import load_rosbag
-from flowcean.sklearn import (
+from flowcean.sklearn.metrics.classification import (
     Accuracy,
     ClassificationReport,
     ConfusionMatrix,
@@ -238,55 +242,80 @@ def collect_data(
     return (samples_train, samples_eval)
 
 
+#### Previous train function
+# def train(
+#     train_data: pl.DataFrame,
+#     config: DictConfig | ListConfig,
+# ) -> ImageBasedPyTorchModel:
+#     # check if disk cache dir is empty, if no, remove its contents
+#     if config.learning.disk_cache_dir:
+#         disk_cache_path = Path(config.learning.disk_cache_dir)
+#         if disk_cache_path.exists() and any(disk_cache_path.iterdir()):
+#             logger.info(
+#                 "Clearing existing disk cache directory: %s",
+#                 disk_cache_path,
+#             )
+#             for item in disk_cache_path.iterdir():
+#                 if item.is_dir():
+#                     for subitem in item.iterdir():
+#                         subitem.unlink()
+#                     item.rmdir()
+#                 else:
+#                     item.unlink()
+#         disk_cache_path.mkdir(parents=True, exist_ok=True)
+#     learner = ImageBasedLightningLearner(
+#         module=CNN(
+#             image_size=config.architecture.image_size,
+#             in_channels=3,
+#             learning_rate=config.learning.learning_rate,
+#         ),
+#         batch_size=config.learning.batch_size,
+#         max_epochs=config.learning.epochs,
+#         image_size=config.architecture.image_size,
+#         width_meters=config.architecture.width_meters,
+#         preload=config.learning.preload,
+#         disk_cache_dir=config.learning.disk_cache_dir,
+#     )
+#     logger.info("Training model for %s epochs", config.learning.epochs)
+#     return learner.learn(
+#         inputs=train_data.drop(["is_delocalized"]),
+#         outputs=train_data.select(["is_delocalized"]),
+#     )
+
+### New train function to handle imbalance
+import torch
+
+
 def train(
     train_data: pl.DataFrame,
     config: DictConfig | ListConfig,
 ) -> ImageBasedPyTorchModel:
-    # check if disk cache dir is empty, if no, remove its contents
-    if config.learning.disk_cache_dir:
-        disk_cache_path = Path(config.learning.disk_cache_dir)
-        if disk_cache_path.exists() and any(disk_cache_path.iterdir()):
-            logger.info(
-                "Clearing existing disk cache directory: %s",
-                disk_cache_path,
-            )
-            for item in disk_cache_path.iterdir():
-                if item.is_dir():
-                    for subitem in item.iterdir():
-                        subitem.unlink()
-                    item.rmdir()
-                else:
-                    item.unlink()
-        disk_cache_path.mkdir(parents=True, exist_ok=True)
-    true_counts = (
-        train_data["is_delocalized"]
-        .value_counts()
-        .filter(pl.col("is_delocalized") == True)
-        .select("count")
-        .item()
+    # Count samples by class
+    class_counts = train_data["is_delocalized"].value_counts()
+    counts_dict = dict(
+        zip(
+            class_counts["is_delocalized"], class_counts["count"], strict=False
+        )
     )
-    false_counts = (
-        train_data["is_delocalized"]
-        .value_counts()
-        .filter(pl.col("is_delocalized") == False)
-        .select("count")
-        .item()
-    )
-    ratio = 1.0 * false_counts / true_counts
+
+    num_neg = counts_dict.get(False, 1)
+    num_pos = counts_dict.get(True, 1)
+
+    # Calculate pos_weight for BCEWithLogitsLoss
+    # Formula: weight = num_neg / num_pos
+    pos_weight = torch.tensor([num_neg / num_pos], dtype=torch.float32)
+
     print(
-        "Negative to Positive ratio:",
-        ratio,
+        f"📊 Class imbalance: {num_neg} negative / {num_pos} positive → pos_weight = {pos_weight.item():.2f}"
     )
+
+    # Initialize learner with weighted CNN
     learner = ImageBasedLightningLearner(
         module=CNN(
             image_size=config.architecture.image_size,
             in_channels=3,
             learning_rate=config.learning.learning_rate,
-            pos_weight=torch.tensor(
-                [ratio],
-                dtype=torch.float32,
-                device="cuda" if torch.cuda.is_available() else "cpu",
-            ),
+            pos_weight=pos_weight,  # 👈 Pass weight here
         ),
         batch_size=config.learning.batch_size,
         max_epochs=config.learning.epochs,
@@ -295,84 +324,22 @@ def train(
         preload=config.learning.preload,
         disk_cache_dir=config.learning.disk_cache_dir,
     )
-    logger.info("Training model for %s epochs", config.learning.epochs)
+
     return learner.learn(
         inputs=train_data.drop(["is_delocalized"]),
         outputs=train_data.select(["is_delocalized"]),
     )
 
 
-def evaluate(
-    model: ImageBasedPyTorchModel,
-    test_data: pl.DataFrame,
-    config: DictConfig | ListConfig,
-) -> Report:
-    from feature_images import DiskCaching, FeatureImagesData
-
-    # Define base dataset
-    base_dataset = FeatureImagesData(
-        inputs=test_data.drop(["is_delocalized"]),
-        outputs=test_data.select(["is_delocalized"]),
-        image_size=config.architecture.image_size,
-        width_meters=config.architecture.width_meters,
-    )
-
-    # Get cache directory from config
-    eval_cache_dir = getattr(config.learning, "eval_cache_dir", None)
-    clear_eval_cache = getattr(config.learning, "clear_eval_cache", False)
-
-    dataset = base_dataset  # default
-
-    if eval_cache_dir:
-        eval_cache_path = Path(eval_cache_dir)
-        eval_cache_path.mkdir(parents=True, exist_ok=True)
-
-        # Optionally clear cache
-        if clear_eval_cache and any(eval_cache_path.iterdir()):
-            logger.info(
-                "Clearing existing evaluation cache: %s",
-                eval_cache_path,
-            )
-            for item in eval_cache_path.iterdir():
-                if item.is_dir():
-                    for subitem in item.iterdir():
-                        subitem.unlink()
-                    item.rmdir()
-                else:
-                    item.unlink()
-
-        # Wrap in DiskCaching for re-use
-        dataset = DiskCaching(base_dataset, eval_cache_path)
-
-        # Warmup (precompute all .pt files)
-        if config.learning.preload:
-            if not any(eval_cache_path.iterdir()):
-                logger.info("Precomputing evaluation cache...")
-                dataset.warmup(show_progress=True)
-            else:
-                logger.info(
-                    "Using existing cached tensors from %s",
-                    eval_cache_path,
-                )
-
-    # Log dataset size
-    logger.info("Evaluation dataset contains %d samples", len(dataset))
-
-    # Define metrics
+def evaluate(model: ImageBasedPyTorchModel, test_data: pl.DataFrame) -> Report:
     metrics = [
         Accuracy(),
         ClassificationReport(),
-        FBetaScore(beta=0.5),
+        FBetaScore(beta=0.5),  # 1.0
         PrecisionScore(),
         Recall(),
         ConfusionMatrix(normalize=True),
     ]
-
-    # Use cached dataset directly if available
-    data_source = (
-        dataset if isinstance(dataset, DiskCaching) else DataFrame(test_data)
-    )
-
     logger.info("Evaluating model on test data")
     return evaluate_offline(
         model,
@@ -381,27 +348,3 @@ def evaluate(
         outputs=["is_delocalized"],
         metrics=metrics,
     )
-
-
-# Original evaluate function before adding evaluation caching
-# def evaluate(
-#     model: ImageBasedPyTorchModel,
-#     test_data: pl.DataFrame,
-# ) -> Report:
-
-#     metrics = [
-#         Accuracy(),
-#         ClassificationReport(),
-#         FBetaScore(beta=0.5),  # 1.0
-#         PrecisionScore(),
-#         Recall(),
-#         ConfusionMatrix(normalize=True),
-#     ]
-#     logger.info("Evaluating model on test data")
-#     return evaluate_offline(
-#         model,
-#         DataFrame(test_data),
-#         inputs=["/map", "/scan", "/particle_cloud", "/amcl_pose"],
-#         outputs=["is_delocalized"],
-#         metrics=metrics,
-#     )
