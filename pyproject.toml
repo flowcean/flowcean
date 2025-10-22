@@ -25,6 +25,7 @@ dependencies = [
   "opcua>=0.98.13",
   "polars[style,xlsxwriter]>=1.33.0",
   "protobuf>=5.28.2",
+  "pysr>=1.5.9",
   "river>=0.21.0",
   "rosbags>=0.10.4",
   "ruamel-yaml>=0.18.6",
