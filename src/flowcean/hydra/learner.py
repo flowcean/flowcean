@@ -98,11 +98,11 @@ def build_remaining_traces(
     """Build the remaining traces from the accurate segments.
 
     Args:
-        traces (list[DataFrame]): The list of traces.
-        accurate_segments (list[DataFrame]): The list of accurate segments.
+        traces: The list of traces.
+        accurate_segments: The list of accurate segments.
 
     Returns:
-        list[DataFrame]: The list of remaining traces.
+        The list of remaining traces.
     """
     remaining_traces = []
     for trace, segments in zip(traces, accurate_segments, strict=True):

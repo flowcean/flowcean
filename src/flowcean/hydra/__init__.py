@@ -5,4 +5,3 @@ __all__ = [
 
 from .learner import HyDRALearner
 from .model import HyDRAModel
-from .segmentor import Segmentor

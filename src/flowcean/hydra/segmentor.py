@@ -8,11 +8,11 @@ class Segmentor:
     """A class that segments traces.
 
     Attributes:
-        target (list[str]): The list of target feature names.
-        inputs (list[str]): The list of input feature names.
-        start_width (int): The starting width of the segmentation window.
-        step_width (int): The step width for enlarging the segmentation window.
-        threshold (float): The threshold for the segmentation.
+        target: The list of target feature names.
+        inputs: The list of input feature names.
+        start_width: The starting width of the segmentation window.
+        step_width: The step width for enlarging the segmentation window.
+        threshold: The threshold for the segmentation.
 
     """
 
@@ -38,11 +38,11 @@ class Segmentor:
         """Perform segmentation on the given data frame.
 
         Args:
-            data_frame (pandas.DataFrame): The data frame to be segmented.
-            learner (SupervisedIncrementalLearner): The learner to be used.
+            data_frame: The data frame to be segmented.
+            learner: The learner to be used.
 
         Returns:
-            model (Model | None): The learned model for a new mode or None if
+            The learned model for a new mode or None if
             segmentation fails.
 
         """
