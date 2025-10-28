@@ -273,10 +273,18 @@ class OPCAdapter(Adapter):
 
         def stream_data() -> bool:
             nonlocal prerecording_in_progress
+
+            # Check if streaming flag is set
+            streaming_flag = cast(
+                "bool",
+                self.client.get_values(self.streaming_flag_node)[0],
+            )
+
             # Check if we are done with pre-recording and streaming
             if (
                 not prerecording_in_progress
-                and not self.streaming_handler.is_streaming()
+                # and not self.streaming_handler.is_streaming()
+                and not streaming_flag
             ):
                 return False
 
@@ -299,7 +307,8 @@ class OPCAdapter(Adapter):
             )
 
             # Check if we are still pre-recording
-            if self.streaming_handler.is_streaming():
+            # if self.streaming_handler.is_streaming():
+            if streaming_flag:
                 prerecording_in_progress = False
             elif prerecording_in_progress:
                 # Still pre-recording
