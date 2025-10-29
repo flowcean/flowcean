@@ -2,7 +2,10 @@
 name = "hybrid-systems"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["matplotlib>=3.10.6"]
+dependencies = [
+    "flowcean",
+    "matplotlib>=3.10.6",
+]
 
 [tool.pyright]
 extends = "../../pyproject.toml"

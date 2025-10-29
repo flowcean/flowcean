@@ -1599,11 +1599,15 @@ name = "hybrid-systems"
 version = "0.1.0"
 source = { virtual = "examples/hybrid_systems" }
 dependencies = [
+    { name = "flowcean" },
     { name = "matplotlib" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "matplotlib", specifier = ">=3.10.6" }]
+requires-dist = [
+    { name = "flowcean", editable = "." },
+    { name = "matplotlib", specifier = ">=3.10.6" },
+]
 
 [[package]]
 name = "hydra-core"
