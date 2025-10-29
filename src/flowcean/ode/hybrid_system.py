@@ -155,6 +155,18 @@ class SimulationResult:
         """
         return self.solution.evaluate(t)
 
+    def is_empty(self) -> bool:
+        """Check if the simulation result is empty.
+
+        Returns:
+            True if the simulation result is empty, False otherwise.
+        """
+        return (
+            self.solution.ts is None
+            or self.solution.ys is None
+            or self.solution.ts[0] == self.solution.ts[1]
+        )
+
     def rollout(self, dt: float) -> tuple[jax.Array, jax.Array]:
         """Roll out the solution at intervals of dt.
 
@@ -189,6 +201,9 @@ def rollout(
     data = pl.DataFrame()
 
     for trace in traces:
+        if trace.is_empty():
+            logger.warning("Skipping empty trace for mode %s", trace.mode)
+            continue
         ts, ys = trace.rollout(dt=dt)
         n = ts.shape[0]
         modes = pl.Series([trace.mode] * n)
