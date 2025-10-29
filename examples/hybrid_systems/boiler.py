@@ -14,17 +14,17 @@ class Boiler(HybridSystem):
     ) -> None:
         guard_cooling_to_heating = Guard(
             # temp < x_ref and time > t_off
-            condition=lambda t, x, _args, **_kwargs: jnp.minimum(
-                -x[0] + x_ref,
-                t - t_off,
+            condition=lambda t, x, _args, **_kwargs: jnp.logical_and(
+                jnp.less_equal(x[0], x_ref),
+                jnp.greater_equal(t, t_off),
             ),
             target_mode="heating",
         )
         guard_heating_to_cooling = Guard(
             # temp > x_ref or time > t_on
-            condition=lambda t, x, _args, **_kwargs: jnp.maximum(
-                x[0] - x_ref,
-                t - t_on,
+            condition=lambda t, x, _args, **_kwargs: jnp.logical_or(
+                jnp.greater_equal(x[0], x_ref),
+                jnp.greater_equal(t, t_on),
             ),
             target_mode="cooling",
         )

@@ -11,8 +11,10 @@ class BouncingBall(HybridSystem):
         epsilon: float = 1e-6,
     ) -> None:
         bounce_guard = Guard(
-            # bounce when height == 0
-            condition=lambda _t, y, _args, **_kwargs: y[0],
+            condition=lambda _t, y, _args, **_kwargs: jnp.less_equal(
+                y[0],
+                0.0,
+            ),
             target_mode="falling",
             reset=lambda _t, y, _args: jnp.array(
                 [epsilon, -restitution * y[1]],

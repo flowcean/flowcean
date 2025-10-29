@@ -1,15 +1,23 @@
+seed: 42
+
 bouncing_ball:
   system:
     restitution: 0.9
     gravity: 9.81
     epsilon: 1e-6
+  mode0: falling
   x0:
-    - 10.0 # height
-    - 0.0 # velocity
+    min:
+      - 10.0
+      - -20.0
+    max:
+      - 20.0
+      - 20.0
   t0: 0.0
   t1: 5.0
   dt0: 0.01
   dt: 0.1
+  n_runs: 20
 
 boiler:
   system:
@@ -20,11 +28,15 @@ boiler:
     cooling_rate: -2.0
   mode0: heating
   x0:
-    - 12.0 # temperature
+    min:
+      - 0.0
+    max:
+      - 30.0
   t0: 0.0
   t1: 10.0
   dt0: 0.01
   dt: 0.1
+  n_runs: 20
 
 tank:
   system:
@@ -44,10 +56,16 @@ tank:
       - 1.0
   mode0: all_leak
   x0:
-    - 15.0
-    - 20.0
-    - 30.0
+    min:
+      - 0
+      - 0
+      - 0
+    max:
+      - 15
+      - 15
+      - 15
   t0: 0.0
   t1: 4.0
   dt0: 0.01
   dt: 0.1
+  n_runs: 20
