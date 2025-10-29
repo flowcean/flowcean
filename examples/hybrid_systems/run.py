@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import polars as pl
 from boiler import Boiler
 from bouncing_ball import BouncingBall
-from tank_system import ThreeTanks
+from tank_system import NTanks
 
 import flowcean.cli
 from flowcean.ode import rollout
@@ -96,7 +96,7 @@ def boiler() -> None:
 
 
 def tank() -> None:
-    system = ThreeTanks(**config.tank.system)
+    system = NTanks(**config.tank.system)
     traces = system.simulate(
         mode0=config.tank.mode0,
         x0=jnp.array(config.tank.x0),
@@ -114,5 +114,5 @@ if __name__ == "__main__":
     config = flowcean.cli.initialize()
 
     # bouncing_ball()
-    boiler()
-    # tank()
+    # boiler()
+    tank()
