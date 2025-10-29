@@ -21,26 +21,36 @@ class ThreeTanks(HybridSystem):
         leakage = jnp.array([l_1, l_2, l_3])
 
         leak_to_1 = Guard(
-            condition=lambda _t, x, _args, **_kwargs: x[0] - h_m,
+            condition=lambda _t, x, _args, **_kwargs: jnp.less_equal(
+                x[0],
+                h_m,
+            ),
             target_mode="flow_1",
         )
         leak_to_2 = Guard(
-            condition=lambda _t, x, _args, **_kwargs: x[1] - h_m,
+            condition=lambda _t, x, _args, **_kwargs: jnp.less_equal(
+                x[1],
+                h_m,
+            ),
             target_mode="flow_2",
         )
         leak_to_3 = Guard(
-            condition=lambda _t, x, _args, **_kwargs: x[2] - h_m,
+            condition=lambda _t, x, _args, **_kwargs: jnp.less_equal(
+                x[2],
+                h_m,
+            ),
             target_mode="flow_3",
         )
+
         all_leak = Mode(
             flow=lambda _t, x, _args: leakage * x,
             guards=[leak_to_1, leak_to_2, leak_to_3],
         )
 
         back_to_leak_1 = Guard(
-            condition=lambda t, x, _args, **_kwargs: jnp.maximum(
-                h_f - x[0],
-                t - t_m1,
+            condition=lambda t, x, _args, **_kwargs: jnp.logical_and(
+                jnp.greater_equal(x[0], h_f),
+                jnp.greater_equal(t, t_m1),
             ),
             target_mode="all_leak",
         )
@@ -50,9 +60,9 @@ class ThreeTanks(HybridSystem):
         )
 
         back_to_leak_2 = Guard(
-            condition=lambda t, x, _args, **_kwargs: jnp.maximum(
-                h_f - x[1],
-                t - t_m2,
+            condition=lambda t, x, _args, **_kwargs: jnp.logical_and(
+                jnp.greater_equal(x[1], h_f),
+                jnp.greater_equal(t, t_m2),
             ),
             target_mode="all_leak",
         )
@@ -62,9 +72,9 @@ class ThreeTanks(HybridSystem):
         )
 
         back_to_leak_3 = Guard(
-            condition=lambda t, x, _args, **_kwargs: jnp.maximum(
-                h_f - x[2],
-                t - t_m3,
+            condition=lambda t, x, _args, **_kwargs: jnp.logical_and(
+                jnp.greater_equal(x[2], h_f),
+                jnp.greater_equal(t, t_m3),
             ),
             target_mode="all_leak",
         )
@@ -72,6 +82,7 @@ class ThreeTanks(HybridSystem):
             flow=lambda _t, x, _args: jnp.array([0.0, 0.0, f_3]) + leakage * x,
             guards=[back_to_leak_3],
         )
+
         super().__init__(
             modes={
                 "all_leak": all_leak,
