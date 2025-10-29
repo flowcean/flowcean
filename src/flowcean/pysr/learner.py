@@ -32,7 +32,10 @@ class PySRLearner(SupervisedIncrementalLearner):
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> Model:
-        self.model.fit(inputs.collect(), outputs.collect())
+        dfs = pl.collect_all([inputs, outputs])
+        collected_inputs = dfs[0]
+        collected_outputs = dfs[1]
+        self.model.fit(collected_inputs, collected_outputs)
 
         # Return the trained PySRModel
         return PySRModel(self.model)
