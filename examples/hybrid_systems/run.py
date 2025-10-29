@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import polars as pl
 from boiler import Boiler
 from bouncing_ball import BouncingBall
+from tank_system import ThreeTanks
 
 import flowcean.cli
 from flowcean.ode import rollout
@@ -64,11 +65,9 @@ def plot_traces(data: pl.DataFrame) -> None:
     ax.legend(handles=scatter_handles + list(patches.values()))
 
 
-if __name__ == "__main__":
-    config = flowcean.cli.initialize()
-
-    bouncing_ball = BouncingBall(**config.bouncing_ball.system)
-    traces = bouncing_ball.simulate(
+def bouncing_ball() -> None:
+    system = BouncingBall(**config.bouncing_ball.system)
+    traces = system.simulate(
         mode0="falling",
         x0=jnp.array(config.bouncing_ball.x0),
         t0=config.bouncing_ball.t0,
@@ -80,10 +79,12 @@ if __name__ == "__main__":
     plot_traces(data)
     plt.show()
 
-    boiler = Boiler(**config.boiler.system)
-    traces = boiler.simulate(
+
+def boiler() -> None:
+    system = Boiler(**config.boiler.system)
+    traces = system.simulate(
         mode0=config.boiler.mode0,
-        x0=jnp.array([config.boiler.x0]),
+        x0=jnp.array(config.boiler.x0),
         t0=config.boiler.t0,
         t1=config.boiler.t1,
         dt0=config.boiler.dt0,
@@ -92,3 +93,26 @@ if __name__ == "__main__":
     data.write_csv("boiler.csv")
     plot_traces(data)
     plt.show()
+
+
+def tank() -> None:
+    system = ThreeTanks(**config.tank.system)
+    traces = system.simulate(
+        mode0=config.tank.mode0,
+        x0=jnp.array(config.tank.x0),
+        t0=config.tank.t0,
+        t1=config.tank.t1,
+        dt0=config.tank.dt0,
+    )
+    data = rollout(traces, dt=config.tank.dt)
+    data.write_csv("tank.csv")
+    plot_traces(data)
+    plt.show()
+
+
+if __name__ == "__main__":
+    config = flowcean.cli.initialize()
+
+    # bouncing_ball()
+    # boiler()
+    tank()

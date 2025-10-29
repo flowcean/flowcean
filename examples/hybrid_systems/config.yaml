@@ -19,8 +19,32 @@ boiler:
     heating_rate: 10.0
     cooling_rate: -2.0
   mode0: heating
-  x0: 12.0 # temperature
+  x0:
+    - 12.0 # temperature
   t0: 0.0
   t1: 10.0
+  dt0: 0.01
+  dt: 0.1
+
+tank:
+  system:
+    l_1: -1.0
+    l_2: -1.0
+    l_3: -1.0
+    f_1: 20.0
+    f_2: 20.0
+    f_3: 20.0
+    h_m: 5.0
+    h_f: 10.0
+    t_m1: 1.0
+    t_m2: 1.0
+    t_m3: 1.0
+  mode0: all_leak
+  x0:
+    - 10.0
+    - 20.0
+    - 30.0
+  t0: 0.0
+  t1: 4.0
   dt0: 0.01
   dt: 0.1
