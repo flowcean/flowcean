@@ -3,7 +3,7 @@ from collections.abc import Sequence
 
 import jax.numpy as jnp
 import numpy as np
-from boiler import Boiler
+from boiler import Boiler, BoilerNoTime
 from bouncing_ball import BouncingBall
 from tank_system import NTanks
 
@@ -74,6 +74,22 @@ def boiler() -> None:
         dt=config.boiler.dt,
     )
 
+def boilernotime() -> None:
+    logger.info("Running boiler example...")
+    system = BoilerNoTime(**config.boilernotime.system)
+    run(
+        system,
+        name="boilernotime",
+        n_runs=config.boiler.n_runs,
+        x0_min=config.boiler.x0.min,
+        x0_max=config.boiler.x0.max,
+        mode0=config.boiler.mode0,
+        t0=config.boiler.t0,
+        t1=config.boiler.t1,
+        dt0=config.boiler.dt0,
+        dt=config.boiler.dt,
+    )
+
 
 def tank() -> None:
     logger.info("Running tank example...")
@@ -100,4 +116,5 @@ if __name__ == "__main__":
 
     bouncing_ball()
     boiler()
+    boilernotime()
     tank()
