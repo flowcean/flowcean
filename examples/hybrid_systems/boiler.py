@@ -38,6 +38,7 @@ class Boiler(HybridSystem):
         )
         super().__init__(modes={"heating": heating, "cooling": cooling})
 
+
 class BoilerNoTime(HybridSystem):
     def __init__(
         self,
@@ -47,16 +48,18 @@ class BoilerNoTime(HybridSystem):
         cooling_rate: float,
     ) -> None:
         guard_cooling_to_heating = Guard(
-            # temp < x_ref and time > t_off
-            condition=lambda t, x, _args, **_kwargs: 
-                jnp.less_equal(x[0], x_min),            
-                target_mode="heating",
+            condition=lambda _t, x, _args, **_kwargs: jnp.less_equal(
+                x[0],
+                x_min,
+            ),
+            target_mode="heating",
         )
         guard_heating_to_cooling = Guard(
-            # temp > x_ref or time > t_on
-            condition=lambda t, x, _args, **_kwargs: 
-                jnp.greater_equal(x[0], x_max),
-                target_mode="cooling",
+            condition=lambda _t, x, _args, **_kwargs: jnp.greater_equal(
+                x[0],
+                x_max,
+            ),
+            target_mode="cooling",
         )
         heating = Mode(
             flow=lambda _t, _x, _args: jnp.array([heating_rate]),
