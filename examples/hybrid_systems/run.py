@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
@@ -28,6 +29,7 @@ def run(
     dt: float,
 ) -> None:
     rng = np.random.default_rng(flowcean.utils.get_seed())
+    Path("data").mkdir(parents=True, exist_ok=True)
     for n in range(n_runs):
         x0 = jnp.array(rng.uniform(x0_min, x0_max))
         traces = system.simulate(
@@ -38,7 +40,7 @@ def run(
             dt0=dt0,
         )
         data = rollout(traces, dt=dt)
-        data.write_csv(f"{name}_{n}.csv")
+        data.write_csv(f"data/{name}_{n}.csv")
 
 
 def bouncing_ball() -> None:
@@ -73,6 +75,7 @@ def boiler() -> None:
         dt0=config.boiler.dt0,
         dt=config.boiler.dt,
     )
+
 
 def boilernotime() -> None:
     logger.info("Running boiler example...")
