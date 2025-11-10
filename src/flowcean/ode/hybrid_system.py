@@ -202,7 +202,7 @@ def rollout(
 
     for trace in traces:
         if trace.is_empty():
-            logger.warning("Skipping empty trace for mode %s", trace.mode)
+            logger.debug("Skipping empty trace for mode %s", trace.mode)
             continue
         ts, ys = trace.rollout(dt=dt)
         n = ts.shape[0]
