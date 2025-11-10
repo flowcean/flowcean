@@ -1,3 +1,4 @@
+from .decision_tree import DecisionTree
 from .metrics.classification import (
     Accuracy,
     ClassificationReport,
@@ -19,6 +20,7 @@ from .regression_tree import RegressionTree
 __all__ = [
     "Accuracy",
     "ClassificationReport",
+    "DecisionTree",
     "FBetaScore",
     "MaxError",
     "MeanAbsoluteError",
