@@ -11,11 +11,13 @@ from ruamel.yaml import YAML
 from tqdm import tqdm
 from typing_extensions import Self, override
 
-from flowcean.core import OfflineEnvironment
+from flowcean.core import IncrementalEnvironment, OfflineEnvironment
 from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
 
 if TYPE_CHECKING:
     from os import PathLike
+
+    from polars._typing import ConcatMethod
 
 
 class DataFrame(OfflineEnvironment):
@@ -153,6 +155,14 @@ class DataFrame(OfflineEnvironment):
                 cache_path=cache_path,
             ),
         )
+
+    @classmethod
+    def concat(
+        cls,
+        environment: IncrementalEnvironment,
+        how: ConcatMethod = "vertical",
+    ) -> Self:
+        return cls(pl.concat(environment, how=how))
 
     @override
     def _observe(self) -> pl.LazyFrame:
