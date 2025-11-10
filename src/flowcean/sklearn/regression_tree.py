@@ -76,6 +76,7 @@ class RegressionTree(SupervisedLearner):
             export_graphviz(
                 self.regressor,
                 out_file=self.dot_graph_export_path,
+                feature_names=collected_inputs.columns,
             )
         return SciKitModel(
             self.regressor,
