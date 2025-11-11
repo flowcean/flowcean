@@ -83,5 +83,6 @@ class DecisionTree(SupervisedLearner):
             )
         return SciKitModel(
             self.classifier,
+            input_names=collected_inputs.columns,
             output_names=collected_outputs.columns,
         )

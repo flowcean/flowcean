@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
 import polars as pl
 from typing_extensions import override
@@ -19,16 +19,21 @@ class SupportsPredict(Protocol):
     def predict(self, X: Any) -> NDArray: ...  # noqa: N803 X is a standard name in sklearn
 
 
-class SciKitModel(Model):
+Estimator = TypeVar("Estimator", bound=SupportsPredict)
+
+
+class SciKitModel(Model, Generic[Estimator]):
     """A model that wraps a scikit-learn model."""
 
-    estimator: SupportsPredict
+    estimator: Estimator
+    input_names: list[str]
     output_names: list[str]
 
     def __init__(
         self,
-        estimator: SupportsPredict,
+        estimator: Estimator,
         *,
+        input_names: Iterable[str],
         output_names: Iterable[str],
         name: str | None = None,
     ) -> None:
@@ -36,13 +41,15 @@ class SciKitModel(Model):
 
         Args:
             estimator: The scikit-learn estimator.
-            output_names: The names of the output columns.
+            input_names: The names of the input features.
+            output_names: The names of the output features.
             name: The name of the model.
         """
         if name is None:
             name = estimator.__class__.__name__
         self._name = name
         self.estimator = estimator
+        self.input_names = list(input_names)
         self.output_names = list(output_names)
 
     @override
