@@ -121,6 +121,8 @@ hybrid_decision_tree = HybridDecisionTree(
     input_names=inputs,
     mode_feature_name="mode_0",
     mode_decoding=input_transform.int_to_cat or {},
+    time_feature_name="t_mode_1",
+    features=["x0_1"],
 )
 
 

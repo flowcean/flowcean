@@ -1,8 +1,10 @@
 import math
+from collections.abc import Iterator
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, TypeAlias
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 from jaxtyping import PyTree
@@ -117,36 +119,28 @@ def make_condition(
         _args: Any,
         **_kwargs: Any,
     ) -> RealScalarLike | bool:
-        ors = []
         # jax.debug.print("Evaluating condition at t={}, x={}", t, x)
-        for condition in conditions:
-            ands = []
+        def generate_edge_conditions(
+            condition: dict[FeatureName, Bound],
+        ) -> Iterator[jax.Array]:
             for feature, bound in condition.items():
                 if feature == time_feature_name:
                     value = t
-                    # jax.debug.print("  time feature {} = {}", feature, value)
                 else:
                     index = feature_to_index[feature]
                     value = x[index]
-                    # jax.debug.print("  state feature {} = {}", feature, value)
                 if bound.left is not None:
-                    ands.append(jnp.greater_equal(value, bound.left))
-                    # jax.debug.print(
-                    #     "    checking {} >= {}: {}",
-                    #     value,
-                    #     bound.left,
-                    #     ands[-1],
-                    # )
+                    yield jnp.greater_equal(value, bound.left)
                 if bound.right is not None:
-                    ands.append(jnp.less(value, bound.right))
-                    # jax.debug.print(
-                    #     "    checking {} < {}: {}",
-                    #     value,
-                    #     bound.right,
-                    #     ands[-1],
-                    # )
-            ors.append(jnp.all(jnp.array(ands)))
-        return jnp.any(jnp.array(ors))
+                    yield jnp.less(value, bound.right)
+
+        trigger = [
+            jnp.all(
+                jnp.array(list(generate_edge_conditions(condition))),
+            )
+            for condition in conditions
+        ]
+        return jnp.any(jnp.array(trigger))
 
     return condition_fn
 
@@ -157,8 +151,10 @@ class HybridDecisionTree(HybridSystem):
         flows: dict[ModeName, FlowFn],
         tree: DecisionTreeClassifier,
         input_names: list[str],
-        mode_feature_name: str,
+        mode_feature_name: FeatureName,
         mode_decoding: dict[int, ModeName],
+        time_feature_name: FeatureName,
+        features: list[FeatureName],
     ) -> None:
         paths = tree_to_paths(tree, input_names)
         transitions = path_to_transitions(
@@ -178,8 +174,8 @@ class HybridDecisionTree(HybridSystem):
                 guard = Guard(
                     condition=make_condition(
                         conditions,
-                        time_feature_name="t_mode_1",
-                        features=["x0_1"],
+                        time_feature_name=time_feature_name,
+                        features=features,
                     ),
                     target_mode=target,
                 )
