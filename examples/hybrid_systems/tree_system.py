@@ -163,15 +163,15 @@ class HybridDecisionTree(HybridSystem):
         flows: dict[ModeName, FlowFn],
         tree: DecisionTreeClassifier,
         input_names: list[str],
-        mode_feature_name: FeatureName,
+        mode_feature: FeatureName,
         mode_decoding: dict[int, ModeName],
-        time_feature_name: FeatureName,
+        time_feature: FeatureName,
         features: list[FeatureName],
     ) -> None:
         paths = tree_to_paths(tree, input_names)
         transitions = path_to_transitions(
             paths,
-            mode_feature_name,
+            mode_feature,
             mode_decoding,
         )
         modes = {
@@ -181,7 +181,7 @@ class HybridDecisionTree(HybridSystem):
                     Guard(
                         condition=make_condition(
                             conditions,
-                            time_feature_name=time_feature_name,
+                            time_feature_name=time_feature,
                             features=features,
                         ),
                         target_mode=target,
