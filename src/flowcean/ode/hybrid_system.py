@@ -90,6 +90,12 @@ class HybridSystem:
             if solution.result == diffrax.RESULTS.successful:
                 break
             if solution.result == diffrax.RESULTS.event_occurred:
+                logger.debug(
+                    "Event occurred at mode %s time interval [%f, %f]",
+                    mode,
+                    t0_mode,
+                    t1_mode,
+                )
                 event_i = next(
                     i
                     for i, fired in enumerate(
