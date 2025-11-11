@@ -3,7 +3,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, TypeAlias
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 from jaxtyping import PyTree
