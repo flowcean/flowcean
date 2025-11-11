@@ -1,4 +1,11 @@
-from .hybrid_system import Guard, HybridSystem, Mode, SimulationResult, rollout
+from .hybrid_system import (
+    Guard,
+    HybridSystem,
+    Mode,
+    SimulationResult,
+    evaluate_at,
+    rollout,
+)
 from .ode_environment import (
     OdeEnvironment,
 )
@@ -9,5 +16,6 @@ __all__ = [
     "Mode",
     "OdeEnvironment",
     "SimulationResult",
+    "evaluate_at",
     "rollout",
 ]
