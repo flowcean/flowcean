@@ -224,3 +224,43 @@ def rollout(
         data = pl.concat([data, df], how="vertical")
 
     return data
+
+
+def evaluate_at(
+    ts: Sequence[float],
+    traces: Sequence[SimulationResult],
+) -> pl.DataFrame:
+    """Evaluate the hybrid system simulation traces at specified times.
+
+    Args:
+        ts: Sequence of times at which to evaluate.
+        traces: Sequence of simulation results.
+
+    Returns:
+        DataFrame containing times, states, and modes.
+    """
+    rows = []
+
+    traces_it = iter(traces)
+    trace = next(traces_it)
+
+    for t in ts:
+        try:
+            while (
+                t > trace.t0 + trace.solution.ts[1]
+                if trace.solution.ts is not None
+                else 0.0
+            ):
+                trace = next(traces_it)
+        except StopIteration as e:
+            msg = f"Time {t} is out of bounds of the simulation traces"
+            raise ValueError(msg) from e
+
+        x = trace.evaluate(t - trace.t0)
+        row = {
+            "t": t,
+            **{f"x{i}": x[i] for i in range(x.shape[0])},
+            "mode": trace.mode,
+        }
+        rows.append(row)
+    return pl.DataFrame(rows)
