@@ -3,10 +3,10 @@ import sys
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import polars as pl
+from matplotlib.axes import Axes
 
 
-def plot_traces(data: pl.DataFrame) -> None:
-    _fig, ax = plt.subplots()
+def plot_traces(ax: Axes, data: pl.DataFrame) -> None:
     segments = (
         data.with_columns(
             (pl.col("mode") != pl.col("mode").shift(1).fill_null(""))
@@ -52,6 +52,7 @@ def plot_traces(data: pl.DataFrame) -> None:
             data["t"],
             data[state],
             label=state,
+            alpha=0.7,
         )
         scatter_handles.append(scatter)
 
@@ -63,5 +64,6 @@ def plot_traces(data: pl.DataFrame) -> None:
 if __name__ == "__main__":
     file_path = sys.argv[1]
     data = pl.read_csv(file_path)
-    plot_traces(data)
+    _fig, ax = plt.subplots()
+    plot_traces(ax, data)
     plt.show()
