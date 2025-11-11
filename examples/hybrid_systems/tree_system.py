@@ -1,34 +1,40 @@
+from __future__ import annotations
+
 import math
-from collections.abc import Iterator
-from copy import deepcopy
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import jax
 import jax.numpy as jnp
 import numpy as np
-from jaxtyping import PyTree
 from sklearn.tree import (
     DecisionTreeClassifier,
     _tree,  # pyright: ignore[reportAttributeAccessIssue]
 )
 
 from flowcean.ode import Guard, HybridSystem, Mode
-from flowcean.ode.hybrid_system import CondFn, FlowFn, RealScalarLike
+
+if TYPE_CHECKING:
+    from jaxtyping import PyTree
+
+    from flowcean.ode.hybrid_system import CondFn, FlowFn, RealScalarLike
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Bound:
     left: float | None = None
     right: float | None = None
 
-    def update_left(self, value: float) -> None:
+    def with_updated_left(self, value: float) -> Bound:
         if self.left is None or value > self.left:
-            self.left = value
+            return Bound(left=value, right=self.right)
+        return self
 
-    def update_right(self, value: float) -> None:
+    def with_updated_right(self, value: float) -> Bound:
         if self.right is None or value < self.right:
-            self.right = value
+            return Bound(left=self.left, right=value)
+        return self
 
 
 FeatureName: TypeAlias = str
@@ -57,12 +63,17 @@ def tree_to_paths(
             name = feature_name[node_id]
             threshold = tree_.threshold[node_id]
 
-            left = deepcopy(conditions)
-            left.setdefault(name, Bound()).update_right(threshold)
+            bound = conditions.get(name, Bound())
+            left = {
+                **conditions,
+                name: bound.with_updated_right(threshold),
+            }
             recurse(tree_.children_left[node_id], left)
 
-            right = deepcopy(conditions)
-            right.setdefault(name, Bound()).update_left(threshold)
+            right = {
+                **conditions,
+                name: bound.with_updated_left(threshold),
+            }
             recurse(tree_.children_right[node_id], right)
         else:
             output = np.argmax(tree_.value[node_id])
@@ -77,31 +88,24 @@ ModeName: TypeAlias = str
 
 def path_to_transitions(
     paths: list[TreePath],
-    mode_feature_name: str,
+    mode_feature_name: FeatureName,
     mode_decoding: dict[int, ModeName],
 ) -> dict[tuple[ModeName, ModeName], list[dict[FeatureName, Bound]]]:
     transitions: dict[
         tuple[ModeName, ModeName],
         list[dict[FeatureName, Bound]],
-    ] = {}
+    ] = defaultdict(list)
 
     max_mode_index = max(mode_decoding.keys())
 
     for path in paths:
         target = mode_decoding[path.output]
         mode_bound = path.conditions.pop(mode_feature_name, Bound())
-        start = (
-            math.ceil(mode_bound.left) if mode_bound.left is not None else 0
-        )
-        stop = (
-            math.ceil(mode_bound.right)
-            if mode_bound.right is not None
-            else max_mode_index + 1
-        )
-        source_modes = [mode_decoding[i] for i in range(start, stop)]
-        for source in source_modes:
-            key = (source, target)
-            transitions.setdefault(key, []).append(path.conditions)
+        start = math.ceil(mode_bound.left or 0)
+        stop = math.ceil(mode_bound.right or (max_mode_index + 1))
+        for i in range(start, stop):
+            source = mode_decoding[i]
+            transitions[(source, target)].append(path.conditions)
 
     return transitions
 
@@ -132,33 +136,28 @@ def make_condition(
         _args: Any,
         **_kwargs: Any,
     ) -> RealScalarLike | bool:
-        # jax.debug.print("Evaluating condition at t={}, x={}", t, x)
-        def generate_edge_conditions(
-            condition: dict[FeatureName, Bound],
-        ) -> Iterator[jax.Array]:
-            for feature, bound in condition.items():
-                if feature == time_feature_name:
-                    value = t
-                else:
-                    index = feature_to_index[feature]
-                    value = x[index]
+        def evaluate_condition(cond: dict[FeatureName, Bound]) -> jax.Array:
+            vals = []
+            for feature, bound in cond.items():
+                value = (
+                    t
+                    if feature == time_feature_name
+                    else x[feature_to_index[feature]]
+                )
                 if bound.left is not None:
-                    yield jnp.greater_equal(value, bound.left)
+                    vals.append(jnp.greater_equal(value, bound.left))
                 if bound.right is not None:
-                    yield jnp.less(value, bound.right)
+                    vals.append(jnp.less(value, bound.right))
+            return jnp.all(jnp.stack(vals))
 
-        trigger = [
-            jnp.all(
-                jnp.array(list(generate_edge_conditions(condition))),
-            )
-            for condition in conditions
-        ]
-        return jnp.any(jnp.array(trigger))
+        return jnp.any(jnp.stack([evaluate_condition(c) for c in conditions]))
 
     return condition_fn
 
 
 class HybridDecisionTree(HybridSystem):
+    """A hybrid system where transitions are learned from a decision tree."""
+
     def __init__(
         self,
         flows: dict[ModeName, FlowFn],
@@ -175,26 +174,23 @@ class HybridDecisionTree(HybridSystem):
             mode_feature_name,
             mode_decoding,
         )
-        modes = {}
-        for mode_name, flow in flows.items():
-            guards = []
-            for (source, target), conditions in transitions.items():
-                if source != mode_name:
-                    continue
-                if target == source:
-                    continue
-
-                guard = Guard(
-                    condition=make_condition(
-                        conditions,
-                        time_feature_name=time_feature_name,
-                        features=features,
-                    ),
-                    target_mode=target,
-                )
-
-                guards.append(guard)
-
-            modes[mode_name] = Mode(flow=flow, guards=guards)
+        modes = {
+            name: Mode(
+                flow=flow,
+                guards=[
+                    Guard(
+                        condition=make_condition(
+                            conditions,
+                            time_feature_name=time_feature_name,
+                            features=features,
+                        ),
+                        target_mode=target,
+                    )
+                    for (source, target), conditions in transitions.items()
+                    if source == name and target != source
+                ],
+            )
+            for name, flow in flows.items()
+        }
         self.transitions = transitions
         super().__init__(modes=modes)
