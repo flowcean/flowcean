@@ -1,4 +1,5 @@
 import logging
+from os import PathLike
 
 import polars as pl
 from numpy.typing import NDArray
@@ -23,11 +24,12 @@ class DecisionTree(SupervisedLearner):
     """
 
     classifier: DecisionTreeClassifier
+    dot_graph_export_path: None | str | PathLike[str]
 
     def __init__(
         self,
         *,
-        dot_graph_export_path: None | str = None,
+        dot_graph_export_path: None | str | PathLike[str] = None,
         criterion: str = "gini",
         splitter: str = "best",
         max_depth: int | None = None,
@@ -78,7 +80,7 @@ class DecisionTree(SupervisedLearner):
             )
             export_graphviz(
                 self.classifier,
-                out_file=self.dot_graph_export_path,
+                out_file=str(self.dot_graph_export_path),
                 feature_names=collected_inputs.columns,
             )
         return SciKitModel(
