@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 import jax.numpy as jnp
+from jax import Array
 
 from flowcean.ode import Guard, HybridSystem, Mode
 
@@ -8,12 +9,21 @@ from flowcean.ode import Guard, HybridSystem, Mode
 class NTanks(HybridSystem):
     def __init__(
         self,
-        leakages: Sequence[float],  # l_1, l_2, ..., l_N
-        inflows: Sequence[float],  # f_1, f_2, ..., f_N
-        h_m: float,  # high threshold to trigger inflow
-        h_f: float,  # low threshold to return to leak mode
-        t_m: Sequence[float],  # timer for each tank
+        leakages: Sequence[float] | Array,
+        inflows: Sequence[float] | Array,
+        h_m: float,
+        h_f: float,
+        t_m: Sequence[float] | Array,
     ) -> None:
+        """Initialize N-Tank hybrid system.
+
+        Args:
+            leakages: l_1, l_2, ..., l_N
+            inflows: f_1, f_2, ..., f_N
+            h_m: high threshold to trigger inflow
+            h_f: low threshold to return to leak mode
+            t_m: timer for each tank
+        """
         self.N = len(leakages)
         leakages = jnp.array(leakages)
         inflows = jnp.array(inflows)
