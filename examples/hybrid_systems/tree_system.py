@@ -111,6 +111,19 @@ def make_condition(
     time_feature_name: FeatureName,
     features: list[FeatureName],
 ) -> CondFn:
+    """Create a condition function from a list of feature bounds.
+
+    Args:
+        conditions: A list of conditions, where each condition is a dictionary
+            mapping feature names to their corresponding bounds.
+        time_feature_name: The name of the time feature.
+        features: A list of feature names. The order of features corresponds
+            to the order of state variables in the hybrid system.
+
+    Returns:
+        A condition function that evaluates to True if any of the conditions
+        are satisfied.
+    """
     feature_to_index = {name: i for i, name in enumerate(features)}
 
     def condition_fn(
