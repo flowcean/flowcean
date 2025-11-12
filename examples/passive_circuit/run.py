@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from river import tree
+from pysr import PySRRegressor
 
 import flowcean.cli
 from flowcean.core import (
@@ -9,7 +9,7 @@ from flowcean.core import (
 )
 from flowcean.hydra import HyDRALearner
 from flowcean.polars import DataFrame
-from flowcean.river.learner import RiverLearner
+from flowcean.pysr import PySRLearner
 from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
 
 
@@ -17,14 +17,14 @@ def main() -> None:
     flowcean.cli.initialize()
 
     train = DataFrame.from_uri("file:./data/circuit_data.csv")
-    regressor = RiverLearner(
-        model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5),
+    regressor = PySRLearner(
+        model=PySRRegressor(niterations=10, verbosity=0),
     )
     learner = HyDRALearner(
         regressor_factory=lambda: regressor,
-        threshold=0.15,
-        start_width=20,
-        step_width=20,
+        threshold=1e-5,
+        start_width=400,
+        step_width=200,
     )
     inputs = ["U1", "U2", "U3", "R"]
     outputs = ["I1"]
