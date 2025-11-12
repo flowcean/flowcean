@@ -10,7 +10,6 @@ from flowcean.core.learner import (
 )
 from flowcean.core.model import Model
 from flowcean.hydra.model import HyDRAModel
-from flowcean.hydra.segmentor import Segmentor
 
 logger = logging.getLogger(__name__)
 
@@ -35,40 +34,100 @@ class HyDRALearner(SupervisedLearner):
         self.start_width = start_width
         self.step_width = step_width
 
+    def learn_new_flow(
+        self,
+        data_frame: pl.DataFrame,
+        learner: SupervisedIncrementalLearner,
+        inputs: list[str],
+        target: list[str],
+    ) -> Model | None:
+        """Perform segmentation on the given data frame.
+
+        Args:
+            data_frame: The data frame to be segmented.
+            learner: The learner to be used.
+            inputs: The input feature names.
+            target: The target feature names.
+
+        Returns:
+            The learned model for a new mode or None if
+            segmentation fails.
+
+        """
+        window_size = self.start_width - self.step_width
+        fit = None
+        function = None
+        if len(data_frame) < self.start_width:
+            return learner.learn_incremental(
+                pl.LazyFrame(data_frame[inputs]),
+                pl.LazyFrame(data_frame[target]),
+            )
+        while fit is None or (
+            fit < self.threshold and window_size < len(data_frame)
+        ):
+            window_size += self.step_width
+            segment = data_frame.slice(0, window_size)
+            function = learner.learn_incremental(
+                pl.LazyFrame(segment[inputs]),
+                pl.LazyFrame(segment[target]),
+            )
+            predictions = function.predict(segment[inputs]).collect()
+            fit = (segment[target[0]] - predictions[target[0]]).abs().max()
+
+        if window_size == self.start_width and fit >= self.threshold:
+            logger.error(
+                "Flow Identification failed: required accuracy not met "
+                "with threshold %.2f and start_width %d.",
+                self.threshold,
+                self.start_width,
+            )
+            return None
+        return function
+
     def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> HyDRAModel:
         # Implement the learning process specific to HyDRA
 
-        input_columns = inputs.columns
-        output_columns = outputs.columns
+        input_columns = inputs.collect_schema().names()
+        output_columns = outputs.collect_schema().names()
 
         # Combine inputs and outputs into a single DataFrame
         traces = [pl.concat([inputs, outputs], how="horizontal").collect()]
-        trajectory = traces[0]
+        # add a "mode" column initialized with None for all rows in each trace
+        traces = [
+            trace.with_columns(pl.lit(None).alias("mode")) for trace in traces
+        ]
         modes = []
+        num_modes = 0
+        next_start = (0, 0, len(traces[0]) - 1)
 
-        while len(trajectory) > 0:
-            logger.info("Remaining traces: %f", len(traces))
-            logger.info("Current trajectory length: %f", len(trajectory))
-
-            # Segmentation
-            segmentor = Segmentor(
-                output_columns,
-                input_columns,
-                threshold=self.threshold,
-                start_width=self.start_width,
-                step_width=self.step_width,
-            )
+        while next_start is not None:
+            logger.info("Current start index: %s", next_start)
 
             regressor_instance = self.regressor_factory()
 
-            model = segmentor.segment(trajectory, regressor_instance)
+            model = self.learn_new_flow(
+                traces[next_start[0]].slice(
+                    next_start[1],
+                    next_start[2] - next_start[1] + 1,
+                ),
+                regressor_instance,
+                input_columns,
+                output_columns,
+            )
 
-            accurate_segments, mode_data = get_accurate_segments(
+            if model is None:
+                logger.error(
+                    "Flow Identification failed. Stopping HyDRA learning.",
+                )
+                break
+
+            mode_data = get_accurate_segments(
                 traces,
                 model,
                 input_columns,
                 output_columns,
                 self.threshold,
+                num_modes,
             )
 
             model = regressor_instance.learn_incremental(
@@ -76,20 +135,14 @@ class HyDRALearner(SupervisedLearner):
                 pl.LazyFrame(mode_data[output_columns]),
             )
             modes.append(model)
+            logger.info("Learned mode %d with model %s", num_modes, model)
+            num_modes += 1
 
-            # Build remaining traces
-            traces = build_remaining_traces(
-                traces,
-                accurate_segments,
-            )
             if len(traces) == 0:
                 break
 
-            trajectory = traces[0]
+            next_start = find_next_start(traces)
 
-        for i, mode in enumerate(modes):
-            print(f"Mode {i}:")
-            print(mode)
         return HyDRAModel(
             modes,
             input_features=input_columns,
@@ -97,35 +150,27 @@ class HyDRALearner(SupervisedLearner):
         )
 
 
-def build_remaining_traces(
-    traces: list[pl.DataFrame],
-    accurate_segments: list[list[tuple[int, int]]],
-) -> list[pl.DataFrame]:
-    """Build the remaining traces from the accurate segments.
-
-    Args:
-        traces: The list of traces.
-        accurate_segments: The list of accurate segments.
+def find_next_start(traces: list[pl.DataFrame]) -> tuple[int, int, int] | None:
+    """Find the next start index among the traces.
 
     Returns:
-        The list of remaining traces.
+        A tuple of (trace_index, start_index, end_index) or None if not found.
     """
-    remaining_traces = []
-    for trace, segments in zip(traces, accurate_segments, strict=True):
-        remaining_trace = trace
-        removed_size = 0
-        for start, end in segments:
-            updated_start = start - removed_size
-            removed_size += end - removed_size + 1
-            # Add the part before start as a new trace
-            new_segment = remaining_trace.slice(0, updated_start)
-            remaining_traces.append(new_segment)
-
-            # Update the remaining trace to the part after end
-            remaining_trace = remaining_trace.slice(end + 1)
-        remaining_traces.append(remaining_trace)
-    # Remove empty traces
-    return [trace for trace in remaining_traces if len(trace) > 0]
+    for trace_i, trace in enumerate(traces):
+        mode_column = trace["mode"]
+        in_none_mode = False
+        start_idx = 0
+        for i, mode in enumerate(mode_column):
+            if mode is None and not in_none_mode:
+                in_none_mode = True
+                start_idx = i
+            elif mode is not None and in_none_mode:
+                end_idx = i - 1
+                return (trace_i, start_idx, end_idx)
+        if in_none_mode:
+            end_idx = len(mode_column) - 1
+            return (trace_i, start_idx, end_idx)
+    return None
 
 
 def get_accurate_segments(
@@ -134,41 +179,69 @@ def get_accurate_segments(
     inputs: list[str],
     target: list[str],
     threshold: float,
-) -> tuple[list[list[tuple[int, int]]], pl.DataFrame]:
+    mode_id: int,
+) -> pl.DataFrame:
     """Get accurate segments from the traces using the given model."""
-    accurate_segments = []
     all_accurate_data = []
 
-    for trace in traces:
+    for trace_i in range(len(traces)):
         if model is None:
             continue  # or handle the None case as needed
-        predictions = model.predict(trace[inputs]).collect()
-        errors = np.abs(predictions - trace[target])
-        local_segments = []
+        predictions = model.predict(traces[trace_i][inputs]).collect()
+        errors = np.abs(predictions - traces[trace_i][target])
 
         start = None
         for i, error in enumerate(errors):
-            if np.all(error < threshold):
+            if traces[trace_i]["mode"][i] is None and np.all(
+                error < threshold,
+            ):
                 if start is None:
                     start = i  # Start of a new interval
             elif start is not None:
-                local_segments.append(
-                    (start, i - 1),
-                )  # End of the interval
+                end_idx = i - 1
+                # set the 'mode' column for rows in [start, end_idx] to mode_id
+                trace_with_mode = traces[trace_i].with_row_index("__idx")
+                mask = (pl.col("__idx") >= start) & (
+                    pl.col("__idx") <= end_idx
+                )
+                trace_with_mode = trace_with_mode.with_columns(
+                    pl.when(mask)
+                    .then(pl.lit(mode_id))
+                    .otherwise(pl.col("mode"))
+                    .alias("mode"),
+                ).drop("__idx")
+                traces[trace_i] = trace_with_mode
                 all_accurate_data.append(
-                    trace[start:i],
+                    traces[trace_i][start:i],
                 )  # Collect data for the segment
+                logger.info(
+                    "Found accurate segment in trace %d: %d to %d",
+                    trace_i,
+                    start,
+                    end_idx,
+                )
                 start = None
         if start is not None:
-            local_segments.append(
-                (start, len(errors) - 1),
-            )  # Handle last interval
+            # Collect data for the last segment
+            end_idx = len(errors) - 1
+            # set the 'mode' column for rows in [start, end_idx] to mode_id
+            trace_with_mode = traces[trace_i].with_row_index("__idx")
+            mask = (pl.col("__idx") >= start) & (pl.col("__idx") <= end_idx)
+            trace_with_mode = trace_with_mode.with_columns(
+                pl.when(mask)
+                .then(pl.lit(mode_id))
+                .otherwise(pl.col("mode"))
+                .alias("mode"),
+            ).drop("__idx")
+            traces[trace_i] = trace_with_mode
             all_accurate_data.append(
-                trace[start : len(errors)],
-            )  # Collect data for the last segment
-        accurate_segments.append(local_segments)
-        print("Accurate segments:", len(accurate_segments))
+                traces[trace_i][start : len(errors)],
+            )
+            logger.info(
+                "Found accurate segment in trace %d: %d to %d",
+                trace_i,
+                start,
+                end_idx,
+            )
 
-    combined_accurate_data = pl.concat(all_accurate_data, how="vertical")
-
-    return accurate_segments, combined_accurate_data
+    return pl.concat(all_accurate_data, how="vertical")

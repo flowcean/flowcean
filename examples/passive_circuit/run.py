@@ -20,7 +20,12 @@ def main() -> None:
     regressor = RiverLearner(
         model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5),
     )
-    learner = HyDRALearner(regressor_factory=lambda: regressor, threshold=0.1)
+    learner = HyDRALearner(
+        regressor_factory=lambda: regressor,
+        threshold=0.15,
+        start_width=20,
+        step_width=20,
+    )
     inputs = ["U1", "U2", "U3", "R"]
     outputs = ["I1"]
 
