@@ -54,7 +54,11 @@ class NTanks(HybridSystem):
         flow_modes = {}
         for i in range(self.N):
             back_to_leak = Guard(
-                condition=lambda t, x, _args, idx=i, **_kwargs: jnp.logical_or(
+                condition=lambda t,
+                x,
+                _args,
+                idx=i,
+                **_kwargs: jnp.logical_and(
                     jnp.greater_equal(x[idx], h_f),
                     jnp.greater_equal(t, t_m[idx]),
                 ),
