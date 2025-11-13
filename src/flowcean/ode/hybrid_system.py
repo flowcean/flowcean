@@ -91,10 +91,10 @@ class HybridSystem:
                 break
             if solution.result == diffrax.RESULTS.event_occurred:
                 logger.debug(
-                    "Event occurred at mode %s time interval [%f, %f]",
+                    "Event occurred at mode %s at time %f with state %s",
                     mode,
-                    t0_mode,
-                    t1_mode,
+                    t,
+                    solution.ys[1],  # pyright: ignore[reportOptionalSubscript]
                 )
                 event_i = next(
                     i
