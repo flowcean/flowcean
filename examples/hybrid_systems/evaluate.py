@@ -276,7 +276,7 @@ evaluations = {
             "HDT": hdt_boilernotime,
         },
         mode0="heating",
-        x0=jnp.array([6.0]),
+        x0=jnp.array([6.5]),
         t0=0.0,
         t1=5.0,
         dt0=0.01,
