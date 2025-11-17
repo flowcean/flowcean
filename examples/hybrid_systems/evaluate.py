@@ -21,6 +21,7 @@ import flowcean.cli
 import flowcean.utils
 from flowcean.ode import HybridSystem, evaluate_at, rollout
 
+import random
 
 @dataclass
 class Evaluation:
@@ -38,43 +39,52 @@ def evaluate(
     t1: float,
     dt0: float,
     dt: float,
+    init_modes: [str],
+    state_max = 1,
+    n_runs: int = 1
 ) -> Evaluation:
-    traces_ref = reference.simulate(mode0=mode0, x0=x0, t0=t0, t1=t1, dt0=dt0)
-    reference_rollout = rollout(traces_ref, dt=dt)
-
-    model_rollout = {
-        name: rollout(
-            system.simulate(
-                mode0=mode0,
-                x0=x0,
-                t0=t0,
-                t1=t1,
-                dt0=dt0,
-            ),
-            dt=dt,
+    evals = []
+    for i in range(n_runs):
+        mode_init = random.choice(init_modes)
+        state_init = jnp.array(random.sample(range(state_max*10), len(x0)))/10
+        # mode_init = mode0
+        x0 = x0
+        traces_ref = reference.simulate(mode0=mode_init, x0=state_init, t0=t0, t1=t1, dt0=dt0)
+        reference_rollout = rollout(traces_ref, dt=dt)
+        model_rollout = {
+            name: rollout(
+                system.simulate(
+                    mode0=mode_init,
+                    x0=state_init,
+                    t0=t0,
+                    t1=t1,
+                    dt0=dt0,
+                ),
+                dt=dt,
+            )
+            for name, system in models.items()
+        }
+        ts = reference_rollout.select(pl.col("t")).to_series().to_list()
+        model_evaluation = {
+            name: evaluate_at(
+                ts,
+                system.simulate(
+                    mode0=mode_init,
+                    x0=state_init,
+                    t0=t0,
+                    t1=t1,
+                    dt0=dt0,
+                ),
+            )
+            for name, system in models.items()
+        }
+        evals.append(Evaluation(
+            reference_rollout=reference_rollout,
+            model_rollout=model_rollout,
+            model_evaluation=model_evaluation,
+            )
         )
-        for name, system in models.items()
-    }
-    ts = reference_rollout.select(pl.col("t")).to_series().to_list()
-    model_evaluation = {
-        name: evaluate_at(
-            ts,
-            system.simulate(
-                mode0=mode0,
-                x0=x0,
-                t0=t0,
-                t1=t1,
-                dt0=dt0,
-            ),
-        )
-        for name, system in models.items()
-    }
-    return Evaluation(
-        reference_rollout=reference_rollout,
-        model_rollout=model_rollout,
-        model_evaluation=model_evaluation,
-    )
-
+    return evals
 
 def plot_evaluation_traces(ax: Axes, evaluation: Evaluation) -> None:
     cmap = plt.get_cmap("tab10")
@@ -265,9 +275,12 @@ evaluations = {
         mode0="cooling",
         x0=jnp.array([23.0]),
         t0=0.0,
-        t1=5.0,
+        t1=2.0,
         dt0=0.01,
         dt=0.1,
+        n_runs = 100,
+        state_max = 30,
+        init_modes = ["heating", "cooling"]
     ),
     "boilernotime": evaluate(
         reference=BoilerNoTime(**config.boilernotime.system),
@@ -278,9 +291,12 @@ evaluations = {
         mode0="heating",
         x0=jnp.array([6.5]),
         t0=0.0,
-        t1=5.0,
+        t1=2.0,
         dt0=0.01,
         dt=0.1,
+        n_runs = 100,
+        state_max = 30,
+        init_modes = ["heating", "cooling"]
     ),
     "tank": evaluate(
         reference=NTanks(**config.tank.system),
@@ -289,20 +305,45 @@ evaluations = {
             "HDT": hdt_tank,
         },
         mode0="flow_0",
-        x0=jnp.array([0.5, 8.0, 1.5]),
+        x0=jnp.array([0.5, 10.0, 1.5]),
         t0=0.0,
-        t1=5.0,
+        t1=2.0,
         dt0=0.01,
         dt=0.1,
+        n_runs = 100,
+        state_max=15,
+        init_modes=["flow_0", "flow_1", "flow_2"],
     ),
 }
 
+# one evaluation per system
 for name, evaluation in evaluations.items():
-    fig, ax = plt.subplots(
-        1,
-        1,
-        layout="constrained",
-    )
-    plot_evaluation_traces(ax, evaluation)
-    ax.set_title(f"Evaluation traces for {name} system")
+    n_columns = len(evaluation[0].reference_rollout.drop(['mode','t_mode','t']).columns)
+    means = { method :pl.DataFrame(data =[[0]*n_columns]*len(evaluation), schema= list(zip(evaluation[0].reference_rollout.drop(['mode','t_mode','t']).columns,[pl.Float64]*n_columns)),orient='row')
+             for method in evaluation[0].model_evaluation.keys()
+             }
+
+    for i, run in enumerate(evaluation):
+        reference = run.reference_rollout
+        ref = reference.drop(['mode','t_mode','t'])
+    
+        for j,(method, result) in enumerate(run.model_evaluation.items()):
+            diff = (ref - result.drop('mode','t')).drop_nans()
+            diff *= diff
+            mean = diff.mean()
+            for c in mean.columns:
+                means[method][i, c] = mean[c]
+        if i%50 ==0:
+            fig, ax = plt.subplots(
+                1,
+                1,
+                layout="constrained",
+            )
+            plot_evaluation_traces(ax, run)
+            ax.set_title(f"Evaluation {i} traces for {name} system")
+    print(means)
+    for method in means.keys():
+        print(method)
+        print(means[method].describe())
+
 plt.show()
