@@ -1,7 +1,20 @@
-# 📘 **AMCL Failure Detection ML Pipeline**
+# 📘 **AMCL Failure Detection — ML Pipeline Documentation**
 
-This repository contains a complete end-to-end **machine learning pipeline** for detecting AMCL delocalization events using **Scan-Map Statistics**, **Particle Cloud Statistics**, and **robot pose**.
-It processes ROS2 bag files, extracts handcrafted features, generates datasets, trains an ML classifier, evaluates it, and stores results in a structured `artifacts/` directory.
+This repository provides a complete, modular, reproducible **machine learning pipeline** for detecting **AMCL delocalization** events using handcrafted features from:
+
+* **Scan–Map Statistics**
+* **Particle Cloud Statistics**
+* **AMCL & Ground-truth pose alignment**
+
+The pipeline:
+
+1. **Processes ROS2 bags**
+2. **Extracts 40+ handcrafted features**
+3. **Builds train/eval datasets**
+4. **Trains ML models**
+5. **Evaluates any saved model**
+6. **Stores all results cleanly inside `artifacts/`**
+7. **Can run each step individually or automatically**
 
 ---
 
@@ -12,29 +25,32 @@ ml_pipeline/
 │
 ├── dataset/
 │   ├── build_dataset.py      # Process all bags → create training & eval datasets
-│   ├── bag_processor.py      # Core logic for processing a single bag
-│   ├── helpers.py            # Helpers (time-series unpacking, yaw, etc.)
+│   ├── bag_processor.py      # Core logic for handling a single bag file
+│   ├── helpers.py            # Common utilities (yaw, timeseries unpacking)
 │
 ├── training/
-│   └── train_model.py        # Train classifier, save model, scaler, metadata
+│   ├── common.py             # Shared ML utilities (scaling, loading model package)
+│   ├── train_model_rf.py     # Train RandomForest classifier + save artifacts
 │
 ├── evaluation/
-│   └── evaluate_model.py     # Evaluate saved model on evaluation dataset
+│   ├── evaluate_model.py     # Evaluate ANY model directory (interactive or CLI)
 │
 ├── utils/
-│   ├── paths.py              # Artifact storage paths (datasets, models, results)
-│   └── cleaning.py           # Removes artifacts directory
+│   ├── paths.py              # Normalized paths for datasets, models, evaluation
+│   ├── cleaning.py           # Deletes the entire artifacts directory
 │
-├── run_all.py                # Runs dataset → training → eval in one command
+├── artifacts/                # Auto-created, contains datasets/models/eval outputs
+│
+├── run_all.py                # One-shot: dataset → training → evaluation
 ├── clean.py                  # Shortcut to wipe artifacts/
 └── README.md                 # This file
 ```
 
 ---
 
-# ⚙️ **Configuration**
+# ⚙️ **Configuration File**
 
-You must place your `config.yaml` in:
+You must place your `config.yaml` at:
 
 ```
 robot_localization_failure/config.yaml
@@ -46,34 +62,29 @@ Example:
 rosbag:
   training_paths:
     - toy_data/training_data_half/rec_20250923_135805_id_01
-    # - toy_data/training_data_half/rec_20250923_135805_id_02
+    - toy_data/training_data_half/rec_20250923_135805_id_02
+
   evaluation_paths:
     - toy_data/testing_data_half/rec_20250923_142005_id_01
-    # - toy_data/testing_data_half/rec_20250923_142005_id_02
+    - toy_data/testing_data_half/rec_20250923_142005_id_02
+
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
     - ros_msgs/nav2_msgs/msg/ParticleCloud.msg
+
 localization:
   position_threshold: 0.4
   heading_threshold: 0.4
-architecture:
-  image_size: 150
-  width_meters: 15.0
-learning:
-  batch_size: 128
-  learning_rate: 0.0001
-  epochs: 2
-  model_path: "models/robot_localization.model"
-optuna:
-  storage: "sqlite:///optuna.db"
 ```
+
+This file controls **which bags to process** and the **AMCL failure criteria**.
 
 ---
 
-# 📦 **Artifacts Folder**
+# 📦 **Artifacts Directory**
 
-All generated files are stored under:
+Everything the pipeline produces is saved inside:
 
 ```
 ml_pipeline/artifacts/
@@ -86,126 +97,291 @@ artifacts/
 │
 ├── datasets/
 │   ├── train.parquet
-│   ├── eval.parquet
+│   └── eval.parquet
 │
 ├── models/
-│   ├── model.pkl
-│   ├── scaler.pkl
-│   ├── feature_columns.json
+│   ├── random_forest_baseline/         # every training run creates its own folder
+│   │   ├── model.pkl
+│   │   ├── scaler.pkl
+│   │   └── feature_columns.json
+│   ├── rf_experiment_02/
+│   └── ...
 │
 └── evaluation/
-    ├── eval_results.parquet
-    ├── metrics.txt
+    ├── model_name/
+    │   ├── eval_results.parquet
+    │   └── metrics.txt  (optional)
 ```
 
-This keeps the project root clean and fully reproducible.
+This ensures:
+
+* every experiment is preserved
+* model/eval artifacts never overwrite each other
+* the repository root stays clean
 
 ---
 
-# 🚀 **How to Run Each Stage**
+# 🧠 **Overview of the Pipeline Components**
 
-### **1️⃣ Build the Datasets**
+## 🔹 1. `build_dataset.py`
 
-Processes all bag files listed in `config.yaml` and generates:
+Processes all bags and produces:
 
-* `artifacts/datasets/training_dataset.parquet`
-* `artifacts/datasets/evaluation_dataset.parquet`
-
-Run:
-
-```bash
-python3 -m ml_pipeline.dataset.build_dataset
 ```
+artifacts/datasets/train.parquet
+artifacts/datasets/eval.parquet
+```
+
+Each file contains:
+
+* 15 Scan–Map features
+* 14 Particle cloud statistics
+* 7 AMCL pose quantities
+* 7 GT pose quantities
+* Position & heading errors
+* `is_delocalized` label
+
+A total of **40+ ML features**.
 
 ---
 
-### **2️⃣ Train the Model**
+## 🔹 2. `train_model_rf.py`
 
-This loads the training parquet, cleans the data, trains a RandomForest classifier, and saves:
+Trains a baseline **Random Forest** classifier:
 
-* `model.pkl`
-* `scaler.pkl`
-* `feature_columns.json`
+* loads `train.parquet`
+* removes leakage columns
+* scales features using `StandardScaler`
+* trains RandomForest classifier
+* saves everything to:
 
-Run:
-
-```bash
-python3 -m ml_pipeline.training.train_model
 ```
+artifacts/models/<model_name>/
+    model.pkl
+    scaler.pkl
+    feature_columns.json
+```
+
+Each training run creates a **new model directory**.
 
 ---
 
-### **3️⃣ Evaluate the Model**
+## 🔹 3. `common.py`
 
-Loads model + scaler + evaluation parquet and produces:
+This file provides **shared ML utilities**:
 
-* metrics summary
-* confusion matrix
-* `eval_results.parquet` with predictions + probabilities
+✔ `load_model_package()`
+Loads a stored model directory:
 
-Run:
+* model.pkl
+* scaler.pkl
+* feature_columns.json
 
-```bash
+✔ `apply_scaler()`
+Applies a stored scaler or returns raw features if none exists.
+
+✔ `timestamped_model_dir()`
+Creates a new folder inside `artifacts/models/` automatically.
+
+This is used by all training scripts to maintain clean, isolated experiment folders.
+
+---
+
+## 🔹 4. `evaluate_model.py`
+
+A **model-agnostic evaluator**.
+
+### 🟢 Supports:
+
+### **1️⃣ Interactive model selection**
+
+```
 python3 -m ml_pipeline.evaluation.evaluate_model
 ```
 
+Output:
+
+```
+Available models:
+[0] random_forest_2025_11_20_14_33_51
+[1] rf_experiment_bigtrees
+Select a model index:
+```
+
+### **2️⃣ Direct model selection**
+
+```
+python3 -m ml_pipeline.evaluation.evaluate_model --model_dir random_forest_2025_11_20_14_33_51
+```
+
+### It performs:
+
+* loads `eval.parquet`
+
+* loads the chosen model
+
+* scales features
+
+* predicts labels + probabilities
+
+* prints:
+
+  ✔ classification report
+  ✔ confusion matrix
+  ✔ precision, recall, F1
+  ✔ **F0.5 score (important for early detection)**
+
+* saves predictions to:
+
+```
+artifacts/models/<model_dir>/eval_results.parquet
+```
+
 ---
 
-# 🧹 **Cleaning the Pipeline**
+# 🚀 **How to Run the Pipeline**
 
-To completely delete all generated datasets, models, and evaluation files:
+## **1️⃣ Build the training & evaluation datasets**
 
-```bash
+Extracts all handcrafted features and builds 40+ column ML tables.
+
+```
+python3 -m ml_pipeline.dataset.build_dataset
+```
+
+This creates:
+
+```
+artifacts/datasets/train.parquet
+artifacts/datasets/eval.parquet
+```
+
+---
+
+## **2️⃣ Train a model**
+
+Trains a Random Forest and saves artifacts.
+
+```
+python3 -m ml_pipeline.training.train_model_rf
+```
+
+This creates:
+
+```
+artifacts/models/random_forest_<timestamp>/
+```
+
+---
+
+## **3️⃣ Evaluate a model**
+
+### **Option A — interactive choose model**
+
+```
+python3 -m ml_pipeline.evaluation.evaluate_model
+```
+
+### **Option B — specify model name**
+
+```
+python3 -m ml_pipeline.evaluation.evaluate_model --model_dir random_forest_2025_11_20_14_33_51
+```
+
+Outputs include:
+
+* precision, recall
+* confusion matrix
+* **F0.5 score**
+* predictions saved to:
+
+```
+artifacts/models/<model_dir>/eval_results.parquet
+```
+
+---
+
+# 🧹 **Cleaning Everything**
+
+To wipe all datasets, models, and evaluation outputs:
+
+```
 python3 -m ml_pipeline.clean
 ```
 
-This wipes the entire `artifacts/` directory.
+This deletes the entire `artifacts/` directory.
 
 ---
 
-# 🔁 **Run ALL Stages Automatically**
+# 🔁 **Run the Entire Pipeline Automatically**
 
-Instead of running each step manually, you can run:
-
-```bash
+```
 python3 -m ml_pipeline.run_all
 ```
 
-This performs:
+Runs:
 
 ```
 build_dataset → train_model → evaluate_model
 ```
 
-in order, and prints a summary.
+Everything is written into `artifacts/`.
 
 ---
 
-# 🧠 **What the Pipeline Actually Does (High-Level Overview)**
+# 🧬 **What the Pipeline Actually Computes**
 
-### **✔ Extracts features from ROS2 bags using two major transforms:**
+### ✔ 1. Scan–Map Statistics
 
-* **ScanMapStatistics** → 15–29 handcrafted geometric features
-* **ParticleCloudStatistics** → 1–14 particle cloud descriptors
+Geometric scan-map alignment → 15 features
+(e.g., point_distance, line_angle, ray_quality…)
 
-### **✔ Aligns all time series**
+### ✔ 2. Particle Cloud Statistics
 
-Using scan timestamps as the reference timeline.
+Distribution shape → 14 features
+(center of gravity spread, cluster variance…)
 
-### **✔ Computes additional pose-related signals**
+### ✔ 3. Pose Alignment
 
-* AMCL yaw
-* MoMo ground truth yaw
-* position error
-* heading error
-* delocalization label (`is_delocalized`)
+Time-synced AMCL & ground truth
+→ computed yaw, errors, labels
 
-### **✔ Creates a clean ML-ready tabular dataset**
+### ✔ 4. Final ML Table
 
-### **✔ Trains a classifier**
+A clean, flat dataset suitable for:
 
-(RandomForest by default, but can be replaced later)
-
-### **✔ Evaluates on held-out datasets**
+* Random Forest
+* XGBoost
+* LightGBM
+* Neural networks
+* Optuna hyperparameter tuning
+* Scikit-learn pipelines
+* Neural networks
 
 ---
+
+# 🎯 **Next Steps (Planned Modules)**
+
+You will soon add:
+
+* `train_model_xgb.py` — XGBoost
+* `train_model_lightgbm.py` — LightGBM
+* `train_model_nn.py` — small MLP
+* `evaluate_model.py` (extended) — ROC curves, PR curves
+* `compare_models.py` — automatically compare all models
+* `plot_feature_importance.py` — SHAP + RF/XGB importance
+
+These will plug into the same `common.py` utilities.
+
+---
+
+# 🎉 **Conclusion**
+
+This pipeline is:
+
+* modular
+* reproducible
+* extensible
+* model-agnostic
+* easy to run
+* easy to clean
