@@ -102,3 +102,4 @@ ENV/
 
 # Flowcean models
 *.fml
+examples/robot_localization_failure/toy_data/
