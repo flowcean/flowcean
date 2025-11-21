@@ -6,7 +6,15 @@ import polars as pl
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    fbeta_score,
+    classification_report,
+    confusion_matrix
+)
 
 from ml_pipeline.utils.paths import DATASETS, MODELS
 
@@ -46,6 +54,19 @@ def main():
     model.fit(X_train_scaled, y_train)
 
     y_pred = model.predict(X_val_scaled)
+
+    accuracy = accuracy_score(y_val, y_pred)
+    precision = precision_score(y_val, y_pred)
+    recall = recall_score(y_val, y_pred)
+    f1 = f1_score(y_val, y_pred)
+    f05 = fbeta_score(y_val, y_pred, beta=0.5)
+
+    print("\n=== Overall Metrics ===")
+    print(f"Accuracy:   {accuracy:.4f}")
+    print(f"Precision:  {precision:.4f}")
+    print(f"Recall:     {recall:.4f}")
+    print(f"F1 Score:   {f1:.4f}")
+    print(f"F0.5 Score: {f05:.4f}")
 
     print("\n=== Classification Report ===")
     print(classification_report(y_val, y_pred))

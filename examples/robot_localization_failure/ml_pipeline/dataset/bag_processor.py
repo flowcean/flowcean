@@ -72,7 +72,7 @@ def process_single_bag(
     base = pl.DataFrame({"time": [e["time"] for e in scan_ts]}).sort("time")
 
     # -----------------------------
-    # Scan–map features (unchanged)
+    # Scan–map features
     # -----------------------------
     scanmap_cols = [
         "point_distance", "point_fitting", "point_inlier", "point_quality",

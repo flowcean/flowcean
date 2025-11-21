@@ -38,6 +38,32 @@ def get_topics():
 
 
 def timeseries_to_df(row_df: pl.DataFrame, column: str, value_name: str):
+    """
+    Convert a nested time series stored in a single DataFrame cell into
+    a flat two-column DataFrame.
+
+    Example
+    -------
+    Input (row_df[column][0]):
+        [
+            {"time": 0.0, "value": 10.0},
+            {"time": 1.0, "value": 10.5},
+            {"time": 2.0, "value": 11.0},
+        ]
+
+    Output:
+        shape: (3, 2)
+        ┌──────┬─────────┐
+        │ time │ reading │   <-- value_name="reading"
+        ├──────┼─────────┤
+        │ 0.0  │ 10.0    │
+        │ 1.0  │ 10.5    │
+        │ 2.0  │ 11.0    │
+        └──────┴─────────┘
+
+    `value_name` becomes the name of the second column.
+    """
+
     ts = row_df[column][0]
     if len(ts) == 0:
         return pl.DataFrame({"time": [], value_name: []})
