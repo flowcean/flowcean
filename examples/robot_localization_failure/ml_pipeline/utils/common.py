@@ -50,12 +50,27 @@ def load_dataset(parquet_path: Path) -> pl.DataFrame:
     return df
 
 
-def prepare_features(df: pl.DataFrame):
+def prepare_features(df: pl.DataFrame, use_scanmap_features: bool = True):
     """
     Removes leakage columns, extracts feature matrix X and label y,
     ensures consistent column order.
     """
     df = remove_leaky_columns(df)
+
+    # Remove Scan-Map features
+    SCANMAP_FEATURES = [
+        "point_distance", "point_fitting", "point_inlier", "point_quality",
+        "ray_inlier", "ray_inlier_percent", "ray_matching_percent",
+        "ray_outlier_percent", "ray_quality",
+        "angle_inlier", "angle_quality",
+        "line_angle", "line_distance", "line_fitting", "line_length",
+    ]
+
+    if not use_scanmap_features:
+        cols_to_drop = [c for c in SCANMAP_FEATURES if c in df.columns]
+        if cols_to_drop:
+            print(f"⚠️  Removing Scan-Map features: {cols_to_drop}")
+            df = df.drop(cols_to_drop)
 
     if LABEL_COL not in df.columns:
         raise ValueError(f"Label column '{LABEL_COL}' missing in dataset.")

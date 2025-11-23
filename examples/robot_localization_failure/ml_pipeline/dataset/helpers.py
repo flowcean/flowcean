@@ -32,7 +32,7 @@ def get_topics():
             "info.origin.orientation.z",
             "info.origin.orientation.w",
         ],
-        "/delocalizations": ["data"],
+        # "/delocalizations": ["data"],
         "/particle_cloud": ["particles"],
     }
 

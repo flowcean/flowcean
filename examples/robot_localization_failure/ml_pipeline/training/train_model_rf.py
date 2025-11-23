@@ -18,6 +18,7 @@ from ml_pipeline.utils.common import (
 
 MODEL_NAME = "random_forest"
 USE_TEMPORAL_FEATURES = True
+USE_SCANMAP_FEATURES = True
 
 
 def main():
@@ -38,7 +39,7 @@ def main():
         print("Skipping temporal features.")
 
     print("Preparing features...")
-    X, y, feature_cols = prepare_features(df)
+    X, y, feature_cols = prepare_features(df,use_scanmap_features=USE_SCANMAP_FEATURES)
 
     # ============================================================
     # 2) Train/val split
@@ -92,7 +93,8 @@ def main():
         extra_metadata={
         "temporal_features": USE_TEMPORAL_FEATURES,
         "model_type": MODEL_NAME,
-        "notes": "trained using single map simulation data"
+        "notes": "trained using single map simulation data",
+        "use_scanmap_features": USE_SCANMAP_FEATURES
     }
     )
 
