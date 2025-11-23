@@ -10,6 +10,7 @@ from sklearn.metrics import (
     f1_score,
     confusion_matrix,
     classification_report,
+    fbeta_score,
 )
 
 from ml_pipeline.utils.paths import MODELS
@@ -105,6 +106,7 @@ def compute_metrics(y_true, y_pred):
         "precision": float(precision_score(y_true, y_pred)),
         "recall": float(recall_score(y_true, y_pred)),
         "f1": float(f1_score(y_true, y_pred)),
+        "f0.5": float(fbeta_score(y_true,y_pred,beta=0.5)),
         "confusion_matrix": confusion_matrix(y_true, y_pred).tolist(),
         "classification_report": classification_report(y_true, y_pred),
     }
@@ -117,6 +119,7 @@ def print_metrics(metrics):
     print(f"Precision:  {metrics['precision']:.4f}")
     print(f"Recall:     {metrics['recall']:.4f}")
     print(f"F1-score:   {metrics['f1']:.4f}")
+    print(f"F0.5 score: {metrics['f0.5']:.4f}")
     print("\nConfusion Matrix:")
     print(np.array(metrics["confusion_matrix"]))
     print("\nClassification Report:")
