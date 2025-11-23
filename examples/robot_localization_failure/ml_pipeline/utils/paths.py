@@ -5,7 +5,6 @@ ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "artifacts"
 DATASETS = ARTIFACTS / "datasets"
 MODELS = ARTIFACTS / "models"
-RESULTS = ARTIFACTS / "results"
 
-for p in [ARTIFACTS, DATASETS, MODELS, RESULTS]:
+for p in [ARTIFACTS, DATASETS, MODELS]:
     p.mkdir(parents=True, exist_ok=True)

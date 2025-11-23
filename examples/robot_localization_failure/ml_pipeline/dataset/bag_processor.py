@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
-import flowcean.cli
 from flowcean.ros import load_rosbag
 
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics

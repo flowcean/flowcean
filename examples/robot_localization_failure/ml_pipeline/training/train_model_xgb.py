@@ -1,7 +1,7 @@
-import polars as pl
-import numpy as np
+# ml_pipeline/training/train_model_xgb.py
+
+import xgboost as xgb
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 
 from ml_pipeline.utils.paths import DATASETS
 from ml_pipeline.utils.common import (
@@ -15,9 +15,8 @@ from ml_pipeline.utils.common import (
     add_temporal_features,
 )
 
-
-MODEL_NAME = "random_forest"
-USE_TEMPORAL_FEATURES = True
+MODEL_NAME = "xgboost"          #xgboost_temporal
+USE_TEMPORAL_FEATURES = False
 
 
 def main():
@@ -48,14 +47,14 @@ def main():
         X, y,
         test_size=0.2,
         shuffle=True,
-        random_state=42
+        random_state=42,
+        stratify=y
     )
 
     # ============================================================
-    # 3) Scaling (RF does NOT need scaling → scaler = None)
+    # 3) Scaling? (NO — XGBoost performs better unscaled)
     # ============================================================
-    scaler = fit_scaler(X_train, model_type="rf")
-
+    scaler = fit_scaler(X_train, model_type="xgb")  # returns None
     X_train_scaled = apply_scaler(X_train, scaler)
     X_val_scaled = apply_scaler(X_val, scaler)
 
@@ -63,13 +62,27 @@ def main():
     # 4) Train model
     # ============================================================
     print(f"\nTraining {MODEL_NAME}...")
-    model = RandomForestClassifier(
-        n_estimators=300,
-        class_weight="balanced",
+
+    model = xgb.XGBClassifier(
+        n_estimators=500,
+        max_depth=6,
+        learning_rate=0.05,
+        subsample=0.9,
+        colsample_bytree=0.9,
+        objective="binary:logistic",
+        eval_metric="logloss",
+        tree_method="hist",  # good for CPU
+        reg_lambda=1.0,
+        reg_alpha=0.0,
+        scale_pos_weight=(len(y) - sum(y)) / sum(y),   # class imbalance fix
         random_state=42,
-        n_jobs=-1,
     )
-    model.fit(X_train_scaled, y_train)
+
+    model.fit(
+        X_train_scaled, y_train,
+        eval_set=[(X_val_scaled, y_val)],
+        verbose=False
+    )
 
     # ============================================================
     # 5) Evaluate
@@ -90,10 +103,10 @@ def main():
         feature_cols=feature_cols,
         metrics=metrics,
         extra_metadata={
-        "temporal_features": USE_TEMPORAL_FEATURES,
-        "model_type": MODEL_NAME,
-        "notes": "trained using single map simulation data"
-    }
+            "temporal_features": USE_TEMPORAL_FEATURES,
+            "model_type": MODEL_NAME,
+            "notes": "trained using single map simulation data"
+        }
     )
 
 

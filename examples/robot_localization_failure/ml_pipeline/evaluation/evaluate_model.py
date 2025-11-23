@@ -16,14 +16,18 @@ from sklearn.metrics import (
 )
 
 from ml_pipeline.utils.paths import DATASETS, MODELS
-from ml_pipeline.utils.common import apply_scaler
+from ml_pipeline.utils.common import (
+    apply_scaler,
+    add_temporal_features,
+)
 
 
 # ============================================================
 # Helper: load model package
 # ============================================================
 def load_model_package(model_dir: Path):
-    """Load model, scaler and feature list from a given directory."""
+    """Load model, scaler, feature list and metadata from directory."""
+
     model = joblib.load(model_dir / "model.pkl")
 
     scaler_path = model_dir / "scaler.pkl"
@@ -32,7 +36,15 @@ def load_model_package(model_dir: Path):
     with open(model_dir / "feature_columns.json", "r") as f:
         feature_cols = json.load(f)
 
-    return model, scaler, feature_cols
+    # Load metadata.json
+    metadata_path = model_dir / "metadata.json"
+    if metadata_path.exists():
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+    else:
+        metadata = {"temporal_features": False}  # fallback
+
+    return model, scaler, feature_cols, metadata
 
 
 # ============================================================
@@ -60,7 +72,7 @@ def main():
     if not model_dirs:
         raise RuntimeError("❌ No model directories found in artifacts/models/")
 
-    # If user provided a model directory name
+    # User selected a specific model
     if args.model_dir is not None:
         candidate = MODELS / args.model_dir
         if not candidate.exists():
@@ -71,7 +83,7 @@ def main():
             return
         model_dir = candidate
     else:
-        # No --model_dir → ask the user which model they want
+        # Ask interactively
         print("\nAvailable models:")
         for i, d in enumerate(model_dirs):
             print(f"[{i}] {d.name}")
@@ -83,8 +95,8 @@ def main():
 
     print(f"\n📦 Using model: {model_dir.name}")
 
-    # Load model/scaler/features
-    model, scaler, feature_cols = load_model_package(model_dir)
+    # Load model, scaler, feature columns, metadata
+    model, scaler, feature_cols, metadata = load_model_package(model_dir)
 
     # ---------------------------
     # Load evaluation dataset
@@ -94,7 +106,20 @@ def main():
 
     df = pl.read_parquet(eval_path).drop_nulls()
 
-    # Check required columns
+    # ---------------------------
+    # Add temporal features if required
+    # ---------------------------
+    use_temporal = metadata.get("temporal_features", False)
+
+    if use_temporal:
+        print("🔧 Model expects TEMPORAL features → adding them to eval dataset...")
+        df = add_temporal_features(df)
+    else:
+        print("ℹ️ Model does NOT use temporal features.")
+
+    # ---------------------------
+    # Ensure required columns exist
+    # ---------------------------
     missing = [c for c in feature_cols if c not in df.columns]
     if missing:
         raise ValueError(f"❌ Missing columns in eval dataset: {missing}")
