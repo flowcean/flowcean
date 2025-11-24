@@ -172,8 +172,7 @@ def select_best_model(
 
     models_by_name = getattr(report, "models_by_name", None)
     if isinstance(models_by_name, dict) and best_name in models_by_name:
-        model = models_by_name[best_name]
-        return cast("Model", model)
+        return cast("Model", models_by_name[best_name])
 
     msg = (
         "The report does not contain attached models. "
