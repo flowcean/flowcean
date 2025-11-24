@@ -16,18 +16,11 @@ from sklearn.metrics import (
 )
 
 from ml_pipeline.utils.paths import DATASETS, MODELS
-from ml_pipeline.utils.common import (
-    apply_scaler,
-    add_temporal_features,
-)
+from ml_pipeline.utils.common import apply_scaler, add_temporal_features
 
 
-# ============================================================
-# Helper: load model package
-# ============================================================
 def load_model_package(model_dir: Path):
-    """Load model, scaler, feature list and metadata from directory."""
-
+    """Load model, scaler, feature list, and optional metadata from a given directory."""
     model = joblib.load(model_dir / "model.pkl")
 
     scaler_path = model_dir / "scaler.pkl"
@@ -36,31 +29,29 @@ def load_model_package(model_dir: Path):
     with open(model_dir / "feature_columns.json", "r") as f:
         feature_cols = json.load(f)
 
-    # Load metadata.json
     metadata_path = model_dir / "metadata.json"
+    metadata = None
     if metadata_path.exists():
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
-    else:
-        metadata = {"temporal_features": False}  # fallback
 
     return model, scaler, feature_cols, metadata
 
 
-# ============================================================
-# Main evaluation entry point
-# ============================================================
 def main():
 
-    # ---------------------------
-    # Parse arguments
-    # ---------------------------
     parser = argparse.ArgumentParser(description="Evaluate trained ML model.")
     parser.add_argument(
         "--model_dir",
         type=str,
         default=None,
         help="Name of the model directory inside artifacts/models/",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.5,
+        help="Decision threshold on positive class probability (default: 0.5)",
     )
     args = parser.parse_args()
 
@@ -72,7 +63,6 @@ def main():
     if not model_dirs:
         raise RuntimeError("❌ No model directories found in artifacts/models/")
 
-    # User selected a specific model
     if args.model_dir is not None:
         candidate = MODELS / args.model_dir
         if not candidate.exists():
@@ -83,11 +73,9 @@ def main():
             return
         model_dir = candidate
     else:
-        # Ask interactively
         print("\nAvailable models:")
         for i, d in enumerate(model_dirs):
             print(f"[{i}] {d.name}")
-
         idx = input("Select a model index: ").strip()
         if not idx.isdigit() or int(idx) not in range(len(model_dirs)):
             raise ValueError("Invalid selection.")
@@ -95,7 +83,7 @@ def main():
 
     print(f"\n📦 Using model: {model_dir.name}")
 
-    # Load model, scaler, feature columns, metadata
+    # Load model/scaler/features/metadata
     model, scaler, feature_cols, metadata = load_model_package(model_dir)
 
     # ---------------------------
@@ -106,10 +94,10 @@ def main():
 
     df = pl.read_parquet(eval_path).drop_nulls()
 
-    # ---------------------------
-    # Add temporal features if required
-    # ---------------------------
-    use_temporal = metadata.get("temporal_features", False)
+    # If the model was trained with temporal features, add them here
+    use_temporal = False
+    if metadata is not None and metadata.get("temporal_features"):
+        use_temporal = True
 
     if use_temporal:
         print("🔧 Model expects TEMPORAL features → adding them to eval dataset...")
@@ -117,9 +105,7 @@ def main():
     else:
         print("ℹ️ Model does NOT use temporal features.")
 
-    # ---------------------------
-    # Ensure required columns exist
-    # ---------------------------
+    # Check required columns
     missing = [c for c in feature_cols if c not in df.columns]
     if missing:
         raise ValueError(f"❌ Missing columns in eval dataset: {missing}")
@@ -127,16 +113,21 @@ def main():
     X = df.select(feature_cols).to_numpy()
     y_true = df["is_delocalized"].to_numpy()
 
-    # Scale features
+    # Scale if needed
     X_scaled = apply_scaler(X, scaler)
 
-    # Predict
-    y_pred = model.predict(X_scaled)
-    y_proba = (
-        model.predict_proba(X_scaled)[:, 1]
-        if hasattr(model, "predict_proba")
-        else None
-    )
+    # ---------------------------
+    # Predict with custom threshold
+    # ---------------------------
+    if hasattr(model, "predict_proba"):
+        y_proba = model.predict_proba(X_scaled)[:, 1]
+        thr = args.threshold
+        print(f"\nUsing decision threshold: {thr:.3f}")
+        y_pred = (y_proba >= thr).astype(int)
+    else:
+        print("⚠️ Model has no predict_proba → falling back to predict(). Threshold ignored.")
+        y_pred = model.predict(X_scaled)
+        y_proba = None
 
     # ---------------------------
     # Metrics
@@ -165,7 +156,7 @@ def main():
     out_path = model_dir / "eval_results.parquet"
     df_out = df.with_columns([
         pl.Series("prediction", y_pred),
-        pl.Series("probability", y_proba if y_proba is not None else [None]*len(y_pred)),
+        pl.Series("probability", y_proba if y_proba is not None else [None] * len(y_pred)),
     ])
     df_out.write_parquet(out_path)
 
