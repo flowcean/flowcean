@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from flowcean.core.transform import Transform
 
+# in a previous version of bag_processor i got the following error: (see pasted terminal snippet) so I changed the particle_cloud_statistics.py and it works. Now use that to adjust the scan_map_statistics.py. The column types should be list of structs with fields "time" and "value".
 # Constants for raycasting optimization
 RAYCAST_BATCH_SIZE = (
     512  # Process rays in batches for better cache utilization

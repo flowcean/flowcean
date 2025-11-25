@@ -24,7 +24,7 @@ def zero_order_hold_align(
         • Behaves like the original implementation (full alignment)
     """
     # ---------------------------------------------------------------
-    # CASE 1 — No reference column → use original behavior
+    # CASE 1 – No reference column → use original behavior
     # ---------------------------------------------------------------
     if reference_column is None:
         exploded = (
@@ -62,11 +62,13 @@ def zero_order_hold_align(
         )
 
     # ---------------------------------------------------------------
-    # CASE 2 — Reference-based ZOH alignment
+    # CASE 2 – Reference-based ZOH alignment
     # ---------------------------------------------------------------
 
     if reference_column not in columns:
-        raise ValueError
+        raise ValueError(
+            f"reference_column '{reference_column}' not in columns"
+        )
 
     # Extract reference timeline
     ref = (
@@ -78,7 +80,7 @@ def zero_order_hold_align(
         )
     )
 
-    # For each column:explode → forward-fill onto ref.index → take latest value
+    # For each column: explode → forward-fill onto ref.index → take latest value
     aligned_cols = []
     for col in columns:
         df = (
@@ -95,8 +97,9 @@ def zero_order_hold_align(
         )
 
         # Join to reference timeline (as-of join)
+        # Drop the 'index' column from df before joining to avoid duplicates
         df = ref.join_asof(
-            df.sort("t"),
+            df.sort("t").drop("index"),
             left_on="time",
             right_on="t",
         ).sort("index")
@@ -106,14 +109,29 @@ def zero_order_hold_align(
 
         aligned_cols.append(df)
 
-    # Combine all
-    final = pl.concat(aligned_cols, how="horizontal")
+    # Combine all columns horizontally
+    # We need to be careful here - the first dataframe has 'index' and 'time'
+    # Subsequent ones should only contribute their feature columns
+    final = aligned_cols[0]
+    for df in aligned_cols[1:]:
+        # Only take the feature columns (exclude 'index', 'time', 't')
+        feature_cols = [
+            c for c in df.columns if c not in ["index", "time", "t"]
+        ]
+        final = pl.concat([final, df.select(feature_cols)], how="horizontal")
 
-    return final.select(
-        pl.struct(
-            pl.col("time"),
-            pl.struct(pl.exclude("time", "t")).alias("value"),
-        ).alias(name),
+    # Group by index and aggregate into time series
+    return (
+        final.select(
+            pl.col("index"),
+            pl.struct(
+                pl.col("time"),
+                pl.struct(pl.exclude("index", "time", "t")).alias("value"),
+            ).alias(name),
+        )
+        .group_by("index", maintain_order=True)
+        .agg(pl.all().implode())
+        .drop("index")
     )
 
 

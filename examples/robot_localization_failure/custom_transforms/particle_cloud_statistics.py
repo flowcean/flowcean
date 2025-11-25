@@ -34,7 +34,7 @@ class ParticleCloudStatistics(Transform):
         self.particle_cloud_feature_name = particle_cloud_feature_name
 
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        logger.debug("Matching sampling rate of time series.")
+        logger.debug("Computing particle cloud statistics.")
 
         sys.setrecursionlimit(1000000)
 
@@ -42,7 +42,8 @@ class ParticleCloudStatistics(Transform):
 
         number_of_messages = len(particle_cloud)
 
-        all_features = []
+        # Dictionary to store timeseries for each feature
+        feature_timeseries = {}
 
         for i in tqdm(
             range(number_of_messages),
@@ -60,30 +61,24 @@ class ParticleCloudStatistics(Transform):
                 min_samples=5,
             )
 
-            features["time"] = message_time
-            all_features.append(features)
+            # Add each feature to its respective timeseries
+            for feature_name, feature_value in features.items():
+                if feature_name not in feature_timeseries:
+                    feature_timeseries[feature_name] = []
+                feature_timeseries[feature_name].append(
+                    {
+                        "time": message_time,
+                        "value": {feature_name: feature_value},
+                    },
+                )
 
-        features_df = pl.DataFrame(all_features)
-        time_values = features_df["time"].to_list()
+        # Create DataFrame with List(Struct) format for each feature
+        final_data = {}
+        for feature_name, timeseries in feature_timeseries.items():
+            # Wrap the entire timeseries in a list to create List(Struct) type
+            final_data[feature_name] = [timeseries]
 
-        new_data = {}
-
-        for col in features_df.columns:
-            if col == "time":
-                continue
-
-            feature_values = features_df[col].to_list()
-
-            # Combine feature value with corresponding time into a dictionary
-            dict_list = [
-                {"time": t, "value": val}
-                for t, val in zip(time_values, feature_values, strict=False)
-            ]
-
-            # Put entire dict_list as a single entry - a list of all structs.
-            new_data[col] = [dict_list]
-
-        final_df = pl.DataFrame(new_data)
+        final_df = pl.DataFrame(final_data)
 
         return data.collect().hstack(final_df).lazy()
 

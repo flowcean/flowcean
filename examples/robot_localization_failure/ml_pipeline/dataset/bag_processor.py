@@ -5,6 +5,7 @@ import polars as pl
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_map_statistics import ScanMapStatistics
 
+from flowcean.polars.transforms.explode_time_series import ExplodeTimeSeries
 from flowcean.polars.transforms.zero_order_hold_matching import ZeroOrderHold
 from flowcean.ros import load_rosbag
 
@@ -43,25 +44,48 @@ def process_single_bag(
         "info.origin.orientation.w": map_value["info.origin.orientation.w"],
     }
 
-    # -----------------------------
-    # ScanMapStatistics
-    # -----------------------------
-    transform = ScanMapStatistics(
-        occupancy_map=occupancy_map,
-        scan_topic="/scan",
-        sensor_pose_topic="/amcl_pose",
-    ) | ParticleCloudStatistics(
-        particle_cloud_feature_name="/particle_cloud",
+    transform = (
+        ScanMapStatistics(
+            occupancy_map=occupancy_map,
+            scan_topic="/scan",
+            sensor_pose_topic="/amcl_pose",
+        )
+        | ParticleCloudStatistics(
+            particle_cloud_feature_name="/particle_cloud",
+        )
+        | ZeroOrderHold(
+            # features=[
+            #     "/amcl_pose",
+            #     "/momo/pose",
+            #     "/scan",
+            #     "/particle_cloud",
+            #     "cog_max_distance",
+            #     "cog_mean_dist",
+            #     "cog_mean_absolute_deviation",
+            #     "cog_median",
+            #     "cog_median_absolute_deviation",
+            #     "cog_min_distance",
+            #     "cog_standard_deviation",
+            #     "circle_radius",
+            #     "circle_mean",
+            #     "circle_mean_absolute_deviation",
+            #     "circle_median",
+            #     "circle_median_absolute_deviation",
+            #     "circle_min_distance",
+            #     "circle_standard_deviation",
+            #     "num_clusters",
+            #     "main_cluster_variance_x",
+            #     "main_cluster_variance_y",
+            # ],
+            reference_column="/scan",
+            drop=True,
+        )
+        | ExplodeTimeSeries("aligned")
     )
 
     full_df = transform(raw_lf).collect()
 
-    zoh_transform = ZeroOrderHold(  # all the features
-        reference_column="/scan",
-        drop=True,
-    )
-    zoh_df = zoh_transform(full_df).collect()
-    print(zoh_df)
+    print(full_df)
     breakpoint()
     # -----------------------------
     # Build Base Index from scan time

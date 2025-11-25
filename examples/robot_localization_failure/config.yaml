@@ -1,8 +1,8 @@
 rosbag:
   training_paths:
-    - rec_20250704_173434_sliced/rec_20250704_173434_id_01
+    - recordings/rec_20250923_135805_id_01
   evaluation_paths:
-    - rec_20250704_173434_sliced/rec_20250704_173434_id_02
+    - recordings/rec_20250923_135805_id_01 
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
