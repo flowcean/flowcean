@@ -67,7 +67,7 @@ def zero_order_hold_align(
 
     if reference_column not in columns:
         raise ValueError(
-            f"reference_column '{reference_column}' not in columns"
+            f"reference_column '{reference_column}' not in columns",
         )
 
     # Extract reference timeline

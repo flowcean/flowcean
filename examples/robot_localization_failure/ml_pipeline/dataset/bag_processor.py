@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import polars as pl
+from custom_transforms.localization_status import LocalizationStatus
 from custom_transforms.particle_cloud_statistics import ParticleCloudStatistics
 from custom_transforms.scan_map_statistics import ScanMapStatistics
 
@@ -81,6 +82,13 @@ def process_single_bag(
             drop=True,
         )
         | ExplodeTimeSeries("aligned")
+        | LocalizationStatus(
+            time_series="measurements",
+            ground_truth="/momo/pose",
+            estimation="/amcl_pose",
+            position_threshold=position_threshold,
+            heading_threshold=heading_threshold,
+        )
     )
 
     full_df = transform(raw_lf).collect()
