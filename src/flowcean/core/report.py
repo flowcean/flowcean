@@ -172,12 +172,12 @@ class Report(dict[str, ReportEntry]):
             value = entry[metric_name]
             if isinstance(value, Mapping):
                 value = cast("Mapping[str, Reportable]", value)
-                vals = [float(v) for v in value.values()]  # type: ignore[arg-type]
+                vals = [float(str(v)) for v in value.values()]
                 if not vals:
                     continue
                 score = sum(vals) / len(vals)
             else:
-                score = float(value)  # type: ignore[arg-type]
+                score = float(str(value))
 
             if factor * score > best_score:
                 best_score = factor * score

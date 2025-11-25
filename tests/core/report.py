@@ -17,7 +17,6 @@ class TestSelectBestModelBasics:
 
     def test_maximize_with_single_metric_simple_case(self) -> None:
         """Test selecting model with highest accuracy value."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
@@ -38,17 +37,14 @@ class TestSelectBestModelBasics:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("accuracy", mode="maximize")
 
-        # Assert
         assert best_model is model_b, (
             "Should return model with highest accuracy (0.92)"
         )
 
     def test_minimize_with_single_metric_simple_case(self) -> None:
         """Test selecting model with lowest loss value."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
@@ -68,10 +64,8 @@ class TestSelectBestModelBasics:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("loss", mode="minimize")
 
-        # Assert
         assert best_model is model_b, (
             "Should return model with lowest loss (0.3)"
         )
@@ -82,7 +76,6 @@ class TestSelectBestModelModeVariations:
 
     def test_mode_max_shorthand(self) -> None:
         """Test that 'max' works as shorthand for 'maximize'."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -99,15 +92,12 @@ class TestSelectBestModelModeVariations:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("score", mode="max")
 
-        # Assert
         assert best_model is model_b
 
     def test_mode_min_shorthand(self) -> None:
         """Test that 'min' works as shorthand for 'minimize'."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -124,15 +114,12 @@ class TestSelectBestModelModeVariations:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("error", mode="min")
 
-        # Assert
         assert best_model is model_b
 
     def test_mode_case_insensitivity(self) -> None:
         """Test that mode parameter is case-insensitive."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -149,7 +136,6 @@ class TestSelectBestModelModeVariations:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act & Assert
         result_upper = report.select_best_model("score", mode="MAXIMIZE")
         result_mixed = report.select_best_model("score", mode="MaXiMiZe")
         result_lower = report.select_best_model("score", mode="maximize")
@@ -164,7 +150,6 @@ class TestSelectBestModelNestedMetrics:
 
     def test_nested_metric_uses_average(self) -> None:
         """Test that nested metrics are averaged correctly."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
@@ -190,17 +175,14 @@ class TestSelectBestModelNestedMetrics:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("f1", mode="maximize")
 
-        # Assert
         assert best_model is model_c, (
             "Should select model_c with average f1 of 0.925"
         )
 
     def test_nested_metric_minimize(self) -> None:
         """Test minimizing with nested metrics."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -221,17 +203,14 @@ class TestSelectBestModelNestedMetrics:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("mae", mode="minimize")
 
-        # Assert
         assert best_model is model_b, (
             "Should select model_b with lower average mae"
         )
 
     def test_mixed_simple_and_nested_metrics(self) -> None:
         """Test when some models have simple metrics and others have nested."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
@@ -240,9 +219,9 @@ class TestSelectBestModelNestedMetrics:
             {
                 "model_a": ReportEntry({"score": 0.80}),
                 "model_b": ReportEntry(
-                    {"score": {"sub1": 0.7, "sub2": 0.9}},
-                ),  # avg: 0.8
-                "model_c": ReportEntry({"score": 0.85}),
+                    {"score": {"sub1": 0.7, "sub2": 0.81}},
+                ),  # avg: 0.755
+                "model_c": ReportEntry({"score": 0.78}),
             },
         )
 
@@ -253,11 +232,9 @@ class TestSelectBestModelNestedMetrics:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("score", mode="maximize")
 
-        # Assert
-        assert best_model is model_c, "Should select model_c with score 0.85"
+        assert best_model is model_a, "Should select model_a with score 0.8"
 
 
 class TestSelectBestModelErrorCases:
@@ -265,35 +242,29 @@ class TestSelectBestModelErrorCases:
 
     def test_invalid_mode_raises_valueerror(self) -> None:
         """Test that invalid mode parameter raises ValueError."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
         models_dict: dict[str, Model] = {"model_a": model_a}
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act & Assert
         with pytest.raises(ValueError, match="mode must be one of"):
             report.select_best_model("accuracy", mode="invalid")
 
     def test_metric_not_found_raises_valueerror(self) -> None:
         """Test that missing metric raises ValueError."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
         models_dict: dict[str, Model] = {"model_a": model_a}
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act & Assert
         with pytest.raises(ValueError, match="Metric 'nonexistent' not found"):
             report.select_best_model("nonexistent", mode="maximize")
 
     def test_no_models_attached_raises_valueerror(self) -> None:
         """Test that missing models_by_name attribute raises ValueError."""
-        # Arrange
         report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
         # Intentionally don't attach models_by_name
 
-        # Act & Assert
         with pytest.raises(
             ValueError,
             match="does not contain attached models",
@@ -302,7 +273,6 @@ class TestSelectBestModelErrorCases:
 
     def test_best_model_not_in_models_dict_raises_valueerror(self) -> None:
         """Test when best model name is not in models_by_name dict."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
 
@@ -321,7 +291,6 @@ class TestSelectBestModelErrorCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act & Assert
         with pytest.raises(
             ValueError,
             match="does not contain attached models",
@@ -330,11 +299,9 @@ class TestSelectBestModelErrorCases:
 
     def test_models_by_name_not_a_dict_raises_valueerror(self) -> None:
         """Test when models_by_name is not a dict."""
-        # Arrange
         report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
         object.__setattr__(report, "models_by_name", "not a dict")
 
-        # Act & Assert
         with pytest.raises(
             ValueError,
             match="does not contain attached models",
@@ -343,7 +310,6 @@ class TestSelectBestModelErrorCases:
 
     def test_empty_nested_metric_skipped(self) -> None:
         """Test that models with empty nested metrics are skipped."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -360,17 +326,14 @@ class TestSelectBestModelErrorCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("f1", mode="maximize")
 
-        # Assert
         assert best_model is model_b, (
             "Should skip model_a with empty nested metric"
         )
 
     def test_all_models_missing_metric_raises_valueerror(self) -> None:
         """Test when metric exists in some entries but not the one searched for."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -387,7 +350,6 @@ class TestSelectBestModelErrorCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act & Assert
         with pytest.raises(ValueError, match="Metric 'recall' not found"):
             report.select_best_model("recall", mode="maximize")
 
@@ -397,21 +359,17 @@ class TestSelectBestModelEdgeCases:
 
     def test_single_model_returns_that_model(self) -> None:
         """Test with only one model in report."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
         models_dict: dict[str, Model] = {"model_a": model_a}
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("accuracy", mode="maximize")
 
-        # Assert
         assert best_model is model_a
 
     def test_tied_scores_returns_first_encountered(self) -> None:
         """Test behavior when multiple models have identical best scores."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
@@ -431,7 +389,6 @@ class TestSelectBestModelEdgeCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("accuracy", mode="maximize")
 
         # Assert - should return first encountered in iteration order
@@ -439,7 +396,6 @@ class TestSelectBestModelEdgeCases:
 
     def test_negative_metric_values(self) -> None:
         """Test with negative metric values."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
         model_c = Mock(spec=["predict"])
@@ -459,7 +415,6 @@ class TestSelectBestModelEdgeCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act & Assert
         best_max = report.select_best_model("loss", mode="maximize")
         assert best_max is model_b, "When maximizing, -0.3 > -0.5 > -0.8"
 
@@ -468,7 +423,6 @@ class TestSelectBestModelEdgeCases:
 
     def test_zero_values(self) -> None:
         """Test with zero metric values."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -485,17 +439,14 @@ class TestSelectBestModelEdgeCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("error", mode="minimize")
 
-        # Assert
         assert best_model is model_a, "Should handle zero values correctly"
 
     def test_numpy_float_types(self) -> None:
         """Test with numpy float types."""
         import numpy as np
 
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -512,15 +463,12 @@ class TestSelectBestModelEdgeCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("accuracy", mode="maximize")
 
-        # Assert
         assert best_model is model_b, "Should handle numpy float types"
 
     def test_very_large_number_of_nested_values(self) -> None:
         """Test averaging with many nested values."""
-        # Arrange
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
@@ -541,10 +489,8 @@ class TestSelectBestModelEdgeCases:
         }
         object.__setattr__(report, "models_by_name", models_dict)
 
-        # Act
         best_model = report.select_best_model("score", mode="maximize")
 
-        # Assert
         assert best_model is model_b, (
             "Should handle many nested values correctly"
         )
