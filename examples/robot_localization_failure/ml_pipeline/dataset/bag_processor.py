@@ -56,11 +56,13 @@ def process_single_bag(
 
     full_df = transform(raw_lf).collect()
 
-    zoh_transform = ZeroOrderHold(
-        
+    zoh_transform = ZeroOrderHold(  # all the features
+        reference_column="/scan",
+        drop=True,
     )
-
-
+    zoh_df = zoh_transform(full_df).collect()
+    print(zoh_df)
+    breakpoint()
     # -----------------------------
     # Build Base Index from scan time
     # -----------------------------

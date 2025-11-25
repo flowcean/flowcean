@@ -122,7 +122,7 @@ class ZeroOrderHold(Transform):
 
     def __init__(
         self,
-        features: list[str] | None,
+        features: list[str] | None = None,
         name: str = "aligned",
         *,
         drop: bool = True,
@@ -148,7 +148,11 @@ class ZeroOrderHold(Transform):
             self.features,
             self.reference_column,
         )
-        if self.features is None: # take all features in data 
+        if self.features is None:  # take all features in data
+            logger.info(
+                "No features specified for ZOH alignment; using all features",
+            )
+            self.features = data.columns
         aligned = zero_order_hold_align(
             data,
             columns=self.features,
