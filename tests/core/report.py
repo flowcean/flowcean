@@ -333,7 +333,7 @@ class TestSelectBestModelErrorCases:
         )
 
     def test_all_models_missing_metric_raises_valueerror(self) -> None:
-        """Test when metric exists in some entries but not the one searched for."""
+        """Test when metric exists but not in the entry searched for."""
         model_a = Mock(spec=["predict"])
         model_b = Mock(spec=["predict"])
 
