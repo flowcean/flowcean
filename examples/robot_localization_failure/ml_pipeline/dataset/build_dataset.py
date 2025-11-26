@@ -1,14 +1,13 @@
 import polars as pl
-import flowcean.cli
-
 from ml_pipeline.dataset.bag_processor import process_single_bag
-from ml_pipeline.utils.paths import DATASETS
 from ml_pipeline.dataset.helpers import get_topics
+from ml_pipeline.utils.paths import DATASETS
+
+import flowcean.cli
 
 
 def safe_iter(x):
-    """
-    Convert None → empty list.
+    """Convert None → empty list.
     Convert single string → [string].
     Return list unchanged.
     """
@@ -81,13 +80,17 @@ def main():
 
         print("✔ Saved evaluation dataset")
     else:
-        print("⚠️ No evaluation bags found — skipping evaluation dataset creation.")
+        print(
+            "⚠️ No evaluation bags found — skipping evaluation dataset creation.",
+        )
 
     # ============================================================
     # FINAL SANITY CHECK
     # ============================================================
     if len(training_paths) == 0 and len(eval_paths) == 0:
-        print("\n❌ ERROR: Both training_paths and evaluation_paths are empty.")
+        print(
+            "\n❌ ERROR: Both training_paths and evaluation_paths are empty.",
+        )
         print("Nothing to process. Check your config.yaml.")
         return
 
