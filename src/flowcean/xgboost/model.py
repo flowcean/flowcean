@@ -75,7 +75,9 @@ class XGBoostClassifierModel(Model):
         # Use default prediction
         return pl.from_numpy(
             self.classifier.predict(
-                input_features.select(self.input_features).collect().to_numpy(),
+                input_features.select(self.input_features)
+                .collect()
+                .to_numpy(),
             ),
             self.output_features,
         ).lazy()

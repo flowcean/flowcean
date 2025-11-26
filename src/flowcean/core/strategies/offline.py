@@ -145,11 +145,11 @@ def tune_threshold(
     Example:
         >>> from flowcean.sklearn.metrics.classification import FBetaScore
         >>> metric = FBetaScore(beta=1.0)
-        >>> best_thr, results = tune_threshold(
+        >>> best_threshold, results = tune_threshold(
         ...     model, eval_env, inputs, outputs, metric
         ... )
-        >>> print(f"Best threshold: {best_thr:.3f}")
-        >>> model.threshold = best_thr  # Apply the best threshold
+        >>> print(f"Best threshold: {best_threshold:.3f}")
+        >>> model.threshold = best_threshold  # Apply the best threshold
     """
     import numpy as np
 
