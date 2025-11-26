@@ -29,6 +29,7 @@ class AdaBoost(SupervisedLearner):
         learning_rate: float = 1.0,
         algorithm: str = "deprecated",
         random_state: int | None = None,
+        threshold: float | None = None,
     ) -> None:
         """Initialize the AdaBoost classifier learner.
 
@@ -41,6 +42,7 @@ class AdaBoost(SupervisedLearner):
             algorithm=algorithm,
             random_state=random_state or get_seed(),
         )
+        self.threshold = threshold
 
     @override
     def learn(
@@ -74,4 +76,5 @@ class AdaBoost(SupervisedLearner):
         return SciKitModel(
             self.classifier,
             output_names=[collected_outputs.columns[0]],
+            threshold=self.threshold,
         )
