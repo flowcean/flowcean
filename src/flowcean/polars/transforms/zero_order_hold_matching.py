@@ -87,7 +87,7 @@ class ZeroOrderHold(Transform):
             logger.info(
                 "No features specified for ZOH alignment; using all features",
             )
-            self.features = data.columns
+            self.features = data.collect_schema().names()
         aligned = zero_order_hold_align(
             data,
             columns=self.features,
