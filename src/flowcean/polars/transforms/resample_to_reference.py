@@ -14,7 +14,7 @@ def resample_to_reference(
     reference: str,
     name: str,
 ) -> pl.LazyFrame:
-    """Resample columns to a reference column's timeline holding the last value.
+    """Resample columns to a reference timeline holding the last value.
 
     Args:
         data: Input LazyFrame containing time series columns.
