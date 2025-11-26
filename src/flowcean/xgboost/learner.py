@@ -17,7 +17,6 @@ class XGBoostClassifierLearner(SupervisedLearner):
     """
 
     def __init__(self, threshold: float = 0.5, **kwargs: Any) -> None:
-        # Store threshold separately - don't pass to XGBoost
         self.threshold = threshold
         self.classifier = XGBClassifier(**kwargs)
         super().__init__()
