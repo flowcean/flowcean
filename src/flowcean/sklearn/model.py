@@ -28,8 +28,9 @@ class SupportsPredictProba(Protocol):
 class SciKitModel(Model):
     """A model that wraps a scikit-learn model.
 
-    For classifiers with predict_proba, this model supports threshold-based
-    predictions. Set the threshold attribute to customize the decision boundary.
+    For classifiers with predict_proba, this model supports
+    threshold-based predictions. Set the threshold attribute to
+    customize the decision boundary.
     """
 
     estimator: SupportsPredict
@@ -48,9 +49,10 @@ class SciKitModel(Model):
         Args:
             estimator: The scikit-learn estimator.
             output_names: The names of the output columns.
-            threshold: Optional decision threshold for classifiers (default: None).
-                If set and estimator has predict_proba, uses threshold-based
-                prediction. Otherwise uses estimator's default predict method.
+            threshold: Optional decision threshold for classifiers
+                (default: None). If set and estimator has predict_proba,
+                uses threshold-based prediction. Otherwise uses
+                estimator's default predict method.
             name: The name of the model.
         """
         super().__init__()
@@ -112,10 +114,10 @@ class SciKitModel(Model):
         if isinstance(input_features, pl.LazyFrame):
             input_features = input_features.collect()
 
-        # Use threshold-based prediction if threshold is set and model supports it
-        if (
-            self.threshold is not None
-            and hasattr(self.estimator, "predict_proba")
+        # Use threshold-based prediction if threshold is set and
+        # model supports it
+        if self.threshold is not None and hasattr(
+            self.estimator, "predict_proba",
         ):
             probas = self._predict_proba(input_features).collect()
             predictions = {}
