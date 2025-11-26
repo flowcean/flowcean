@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import polars as pl
 from typing_extensions import override
@@ -78,7 +78,9 @@ class SciKitModel(Model):
             )
             raise AttributeError(msg)
 
-        probas = self.estimator.predict_proba(input_features)[:, 1]
+        # Cast to SupportsPredictProba for type checker
+        estimator = cast("SupportsPredictProba", self.estimator)
+        probas = estimator.predict_proba(input_features)[:, 1]
 
         if len(self.output_names) == 1:
             data = {self.output_names[0]: probas}
@@ -117,7 +119,8 @@ class SciKitModel(Model):
         # Use threshold-based prediction if threshold is set and
         # model supports it
         if self.threshold is not None and hasattr(
-            self.estimator, "predict_proba",
+            self.estimator,
+            "predict_proba",
         ):
             probas = self._predict_proba(input_features).collect()
             predictions = {}
