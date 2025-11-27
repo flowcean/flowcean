@@ -9,7 +9,7 @@ import lightning
 import polars as pl
 import torch
 from feature_images import DiskCaching, FeatureImagesData, InMemoryCaching
-from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
 from typing_extensions import override
 
@@ -105,17 +105,22 @@ class ImageBasedLightningLearner(SupervisedLearner):
             num_workers=self.num_workers,
             persistent_workers=platform.system() == "Linux",
         )
+        tb_logger = TensorBoardLogger(
+            save_dir="tb_lightning_logs",
+            name="image_based_model",
+        )
         trainer = lightning.Trainer(
             accelerator=self.accelerator,
             max_epochs=self.max_epochs,
             callbacks=[
-                EarlyStopping(
-                    monitor="train_loss",
-                    patience=10,
-                    mode="min",
-                ),
+                # EarlyStopping(
+                #     monitor="train_loss",
+                #     patience=10,
+                #     mode="min",
+                # ),
             ],
             devices=1,
+            logger=tb_logger,
         )
         trainer.fit(self.module, dataloader)
         return ImageBasedPyTorchModel(
@@ -139,7 +144,7 @@ class ImageBasedPyTorchModel(Model):
         output_names: list[str],
         batch_size: int = 32,
         num_workers: int = 1,
-        binary_classification_threshold: float = 0.5,
+        binary_classification_threshold: float = 0.5,  # 0.5
     ) -> None:
         """Initialize the model.
 
@@ -161,16 +166,7 @@ class ImageBasedPyTorchModel(Model):
         self.binary_classification_threshold = binary_classification_threshold
 
     @override
-    def predict(
-        self,
-        input_features: pl.LazyFrame,
-        threshold: float | None = None,
-    ) -> pl.LazyFrame:
-        current_threshold = (
-            threshold
-            if threshold is not None
-            else self.binary_classification_threshold
-        )
+    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         dataset = FeatureImagesData(
             input_features.collect(),
             image_size=self.image_size,
@@ -187,10 +183,8 @@ class ImageBasedPyTorchModel(Model):
         with torch.no_grad():
             for batch in dataloader:
                 outputs = self.module(batch)
-                preds = (
-                    outputs
-                    > current_threshold  # self.binary_classification_threshold
-                ).float()
+                probs = torch.sigmoid(outputs)
+                preds = (probs > self.binary_classification_threshold).float()
                 predictions.append(preds)
         predictions = torch.cat(predictions, dim=0).numpy()
         return pl.DataFrame(predictions, schema=self.output_names).lazy()

@@ -1,49 +1,26 @@
 rosbag:
   training_paths:
-    # - recordings/wgtl_half_split/rec_20250821_104113_id_01
-    # - recordings/wgtl_half_split/rec_20250821_132354_id_01
-    # - recordings/wgtl_half_split/rec_20250821_132354_id_02
-    # - recordings/wgtl_half_split/rec_20250821_141846_id_01
-    # - recordings/wgtl_half_split/rec_20250821_141846_id_02
-    # - recordings/wgtl_half_split/rec_20250821_151429_id_01   #evaluation_cache
-    # - recordings/wgtl_half_split/rec_20250822_123916_id_01   #evaluation_cache
-    # - recordings/wgtl_half_split/rec_20250822_123916_id_02
-    # - recordings/wgtl_half_split/rec_20250822_132819_id_01
-    # - recordings/wgtl_half_split/rec_20250822_132819_id_02
-    - recordings/wgtl_half_split/rec_20250822_135308_id_01
-    - recordings/wgtl_half_split/rec_20250822_135308_id_02
-    # - recordings/wgtl_half_split/rec_20250825_100748_id_01
-    # - recordings/wgtl_half_split/rec_20250825_100748_id_02
-    # - recordings/wgtl_half_split/rec_20250825_133605_id_01
-    # - recordings/wgtl_half_split/rec_20250825_133605_id_02
-    # - recordings/wgtl_half_split/rec_20250825_135829_id_01
-    # - recordings/wgtl_half_split/rec_20250825_135829_id_02
-    # - recordings/wgtl_half_split/rec_20250825_145941_id_01
-    # - recordings/wgtl_half_split/rec_20250825_145941_id_02
-    # - recordings/wgtl_half_split/rec_20250825_153216_id_01
-    # - recordings/wgtl_half_split/rec_20250825_153216_id_02
-    # - recordings/wgtl_half_split/rec_20250825_161940_id_01
-    # - recordings/wgtl_half_split/rec_20250825_161940_id_02
-    # - recordings/wgtl_half_split/rec_20250826_095810_id_01
-    # - recordings/wgtl_half_split/rec_20250826_102611_id_01
-    # - recordings/wgtl_half_split/rec_20250826_102611_id_02
-    # - recordings/wgtl_half_split/rec_20250826_104543_id_01
-    # - recordings/wgtl_half_split/rec_20250826_104543_id_02
-    # - recordings/wgtl_half_split/rec_20250827_161251_id_01
-    # - recordings/wgtl_half_split/rec_20250827_161251_id_02
-    # - recordings/wgtl_half_split/rec_20250828_102407_id_01
-    # - recordings/wgtl_half_split/rec_20250828_102407_id_02
-    # - recordings/wgtl_half_split/rec_20250828_105714_id_01
-    # - recordings/wgtl_half_split/rec_20250828_105714_id_02
-    # - recordings/wgtl_half_split/rec_20250828_161448_id_01
-    # - recordings/wgtl_half_split/rec_20250829_104641_id_01
-    # - recordings/wgtl_half_split/rec_20250829_104641_id_02
+    # - recordings/wgtl_half_split/rec_20250825_161940_id_01 # map: unsymmetric_exp_2, static & dynamic obstacles
+    # - recordings/wgtl_half_split/rec_20250825_161940_id_02 # map: unsymmetric_exp_2, static & dynamic obstacles
+    # - recordings/wgtl_half_split/rec_20250822_135308_id_02 # map: symmetric_exp_2, dynamic obstacles
+    # - recordings/wgtl_half_split/rec_20250825_153216_id_02 # map: unsymmetric_exp_2, only static obstacles  
+    # - recordings/wgtl_half_split/rec_20250822_135308_id_01 # map: symmetric_exp_2, dynamic obstacles
+    # - recordings/wgtl_half_split/rec_20250825_153216_id_01 # map: unsymmetric_exp_2, only static obstacles
+    # - recordings/momo_real_world_data/rosbag2_2025_11_12-16_38_21
+    - recordings/test_data/test_1/training_data_half/rec_20250923_135805_id_01
+    - recordings/test_data/test_1/training_data_half/rec_20250923_135805_id_02
+    # - recordings/test_data/test_2/data_half/rec_20250923_145058_id_01
+    # - recordings/test_data/test_2/data_half/rec_20250923_145058_id_02
+
 
   evaluation_paths:
-    # - recordings/wgtl_half_split/rec_20250821_104113_id_02
-    # - recordings/wgtl_half_split/rec_20250821_151429_id_02
-    # - recordings/wgtl_half_split/rec_20250826_095810_id_02
-    - recordings/wgtl_half_split/rec_20250828_161448_id_02
+    # - recordings/real_world_data
+    # - recordings/momo_real_world_data/rosbag2_2025_11_13-14_53_15
+    - recordings/test_data/test_1/testing_data_half/rec_20250923_142005_id_01
+    - recordings/test_data/test_1/testing_data_half/rec_20250923_142005_id_02
+    # - recordings/test_data/test_2/data_half/rec_20250923_153128_id_01
+    # - recordings/test_data/test_2/data_half/rec_20250923_153128_id_02
+
 
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
@@ -53,28 +30,27 @@ localization:
   position_threshold: 0.4
   heading_threshold: 0.4
 architecture:
-  image_size: 256
-  width_meters: 15.0
+  image_size: 100 #640
+  width_meters: 20.0 
 learning:
-  batch_size: 64
+  batch_size: 16
   learning_rate: 0.0001
-  epochs: 10 #50
+  epochs: 50
   preload: true
   disk_cache_dir: "learning_cache"
-  eval_cache_dir: "evaluation_cache"          # evaluation cache directory
-  clear_eval_cache: false                     # whether to clear the evaluation cache before use
-  model_path: "models/robot_localization.fml"
+  model_path: "models/train_on_sim_test_on_real_data.fml"
+
 optuna:
   storage: "sqlite:///optuna.db"
-  trials: 10 # 30
+  trials: 100
   hyperparameters:
     learning_rate:
       low: 1e-5
       high: 1e-2
     batch_size:
-      choices: [32, 64, 128]
+      choices: [16, 32]
     image_size:
-      choices: [256, 512, 768]
+      choices: [100,120,140,160]
     width_meters:
-      low: 5.0
-      high: 50.0
+      low: 2.0
+      high: 30.0

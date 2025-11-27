@@ -6,7 +6,7 @@ from pathlib import Path
 
 import polars as pl
 import torch
-from architectures.cnn import CNN
+from architectures.cnn_4_layers import CNN
 from custom_learners.image_based_lightning_learner import (
     ImageBasedLightningLearner,
     ImageBasedPyTorchModel,
@@ -22,7 +22,6 @@ from flowcean.ros import load_rosbag
 from flowcean.sklearn import (
     Accuracy,
     ClassificationReport,
-    ConfusionMatrix,
     FBetaScore,
     PrecisionScore,
     Recall,
@@ -54,7 +53,6 @@ def define_transforms(
             ],
             name="measurements",
         )
-        | Drop("/scan", "/particle_cloud", "/momo/pose", "/amcl_pose")
         | DetectDelocalizations("/delocalizations", name="slice_points")
         | Drop("/delocalizations")
         | SliceTimeSeries(
@@ -206,7 +204,7 @@ def collect_data(
         for path in config.rosbag.training_paths
     ]
     logger.info(
-        "Lazily combining training data. This takes 8 min for 130 GB of data",
+        "Lazily combining training data. This can take several minutes...",
     )
     samples_train_lf = explode_and_collect_samples(
         pl.concat(runs_train_lf, how="vertical"),
@@ -272,21 +270,21 @@ def train(
         .select("count")
         .item()
     )
-    ratio = 1.0 * false_counts / true_counts
+    ratio = false_counts / true_counts
     print(
         "Negative to Positive ratio:",
         ratio,
     )
+    pos_weight = torch.tensor(
+        [ratio],
+        dtype=torch.float32,
+        device="cuda" if torch.cuda.is_available() else "cpu",
+    )
     learner = ImageBasedLightningLearner(
         module=CNN(
-            image_size=config.architecture.image_size,
             in_channels=3,
             learning_rate=config.learning.learning_rate,
-            pos_weight=torch.tensor(
-                [ratio],
-                dtype=torch.float32,
-                device="cuda" if torch.cuda.is_available() else "cpu",
-            ),
+            pos_weight=pos_weight,  # None,  # pos_weight,
         ),
         batch_size=config.learning.batch_size,
         max_epochs=config.learning.epochs,
@@ -365,7 +363,6 @@ def evaluate(
         FBetaScore(beta=0.5),
         PrecisionScore(),
         Recall(),
-        ConfusionMatrix(normalize=True),
     ]
 
     # Use cached dataset directly if available
@@ -381,27 +378,3 @@ def evaluate(
         outputs=["is_delocalized"],
         metrics=metrics,
     )
-
-
-# Original evaluate function before adding evaluation caching
-# def evaluate(
-#     model: ImageBasedPyTorchModel,
-#     test_data: pl.DataFrame,
-# ) -> Report:
-
-#     metrics = [
-#         Accuracy(),
-#         ClassificationReport(),
-#         FBetaScore(beta=0.5),  # 1.0
-#         PrecisionScore(),
-#         Recall(),
-#         ConfusionMatrix(normalize=True),
-#     ]
-#     logger.info("Evaluating model on test data")
-#     return evaluate_offline(
-#         model,
-#         DataFrame(test_data),
-#         inputs=["/map", "/scan", "/particle_cloud", "/amcl_pose"],
-#         outputs=["is_delocalized"],
-#         metrics=metrics,
-#     )

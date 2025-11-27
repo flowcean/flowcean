@@ -13,6 +13,15 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     config = flowcean.cli.initialize()
 
+    model = Model.load(
+        "models/model_with_sigmoid_optimized_only_small_maps.fml",
+    )
+    print("Model type:", type(model))
+    model.binary_classification_threshold = 0.3
+
+    # evaluation
+    return
+
     samples_train, samples_eval = collect_data(config)
 
     print("samples_train:", samples_train)
@@ -21,16 +30,12 @@ def main() -> None:
     print("samples_train schema:", samples_train.schema)
     print("samples_eval schema:", samples_eval.schema)
 
-    model = Model.load("models/robot_localization_1_0_40epochs.fml")
-
-    print("Model type:", type(model))
-
     lazy_samples = samples_eval.lazy()
 
     print("lazy_samples:", lazy_samples)
     print("lazy_samples schema:", lazy_samples.schema)
 
-    x = model.predict(lazy_samples, threshold=0.3).collect()
+    x = model.predict(lazy_samples).collect()
 
     print("Predictions:", x)
 

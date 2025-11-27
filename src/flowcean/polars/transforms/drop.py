@@ -21,4 +21,6 @@ class Drop(Transform):
 
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.drop(self.features, *self.more_features)
+        if self.features in data.columns:
+            return data.drop(self.features, *self.more_features)
+        return data

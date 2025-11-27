@@ -83,51 +83,52 @@ def load_rosbag(
 def _generate_features(
     reader: AnyReader,
     topics: dict[str, list[str]],
-) -> Iterable[pl.LazyFrame]:
+) -> Iterable[pl.LazyFrame | None]:
     bar = tqdm(topics.items(), "Loading topics")
     for topic, paths in bar:
         bar.set_description(f"Loading topic {topic!r}")
-        yield _get_dataframe(reader, topic, paths)
+        if _get_dataframe(reader, topic, paths) is not None:
+            yield _get_dataframe(reader, topic, paths)
 
 
 def _get_dataframe(
     reader: AnyReader,
     topic_name: str,
     paths: Sequence[str],
-) -> pl.LazyFrame:
-    if topic_name not in reader.topics:
-        msg = f"Requested unknown topic {topic_name!r}."
-        raise RosbagError(msg)
+) -> pl.LazyFrame | None:
+    if topic_name in reader.topics:
+        topic = reader.topics[topic_name]
+        getters = [_create_getter(path.split(".")) for path in paths]
 
-    topic = reader.topics[topic_name]
-    getters = [_create_getter(path.split(".")) for path in paths]
+        timestamps = []
+        data = []
+        for connection, timestamp, rawdata in tqdm(
+            reader.messages(
+                connections=topic.connections,
+            ),
+            position=1,
+            leave=False,
+            total=topic.msgcount,
+        ):
+            dmsg = reader.deserialize(rawdata, connection.msgtype)
+            timestamps.append(timestamp)
+            row = [_message_to_dict(x(dmsg)) for x in getters]
+            data.append(row)
 
-    timestamps = []
-    data = []
-    for connection, timestamp, rawdata in tqdm(
-        reader.messages(
-            connections=topic.connections,
-        ),
-        position=1,
-        leave=False,
-        total=topic.msgcount,
-    ):
-        dmsg = reader.deserialize(rawdata, connection.msgtype)
-        timestamps.append(timestamp)
-        row = [_message_to_dict(x(dmsg)) for x in getters]
-        data.append(row)
-
-    df = pl.LazyFrame(data, schema=paths, orient="row")
-    time = pl.Series("time", timestamps)
-    nest_into_timeseries = pl.struct(
-        [
-            pl.col("time"),
-            pl.struct(pl.exclude("time")).alias("value"),
-        ],
-    )
-    return df.with_columns(time).select(
-        nest_into_timeseries.implode().alias(topic_name),
-    )
+        df = pl.LazyFrame(data, schema=paths, orient="row")
+        time = pl.Series("time", timestamps)
+        nest_into_timeseries = pl.struct(
+            [
+                pl.col("time"),
+                pl.struct(pl.exclude("time")).alias("value"),
+            ],
+        )
+        return df.with_columns(time).select(
+            nest_into_timeseries.implode().alias(topic_name),
+        )
+    msg = f"Requested unknown topic {topic_name!r}."
+    logger.info(msg=msg)
+    return None
 
 
 def _collect_type_definitions(

@@ -25,10 +25,11 @@ class DetectDelocalizations(Transform):
             self.counter_column,
             self.name,
         )
-
-        # Simply extract the "time" field from each struct in the list
-        return data.with_columns(
-            pl.col(self.counter_column)
-            .list.eval(pl.element().struct.field("time"))
-            .alias(self.name),
-        )
+        if self.counter_column in data.columns:
+            # Simply extract the "time" field from each struct in the list
+            return data.with_columns(
+                pl.col(self.counter_column)
+                .list.eval(pl.element().struct.field("time"))
+                .alias(self.name),
+            )
+        return data

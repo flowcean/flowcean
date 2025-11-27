@@ -7,13 +7,11 @@ class CNN(lightning.LightningModule):
     def __init__(
         self,
         *,
-        image_size: int,
         in_channels: int,
         learning_rate: float,
         pos_weight: torch.Tensor | None = None,
     ) -> None:
         super().__init__()
-        self.image_size = image_size
         self.in_channels = in_channels
         self.learning_rate = learning_rate
         self.conv_layers = nn.Sequential(
