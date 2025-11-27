@@ -26,7 +26,7 @@ learning:
   model_path: "models/robot_localization.fml"
 optuna:
   storage: "sqlite:///optuna.db"
-  trials: 10 
+  trials: 10
   hyperparameters:
     learning_rate:
       low: 1e-5
