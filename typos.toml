@@ -12,4 +12,5 @@ extend-ignore-identifiers-re = [
 [files]
 extend-exclude = [
   "java/AutomataLearner/src/main/java/io/flowcean/learner/grpc/*.java",
+  "examples/robot_localization_failure/recordings/wgtl_data_collection_experiment_overview.csv",
 ]

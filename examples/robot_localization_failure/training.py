@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from os import PathLike
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import polars as pl
 import torch
@@ -14,7 +14,7 @@ from custom_learners.image_based_lightning_learner import (
 from custom_transforms.collapse import Collapse
 from custom_transforms.detect_delocalizations import DetectDelocalizations
 from custom_transforms.localization_status import LocalizationStatus
-from omegaconf import DictConfig, ListConfig
+from feature_images import DiskCaching, FeatureImagesData
 
 from flowcean.core import Lambda, Report, Transform, evaluate_offline
 from flowcean.polars import DataFrame, Drop, SliceTimeSeries, ZeroOrderHold
@@ -22,11 +22,15 @@ from flowcean.ros import load_rosbag
 from flowcean.sklearn import (
     Accuracy,
     ClassificationReport,
-    ConfusionMatrix,
     FBetaScore,
     PrecisionScore,
     Recall,
 )
+
+if TYPE_CHECKING:
+    from os import PathLike
+
+    from omegaconf import DictConfig, ListConfig
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +228,6 @@ def collect_data(
     )
     samples_eval = samples_eval_lf.collect(engine="streaming")
 
-    ##########################################
     train_counts = samples_train["is_delocalized"].value_counts()
     eval_counts = samples_eval["is_delocalized"].value_counts()
 
@@ -233,7 +236,6 @@ def collect_data(
 
     print("\nEvaluation set:")
     print(eval_counts)
-    ##########################################
 
     return (samples_train, samples_eval)
 
@@ -261,14 +263,14 @@ def train(
     true_counts = (
         train_data["is_delocalized"]
         .value_counts()
-        .filter(pl.col("is_delocalized") == True)
+        .filter(pl.col("is_delocalized"))
         .select("count")
         .item()
     )
     false_counts = (
         train_data["is_delocalized"]
         .value_counts()
-        .filter(pl.col("is_delocalized") == False)
+        .filter(~pl.col("is_delocalized"))
         .select("count")
         .item()
     )
@@ -307,9 +309,6 @@ def evaluate(
     test_data: pl.DataFrame,
     config: DictConfig | ListConfig,
 ) -> Report:
-    from feature_images import DiskCaching, FeatureImagesData
-
-    # Define base dataset
     base_dataset = FeatureImagesData(
         inputs=test_data.drop(["is_delocalized"]),
         outputs=test_data.select(["is_delocalized"]),
@@ -317,11 +316,10 @@ def evaluate(
         width_meters=config.architecture.width_meters,
     )
 
-    # Get cache directory from config
     eval_cache_dir = getattr(config.learning, "eval_cache_dir", None)
     clear_eval_cache = getattr(config.learning, "clear_eval_cache", False)
 
-    dataset = base_dataset  # default
+    dataset = base_dataset
 
     if eval_cache_dir:
         eval_cache_path = Path(eval_cache_dir)
@@ -365,13 +363,7 @@ def evaluate(
         FBetaScore(beta=0.5),
         PrecisionScore(),
         Recall(),
-        ConfusionMatrix(normalize=True),
     ]
-
-    # Use cached dataset directly if available
-    data_source = (
-        dataset if isinstance(dataset, DiskCaching) else DataFrame(test_data)
-    )
 
     logger.info("Evaluating model on test data")
     return evaluate_offline(
@@ -381,27 +373,3 @@ def evaluate(
         outputs=["is_delocalized"],
         metrics=metrics,
     )
-
-
-# Original evaluate function before adding evaluation caching
-# def evaluate(
-#     model: ImageBasedPyTorchModel,
-#     test_data: pl.DataFrame,
-# ) -> Report:
-
-#     metrics = [
-#         Accuracy(),
-#         ClassificationReport(),
-#         FBetaScore(beta=0.5),  # 1.0
-#         PrecisionScore(),
-#         Recall(),
-#         ConfusionMatrix(normalize=True),
-#     ]
-#     logger.info("Evaluating model on test data")
-#     return evaluate_offline(
-#         model,
-#         DataFrame(test_data),
-#         inputs=["/map", "/scan", "/particle_cloud", "/amcl_pose"],
-#         outputs=["is_delocalized"],
-#         metrics=metrics,
-#     )

@@ -5,3 +5,4 @@ evaluation_cache/
 learning_cache/
 recordings/test_data
 simulation/
+eval_cache/
