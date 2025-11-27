@@ -6,3 +6,5 @@ learning_cache/
 recordings/test_data
 simulation/
 eval_cache/
+tb_lightning_logs/
+results/
