@@ -21,21 +21,14 @@ class DetectDelocalizations(Transform):
     @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         logger.debug(
-            "Detecting delocalizations in column '%s' with output name '%s'",
+            "Extracting delocalization timestamps from column '%s' → '%s'",
             self.counter_column,
             self.name,
         )
-        compute_difference = pl.element().struct.with_fields(
-            pl.field("value").struct.field("data").diff().alias("value"),
-        )
-        filter_events = (
-            pl.element()
-            .struct.field("time")
-            .filter(pl.element().struct.field("value") > 0)
-        )
+
+        # Simply extract the "time" field from each struct in the list
         return data.with_columns(
             pl.col(self.counter_column)
-            .list.eval(compute_difference)
-            .list.eval(filter_events)
+            .list.eval(pl.element().struct.field("time"))
             .alias(self.name),
         )

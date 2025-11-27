@@ -23,22 +23,22 @@ def objective(
 ) -> float:
     config.learning.learning_rate = trial.suggest_float(
         "learning_rate",
-        low=1e-5,
-        high=1e-2,
+        config.optuna.hyperparameters.learning_rate.low,
+        config.optuna.hyperparameters.learning_rate.high,
         log=True,
     )
     config.learning.batch_size = trial.suggest_categorical(
         "batch_size",
-        [32, 64, 128, 256],
+        config.optuna.hyperparameters.batch_size.choices,
     )
     config.architecture.image_size = trial.suggest_categorical(
         "image_size",
-        [64, 128, 150, 224],
+        config.optuna.hyperparameters.image_size.choices,
     )
     config.architecture.width_meters = trial.suggest_float(
         "width_meters",
-        5.0,
-        50.0,
+        config.optuna.hyperparameters.width_meters.low,
+        config.optuna.hyperparameters.width_meters.high,
     )
 
     model = train(
@@ -48,10 +48,11 @@ def objective(
     report = evaluate(
         model=model,
         test_data=eval_data,
+        config=config,
     )
 
     f1_score = report["FBetaScore"]
-    logger.info("Trial finished with F1=%.4f", f1_score)
+    logger.info("Trial finished with FBeta=%.4f", f1_score)
 
     return f1_score  # pyright: ignore[reportReturnType]
 
@@ -74,7 +75,7 @@ def main() -> None:
             eval_data=samples_eval,
             config=config,
         ),
-        n_trials=2,
+        n_trials=config.optuna.trials,
     )
 
     logger.info("Best trial: %s", study.best_trial.params)

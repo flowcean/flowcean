@@ -13,6 +13,7 @@ dependencies = [
   "dash>=3.0.4",
   "optuna>=4.5.0",
   "polars-u64-idx>=1.32.3",
+  "scikit-learn>=1.7.1",
 ]
 
 [tool.pyright]

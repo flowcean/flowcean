@@ -1,0 +1,6 @@
+outs:
+- md5: 0d80de2885c58d7ef795643f361e3a10.dir
+  size: 126356506060
+  nfiles: 170
+  hash: md5
+  path: wgtl_half_split

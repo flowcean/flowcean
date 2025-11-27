@@ -17,15 +17,18 @@ keywords = []
 authors = [{ name = "The AGenC Team", email = "agenc.team@tuhh.de" }]
 
 dependencies = [
+  "cloudpickle>=3.1.1",
   "docker>=7.1.0",
   "grpcio>=1.67.0",
   "lightning>=2.4.0",
   "numpy>=1.26.4",
   "omegaconf>=2.3.0",
   "opcua>=0.98.13",
+  "polars-u64-idx>=1.32.3",
   "polars[style,xlsxwriter]>=1.33.0",
   "protobuf>=5.28.2",
   "pysr>=1.5.9",
+  "rich>=14.1.0",
   "river>=0.21.0",
   "rosbags>=0.10.4",
   "ruamel-yaml>=0.18.6",
@@ -36,9 +39,6 @@ dependencies = [
   "tqdm>=4.66.5",
   "typing_extensions>=4.0.0",
   "xgboost>=3.0.2",
-  "polars-u64-idx>=1.32.3",
-  "cloudpickle>=3.1.1",
-  "rich>=14.1.0",
 ]
 
 [project.optional-dependencies]
