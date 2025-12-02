@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 import polars.selectors as cs
 from boiler import Boiler, BoilerNoTime
@@ -23,6 +25,7 @@ from flowcean.ode import HybridSystem, evaluate_at, rollout
 
 import random
 
+
 @dataclass
 class Evaluation:
     reference_rollout: pl.DataFrame
@@ -40,16 +43,20 @@ def evaluate(
     dt0: float,
     dt: float,
     init_modes: [str],
-    state_max = 1,
-    n_runs: int = 1
+    state_max=1,
+    n_runs: int = 1,
 ) -> Evaluation:
     evals = []
     for i in range(n_runs):
         mode_init = random.choice(init_modes)
-        state_init = jnp.array(random.sample(range(state_max*10), len(x0)))/10
+        state_init = (
+            jnp.array(random.sample(range(state_max * 10), len(x0))) / 10
+        )
         # mode_init = mode0
         x0 = x0
-        traces_ref = reference.simulate(mode0=mode_init, x0=state_init, t0=t0, t1=t1, dt0=dt0)
+        traces_ref = reference.simulate(
+            mode0=mode_init, x0=state_init, t0=t0, t1=t1, dt0=dt0
+        )
         reference_rollout = rollout(traces_ref, dt=dt)
         model_rollout = {
             name: rollout(
@@ -78,13 +85,15 @@ def evaluate(
             )
             for name, system in models.items()
         }
-        evals.append(Evaluation(
-            reference_rollout=reference_rollout,
-            model_rollout=model_rollout,
-            model_evaluation=model_evaluation,
+        evals.append(
+            Evaluation(
+                reference_rollout=reference_rollout,
+                model_rollout=model_rollout,
+                model_evaluation=model_evaluation,
             )
         )
     return evals
+
 
 def plot_evaluation_traces(ax: Axes, evaluation: Evaluation) -> None:
     cmap = plt.get_cmap("tab10")
@@ -266,6 +275,19 @@ hdt_tank = train_hybrid_decision_tree(
 hdt_tank.print_transitions()
 
 evaluations = {
+    # "boilernotime": evaluate(
+    #     reference=BoilerNoTime(**config.boilernotime.system),
+    #     models={
+    #         "STL": stl_boilernotime,
+    #         "HDT": hdt_boilernotime,
+    #     },
+    #     mode0="heating",
+    #     x0=jnp.array([6.5]),
+    #     t0=0.0,
+    #     t1=5.0,
+    #     dt0=0.01,
+    #     dt=0.1,
+    # ),
     "boiler": evaluate(
         reference=Boiler(**config.boiler.system),
         models={
@@ -278,25 +300,9 @@ evaluations = {
         t1=2.0,
         dt0=0.01,
         dt=0.1,
-        n_runs = 100,
-        state_max = 30,
-        init_modes = ["heating", "cooling"]
-    ),
-    "boilernotime": evaluate(
-        reference=BoilerNoTime(**config.boilernotime.system),
-        models={
-            "STL": stl_boilernotime,
-            "HDT": hdt_boilernotime,
-        },
-        mode0="heating",
-        x0=jnp.array([6.5]),
-        t0=0.0,
-        t1=2.0,
-        dt0=0.01,
-        dt=0.1,
-        n_runs = 100,
-        state_max = 30,
-        init_modes = ["heating", "cooling"]
+        n_runs=100,
+        state_max=30,
+        init_modes=["heating", "cooling"],
     ),
     "tank": evaluate(
         reference=NTanks(**config.tank.system),
@@ -305,12 +311,12 @@ evaluations = {
             "HDT": hdt_tank,
         },
         mode0="flow_0",
-        x0=jnp.array([0.5, 10.0, 1.5]),
+        x0=jnp.array([0.3, 7.8, 1.1]),
         t0=0.0,
         t1=2.0,
         dt0=0.01,
         dt=0.1,
-        n_runs = 100,
+        n_runs=100,
         state_max=15,
         init_modes=["flow_0", "flow_1", "flow_2"],
     ),
@@ -318,32 +324,20 @@ evaluations = {
 
 # one evaluation per system
 for name, evaluation in evaluations.items():
-    n_columns = len(evaluation[0].reference_rollout.drop(['mode','t_mode','t']).columns)
-    means = { method :pl.DataFrame(data =[[0]*n_columns]*len(evaluation), schema= list(zip(evaluation[0].reference_rollout.drop(['mode','t_mode','t']).columns,[pl.Float64]*n_columns)),orient='row')
-             for method in evaluation[0].model_evaluation.keys()
-             }
+    fig, ax = plt.subplots(
+        1,
+        1,
+        layout="constrained",
+    )
+    plot_evaluation_traces(ax, evaluation)
+    out_dir = Path(f"results/{name}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_dir / "evaluation_traces.png")
+    evaluation.reference_rollout.write_csv(out_dir / "ground_truth.csv")
+    for model_name, trace in evaluation.model_rollout.items():
+        trace.write_csv(out_dir / f"model_{model_name}_rollout.csv")
+    for model_name, trace in evaluation.model_evaluation.items():
+        trace.write_csv(out_dir / f"model_{model_name}_evaluation.csv")
 
-    for i, run in enumerate(evaluation):
-        reference = run.reference_rollout
-        ref = reference.drop(['mode','t_mode','t'])
-    
-        for j,(method, result) in enumerate(run.model_evaluation.items()):
-            diff = (ref - result.drop('mode','t')).drop_nans()
-            diff *= diff
-            mean = diff.mean()
-            for c in mean.columns:
-                means[method][i, c] = mean[c]
-        if i%50 ==0:
-            fig, ax = plt.subplots(
-                1,
-                1,
-                layout="constrained",
-            )
-            plot_evaluation_traces(ax, run)
-            ax.set_title(f"Evaluation {i} traces for {name} system")
-    print(means)
-    for method in means.keys():
-        print(method)
-        print(means[method].describe())
-
+    # ax.set_title(f"Evaluation traces for {name} system")
 plt.show()
