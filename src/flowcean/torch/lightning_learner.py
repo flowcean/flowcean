@@ -67,5 +67,6 @@ class LightningLearner(SupervisedLearner):
                 ),
             ],
         )
+        self.module.example_input_array = dataset[0][0]
         trainer.fit(self.module, dataloader)
         return PyTorchModel(self.module, collected_outputs.columns)
