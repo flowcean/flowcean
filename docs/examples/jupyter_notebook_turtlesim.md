@@ -1,9 +1,6 @@
 # Using Jupyter Notebooks with Flowcean
 
-This example demonstrates how to use Jupyter Notebooks to work with the Flowcean framework. Jupyter Notebooks provide an interactive environment for writing and executing code, making them ideal for data analysis, visualization, and machine learning tasks.
-
-If you want to code along, use the tasks notebook which you can find under ```examples/jupyter_notebook/tasks.ipynb```.
-The solutions notebook lets you run the complete solution. You can find it under ```examples/jupyter_notebook/solutions.ipynb```.
+This example demonstrates how to use Jupyter Notebooks to work with the Flowcean framework.
 
 ![Turtlesim simulation](images/turtlesim.png)
 
@@ -16,4 +13,4 @@ ROS uses _topics_ to communicate between _nodes_. Nodes are processes that perfo
 You can record ROS bag files using the _rosbag_ command-line tool. A ROS bag is a file format for storing ROS message data. It is commonly used for logging data during robot operation, which can later be played back for analysis or testing.
 The tutorial uses ROS bag data recorded from turtlesim, processes it into supervised samples, trains multiple models, evaluates them using several metrics, and plots predictions versus ground truth.
 
-For more information, please refer to the Jupyter notebooks provided in the `examples/jupyter_notebook/` directory.
+For more information, please refer to the Jupyter notebook provided in the `examples/jupyter_notebook/` directory.
