@@ -47,7 +47,7 @@ For more information on the implementation of the learning strategies take a loo
 The first step of an offline learning strategy is to get the dataset from an environment.
 This environment is typically an [OfflineEnvironment](https://flowcean.me/reference/flowcean/core/environment/offline/).
 Along with the environment the learner requires the names of the inputs and outputs.
-Transforms can be applied to the input features of the data set and the outputs.
+Transforms can be applied to the input features of the dataset and the outputs.
 The last step is to learn the model using a learning algorithm.
 For this, the learning algorithm receives the entire transformed dataset at once.
 
@@ -56,10 +56,10 @@ For this, the learning algorithm receives the entire transformed dataset at once
 For the incremental learning strategy, a learner is connected to an [IncrementalEnvironment](https://flowcean.me/reference/flowcean/core/environment/incremental/).
 It iteratively receives data - either in single packets or small batches.
 Along with the environment the learner requires the names of the inputs and outputs.
-Transforms can be applied to the input features of the data set and the outputs.
+Transforms can be applied to the input features of the dataset and the outputs.
 The next step is to incrementally learn the model using a learning algorithm.
 This means the model is updated in the process.
-The learning process stops when the environment ends, i.e. when the data stream is stopped or the data set is empty.
+The learning process stops when the environment ends, i.e. when the data stream is stopped or the dataset is empty.
 
 ## Active Learning
 

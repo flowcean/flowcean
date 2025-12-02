@@ -38,10 +38,13 @@ class IncrementalEnvironment(
     Iterable[Data],
     Protocol,
 ):
-    """Base class for incremental environments.
+    """An environment providing incremental (streaming) learning data.
 
-    Incremental environments are environments that can be advanced by a step
-    and provide a stream of data. The data can be observed at each step.
+    Incremental environments provide data as a continuous stream of samples
+    or small batches. The environment is advanced by stepping through data,
+    observing the current state at each step. This supports incremental
+    learning (also known as passive online learning), where the model is
+    continuously updated as new data arrives.
     """
 
     @override

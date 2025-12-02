@@ -20,9 +20,10 @@ if TYPE_CHECKING:
 class OfflineEnvironment(Environment, Protocol):
     """Base class for offline environments.
 
-    Offline environments are used to represent datasets. They can be used to
-    represent static datasets. Offline environments can be transformed and
-    joined together to create new datasets.
+    Offline environments represent static, pre-recorded datasets collected
+    upfront. They support the offline learning strategy where a fixed batch
+    of data is processed at once to train a model. Offline environments can
+    be transformed and chained together to create new datasets.
     """
 
     def chain(self, *other: Environment) -> ChainedOfflineEnvironments:

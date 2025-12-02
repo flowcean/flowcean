@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import (
-    TYPE_CHECKING,
-    Protocol,
-    final,
-)
+from typing import TYPE_CHECKING, Protocol, final
 
 from flowcean.core.named import Named
 
@@ -16,7 +12,9 @@ if TYPE_CHECKING:
 
 
 class Metric(Named, Protocol):
-    """Minimal template for metrics.
+    """Quantitative measure for evaluating model performance.
+
+    Metrics compare predictions with true outputs to assess model quality.
 
     Call flow:
       __call__ -> prepare(true), prepare(predicted) -> compute(true, predicted)

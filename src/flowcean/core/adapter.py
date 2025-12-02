@@ -4,7 +4,14 @@ from .data import Data
 
 
 class Adapter(ABC):
-    """Abstract base class for adapters."""
+    """Abstract base class for adapters.
+
+    A component connecting Flowcean to cyber-physical systems. An adapter
+    handles the interface between learned models and real
+    cyber-physical systems during deployment. It manages communication with
+    the system's sensors (for observations) and actuators (for applying
+    actions), enabling the deployment of trained models in production.
+    """
 
     @abstractmethod
     def start(self) -> None:

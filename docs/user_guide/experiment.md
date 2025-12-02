@@ -3,7 +3,7 @@
 An **Experiment** is a structure definition.
 It defines
 
-- which _Environment_ to load (i.e. are we learning based on a data set, a simulation or a data stream?),
+- which _Environment_ to load (i.e. are we learning based on a dataset, a simulation or a data stream?),
 - which _learning strategy_ to apply,
 - which _learner_ should be selected and how it is configured,
 - which _transforms_ should be applied to the data,
