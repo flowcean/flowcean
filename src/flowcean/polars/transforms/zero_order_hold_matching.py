@@ -69,7 +69,8 @@ class ZeroOrderHold(Transform):
         """Initialize the ZeroOrderHoldMatching transform.
 
         Args:
-            features: List of topics to align.
+            features: List of topics to align. If None, all features are
+                aligned.
             name: Name of the output time series feature.
             drop: Whether to drop the original features after alignment.
         """
