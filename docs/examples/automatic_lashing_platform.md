@@ -34,12 +34,12 @@ The goal of this example is, to use the data obtained from the ALP's sensors to 
 Multiple sensors are installed on the ALP to monitor its state during container handling operations.
 Pressure sensors are placed at the outlet of each of the four hydraulic cylinders (`p_cylinder1` to `p_cylinder4`) and at the accumulator (`p_accumulator`).
 These sensors measure the hydraulic pressure in whole millibar.
-A distance sensor measures the height of the topframe (`frame_z`) in fractions of millimetres, where zero corresponds to a completely lowered topframe.
+A distance sensor measures the height of the topframe (`frame_z`) in whole millimetres, where zero corresponds to a completely lowered topframe.
 All time-dependent sensor readings are sampled at a frequency of 100 Hz over a time span of 15 seconds and are stored in the Flowcean time series format.
 
 In addition to the time-dependent sensor readings, a set of static parameters are available for each container handling operation.
-These include the ambient temperature (`T`) in whole millidegrees Celsius, the state of each individual valve (`valve_state_0` to `valve_state_4`) where `0` means the corresponding cylinder does not participate in energy harvesting and `1` means it does and the total number of active valves for energy harvesting (`active_valve_count`).
-The actual container weight `container_weight` is kilograms is also included as the ground truth.
+These include the ambient temperature (`T`) in whole millidegrees Celsius, the state of each individual valve (`valve_state_0` to `valve_state_3`) where `0` means the corresponding cylinder does not participate in energy harvesting and `1` means it does and the total number of active valves for energy harvesting (`active_valve_count`).
+The actual container weight `container_weight` in whole kilograms is also included as the ground truth.
 
 There are four different datasets available for this example.
 The primary dataset contains approximately 160,000 simulated container handling operations, involving containers with weights ranging from 2,500 kg to 60,000 kg.
