@@ -197,34 +197,43 @@ class TestResampleToReferenceFunction(unittest.TestCase):
         assert_frame_equal(result, expected)
 
     def test_reference_not_in_features(self) -> None:
-        """Test that error is raised when reference not in features."""
+        """Test that reference is automatically included."""
         data = pl.DataFrame(
             {
                 "ref": [
                     [
                         {"time": 0.0, "value": {"x": 0.0}},
+                        {"time": 1.0, "value": {"x": 1.0}},
                     ],
                 ],
                 "sensor": [
                     [
-                        {"time": 0.0, "value": {"x": 1.0}},
+                        {"time": 0.0, "value": {"x": 100.0}},
+                        {"time": 0.5, "value": {"x": 200.0}},
                     ],
                 ],
             },
         )
 
-        with pytest.raises(
-            ValueError,
-            match="reference 'ref' not in columns",
-        ) as context:
-            resample_to_reference(
-                data.lazy(),
-                features=["sensor"],
-                reference="ref",
-                name="output",
-            ).collect()
+        # Reference is automatically included even if not in features list
+        result = resample_to_reference(
+            data.lazy(),
+            features=["sensor"],
+            reference="ref",
+            name="output",
+        ).collect()
 
-        assert "reference 'ref' not in columns" in str(context.value)
+        # Verify the result has both ref and sensor data
+        exploded = result.explode("output")
+        assert len(exploded) == 2
+
+        # Extract and verify the fields exist
+        values = exploded.select(
+            pl.col("output").struct.field("value").alias("value"),
+        ).to_dict()["value"]
+
+        assert "ref/x" in values[0]
+        assert "sensor/x" in values[0]
 
 
 class TestResampleToReferenceTransform(unittest.TestCase):
@@ -369,8 +378,8 @@ class TestResampleToReferenceTransform(unittest.TestCase):
 
         assert "output" in result.columns
 
-    def test_reference_not_in_features_transform(self) -> None:
-        """Test that Transform raises error when reference not in features."""
+    def test_reference_not_in_data(self) -> None:
+        """Test error when reference column doesn't exist in data."""
         transform = ResampleToReference(
             reference="missing",
             features=["ref", "data"],
@@ -393,14 +402,10 @@ class TestResampleToReferenceTransform(unittest.TestCase):
         )
 
         with pytest.raises(
-            ValueError,
-            match="reference 'missing' must be included in features",
-        ) as context:
+            pl.exceptions.ColumnNotFoundError,
+            match="missing",
+        ):
             transform(data.lazy()).collect()
-
-        assert "reference 'missing' must be included in features" in str(
-            context.value,
-        )
 
     def test_multiple_rows(self) -> None:
         """Test resampling with multiple rows in the dataset."""
@@ -439,6 +444,74 @@ class TestResampleToReferenceTransform(unittest.TestCase):
 
         assert len(result) == 2
         assert "aligned" in result.columns
+
+    def test_overlapping_time_ranges(self) -> None:
+        """Test resampling with overlapping time ranges across rows.
+
+        This test verifies that data from different rows doesn't get mixed
+        when time ranges overlap.
+        """
+        transform = ResampleToReference(
+            reference="ref",
+            features=["ref", "sensor"],
+            name="aligned",
+        )
+
+        data = pl.DataFrame(
+            {
+                "ref": [
+                    [
+                        {"time": 0.0, "value": {"x": 0.0}},
+                        {"time": 5.0, "value": {"x": 5.0}},
+                    ],
+                    [
+                        {"time": 1.0, "value": {"x": 10.0}},
+                        {"time": 13.0, "value": {"x": 13.0}},
+                    ],
+                ],
+                "sensor": [
+                    [
+                        {"time": 0.0, "value": {"x": 100.0}},
+                        {"time": 2.0, "value": {"x": 200.0}},
+                    ],
+                    [
+                        {"time": 0.5, "value": {"x": 50.0}},
+                        {"time": 14.0, "value": {"x": 150.0}},
+                    ],
+                ],
+            },
+        )
+
+        result = transform(data.lazy()).collect()
+
+        expected = pl.DataFrame(
+            {
+                "aligned": [
+                    [
+                        {
+                            "time": 0.0,
+                            "value": {"ref/x": 0.0, "sensor/x": 100.0},
+                        },
+                        {
+                            "time": 5.0,
+                            "value": {"ref/x": 5.0, "sensor/x": 200.0},
+                        },
+                    ],
+                    [
+                        {
+                            "time": 1.0,
+                            "value": {"ref/x": 10.0, "sensor/x": 50.0},
+                        },
+                        {
+                            "time": 13.0,
+                            "value": {"ref/x": 13.0, "sensor/x": 50.0},
+                        },
+                    ],
+                ],
+            },
+        )
+
+        assert_frame_equal(result, expected)
 
 
 if __name__ == "__main__":

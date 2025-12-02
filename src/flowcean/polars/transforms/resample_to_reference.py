@@ -18,17 +18,15 @@ def resample_to_reference(
 
     Args:
         data: Input LazyFrame containing time series columns.
-        features: Features to resample (must include reference).
+        features: Features to resample. The reference column will be included
+            in the output automatically; other features will be resampled to
+            match the reference timeline.
         reference: Column whose timestamps define the output timeline.
         name: Name for the output aligned time series column.
 
     Returns:
         LazyFrame with a single time series column containing resampled data.
     """
-    if reference not in features:
-        msg = f"reference '{reference}' not in columns {list(features)}"
-        raise ValueError(msg)
-
     # Extract reference timeline
     ref = (
         data.with_row_index()
@@ -42,6 +40,10 @@ def resample_to_reference(
     # For each feature: explode → forward-fill onto reference timeline
     aligned_cols = []
     for col in features:
+        # Skip resampling the reference to itself
+        if col == reference:
+            continue
+
         df = (
             data.with_row_index()
             .explode(col)
@@ -55,11 +57,12 @@ def resample_to_reference(
             )
         )
 
-        # Join to reference timeline (as-of join)
+        # Join to reference timeline (as-of join, stratified by index)
         df = ref.join_asof(
-            df.sort("t").drop("index"),
+            df.sort("index", "t"),
             left_on="time",
             right_on="t",
+            by="index",
         ).sort("index")
 
         # Forward-fill the values along the reference sampling times
@@ -67,8 +70,23 @@ def resample_to_reference(
 
         aligned_cols.append(df)
 
-    final = aligned_cols[0]
-    for df in aligned_cols[1:]:
+    # Start with reference timeline and add reference column values
+    ref_df = (
+        data.with_row_index()
+        .explode(reference)
+        .select(
+            pl.col("index"),
+            pl.col(reference).struct.field("time").alias("time"),
+            pl.col(reference)
+            .struct.field("value")
+            .name.prefix_fields(f"{reference}/")
+            .struct.unnest(),
+        )
+    )
+
+    # Concatenate all aligned columns horizontally
+    final = ref_df
+    for df in aligned_cols:
         feature_cols = [
             c
             for c in df.collect_schema().names()
@@ -116,10 +134,10 @@ class ResampleToReference(Transform):
 
         Args:
             reference: Column whose timestamps define the output timeline.
-                This column must be included in features (or present in data if
-                features is None).
+                This column will be included in the output automatically.
             features: List of time series features to resample. If None, uses
-                all features in the data. Must include reference.
+                all features in the data. The reference column is always
+                included in the output regardless.
             name: Name of the output time series feature.
             drop: Whether to drop the original features after resampling.
         """
@@ -142,14 +160,10 @@ class ResampleToReference(Transform):
             )
             features = data.collect_schema().names()
         else:
-            features = self.features
-
-        if self.reference not in features:
-            msg = (
-                f"reference '{self.reference}' must be included "
-                f"in features {features}"
-            )
-            raise ValueError(msg)
+            features = list(self.features)
+            # Add reference if not already in features
+            if self.reference not in features:
+                features.append(self.reference)
 
         resampled = resample_to_reference(
             data,
