@@ -112,4 +112,5 @@ nav:
       - One Tank Incremental: examples/one_tank_incremental.md
       - Robot Localization Failure: examples/robot_localization_failure.md
       - XOR Function: examples/xor.md
+      - Jupyter Notebook Turtlesim: examples/jupyter_notebook_turtlesim.md
   - Reference: reference/
