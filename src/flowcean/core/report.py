@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 import numpy as np
 import polars as pl
@@ -140,64 +140,70 @@ class Report(dict[str, ReportEntry]):
     def select_best_model(
         self,
         metric_name: str,
+        models_by_name: dict[str, Model],
         *,
-        mode: str = "maximize",
+        mode: Literal["max", "min"] = "max",
+        nested_aggregation: Literal["mean", "max", "min"] = "mean",
     ) -> Model:
-        """Return the best model according to a metric.
+        """Select the best model from the report based on a metric.
 
         Args:
             metric_name: Name of the metric to select by.
-            mode: One of {"maximize", "minimize", "max", "min"}.
+            models_by_name: Dictionary mapping model names to Model instances.
+            mode: Either "max" to maximize the metric or "min" to minimize it.
+            nested_aggregation: How to aggregate nested metrics (e.g.,
+                per-class scores). Options are "mean" (arithmetic mean), "max"
+                (maximum value), or "min" (minimum value).
 
         Returns:
-            The best Model instance. Requires that a mapping of models was
-            attached to the report under `models_by_name` (as done by
-            evaluate_offline).
+            The Model instance with the best metric value.
+
+        Raises:
+            ValueError: If the metric is not found for any model in the report,
+                or if the best model name is not in models_by_name,
+                or if the report is empty.
         """
-        mode_norm = mode.lower()
-        if mode_norm in ("maximize", "max"):
-            factor = 1.0
-        elif mode_norm in ("minimize", "min"):
-            factor = -1.0
-        else:
-            msg = "mode must be one of: maximize, minimize, max, min"
+        if not self:
+            msg = "Report is empty"
             raise ValueError(msg)
 
-        best_name: str | None = None
-        best_score = float("-inf")
-
-        for model_name, entry in self.items():
+        def get_score(model_name: str) -> float:
+            entry = self[model_name]
             if metric_name not in entry:
-                continue
+                msg = (
+                    f"Model '{model_name}' does not have "
+                    f"metric '{metric_name}'"
+                )
+                raise ValueError(msg)
+
             value = entry[metric_name]
             if isinstance(value, Mapping):
                 value = cast("Mapping[str, Reportable]", value)
                 vals = [float(str(v)) for v in value.values()]
                 if not vals:
-                    continue
-                score = sum(vals) / len(vals)
-            else:
-                score = float(str(value))
+                    msg = (
+                        f"Model '{model_name}' has empty nested "
+                        f"metric '{metric_name}'"
+                    )
+                    raise ValueError(msg)
 
-            if factor * score > best_score:
-                best_score = factor * score
-                best_name = model_name
+                # Apply chosen aggregation method
+                if nested_aggregation == "mean":
+                    return sum(vals) / len(vals)
+                if nested_aggregation == "max":
+                    return max(vals)
+                # min
+                return min(vals)
+            return float(str(value))
 
-        if best_name is None:
-            msg = f"Metric '{metric_name}' not found in report for any model."
+        factor = 1 if mode == "max" else -1
+        best_name = max(self.keys(), key=lambda name: factor * get_score(name))
+
+        if best_name not in models_by_name:
+            msg = f"Model '{best_name}' not found in models_by_name dictionary"
             raise ValueError(msg)
 
-        models_by_name = getattr(self, "models_by_name", None)
-        if isinstance(models_by_name, dict) and best_name in models_by_name:
-            return cast("Model", models_by_name[best_name])
-
-        msg = (
-            "The report does not contain attached models. "
-            "Re-run evaluation with "
-            "evaluate_offline so that models are attached, "
-            "or select using the model name from report keys."
-        )
-        raise ValueError(msg)
+        return models_by_name[best_name]
 
 
 def _format_value(value: Reportable) -> str:

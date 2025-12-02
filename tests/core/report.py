@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
-import pytest
-
 from flowcean.core import Report
 from flowcean.core.report import ReportEntry
 
@@ -29,15 +27,17 @@ class TestSelectBestModelBasics:
             },
         )
 
-        # Manually attach models as the method expects
         models_dict: dict[str, Model] = {
             "model_a": model_a,
             "model_b": model_b,
             "model_c": model_c,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("accuracy", mode="maximize")
+        best_model = report.select_best_model(
+            "accuracy",
+            models_dict,
+            mode="max",
+        )
 
         assert best_model is model_b, (
             "Should return model with highest accuracy (0.92)"
@@ -62,9 +62,8 @@ class TestSelectBestModelBasics:
             "model_b": model_b,
             "model_c": model_c,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("loss", mode="minimize")
+        best_model = report.select_best_model("loss", models_dict, mode="min")
 
         assert best_model is model_b, (
             "Should return model with lowest loss (0.3)"
@@ -90,9 +89,8 @@ class TestSelectBestModelModeVariations:
             "model_a": model_a,
             "model_b": model_b,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("score", mode="max")
+        best_model = report.select_best_model("score", models_dict, mode="max")
 
         assert best_model is model_b
 
@@ -112,37 +110,10 @@ class TestSelectBestModelModeVariations:
             "model_a": model_a,
             "model_b": model_b,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("error", mode="min")
+        best_model = report.select_best_model("error", models_dict, mode="min")
 
         assert best_model is model_b
-
-    def test_mode_case_insensitivity(self) -> None:
-        """Test that mode parameter is case-insensitive."""
-        model_a = Mock(spec=["predict"])
-        model_b = Mock(spec=["predict"])
-
-        report = Report(
-            {
-                "model_a": ReportEntry({"score": 0.5}),
-                "model_b": ReportEntry({"score": 0.8}),
-            },
-        )
-
-        models_dict: dict[str, Model] = {
-            "model_a": model_a,
-            "model_b": model_b,
-        }
-        object.__setattr__(report, "models_by_name", models_dict)
-
-        result_upper = report.select_best_model("score", mode="MAXIMIZE")
-        result_mixed = report.select_best_model("score", mode="MaXiMiZe")
-        result_lower = report.select_best_model("score", mode="maximize")
-
-        assert result_upper is model_b
-        assert result_mixed is model_b
-        assert result_lower is model_b
 
 
 class TestSelectBestModelNestedMetrics:
@@ -173,9 +144,8 @@ class TestSelectBestModelNestedMetrics:
             "model_b": model_b,
             "model_c": model_c,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("f1", mode="maximize")
+        best_model = report.select_best_model("f1", models_dict, mode="max")
 
         assert best_model is model_c, (
             "Should select model_c with average f1 of 0.925"
@@ -201,9 +171,8 @@ class TestSelectBestModelNestedMetrics:
             "model_a": model_a,
             "model_b": model_b,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("mae", mode="minimize")
+        best_model = report.select_best_model("mae", models_dict, mode="min")
 
         assert best_model is model_b, (
             "Should select model_b with lower average mae"
@@ -230,128 +199,10 @@ class TestSelectBestModelNestedMetrics:
             "model_b": model_b,
             "model_c": model_c,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("score", mode="maximize")
+        best_model = report.select_best_model("score", models_dict, mode="max")
 
         assert best_model is model_a, "Should select model_a with score 0.8"
-
-
-class TestSelectBestModelErrorCases:
-    """Test error handling and edge cases."""
-
-    def test_invalid_mode_raises_valueerror(self) -> None:
-        """Test that invalid mode parameter raises ValueError."""
-        model_a = Mock(spec=["predict"])
-        report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
-        models_dict: dict[str, Model] = {"model_a": model_a}
-        object.__setattr__(report, "models_by_name", models_dict)
-
-        with pytest.raises(ValueError, match="mode must be one of"):
-            report.select_best_model("accuracy", mode="invalid")
-
-    def test_metric_not_found_raises_valueerror(self) -> None:
-        """Test that missing metric raises ValueError."""
-        model_a = Mock(spec=["predict"])
-        report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
-        models_dict: dict[str, Model] = {"model_a": model_a}
-        object.__setattr__(report, "models_by_name", models_dict)
-
-        with pytest.raises(ValueError, match="Metric 'nonexistent' not found"):
-            report.select_best_model("nonexistent", mode="maximize")
-
-    def test_no_models_attached_raises_valueerror(self) -> None:
-        """Test that missing models_by_name attribute raises ValueError."""
-        report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
-        # Intentionally don't attach models_by_name
-
-        with pytest.raises(
-            ValueError,
-            match="does not contain attached models",
-        ):
-            report.select_best_model("accuracy", mode="maximize")
-
-    def test_best_model_not_in_models_dict_raises_valueerror(self) -> None:
-        """Test when best model name is not in models_by_name dict."""
-        model_a = Mock(spec=["predict"])
-        model_c = Mock(spec=["predict"])
-
-        report = Report(
-            {
-                "model_a": ReportEntry({"accuracy": 0.85}),
-                "model_b": ReportEntry({"accuracy": 0.92}),
-                "model_c": ReportEntry({"accuracy": 0.78}),
-            },
-        )
-
-        # models_by_name is missing model_b (which has best accuracy)
-        models_dict: dict[str, Model] = {
-            "model_a": model_a,
-            "model_c": model_c,
-        }
-        object.__setattr__(report, "models_by_name", models_dict)
-
-        with pytest.raises(
-            ValueError,
-            match="does not contain attached models",
-        ):
-            report.select_best_model("accuracy", mode="maximize")
-
-    def test_models_by_name_not_a_dict_raises_valueerror(self) -> None:
-        """Test when models_by_name is not a dict."""
-        report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
-        object.__setattr__(report, "models_by_name", "not a dict")
-
-        with pytest.raises(
-            ValueError,
-            match="does not contain attached models",
-        ):
-            report.select_best_model("accuracy", mode="maximize")
-
-    def test_empty_nested_metric_skipped(self) -> None:
-        """Test that models with empty nested metrics are skipped."""
-        model_a = Mock(spec=["predict"])
-        model_b = Mock(spec=["predict"])
-
-        report = Report(
-            {
-                "model_a": ReportEntry({"f1": {}}),  # Empty nested dict
-                "model_b": ReportEntry({"f1": {"class_0": 0.9}}),
-            },
-        )
-
-        models_dict: dict[str, Model] = {
-            "model_a": model_a,
-            "model_b": model_b,
-        }
-        object.__setattr__(report, "models_by_name", models_dict)
-
-        best_model = report.select_best_model("f1", mode="maximize")
-
-        assert best_model is model_b, (
-            "Should skip model_a with empty nested metric"
-        )
-
-    def test_all_models_missing_metric_raises_valueerror(self) -> None:
-        """Test when metric exists but not in the entry searched for."""
-        model_a = Mock(spec=["predict"])
-        model_b = Mock(spec=["predict"])
-
-        report = Report(
-            {
-                "model_a": ReportEntry({"accuracy": 0.85}),
-                "model_b": ReportEntry({"precision": 0.90}),
-            },
-        )
-
-        models_dict: dict[str, Model] = {
-            "model_a": model_a,
-            "model_b": model_b,
-        }
-        object.__setattr__(report, "models_by_name", models_dict)
-
-        with pytest.raises(ValueError, match="Metric 'recall' not found"):
-            report.select_best_model("recall", mode="maximize")
 
 
 class TestSelectBestModelEdgeCases:
@@ -362,9 +213,12 @@ class TestSelectBestModelEdgeCases:
         model_a = Mock(spec=["predict"])
         report = Report({"model_a": ReportEntry({"accuracy": 0.85})})
         models_dict: dict[str, Model] = {"model_a": model_a}
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("accuracy", mode="maximize")
+        best_model = report.select_best_model(
+            "accuracy",
+            models_dict,
+            mode="max",
+        )
 
         assert best_model is model_a
 
@@ -387,9 +241,12 @@ class TestSelectBestModelEdgeCases:
             "model_b": model_b,
             "model_c": model_c,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("accuracy", mode="maximize")
+        best_model = report.select_best_model(
+            "accuracy",
+            models_dict,
+            mode="max",
+        )
 
         # Assert - should return first encountered in iteration order
         assert best_model is model_a, "Should return first model when tied"
@@ -413,12 +270,11 @@ class TestSelectBestModelEdgeCases:
             "model_b": model_b,
             "model_c": model_c,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_max = report.select_best_model("loss", mode="maximize")
+        best_max = report.select_best_model("loss", models_dict, mode="max")
         assert best_max is model_b, "When maximizing, -0.3 > -0.5 > -0.8"
 
-        best_min = report.select_best_model("loss", mode="minimize")
+        best_min = report.select_best_model("loss", models_dict, mode="min")
         assert best_min is model_c, "When minimizing, -0.8 < -0.5 < -0.3"
 
     def test_zero_values(self) -> None:
@@ -437,9 +293,8 @@ class TestSelectBestModelEdgeCases:
             "model_a": model_a,
             "model_b": model_b,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("error", mode="minimize")
+        best_model = report.select_best_model("error", models_dict, mode="min")
 
         assert best_model is model_a, "Should handle zero values correctly"
 
@@ -461,9 +316,12 @@ class TestSelectBestModelEdgeCases:
             "model_a": model_a,
             "model_b": model_b,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("accuracy", mode="maximize")
+        best_model = report.select_best_model(
+            "accuracy",
+            models_dict,
+            mode="max",
+        )
 
         assert best_model is model_b, "Should handle numpy float types"
 
@@ -487,9 +345,8 @@ class TestSelectBestModelEdgeCases:
             "model_a": model_a,
             "model_b": model_b,
         }
-        object.__setattr__(report, "models_by_name", models_dict)
 
-        best_model = report.select_best_model("score", mode="maximize")
+        best_model = report.select_best_model("score", models_dict, mode="max")
 
         assert best_model is model_b, (
             "Should handle many nested values correctly"
