@@ -1,4 +1,8 @@
 from .adapter import Adapter
+from .callbacks import CallbackManager, LearnerCallback, SilentCallback
+from .callbacks_logging import LoggingCallback
+from .callbacks_rich import RichCallback, RichSpinnerCallback
+from .callbacks_support import CallbackMixin, create_callback_manager
 from .data import Data
 from .environment.actable import Actable
 from .environment.active import ActiveEnvironment
@@ -39,6 +43,8 @@ __all__ = [
     "ActiveInterface",
     "ActiveLearner",
     "Adapter",
+    "CallbackManager",
+    "CallbackMixin",
     "ChainedOfflineEnvironments",
     "ChainedTransforms",
     "Data",
@@ -49,17 +55,23 @@ __all__ = [
     "Invertible",
     "InvertibleTransform",
     "Lambda",
+    "LearnerCallback",
+    "LoggingCallback",
     "Metric",
     "Model",
     "Observation",
     "OfflineEnvironment",
     "Report",
     "Reportable",
+    "RichCallback",
+    "RichSpinnerCallback",
+    "SilentCallback",
     "Stepable",
     "StopLearning",
     "SupervisedIncrementalLearner",
     "SupervisedLearner",
     "Transform",
+    "create_callback_manager",
     "deploy",
     "evaluate_offline",
     "learn_active",
