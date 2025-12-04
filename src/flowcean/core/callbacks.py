@@ -157,31 +157,31 @@ class SilentCallback:
 
     def on_learning_start(
         self,
-        learner: Named,  # noqa: ARG002
-        context: dict[str, Any] | None = None,  # noqa: ARG002
+        learner: Named,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Do nothing when learning starts."""
 
     def on_learning_progress(
         self,
-        learner: Named,  # noqa: ARG002
-        progress: float | None = None,  # noqa: ARG002
-        metrics: dict[str, Any] | None = None,  # noqa: ARG002
+        learner: Named,
+        progress: float | None = None,
+        metrics: dict[str, Any] | None = None,
     ) -> None:
         """Do nothing during learning progress."""
 
     def on_learning_end(
         self,
-        learner: Named,  # noqa: ARG002
-        model: Model,  # noqa: ARG002
-        metrics: dict[str, Any] | None = None,  # noqa: ARG002
+        learner: Named,
+        model: Model,
+        metrics: dict[str, Any] | None = None,
     ) -> None:
         """Do nothing when learning ends."""
 
     def on_learning_error(
         self,
-        learner: Named,  # noqa: ARG002
-        error: Exception,  # noqa: ARG002
+        learner: Named,
+        error: Exception,
     ) -> None:
         """Do nothing when learning errors."""
 

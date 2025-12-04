@@ -141,7 +141,7 @@ class RichCallback:
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Model,  # noqa: ARG002
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Display learning completion message."""
@@ -214,7 +214,8 @@ class RichSpinnerCallback:
         """Initialize the Rich spinner callback.
 
         Args:
-            console: Optional Rich console instance. Creates a new one if not provided.
+            console: Optional Rich console instance. Creates a new one if not
+                provided.
         """
         self.console = console or Console()
         self._live: Live | None = None
@@ -222,7 +223,7 @@ class RichSpinnerCallback:
     def on_learning_start(
         self,
         learner: Named,
-        context: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> None:
         """Display learning start message with spinner."""
         text = Text()
@@ -244,8 +245,8 @@ class RichSpinnerCallback:
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
-        metrics: dict[str, Any] | None = None,
+        model: Model,  # noqa: ARG002
+        metrics: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> None:
         """Display learning completion message."""
         if self._live:

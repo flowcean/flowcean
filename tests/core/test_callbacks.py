@@ -1,6 +1,5 @@
 """Tests for the learner callback system."""
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import polars as pl
@@ -93,8 +92,16 @@ class TestCallbackManager:
         metrics = {"final_loss": 0.05}
         manager.on_learning_end(learner, model, metrics)
 
-        callback1.on_learning_end.assert_called_once_with(learner, model, metrics)
-        callback2.on_learning_end.assert_called_once_with(learner, model, metrics)
+        callback1.on_learning_end.assert_called_once_with(
+            learner,
+            model,
+            metrics,
+        )
+        callback2.on_learning_end.assert_called_once_with(
+            learner,
+            model,
+            metrics,
+        )
 
     def test_on_learning_error(self) -> None:
         """Test that on_learning_error is called on all callbacks."""
@@ -129,7 +136,10 @@ class TestCreateCallbackManager:
 
     def test_create_from_list(self) -> None:
         """Test creating manager from a list of callbacks."""
-        callbacks = [SilentCallback(), SilentCallback()]
+        callbacks: list[LearnerCallback] = [
+            SilentCallback(),
+            SilentCallback(),
+        ]
         manager = create_callback_manager(callbacks)
         assert isinstance(manager, CallbackManager)
         assert len(manager.callbacks) == 2
@@ -193,9 +203,10 @@ class TestCallbackIntegration:
         from flowcean.sklearn import RandomForestRegressorLearner
 
         # Create sample data
+        rng = np.random.default_rng(42)
         n_samples = 100
-        x = np.random.randn(n_samples, 3)
-        y = x[:, 0] + x[:, 1] - x[:, 2] + np.random.randn(n_samples) * 0.1
+        x = rng.standard_normal((n_samples, 3))
+        y = x[:, 0] + x[:, 1] - x[:, 2] + rng.standard_normal(n_samples) * 0.1
 
         inputs = pl.LazyFrame(
             {
@@ -233,7 +244,10 @@ class TestCallbackIntegration:
         outputs = pl.LazyFrame({"y": ["invalid", "data", "types"]})
 
         # Should raise an error and call on_learning_error
-        with pytest.raises(Exception):
+        with pytest.raises(
+            (ValueError, TypeError),
+            match=r"could not convert|not supported",
+        ):
             learner.learn(inputs, outputs)
 
         # Verify error callback was called

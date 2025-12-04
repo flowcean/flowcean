@@ -77,7 +77,7 @@ class LoggingCallback:
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Model,  # noqa: ARG002
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Log learning completion."""
@@ -95,7 +95,9 @@ class LoggingCallback:
         """Log learning error."""
         self.logger.log(
             self.level_error,
-            f"[{learner.name}] Learning failed: {error}",
+            "[%s] Learning failed: %s",
+            learner.name,
+            error,
             exc_info=error,
         )
 

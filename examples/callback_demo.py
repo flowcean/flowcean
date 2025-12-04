@@ -32,7 +32,6 @@ def create_sample_data(
     """Create sample data for demonstration."""
     import numpy as np
 
-    # Use modern numpy random generator
     rng = np.random.default_rng(42)
 
     # Create features

@@ -37,7 +37,7 @@ class LightningCallbackBridge(lightning.Callback):
     def on_train_start(
         self,
         trainer: lightning.Trainer,
-        _pl_module: lightning.LightningModule,
+        pl_module: lightning.LightningModule,  # noqa: ARG002
     ) -> None:
         """Called when training starts."""
         context = {
@@ -54,8 +54,8 @@ class LightningCallbackBridge(lightning.Callback):
         self,
         trainer: lightning.Trainer,
         pl_module: lightning.LightningModule,
-        _outputs: Any,
-        _batch: Any,
+        outputs: Any,  # noqa: ARG002
+        batch: Any,  # noqa: ARG002
         batch_idx: int,
     ) -> None:
         """Called after each training batch."""
@@ -82,7 +82,7 @@ class LightningCallbackBridge(lightning.Callback):
         if has_callback_metrics:
             for key, value in pl_module.trainer.callback_metrics.items():
                 if hasattr(value, "item"):
-                    metrics[key] = value.item()
+                    metrics[key] = value.item()  # type: ignore[assignment]
 
         self.callback_manager.on_learning_progress(
             self.learner,
@@ -92,8 +92,8 @@ class LightningCallbackBridge(lightning.Callback):
 
     def on_train_end(
         self,
-        _trainer: lightning.Trainer,
-        _pl_module: lightning.LightningModule,
+        trainer: lightning.Trainer,
+        pl_module: lightning.LightningModule,
     ) -> None:
         """Called when training ends."""
         # We'll call on_learning_end from the learn method

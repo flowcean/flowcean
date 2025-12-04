@@ -72,14 +72,15 @@ class CallbackMixin:
     def _setup_callbacks(
         self,
         callbacks: list[LearnerCallback] | LearnerCallback | None = None,
-        use_default: bool = True,
+        use_default: bool = True,  # noqa: FBT001, FBT002
     ) -> CallbackManager:
         """Set up the callback manager.
 
         Args:
-            callbacks: User-provided callbacks. If None and use_default is True,
-                uses default callbacks.
-            use_default: Whether to use default callbacks when callbacks is None.
+            callbacks: User-provided callbacks. If None and use_default is
+                True, uses default callbacks.
+            use_default: Whether to use default callbacks when callbacks is
+                None.
 
         Returns:
             Configured CallbackManager.
@@ -124,10 +125,11 @@ class CallbackMixin:
         try:
             model = learning_fn()
             callback_manager.on_learning_end(learner, model)
-            return model
         except Exception as e:
             callback_manager.on_learning_error(learner, e)
             raise
+        else:
+            return model
 
 
 __all__ = [
