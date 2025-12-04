@@ -5,7 +5,13 @@ learner progress in flowcean:
 - RichCallback: Beautiful terminal output with progress bars
 - LoggingCallback: Standard Python logging
 - SilentCallback: No output
-- Custom callbacks: Create your own
+- Multiple callbacks: Use several callbacks at once
+
+Demonstrated learners:
+- SKLearn (RandomForest): Batch learning
+- PyTorch Lightning: Neural network training with per-batch progress
+- XGBoost: Gradient boosting with per-iteration progress
+- River: Incremental learning with per-sample progress
 
 Run this example with:
     python examples/callback_demo.py
@@ -16,11 +22,14 @@ import logging
 import lightning
 import polars as pl
 import torch
+from river.linear_model import LinearRegression
 from torch import nn
 
 from flowcean.core import LoggingCallback, RichCallback, SilentCallback
+from flowcean.river import RiverLearner
 from flowcean.sklearn import RandomForestRegressorLearner
 from flowcean.torch import LightningLearner
+from flowcean.xgboost import XGBoostRegressorLearner
 
 # Configure logging to see LoggingCallback output
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
@@ -156,12 +165,50 @@ def demo_lightning_with_progress() -> None:
     learner = LightningLearner(
         module=SimpleNet(),
         batch_size=4,
-        max_epochs=20,  # Train for 20 epochs to see progress
+        max_epochs=5,  # Train for 5 epochs to see progress
         callbacks=RichCallback(),
     )
 
     model = learner.learn(inputs, outputs)
     print(f"Model trained! Type: {type(model).__name__}")
+
+
+def demo_xgboost_with_progress() -> None:
+    """Demo 6: XGBoost with per-iteration progress updates."""
+    print("\n" + "=" * 60)
+    print("Demo 6: XGBoost Regressor with Live Progress")
+    print("=" * 60)
+
+    inputs, outputs = create_sample_data(n_samples=2000)
+
+    # XGBoost shows per-iteration progress during boosting
+    learner = XGBoostRegressorLearner(
+        n_estimators=20000,
+        max_depth=5,
+        learning_rate=0.1,
+        callbacks=RichCallback(),
+    )
+
+    model = learner.learn(inputs, outputs)
+    print(f"Model trained! Type: {type(model).__name__}\n")
+
+
+def demo_river_incremental() -> None:
+    """Demo 7: River with incremental learning progress."""
+    print("\n" + "=" * 70)
+    print("Demo 7: River with Large Dataset")
+    print("=" * 70)
+
+    inputs, outputs = create_sample_data(n_samples=500000)
+
+    learner = RiverLearner(
+        model=LinearRegression(),
+        callbacks=RichCallback(),
+        progress_interval=50,
+    )
+
+    model = learner.learn_incremental(inputs, outputs)
+    print(f"Model trained! Type: {type(model).__name__}\n")
 
 
 def main() -> None:
@@ -178,6 +225,8 @@ def main() -> None:
     demo_silent_callback()
     demo_multiple_callbacks()
     demo_lightning_with_progress()
+    demo_xgboost_with_progress()
+    demo_river_incremental()
 
     print("\n" + "=" * 60)
     print("All demos completed!")
