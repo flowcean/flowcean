@@ -15,21 +15,19 @@ class ToTimeSeries(Transform):
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         if isinstance(self.time_feature, str):
             time_feature = {
-                feature_name: self.time_feature
-                for feature_name in data.collect_schema().names()
-                if feature_name != self.time_feature
+                self.time_feature: data.drop(self.time_feature)
+                .collect_schema()
+                .names(),
             }
         else:
             time_feature = self.time_feature
 
         return data.select(
-            [
+            (
                 pl.struct(
                     pl.col(t_feature).alias("time"),
-                    pl.col(value_feature).alias("value"),
-                )
-                .implode()
-                .alias(value_feature)
-                for value_feature, t_feature in time_feature.items()
-            ],
+                    pl.struct(pl.col(values)).alias("value"),
+                ).implode()
+                for t_feature, values in time_feature.items()
+            ),
         )

@@ -64,7 +64,11 @@ class ChainedOfflineEnvironments(IncrementalEnvironment):
             environments: The offline environments to chain.
         """
         self._environments = iter(environments)
-        self._element = next(self._environments)
+        try:
+            self._element = next(self._environments)
+        except StopIteration as e:
+            msg = "environments must contain at least one element"
+            raise ValueError(msg) from e
 
     @override
     def _observe(self) -> Data:

@@ -6,7 +6,6 @@ from .environments.dataframe import (
     collect,
 )
 from .environments.datasetprediction import DatasetPredictionEnvironment
-from .environments.join import JoinedOfflineEnvironment
 from .environments.streaming import StreamingOfflineEnvironment
 from .environments.train_test_split import TrainTestSplit
 from .is_time_series import is_timeseries_feature
@@ -72,7 +71,6 @@ __all__ = [
     "First",
     "Flatten",
     "InvalidUriSchemeError",
-    "JoinedOfflineEnvironment",
     "Lambda",
     "Last",
     "LazyMixin",

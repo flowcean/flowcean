@@ -31,8 +31,10 @@ def _load_config(path: Path) -> DictConfig | ListConfig:
 
 DEFAULT_CONFIG = {
     "logging": {
-        "level": "INFO",
-        "format": "%(asctime)s [%(name)s][%(levelname)s] %(message)s",
+        "root": {
+            "level": "INFO",
+            "format": "%(asctime)s [%(name)s][%(levelname)s] %(message)s",
+        },
     },
 }
 
@@ -78,5 +80,10 @@ def initialize(**kwargs: Any) -> DictConfig | ListConfig:
         The initialized configuration object.
     """
     conf = load_experiment_config(**kwargs)
-    logging.basicConfig(**conf.logging)
+    logging.basicConfig(**conf.logging.root)
+    for logger_name, logger_conf in conf.logging.items():
+        if logger_name == "root":
+            continue
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logger_conf.level)
     return conf

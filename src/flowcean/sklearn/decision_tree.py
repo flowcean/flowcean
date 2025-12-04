@@ -1,8 +1,12 @@
 import logging
+from os import PathLike
 
 import polars as pl
 from numpy.typing import NDArray
-from sklearn.tree import DecisionTreeRegressor, export_graphviz
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    export_graphviz,
+)
 from typing_extensions import override
 
 from flowcean.core import Model, SupervisedLearner
@@ -13,19 +17,20 @@ from .model import SciKitModel
 logger = logging.getLogger(__name__)
 
 
-class RegressionTree(SupervisedLearner):
-    """Wrapper class for sklearn's DecisionTreeRegressor.
+class DecisionTree(SupervisedLearner):
+    """Wrapper class for sklearn's DecisionTreeClassifier.
 
-    Reference: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html
+    Reference: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
     """
 
-    regressor: DecisionTreeRegressor
+    classifier: DecisionTreeClassifier
+    dot_graph_export_path: None | str | PathLike[str]
 
     def __init__(
         self,
         *,
-        dot_graph_export_path: None | str = None,
-        criterion: str = "squared_error",
+        dot_graph_export_path: None | str | PathLike[str] = None,
+        criterion: str = "gini",
         splitter: str = "best",
         max_depth: int | None = None,
         min_samples_split: int = 2,
@@ -42,7 +47,7 @@ class RegressionTree(SupervisedLearner):
 
         Reference: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html
         """
-        self.regressor = DecisionTreeRegressor(
+        self.classifier = DecisionTreeClassifier(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -67,19 +72,19 @@ class RegressionTree(SupervisedLearner):
         dfs = pl.collect_all([inputs, outputs])
         collected_inputs = dfs[0]
         collected_outputs = dfs[1]
-        self.regressor.fit(collected_inputs, collected_outputs)
+        self.classifier.fit(collected_inputs, collected_outputs)
         if self.dot_graph_export_path is not None:
             logger.info(
                 "Exporting decision tree graph to %s",
                 self.dot_graph_export_path,
             )
             export_graphviz(
-                self.regressor,
-                out_file=self.dot_graph_export_path,
+                self.classifier,
+                out_file=str(self.dot_graph_export_path),
                 feature_names=collected_inputs.columns,
             )
         return SciKitModel(
-            self.regressor,
+            self.classifier,
             input_names=collected_inputs.columns,
             output_names=collected_outputs.columns,
         )
