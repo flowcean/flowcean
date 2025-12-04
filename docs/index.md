@@ -54,3 +54,5 @@ This work has been funded by BMBF project AGenC no. 16IS22047A
 
 ![BMBF](assets/BMBF-light.svg#only-light)
 ![BMBF](assets/BMBF-dark.svg#only-dark)
+
+[Impressum](impressum.md)
