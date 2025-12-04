@@ -121,10 +121,12 @@ class TestCreateCallbackManager:
     """Test the create_callback_manager helper function."""
 
     def test_create_from_none(self) -> None:
-        """Test creating manager from None."""
+        """Test creating manager from None returns default callbacks."""
         manager = create_callback_manager(None)
         assert isinstance(manager, CallbackManager)
-        assert len(manager.callbacks) == 0
+        # Default behavior: returns RichCallback when None is passed
+        assert len(manager.callbacks) == 1
+        assert isinstance(manager.callbacks[0], RichCallback)
 
     def test_create_from_single_callback(self) -> None:
         """Test creating manager from a single callback."""
