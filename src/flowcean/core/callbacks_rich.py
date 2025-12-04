@@ -138,6 +138,10 @@ class RichCallback:
                     advance=0.1,
                 )
 
+            # Force immediate refresh to show updates in real-time
+            if self._live:
+                self._live.refresh()
+
     def on_learning_end(
         self,
         learner: Named,

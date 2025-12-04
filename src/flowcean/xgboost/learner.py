@@ -116,11 +116,16 @@ class XGBoostClassifierLearner(SupervisedLearner):
                 max_iterations=self.classifier.n_estimators,
             )
 
-            # Fit the classifier with callbacks
+            # In XGBoost 3.0+, callbacks must be set on the model, not in fit()
+            # Get current params and recreate classifier with callbacks
+            params = self.classifier.get_params()
+            params["callbacks"] = [xgb_callback]
+            self.classifier = XGBClassifier(**params)
+
+            # Fit the classifier
             self.classifier.fit(
                 inputs_collected.to_numpy(),
                 outputs_collected.to_numpy(),
-                callbacks=[xgb_callback],
             )
 
             # Create the model
@@ -184,11 +189,16 @@ class XGBoostRegressorLearner(SupervisedLearner):
                 max_iterations=self.regressor.n_estimators,
             )
 
-            # Fit the regressor with callbacks
+            # In XGBoost 3.0+, callbacks must be set on the model, not in fit()
+            # Get current params and recreate regressor with callbacks
+            params = self.regressor.get_params()
+            params["callbacks"] = [xgb_callback]
+            self.regressor = XGBRegressor(**params)
+
+            # Fit the regressor
             self.regressor.fit(
                 inputs_collected.to_numpy(),
                 outputs_collected.to_numpy(),
-                callbacks=[xgb_callback],
             )
 
             # Create the model
