@@ -25,7 +25,7 @@ Of course, a data source and, thus, an environment is as well needed for the lea
 In addition to that, a strategy involves a learner, representing the actual learning algorithm and, by that, the type of model learned.
 The [model section](https://flowcean.me/user_guide/model/) provides more insights into the separation of learner and model modules.
 The third element of a strategy are _Transforms_.
-Transforms are all kind of preliminary operations on data sets which might be preprocessing, abstraction, augmentation, feature engineering, etc.
+Transforms are all kind of preliminary operations on datasets which might be preprocessing, abstraction, augmentation, feature engineering, etc.
 
 ## Reference to Python API
 

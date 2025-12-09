@@ -18,7 +18,7 @@ The objective of the learning process is to predict the output based on the simu
 
 The best fitting flowcean environment for this simulation is an ActiveOnlineEnvironment.
 This type of environment requires a learning algorithm that is able to perform active learning e.g.
-returning an input to the siimulation.
+returning an input to the simulation.
 With flowcean the algorithm is stored and can be used in the model of the learner.
 In this getting started we show how to use Flowcean to implement your own learning pipeline.
 

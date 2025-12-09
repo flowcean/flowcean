@@ -9,9 +9,11 @@ from flowcean.core.environment.incremental import Stepable
 
 @runtime_checkable
 class ActiveEnvironment(Environment, Stepable, Actable, Protocol):
-    """Base class for active environments.
+    """An environment supporting active learning through interaction.
 
-    An active environment loads data in an interactive way, e.g., from a
-    simulation or real system. The environment requires actions to be taken to
-    advance. Data can be retrieved by observing the environment.
+    An active environment loads data interactively from simulations or real
+    systems. The learner influences the environment by selecting actions,
+    which the environment responds to with observations and rewards. This
+    supports active learning strategies where the learner explores the
+    environment to optimize its behavior.
     """

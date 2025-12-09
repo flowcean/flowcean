@@ -14,7 +14,14 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class Environment(Named, Protocol):
-    """Base class adding transform support."""
+    """Abstraction for data sources in learning and evaluation.
+
+    An environment describes the possible data sources for the learning and
+    evaluation procedure. Environments can be offline (pre-recorded datasets),
+    incremental (streaming data), or active (interactive systems where the
+    learner can influence the environment). All environments support applying
+    transforms to observations.
+    """
 
     transform: Transform = Identity()
 
