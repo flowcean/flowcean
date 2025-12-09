@@ -1,0 +1,5 @@
+outs:
+- md5: 673a48678417024873d8882101565831
+  size: 17454918
+  hash: md5
+  path: alp_sim_data_containerweight.parquet
