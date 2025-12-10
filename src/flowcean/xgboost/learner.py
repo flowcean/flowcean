@@ -9,9 +9,15 @@ from .model import XGBoostClassifierModel, XGBoostRegressorModel
 
 
 class XGBoostClassifierLearner(SupervisedLearner):
-    """Wrapper for XGBoost classifiers."""
+    """Wrapper for XGBoost classifiers.
 
-    def __init__(self, **kwargs: Any) -> None:
+    Args:
+        threshold: Decision threshold for binary classification (default: 0.5).
+        **kwargs: Additional arguments passed to XGBClassifier.
+    """
+
+    def __init__(self, threshold: float = 0.5, **kwargs: Any) -> None:
+        self.threshold = threshold
         self.classifier = XGBClassifier(**kwargs)
         super().__init__()
 
@@ -35,6 +41,7 @@ class XGBoostClassifierLearner(SupervisedLearner):
             self.classifier,
             input_features=inputs_collected.columns,
             output_features=outputs_collected.columns,
+            threshold=self.threshold,
         )
 
 
