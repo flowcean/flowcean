@@ -34,12 +34,12 @@ def main() -> None:
         | Select(
             [
                 "p_accumulator",
-                "containerWeight",
-                "activeValveCount",
+                "container_weight",
+                "active_valve_count",
                 "T",
             ],
         )
-        | Filter("activeValveCount > 0")
+        | Filter("active_valve_count > 0")
         | Resample(0.25)
         | TimeWindow(
             time_start=0,
@@ -65,10 +65,10 @@ def main() -> None:
     )
     inputs = [
         "^p_accumulator_.*$",
-        "activeValveCount",
+        "active_valve_count",
         "T",
     ]
-    outputs = ["containerWeight"]
+    outputs = ["container_weight"]
 
     logger.info("Starting learning...")
     time_start = time.time()

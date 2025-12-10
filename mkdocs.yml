@@ -107,6 +107,7 @@ nav:
       - Tools: user_guide/tools.md
       - Adapter: user_guide/adapter.md
   - Examples:
+      - Automatic Lashing Platform: examples/automatic_lashing_platform.md
       - Coffee Machine: examples/coffee_machine.md
       - One Tank: examples/one_tank.md
       - One Tank Incremental: examples/one_tank_incremental.md
