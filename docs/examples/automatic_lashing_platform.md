@@ -56,7 +56,7 @@ First the data is loaded and preprocessed to extract the relevant features and t
 ```python
 from flowcean.polars import (DataFrame, Filter, Flatten, Lambda, Resample, Select, TimeWindow)
 
-data = DataFrame.read_parquet("path/to/dataset.parquet")
+data = DataFrame.from_parquet("path/to/dataset.parquet")
   | Lambda(lambda df: df.limit(50_000)) # Use a subset of the data for faster training
   | Select([
       "p_accumulator",
