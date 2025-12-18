@@ -45,6 +45,7 @@ There are four different datasets available for this example.
 The primary dataset contains approximately 160,000 simulated container handling operations, involving containers with weights ranging from 2,500 kg to 60,000 kg.
 The other three datasets are smaller, containing between 3,100 and 4,000 samples each.
 In these datasets, only one of the three parameters — container weight (`container_weight`), ambient temperature (`T`), and starting pressure in the accumulator (`p_accumulator[0]`) — is varied, while all other parameters are held constant.
+The datasets used for this example can be found on [Zenodo](https://zenodo.org/records/17812362).
 
 ## Learning Models
 
