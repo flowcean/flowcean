@@ -580,7 +580,10 @@ class ScanMapStatistics(Transform):
             avg_distance = np.mean(min_distances) if n_points > 0 else 0.0
             # Feature 15: Point distance
             point_distance_timeseries.append(
-                {"time": scan["time"], "value": avg_distance},
+                {
+                    "time": scan["time"],
+                    "value": {"point_distance": avg_distance},
+                },
             )
 
             # Feature 16: Point fitting percentage
@@ -591,7 +594,10 @@ class ScanMapStatistics(Transform):
                 else 0.0
             )
             point_fitting_timeseries.append(
-                {"time": scan["time"], "value": fitting_percent},
+                {
+                    "time": scan["time"],
+                    "value": {"point_fitting": fitting_percent},
+                },
             )
 
             # Feature 17: Point inlier percentage
@@ -606,14 +612,20 @@ class ScanMapStatistics(Transform):
                 (inlier_count / n_points * 100) if n_points > 0 else 0.0
             )
             point_inlier_timeseries.append(
-                {"time": scan["time"], "value": inlier_percent},
+                {
+                    "time": scan["time"],
+                    "value": {"point_inlier": inlier_percent},
+                },
             )
 
             # Feature 18: Point quality
             qualities = 1.0 / (1.0 + min_distances)
             avg_quality = np.mean(qualities) if n_points > 0 else 0.0
             point_quality_timeseries.append(
-                {"time": scan["time"], "value": avg_quality},
+                {
+                    "time": scan["time"],
+                    "value": {"point_quality": avg_quality},
+                },
             )
 
             # Raycasting features (19-23)
@@ -666,19 +678,28 @@ class ScanMapStatistics(Transform):
                 )
 
             ray_inlier_timeseries.append(
-                {"time": scan["time"], "value": ray_inlier},
+                {"time": scan["time"], "value": {"ray_inlier": ray_inlier}},
             )
             ray_inlier_percent_timeseries.append(
-                {"time": scan["time"], "value": ray_inlier_percent},
+                {
+                    "time": scan["time"],
+                    "value": {"ray_inlier_percent": ray_inlier_percent},
+                },
             )
             ray_matching_percent_timeseries.append(
-                {"time": scan["time"], "value": ray_matching},
+                {
+                    "time": scan["time"],
+                    "value": {"ray_matching_percent": ray_matching},
+                },
             )
             ray_outlier_percent_timeseries.append(
-                {"time": scan["time"], "value": ray_outlier},
+                {
+                    "time": scan["time"],
+                    "value": {"ray_outlier_percent": ray_outlier},
+                },
             )
             ray_quality_timeseries.append(
-                {"time": scan["time"], "value": ray_quality},
+                {"time": scan["time"], "value": {"ray_quality": ray_quality}},
             )
 
             # Line-based features (24-29)
@@ -699,7 +720,10 @@ class ScanMapStatistics(Transform):
                 sensor_y,
             )
             angle_inlier_timeseries.append(
-                {"time": scan["time"], "value": angle_inlier},
+                {
+                    "time": scan["time"],
+                    "value": {"angle_inlier": angle_inlier},
+                },
             )
 
             # Feature 25: Angle quality (simplified as average angle match)
@@ -708,7 +732,10 @@ class ScanMapStatistics(Transform):
                 detected_lines,
             )
             angle_quality_timeseries.append(
-                {"time": scan["time"], "value": angle_quality},
+                {
+                    "time": scan["time"],
+                    "value": {"angle_quality": angle_quality},
+                },
             )
 
             # Features 26-29
@@ -719,19 +746,25 @@ class ScanMapStatistics(Transform):
                 )
             )
             line_angle_timeseries.append(
-                {"time": scan["time"], "value": line_angle},
+                {"time": scan["time"], "value": {"line_angle": line_angle}},
             )
             line_distance_timeseries.append(
-                {"time": scan["time"], "value": line_distance},
+                {
+                    "time": scan["time"],
+                    "value": {"line_distance": line_distance},
+                },
             )
             line_fitting_timeseries.append(
-                {"time": scan["time"], "value": line_fitting},
+                {
+                    "time": scan["time"],
+                    "value": {"line_fitting": line_fitting},
+                },
             )
             line_length_timeseries.append(
-                {"time": scan["time"], "value": line_length},
+                {"time": scan["time"], "value": {"line_length": line_length}},
             )
 
-        return data.hstack(
+        return data.drop("scan_points", "scan_points_sensor").hstack(
             pl.DataFrame(
                 {
                     "point_distance": [point_distance_timeseries],
