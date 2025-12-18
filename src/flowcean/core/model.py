@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 class Model(Named, Protocol):
     """Base class for models.
 
-    A model is used to predict outputs for given inputs.
+    A model represents learned patterns extracted by a learner from data.
+    It is used to predict outputs for given inputs.
     """
 
     pre_transform: Transform = Identity()
