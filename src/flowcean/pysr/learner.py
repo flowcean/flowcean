@@ -10,14 +10,19 @@ logger = logging.getLogger(__name__)
 
 
 class PySRModel(Model):
-    def __init__(self, model: PySRRegressor) -> None:
+    def __init__(self, model: PySRRegressor, output_column: str) -> None:
         self.model = model
+        self.output_column = output_column
 
     @override
     def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
-        return pl.LazyFrame(
-            self.model.predict(input_features.collect()),
+        df = (
+            input_features.collect()
+            if isinstance(input_features, pl.LazyFrame)
+            else input_features
         )
+        predictions = self.model.predict(df)
+        return pl.from_numpy(predictions, schema=[self.output_column]).lazy()
 
 
 class PySRLearner(SupervisedIncrementalLearner):
@@ -38,7 +43,7 @@ class PySRLearner(SupervisedIncrementalLearner):
         self.model.fit(collected_inputs, collected_outputs)
 
         # Return the trained PySRModel
-        return PySRModel(self.model)
+        return PySRModel(self.model, outputs.collect_schema().names()[0])
 
 
 logger = logging.getLogger(__name__)
