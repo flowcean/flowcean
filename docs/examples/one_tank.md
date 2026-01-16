@@ -18,7 +18,7 @@ $ \dot{x} = \frac{b V(t) - a \sqrt{x}}{A} $,
 
 where $x$ is the water level in the tank, $\dot{x}$ is the change of the water level over time, $V(t)$ is the time-dependent inflow, $A$ is the tank area, and $a$ and $b$ are scaling constants for the equation.
 The solution of an ODE is not a single value, but a function (here $x(t)$) or a series of its values for different times $t$.
-As solving this ODE analytically is quite complicated, a numerical solver is used which compute solution points starting from an initial value.
+As solving this ODE analytically is quite complicated, a numerical solver is used which computes solution points starting from an initial value.
 In this example, the initial value is the initial level of the liquid $x(0) = x_0$ in the tank.
 
 The free parameters from the above equation are set to
