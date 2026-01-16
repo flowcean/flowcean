@@ -14,7 +14,7 @@ ODEs describe the derivative of a variable (e.g. it's change over time) as a fun
 
 For this example the system is described by the equation
 
-$ \dot{x} = \frac{b V(t) - a \sqrt{x}}{A} $,
+$$ \dot{x} = \frac{b V(t) - a \sqrt{x}}{A} $$
 
 where $x$ is the water level in the tank, $\dot{x}$ is the change of the water level over time, $V(t)$ is the time-dependent inflow, $A$ is the tank area, and $a$ and $b$ are scaling constants for the equation.
 The solution of an ODE is not a single value, but a function (here $x(t)$) or a series of its values for different times $t$.
