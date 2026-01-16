@@ -6,14 +6,14 @@ Flowcean can be used for different types and strategies of learning with differe
 First step when using Flowcean is to think about your problem at hand and specify:
 
 - What type of data can be provided?
-- Is it a dataset, a dataset, a simulation or something else?
+- Is it a dataset, a simulation or something else?
 - Are inputs to the data required (is it interactive)?
 - What kind of learning process is required?
 
 According to these questions flowcean offers different learning environments (offline, incremental and active).
 To decide what kind approach you need see (link).
 
-In this example we a simulation that requires a floating point value as input and returns a value as output (randomly chosen in this case).
+In this example, we have a simulation that requires a floating point value as input and returns a value as output (randomly chosen in this case).
 The objective of the learning process is to predict the output based on the simulation's input value.
 
 The best fitting flowcean environment for this simulation is an ActiveOnlineEnvironment.
