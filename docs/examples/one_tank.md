@@ -86,7 +86,7 @@ class OneTank(OdeSystem[TankState]):
 The `OneTank` class describes the differential equation in the `flow` as well as all parameters needed to evaluate it.
 The type parameter `TankState` is used to map the general numpy array holding the current state of the simulation to a more tangible representation.
 The state of an `ODESystem` can also be used for systems with multiple states, where the behavior might change when certain conditions are met.
-For this example with only a single state the `TankState` class simply maps the water level in the tank to the first entry in the state vector
+For this example, with only a single state, the `TankState` class simply maps the water level in the tank to the first entry in the state vector
 
 ```python
 class TankState(State):
