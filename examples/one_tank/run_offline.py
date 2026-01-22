@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
 import logging
-from dataclasses import dataclass
 from datetime import datetime, timezone
 
+import equinox as eqx
+import jax.numpy as jnp
 import numpy as np
 import polars as pl
 import torch
-from numpy.typing import NDArray
-from typing_extensions import Self, override
+from jaxtyping import PyTree
 
 from flowcean.cli import initialize
-from flowcean.core import evaluate_offline, learn_offline
-from flowcean.ode import OdeEnvironment, OdeState, OdeSystem
-from flowcean.polars import SlidingWindow, TrainTestSplit, collect
+from flowcean.core import Lambda, evaluate_offline, learn_offline
+from flowcean.ode import OdeEnvironment
+from flowcean.polars import SlidingWindow, TrainTestSplit
 from flowcean.sklearn import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -25,21 +25,7 @@ from flowcean.utils.random import initialize_random
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TankState(OdeState):
-    water_level: float
-
-    @override
-    def as_numpy(self) -> NDArray[np.float64]:
-        return np.array([self.water_level])
-
-    @classmethod
-    @override
-    def from_numpy(cls, state: NDArray[np.float64]) -> Self:
-        return cls(state[0])
-
-
-class OneTank(OdeSystem[TankState]):
+class OneTank(eqx.Module):
     """One tank system.
 
     This class represents a one tank system. The system is defined by a
@@ -48,45 +34,21 @@ class OneTank(OdeSystem[TankState]):
     This example is based on https://de.mathworks.com/help/slcontrol/ug/watertank-simulink-model.html.
     """
 
-    def __init__(
-        self,
-        *,
-        area: float,
-        outflow_rate: float,
-        inflow_rate: float,
-        initial_t: float = 0.0,
-        initial_state: TankState,
-    ) -> None:
-        """Initialize the one tank system.
+    area: float
+    outflow_rate: float
+    inflow_rate: float
 
-        Args:
-            area: Area of the tank.
-            outflow_rate: Outflow rate.
-            inflow_rate: Inflow rate.
-            initial_t: Initial time (default: 0).
-            initial_state: Initial state.
-        """
-        super().__init__(
-            initial_t,
-            initial_state,
-        )
-        self.area = area
-        self.outflow_rate = outflow_rate
-        self.inflow_rate = inflow_rate
-
-    @override
-    def flow(
+    def __call__(
         self,
         t: float,
-        state: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        pump_voltage = np.max([0.0, np.sin(2.0 * np.pi * 1.0 / 10.0 * t)])
-        tank = TankState.from_numpy(state)
-        d_level = (
-            self.inflow_rate * pump_voltage
-            - self.outflow_rate * np.sqrt(tank.water_level)
+        x: PyTree,
+        args: PyTree,
+    ) -> PyTree:
+        _ = args
+        pump_voltage = jnp.maximum(0.0, jnp.sin(2.0 * jnp.pi * 1.0 / 10.0 * t))
+        return (
+            self.inflow_rate * pump_voltage - self.outflow_rate * jnp.sqrt(x)
         ) / self.area
-        return np.array([d_level])
 
 
 def main() -> None:
@@ -98,21 +60,22 @@ def main() -> None:
         area=5.0,
         outflow_rate=0.5,
         inflow_rate=2.0,
-        initial_state=TankState(water_level=1.0),
     )
 
-    data_incremental = OdeEnvironment(
-        system,
-        dt=0.1,
-        map_to_dataframe=lambda ts, xs: pl.DataFrame(
-            {
-                "t": ts,
-                "h": [x.water_level for x in xs],
-            },
-        ),
-    )
+    def solution_to_dataframe(data: tuple[PyTree, PyTree]) -> pl.LazyFrame:
+        ts, xs = data
+        return pl.LazyFrame({"t": np.asarray(ts), "h": np.asarray(xs)})
 
-    data = collect(data_incremental, 250) | SlidingWindow(window_size=3)
+    data = (
+        OdeEnvironment(
+            system,
+            t0=0.0,
+            x0=1.0,
+            ts=jnp.arange(0.0, 10.0, 0.1),
+        )
+        | Lambda(solution_to_dataframe)
+        | SlidingWindow(window_size=3)
+    )
 
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 
@@ -128,7 +91,7 @@ def main() -> None:
                 hidden_dimensions=[10, 10],
                 activation_function=torch.nn.Tanh,
             ),
-            max_epochs=1000,
+            max_epochs=10,
         ),
     ]:
         t_start = datetime.now(tz=timezone.utc)
@@ -148,7 +111,7 @@ def main() -> None:
             outputs,
             [MeanAbsoluteError(), MeanSquaredError()],
         )
-        print(report)
+        report.pretty_print()
 
 
 if __name__ == "__main__":

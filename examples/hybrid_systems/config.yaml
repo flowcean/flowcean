@@ -1,0 +1,89 @@
+seed: 42
+
+bouncing_ball:
+  system:
+    restitution: 0.9
+    gravity: 9.81
+    epsilon: 1e-6
+  mode0: falling
+  x0:
+    min:
+      - 10.0
+      - -20.0
+    max:
+      - 20.0
+      - 20.0
+  t0: 0.0
+  t1: 5.0
+  dt0: 0.01
+  dt: 0.1
+  n_runs: 20
+
+boiler:
+  system:
+    x_ref: 20.0
+    t_on: 1.0
+    t_off: 1.5
+    heating_rate: 10.0
+    cooling_rate: -2.0
+  mode0: heating
+  x0:
+    min:
+      - 0.0
+    max:
+      - 30.0
+  t0: 0.0
+  t1: 10.0
+  dt0: 0.01
+  dt: 0.1
+  n_runs: 20
+
+boilernotime:
+  system:
+    x_min: 18.0
+    x_max: 22.0
+    heating_rate: 10.0
+    cooling_rate: -2.0
+  mode0: heating
+  x0:
+    min:
+      - 0.0
+    max:
+      - 30.0
+  t0: 0.0
+  t1: 10.0
+  dt0: 0.01
+  dt: 0.1
+  n_runs: 20
+
+tank:
+  system:
+    leakages:
+      - -1.0
+      - -1.0
+      - -1.0
+    inflows:
+      - 20.0
+      - 20.0
+      - 20.0
+    h_m: 5.0
+    h_f: 10.0
+    t_m:
+      - 0.5
+      - 0.5
+      - 0.5
+  mode0: all_leak
+  x0:
+    min:
+      - 0
+      - 0
+      - 0
+    max:
+      - 15
+      - 15
+      - 15
+  t0: 0.0
+  t1: 4.0
+  dt0: 0.01
+  dt: 0.1
+  n_runs: 20

@@ -62,8 +62,8 @@ class Heating(DifferentialMode[Temperature, TargetTemperature]):
         self,
         i: TargetTemperature,
     ) -> DifferentialMode[Temperature, TargetTemperature]:
-        if self.state.temperature > i or self.t > self.overheat_timeout:
-            return Cooling(t=0.0, state=self.state)
+        if self.x.temperature > i or self.t > self.overheat_timeout:
+            return Cooling(t0=0.0, x=self.x)
         return self
 
 
@@ -85,8 +85,8 @@ class Cooling(DifferentialMode[Temperature, TargetTemperature]):
         self,
         i: TargetTemperature,
     ) -> DifferentialMode[Temperature, TargetTemperature]:
-        if self.state.temperature < i and self.t > self.cooldown_timeout:
-            return Heating(t=0.0, state=self.state)
+        if self.x.temperature < i and self.t > self.cooldown_timeout:
+            return Heating(t0=0.0, x=self.x)
         return self
 
 
@@ -117,7 +117,7 @@ def main() -> None:
     )
 
     environment = HybridSystem(
-        initial_mode=Heating(t=0.0, state=Temperature(30)),
+        initial_mode=Heating(t0=0.0, x=Temperature(30)),
         inputs=target_temperatures,
         map_to_dataframe=lambda times, inputs, modes: pl.DataFrame(
             {

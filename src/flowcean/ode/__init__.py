@@ -1,16 +1,21 @@
-from .hybrid_system import DifferentialMode, HybridSystem
+from .hybrid_system import (
+    Guard,
+    HybridSystem,
+    Mode,
+    SimulationResult,
+    evaluate_at,
+    rollout,
+)
 from .ode_environment import (
-    IntegrationError,
     OdeEnvironment,
-    OdeState,
-    OdeSystem,
 )
 
 __all__ = [
-    "DifferentialMode",
+    "Guard",
     "HybridSystem",
-    "IntegrationError",
+    "Mode",
     "OdeEnvironment",
-    "OdeState",
-    "OdeSystem",
+    "SimulationResult",
+    "evaluate_at",
+    "rollout",
 ]
