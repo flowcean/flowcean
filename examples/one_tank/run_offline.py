@@ -126,7 +126,7 @@ def main() -> None:
                 learning_rate=1e-3,
                 output_size=len(outputs),
                 hidden_dimensions=[10, 10],
-                activation_function=torch.nn.Tanh,
+                activation_function=torch.nn.LeakyReLU,
             ),
             max_epochs=1000,
         ),

@@ -83,4 +83,4 @@ If no errors occur, the installation was successful.
 ## Getting Started
 
 After installation, you can begin using Flowcean in your projects.
-For initial usage, refer to the [New Project Guide](new_project.md) to explore how flowcean is used for your project.
+For initial usage, refer to the [New Project Guide](new_project.md) to explore how Flowcean is used for your project.

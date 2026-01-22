@@ -16,7 +16,7 @@ Therefore, those voltages will be handled as *Voltage magnitude per unit*, with 
 
 In this example, a model will be trained that aims to keep the voltage at 1.0 p.u. on a simulation model of the power grid.
 Therefore, an active learner is required, which will be taken from the [palaestrAI](https://docs.palaestr.ai).
-The following code example will show the essential steps only, the full code is available within the examples of the flowcean source distribution.
+The following code example will show the essential steps only, the full code is available within the examples of the Flowcean source distribution.
 
 The power grid can be loaded with
 
@@ -71,7 +71,7 @@ learner = SACLearner(
 )
 ```
 
-As with the other examples, running the learning and evaluation processes with flowcean is rather simple.
+As with the other examples, running the learning and evaluation processes with Flowcean is rather simple.
 But first, at least one metric for the evaluation is required.
 For this example, a metric will be created that calculates the RMSE between each buses' voltage magnitude p.u. and 1.0.
 
@@ -121,7 +121,7 @@ VoltageDeviation: 0.022040343118938252
 
 ## Ensemble: Comparing different models
 
-With flowcean and some loops it is possible to compare different models on the energy system environment.
+With Flowcean and some loops it is possible to compare different models on the energy system environment.
 Since there is currently only one active learner, different learning parameters will be used to create different models.
 
 ```python
