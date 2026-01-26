@@ -123,10 +123,6 @@ def main() -> None:
 
     for learner in [
         RegressionTree(max_depth=4),
-        EnsembleLearner(
-            RegressionTree(max_depth=4),
-            RegressionTree(max_depth=4),
-        ),
         LightningLearner(
             module=MultilayerPerceptron(
                 learning_rate=1e-3,
@@ -135,6 +131,10 @@ def main() -> None:
                 activation_function=torch.nn.Tanh,
             ),
             max_epochs=100,
+        ),
+        EnsembleLearner(
+            RegressionTree(max_depth=4),
+            RegressionTree(max_depth=4),
         ),
     ]:
         t_start = datetime.now(tz=timezone.utc)
