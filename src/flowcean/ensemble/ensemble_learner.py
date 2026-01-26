@@ -8,7 +8,21 @@ from flowcean.core.model import Model
 
 
 class EnsembleLearner(SupervisedLearner):
-    """Ensemble learner that combines multiple supervised learners."""
+    """Ensemble learner that combines multiple supervised learners.
+
+    The ensemble learner trains each of its constituent learners sequentially.
+    After each learner is trained, its residual errors are calculated and used
+    as the target outputs for the next learner in the sequence.
+
+    The final model produced by the ensemble learner combines the predictions
+    of all constituent models by summing their outputs.
+
+    This learner works with any supervised learner and arbitrary data types
+    supported by those learners, as long as the `Data` type is consistent
+    across all learners and implements `__add__` and `__sub__` operations.
+    Special handling is included for Polars DataFrames and LazyFrames to be
+    compatible with the default flowcean learners.
+    """
 
     def __init__(self, *learners: SupervisedLearner) -> None:
         """Initialize the ensemble learner.
