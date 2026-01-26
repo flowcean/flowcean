@@ -76,11 +76,11 @@ class EnsembleModel(Model):
             column_names = predictions[0].collect_schema().names()
             total_prediction = reduce(
                 lambda x, y: pl.concat(
-                    [x, y.select(pl.all().name.suffix("_y"))],
+                    [x, y.select(pl.all().name.suffix("_"))],
                     how="horizontal",
                 ).select(
                     [
-                        (pl.col(col) + pl.col(f"{col}_y")).alias(col)
+                        (pl.col(col) + pl.col(f"{col}_")).alias(col)
                         for col in column_names
                     ],
                 ),
