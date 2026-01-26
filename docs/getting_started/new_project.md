@@ -10,21 +10,21 @@ First step when using Flowcean is to think about your problem at hand and specif
 - Are inputs to the data required (is it interactive)?
 - What kind of learning process is required?
 
-According to these questions flowcean offers different learning environments (offline, incremental and active).
+According to these questions Flowcean offers different learning environments (offline, incremental and active).
 To decide what kind approach you need see (link).
 
 In this example, we have a simulation that requires a floating point value as input and returns a value as output (randomly chosen in this case).
 The objective of the learning process is to predict the output based on the simulation's input value.
 
-The best fitting flowcean environment for this simulation is an ActiveOnlineEnvironment.
+The best fitting Flowcean environment for this simulation is an ActiveOnlineEnvironment.
 This type of environment requires a learning algorithm that is able to perform active learning e.g.
 returning an input to the simulation.
-With flowcean the algorithm is stored and can be used in the model of the learner.
+With Flowcean the algorithm is stored and can be used in the model of the learner.
 In this getting started we show how to use Flowcean to implement your own learning pipeline.
 
 ### The main function
 
-The first step in your code is to activate the flowcean CLI utilities, which mainly includes logging.
+The first step in your code is to activate the Flowcean CLI utilities, which mainly includes logging.
 The CLI utilities allows you to specify log messages (e.g.
 output).
 

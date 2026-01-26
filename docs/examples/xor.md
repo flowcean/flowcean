@@ -15,7 +15,7 @@ Its truth table is given by
 |    1    |    0    |        1         |
 |    1    |    1    |        0         |
 
-While simple, the XOR function is not linearly separable, making it a classic example for testing machine learning algorithms and a good candidate to demonstrate flowcean's prediction and testing capabilities.
+While simple, the XOR function is not linearly separable, making it a classic example for testing machine learning algorithms and a good candidate to demonstrate Flowcean's prediction and testing capabilities.
 
 ## Learning a Regression Tree Model
 
@@ -60,7 +60,7 @@ Flowcean offers a simple way to connect a model with a cyber-physical system (CP
 `Adapters` are components that establish a connection between the model and the CPS.
 This allows the model to receive live data for prediction purposes and send the results back to the CPS.
 
-For this example, a simple mockup adapter is used to simulate the CPS, which reads samples from a flowcean environment and writes the predictions back to another file.
+For this example, a simple mockup adapter is used to simulate the CPS, which reads samples from a Flowcean environment and writes the predictions back to another file.
 The code to set up the adapter and use the model for prediction can be found in the following listing.
 
 ```python
@@ -85,7 +85,7 @@ After running the prediction loop and examining the `result.csv` file, we can se
 ## Testing the Model
 
 Besides using the model for prediction, we can also automatically generate test cases to verify that the model -- and therefore the CPS -- behaves as expected.
-Testing a model with flowcean is a two-step process.
+Testing a model with Flowcean is a two-step process.
 First, a `TestcaseGenerator` is used to create a corpus of test cases based on the possible values of the input features.
 Second, the generated test cases are executed and the results are checked against the expected output.
 The expected outputs can either be concrete values or expressions that should evaluate to true for all test cases.
@@ -122,7 +122,7 @@ Then, the generated test cases are saved to an Excel file for documentation purp
 Next, a predicate is defined, which should hold true for all test cases.
 In this case, the predicate checks that the output `z` is equal to the result of the -- logical and not learned -- XOR operation on the inputs `x` and `y`.
 For other use cases, a more complex predicate could be used, such as ensuring that a certain output is within a specified range at all times.
-Finally, the tests are executed using flowcean's `test_model` function.
+Finally, the tests are executed using Flowcean's `test_model` function.
 Depending on the configuration, the testing can either stop at the first failed test case or continue until all test cases have been executed.
 
 When running the tests for our learned XOR model, all test cases pass successfully, confirming that the model behaves as expected for all input combinations.

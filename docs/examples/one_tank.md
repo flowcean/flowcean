@@ -47,7 +47,7 @@ Normally this data would be recorded from a real CPS and imported into the frame
 However, since we know the differential equation describing the system behavior, we can also use this equation to generate data.
 We can do this by using an [`ODEEnvironment`](../reference/flowcean/ode/index.md#flowcean.ode.OdeEnvironment) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/index.md#flowcean.core.IncrementalEnvironment) within the framework.
 
-To do so, a special `OneTank` class is created which inherits from the general flowcean `OdeSystem` class.
+To do so, a special `OneTank` class is created which inherits from the general Flowcean `OdeSystem` class.
 
 ```python
 class OneTank(OdeSystem[TankState]):
@@ -252,7 +252,7 @@ Afterwards you can either use `just` or run the examples from source.
 ### Just
 
 The easiest way to run this example is using `just`.
-Follow the [installation guide](../getting_started/installation.md) to clone flowcean but stop before installing it or any of its dependencies.
+Follow the [installation guide](../getting_started/installation.md) to clone Flowcean but stop before installing it or any of its dependencies.
 Now you can run the example using
 
 ```sh
@@ -264,7 +264,7 @@ After a short moment you should see the learning results from both methods and t
 
 ### From source
 
-Follow the [installation guide](../getting_started/installation.md) to install flowcean and it's dependencies from source.
+Follow the [installation guide](../getting_started/installation.md) to install Flowcean and it's dependencies from source.
 Afterwards you can navigate to the `examples` folder and run the examples.
 
 ```sh
