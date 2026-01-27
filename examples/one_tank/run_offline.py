@@ -12,9 +12,11 @@ from typing_extensions import Self, override
 
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
+from flowcean.ensemble import EnsembleLearner
 from flowcean.ode import OdeEnvironment, OdeState, OdeSystem
 from flowcean.polars import SlidingWindow, TrainTestSplit, collect
 from flowcean.sklearn import (
+    MaxError,
     MeanAbsoluteError,
     MeanSquaredError,
     RegressionTree,
@@ -120,7 +122,7 @@ def main() -> None:
     outputs = ["h_2"]
 
     for learner in [
-        RegressionTree(max_depth=5),
+        RegressionTree(max_depth=4),
         LightningLearner(
             module=MultilayerPerceptron(
                 learning_rate=1e-3,
@@ -128,7 +130,11 @@ def main() -> None:
                 hidden_dimensions=[10, 10],
                 activation_function=torch.nn.LeakyReLU,
             ),
-            max_epochs=1000,
+            max_epochs=100,
+        ),
+        EnsembleLearner(
+            RegressionTree(max_depth=4),
+            RegressionTree(max_depth=4),
         ),
     ]:
         t_start = datetime.now(tz=timezone.utc)
@@ -146,7 +152,11 @@ def main() -> None:
             test,
             inputs,
             outputs,
-            [MeanAbsoluteError(), MeanSquaredError()],
+            [
+                MeanAbsoluteError(),
+                MeanSquaredError(),
+                MaxError(),
+            ],
         )
         print(report)
 

@@ -208,11 +208,29 @@ perceptron_model = learn_offline(
 )
 ```
 
+As a third option, an [`EnsembleLearner`](../reference/flowcean/ensemble/index.md#flowcean.ensemble.EnsembleLearner) is used to combine two [regression tree](../reference/flowcean/sklearn/index.md#flowcean.sklearn.RegressionTree) learners into a single model.
+The idea of an ensemble learner is to combine multiple different learning algorithms to create a single model.
+The learners are used to iterativly improve the model by learning the residuals of the previous learners.
+By combining the results, a better estimate can be achieved than by using a single learner alone.
+
+```python
+ensemble_learner = EnsembleLearner(
+    RegressionTree(max_depth=4),
+    RegressionTree(max_depth=4),
+)
+ensemble_model = learn_offline(
+    train,
+    ensemble_learner,
+    inputs,
+    outputs,
+)
+```
+
 The final step is to evaluate the obtained models.
 This is done to estimate how well they are able to describe the unknown function as described above.
 Flowcean ships with a couple of different metrics which can be used for this purpose.
 Depending on the underlying problem, different metrics can be reasonable to apply.
-For this example the [`MeanAbsoluteError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanAbsoluteError) and [`MeanSquaredError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanSquaredError) error are used.
+For this example the [`MeanAbsoluteError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanAbsoluteError), [`MeanSquaredError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanSquaredError) and [`MaxError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MaxError) error are used.
 These metrics are useful when the output of the learned function is a (more or less) continuous value and the deviation from the actual value is of interest.
 The helper method [`evaluate_offline`](../reference/flowcean/core/index.md#flowcean.core.evaluate_offline) allows for easy evaluation of multiple metrics for a learned model.
 
@@ -222,7 +240,7 @@ regression_report = evaluate_offline(
     test,
     inputs,
     outputs,
-    [MeanAbsoluteError(), MeanSquaredError()],
+    [MeanAbsoluteError(), MeanSquaredError(), MaxError()],
 )
 
 perceptron_report = evaluate_offline(
@@ -230,16 +248,25 @@ perceptron_report = evaluate_offline(
     test,
     inputs,
     outputs,
-    [MeanAbsoluteError(), MeanSquaredError()],
+    [MeanAbsoluteError(), MeanSquaredError(), MaxError()],
+)
+
+ensemble_report = evaluate_offline(
+    ensemble_model,
+    test,
+    inputs,
+    outputs,
+    [MeanAbsoluteError(), MeanSquaredError(), MaxError()],
 )
 ```
 
 For this example, the resulting metrics are about
 
-| Learner                | Runtime              | Mean Absolute Error | Mean Squared Error |
-| ---------------------- | -------------------- | ------------------- | ------------------ |
-| Regression Tree        | $15.5\: \mathrm{ms}$ | $0.0206$            | $0.0006$           |
-| Multi-layer Perceptron | $813\: \mathrm{ms}$  | $0.0639$            | $0.00054$          |
+| Learner                | Runtime              | Mean Absolute Error | Mean Squared Error | Max Error        |
+| ---------------------- | -------------------- | ------------------- | ------------------ | ---------------- |
+| Regression Tree        | $10\: \mathrm{ms}$   | $0.0243$            | $0.0008$           | $0.0546$         |
+| Multi-layer Perceptron | $918\: \mathrm{ms}$  | $0.1838$            | $0.0561$           | $0.4820$         |
+| Ensemble Learner       | $16\: \mathrm{ms}$   | $0.0224$            | $0.0007$           | $0.0474$         |
 
 Depending on the size of the dataset, the way the train and test set are split and shuffled, the learners configuration and other random facts, these values may vary.
 However, it is clear, that both learners produced models with relative small errors ($\sim 2\%$ and $\sim 6\%$) which could be used for tasks such as prediction.
