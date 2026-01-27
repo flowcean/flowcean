@@ -7,7 +7,7 @@ from flowcean.core.learner import SupervisedLearner
 from flowcean.core.model import Model
 
 
-class ClusterProtocol(Protocol):
+class Clusterer(Protocol):
     def fit_predict(self, x: npt.ArrayLike) -> list[int]: ...
     def predict(self, x: npt.ArrayLike) -> list[int]: ...
 
@@ -15,7 +15,7 @@ class ClusterProtocol(Protocol):
 class ClusterModel(Model):
     def __init__(
         self,
-        clustering_function: ClusterProtocol,
+        clustering_function: Clusterer,
         cluster_model_mapping: dict[int, Model],
     ) -> None:
         super().__init__()
@@ -52,7 +52,7 @@ class ClusterModel(Model):
 class ClusterLearner(SupervisedLearner):
     def __init__(
         self,
-        clustering_function: ClusterProtocol,
+        clustering_function: Clusterer,
         learner: SupervisedLearner,
     ) -> None:
         super().__init__()
