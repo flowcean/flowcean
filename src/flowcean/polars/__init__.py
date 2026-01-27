@@ -12,7 +12,6 @@ from .environments.train_test_split import TrainTestSplit
 from .is_time_series import is_timeseries_feature
 from .metric import LazyMixin, SelectMixin
 from .transforms.cast import Cast
-from .transforms.cluster import Cluster, ClusterFunction
 from .transforms.discrete_derivative import DiscreteDerivative
 from .transforms.drop import Drop
 from .transforms.explode import Explode
@@ -57,8 +56,6 @@ from .transforms.zero_order_hold_matching import ZeroOrderHold
 __all__ = [
     "And",
     "Cast",
-    "Cluster",
-    "ClusterFunction",
     "CollectionExpr",
     "DataFrame",
     "DatasetPredictionEnvironment",
