@@ -20,8 +20,7 @@ from flowcean.sklearn import (
 
 logger = logging.getLogger(__name__)
 
-# N = 1_000
-N = 50
+N = 1_000
 
 
 def main() -> None:
