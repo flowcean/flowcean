@@ -79,5 +79,6 @@ class RegressionTree(SupervisedLearner):
             )
         return SciKitModel(
             self.regressor,
-            output_names=collected_outputs.columns,
+            input_features=collected_inputs.columns,
+            output_features=collected_outputs.columns,
         )

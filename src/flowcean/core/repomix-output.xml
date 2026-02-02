@@ -1,0 +1,2585 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+environment/
+  __init__.py
+  actable.py
+  active.py
+  base.py
+  incremental.py
+  offline.py
+strategies/
+  __init__.py
+  active.py
+  deploy.py
+  incremental.py
+  offline.py
+tool/
+  testing/
+    domain/
+      __init__.py
+      continuous.py
+      discrete.py
+      domain.py
+      fixed.py
+    generator/
+      __init__.py
+      combination_generator.py
+      generator.py
+      stochastic_generator.py
+    predicates/
+      __init__.py
+      polars.py
+      predicate.py
+    __init__.py
+  __init__.py
+  predict.py
+  test.py
+__init__.py
+adapter.py
+data.py
+learner.py
+metric.py
+model.py
+named.py
+report.py
+transform.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="environment/__init__.py">
+
+</file>
+
+<file path="environment/actable.py">
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from flowcean.core.data import Data
+
+
+class Actable(Protocol):
+    """Base class for active environments.
+
+    Active environments require actions to be taken to advance.
+    """
+
+    @abstractmethod
+    def act(self, action: Data) -> None:
+        """Act on the environment.
+
+        Args:
+            action: The action to perform.
+        """
+</file>
+
+<file path="environment/active.py">
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
+
+from flowcean.core.environment.actable import Actable
+from flowcean.core.environment.base import Environment
+from flowcean.core.environment.incremental import Stepable
+
+
+@runtime_checkable
+class ActiveEnvironment(Environment, Stepable, Actable, Protocol):
+    """An environment supporting active learning through interaction.
+
+    An active environment loads data interactively from simulations or real
+    systems. The learner influences the environment by selecting actions,
+    which the environment responds to with observations and rewards. This
+    supports active learning strategies where the learner explores the
+    environment to optimize its behavior.
+    """
+</file>
+
+<file path="environment/base.py">
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol, final, runtime_checkable
+
+from typing_extensions import Self
+
+from flowcean.core.named import Named
+from flowcean.core.transform import Identity, Transform
+
+if TYPE_CHECKING:
+    from flowcean.core.data import Data
+
+
+@runtime_checkable
+class Environment(Named, Protocol):
+    """Abstraction for data sources in learning and evaluation.
+
+    An environment describes the possible data sources for the learning and
+    evaluation procedure. Environments can be offline (pre-recorded datasets),
+    incremental (streaming data), or active (interactive systems where the
+    learner can influence the environment). All environments support applying
+    transforms to observations.
+    """
+
+    transform: Transform = Identity()
+
+    def append_transform(
+        self,
+        transform: Transform,
+    ) -> Self:
+        """Append a transform to the observation.
+
+        Args:
+            transform: Transform to append.
+
+        Returns:
+            This observable with the appended transform.
+        """
+        self.transform = self.transform.chain(transform)
+        return self
+
+    @abstractmethod
+    def _observe(self) -> Data:
+        """Observe and return the observation without applying the transform.
+
+        This method must be implemented by subclasses.
+
+        Returns:
+            The raw observation.
+        """
+
+    def observe(self) -> Data:
+        """Observe and return the observation."""
+        return self.transform(self._observe())
+
+    @final
+    def __or__(
+        self,
+        transform: Transform,
+    ) -> Self:
+        """Shortcut for `with_transform`."""
+        return self.append_transform(transform)
+</file>
+
+<file path="environment/incremental.py">
+from __future__ import annotations
+
+from abc import abstractmethod
+from collections.abc import Iterable, Iterator
+from typing import Protocol, runtime_checkable
+
+from typing_extensions import override
+
+from flowcean.core.data import Data
+from flowcean.core.environment.base import Environment
+
+
+@runtime_checkable
+class Stepable(Protocol):
+    """Base class for stepable environments.
+
+    Stepable environments are environments that can be advanced by a step.
+    Usually, this is combined with an observable to provide a stream of data.
+    """
+
+    @abstractmethod
+    def step(self) -> None:
+        """Advance the environment by one step."""
+
+
+class Finished(Exception):
+    """Exception raised when the environment is finished.
+
+    This exception is raised when the environment is finished, and no more data
+    can be retrieved.
+    """
+
+
+@runtime_checkable
+class IncrementalEnvironment(
+    Environment,
+    Stepable,
+    Iterable[Data],
+    Protocol,
+):
+    """An environment providing incremental (streaming) learning data.
+
+    Incremental environments provide data as a continuous stream of samples
+    or small batches. The environment is advanced by stepping through data,
+    observing the current state at each step. This supports incremental
+    learning (also known as passive online learning), where the model is
+    continuously updated as new data arrives.
+    """
+
+    @override
+    def __iter__(self) -> Iterator[Data]:
+        yield self.observe()
+        while True:
+            try:
+                self.step()
+            except Finished:
+                break
+            yield self.observe()
+
+    def num_steps(self) -> int | None:
+        """Return the number of steps in the environment.
+
+        Returns:
+            The number of steps in the environment, or None if the number of
+            steps is unknown.
+        """
+        return None
+</file>
+
+<file path="environment/offline.py">
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol, final, runtime_checkable
+
+from typing_extensions import override
+
+from flowcean.core.environment.base import Environment
+from flowcean.core.environment.incremental import (
+    Finished,
+    IncrementalEnvironment,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    from flowcean.core.data import Data
+
+
+@runtime_checkable
+class OfflineEnvironment(Environment, Protocol):
+    """Base class for offline environments.
+
+    Offline environments represent static, pre-recorded datasets collected
+    upfront. They support the offline learning strategy where a fixed batch
+    of data is processed at once to train a model. Offline environments can
+    be transformed and chained together to create new datasets.
+    """
+
+    def chain(self, *other: Environment) -> ChainedOfflineEnvironments:
+        """Chain this offline environment with other offline environments.
+
+        Chaining offline environments will create a new incremental environment
+        that will first observe the data from this environment and then the
+        data from the other environments.
+
+        Args:
+            other: The other offline environments to chain.
+
+        Returns:
+            The chained offline environments.
+        """
+        return ChainedOfflineEnvironments([self, *other])
+
+    @final
+    def __add__(self, other: Environment) -> ChainedOfflineEnvironments:
+        """Shorthand for `chain`."""
+        return self.chain(other)
+
+
+class ChainedOfflineEnvironments(IncrementalEnvironment):
+    """Chained offline environments.
+
+    This environment chains multiple offline environments together. The
+    environment will first observe the data from the first environment and then
+    the data from the other environments.
+    """
+
+    _environments: Iterator[Environment]
+    _element: Environment
+
+    def __init__(self, environments: Iterable[Environment]) -> None:
+        """Initialize the chained offline environments.
+
+        Args:
+            environments: The offline environments to chain.
+        """
+        self._environments = iter(environments)
+        self._element = next(self._environments)
+
+    @override
+    def _observe(self) -> Data:
+        return self._element.observe()
+
+    @override
+    def step(self) -> None:
+        try:
+            self._element = next(self._environments)
+        except StopIteration:
+            raise Finished from StopIteration
+</file>
+
+<file path="strategies/__init__.py">
+from .active import StopLearning, learn_active
+from .incremental import learn_incremental
+from .offline import evaluate_offline, learn_offline
+
+__all__ = [
+    "StopLearning",
+    "evaluate_offline",
+    "learn_active",
+    "learn_incremental",
+    "learn_offline",
+]
+</file>
+
+<file path="strategies/active.py">
+from collections.abc import Sequence
+from dataclasses import dataclass
+from typing import Any, SupportsFloat
+
+import numpy as np
+from numpy.typing import NDArray
+
+from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.learner import ActiveLearner
+from flowcean.core.metric import ActiveMetric
+from flowcean.core.model import Model
+from flowcean.core.report import Report, ReportEntry
+
+
+@dataclass
+class ActiveInterface:
+    """Interface to a feature in an active environment.
+
+    Represents a single feature of the environment, which can be
+    either an input, an output, or the reward of the environment.
+
+    Args:
+        uid: Identifier of the feature inside the environment
+        value: The value of the feature
+        value_min: Simple representation of the minimum value
+        value_max: Simple representation of the maximum value
+        shape: Tuple representing the shape of the value
+        dtype: Data type of this interface, e.g., numpy.float32
+    """
+
+    uid: str
+    value: int | float | NDArray[Any] | None
+    value_min: SupportsFloat | NDArray[Any] | list[Any]
+    value_max: SupportsFloat | NDArray[Any] | list[Any]
+    shape: Sequence[int]
+    dtype: type[np.floating[Any]] | type[np.integer[Any]]
+
+
+@dataclass
+class Observation:
+    """An observation of an active environment.
+
+    The observation contains 'sensors', which are the raw observations
+    of featured values, and rewards, which are a rated quantification
+    of the environment state.
+
+    Args:
+        sensors: List of interface objects, i.e., raw observations
+        rewards: List of interface objects, i.e., rated state
+
+    """
+
+    sensors: list[ActiveInterface]
+    rewards: list[ActiveInterface]
+
+
+@dataclass
+class Action:
+    """An action in an active environment.
+
+    The action contains 'actuators', which represent setpoints in the
+    environment. Each actuator targets exactly one input feature.
+
+    Args:
+        actuators: List of interface objects, which are setpoints
+    """
+
+    actuators: list[ActiveInterface]
+
+
+def interface_dict(itf: ActiveInterface) -> dict[str, Any]:
+    return {
+        "uid": itf.uid,
+        "value": itf.value,
+        "value_min": itf.value_min,
+        "value_max": itf.value_max,
+        "shape": itf.shape,
+        "dtype": itf.dtype,
+    }
+
+
+def interface_from_dict(state: dict[str, Any]) -> ActiveInterface:
+    return ActiveInterface(
+        uid=state["uid"],
+        value=state["value"],
+        value_min=state["value_min"],
+        value_max=state["value_max"],
+        shape=state["shape"],
+        dtype=state["dtype"],
+    )
+
+
+class StopLearning(Exception):
+    """Stop learning.
+
+    This exception is raised when the learning process should stop.
+    """
+
+
+def learn_active(
+    environment: ActiveEnvironment,
+    learner: ActiveLearner,
+) -> Model:
+    """Learn from an active environment.
+
+    Learn from an active environment by interacting with it and
+    learning from the observations. The learning process stops when the
+    environment ends or when the learner requests to stop.
+
+    Args:
+        environment: The active environment.
+        learner: The active learner.
+
+    Returns:
+        The model learned from the environment.
+    """
+    model = None
+
+    try:
+        while True:
+            observations = environment.observe()
+            action = learner.propose_action(observations)
+            environment.act(action)
+            environment.step()
+            observations = environment.observe()
+            model = learner.learn_active(action, observations)
+    except StopLearning:
+        pass
+    if model is None:
+        message = "No model was learned."
+        raise RuntimeError(message)
+    return model
+
+
+def evaluate_active(
+    environment: ActiveEnvironment,
+    model: Model,
+    metrics: list[ActiveMetric],
+) -> Report:
+    """Evaluate on an active environment.
+
+    Evaluate a model that was trained for an active environment. The
+    optimal output of the model is not known (unlike in supervised
+    settings), therefore, the evaluation function(s) have to be
+    provided manually. The evaluation function(s) are specific to an
+    environment.
+
+    Action and observations going into the metric function with the
+    relation that the nth entries of both lists contain the Action and
+    the Observation that results from this action. Therefore, the first
+    entry of Actions will not contain any values and the first entry of
+    Observations contains the initial state of the environment.
+
+    Args:
+        environment: The active environment
+        model: The model to evaluate
+        metrics: list of metrics to evaluate against
+
+    Returns:
+        The evaluation report.
+
+    """
+    observations: list[Observation] = []
+    actions: list[Action] = [Action(actuators=[])]
+    try:
+        while True:
+            observations.append(environment.observe())
+            actions.append(model.predict(observations[-1]))
+            environment.act(actions[-1])
+            environment.step()
+    except StopLearning:
+        pass
+    observations.append(environment.observe())
+    entries: dict[str, ReportEntry] = {}
+    entries[model.name] = ReportEntry(
+        {metric.name: metric(observations, actions) for metric in metrics},
+    )
+    return Report(entries)
+</file>
+
+<file path="strategies/deploy.py">
+from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.environment.incremental import IncrementalEnvironment
+from flowcean.core.model import Model
+from flowcean.core.transform import Identity, Transform
+
+
+def deploy(
+    environment: ActiveEnvironment | IncrementalEnvironment,
+    model: Model,
+    input_transforms: Transform | None = None,
+    output_transforms: Transform | None = None,
+) -> None:
+    """Deploy a trained model to a custom environment.
+
+    Args:
+        environment: custom system environment
+        model: the trained model
+        input_transforms: system specific transforms for model input
+        output_transforms: system specific transforms for system input
+    """
+    if input_transforms is None:
+        input_transforms = Identity()
+    if output_transforms is None:
+        output_transforms = Identity()
+
+    observation = environment.observe()
+    output = model.predict(input_transforms.apply(observation))
+
+    if isinstance(environment, ActiveEnvironment):
+        environment.act(output_transforms.apply(output).collect())
+</file>
+
+<file path="strategies/incremental.py">
+from flowcean.core.environment.incremental import IncrementalEnvironment
+from flowcean.core.learner import SupervisedIncrementalLearner
+from flowcean.core.model import Model
+from flowcean.core.transform import Identity, InvertibleTransform, Transform
+
+
+def learn_incremental(
+    environment: IncrementalEnvironment,
+    learner: SupervisedIncrementalLearner,
+    inputs: list[str],
+    outputs: list[str],
+    input_transform: Transform | None = None,
+    output_transform: InvertibleTransform | None = None,
+) -> Model:
+    """Learn from a incremental environment.
+
+    Learn from a incremental environment by incrementally learning from
+    the input-output pairs. The learning process stops when the environment
+    ends.
+
+    Args:
+        environment: The incremental environment.
+        learner: The supervised incremental learner.
+        inputs: The input feature names.
+        outputs: The output feature names.
+        input_transform: The transform to apply to the input features.
+        output_transform: The transform to apply to the output features.
+            Its inverse will be part of the final model.
+
+    Returns:
+        The model learned from the environment.
+    """
+    if input_transform is None:
+        input_transform = Identity()
+    if output_transform is None:
+        output_transform = Identity()
+
+    model = None
+    for data in environment:
+        input_features = data.select(inputs)
+        output_features = data.select(outputs)
+
+        input_transform.fit_incremental(input_features)
+        input_features = input_transform.apply(input_features)
+
+        output_transform.fit_incremental(output_features)
+        output_features = output_transform.apply(output_features)
+
+        model = learner.learn_incremental(
+            input_features,
+            output_features,
+        )
+
+    if model is None:
+        message = "No data found in environment."
+        raise ValueError(message)
+
+    model.post_transform |= output_transform.inverse()
+
+    return model
+</file>
+
+<file path="strategies/offline.py">
+import logging
+from collections.abc import Iterable, Sequence
+
+from flowcean.core.environment.offline import OfflineEnvironment
+from flowcean.core.learner import SupervisedLearner
+from flowcean.core.metric import Metric
+from flowcean.core.model import Model
+from flowcean.core.report import Report, ReportEntry
+from flowcean.core.transform import Identity, InvertibleTransform, Transform
+
+logger = logging.getLogger(__name__)
+
+
+def learn_offline(
+    environment: OfflineEnvironment,
+    learner: SupervisedLearner,
+    inputs: list[str],
+    outputs: list[str],
+    *,
+    input_transform: Transform | None = None,
+    output_transform: InvertibleTransform | None = None,
+) -> Model:
+    """Learn from an offline environment.
+
+    Learn from an offline environment by learning from the input-output pairs.
+
+    Args:
+        environment: The offline environment.
+        learner: The supervised learner.
+        inputs: The input feature names.
+        outputs: The output feature names.
+        input_transform: The transform to apply to the input features.
+            Will be part of the final model.
+        output_transform: The transform to apply to the output features.
+            Its inverse will be part of the final model.
+
+    Returns:
+        The model learned from the environment.
+    """
+    if input_transform is None:
+        input_transform = Identity()
+    if output_transform is None:
+        output_transform = Identity()
+
+    logger.info("Learning with offline strategy")
+    data = environment.observe()
+
+    logger.info("Selecting input and output features")
+    input_features = data.select(inputs)
+    output_features = data.select(outputs)
+
+    logger.info("Fitting transforms and applying them to features")
+    input_transform.fit(input_features)
+    input_features = input_transform.apply(input_features)
+
+    logger.info("Fitting output transform and applying it to output features")
+    output_transform.fit(output_features)
+    output_features = output_transform.apply(output_features)
+
+    logger.info("Learning model")
+    model = learner.learn(inputs=input_features, outputs=output_features)
+
+    model.post_transform |= output_transform.inverse()
+
+    return model
+
+
+def evaluate_offline(
+    models: Model | Iterable[Model],
+    environment: OfflineEnvironment,
+    inputs: Sequence[str],
+    outputs: Sequence[str],
+    metrics: Sequence[Metric],
+) -> Report:
+    """Evaluate a model on an offline environment.
+
+    Evaluate a model on an offline environment by predicting the outputs from
+    the inputs and comparing them to the true outputs.
+
+    Args:
+        models: The models to evaluate.
+        environment: The offline environment.
+        inputs: The input feature names.
+        outputs: The output feature names.
+        metrics: The metrics to evaluate the model with.
+
+    Returns:
+        The evaluation report.
+    """
+    if not isinstance(models, Iterable):
+        models = [models]
+    data = environment.observe()
+    input_features = data.select(inputs)
+    output_features = data.select(outputs)
+    entries: dict[str, ReportEntry] = {}
+
+    for model in models:
+        predictions = model.predict(input_features)
+
+        entries[model.name] = ReportEntry(
+            {
+                metric.name: metric(output_features, predictions.lazy())
+                for metric in metrics
+            },
+        )
+    return Report(entries)
+</file>
+
+<file path="tool/testing/domain/__init__.py">
+__all__ = [
+    "Continuous",
+    "Discrete",
+    "Domain",
+    "Fixed",
+]
+
+from .continuous import Continuous
+from .discrete import Discrete
+from .domain import Domain
+from .fixed import Fixed
+</file>
+
+<file path="tool/testing/domain/continuous.py">
+import random
+from typing import Literal
+
+from .discrete import Discrete
+from .domain import Domain
+
+Distribution = Literal["uniform", "normal"]
+
+
+class Continuous(Domain):
+    """A domain of continuous values.
+
+    This domain describes a continuous distribution of values between a minimum
+    and maximum value for a feature.
+    """
+
+    rng: random.Random
+
+    def __init__(
+        self,
+        feature_name: str,
+        min_value: float,
+        max_value: float,
+        *,
+        distribution: Distribution = "uniform",
+        mean: float | None = None,
+        stddev: float | None = None,
+    ) -> None:
+        """Initialize the uniform feature domain.
+
+        Args:
+            feature_name: The name of the feature the domain belongs to.
+            min_value: The minimum value of the domain.
+            max_value: The maximum value of the domain.
+            distribution: The distribution of values inside the domain.
+                Can be either "uniform" or "normal". Defaults to "uniform".
+            mean: The mean of the normal distribution. Required if
+                distribution is "normal".
+            stddev: The standard deviation of the normal distribution.
+                Required if distribution is "normal".
+        """
+        super().__init__(feature_name)
+        if min_value >= max_value:
+            msg = (
+                f"min_value ({min_value}) must be less"
+                "than max_value ({max_value})"
+            )
+            raise ValueError(
+                msg,
+            )
+        self.distribution = distribution
+        if self.distribution == "normal":
+            if mean is None or stddev is None:
+                msg = (
+                    "mean and stddev must be provided for normal distribution"
+                )
+                raise ValueError(msg)
+            if not (min_value <= mean <= max_value):
+                msg = (
+                    f"mean ({mean}) must be between min_value ({min_value})"
+                    f"and max_value ({max_value})"
+                )
+                raise ValueError(msg)
+            self.mean = mean
+            self.stddev = stddev
+
+        self.min_value = min_value
+        self.max_value = max_value
+        self.rng = random.Random()
+
+    def get_value(self) -> float:
+        """Get a random value from the domain.
+
+        Returns:
+            A random value uniformly distributed between min_value and
+            max_value.
+        """
+        if self.distribution == "normal":
+            # We ignore the min and max values for the normal distribution
+            # They are only used to check the mean and when the domain is
+            # converted to discrete.
+            return self.rng.gauss(self.mean, self.stddev)
+        return (
+            self.min_value
+            + (self.max_value - self.min_value) * self.rng.random()
+        )
+
+    def set_seed(self, seed: int) -> None:
+        self.rng.seed(seed)
+
+    def to_discrete(self, sampling_distance: float) -> Discrete:
+        """Discretize the continuous domain into a discrete domain.
+
+        Args:
+            sampling_distance: The distance between two discrete values.
+
+        Returns:
+            A discrete domain with the same feature name and a list of
+            uniformly distributed values.
+        """
+        return Discrete(
+            self.feature_name,
+            [
+                self.min_value + i * sampling_distance
+                for i in range(
+                    int((self.max_value - self.min_value) / sampling_distance)
+                    + 1,
+                )
+            ],
+        )
+</file>
+
+<file path="tool/testing/domain/discrete.py">
+import random
+from collections.abc import Iterable, Iterator
+
+from .domain import Domain
+
+
+class Discrete(Domain, Iterable[tuple[str, float]]):
+    """A domain of discrete values.
+
+    This domain describes a discrete set of values for a feature.
+    """
+
+    rng: random.Random
+
+    def __init__(
+        self,
+        feature_name: str,
+        values: list[float],
+    ) -> None:
+        """Initialize the discrete domain.
+
+        Args:
+            feature_name: The name of the feature the domain belongs to.
+            values: The list of values of the domain.
+        """
+        super().__init__(feature_name)
+        self.values = values
+
+        self.rng = random.Random()
+
+    def __len__(self) -> int:
+        """Get the number of discrete values in the domain.
+
+        Returns:
+            The number of discrete values in the domain.
+        """
+        return len(self.values)
+
+    def get_value(self) -> float:
+        """Get a random value from the domain."""
+        return self.rng.choice(self.values)
+
+    def set_seed(self, seed: int) -> None:
+        self.rng.seed(seed)
+
+    def __iter__(self) -> Iterator[tuple[str, float]]:
+        """Iterate over the values of the range."""
+        for value in self.values:
+            yield (self.feature_name, value)
+</file>
+
+<file path="tool/testing/domain/domain.py">
+from abc import ABC, abstractmethod
+
+
+class Domain(ABC):
+    """An abstract base class for describing the value domain for a feature."""
+
+    feature_name: str
+
+    def __init__(
+        self,
+        feature_name: str,
+    ) -> None:
+        """Initialize the domain.
+
+        Args:
+            feature_name: The name of the feature the domain belongs to.
+        """
+        self.feature_name = feature_name
+
+    @abstractmethod
+    def get_value(self) -> float:
+        """Get a random value from the domain for the feature."""
+
+    def __call__(self) -> float:
+        """Get a random value from the domain for the feature."""
+        return self.get_value()
+
+    def set_seed(self, seed: int) -> None:  # noqa: ARG002
+        """Set the seed for the random number generator.
+
+        Args:
+            seed: The seed to set.
+        """
+        # This is a no-op by default, as the base class does not maintain
+        # any state related to random number generation.
+        # Subclasses that maintain state can override this method to set
+        # the seed for their random number generator.
+        return
+</file>
+
+<file path="tool/testing/domain/fixed.py">
+from .discrete import Discrete
+
+
+class Fixed(Discrete):
+    """A domain with a single value.
+
+    This domain contains a single fixed value for a feature.
+    """
+
+    def __init__(self, feature_name: str, value: float) -> None:
+        """Initialize the fixed domain.
+
+        Args:
+            feature_name: The name of the feature the domain belongs to.
+            value: The fixed value to return.
+        """
+        super().__init__(feature_name, [value])
+
+    def get_value(self) -> float:
+        """Get the fixed value."""
+        return self.values[0]
+</file>
+
+<file path="tool/testing/generator/__init__.py">
+__all__ = [
+    "CombinationGenerator",
+    "StochasticGenerator",
+    "TestcaseGenerator",
+]
+
+from .combination_generator import CombinationGenerator
+from .generator import TestcaseGenerator
+from .stochastic_generator import StochasticGenerator
+</file>
+
+<file path="tool/testing/generator/combination_generator.py">
+import functools
+import itertools
+
+import polars as pl
+
+from flowcean.core.data import Data
+from flowcean.core.environment.incremental import Finished
+from flowcean.core.tool.testing.domain import Discrete
+
+from .generator import TestcaseGenerator
+
+
+class CombinationGenerator(TestcaseGenerator):
+    """A generator that produces tests based on combination of ranges.
+
+    This generator creates a test case for each combination of the provided
+    value ranges. Each value range must be associated with exactly one input
+    feature of the model that shall be tested.
+    """
+
+    data: pl.DataFrame
+    number_test_cases: int
+
+    def __init__(self, *discrete_domains: Discrete) -> None:
+        """Initialize the combination generator.
+
+        Args:
+            discrete_domains: A list of discrete domains to generate test cases
+                from. Each domain must be associated with exactly one input
+                feature of the model that shall be tested.
+        """
+        super().__init__()
+
+        # Check if no duplicate feature names are present
+        feature_names_count: dict[str, int] = {}
+        for domain in discrete_domains:
+            feature_names_count[domain.feature_name] = (
+                feature_names_count.get(
+                    domain.feature_name,
+                    0,
+                )
+                + 1
+            )
+        if len(feature_names_count) != len(discrete_domains):
+            msg = "Duplicate features found: "
+            msg += ", ".join(
+                f"{feature_name}: {count}"
+                for feature_name, count in feature_names_count.items()
+                if count > 1
+            )
+            raise ValueError(msg)
+
+        self.domains = discrete_domains
+
+        # Calculate the number of test cases
+        self.number_test_cases = functools.reduce(
+            lambda n, range_: n * len(range_),
+            self.domains,
+            1,
+        )
+
+        # Call reset to initialize the generator
+        self.reset()
+
+    def num_steps(self) -> int | None:
+        return self.number_test_cases
+
+    def reset(self) -> None:
+        """Reset the generator to the initial state."""
+        # Build the product iterator
+        self.product_iterator = itertools.product(
+            *self.domains,
+        )
+        # Perform a first step to initialize the data
+        self.step()
+
+    def step(self) -> None:
+        try:
+            test_case = next(self.product_iterator)
+        except StopIteration:
+            raise Finished from None
+        self.data = pl.DataFrame(
+            dict(test_case),
+        )
+
+    def _observe(self) -> Data:
+        return self.data.lazy()
+</file>
+
+<file path="tool/testing/generator/generator.py">
+import sys
+from abc import abstractmethod
+from pathlib import Path
+
+from flowcean.core.environment.incremental import IncrementalEnvironment
+from flowcean.polars.environments.dataframe import DataFrame, collect
+
+
+class TestcaseGenerator(IncrementalEnvironment):
+    """A generator that produces test cases for a model."""
+
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset the generator to its initial state."""
+
+    def save_csv(
+        self,
+        path: str | Path,
+        *,
+        test_case_count: int | None = None,
+        separator: str = ",",
+    ) -> None:
+        """Save the generated test cases to a CSV file.
+
+        Args:
+            path: The path where the CSV file should be saved.
+                If the path does not have a suffix, '.csv' will be added.
+            test_case_count: The number of test cases to save. If None, all
+                available test cases will be saved. If the number of test cases
+                is not defined, a ValueError will be raised.
+            separator: The value separator to use in the CSV file.
+                Defaults to ','.
+        """
+        path = Path(path)
+        if not path.suffix:
+            path = path.with_suffix(".csv")
+
+        # Collect test cases and save them to a CSV file
+        df = self.__collect_to_df(test_case_count)
+
+        df.data.sink_csv(
+            path,
+            separator=separator,
+            engine="streaming",
+            include_header=True,
+        )
+
+    def save_excel(
+        self,
+        path: str | Path,
+        *,
+        test_case_count: int | None = None,
+        worksheet_name: str = "Test Cases",
+    ) -> None:
+        """Save the generated test cases to an Excel file.
+
+        Args:
+            path: The path where the Excel file should be saved.
+                If the path does not have a suffix, '.xlsx' will be added.
+            test_case_count: The number of test cases to save. If None, all
+                available test cases will be saved. If the number of test cases
+                is not defined, a ValueError will be raised.
+            worksheet_name: The name of the worksheet in the Excel file.
+                Defaults to 'Test Cases'.
+        """
+        path = Path(path)
+        if not path.suffix:
+            path = path.with_suffix(".xlsx")
+
+        # Collect test cases and save them to a XLSX file
+        df = self.__collect_to_df(test_case_count)
+
+        df.data.collect(engine="streaming").write_excel(
+            workbook=path,
+            worksheet=worksheet_name,
+            include_header=True,
+        )
+
+    def __collect_to_df(self, n: int | None) -> DataFrame:
+        """Collect the first n test cases and return them as a DataFrame."""
+        # Make sure the number of test cases is defined
+        if n is None and self.num_steps() is None:
+            msg = (
+                "Cannot save test cases to file without a defined "
+                "number of cases."
+            )
+            raise ValueError(msg)
+
+        n = min(
+            n or sys.maxsize,
+            self.num_steps() or sys.maxsize,
+        )
+
+        # Collect the data from the generator
+        return collect(self, n)
+</file>
+
+<file path="tool/testing/generator/stochastic_generator.py">
+import random
+
+import polars as pl
+
+from flowcean.core.data import Data
+from flowcean.core.environment.incremental import Finished
+from flowcean.core.tool.testing.domain import Domain
+
+from .generator import TestcaseGenerator
+
+
+class StochasticGenerator(TestcaseGenerator):
+    """A generator that produces random tests based on given domains."""
+
+    data: pl.DataFrame
+    count: int
+
+    def __init__(
+        self,
+        domains: list[Domain],
+        *,
+        test_case_count: int | None = None,
+        seed: int = 0,
+    ) -> None:
+        """Initialize the stochastic generator.
+
+        Args:
+            domains: A list of domains to generate random values for.
+                Each domain must be associated with exactly one input
+                feature of the model that shall be tested.
+            test_case_count: The number of test cases to generate. If None,
+                the generator will run indefinitely.
+            seed: The seed for the random number generator. The default is 0,
+                which means a random seed will be used.
+        """
+        super().__init__()
+
+        # Check if no duplicate feature names are present
+        feature_names_count: dict[str, int] = {}
+        for domain in domains:
+            feature_names_count[domain.feature_name] = (
+                feature_names_count.get(
+                    domain.feature_name,
+                    0,
+                )
+                + 1
+            )
+        if len(feature_names_count) != len(domains):
+            msg = "Duplicate features found: "
+            msg += ", ".join(
+                f"{feature_name}: {count}"
+                for feature_name, count in feature_names_count.items()
+                if count > 1
+            )
+            raise ValueError(msg)
+
+        # Seed all domains
+        rng = random.Random(seed) if seed != 0 else random.Random()
+        for domain in domains:
+            domain.set_seed(rng.randint(0, 2**32 - 1))
+
+        self.domains = domains
+        self.count = 0
+        self.number_test_cases = test_case_count
+        # Perform the first step to initialize the generator
+        self.step()
+
+    def num_steps(self) -> int | None:
+        return self.number_test_cases
+
+    def reset(self) -> None:
+        """Reset the generator to its initial state."""
+        self.count = 0
+        self.step()
+
+    def step(self) -> None:
+        self.count += 1
+        if (
+            self.number_test_cases is not None
+            and self.count > self.number_test_cases
+        ):
+            raise Finished
+        self.data = pl.DataFrame(
+            {domain.feature_name: domain() for domain in self.domains},
+        )
+
+    def _observe(self) -> Data:
+        return self.data.lazy()
+</file>
+
+<file path="tool/testing/predicates/__init__.py">
+__all__ = [
+    "AndPredicate",
+    "NotPredicate",
+    "OrPredicate",
+    "PolarsPredicate",
+    "Predicate",
+]
+
+from .polars import PolarsPredicate
+from .predicate import AndPredicate, NotPredicate, OrPredicate, Predicate
+</file>
+
+<file path="tool/testing/predicates/polars.py">
+from typing import cast
+
+import polars as pl
+import sympy  # type:ignore[reportMissingTypeStubs]
+
+from .predicate import Predicate
+
+
+class PolarsPredicate(Predicate):
+    """Predicate for Polars DataFrame.
+
+    This predicate allows for two different ways to provide the predicate
+    expression:
+
+    1. As a Polars expression. This expression is used directly and must
+    evaluate to a single boolean value. For example, the following expression
+    checks if the values in the "feature_a" column are in the list [1, 2, 3]
+    and if the values in the "feature_b" column are greater than 0:
+    ```python
+        import polars as pl
+
+        PolarsPredicate(
+            pl.col("feature_a").is_in([1, 2, 3]).and_(pl.col("feature_b") > 0),
+        )
+    ```
+
+    2. As a string. The string is parsed as a Polars expression.
+    Any string identifier are replace with the respective feature during
+    evaluation. The string expression must evaluate to a single boolean value
+    as well. For example, the following expression checks if "feature_a" is
+    always greater than "feature_b":
+    ```python
+        import polars as pl
+
+        PolarsPredicate(
+            "feature_a > feature_b",
+        )
+    ```
+    Boolean expressions like `and`, `or`, and `not` are *not* supported by this
+    syntax. See `AndPredicate`, `OrPredicate` and `NotPredicate` for combined
+    predicates or use the polars expression syntax above.
+    """
+
+    def __init__(self, expr: pl.Expr | str) -> None:
+        """Initialize the predicate from a polars expression or a string."""
+        self.expr = _str_to_pl(expr) if isinstance(expr, str) else expr
+
+    def __call__(
+        self,
+        input_data: pl.DataFrame | pl.LazyFrame,
+        prediction: pl.DataFrame | pl.LazyFrame,
+    ) -> bool:
+        return cast(
+            "bool",
+            pl.concat(
+                [input_data.lazy(), prediction.lazy()],
+                how="horizontal",
+            )
+            .select(
+                self.expr.cast(pl.Boolean).alias("predicate"),
+            )
+            .lazy()
+            .collect()
+            .item(),
+        )
+
+
+def _str_to_pl(expression: str) -> pl.Expr:
+    sym_expr = sympy.parse_expr(expression, evaluate=False)
+    symbols = list(sym_expr.free_symbols)
+    lambda_expr = sympy.lambdify(  # type:ignore[reportUnknownVariableType, reportUnknownMemberType]
+        symbols,
+        sym_expr,
+        "math",
+        docstring_limit=0,
+    )
+    return cast(
+        "pl.Expr",
+        lambda_expr(*[pl.col(str(symbol)) for symbol in symbols]),
+    )
+</file>
+
+<file path="tool/testing/predicates/predicate.py">
+from abc import ABC, abstractmethod
+
+from flowcean.core.data import Data
+
+
+class Predicate(ABC):
+    """Base class for predicates.
+
+    A predicate is a function that takes the prediction of an model and returns
+    a boolean value indicating whether the prediction satisfies a certain
+    condition. Predicates can be combined using logical operators (AND, OR,
+    NOT) to create more complex predicates.
+    """
+
+    @abstractmethod
+    def __call__(self, input_data: Data, prediction: Data) -> bool:
+        """Evaluate the predicate on a model prediction.
+
+        Args:
+            input_data: The input data used to generate the prediction.
+            prediction: The prediction to evaluate.
+
+        Returns:
+            bool: True if the prediction satisfies the predicate,
+                False otherwise.
+        """
+
+    def __and__(self, other: "Predicate") -> "AndPredicate":
+        """Combine two predicates with a logical AND operation.
+
+        Args:
+            other: The other predicate to combine with.
+
+        Returns:
+            Predicate: A new predicate that is the logical AND of this and
+                other.
+        """
+        return AndPredicate(self, other)
+
+    def __or__(self, other: "Predicate") -> "OrPredicate":
+        """Combine two predicates with a logical OR operation.
+
+        Args:
+            other: The other predicate to combine with.
+
+        Returns:
+            Predicate: A new predicate that is the logical OR of this and
+                other.
+        """
+        return OrPredicate(self, other)
+
+    def __invert__(self) -> "NotPredicate":
+        """Negate the predicate.
+
+        Returns:
+            Predicate: A new predicate that is the negation of the original.
+        """
+        return NotPredicate(self)
+
+
+class AndPredicate(Predicate):
+    """Combine multiple predicates with a logical AND operation."""
+
+    def __init__(self, *predicates: Predicate) -> None:
+        self.predicates = predicates
+
+    def __call__(self, input_data: Data, prediction: Data) -> bool:
+        return all(
+            predicate(input_data, prediction) for predicate in self.predicates
+        )
+
+
+class OrPredicate(Predicate):
+    """Combine multiple predicates with a logical OR operation."""
+
+    def __init__(self, *predicates: Predicate) -> None:
+        self.predicates = predicates
+
+    def __call__(self, input_data: Data, prediction: Data) -> bool:
+        return any(
+            predicate(input_data, prediction) for predicate in self.predicates
+        )
+
+
+class NotPredicate(Predicate):
+    """Negate a predicate."""
+
+    def __init__(self, predicate: Predicate) -> None:
+        self.predicate = predicate
+
+    def __call__(self, input_data: Data, prediction: Data) -> bool:
+        return not self.predicate(input_data, prediction)
+</file>
+
+<file path="tool/testing/__init__.py">
+
+</file>
+
+<file path="tool/__init__.py">
+__all__ = [
+    "start_prediction_loop",
+    "test_model",
+]
+
+from .predict import start_prediction_loop
+from .test import test_model
+</file>
+
+<file path="tool/predict.py">
+from flowcean.core.adapter import Adapter
+from flowcean.core.environment.incremental import Finished
+from flowcean.core.model import Model
+from flowcean.core.transform import Identity, Transform
+
+
+def start_prediction_loop(
+    model: Model,
+    adapter: Adapter,
+    *,
+    adapter_to_model_transforms: Transform | None = None,
+    model_to_adapter_transforms: Transform | None = None,
+) -> None:
+    """Start a prediction loop with the given model and adapter."""
+    adapter_to_model_transforms = adapter_to_model_transforms or Identity()
+    model_to_adapter_transforms = model_to_adapter_transforms or Identity()
+
+    # Start the adapter
+    adapter.start()
+
+    # Run the prediction loop
+    try:
+        while True:
+            # Get data from the adapter
+            data = adapter.get_data()
+            # Transform the data to the model format
+            transformed_data = adapter_to_model_transforms(data)
+            # Run the model prediction
+            prediction = model.predict(transformed_data)
+            # Transform the prediction to the adapter format
+            transformed_prediction = model_to_adapter_transforms(
+                prediction,
+            )
+            # Send the prediction to the adapter
+            adapter.send_data(transformed_prediction)
+    except Finished:
+        pass
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Stop the adapter
+        adapter.stop()
+</file>
+
+<file path="tool/test.py">
+import polars as pl
+import tqdm
+
+from flowcean.core import Model
+from flowcean.core.data import Data
+from flowcean.core.environment.incremental import IncrementalEnvironment
+from flowcean.core.tool.testing.predicates import Predicate
+
+
+def test_model(
+    model: Model,
+    test_data: IncrementalEnvironment,
+    predicate: Predicate,
+    *,
+    show_progress: bool = False,
+    stop_after: int = 1,
+) -> None:
+    """Test a model with the given test data and predicate.
+
+    This function runs the model on the test data and checks if the
+    predictions satisfy the given predicate. If any prediction does not
+    satisfy the predicate, a TestFailed exception is raised.
+    This exception contains the input data and prediction that failed the
+    predicate and can be used as a counterexample.
+    This method relies on the model's predict method to obtain a prediction.
+    It does not utilize the model's type or internal structure to prove
+    predicates.
+
+    Args:
+        model: The model to test.
+        test_data: The test data to use for testing the model. This must only
+            include input features passed to the model and *not* the targets.
+        predicate: The predicate used to check the model's predictions.
+        show_progress: Whether to show progress during testing.
+            Defaults to False.
+        stop_after: Number of tests that need to fail before stopping. Defaults
+            to 1. If set to 0 or negative, all tests are run regardless of
+            failures.
+
+    Raises:
+        TestFailed: If the model's prediction does not satisfy the
+            predicate.
+    """
+    number_of_failures = 0
+    failure_data: list[Data] = []
+    failure_prediction: list[Data] = []
+    # Run the model on the test data
+    for input_data in (
+        tqdm.tqdm(
+            test_data,
+            "Testing Model",
+            total=test_data.num_steps(),
+        )
+        if show_progress
+        else test_data
+    ):
+        prediction = model.predict(input_data)
+
+        # Handle dataframes and lazyframes separately
+        # Those may contain multiple rows / samples and need to be
+        # sliced to get the individual samples for testing
+        if isinstance(prediction, pl.LazyFrame | pl.DataFrame) and isinstance(
+            input_data,
+            pl.LazyFrame | pl.DataFrame,
+        ):
+            input_data_collected = input_data.lazy().collect()
+            prediction = prediction.lazy().collect()
+
+            test_inputs = [
+                input_data_collected.slice(i, 1)
+                for i in range(len(input_data_collected))
+            ]
+            predictions = [
+                prediction.slice(i, 1) for i in range(len(prediction))
+            ]
+
+        else:
+            test_inputs = [input_data]
+            predictions = [prediction]
+
+        # Check if the prediction satisfies the predicate
+        for test_input, prediction in zip(
+            test_inputs,
+            predictions,
+            strict=True,
+        ):
+            if not predicate(
+                test_input,
+                prediction,
+            ):
+                number_of_failures += 1
+                failure_data.append(test_input)
+                failure_prediction.append(prediction)
+
+                if number_of_failures >= stop_after > 0:
+                    break
+
+    # If we got any failures at this point, raise an exception
+    if number_of_failures > 0:
+        raise TestFailed(failure_data, failure_prediction)
+
+
+class TestFailed(Exception):
+    """Test failed exception.
+
+    This exception is raised when a test fails.
+    This happens when a model's prediction does not satisfy the given
+    predicate.
+    """
+
+    def __init__(self, input_data: list[Data], prediction: list[Data]) -> None:
+        self.input_data = [data.lazy().collect() for data in input_data]
+        self.prediction = [data.lazy().collect() for data in prediction]
+
+        if len(self.input_data) != len(self.prediction):
+            msg = (
+                "Input data and prediction must have the same length. "
+                f"Got {len(self.input_data)} and {len(self.prediction)}."
+            )
+            raise ValueError(msg)
+
+        if len(self.input_data) == 1:
+            message = (
+                f"Test failed for input data: {self.input_data} "
+                f"with prediction: {self.prediction}"
+            )
+        else:
+            message = (
+                "Test failed. The following input data and predictions"
+                " did not fulfill the predicate:\n"
+            )
+
+            for data, pred in zip(
+                self.input_data,
+                self.prediction,
+                strict=True,
+            ):
+                message += f"Input data: {data}\nPrediction: {pred}\n\n"
+
+        super().__init__(message)
+</file>
+
+<file path="__init__.py">
+from .adapter import Adapter
+from .data import Data
+from .environment.actable import Actable
+from .environment.active import ActiveEnvironment
+from .environment.base import Environment
+from .environment.incremental import Finished, IncrementalEnvironment, Stepable
+from .environment.offline import ChainedOfflineEnvironments, OfflineEnvironment
+from .learner import (
+    ActiveLearner,
+    SupervisedIncrementalLearner,
+    SupervisedLearner,
+)
+from .metric import Metric
+from .model import Model
+from .report import Report, Reportable
+from .strategies.active import (
+    Action,
+    ActiveInterface,
+    Observation,
+    StopLearning,
+    learn_active,
+)
+from .strategies.deploy import deploy
+from .strategies.incremental import learn_incremental
+from .strategies.offline import evaluate_offline, learn_offline
+from .transform import (
+    ChainedTransforms,
+    Identity,
+    Invertible,
+    InvertibleTransform,
+    Lambda,
+    Transform,
+)
+
+__all__ = [
+    "Actable",
+    "Action",
+    "ActiveEnvironment",
+    "ActiveInterface",
+    "ActiveLearner",
+    "Adapter",
+    "ChainedOfflineEnvironments",
+    "ChainedTransforms",
+    "Data",
+    "Environment",
+    "Finished",
+    "Identity",
+    "IncrementalEnvironment",
+    "Invertible",
+    "InvertibleTransform",
+    "Lambda",
+    "Metric",
+    "Model",
+    "Observation",
+    "OfflineEnvironment",
+    "Report",
+    "Reportable",
+    "Stepable",
+    "StopLearning",
+    "SupervisedIncrementalLearner",
+    "SupervisedLearner",
+    "Transform",
+    "deploy",
+    "evaluate_offline",
+    "learn_active",
+    "learn_incremental",
+    "learn_offline",
+]
+</file>
+
+<file path="adapter.py">
+from abc import ABC, abstractmethod
+
+from .data import Data
+
+
+class Adapter(ABC):
+    """Abstract base class for adapters.
+
+    A component connecting Flowcean to cyber-physical systems. An adapter
+    handles the interface between learned models and real
+    cyber-physical systems during deployment. It manages communication with
+    the system's sensors (for observations) and actuators (for applying
+    actions), enabling the deployment of trained models in production.
+    """
+
+    @abstractmethod
+    def start(self) -> None:
+        """Start the adapter.
+
+        This method is called when the tool loop is started.
+        It should be used to initialize the adapter, start any
+        background processes and establish connections to the CPS.
+        """
+
+    @abstractmethod
+    def stop(self) -> None:
+        """Stop the adapter.
+
+        This method is called when the tool loop is stopped.
+        It should be used to clean up resources, stop any background
+        processes and close connections to the CPS.
+        """
+
+    @abstractmethod
+    def get_data(self) -> Data:
+        """Get data from the CPS through the adapter.
+
+        Retrieve a data record from the CPS. This method should block until
+        data is available. If no more data is available, it should raise a
+        Stop exception.
+
+        Returns:
+            The data retrieved from the CPS.
+        """
+
+    @abstractmethod
+    def send_data(self, data: Data) -> None:
+        """Send data to the CPS through the adapter.
+
+        This method allows sending data to the CPS. It is used by the tool loop
+        to send the results for the tool evaluation back to the CPS for further
+        processing.
+
+        Args:
+            data: The data to send.
+        """
+</file>
+
+<file path="data.py">
+from typing import Any, TypeAlias
+
+Data: TypeAlias = Any
+</file>
+
+<file path="learner.py">
+from abc import abstractmethod
+from typing import Protocol
+
+from .data import Data
+from .model import Model
+from .named import Named
+
+
+class SupervisedLearner(Named, Protocol):
+    """Base class for supervised learners.
+
+    A supervised learner learns from input-output pairs.
+    """
+
+    @abstractmethod
+    def learn(self, inputs: Data, outputs: Data) -> Model:
+        """Learn from the data.
+
+        Args:
+            inputs: The input data.
+            outputs: The output data.
+
+        Returns:
+            The model learned from the data.
+        """
+
+
+class SupervisedIncrementalLearner(Named, Protocol):
+    """Base class for incremental supervised learners.
+
+    An incremental supervised learner learns from input-output pairs
+    incrementally.
+    """
+
+    @abstractmethod
+    def learn_incremental(self, inputs: Data, outputs: Data) -> Model:
+        """Learn from the data incrementally.
+
+        Args:
+            inputs: The input data.
+            outputs: The output data.
+
+        Returns:
+            The model learned from the data.
+        """
+
+
+class ActiveLearner(Named, Protocol):
+    """Base class for active learners.
+
+    Active learners require actions to be taken to learn.
+    """
+
+    @abstractmethod
+    def learn_active(self, action: Data, observation: Data) -> Model:
+        """Learn from actions and observations.
+
+        Args:
+            action: The action performed.
+            observation: The observation of the environment.
+
+        Returns:
+            The model learned from the data.
+        """
+
+    @abstractmethod
+    def propose_action(self, observation: Data) -> Data:
+        """Propose an action based on an observation.
+
+        Args:
+            observation: The observation of an environment.
+
+        Returns:
+            The action to perform.
+        """
+</file>
+
+<file path="metric.py">
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol, final
+
+from flowcean.core.named import Named
+
+if TYPE_CHECKING:
+    from .data import Data
+    from .report import Reportable
+    from .strategies.active import Action, Observation
+
+
+class Metric(Named, Protocol):
+    """Quantitative measure for evaluating model performance.
+
+    Metrics compare predictions with true outputs to assess model quality.
+
+    Call flow:
+      __call__ -> prepare(true), prepare(predicted) -> compute(true, predicted)
+    """
+
+    def prepare(self, data: Data) -> Data:
+        """Hook to normalize/collect/select data before computing metric.
+
+        Default: identity. Mixins override and call super().prepare(...)
+        """
+        return data
+
+    @abstractmethod
+    def _compute(self, true: Data, predicted: Data) -> Reportable:
+        """Implement metric logic on prepared inputs."""
+
+    @final
+    def __call__(
+        self,
+        true: Data,
+        predicted: Data,
+    ) -> Reportable | dict[str, Reportable]:
+        """Execute metric: prepare inputs then compute."""
+        return self.compute(true, predicted)
+
+    def compute(self, true: Data, predicted: Data) -> Reportable:
+        """Implement metric logic on prepared inputs."""
+        t = self.prepare(true)
+        p = self.prepare(predicted)
+        return self._compute(t, p)
+
+
+class ActiveMetric(Named, Protocol):
+    """Base class for metrics for active environments."""
+
+    @abstractmethod
+    def __call__(
+        self,
+        observations: list[Observation],
+        actions: list[Action],
+    ) -> Reportable | dict[str, Reportable]:
+        """Calculate the metric value based on the observations.
+
+        Args:
+            observations: list of observations of the environment
+            actions: list of actions of the learner
+
+        Returns:
+            Metric value
+        """
+</file>
+
+<file path="model.py">
+from __future__ import annotations
+
+import pickle
+from abc import abstractmethod
+from pathlib import Path
+from typing import TYPE_CHECKING, BinaryIO, Protocol, final, runtime_checkable
+
+from .named import Named
+from .transform import Identity, Transform
+
+if TYPE_CHECKING:
+    from .data import Data
+
+
+@runtime_checkable
+class Model(Named, Protocol):
+    """Base class for models.
+
+    A model represents learned patterns extracted by a learner from data.
+    It is used to predict outputs for given inputs.
+    """
+
+    pre_transform: Transform = Identity()
+    post_transform: Transform = Identity()
+
+    def preprocess(self, input_features: Data) -> Data:
+        """Preprocess pipeline step."""
+        return self.pre_transform.apply(input_features)
+
+    @abstractmethod
+    def _predict(self, input_features: Data) -> Data:
+        """Predict outputs for the given inputs.
+
+        Args:
+            input_features: The inputs for which to predict the outputs.
+
+        Returns:
+            The predicted outputs.
+        """
+
+    def predict(self, input_features: Data) -> Data:
+        """Predict outputs for given inputs, applying transforms and hooks."""
+        input_features = self.preprocess(input_features)
+        result = self._predict(input_features)
+        return self.postprocess(result)
+
+    @final
+    def __call__(self, input_features: Data) -> Data:
+        """Predict outputs for given inputs, applying transforms and hooks."""
+        return self.predict(input_features)
+
+    def postprocess(self, output: Data) -> Data:
+        """Postprocess pipeline step."""
+        return self.post_transform.apply(output)
+
+    def save(self, file: Path | str | BinaryIO) -> None:
+        """Save the model to the file.
+
+        This method can be used to save a flowcean model to a file or a
+        file-like object. To save a model to a file use
+
+        ```python
+        model.save("model.fml")
+        ```
+
+        The resulting file will contain the model any any attached transforms.
+        It can be loaded again using the `load` method from the `Model` class.
+
+        This method uses pickle to serialize the model, so child classes should
+        ensure that all attributes are pickleable. If this is not the case, the
+        child class should override this method to implement custom
+        serialization logic, or use the `__getstate__` and `__setstate__`
+        methods to control what is serialized (see https://docs.python.org/3/library/pickle.html#pickling-class-instances).
+
+        Args:
+            file: The file like object to save the model to.
+        """
+        if isinstance(file, Path | str):
+            path = Path(file)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("wb") as f:
+                pickle.dump(self, f)
+        else:
+            pickle.dump(self, file)
+
+    @staticmethod
+    def load(file: Path | str | BinaryIO) -> Model:
+        """Load a model from file.
+
+        This method can be used to load a previously saved flowcean model from
+        a file or a file-like object. To load a model from a file use
+
+        ```python
+        model = Model.load("model.fml")
+        ```
+
+        The `load` method will automatically determine the model type and and
+        any attached transforms and will load them into the correct model
+        class.
+
+        As this method uses the `pickle` module to load the model, it is not
+        safe to load models from untrusted sources as this could lead to
+        arbitrary code execution!
+
+        Args:
+            file: The file like object to load the model from.
+        """
+        if isinstance(file, Path | str):
+            with Path(file).open("rb") as f:
+                instance = pickle.load(f)
+        else:
+            instance = pickle.load(file)
+
+        return instance
+</file>
+
+<file path="named.py">
+from typing import Protocol
+
+
+class Named(Protocol):
+    """A mixin for named objects."""
+
+    _name: str | None = None
+
+    @property
+    def name(self) -> str:
+        """The name of the object."""
+        return self._name or self.__class__.__name__
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
+</file>
+
+<file path="report.py">
+from __future__ import annotations
+
+from abc import abstractmethod
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Protocol, cast
+
+import numpy as np
+import polars as pl
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+if TYPE_CHECKING:
+    from great_tables import GT
+    from rich.style import StyleType
+
+
+class Reportable(Protocol):
+    @abstractmethod
+    def __str__(self) -> str:
+        """Return a string representation."""
+
+
+class ReportEntry(dict[str, Reportable | Mapping[str, Reportable]]):
+    def flatten(self, delimiter: str = ": ") -> dict[str, Reportable]:
+        row: dict[str, Reportable] = {}
+        for metric, value in self.items():
+            if isinstance(value, Mapping):
+                value = cast("Mapping[str, Reportable]", value)
+                row.update(
+                    {
+                        f"{metric}{delimiter}{submetric}": subvalue
+                        for submetric, subvalue in value.items()
+                    },
+                )
+            else:
+                row[metric] = value
+        return row
+
+
+class Report(dict[str, ReportEntry]):
+    """A structured container for evaluation results of multiple models.
+
+    The `Report` maps model names to their metric results. For each model:
+
+      * top-level keys are metric names,
+      * values are either:
+          - a single `Reportable` (e.g., scalar metric result), or
+          - a nested mapping from submetric names to `Reportable` objects
+            (e.g., per-class F1 scores, per-feature regression errors, or
+            multi-output results).
+
+    This hierarchical structure allows uniform representation of both
+    simple metrics and complex hierarchical metrics across multiple models.
+
+    Example:
+    >>> report = Report(
+    ...     {
+    ...         "model_a": {
+    ...             "accuracy": 0.95,
+    ...             "f1": {"class_0": 0.91, "class_1": 0.89},
+    ...         },
+    ...         "model_b": {
+    ...             "mae": {"feature_x": 0.2, "feature_y": 0.3},
+    ...         },
+    ...     }
+    ... )
+    """
+
+    def great_table(self) -> GT:
+        rows = [
+            {"model": model} | entry.flatten() for model, entry in self.items()
+        ]
+        table = pl.DataFrame(rows)
+        return (
+            table.style.tab_spanner_delim(": ")  # pyright: ignore[reportUnknownMemberType] until https://github.com/posit-dev/great-tables/pull/770 is merged
+            .tab_header(
+                title="Model Evaluation Report",
+                subtitle="Metrics for each trained model",
+            )
+            .tab_stub(rowname_col="model")
+            .tab_stubhead(label="Model")
+            .fmt_number(decimals=2)
+            .opt_stylize(style=3)
+        )
+
+    def __repr__(self) -> str:
+        return f"Report(models={list(self.keys())})"
+
+    def __str__(self) -> str:
+        lines: list[str] = []
+        for model, entry in self.items():
+            lines.append(f"=== {model} ===")
+            for metric, value in entry.items():
+                if isinstance(value, Mapping):
+                    value = cast("Mapping[str, Reportable]", value)
+                    for submetric, subvalue in value.items():
+                        reportable = _format_value(subvalue)
+                        lines.append(f"{metric} -> {submetric} {reportable}")
+                else:
+                    reportable = _format_value(value)
+                    lines.append(f"{metric} {reportable}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def pretty_print(
+        self,
+        header_style: StyleType = "bold magenta",
+        metric_style: StyleType = "cyan",
+        value_style: StyleType = "green",
+        title_style: StyleType = "bold yellow",
+    ) -> None:
+        """Pretty print the report to the terminal."""
+        console = Console()
+        for model, entry in self.items():
+            table = Table(show_header=True, header_style=header_style)
+            table.add_column("Metric", style=metric_style, no_wrap=True)
+            table.add_column("Value", style=value_style)
+
+            for metric, value in entry.items():
+                if isinstance(value, Mapping):
+                    value = cast("Mapping[str, Reportable]", value)
+                    for submetric, subvalue in value.items():
+                        table.add_row(
+                            f"{metric} → {submetric}",
+                            _format_value(subvalue),
+                        )
+                else:
+                    table.add_row(metric, _format_value(value))
+
+            panel = Panel(
+                table,
+                title=f"[{title_style}]{model}[/]",
+                expand=False,
+            )
+            console.print(panel)
+
+
+def _format_value(value: Reportable) -> str:
+    if isinstance(value, (float, np.floating)):
+        return f"{value:.4f}"
+    return str(value)
+</file>
+
+<file path="transform.py">
+"""This module provides abstractions for transforms.
+
+Transforms are reusable, composable operations that modify data in preparation
+for machine learning or analysis. Transforms unify pre-processing, feature
+engineering, and augmentation under a single protocol-based interface.
+
+## Nomenclature
+
+Transforms are a set of operations that modify data. They can include
+operations such as data normalization, dimensionality reduction, data
+augmentation, and much more. These transformations are essential for preparing
+data for machine learning tasks and improving model performance.
+
+We use the generalized term _transform_ for all types of _pre-processing of
+data_, _feature engineering_, and _data augmentation_, as they all involve the
+same fundamental concept of transforming data to obtain a modified dataset.
+
+flowcean provides a flexible and unified interface to apply transforms to data.
+The framework allows to combine these transforming steps steps as needed.
+
+## Using Transforms
+
+Here's a basic example:
+
+```python
+from flowcean.polars import Select, Standardize
+from flowcean.core import Lambda
+
+# Define a simple pipeline
+transform = (
+    Select(features=["x", "y"])
+    | Standardize()
+    | Lambda(lambda df: df.with_columns(z=df["x"] * df["y"]))
+)
+
+# Fit and apply
+transform.fit(dataset)
+transformed = transform(dataset)
+
+# Invert (if supported)
+restored = transform.inverse()(transformed)
+```
+"""
+
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol, cast, final, runtime_checkable
+
+import cloudpickle
+from typing_extensions import Self, override
+
+from .named import Named
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from flowcean.core.data import Data
+
+
+class Transform(Named, Protocol):
+    """Base protocol for all transforms in Flowcean.
+
+    A transform is a reusable operation that modifies data. Examples include
+    preprocessing (e.g., standardization), feature engineering (e.g., feature
+    selection, PCA), or augmentation (noise injection, synthetic features).
+
+    Transforms are composable via the ``|`` operator, allowing complex
+    transformation pipelines to be expressed in a clean and functional style:
+
+    Example:
+        ```
+        >>> transform = Select(features=["x"]) | Standardize()
+        >>> transformed = transform(dataset)
+        ```
+    """
+
+    @abstractmethod
+    def apply(self, data: Data) -> Data:
+        """Apply the transform to data.
+
+        Args:
+            data: The data to transform.
+
+        Returns:
+            The transformed data.
+        """
+
+    @final
+    def __call__(self, data: Data) -> Data:
+        """Apply the transform to data.
+
+        Equivalent to ``self.apply(data)``.
+
+        Args:
+            data: The data to transform.
+
+        Returns:
+            The transformed data.
+        """
+        return self.apply(data)
+
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        """Chain this transform with ``other``.
+
+        This can be used to chain multiple transforms together. Chained
+        transforms are applied left-to-right:
+
+        Example:
+            ```python
+            chained = TransformA().chain(TransformB())
+            chained(data)  # Equivalent to TransformB(TransformA(data))
+            ```
+
+        Args:
+            other: The transforms to chain.
+
+        Returns:
+            A new chained transform.
+        """
+        return ChainedTransforms(self, other)
+
+    def __or__(
+        self,
+        other: Transform,
+    ) -> Transform:
+        """Shorthand for chaining transforms.
+
+        Example:
+            ```python
+            chained = TransformA() | TransformB()
+            ```
+
+        Args:
+            other: The transform to chain.
+
+        Returns:
+            A new Chain transform.
+        """
+        return self.chain(other)
+
+    def fit(self, data: Data) -> Self:
+        """Fit the transform to data.
+
+        Many transforms (e.g. scaling, PCA) require statistics from the dataset
+        before applying. Default implementation is a no-op.
+        This is meant to be idempotent, i.e., calling ``fit()`` multiple times
+        should have the same effect as calling it once.
+
+        Args:
+            data: The data to fit to.
+        """
+        _ = data
+        return self
+
+    def fit_incremental(self, data: Data) -> Self:
+        """Incrementally fit the transform to streaming/batched data.
+
+        Default implementation is a no-op.
+
+        Args:
+            data: The data to fit to.
+        """
+        _ = data
+        return self
+
+
+@runtime_checkable
+class Invertible(Protocol):
+    """Protocol for transforms that support inversion.
+
+    An invertible transform can undo its effect via ``inverse()``.
+
+    Example:
+        ```
+        >>> scaler = Standardize().fit(data)
+        >>> restored = scaler.inverse()(scaler(data))
+        ```
+    """
+
+    @abstractmethod
+    def inverse(self) -> Transform:
+        """Return a new transform that inverts this one.
+
+        Returns:
+            The inverse of the transform.
+        """
+
+
+class ChainedTransforms(Invertible, Transform):
+    """A composition of multiple transforms applied sequentially.
+
+    Chained transforms are applied left-to-right. Useful for building
+    preprocessing pipelines.
+    """
+
+    transforms: Sequence[Transform]
+
+    def __init__(
+        self,
+        *transforms: Transform,
+    ) -> None:
+        """Initialize the chained transforms.
+
+        Args:
+            transforms: The transforms to chain.
+        """
+        self.transforms = transforms
+
+    @override
+    def apply(self, data: Data) -> Data:
+        for transform in self.transforms:
+            data = transform.apply(data)
+        return data
+
+    @override
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        return ChainedTransforms(*self.transforms, other)
+
+    @override
+    def fit(self, data: Data) -> Self:
+        for transform in self.transforms:
+            transform.fit(data)
+            data = transform.apply(data)
+        return self
+
+    @override
+    def fit_incremental(self, data: Data) -> Self:
+        for transform in self.transforms:
+            transform.fit_incremental(data)
+            data = transform.apply(data)
+        return self
+
+    @override
+    def inverse(self) -> Transform:
+        non_inv = [t for t in self.transforms if not isinstance(t, Invertible)]
+        if non_inv:
+            msg = f"Transforms {non_inv} do not support inversion."
+            raise NotImplementedError(msg)
+        transforms = cast("Sequence[Invertible]", self.transforms)
+        return ChainedTransforms(
+            *(t.inverse() for t in reversed(transforms)),
+        )
+
+
+class InvertibleTransform(Transform, Invertible, Protocol): ...
+
+
+class Identity(Invertible, Transform):
+    """A no-op transform that returns data unchanged.
+
+    Often used as a placeholder or default transform.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the identity transform."""
+        super().__init__()
+
+    @override
+    def apply(self, data: Data) -> Data:
+        return data
+
+    @override
+    def inverse(self) -> Transform:
+        return self
+
+    @override
+    def chain(
+        self,
+        other: Transform,
+    ) -> Transform:
+        return other
+
+
+class Lambda(Transform, Invertible):
+    """A transform wrapping a function.
+
+    Useful for quick one-off transformations without creating a dedicated
+    class.
+
+    Example:
+        ```
+        >>> to_float = Lambda(lambda df: df.cast(pl.Float64))
+        >>> normalized = Lambda(
+        ...     lambda df: (df - df.mean()) / df.std(),
+        ...     inverse_func=lambda df: df * df.std() + df.mean(),
+        ... )
+        ```
+    """
+
+    func: Callable[[Data], Data]
+    inverse_func: Callable[[Data], Data] | None
+
+    def __init__(
+        self,
+        func: Callable[[Data], Data],
+        *,
+        inverse_func: Callable[[Data], Data] | None = None,
+    ) -> None:
+        """Initialize the lambda transform.
+
+        Args:
+            func: Function that transforms data.
+            inverse_func: Optional function that inverts ``func``.
+        """
+        self.func = func
+        self.inverse_func = inverse_func
+
+    @override
+    def apply(self, data: Data) -> Data:
+        return self.func(data)
+
+    def __getstate__(self) -> dict[str, bytes]:
+        return {"func": cloudpickle.dumps(self.func)}
+
+    def __setstate__(self, state: dict[str, bytes]) -> None:
+        self.func = cloudpickle.loads(state["func"])
+
+    def inverse(self) -> Transform:
+        if self.inverse_func is None:
+            msg = "This transform does not have an inverse."
+            raise NotImplementedError(msg)
+        return Lambda(self.inverse_func, inverse_func=self.func)
+</file>
+
+</files>

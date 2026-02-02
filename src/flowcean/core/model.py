@@ -3,12 +3,20 @@ from __future__ import annotations
 import pickle
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Protocol, final, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    BinaryIO,
+    Protocol,
+    final,
+    runtime_checkable,
+)
 
 from .named import Named
 from .transform import Identity, Transform
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from .data import Data
 
 
@@ -20,6 +28,8 @@ class Model(Named, Protocol):
     It is used to predict outputs for given inputs.
     """
 
+    input_features: Sequence[str]
+    out_features: Sequence[str]
     pre_transform: Transform = Identity()
     post_transform: Transform = Identity()
 
