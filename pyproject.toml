@@ -93,6 +93,7 @@ members = [
   "examples/boiler",
   "examples/coffee_machine",
   "examples/energy_system",
+  "examples/hybrid_systems",
   "examples/failure_time_prediction",
   "examples/linear_data",
   "examples/one_tank",
@@ -113,6 +114,7 @@ ignore = ["src/flowcean/grpc/_generated/*"]
 pythonVersion = "3.10"
 strict = ["src/flowcean/core"]
 typeCheckingMode = "standard"
+
 
 [tool.poetry.scripts]
 install_clang = "bash -c 'sudo apt-get install -y clang'"

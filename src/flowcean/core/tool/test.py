@@ -12,8 +12,8 @@ def test_model(
     test_data: IncrementalEnvironment,
     predicate: Predicate,
     *,
-    show_progress: bool = False,
-    stop_after: int = 1,
+    show_progress: bool = False,  # noqa: PT028
+    stop_after: int = 1,  # noqa: PT028
 ) -> None:
     """Test a model with the given test data and predicate.
 
