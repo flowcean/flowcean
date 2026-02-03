@@ -12,7 +12,7 @@ def run_offline() -> None:
             "Powergrid-0.0-bus-3.vm_pu",
         ],
     )
-    train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(environment)
+    _train, _test = TrainTestSplit(ratio=0.8, shuffle=False).split(environment)
 
 
 if __name__ == "__main__":

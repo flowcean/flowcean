@@ -107,7 +107,9 @@ def mode_cycle(
     guard = Guard(name="dwell", fn=_guard_clock, direction=1, terminal=True)
     reset = Reset(name="reset_clock", fn=_reset_clock)
     mode_map, transitions = _build_modes_and_transitions(
-        matrices, reset, guard,
+        matrices,
+        reset,
+        guard,
     )
 
     if initial_state is None:
