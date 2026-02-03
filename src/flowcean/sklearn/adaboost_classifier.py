@@ -27,7 +27,6 @@ class AdaBoost(SupervisedLearner):
         *,
         n_estimators: int = 50,
         learning_rate: float = 1.0,
-        algorithm: str = "deprecated",
         random_state: int | None = None,
     ) -> None:
         """Initialize the AdaBoost classifier learner.
@@ -38,7 +37,6 @@ class AdaBoost(SupervisedLearner):
             estimator=estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
-            algorithm=algorithm,
             random_state=random_state or get_seed(),
         )
 

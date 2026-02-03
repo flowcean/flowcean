@@ -53,7 +53,7 @@ def tank_valves(
         state: np.ndarray,
         params: Mapping[str, float],
     ) -> np.ndarray:
-        level_1, level_2 = state
+        _level_1, _level_2 = state
         inter_flow = _inter_tank_flow(state, params)
         dlevel_1 = (
             params["inflow"] - inter_flow - params["outflow_1"]
@@ -66,7 +66,7 @@ def tank_valves(
         state: np.ndarray,
         params: Mapping[str, float],
     ) -> np.ndarray:
-        _level_1, level_2 = state
+        _level_1, _level_2 = state
         dlevel_1 = (params["inflow"] - params["outflow_1"]) / params["area_1"]
         dlevel_2 = (-params["outflow"]) / params["area_2"]
         return np.array([dlevel_1, dlevel_2], dtype=float)

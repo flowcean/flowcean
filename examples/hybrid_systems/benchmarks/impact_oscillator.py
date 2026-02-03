@@ -46,11 +46,14 @@ def impact_oscillator(
         return state[0]
 
     def reset(
-        _: float, state: np.ndarray, params: Mapping[str, float],
+        _: float,
+        state: np.ndarray,
+        params: Mapping[str, float],
     ) -> np.ndarray:
         position, velocity = state
         return np.array(
-            [position, -params["restitution"] * velocity], dtype=float,
+            [position, -params["restitution"] * velocity],
+            dtype=float,
         )
 
     mode = Mode(name="oscillate", flow=flow)
@@ -59,7 +62,9 @@ def impact_oscillator(
         target="oscillate",
         guard=Guard(name="impact", fn=guard, direction=-1, terminal=True),
         reset=Reset(
-            name="bounce", fn=reset, params={"restitution": restitution},
+            name="bounce",
+            fn=reset,
+            params={"restitution": restitution},
         ),
     )
 

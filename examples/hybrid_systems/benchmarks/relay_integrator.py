@@ -60,14 +60,20 @@ def relay_integrator(
         source="up",
         target="down",
         guard=Guard(
-            name="hit_upper", fn=guard_upper, direction=1, terminal=True,
+            name="hit_upper",
+            fn=guard_upper,
+            direction=1,
+            terminal=True,
         ),
     )
     to_up = Transition(
         source="down",
         target="up",
         guard=Guard(
-            name="hit_lower", fn=guard_lower, direction=-1, terminal=True,
+            name="hit_lower",
+            fn=guard_lower,
+            direction=-1,
+            terminal=True,
         ),
     )
 
