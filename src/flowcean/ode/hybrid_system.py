@@ -1,92 +1,142 @@
-"""Hybrid System.
+"""Hybrid system core types."""
 
-This module provides the definition of a hybrid system, which is a dynamical
-system that can switch between different modes of operation. Each mode is
-defined by a differential equation and a transition function that determines
-the next mode based on a current input.
-"""
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 
-from abc import abstractmethod
-from collections.abc import Callable, Iterator, Sequence
-from typing import Generic, TypeVar
+import numpy as np
 
-import polars as pl
-from typing_extensions import override
-
-from flowcean.core import IncrementalEnvironment
-
-from .ode_environment import OdeState, OdeSystem
-
-X = TypeVar("X", bound=OdeState)
-Input = TypeVar("Input")
+State = np.ndarray
+FlowFn = Callable[[float, State, Mapping[str, float]], State]
+GuardFn = Callable[[float, State, Mapping[str, float]], float]
+ResetFn = Callable[[float, State, Mapping[str, float]], State]
 
 
-class DifferentialMode(Generic[X, Input], OdeSystem[X]):
-    """Differential mode of a hybrid system.
+@dataclass(frozen=True)
+class Mode:
+    """Continuous dynamics definition for a single mode.
 
-    This class represents a mode of a hybrid system by extending an OdeSystem
-    with a transition function that determines the next mode.
+    Args:
+        name: Mode identifier.
+        flow: Dynamics function returning the state derivative.
+        params: Optional parameter map merged with system parameters.
     """
 
-    @abstractmethod
-    def transition(
-        self,
-        i: Input,
-    ) -> "DifferentialMode[X, Input]":
-        """Transition to the next mode.
-
-        Determine the next mode based on the current input. This method should
-        return the current mode if no transition is needed.
-
-        Args:
-            i: Input.
-
-        Returns:
-            Next mode.
-        """
+    name: str
+    flow: FlowFn
+    params: Mapping[str, float] = field(default_factory=dict)
 
 
-class HybridSystem(IncrementalEnvironment, Generic[X, Input]):
-    """Hybrid system environment.
+@dataclass(frozen=True)
+class Guard:
+    """Guard function defining a transition event.
 
-    This environment generates samples by simulating a hybrid system. The
-    system is defined by a set of differential modes and a sequence of inputs
-    that determine the transitions between the modes.
+    Args:
+        name: Guard identifier.
+        fn: Root function; transitions when it crosses zero.
+        direction: Crossing direction (-1, 0, +1).
+        terminal: Whether the solver should stop at the event.
     """
 
-    def __init__(
-        self,
-        initial_mode: DifferentialMode[X, Input],
-        inputs: Iterator[tuple[float, Input]],
-        map_to_dataframe: Callable[
-            [Sequence[float], Sequence[Input], Sequence[X]],
-            pl.DataFrame,
-        ],
-    ) -> None:
-        """Initialize the hybrid system.
+    name: str
+    fn: GuardFn
+    direction: int = 0
+    terminal: bool = True
 
-        Args:
-            initial_mode: Initial mode of the system.
-            inputs: Timeseries of inputs (time, input).
-            map_to_dataframe: Function to map times, inputs, and states to a
-                DataFrame.
-        """
-        super().__init__()
-        self.mode = initial_mode
-        self.inputs = inputs
-        self.map_to_dataframe = map_to_dataframe
-        self.last_t = 0.0
-        self.data = pl.DataFrame()
 
-    @override
-    def _observe(self) -> pl.LazyFrame:
-        return self.data.lazy()
+@dataclass(frozen=True)
+class Reset:
+    """State reset applied on a transition.
 
-    @override
-    def step(self) -> None:
-        t, i = next(self.inputs)
-        dt = t - self.last_t
-        self.last_t = t
-        ts, states = self.mode.step(dt)
-        self.mode = self.mode.transition(i)
-        self.data = self.map_to_dataframe(ts, [i] * len(ts), states)
+    Args:
+        name: Reset identifier.
+        fn: Reset function applied at the event time.
+        params: Optional parameter map for the reset.
+    """
+
+    name: str
+    fn: ResetFn
+    params: Mapping[str, float] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class Transition:
+    """Discrete transition between modes.
+
+    Args:
+        source: Source mode name.
+        target: Target mode name.
+        guard: Guard that triggers the transition.
+        reset: Optional reset applied upon transition.
+    """
+
+    source: str
+    target: str
+    guard: Guard
+    reset: Reset | None = None
+
+
+@dataclass(frozen=True)
+class HybridSystem:
+    """Hybrid system with modes and transitions.
+
+    Args:
+        modes: Mode registry by name.
+        transitions: Transition list defining guards and resets.
+        initial_mode: Name of the starting mode.
+        initial_state: Initial state vector.
+        params: Global parameter map passed to dynamics and guards.
+    """
+
+    modes: Mapping[str, Mode]
+    transitions: Sequence[Transition]
+    initial_mode: str
+    initial_state: State
+    params: Mapping[str, float] = field(default_factory=dict)
+
+    def transitions_from(self, mode: str) -> list[Transition]:
+        """Return transitions leaving the given mode."""
+        return [
+            transition
+            for transition in self.transitions
+            if transition.source == mode
+        ]
+
+
+@dataclass(frozen=True)
+class Event:
+    """Transition event information for a trace."""
+
+    time: float
+    source_mode: str
+    target_mode: str
+    guard: str
+    reset: str | None
+    state: State
+
+
+@dataclass(frozen=True)
+class Trace:
+    """Simulation trace with time, state, and mode labels."""
+
+    t: np.ndarray
+    x: np.ndarray
+    mode: np.ndarray
+    events: Sequence[Event]
+
+    def as_dict(self) -> dict[str, object]:
+        """Return a dictionary view of the trace."""
+        return {
+            "t": self.t,
+            "x": self.x,
+            "mode": self.mode,
+            "events": self.events,
+        }
+
+
+def ensure_state(state: Iterable[float]) -> State:
+    """Validate and coerce a state vector into a 1D array."""
+    array = np.asarray(state, dtype=float)
+    if array.ndim != 1:
+        message = "State must be a 1D array."
+        raise ValueError(message)
+    return array
