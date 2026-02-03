@@ -10,6 +10,7 @@ from flowcean.core import evaluate_offline
 from flowcean.core.strategies.offline import learn_offline
 from flowcean.ensemble.cluster_learner import ClusterLearner
 from flowcean.polars import (
+    Cluster,
     DataFrame,
 )
 from flowcean.sklearn import (
@@ -47,7 +48,7 @@ def main() -> None:
     data = DataFrame(pl.concat([df_a, df_b]))
 
     learner = ClusterLearner(
-        KMeans(n_clusters=2),
+        "cluster_feature",
         LinearRegression(),
     )
 
@@ -59,6 +60,10 @@ def main() -> None:
         learner,
         inputs,
         outputs,
+        input_transform=Cluster(
+            KMeans(n_clusters=2),
+            cluster_feature_name="cluster_feature",
+        ),
     )
 
     report = evaluate_offline(
