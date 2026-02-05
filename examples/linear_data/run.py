@@ -33,8 +33,6 @@ def main() -> None:
     )
     train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
 
-    print(data.data.collect())
-
     learner = LinearRegression(
         output_size=1,
         learning_rate=0.1,
