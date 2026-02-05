@@ -3,4 +3,3 @@ __all__ = [
 ]
 
 from .predict import start_prediction_loop
-
