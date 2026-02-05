@@ -1,0 +1,7 @@
+{
+    "test_coverage_criterium": "dtc", 
+    "n_testinputs": 5000, 
+    "inverse_alloc": false, 
+    "epsilon": 1.0,
+    "max_depth": 7
+}
