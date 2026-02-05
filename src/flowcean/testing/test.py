@@ -4,7 +4,7 @@ import tqdm
 from flowcean.core import Model
 from flowcean.core.data import Data
 from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.core.tool.testing.predicates import Predicate
+from flowcean.testing.predicates import Predicate
 
 
 def test_model(
