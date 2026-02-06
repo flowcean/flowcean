@@ -4,13 +4,14 @@ import polars as pl
 
 from flowcean.core.model import Model
 from flowcean.core.strategies import learn_offline
-from flowcean.core.tool import start_prediction_loop, test_model
-from flowcean.core.tool.testing.domain import Discrete
-from flowcean.core.tool.testing.generator import CombinationGenerator
-from flowcean.core.tool.testing.predicates import PolarsPredicate
+from flowcean.core.tool import start_prediction_loop
 from flowcean.polars.adapter.dataframe_adapter import DataFrameAdapter
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.sklearn.regression_tree import RegressionTree
+from flowcean.testing import test_model
+from flowcean.testing.domain import Discrete
+from flowcean.testing.generator import CombinationGenerator
+from flowcean.testing.predicates import PolarsPredicate
 
 
 def main() -> None:

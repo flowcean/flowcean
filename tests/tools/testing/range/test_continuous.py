@@ -1,6 +1,6 @@
 import unittest
 
-from flowcean.core.tool.testing.domain import Continuous
+from flowcean.testing.domain import Continuous
 
 
 class TestContinuous(unittest.TestCase):
