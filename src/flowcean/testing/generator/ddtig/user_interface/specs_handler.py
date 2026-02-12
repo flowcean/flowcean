@@ -3,7 +3,9 @@ import json
 from pathlib import Path
 from typing import TextIO
 import polars as pl
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SystemSpecsHandler():
     """
@@ -17,9 +19,6 @@ class SystemSpecsHandler():
         
     n_features : int
         Number of features.
-
-    logger : TestLogger
-        Logger for tracking the test input generation process.
 
     Methods
     -------
@@ -56,7 +55,7 @@ class SystemSpecsHandler():
         self,
         data: pl.DataFrame,
         specs_file: Path | TextIO,
-        logger: TestLogger) -> None:
+        ) -> None:
         """
         Loads specifications from a JSON file or infers them from a dataset.
         For details on defining specifications in JSON, refer to README.md.
@@ -78,9 +77,7 @@ class SystemSpecsHandler():
         Args:
             data : Dataset used to infer specifications if specs_file is not provided.
             specs_file : JSON file containing system specifications.
-            logger : Logger for logging messages.
         """
-        self.logger = logger
         if data is not None:
             # Drop the target column (assumed to be the last column)
             target_col = data.columns[-1]
@@ -107,24 +104,19 @@ class SystemSpecsHandler():
                 features.append(feature)
             self.specs = {"features": features}
 
-            if self.logger:
-                self.logger.log_debug("Specifications successfully extracted from dataset.")
+            logger.info("Specifications successfully extracted from dataset.")
 
         else:
             # Load specifications from JSON file
             with open(specs_file) as f:
                 try:
                     self.specs = json.load(f)
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"Invalid JSON in specification file: {e}") from e
                 except Exception as e:
-                    if self.logger:
-                        self.logger.log_error("Failed to import specification file.")
-                    print("Import JSON file unsuccessful.")
-                    print("Error message:", str(e))
-
+                    raise RuntimeError(f"Failed to load specification file: {e}") from e
             # Validate JSON structure
             if self.specs.get('features') is None:
-                if self.logger:
-                    self.logger.log_error("Specification file structure is invalid.")
                 raise LookupError("Invalid JSON structure. Refer to README.md.")
 
             self.n_features = self.get_n_features()
@@ -134,51 +126,34 @@ class SystemSpecsHandler():
 
                 # Validate presence of required keys
                 if not all(k in feature for k in ['name', 'min', 'max', 'type', 'nominal']) or len(feature) != 5:
-                    if self.logger:
-                        self.logger.log_error("Specification file structure is invalid.")
                     raise LookupError("Invalid JSON structure. Refer to README.md.")
 
                 # Validate types
                 if not isinstance(feature['name'], str):
-                    if self.logger:
-                        self.logger.log_error("Invalid value type for 'name'.")
                     raise ValueError("'name' must be a string.")
 
                 if feature['type'] not in ['int', 'float']:
                     raise ValueError("'type' must be either 'int' or 'float'.")
 
                 if not isinstance(feature['min'], (int, float)) or not isinstance(feature['max'], (int, float)):
-                    if self.logger:
-                        self.logger.log_error("Invalid value type for 'min' or 'max'.")
                     raise TypeError("'min' and 'max' must be int or float.")
 
                 if feature['type'] == 'int' and not (isinstance(feature['min'], int) and isinstance(feature['max'], int)):
-                    if self.logger:
-                        self.logger.log_error("Type mismatch for 'int' feature.")
                     raise ValueError("'min' and 'max' must be int for type 'int'.")
 
                 if feature['type'] == 'float' and not all(isinstance(v, (int, float)) for v in [feature['min'], feature['max']]):
-                    if self.logger:
-                        self.logger.log_error("Type mismatch for 'float' feature.")
                     raise ValueError("'min' and 'max' must be numeric for type 'float'.")
 
                 if not isinstance(feature['nominal'], bool):
-                    if self.logger:
-                        self.logger.log_error("Invalid value type for 'nominal'.")
                     raise TypeError("'nominal' must be a boolean.")
 
                 if feature['nominal'] and feature['type'] != 'int':
-                    if self.logger:
-                        self.logger.log_error("Nominal feature must be of type 'int'.")
                     raise TypeError("Nominal features must be of type 'int'.")
                 
                 if feature['min'] > feature['max']:
-                    if self.logger:
-                        self.logger.log_error("'min' is larger than 'max'.")
                     raise TypeError("'min' must be smaller than or equal to 'max'.")
 
-            if self.logger:
-                self.logger.log_debug("Specifications successfully extracted from file.")
+            logger.info("Specifications successfully extracted from file.")
 
 
     def get_n_features(self) -> int:

@@ -7,7 +7,9 @@ from typing import BinaryIO
 from contextlib import nullcontext
 from flowcean.core.model import Model
 import polars as pl
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ModelHandler():
     """
@@ -18,8 +20,6 @@ class ModelHandler():
     model : flowcean.core.model.Model
         The loaded Flowcean model.
     
-    logger : TestLogger
-        Logger used to log the test input generation process.
     
     Methods
     -------
@@ -37,20 +37,17 @@ class ModelHandler():
     def __init__(
         self,
         file: Path | str | BinaryIO,
-        logger: TestLogger | None = None
     ) -> None:
         """
         Initializes the ModelHandler.
 
         Args:
             file : File containing the Flowcean model.
-            logger : Logger for logging validation messages.
         """
         # Load the Flowcean model from the given file
         file_ctx = open(file, "rb") if isinstance(file, (Path, str)) else nullcontext(file)
         with file_ctx as f:
             self.model = Model.load(f)
-        self.logger = logger
 
 
     def get_ml_model(self):
@@ -66,8 +63,7 @@ class ModelHandler():
             ml_model = self.model.module
         else:
             raise ValueError(f"Unsupported model type: {type(self.model)}")
-        if self.logger:
-            self.logger.log_debug("Extracted the underlying ML model from the Flowcean model successfully.")
+        logger.info("Extracted the underlying ML model from the Flowcean model successfully.")
         return ml_model
     
 

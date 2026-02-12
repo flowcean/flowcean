@@ -4,7 +4,9 @@ from pathlib import Path
 from typing import TextIO
 from contextlib import nullcontext
 from dataclasses import dataclass
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class RequirementsHandler():
@@ -16,9 +18,6 @@ class RequirementsHandler():
     ----------
     requirements : dict
         Dictionary storing the test requirements.
-    
-    logger : TestLogger
-        Logger for tracking the test input generation process.
     """
 
     # Parameters expected to be of type int
@@ -41,7 +40,7 @@ class RequirementsHandler():
     def __init__(
         self,
         reqs_file: Path | str | TextIO,
-        logger: TestLogger) -> None:
+        ) -> None:
         """
         Loads and validates test requirements from a JSON file.
         For details on defining requirements, refer to README.md.
@@ -55,26 +54,21 @@ class RequirementsHandler():
 
         Args:
             reqs_file : JSON file containing test requirements.
-            logger : Logger for logging validation messages.
         """
-        self.logger = logger
 
         # Load JSON file
         file_ctx = open(reqs_file) if isinstance(reqs_file, (Path, str)) else nullcontext(reqs_file)
         with file_ctx as f:
             try:
                 self.requirements = json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON in requirements file: {e}") from e
             except Exception as e:
-                if self.logger:
-                    self.logger.log_error("Failed to import requirement file.")
-                print("Import JSON file unsuccessful.")
-                print("Error message: " + str(e))
+                raise RuntimeError(f"Failed to load requirements file: {e}") from e
 
         # Validate presence of mandatory parameters
         for must_param in self.must_params:
             if must_param not in self.requirements:
-                if self.logger:
-                    self.logger.log_error("Missing required parameters in requirement file.")
                 raise KeyError(f"Missing required parameter: '{must_param}'") 
 
         # Validate integer parameters
@@ -82,8 +76,6 @@ class RequirementsHandler():
             if int_param in self.requirements:
                 value = self.requirements[int_param]
                 if not isinstance(value, int):
-                    if self.logger:
-                        self.logger.log_error("Incorrect type for integer parameter.")
                     raise TypeError(f"Expected type 'int', but got '{type(value).__name__}' instead.")
 
         # Validate float parameters
@@ -91,8 +83,6 @@ class RequirementsHandler():
             if float_param in self.requirements:
                 value = self.requirements[float_param]
                 if not (isinstance(value, float) or (isinstance(value, int) and not isinstance(value, bool))):
-                    if self.logger:
-                        self.logger.log_error("Incorrect type for float parameter.")
                     raise TypeError(f"Expected type 'float', but got '{type(value).__name__}' instead.")
         
          # Validate string parameters and their allowed values
@@ -100,12 +90,8 @@ class RequirementsHandler():
             if str_param in self.requirements:
                 value = self.requirements[str_param]
                 if not isinstance(value, str):
-                    if self.logger:
-                        self.logger.log_error("Incorrect type for string parameter.")
                     raise TypeError(f"Expected type 'str', but got '{type(value).__name__}' instead.")
                 if value not in str_params_value:
-                    if self.logger:
-                        self.logger.log_error("Invalid value for string parameter.")
                     raise ValueError(f"Invalid value: '{value}'. Allowed values are: {str_params_value}")
         
         # Validate boolean parameters
@@ -113,6 +99,4 @@ class RequirementsHandler():
             if bool_param in self.requirements:
                 value = self.requirements[bool_param]
                 if not isinstance(value, bool):
-                    if self.logger:
-                        self.logger.log_error("Incorrect type for boolean parameter.")
                     raise TypeError(f"Expected type 'bool', but got '{type(value).__name__}' instead.")

@@ -4,7 +4,9 @@ from sklearn.tree._tree import Tree as sklearnTree
 from river.tree import HoeffdingTreeRegressor as riverTree
 from river.tree.nodes.branch import DTBranch
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 def convert_river_tree(river_tree: riverTree,
                        feature_dict: dict) -> dict:
@@ -146,9 +148,6 @@ class TestTree():
     ----------
     test_tree : dict
         Dictionary representing the structure of a River or scikit-learn tree.
-    
-    logger : TestLogger
-        Logger for tracking the test input generation process.
 
     Methods
     -------
@@ -160,7 +159,6 @@ class TestTree():
         self,
         model_tree: riverTree | sklearnTree,
         specs_handler: SystemSpecsHandler,
-        logger: TestLogger
     ) -> None:
         """
         Initializes the TestTree from a model tree.
@@ -168,20 +166,16 @@ class TestTree():
         Args:
             model_tree : A River or scikit-learn decision tree.
             specs_handler : Object for accessing feature specifications.
-            logger : Logger for tracking the conversion process.
         """
-        self.logger = logger
 
         if isinstance(model_tree, sklearnTree):
             feature_dict = specs_handler.extract_feature_names_with_idx_reversed()
             self.test_tree = convert_sklearn_tree(model_tree, feature_dict)
-            if self.logger:
-                self.logger.log_debug("Converted a scikit-learn tree to TestTree successfully.")
+            logger.info("Converted a scikit-learn tree to TestTree successfully.")
         else:
             feature_dict = specs_handler.extract_feature_names_with_idx()
             self.test_tree = convert_river_tree(model_tree, feature_dict)
-            if self.logger:
-                self.logger.log_debug("Converted a River tree to TestTree successfully.")
+            logger.info("Converted a River tree to TestTree successfully.")
     
     def get_n_samples(self) -> int:
         """

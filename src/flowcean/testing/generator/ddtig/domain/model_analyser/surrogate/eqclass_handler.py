@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 from copy import deepcopy
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EquivalenceClassesHandler():
     """
@@ -21,8 +24,6 @@ class EquivalenceClassesHandler():
     n_features : int
         Number of features in the dataset.
     
-    logger : TestLogger
-        Logger for tracking the equivalence class extraction process.
 
     Methods
     -------
@@ -45,7 +46,6 @@ class EquivalenceClassesHandler():
         test_tree,
         minmax_values_specs: dict,
         n_features: int,
-        logger: TestLogger
     ) -> None:
         """
         Initializes the EquivalenceClassesHandler.
@@ -54,13 +54,11 @@ class EquivalenceClassesHandler():
             test_tree : The decision tree used for extracting equivalence classes.
             minmax_values_specs : Dictionary containing min/max values for each feature.
             n_features : Number of features in the dataset.
-            logger : Logger for logging the extraction process.
         """
         self.test_tree = test_tree.test_tree
         self.n_samples = test_tree.get_n_samples()
         self.minmax_values_specs = minmax_values_specs
         self.n_features = n_features
-        self.logger = logger
 
 
     # Initializes an empty equivalence class with None bounds.
@@ -182,8 +180,7 @@ class EquivalenceClassesHandler():
         paths = self._collect_all_paths(self.ROOT_INDEX)
         equivalence_classes = self._extract_equivalence_classes(paths)
         equivalence_classes_formatted = self._format_equivalence_classes(equivalence_classes)
-        if self.logger:
-            self.logger.log_debug("Extracted equivalence classes successfully.")
+        logger.info("Extracted equivalence classes successfully.")
         return equivalence_classes_formatted
 
 

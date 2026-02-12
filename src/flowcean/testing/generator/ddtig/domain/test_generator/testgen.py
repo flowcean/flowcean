@@ -3,7 +3,9 @@ import random
 import math
 from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval import Interval, IntervalEndpoint
 from flowcean.testing.generator.ddtig.infrastructure.utils import reverse_list_by_value
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+
+import logging
+logger = logging.getLogger(__name__)
 
 class TestGenerator():
     """
@@ -23,9 +25,6 @@ class TestGenerator():
     n_testinputs_lst : list
         Number of test inputs to generate for each equivalence class.
 
-    logger : TestLogger
-        Logger for tracking the test input generation process.
-
     Methods
     -------
     generate_testinputs()
@@ -37,7 +36,6 @@ class TestGenerator():
         self,
         equivalence_classes: list,
         type_specs: dict,
-        logger: TestLogger
     ) -> None:
         """
         Initializes the Test Generator.
@@ -45,12 +43,10 @@ class TestGenerator():
         Args:
             equivalence_classes : Equivalence classes extracted from the decision tree.
             type_specs : Input types for each feature from the specifications.
-            logger : Logger for logging the generation process.
         """
         self.equivalence_classes = equivalence_classes
         self.type_specs = type_specs
         self.testplans = []
-        self.logger = logger
 
 
     # Generates a test plan for Boundary Value Analysis (BVA).
@@ -176,6 +172,5 @@ class TestGenerator():
         for eqclass, n_testinputs in zip(self.equivalence_classes, self.n_testinputs_lst):
             testinputs_eqclass = self._generate_testinputs_eqclass(n_testinputs, test_coverage_criterium, eqclass, epsilon)
             testinputs += testinputs_eqclass
-        if self.logger:
-            self.logger.log_debug("Generated test inputs for all equivalence classes successfully.")
+        logger.info("Generated test inputs for all equivalence classes successfully.")
         return testinputs

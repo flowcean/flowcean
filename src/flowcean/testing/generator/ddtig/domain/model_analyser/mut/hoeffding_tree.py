@@ -6,8 +6,11 @@ from river import preprocessing
 from river.tree import HoeffdingTreeRegressor, HoeffdingTreeClassifier
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 from flowcean.testing.generator.ddtig.application import ModelHandler
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
 from flowcean.testing.generator.ddtig.domain import DataModel
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 class HoeffdingTree():
     """
@@ -23,9 +26,6 @@ class HoeffdingTree():
     
     nominal_attributes : list
         List of indices for nominal features.
-    
-    logger : TestLogger
-        Logger for tracking the training process.
 
     Methods
     -------
@@ -40,7 +40,6 @@ class HoeffdingTree():
         inputs: pl.DataFrame,
         model_handler: ModelHandler,
         specs_handler: SystemSpecsHandler,
-        logger: TestLogger
     ) -> None:
         """
         Initializes the HoeffdingTree trainer.
@@ -49,7 +48,6 @@ class HoeffdingTree():
             inputs : Original training dataset including target column.
             model_handler : Object used to generate predictions from the Flowcean model.
             specs_handler : Object containing feature specifications and metadata.
-            logger : Logger for logging the training process.
         """
         # Remove target column to isolate input features
         inputs = inputs.drop(inputs.columns[-1])
@@ -58,7 +56,6 @@ class HoeffdingTree():
         # Generate River-compatible samples using original data
         self.samples = self.datamodel.generate_dataset(original_data=True)
         self.nominal_attributes = specs_handler.get_nominal_features()
-        self.logger = logger
 
         
         
@@ -140,7 +137,6 @@ class HoeffdingTree():
                     samples_to_generate = self.N_SAMPLES
                 self.samples.extend(self.datamodel.generate_dataset(n_samples = samples_to_generate))
 
-        if self.logger:
-            self.logger.log_debug("Hoeffding Tree training completed successfully.")
+            logger.info("Hoeffding Tree training completed successfully.")
         return model
     

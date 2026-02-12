@@ -9,7 +9,9 @@ import pickle
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler, RequirementsHandler
 from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.domain import TestTree, TestGenerator, TestCompiler, EquivalenceClassesHandler, HoeffdingTree
-from flowcean.testing.generator.ddtig.infrastructure import TestLogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TestPipeline():
     """
@@ -53,9 +55,6 @@ class TestPipeline():
     feature_names : list
         Names of all input features.
     
-    logger : TestLogger
-        Logger for tracking the test input generation process.
-    
     hoeffding_tree : HoeffdingTreeRegressor
         Hoeffding tree used to approximate complex black-box models.
     
@@ -81,8 +80,6 @@ class TestPipeline():
         dataset: pl.DataFrame | None = None,
         specs_file: Path | TextIO | None = None,
         classification: bool = False,
-        log: bool = False,
-        log_file: Path | None = None,
     ) -> None:
         """
         Initializes the TestPipeline.
@@ -96,26 +93,17 @@ class TestPipeline():
             log (optional) : Whether to enable logging.
             log_file (optional): Path to store the log file.
         """
-        if log:
-            if log_file is not None:
-                self.logger = TestLogger(str(log_file))
-            else:
-                self.logger = TestLogger()
-        else:
-            self.logger = None
-        self.model_handler = ModelHandler(model_file, self.logger)
+        self.model_handler = ModelHandler(model_file)
         self.model = self.model_handler.get_ml_model()
         if (type(self.model) != DecisionTreeRegressor and 
             type(self.model) != DecisionTreeClassifier and 
             dataset is None):
-            self.logger.log_error("Missing required parameter in TestPipeline.__init__(): 'dataset'.")
             raise ValueError("Missing required parameter: 'dataset'")
         if dataset is None and specs_file is None:
-            self.logger.log_error("Missing required parameter in TestPipeline.__init__(): 'dataset' or 'specs_file'.")
             raise ValueError("Missing required parameter: 'dataset' or 'specs_file'")
         self.dataset = dataset 
-        self.specs_handler = SystemSpecsHandler(data = dataset, specs_file = specs_file, logger = self.logger)
-        reqs_handler = RequirementsHandler(reqs_file, logger = self.logger)
+        self.specs_handler = SystemSpecsHandler(data = dataset, specs_file = specs_file)
+        reqs_handler = RequirementsHandler(reqs_file)
         self.requirements = reqs_handler.requirements
         self.feature_names = self.specs_handler.extract_feature_names()
         self.hoeffding_tree = None
@@ -129,9 +117,9 @@ class TestPipeline():
         Args:
             reqs_file : File containing the updated test requirements.
         """
-        reqs_handler = RequirementsHandler(reqs_file, logger = self.logger)
+        reqs_handler = RequirementsHandler(reqs_file)
         self.requirements = reqs_handler.requirements
-        self.logger.log_debug("Test requirements modified.")
+        logger.info("Test requirements modified.")
 
 
     def _execute(self,
@@ -178,7 +166,7 @@ class TestPipeline():
         if not isinstance(self.model, (DecisionTreeRegressor, DecisionTreeClassifier)):
             # Generate Hoeffding tree only if it hasn't been created yet
             if self.hoeffding_tree is None:
-                htree_obj = HoeffdingTree(self.dataset, self.model_handler, self.specs_handler, logger = self.logger)
+                htree_obj = HoeffdingTree(self.dataset, self.model_handler, self.specs_handler)
                 dtree = htree_obj.train_tree(performance_threshold=performance_threshold, 
                                             sample_limit=sample_limit, 
                                             n_predictions=n_predictions,
@@ -198,12 +186,12 @@ class TestPipeline():
         n_features = self.specs_handler.get_n_features()
         
         # Compute equivalence classes from the decision tree
-        test_tree = TestTree(dtree, self.specs_handler, logger = self.logger)
-        eqclassobj = EquivalenceClassesHandler(test_tree, minmax_specs, n_features, logger = self.logger)
+        test_tree = TestTree(dtree, self.specs_handler)
+        eqclassobj = EquivalenceClassesHandler(test_tree, minmax_specs, n_features)
         self.eqclasses = eqclassobj.get_equivalence_classes()
         
         # Generate test inputs based on equivalence classes and coverage criteria
-        testgenobj = TestGenerator(self.eqclasses, type_specs, logger = self.logger)
+        testgenobj = TestGenerator(self.eqclasses, type_specs)
         self.testinputs = testgenobj.generate_testinputs(test_coverage_criterium,
                                                        eqclassobj.eqclass_prio,
                                                        n_testinputs,
@@ -334,8 +322,7 @@ class TestPipeline():
                 - 5 → Hoeffding tree
                 Default: [1, 2, 3, 4]
         """
-        if self.logger:
-            self.logger.log_debug(f"Printing: {print_option}")
+        logger.info(f"Printing: {print_option}")
         if 1 in print_option:
             self._print_eqclasses()
         if 2 in print_option:

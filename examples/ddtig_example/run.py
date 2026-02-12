@@ -81,7 +81,7 @@ def generate_test_inputs() -> pl.DataFrame:
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
-    testpipeline = TestPipeline(model_file, test_reqs, dataset=df, log=False)
+    testpipeline = TestPipeline(model_file, test_reqs, dataset=df)
     test_inputs = testpipeline.execute()
 
     # TODO (optional): Uncomment to save all intermediate results and outputs to files
