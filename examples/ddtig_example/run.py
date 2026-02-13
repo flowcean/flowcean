@@ -7,6 +7,7 @@ import polars as pl
 from flowcean.torch import LightningLearner, MultilayerPerceptron
 from flowcean.testing.generator.ddtig import TestPipeline, ModelHandler
 import os
+import logging
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -16,6 +17,7 @@ dataset = "dataset/regression/BodyFat.csv"
 
 # TODO (optional): Adjust the parameters in this file to define the expected test requirements.
 test_reqs_file = "test_reqs.json"
+logging.basicConfig(level=logging.DEBUG)
 
 def construct_data_driven_model():
     '''
@@ -81,7 +83,7 @@ def generate_test_inputs() -> pl.DataFrame:
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
-    testpipeline = TestPipeline(model_file, test_reqs, dataset=df)
+    testpipeline = TestPipeline(model_file, test_reqs, dataset=df, n_testinputs=1000, test_coverage_criterium="dtc")
     test_inputs = testpipeline.execute()
 
     # TODO (optional): Uncomment to save all intermediate results and outputs to files

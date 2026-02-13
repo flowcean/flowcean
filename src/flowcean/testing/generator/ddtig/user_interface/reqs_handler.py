@@ -21,7 +21,7 @@ class RequirementsHandler():
     """
 
     # Parameters expected to be of type int
-    int_params = ["n_testinputs", "sample_limit", "n_predictions", "max_depth"]
+    int_params = ["sample_limit", "n_predictions", "max_depth"]
 
     # Parameters expected to be of type float
     float_params = ["epsilon", "performance_threshold"]
@@ -65,11 +65,6 @@ class RequirementsHandler():
                 raise ValueError(f"Invalid JSON in requirements file: {e}") from e
             except Exception as e:
                 raise RuntimeError(f"Failed to load requirements file: {e}") from e
-
-        # Validate presence of mandatory parameters
-        for must_param in self.must_params:
-            if must_param not in self.requirements:
-                raise KeyError(f"Missing required parameter: '{must_param}'") 
 
         # Validate integer parameters
         for int_param in self.int_params:

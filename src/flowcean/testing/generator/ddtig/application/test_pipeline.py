@@ -76,25 +76,30 @@ class TestPipeline():
     def __init__(
         self,
         model_file: Path | BinaryIO,
-        reqs_file: Path | TextIO,
+        reqs_file: Path | TextIO | None = None,
         dataset: pl.DataFrame | None = None,
         specs_file: Path | TextIO | None = None,
         classification: bool = False,
+        n_testinputs: int | None = None,
+        test_coverage_criterium: str | None = None,
     ) -> None:
         """
         Initializes the TestPipeline.
 
         Args:
             model_file : File containing the Flowcean model.
-            reqs_file : File containing the test requirements.
+            reqs_file (optional): File containing the test requirements.
             dataset (optional) : Original training dataset. Required if specs_file is not provided.
             specs_file (optional) : File containing system specifications. Required if dataset is not provided.
             classification (optional) : Whether the task is classification.
-            log (optional) : Whether to enable logging.
-            log_file (optional): Path to store the log file.
+            n_testinputs (optional) : Total number of test inputs to generate. Required if not specified in reqs_file.
+            test_coverage_criterium (optional) : Strategy for test coverage (e.g., "bva" or "dtc"). Required if not specified in reqs_file.
         """
         self.model_handler = ModelHandler(model_file)
         self.model = self.model_handler.get_ml_model()
+        if test_coverage_criterium is not None and test_coverage_criterium not in ["bva", "dtc"]:
+            raise ValueError("Invalid test coverage criterium. Expected 'bva' or 'dtc'.")
+        
         if (type(self.model) != DecisionTreeRegressor and 
             type(self.model) != DecisionTreeClassifier and 
             dataset is None):
@@ -103,11 +108,16 @@ class TestPipeline():
             raise ValueError("Missing required parameter: 'dataset' or 'specs_file'")
         self.dataset = dataset 
         self.specs_handler = SystemSpecsHandler(data = dataset, specs_file = specs_file)
-        reqs_handler = RequirementsHandler(reqs_file)
-        self.requirements = reqs_handler.requirements
+        if reqs_file is not None:
+            reqs_handler = RequirementsHandler(reqs_file)
+            self.requirements = reqs_handler.requirements
+        else:
+            self.requirements = {}
         self.feature_names = self.specs_handler.extract_feature_names()
         self.hoeffding_tree = None
         self.classification = classification
+        self.test_coverage_criterium = test_coverage_criterium
+        self.n_testinputs = n_testinputs
 
 
     def modify_reqs(self, reqs_file: Path | TextIO) -> None:
@@ -163,6 +173,8 @@ class TestPipeline():
         Returns:
             Executable test inputs formatted for Flowcean.
         """
+        logger.debug(f"epsilon: {epsilon}")
+        logger.debug(f"n_testinputs: {n_testinputs}")
         if not isinstance(self.model, (DecisionTreeRegressor, DecisionTreeClassifier)):
             # Generate Hoeffding tree only if it hasn't been created yet
             if self.hoeffding_tree is None:
@@ -214,7 +226,25 @@ class TestPipeline():
         Returns:
             Executable test inputs formatted for Flowcean.
         """
-        return self._execute(**self.requirements)
+        reqs = dict(self.requirements)
+        if self.test_coverage_criterium is None and reqs.get("test_coverage_criterium") is None:
+            raise ValueError("Missing required parameter: 'test_coverage_criterium'")
+        
+        if self.n_testinputs is None and reqs.get("n_testinputs") is None:
+            raise ValueError("Missing required parameter: 'n_testinputs'")
+        if self.test_coverage_criterium is None:
+            self.test_coverage_criterium = reqs.get("test_coverage_criterium")
+        if self.n_testinputs is None:
+            self.n_testinputs = reqs.get("n_testinputs")
+
+        reqs.pop("test_coverage_criterium", None)
+        reqs.pop("n_testinputs", None)
+
+        return self._execute(
+            test_coverage_criterium=self.test_coverage_criterium,
+            n_testinputs=self.n_testinputs,
+            **reqs,
+        )
     
 
     # Print equivalence classes with test input counts to a text file
