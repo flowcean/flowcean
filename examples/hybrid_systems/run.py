@@ -15,9 +15,9 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 try:
-    from .benchmarks import BenchmarkSpec, all_specs
+    from .benchmarks import BenchmarkSpec, all_specs, turbine_specs
 except ImportError:
-    from benchmarks import BenchmarkSpec, all_specs
+    from benchmarks import BenchmarkSpec, all_specs, turbine_specs
 
 from flowcean.ode import Trace, plot_trace, simulate
 
@@ -62,6 +62,7 @@ def main() -> None:
     output_path = Path("outputs") / "benchmarks.png"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     print("Hybrid systems benchmark gallery")
+    specs = list(turbine_specs())   #TODO merge
 
     cols = 3
     rows = (len(specs) + cols - 1) // cols
