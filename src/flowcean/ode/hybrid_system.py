@@ -6,9 +6,11 @@ from dataclasses import dataclass, field
 import numpy as np
 
 State = np.ndarray
-FlowFn = Callable[[float, State, Mapping[str, float]], State]
-GuardFn = Callable[[float, State, Mapping[str, float]], float]
-ResetFn = Callable[[float, State, Mapping[str, float]], State]
+Input = np.ndarray
+InputStream = Callable[[float], Input]
+FlowFn = Callable[[float, State, Mapping[str, float], InputStream], State]
+GuardFn = Callable[[float, State, Mapping[str, float], InputStream], float]
+ResetFn = Callable[[float, State, Mapping[str, float], InputStream], State]
 
 
 @dataclass(frozen=True)
@@ -122,6 +124,7 @@ class Trace:
     x: np.ndarray
     mode: np.ndarray
     events: Sequence[Event]
+    u: np.ndarray | None = None
 
     def as_dict(self) -> dict[str, object]:
         """Return a dictionary view of the trace."""
@@ -130,13 +133,5 @@ class Trace:
             "x": self.x,
             "mode": self.mode,
             "events": self.events,
+            "u": self.u,
         }
-
-
-def ensure_state(state: Iterable[float]) -> State:
-    """Validate and coerce a state vector into a 1D array."""
-    array = np.asarray(state, dtype=float)
-    if array.ndim != 1:
-        message = "State must be a 1D array."
-        raise ValueError(message)
-    return array

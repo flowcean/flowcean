@@ -4,7 +4,14 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Reset, Transition
+from flowcean.ode import (
+    Guard,
+    HybridSystem,
+    InputStream,
+    Mode,
+    Reset,
+    Transition,
+)
 
 MIN_MODES = 2
 MIN_DIMENSION = 1
@@ -25,6 +32,7 @@ def _make_flow(dimension: int, matrix: np.ndarray) -> Mode:
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         x = state[:dimension]
         clock = state[-1]
@@ -38,6 +46,7 @@ def _guard_clock(
     _: float,
     state: np.ndarray,
     params: Mapping[str, float],
+    _input: InputStream,
 ) -> float:
     return state[-1] - params["dwell_time"]
 
@@ -46,6 +55,7 @@ def _reset_clock(
     _: float,
     state: np.ndarray,
     __: Mapping[str, float],
+    _input: InputStream,
 ) -> np.ndarray:
     updated = state.copy()
     updated[-1] = 0.0

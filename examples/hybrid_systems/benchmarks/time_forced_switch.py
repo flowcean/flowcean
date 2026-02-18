@@ -4,7 +4,14 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Reset, Transition
+from flowcean.ode import (
+    Guard,
+    HybridSystem,
+    InputStream,
+    Mode,
+    Reset,
+    Transition,
+)
 
 STATE_DIM_NO_CLOCK = 2
 
@@ -30,6 +37,7 @@ def time_forced_switch(
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         x1, x2, clock = state
         return np.array([-2.0 * x1, -1.0 * x2, 1.0 + 0.0 * clock], dtype=float)
@@ -38,6 +46,7 @@ def time_forced_switch(
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         x1, x2, clock = state
         return np.array([-0.5 * x1, -0.2 * x2, 1.0 + 0.0 * clock], dtype=float)
@@ -46,6 +55,7 @@ def time_forced_switch(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[2] - params["dwell_time"]
 
@@ -53,6 +63,7 @@ def time_forced_switch(
         _: float,
         state: np.ndarray,
         __: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         updated = state.copy()
         updated[2] = 0.0

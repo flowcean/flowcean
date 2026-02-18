@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def time_varying_guard(
@@ -33,6 +33,7 @@ def time_varying_guard(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return np.array(
             [
@@ -46,6 +47,7 @@ def time_varying_guard(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return np.array(
             [
@@ -58,18 +60,20 @@ def time_varying_guard(
     def guard_right(
         t: float,
         state: np.ndarray,
-        params: Mapping[str, float],
+        _params: Mapping[str, float],
+        input_stream: InputStream,
     ) -> float:
-        threshold = params["amplitude"] * np.sin(params["frequency"] * t)
-        return state[0] - (threshold + 0.5 * params["hysteresis"])
+        threshold = float(input_stream(t)[0])
+        return state[0] - (threshold + 0.5 * _params["hysteresis"])
 
     def guard_left(
         t: float,
         state: np.ndarray,
-        params: Mapping[str, float],
+        _params: Mapping[str, float],
+        input_stream: InputStream,
     ) -> float:
-        threshold = params["amplitude"] * np.sin(params["frequency"] * t)
-        return state[0] - (threshold - 0.5 * params["hysteresis"])
+        threshold = float(input_stream(t)[0])
+        return state[0] - (threshold - 0.5 * _params["hysteresis"])
 
     left = Mode(name="left", flow=flow_left)
     right = Mode(name="right", flow=flow_right)

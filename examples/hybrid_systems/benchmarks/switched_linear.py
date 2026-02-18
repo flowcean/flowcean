@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def switched_linear(
@@ -33,6 +33,7 @@ def switched_linear(
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return a_on @ state
 
@@ -40,6 +41,7 @@ def switched_linear(
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return a_off @ state
 
@@ -47,6 +49,7 @@ def switched_linear(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["threshold"]
 
@@ -54,6 +57,7 @@ def switched_linear(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["threshold"]
 

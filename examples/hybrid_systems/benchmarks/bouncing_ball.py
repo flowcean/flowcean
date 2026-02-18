@@ -4,7 +4,14 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Reset, Transition
+from flowcean.ode import (
+    Guard,
+    HybridSystem,
+    InputStream,
+    Mode,
+    Reset,
+    Transition,
+)
 
 
 def bouncing_ball(
@@ -27,6 +34,7 @@ def bouncing_ball(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         _height, velocity = state
         return np.array([velocity, -params["gravity"]], dtype=float)
@@ -35,6 +43,7 @@ def bouncing_ball(
         _: float,
         state: np.ndarray,
         __: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0]
 
@@ -42,6 +51,7 @@ def bouncing_ball(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         height, velocity = state
         return np.array(

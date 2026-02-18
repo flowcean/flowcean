@@ -3,7 +3,9 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-from flowcean.ode import HybridSystem
+import numpy as np
+
+from flowcean.ode import HybridSystem, InputStream
 
 from .bouncing_ball import bouncing_ball
 from .hybrid_oscillator import hybrid_oscillator
@@ -28,6 +30,22 @@ class BenchmarkSpec:
     tags: tuple[str, ...]
     description: str
     t_span: tuple[float, float]
+    input_stream: InputStream | None = None
+
+
+def _thermostat_input_stream(t: float) -> np.ndarray:
+    target = 22.0 + 0.8 * np.sin(0.7 * t)
+    return np.array([target], dtype=float)
+
+
+def _time_guard_input_stream(t: float) -> np.ndarray:
+    value = 0.5 * np.sin(t) + 0.15 * np.sin(2.3 * t)
+    return np.array([value], dtype=float)
+
+
+def _impact_input_stream(t: float) -> np.ndarray:
+    value = 0.5 * np.sin(1.5 * t) + 0.2 * np.sin(0.2 * t)
+    return np.array([value], dtype=float)
 
 
 def registry() -> dict[str, BenchmarkSpec]:
@@ -46,6 +64,7 @@ def registry() -> dict[str, BenchmarkSpec]:
             tags=("hysteresis", "threshold", "switching"),
             description="Two-mode thermostat with temperature thresholds.",
             t_span=(0.0, 10.0),
+            input_stream=_thermostat_input_stream,
         ),
         BenchmarkSpec(
             name="Hybrid Oscillator",
@@ -74,6 +93,7 @@ def registry() -> dict[str, BenchmarkSpec]:
             tags=("time", "guard", "switching"),
             description="Time-varying guard surface induces switching.",
             t_span=(0.0, 20.0),
+            input_stream=_time_guard_input_stream,
         ),
         BenchmarkSpec(
             name="Time-Forced Switch",
@@ -95,6 +115,7 @@ def registry() -> dict[str, BenchmarkSpec]:
             tags=("impact", "time", "reset"),
             description="Oscillator with periodic forcing and impacts.",
             t_span=(0.0, 20.0),
+            input_stream=_impact_input_stream,
         ),
         BenchmarkSpec(
             name="PID-Controlled Plant",

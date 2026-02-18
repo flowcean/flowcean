@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def hybrid_oscillator(
@@ -29,6 +29,7 @@ def hybrid_oscillator(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         position, velocity = state
         return np.array(
@@ -43,6 +44,7 @@ def hybrid_oscillator(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         position, velocity = state
         return np.array(
@@ -57,6 +59,7 @@ def hybrid_oscillator(
         _: float,
         state: np.ndarray,
         __: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0]
 
@@ -64,6 +67,7 @@ def hybrid_oscillator(
         _: float,
         state: np.ndarray,
         __: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0]
 

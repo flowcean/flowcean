@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def tank_valves(
@@ -52,6 +52,7 @@ def tank_valves(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         _level_1, _level_2 = state
         inter_flow = _inter_tank_flow(state, params)
@@ -65,6 +66,7 @@ def tank_valves(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         _level_1, _level_2 = state
         dlevel_1 = (params["inflow"] - params["outflow_1"]) / params["area_1"]
@@ -75,6 +77,7 @@ def tank_valves(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["high_level"]
 
@@ -82,6 +85,7 @@ def tank_valves(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["low_level"]
 

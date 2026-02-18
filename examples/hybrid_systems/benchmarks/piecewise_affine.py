@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def piecewise_affine(
@@ -41,6 +41,7 @@ def piecewise_affine(
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return a_left @ state + b_left
 
@@ -48,6 +49,7 @@ def piecewise_affine(
         _: float,
         state: np.ndarray,
         _params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return a_right @ state + b_right
 
@@ -55,6 +57,7 @@ def piecewise_affine(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["threshold"]
 
@@ -62,6 +65,7 @@ def piecewise_affine(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["threshold"]
 

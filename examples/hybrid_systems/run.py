@@ -23,7 +23,11 @@ def main() -> None:
     axes_list = axes.flatten()
 
     for ax, spec in zip(axes_list, specs, strict=False):
-        trace = simulate(spec.factory(), t_span=spec.t_span)
+        trace = simulate(
+            spec.factory(),
+            t_span=spec.t_span,
+            input_stream=spec.input_stream,
+        )
         plot_trace(
             trace,
             show_modes=True,

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def relay_integrator(
@@ -29,6 +29,7 @@ def relay_integrator(
         _: float,
         __: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return np.array([params["rate"]], dtype=float)
 
@@ -36,6 +37,7 @@ def relay_integrator(
         _: float,
         __: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         return np.array([-params["rate"]], dtype=float)
 
@@ -43,6 +45,7 @@ def relay_integrator(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["upper"]
 
@@ -50,6 +53,7 @@ def relay_integrator(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> float:
         return state[0] - params["lower"]
 

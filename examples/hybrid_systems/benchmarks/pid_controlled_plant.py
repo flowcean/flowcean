@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def _setpoint(t: float, params: Mapping[str, float]) -> float:
@@ -53,6 +53,7 @@ def _flow_linear(
     t: float,
     state: np.ndarray,
     params: Mapping[str, float],
+    _input: InputStream,
 ) -> np.ndarray:
     return _plant_flow(t, state, params, clamp=None)
 
@@ -61,6 +62,7 @@ def _flow_sat_high(
     t: float,
     state: np.ndarray,
     params: Mapping[str, float],
+    _input: InputStream,
 ) -> np.ndarray:
     return _plant_flow(t, state, params, clamp=params["u_max"])
 
@@ -69,6 +71,7 @@ def _flow_sat_low(
     t: float,
     state: np.ndarray,
     params: Mapping[str, float],
+    _input: InputStream,
 ) -> np.ndarray:
     return _plant_flow(t, state, params, clamp=params["u_min"])
 
@@ -77,6 +80,7 @@ def _guard_high(
     t: float,
     state: np.ndarray,
     params: Mapping[str, float],
+    _input: InputStream,
 ) -> float:
     return _control_unclamped(t, state, params) - params["u_max"]
 
@@ -85,6 +89,7 @@ def _guard_low(
     t: float,
     state: np.ndarray,
     params: Mapping[str, float],
+    _input: InputStream,
 ) -> float:
     return _control_unclamped(t, state, params) - params["u_min"]
 

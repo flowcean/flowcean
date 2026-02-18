@@ -4,15 +4,14 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Transition
+from flowcean.ode import Guard, HybridSystem, InputStream, Mode, Transition
 
 
 def thermostat(
     ambient: float = 20.0,
     heating_power: float = 5.0,
     cooling_rate: float = 0.3,
-    t_low: float = 21.0,
-    t_high: float = 23.0,
+    hysteresis: float = 2.0,
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
     """Create a thermostat benchmark system.
@@ -21,8 +20,7 @@ def thermostat(
         ambient: Ambient temperature.
         heating_power: Heating input strength.
         cooling_rate: Cooling coefficient.
-        t_low: Lower switching threshold.
-        t_high: Upper switching threshold.
+        hysteresis: Temperature hysteresis band width.
         initial_state: Optional initial temperature.
 
     Returns:
@@ -33,6 +31,7 @@ def thermostat(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input_stream: InputStream,
     ) -> np.ndarray:
         temperature = state[0]
         return np.array(
@@ -46,6 +45,7 @@ def thermostat(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         temperature = state[0]
         return np.array(
@@ -55,18 +55,22 @@ def thermostat(
         )
 
     def guard_high(
-        _: float,
+        t: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        input_stream: InputStream,
     ) -> float:
-        return state[0] - params["t_high"]
+        target = float(input_stream(t)[0])
+        return state[0] - (target + 0.5 * params["hysteresis"])
 
     def guard_low(
-        _: float,
+        t: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        input_stream: InputStream,
     ) -> float:
-        return state[0] - params["t_low"]
+        target = float(input_stream(t)[0])
+        return state[0] - (target - 0.5 * params["hysteresis"])
 
     heating_mode = Mode(name="heating", flow=heating)
     cooling_mode = Mode(name="cooling", flow=cooling)
@@ -99,7 +103,6 @@ def thermostat(
             "ambient": ambient,
             "heating_power": heating_power,
             "cooling_rate": cooling_rate,
-            "t_low": t_low,
-            "t_high": t_high,
+            "hysteresis": hysteresis,
         },
     )

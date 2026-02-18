@@ -1,6 +1,7 @@
 """Hybrid system simulation utilities."""
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from typing import NamedTuple
 
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -9,11 +10,22 @@ from .hybrid_system import (
     Event,
     GuardFn,
     HybridSystem,
+    Input,
+    InputStream,
     Mode,
+    State,
     Trace,
     Transition,
-    ensure_state,
 )
+
+
+def ensure_state(state: Iterable[float]) -> State:
+    """Validate and coerce a state vector into a 1D array."""
+    array = np.asarray(state, dtype=float)
+    if array.ndim != 1:
+        message = "State must be a 1D array."
+        raise ValueError(message)
+    return array
 
 
 class _EventFn:
@@ -24,22 +36,34 @@ class _EventFn:
         guard: GuardFn,
         params: Mapping[str, float],
         direction: int,
+        input_stream: InputStream,
     ) -> None:
         self._guard = guard
         self._params = params
+        self._input_stream = input_stream
         self.direction = direction
         self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
-        return self._guard(t, y, self._params)
+        return self._guard(t, y, self._params, self._input_stream)
 
 
-def simulate(  # noqa: C901, PLR0915
+class _RolloutResult(NamedTuple):
+    """Sampled result for dense rollout."""
+
+    t: np.ndarray
+    x: np.ndarray
+    mode: np.ndarray
+
+
+def simulate(  # noqa: C901, PLR0912, PLR0915
     system: HybridSystem,
     t_span: tuple[float, float],
     x0: Iterable[float] | None = None,
     mode0: str | None = None,
     *,
+    input_stream: InputStream | None = None,
+    capture_inputs: bool | None = None,
     max_jumps: int = 256,
     rtol: float = 1e-7,
     atol: float = 1e-9,
@@ -55,6 +79,9 @@ def simulate(  # noqa: C901, PLR0915
         t_span: Start and end time for integration.
         x0: Optional initial state override.
         mode0: Optional initial mode override.
+        input_stream: Optional input stream accessor for callbacks.
+        capture_inputs: Input capture mode. If ``None``, capture iff an
+            input stream is provided.
         max_jumps: Maximum number of transitions allowed.
         rtol: Relative tolerance for the solver.
         atol: Absolute tolerance for the solver.
@@ -73,6 +100,11 @@ def simulate(  # noqa: C901, PLR0915
 
     state = ensure_state(x0 if x0 is not None else system.initial_state)
     mode = system.modes[start_mode]
+    effective_input_stream = input_stream or _missing_input_stream
+    should_capture = _resolve_capture_inputs(
+        capture_inputs=capture_inputs,
+        input_stream=input_stream,
+    )
 
     t_segments: list[np.ndarray] = []
     x_segments: list[np.ndarray] = []
@@ -94,10 +126,11 @@ def simulate(  # noqa: C901, PLR0915
             transitions,
             system.params,
             mode.params,
+            effective_input_stream,
         )
 
         solve_kwargs = {
-            "fun": _wrap_flow(mode, system.params),
+            "fun": _wrap_flow(mode, system.params, effective_input_stream),
             "t_span": (t_current, t_final),
             "y0": state,
             "events": event_fns if event_fns else None,
@@ -140,6 +173,7 @@ def simulate(  # noqa: C901, PLR0915
                 event_time,
                 event_state,
                 transition.reset.params,
+                effective_input_stream,
             )
             reset_name = transition.reset.name
 
@@ -169,7 +203,19 @@ def simulate(  # noqa: C901, PLR0915
         t_all = _concat_segments(t_segments)
         x_all = _concat_segments(x_segments)
         mode_all = _concat_segments(mode_segments)
-        return Trace(t=t_all, x=x_all, mode=mode_all, events=tuple(events))
+        u_all = None
+        if should_capture:
+            if input_stream is None:
+                message = "Internal error: expected input_stream for capture."
+                raise RuntimeError(message)
+            u_all = _capture_inputs(t_all, input_stream)
+        return Trace(
+            t=t_all,
+            x=x_all,
+            mode=mode_all,
+            events=tuple(events),
+            u=u_all,
+        )
 
     rolled = _rollout_segments(
         sample_grid,
@@ -178,11 +224,18 @@ def simulate(  # noqa: C901, PLR0915
         mode_segments,
         sol_segments,
     )
+    u_all = None
+    if should_capture:
+        if input_stream is None:
+            message = "Internal error: expected input_stream for capture."
+            raise RuntimeError(message)
+        u_all = _capture_inputs(rolled.t, input_stream)
     return Trace(
-        t=rolled[0],
-        x=rolled[1],
-        mode=rolled[2],
+        t=rolled.t,
+        x=rolled.x,
+        mode=rolled.mode,
         events=tuple(events),
+        u=u_all,
     )
 
 
@@ -191,6 +244,8 @@ def generate_traces(
     t_span: tuple[float, float],
     initial_states: Iterable[Iterable[float]],
     *,
+    input_stream: InputStream | None = None,
+    capture_inputs: bool | None = None,
     max_jumps: int = 256,
     rtol: float = 1e-7,
     atol: float = 1e-9,
@@ -199,12 +254,17 @@ def generate_traces(
     sample_times: Iterable[float] | None = None,
     sample_dt: float | None = None,
 ) -> list[Trace]:
-    """Simulate a batch of traces for a set of initial states."""
+    """Simulate a batch of traces for a set of initial states.
+
+    The input stream and capture semantics match :func:`simulate`.
+    """
     return [
         simulate(
             system,
             t_span,
             x0=state,
+            input_stream=input_stream,
+            capture_inputs=capture_inputs,
             max_jumps=max_jumps,
             rtol=rtol,
             atol=atol,
@@ -220,11 +280,17 @@ def generate_traces(
 def _wrap_flow(
     mode: Mode,
     system_params: Mapping[str, float],
+    input_stream: InputStream,
 ) -> Callable[[float, np.ndarray], np.ndarray]:
     """Bind mode and system parameters into a solver-compatible function."""
 
     def flow(t: float, y: np.ndarray) -> np.ndarray:
-        return mode.flow(t, y, {**system_params, **mode.params})
+        return mode.flow(
+            t,
+            y,
+            {**system_params, **mode.params},
+            input_stream,
+        )
 
     return flow
 
@@ -233,6 +299,7 @@ def _build_event_functions(
     transitions: Sequence[Transition],
     system_params: Mapping[str, float],
     mode_params: Mapping[str, float],
+    input_stream: InputStream,
 ) -> list[_EventFn]:
     """Create SciPy-compatible event functions for transitions."""
     event_functions: list[_EventFn] = []
@@ -240,7 +307,14 @@ def _build_event_functions(
         guard = transition.guard
 
         params = {**system_params, **mode_params}
-        event_functions.append(_EventFn(guard.fn, params, guard.direction))
+        event_functions.append(
+            _EventFn(
+                guard.fn,
+                params,
+                guard.direction,
+                input_stream,
+            ),
+        )
     return event_functions
 
 
@@ -309,18 +383,76 @@ def _prepare_sample_times(
     return times
 
 
+def _capture_inputs(
+    times: np.ndarray,
+    input_stream: InputStream,
+) -> np.ndarray:
+    values: list[np.ndarray] = []
+    input_dim: int | None = None
+    for time in times:
+        value = _coerce_input(input_stream(float(time)))
+        if input_dim is None:
+            input_dim = value.shape[0]
+        elif value.shape[0] != input_dim:
+            message = "Input stream dimension changed during simulation."
+            raise ValueError(message)
+        values.append(value)
+
+    if not values:
+        return np.empty((0, 0), dtype=float)
+
+    return np.vstack(values)
+
+
+def _coerce_input(candidate: object) -> np.ndarray:
+    try:
+        values = np.asarray(candidate, dtype=float)
+    except (TypeError, ValueError) as error:
+        message = "Input stream must return numeric values."
+        raise ValueError(message) from error
+
+    if values.ndim != 1:
+        message = "Input stream must return a 1D array."
+        raise ValueError(message)
+
+    return values
+
+
+def _missing_input_stream(time: float) -> Input:
+    message = (
+        "input_stream is required for this system; callback accessed input "
+        f"at t={time}."
+    )
+    raise ValueError(message)
+
+
+def _resolve_capture_inputs(
+    *,
+    capture_inputs: bool | None,
+    input_stream: InputStream | None,
+) -> bool:
+    if capture_inputs is None:
+        return input_stream is not None
+    if capture_inputs:
+        if input_stream is None:
+            message = "capture_inputs=True requires an input_stream."
+            raise ValueError(message)
+        return True
+    return False
+
+
 def _rollout_segments(
     sample_times: np.ndarray,
     t_segments: Sequence[np.ndarray],
     x_segments: Sequence[np.ndarray],
     mode_segments: Sequence[np.ndarray],
     sol_segments: Sequence[Callable[[np.ndarray], np.ndarray] | None],
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> _RolloutResult:
     if sample_times.size == 0:
-        return (
-            sample_times,
-            np.empty((0, 0), dtype=float),
-            np.empty((0,), dtype=object),
+        return _RolloutResult(
+            t=sample_times,
+            x=np.empty((0, 0), dtype=float),
+            mode=np.empty((0,), dtype=object),
         )
 
     sampled_t: list[np.ndarray] = []
@@ -348,16 +480,16 @@ def _rollout_segments(
         sampled_mode.append(np.full(times.shape, mode_seg[0], dtype=object))
 
     if not sampled_t:
-        return (
-            np.array([], dtype=float),
-            np.empty((0, 0), dtype=float),
-            np.empty((0,), dtype=object),
+        return _RolloutResult(
+            t=np.array([], dtype=float),
+            x=np.empty((0, 0), dtype=float),
+            mode=np.empty((0,), dtype=object),
         )
 
-    return (
-        np.concatenate(sampled_t),
-        np.concatenate(sampled_x),
-        np.concatenate(sampled_mode),
+    return _RolloutResult(
+        t=np.concatenate(sampled_t),
+        x=np.concatenate(sampled_x),
+        mode=np.concatenate(sampled_mode),
     )
 
 

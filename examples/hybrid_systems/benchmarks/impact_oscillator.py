@@ -4,7 +4,14 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from flowcean.ode import Guard, HybridSystem, Mode, Reset, Transition
+from flowcean.ode import (
+    Guard,
+    HybridSystem,
+    InputStream,
+    Mode,
+    Reset,
+    Transition,
+)
 
 
 def impact_oscillator(
@@ -33,22 +40,29 @@ def impact_oscillator(
         t: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        input_stream: InputStream,
     ) -> np.ndarray:
         position, velocity = state
         accel = (
             -params["stiffness"] * position
             - params["damping"] * velocity
-            + params["forcing"] * np.sin(params["forcing_freq"] * t)
+            + float(input_stream(t)[0])
         )
         return np.array([velocity, accel], dtype=float)
 
-    def guard(_: float, state: np.ndarray, __: Mapping[str, float]) -> float:
+    def guard(
+        _: float,
+        state: np.ndarray,
+        __: Mapping[str, float],
+        _input: InputStream,
+    ) -> float:
         return state[0]
 
     def reset(
         _: float,
         state: np.ndarray,
         params: Mapping[str, float],
+        _input: InputStream,
     ) -> np.ndarray:
         position, velocity = state
         return np.array(
