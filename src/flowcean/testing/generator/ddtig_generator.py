@@ -1,11 +1,12 @@
 import polars as pl
 
 from pathlib import Path
-from typing import BinaryIO, TextIO
+from typing import TextIO, Iterator
 
 from flowcean.testing.generator.ddtig.application.test_pipeline import TestPipeline
 from .generator import TestcaseGenerator
 from flowcean.core.data import Data
+from flowcean.core import Model
 from flowcean.core.environment.incremental import Finished
 
 
@@ -15,13 +16,13 @@ class ddtigGenerator(TestcaseGenerator):
 
     data: pl.DataFrame
     count: int
-    _row_iter: object
+    _row_iter: Iterator
     _columns: list[str]
     _df: pl.DataFrame
 
     def __init__(
         self,
-        model_file: Path | BinaryIO,
+        model: Model,
         *,
         reqs_file: Path | TextIO,
         dataset: pl.DataFrame | None = None,
@@ -35,7 +36,7 @@ class ddtigGenerator(TestcaseGenerator):
         """Initialize the stochastic generator.
 
         Args:
-            model_file: Path to the trained Flowcean model file.
+            model: The trained Flowcean model.
             reqs_file: Path to the test requirements file.
             dataset: Optional Polars DataFrame containing the original dataset.
             specs_file: Path to a file containing feature specifications. If you provide a dataset containing system inputs and outputs that already encodes the necessary specifications, then you do not need to supply a separate system specification file.
@@ -45,7 +46,7 @@ class ddtigGenerator(TestcaseGenerator):
         self.n_testinputs = n_testinputs
 
         self.test_pipeline = TestPipeline(
-            model_file,
+            model,
             reqs_file,
             dataset=dataset,
             specs_file=specs_file,

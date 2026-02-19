@@ -133,15 +133,24 @@ class TestGenerator():
         return testinputs
     
     
-    # Computes the number of test inputs to generate per equivalence class.
+    # Computes the number of test inputs to generate per equivalence class fairly while maintaining the total number of test inputs.
     def _generate_n_testinputs_list(self,
                                    n_testinputs: int,
                                    eqclass_prio: list,
                                    inverse_alloc: bool) -> list:
-        n_testinputs_lst = []
-        for prio in eqclass_prio[:-1]:
-            n_testinputs_lst.append(round(n_testinputs*prio))
-        n_testinputs_lst.append(n_testinputs-sum(n_testinputs_lst))
+
+        exact_values = [n_testinputs * prio for prio in eqclass_prio]
+        n_testinputs_lst = [int(x) for x in exact_values]
+        
+        remainder = n_testinputs - sum(n_testinputs_lst)
+        
+        fractional_parts = [(i, x % 1) for i, x in enumerate(exact_values)]
+        fractional_parts.sort(key=lambda x: x[1], reverse=True)
+        
+
+        for i in range(int(remainder)):
+            index = fractional_parts[i][0]
+            n_testinputs_lst[index] += 1
         if inverse_alloc:
             n_testinputs_lst = reverse_list_by_value(n_testinputs_lst)
         return n_testinputs_lst

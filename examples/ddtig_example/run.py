@@ -78,12 +78,13 @@ def generate_test_inputs() -> pl.DataFrame:
     model_file = os.path.join(dirpath, "model.fml")
     csv_file = os.path.join(dirpath, dataset)
     df = pl.read_csv(csv_file)
+    model = Model.load(model_file)
 
     test_reqs = os.path.join(dirpath, test_reqs_file)
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
-    testpipeline = TestPipeline(model_file, test_reqs, dataset=df, n_testinputs=1000, test_coverage_criterium="dtc")
+    testpipeline = TestPipeline(model, test_reqs, dataset=df, n_testinputs=1000, test_coverage_criterium="dtc")
     test_inputs = testpipeline.execute()
 
     # TODO (optional): Uncomment to save all intermediate results and outputs to files
@@ -106,9 +107,9 @@ def execute_test_set(test_set: pl.DataFrame) -> pl.DataFrame:
         A Polars DataFrame containing test inputs and their predicted outputs.
     '''
     model_file = os.path.join(dirpath, "model.fml")
-
+    model = Model.load(model_file)
     # Predict outputs using the Flowcean model
-    y_preds = ModelHandler(model_file).get_model_prediction_as_lst(test_set)
+    y_preds = ModelHandler(model).get_model_prediction_as_lst(test_set)
 
     # Append predictions as the last column
     test_results = test_set.with_columns([

@@ -36,19 +36,19 @@ class TestCompiler():
         self.abst_testinputs = testinputs
 
     # Initializes a dictionary to store test inputs sorted by feature index.
-    def _init_input_dict(self) -> pl.DataFrame:
+    def _init_input_dict(self) -> dict:
         input_dict = dict()
         for feature in range(self.n_features):
             input_dict[str(feature)] = []
         return input_dict
 
-    def compute_executable_testinputs(self, feature_names: dict) -> pl.DataFrame:
+    def compute_executable_testinputs(self, feature_names: list) -> pl.DataFrame:
         """
         Converts abstract test inputs into a polars DataFrame for execution
         on Flowcean models.
 
         Args:
-            feature_names : Dictionary mapping feature indices to feature names.
+            feature_names : List of feature names in order of their indices.
 
         Returns:
             DataFrame where each column represents a feature

@@ -82,25 +82,27 @@ def generate_test_inputs() -> None:
     df = pl.read_csv(csv_file)
 
     test_reqs = os.path.join(dirpath, test_reqs_file)
+    model = Model.load(model_file)
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
     test_generator = ddtigGenerator(
-        model_file,
+        model,
         reqs_file=test_reqs,
         dataset=df,
         n_testinputs=1000,
         test_coverage_criterium="dtc"
     )
-    test_generator.save_excel("test_inputs.xlsx")
+    print(test_generator.test_pipeline.n_testinputs_lst)
+    test_generator.save_csv("test_inputs.csv")
     test_generator.reset()
 
 
     predicate = PolarsPredicate(
-        pl.col("Age") > 1,
+        (100>pl.col("Age")) & (pl.col("Age") > 1),
     )
 
-    model = Model.load(model_file)
+    
 
     test_model(
         model,
@@ -119,31 +121,6 @@ def generate_test_inputs() -> None:
     return None
 
 
-def execute_test_set(test_set: pl.DataFrame) -> pl.DataFrame:
-    '''
-    Executes a test set on a Flowcean model.
-
-    Args:
-        test_set: The test set to execute as Polars DataFrame
-
-    Returns:
-        A Polars DataFrame containing test inputs and their predicted outputs.
-    '''
-    model_file = os.path.join(dirpath, "model.fml")
-
-    # Predict outputs using the Flowcean model
-    y_preds = ModelHandler(model_file).get_model_prediction_as_lst(test_set)
-
-    # Append predictions as the last column
-    test_results = test_set.with_columns([
-        pl.Series("preds", y_preds)
-    ])
-    
-    # TODO (optional): Uncomment to save the test results to a CSV file
-    test_results.write_csv(os.path.join(dirpath, "test_results.csv"))
-    
-    return test_results
-
 
 def main() -> None:
 
@@ -151,8 +128,7 @@ def main() -> None:
     construct_data_driven_model()
     
     test_set = generate_test_inputs()
-    #results = execute_test_set(test_set)
-    #print(results)
+
 
 if __name__ == "__main__":
     main()

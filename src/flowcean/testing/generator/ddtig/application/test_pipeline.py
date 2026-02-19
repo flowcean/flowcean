@@ -6,6 +6,7 @@ from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from tabulate import tabulate
 import yaml
 import pickle
+from flowcean.core import Model
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler, RequirementsHandler
 from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.domain import TestTree, TestGenerator, TestCompiler, EquivalenceClassesHandler, HoeffdingTree
@@ -75,7 +76,7 @@ class TestPipeline():
 
     def __init__(
         self,
-        model_file: Path | BinaryIO,
+        model: Model,
         reqs_file: Path | TextIO | None = None,
         dataset: pl.DataFrame | None = None,
         specs_file: Path | TextIO | None = None,
@@ -87,7 +88,7 @@ class TestPipeline():
         Initializes the TestPipeline.
 
         Args:
-            model_file : File containing the Flowcean model.
+            model: The trained Flowcean model.
             reqs_file (optional): File containing the test requirements.
             dataset (optional) : Original training dataset. Required if specs_file is not provided.
             specs_file (optional) : File containing system specifications. Required if dataset is not provided.
@@ -95,7 +96,7 @@ class TestPipeline():
             n_testinputs (optional) : Total number of test inputs to generate. Required if not specified in reqs_file.
             test_coverage_criterium (optional) : Strategy for test coverage (e.g., "bva" or "dtc"). Required if not specified in reqs_file.
         """
-        self.model_handler = ModelHandler(model_file)
+        self.model_handler = ModelHandler(model)
         self.model = self.model_handler.get_ml_model()
         if test_coverage_criterium is not None and test_coverage_criterium not in ["bva", "dtc"]:
             raise ValueError("Invalid test coverage criterium. Expected 'bva' or 'dtc'.")
@@ -221,7 +222,7 @@ class TestPipeline():
 
     def execute(self) -> pl.DataFrame:
         """
-        Wrapper around `_execute()` that uses the current test requirements.
+        Wrapper around `_execute()` that uses test requirements from either the requirements file or the arguments with arguments taking precedence over requirements file values.
 
         Returns:
             Executable test inputs formatted for Flowcean.

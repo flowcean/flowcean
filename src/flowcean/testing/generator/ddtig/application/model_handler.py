@@ -36,7 +36,7 @@ class ModelHandler():
 
     def __init__(
         self,
-        file: Path | str | BinaryIO,
+        model: Model,
     ) -> None:
         """
         Initializes the ModelHandler.
@@ -45,9 +45,7 @@ class ModelHandler():
             file : File containing the Flowcean model.
         """
         # Load the Flowcean model from the given file
-        file_ctx = open(file, "rb") if isinstance(file, (Path, str)) else nullcontext(file)
-        with file_ctx as f:
-            self.model = Model.load(f)
+        self.model = model
 
 
     def get_ml_model(self):

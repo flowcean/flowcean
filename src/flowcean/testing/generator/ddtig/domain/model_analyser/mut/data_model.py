@@ -1,6 +1,7 @@
 from __future__ import annotations
 import polars as pl
 import numpy as np
+from polars import DataFrame
 from sklearn.neighbors import KernelDensity
 from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
@@ -73,7 +74,7 @@ class DataModel():
 
     def _generate_samples(self,
                           n_samples: int,
-                          int_features: list = []) -> list:
+                          int_features: list = []) -> DataFrame:
         """
         Generates n random input samples for all features using KDE.
 
