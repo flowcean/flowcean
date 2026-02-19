@@ -9,6 +9,13 @@ from flowcean.ode import Guard, HybridSystem, Mode, Transition
 J_H     = 115926   # kgm^2                     Hub Inertia About Shaft Axis
 J_B     = 11776047 # kgm^2                     Second Mass Moment of Inertia (w.r.t. Root)
 J_G     = 534.116   # kgm^2                     Generator Inertia About High-Speed Shaft
+xt0 = 0.7452
+omega0 = 1.2671
+theta0 = 0.143
+mas=[]
+fas=[]
+ts_ratios = []
+
 
 def turbine(
     damping_pitch: float = 0.7,
@@ -19,7 +26,7 @@ def turbine(
     cTe: float = 19325.0,
     mTe: float = 480650.0,
     kTe: float = 1942400.0 ,
-    xT0: float = 0.7452 ,
+    xT0: float = xt0 ,
     # paper != matlab implementation (*vs/) (gearbox_ratio**2),
     inertia: float = J_H + 3*J_B + J_G *((1/97)**2), # gearbox_ratio: float = 1/97,
     initial_state: np.ndarray | None = None,
@@ -37,18 +44,23 @@ def turbine(
     Returns:
         HybridSystem with time-dependent guard surfaces.
     """
+    
+
     def tipspeed_ratio(omega, rotor_radius, wind_speed, dx):
-        return omega * rotor_radius / (wind_speed - dx)
+        ts_ratio = omega * rotor_radius / (wind_speed - dx)
+        return ts_ratio
 
     def Ma(rho, rotor_radius, theta, wind_speed, omega, dx):
         # calculate aerodynamic torque
         tipspeedratio = tipspeed_ratio(omega, rotor_radius, wind_speed, dx)
-        return 1/2 * rho * np.pi * rotor_radius**3 * cp(tipspeedratio, theta) / tipspeedratio * (wind_speed - dx)**2
+        ma = 1/2 * rho * np.pi * rotor_radius**3 * cp(tipspeedratio, theta) / tipspeedratio * (wind_speed - dx)**2
+        return ma
     
     def Fa(rho, rotor_radius, theta, wind_speed, omega, dx):
         # calculate aerodynamic force
         tipspeedratio = tipspeed_ratio(omega, rotor_radius, wind_speed, dx)
-        return 1/2 * rho * np.pi * rotor_radius**2 * c_thrust(tipspeedratio, theta) * (wind_speed - dx)**2
+        fa = 1/2 * rho * np.pi * rotor_radius**2 * c_thrust(tipspeedratio, theta) * (wind_speed - dx)**2
+        return fa
     
     def cp(tipspeed_ratio_val, theta):
         return 0.482
@@ -57,7 +69,7 @@ def turbine(
         return 0
 
     def flow_(
-        _: float,
+        time: float,
         state: np.ndarray, # omega, x, dx, theta, dtheta, target_torque, target_pitch
         params: Mapping[str, float],
     ) -> np.ndarray:
@@ -86,7 +98,7 @@ def turbine(
    
 
     if initial_state is None:
-        initial_state = np.array([122.0, 0, 0, 0.143, 0], dtype=float)
+        initial_state = np.array([omega0, xt0, 0, theta0, 0], dtype=float)
         # initial_state = np.array([120, 0, 0, 0.1, 0, 1000, 0.1], dtype=float)
 
     return HybridSystem(
