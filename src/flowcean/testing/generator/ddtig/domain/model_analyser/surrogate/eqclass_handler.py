@@ -38,7 +38,6 @@ class EquivalenceClassesHandler():
     """
 
     ROOT_INDEX = 0      # Root index of decision trees is always 0
-    eqclass_prio = []
 
 
     def __init__(
@@ -59,6 +58,7 @@ class EquivalenceClassesHandler():
         self.n_samples = test_tree.get_n_samples()
         self.minmax_values_specs = minmax_values_specs
         self.n_features = n_features
+        self.eqclass_prio = []
 
 
     # Initializes an empty equivalence class with None bounds.
@@ -177,6 +177,7 @@ class EquivalenceClassesHandler():
         Returns:
             List of formatted equivalence classes.
         """
+        self.eqclass_prio = []
         paths = self._collect_all_paths(self.ROOT_INDEX)
         equivalence_classes = self._extract_equivalence_classes(paths)
         equivalence_classes_formatted = self._format_equivalence_classes(equivalence_classes)

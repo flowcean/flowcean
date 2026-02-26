@@ -39,7 +39,7 @@ def construct_data_driven_model():
 
     # Create a regression tree using Flowcean
     # TODO (optional): Adjust "max_depth" to control the maximum depth of the decision tree
-    learner = RegressionTree(max_depth=7)
+    learner = RegressionTree(max_depth=7, random_state=42)
 
     # TODO (optional): To use a neural network instead, uncomment the block below,
     #                  and comment out other model definitions.

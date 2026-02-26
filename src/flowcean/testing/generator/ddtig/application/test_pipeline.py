@@ -4,7 +4,6 @@ from typing import Any, TextIO
 from typing import BinaryIO
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from tabulate import tabulate
-import yaml
 import pickle
 from flowcean.core import Model
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
@@ -85,6 +84,8 @@ class TestPipeline():
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
+        seed: int = 42,
+
         performance_threshold: float = 0.3,
         sample_limit: int = 50000,
         n_predictions: int = 50,
@@ -130,6 +131,7 @@ class TestPipeline():
         self.hoeffding_tree = None
         self.classification = classification
         self.inverse_alloc = inverse_alloc
+        self.seed = seed
         self.epsilon = epsilon
         self.performance_threshold = performance_threshold
         self.sample_limit = sample_limit
@@ -185,8 +187,9 @@ class TestPipeline():
         logger.debug(f"n_testinputs: {n_testinputs}")
         if not isinstance(self.model, (DecisionTreeRegressor, DecisionTreeClassifier)):
             # Generate Hoeffding tree only if it hasn't been created yet
+            logger.info("Training Hoeffding Tree surrogate model for black-box model...")
             if self.hoeffding_tree is None:
-                htree_obj = HoeffdingTree(self.dataset, self.model_handler, self.specs_handler)
+                htree_obj = HoeffdingTree(self.dataset, self.seed, self.model_handler, self.specs_handler)
                 dtree = htree_obj.train_tree(performance_threshold=performance_threshold, 
                                             sample_limit=sample_limit, 
                                             n_predictions=n_predictions,
@@ -198,6 +201,7 @@ class TestPipeline():
                 dtree = self.hoeffding_tree
         else:
             # Use the decision tree directly if the model is a tree-based one
+            logger.info("Using existing Decision Tree model for test input generation...")
             dtree = self.model.tree_
 
         # Extract specification details for equivalence class computation
@@ -212,7 +216,7 @@ class TestPipeline():
         self.eqclasses = eqclassobj.get_equivalence_classes()
         
         # Generate test inputs based on equivalence classes and coverage criteria
-        testgenobj = TestGenerator(self.eqclasses, type_specs)
+        testgenobj = TestGenerator(self.eqclasses, self.seed, type_specs)
         self.testinputs = testgenobj.generate_testinputs(test_coverage_criterium,
                                                        eqclassobj.eqclass_prio,
                                                        n_testinputs,

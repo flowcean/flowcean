@@ -38,6 +38,7 @@ class HoeffdingTree():
     def __init__(
         self,
         inputs: pl.DataFrame,
+        seed: int,
         model_handler: ModelHandler,
         specs_handler: SystemSpecsHandler,
     ) -> None:
@@ -46,12 +47,13 @@ class HoeffdingTree():
 
         Args:
             inputs : Original training dataset including target column.
+            seed : Random seed for reproducible synthetic sample generation.
             model_handler : Object used to generate predictions from the Flowcean model.
             specs_handler : Object containing feature specifications and metadata.
         """
         # Remove target column to isolate input features
         inputs = inputs.drop(inputs.columns[-1])
-        self.datamodel = DataModel(inputs, model_handler, specs_handler)
+        self.datamodel = DataModel(inputs, seed, model_handler, specs_handler)
 
         # Generate River-compatible samples using original data
         self.samples = self.datamodel.generate_dataset(original_data=True)

@@ -31,6 +31,8 @@ class ddtigGenerator(TestcaseGenerator):
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
+        seed: int = 42,
+
         performance_threshold: float = 0.3,
         sample_limit: int = 50000,
         n_predictions: int = 50,
@@ -69,6 +71,7 @@ class ddtigGenerator(TestcaseGenerator):
             test_coverage_criterium=test_coverage_criterium,
             inverse_alloc=inverse_alloc,
             epsilon=epsilon,
+            seed=seed,
             performance_threshold=performance_threshold,
             sample_limit=sample_limit,
             n_predictions=n_predictions,

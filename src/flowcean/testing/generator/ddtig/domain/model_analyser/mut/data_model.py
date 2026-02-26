@@ -38,6 +38,7 @@ class DataModel():
     def __init__(
         self,
         data: pl.DataFrame,
+        seed: int,
         model_handler: ModelHandler,
         specs_handler: SystemSpecsHandler
     ) -> None:
@@ -46,10 +47,12 @@ class DataModel():
 
         Args:
             data : Original training data used in the Flowcean model.
+            seed : Random seed for reproducibility.
             model_handler : ModelHandler object used to produce predictions.
             specs_handler : SystemSpecsHandler object storing system specifications.
         """
         self.data = data
+        self.seed = seed
         self.col_names = data.columns
         self.model_handler = model_handler
 
@@ -99,7 +102,7 @@ class DataModel():
         """
         samples = pl.DataFrame()
         kde = self._compute_dist()
-        samples_array = kde.sample(n_samples)
+        samples_array = kde.sample(n_samples, random_state=self.seed)
         for i in range(self.n_features):  
             # Round values for integer-type features
             if i in int_features:

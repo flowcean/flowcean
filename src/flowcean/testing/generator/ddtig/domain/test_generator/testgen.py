@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import random
 import math
+import random
+from flowcean.utils import initialize_random
 from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval import Interval, IntervalEndpoint
 from flowcean.testing.generator.ddtig.infrastructure.utils import reverse_list_by_value
 
@@ -35,6 +36,7 @@ class TestGenerator():
     def __init__(
         self,
         equivalence_classes: list,
+        seed: int,
         type_specs: dict,
     ) -> None:
         """
@@ -42,12 +44,14 @@ class TestGenerator():
 
         Args:
             equivalence_classes : Equivalence classes extracted from the decision tree.
+            seed: The random seed to use for reproducible test input generation.
             type_specs : Input types for each feature from the specifications.
         """
         self.equivalence_classes = equivalence_classes
+        self.seed = seed
         self.type_specs = type_specs
         self.testplans = []
-
+        initialize_random(seed)
 
     # Generates a test plan for Boundary Value Analysis (BVA).
     # BVA samples around the boundaries of each interval.
