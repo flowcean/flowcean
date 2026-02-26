@@ -1,13 +1,13 @@
 import polars as pl
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 from typing import BinaryIO
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from tabulate import tabulate
 import yaml
 import pickle
 from flowcean.core import Model
-from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler, RequirementsHandler
+from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.domain import TestTree, TestGenerator, TestCompiler, EquivalenceClassesHandler, HoeffdingTree
 import logging
@@ -77,28 +77,43 @@ class TestPipeline():
     def __init__(
         self,
         model: Model,
-        reqs_file: Path | TextIO | None = None,
+        
+        n_testinputs: int,
+        test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
         specs_file: Path | TextIO | None = None,
         classification: bool = False,
-        n_testinputs: int | None = None,
-        test_coverage_criterium: str | None = None,
+        inverse_alloc: bool = False,
+        epsilon: float = 0.5,
+        performance_threshold: float = 0.3,
+        sample_limit: int = 50000,
+        n_predictions: int = 50,
+        max_depth: int = 5,
+        hoeffding_tree_extra_params: dict[str, Any] | None = None,
     ) -> None:
         """
         Initializes the TestPipeline.
 
         Args:
             model: The trained Flowcean model.
-            reqs_file (optional): File containing the test requirements.
+            n_testinputs: Total number of test inputs to generate.
+            test_coverage_criterium: Strategy for test coverage ("bva" or "dtc").
             dataset (optional) : Original training dataset. Required if specs_file is not provided.
             specs_file (optional) : File containing system specifications. Required if dataset is not provided.
             classification (optional) : Whether the task is classification.
-            n_testinputs (optional) : Total number of test inputs to generate. Required if not specified in reqs_file.
-            test_coverage_criterium (optional) : Strategy for test coverage (e.g., "bva" or "dtc"). Required if not specified in reqs_file.
+            inverse_alloc (optional) : If true, use inverse test allocation strategy.
+            epsilon (optional) : Size of interval around boundaries for BVA testing.
+
+            For Surrogate model training (only applicable for black-box models):
+                performance_threshold (optional) : Minimum performance required to export the Hoeffding Tree (only applicable for black-box models).
+                sample_limit (optional) : Maximum number of samples used to train the Hoeffding Tree (only applicable for black-box models).
+                n_predictions (optional) : Number of correct predictions required before exporting the Hoeffding Tree (only applicable for black-box models).
+                max_depth (optional) : Maximum depth of the Hoeffding tree.
+                hoeffding_tree_extra_params (optional) : Additional parameters for training the Hoeffding Tree (only applicable for black-box models).
         """
         self.model_handler = ModelHandler(model)
         self.model = self.model_handler.get_ml_model()
-        if test_coverage_criterium is not None and test_coverage_criterium not in ["bva", "dtc"]:
+        if test_coverage_criterium not in ["bva", "dtc"]:
             raise ValueError("Invalid test coverage criterium. Expected 'bva' or 'dtc'.")
         
         if (type(self.model) != DecisionTreeRegressor and 
@@ -107,30 +122,21 @@ class TestPipeline():
             raise ValueError("Missing required parameter: 'dataset'")
         if dataset is None and specs_file is None:
             raise ValueError("Missing required parameter: 'dataset' or 'specs_file'")
+        self.n_testinputs = n_testinputs
+        self.test_coverage_criterium = test_coverage_criterium
         self.dataset = dataset 
         self.specs_handler = SystemSpecsHandler(data = dataset, specs_file = specs_file)
-        if reqs_file is not None:
-            reqs_handler = RequirementsHandler(reqs_file)
-            self.requirements = reqs_handler.requirements
-        else:
-            self.requirements = {}
         self.feature_names = self.specs_handler.extract_feature_names()
         self.hoeffding_tree = None
         self.classification = classification
-        self.test_coverage_criterium = test_coverage_criterium
-        self.n_testinputs = n_testinputs
+        self.inverse_alloc = inverse_alloc
+        self.epsilon = epsilon
+        self.performance_threshold = performance_threshold
+        self.sample_limit = sample_limit
+        self.n_predictions = n_predictions
+        self.max_depth = max_depth
+        self.hoeffding_tree_extra_params = hoeffding_tree_extra_params if hoeffding_tree_extra_params is not None else {}
 
-
-    def modify_reqs(self, reqs_file: Path | TextIO) -> None:
-        """
-        Updates the test requirements from a new requirements file.
-
-        Args:
-            reqs_file : File containing the updated test requirements.
-        """
-        reqs_handler = RequirementsHandler(reqs_file)
-        self.requirements = reqs_handler.requirements
-        logger.info("Test requirements modified.")
 
 
     def _execute(self,
@@ -141,6 +147,7 @@ class TestPipeline():
                 performance_threshold: float = 0.3,
                 sample_limit: int = 50000,
                 n_predictions: int = 50,
+                max_depth: int = 5,
                 **kwargs) -> pl.DataFrame:
         """
         Executes the full test input generation workflow:
@@ -183,6 +190,7 @@ class TestPipeline():
                 dtree = htree_obj.train_tree(performance_threshold=performance_threshold, 
                                             sample_limit=sample_limit, 
                                             n_predictions=n_predictions,
+                                            max_depth=max_depth,                                            
                                             classification=self.classification, 
                                             **kwargs)
                 self.hoeffding_tree = dtree
@@ -222,29 +230,23 @@ class TestPipeline():
 
     def execute(self) -> pl.DataFrame:
         """
-        Wrapper around `_execute()` that uses test requirements from either the requirements file or the arguments with arguments taking precedence over requirements file values.
+        Wrapper around `_execute()` to run the test input generation workflow with the parameters specified during initialization.
 
         Returns:
             Executable test inputs formatted for Flowcean.
         """
-        reqs = dict(self.requirements)
-        if self.test_coverage_criterium is None and reqs.get("test_coverage_criterium") is None:
-            raise ValueError("Missing required parameter: 'test_coverage_criterium'")
         
-        if self.n_testinputs is None and reqs.get("n_testinputs") is None:
-            raise ValueError("Missing required parameter: 'n_testinputs'")
-        if self.test_coverage_criterium is None:
-            self.test_coverage_criterium = reqs.get("test_coverage_criterium")
-        if self.n_testinputs is None:
-            self.n_testinputs = reqs.get("n_testinputs")
-
-        reqs.pop("test_coverage_criterium", None)
-        reqs.pop("n_testinputs", None)
 
         return self._execute(
             test_coverage_criterium=self.test_coverage_criterium,
             n_testinputs=self.n_testinputs,
-            **reqs,
+            inverse_alloc=self.inverse_alloc,
+            epsilon=self.epsilon,
+            performance_threshold=self.performance_threshold,
+            sample_limit=self.sample_limit,
+            n_predictions=self.n_predictions,
+            max_depth=self.max_depth,
+            **self.hoeffding_tree_extra_params,
         )
     
 
@@ -274,46 +276,6 @@ class TestPipeline():
             f.write(testinputs_table)
     
 
-    # Print test requirements and hyperparameters to a YAML file
-    def _print_test_requirements(self) -> None:
-        # Requirements for test input generation with their default values
-        reqs_default  = {"n_testinputs": 0, 
-                         "test_coverage_criterium": "",
-                         "epsilon": 0.5, 
-                         "inverse_alloc": False}
-        # Hyperparameters for training a Hoeffding Tree (+ default values)
-        train_reqs_default  = {"performance_threshold": 0.3, "evaluation_metric": "MAE", 
-                               "n_predictions": 50, "sample_limit": 50000, "max_depth": 5}
-        reqs_to_print = {}
-        test_reqs_to_print = {}
-
-        # Get values for each parameters from user-specified requirements
-        # or use default values if not specified
-        for var, default in reqs_default.items():
-            if var in self.requirements:
-                test_reqs_to_print[var] = self.requirements[var]
-            else:
-                test_reqs_to_print[var] = default
-        if self.requirements["test_coverage_criterium"] == "dtc":
-            del test_reqs_to_print["epsilon"]
-        reqs_to_print["Test Input Generation Parameters"] = test_reqs_to_print
-
-        # Fill in Hoeffding tree parameters if applicable
-        if not isinstance(self.model, (DecisionTreeRegressor, DecisionTreeClassifier)):
-            train_reqs = {}
-            for var, default in train_reqs_default.items():
-                if var == "evaluation_metric" and self.classification:
-                    train_reqs[var] = 'F1 Score'
-                    continue
-                if var in self.requirements:
-                    train_reqs[var] = self.requirements[var]
-                else:
-                    train_reqs[var] = default
-            reqs_to_print["Hoeffding Tree Hyperparameters"] = train_reqs
-
-        # Write all requirements to a YAML file
-        with open('test_requirements.yaml', 'w', encoding='utf-8') as file:
-            yaml.dump(reqs_to_print, file, default_flow_style=False, sort_keys=False)
 
 
     # Render and save the Hoeffding tree as a PNG image
@@ -340,8 +302,7 @@ class TestPipeline():
             1. Equivalence classes + Number of test inputs
             2. Test plans
             3. Test inputs 
-            4. Test requirements
-            5. Hoeffding Tree (if exists)
+            4. Hoeffding Tree (if exists)
 
         Args:
             print_option : 
@@ -349,8 +310,7 @@ class TestPipeline():
                 - 1 → Equivalence classes + Number of test inputs
                 - 2 → Test plans
                 - 3 → Test inputs
-                - 4 → Test requirements
-                - 5 → Hoeffding tree
+                - 4 → Hoeffding tree
                 Default: [1, 2, 3, 4]
         """
         logger.info(f"Printing: {print_option}")
@@ -361,6 +321,4 @@ class TestPipeline():
         if 3 in print_option:
             self._print_testinputs()
         if 4 in print_option:
-            self._print_test_requirements()
-        if 5 in print_option:
             self._print_hoeffding_tree()

@@ -88,10 +88,11 @@ def generate_test_inputs() -> None:
     # TODO (optional): Set log=True to enable logging
     test_generator = ddtigGenerator(
         model,
-        reqs_file=test_reqs,
+        n_testinputs=1000,        
+        test_coverage_criterium="dtc",
         dataset=df,
-        n_testinputs=1000,
-        test_coverage_criterium="dtc"
+        epsilon=1.0,
+        max_depth=7,
     )
     print(test_generator.test_pipeline.n_testinputs_lst)
     test_generator.save_csv("test_inputs.csv")
