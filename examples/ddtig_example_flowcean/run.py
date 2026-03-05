@@ -10,6 +10,7 @@ from flowcean.testing.generator import ddtigGenerator
 import os
 import logging
 from flowcean.testing.predicates import PolarsPredicate
+from flowcean.utils import initialize_random
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -83,6 +84,7 @@ def generate_test_inputs() -> None:
 
     test_reqs = os.path.join(dirpath, test_reqs_file)
     model = Model.load(model_file)
+    initialize_random(42)
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
@@ -96,9 +98,6 @@ def generate_test_inputs() -> None:
     )
     test_generator.save_csv("test_inputs.csv")
     test_generator.reset()
-    test_generator.save_csv("test_inputs2.csv")
-    test_generator.reset()
-
 
     predicate = PolarsPredicate(
         (100>pl.col("Age")) & (pl.col("Age") > 1),

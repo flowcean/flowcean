@@ -9,6 +9,7 @@ from flowcean.core.data import Data
 from flowcean.core import Model
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
+from flowcean.utils import get_seed
 
 
 
@@ -27,7 +28,6 @@ class ddtigGenerator(TestcaseGenerator):
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
-        seed: int = 42,
 
         performance_threshold: float = 0.3,
         sample_limit: int = 50000,
@@ -57,6 +57,7 @@ class ddtigGenerator(TestcaseGenerator):
         """
         super().__init__()
         self.n_testinputs = n_testinputs
+        self.seed = get_seed()
     
         self.test_pipeline = TestPipeline(
             model,
@@ -67,7 +68,7 @@ class ddtigGenerator(TestcaseGenerator):
             test_coverage_criterium=test_coverage_criterium,
             inverse_alloc=inverse_alloc,
             epsilon=epsilon,
-            seed=seed,
+            seed=self.seed,
             performance_threshold=performance_threshold,
             sample_limit=sample_limit,
             n_predictions=n_predictions,
