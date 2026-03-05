@@ -7,18 +7,14 @@ from flowcean.testing.generator.ddtig.application.test_pipeline import TestPipel
 from .generator import TestcaseGenerator
 from flowcean.core.data import Data
 from flowcean.core import Model
-from flowcean.core.environment.incremental import Finished
+from flowcean.polars.environments.dataframe import DataFrame
+from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
 
 
 
 class ddtigGenerator(TestcaseGenerator):
     """A generator that produces random tests based on given domains."""
 
-    data: pl.DataFrame
-    count: int
-    _row_iter: Iterator
-    _columns: list[str]
-    _df: pl.DataFrame
 
     def __init__(
         self,
@@ -78,6 +74,8 @@ class ddtigGenerator(TestcaseGenerator):
             max_depth=max_depth,
             hoeffding_tree_extra_params=hoeffding_tree_extra_params,
         )
+        self.data = DataFrame(self.test_pipeline.execute())
+        self._streaming_env : StreamingOfflineEnvironment
 
         self.reset()
 
@@ -85,21 +83,13 @@ class ddtigGenerator(TestcaseGenerator):
         return self.n_testinputs
 
     def reset(self) -> None:
-        self._df = self.test_pipeline.execute()
-        self._columns = self._df.columns
-        self.n_testinputs = self._df.height
-        self._row_iter = self._df.iter_rows()
-        self.step()
+        self._streaming_env = self.data.to_incremental()
 
     def step(self) -> None:
-        try:
-            row = next(self._row_iter)
-        except StopIteration:
-            raise Finished from None
-        self.data = pl.DataFrame([row], schema=self._columns, orient="row")
+        self._streaming_env.step()
 
     def _observe(self) -> Data:
-        return self.data.lazy()
+        return self._streaming_env.observe()
 
         
 

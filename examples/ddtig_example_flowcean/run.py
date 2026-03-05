@@ -94,8 +94,9 @@ def generate_test_inputs() -> None:
         epsilon=1.0,
         max_depth=7,
     )
-    print(test_generator.test_pipeline.n_testinputs_lst)
     test_generator.save_csv("test_inputs.csv")
+    test_generator.reset()
+    test_generator.save_csv("test_inputs2.csv")
     test_generator.reset()
 
 
