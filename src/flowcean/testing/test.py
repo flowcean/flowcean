@@ -1,5 +1,6 @@
 import polars as pl
 import tqdm
+from pathlib import Path
 
 from flowcean.core import Model
 from flowcean.core.data import Data
@@ -12,6 +13,7 @@ def test_model(
     test_data: IncrementalEnvironment,
     predicate: Predicate,
     *,
+    path: str | Path | None = None,
     show_progress: bool = False,
     stop_after: int = 1,
 ) -> None:
@@ -31,6 +33,9 @@ def test_model(
         test_data: The test data to use for testing the model. This must only
             include input features passed to the model and *not* the targets.
         predicate: The predicate used to check the model's predictions.
+        path: Optional output file for failed test details. If provided,
+            failures are written to this file instead of raising
+            ``TestFailed``.
         show_progress: Whether to show progress during testing.
             Defaults to False.
         stop_after: Number of tests that need to fail before stopping. Defaults
@@ -39,7 +44,7 @@ def test_model(
 
     Raises:
         TestFailed: If the model's prediction does not satisfy the
-            predicate.
+            predicate and ``path`` is not provided.
     """
     number_of_failures = 0
     failure_data: list[Data] = []
@@ -94,10 +99,18 @@ def test_model(
 
                 if number_of_failures >= stop_after > 0:
                     break
+        else:
+            continue
+        break
 
-    # If we got any failures at this point, raise an exception
+    # If we got any failures at this point, raise an exception or write
+    # details to disk, depending on the selected output mode.
     if number_of_failures > 0:
-        raise TestFailed(failure_data, failure_prediction)
+        test_failed = TestFailed(failure_data, failure_prediction)
+        if path is None:
+            raise test_failed
+
+        test_failed.to_file(path)
 
 
 class TestFailed(Exception):
@@ -138,3 +151,9 @@ class TestFailed(Exception):
                 message += f"Input data: {data}\nPrediction: {pred}\n\n"
 
         super().__init__(message)
+
+    def to_file(self, path: str | Path) -> None:
+        """Write failure details to ``path``."""
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(str(self), encoding="utf-8")

@@ -100,7 +100,7 @@ def generate_test_inputs() -> None:
     test_generator.reset()
 
     predicate = PolarsPredicate(
-        (100>pl.col("Age")) & (pl.col("Age") > 1),
+        (100>pl.col("Age")) & (pl.col("Age") > 40),
     )
 
     
@@ -110,7 +110,8 @@ def generate_test_inputs() -> None:
         test_generator,
         predicate,
         show_progress=True,
-        stop_after=3,
+        stop_after=4,
+        path="test_failures.txt",
     )
 
     # TODO (optional): Uncomment to save all intermediate results and outputs to files
