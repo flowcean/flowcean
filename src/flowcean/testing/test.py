@@ -1,6 +1,7 @@
 import polars as pl
 import tqdm
 from pathlib import Path
+import logging
 
 from flowcean.core import Model
 from flowcean.core.data import Data
@@ -111,7 +112,13 @@ def test_model(
             raise test_failed
 
         test_failed.to_file(path)
-
+    elif number_of_failures == 0:
+        if path is not None:
+            output_path = Path(path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text("All tests passed.", encoding="utf-8")
+        else:
+            logging.info("All tests passed.")
 
 class TestFailed(Exception):
     """Test failed exception.

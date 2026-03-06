@@ -139,6 +139,6 @@ class HoeffdingTree():
                     samples_to_generate = self.N_SAMPLES
                 self.samples.extend(self.datamodel.generate_dataset(n_samples = samples_to_generate))
 
-            logger.info("Hoeffding Tree training completed successfully.")
+        logger.info("Hoeffding Tree training completed successfully.")
         return model
     
