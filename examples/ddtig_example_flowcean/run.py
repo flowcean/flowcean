@@ -1,36 +1,34 @@
 
+import logging
+from pathlib import Path
+
+import polars as pl
+
 from flowcean.core import Model
 from flowcean.core.strategies.offline import learn_offline
 from flowcean.polars import DataFrame
 from flowcean.sklearn import RegressionTree
-import polars as pl
-from flowcean.testing.test import test_model
-from flowcean.torch import LightningLearner, MultilayerPerceptron
 from flowcean.testing.generator import ddtigGenerator
-import os
-import logging
 from flowcean.testing.predicates import PolarsPredicate
+from flowcean.testing.test import test_model
 from flowcean.utils import initialize_random
+from flowcean.torch import LightningLearner, MultilayerPerceptron
 
-dirpath = os.path.dirname(os.path.abspath(__file__))
+dirpath = Path(Path(__file__).resolve()).parent
 
 # TODO (optional): Modify the CSV file name of the dataset used to generate a Flowcean model.
 #                  Example datasets are located in the "examples/dataset" directory.
 dataset = "dataset/regression/BodyFat.csv"
 
-# TODO (optional): Adjust the parameters in this file to define the expected test requirements.
-test_reqs_file = "test_reqs.json"
 logging.basicConfig(level=logging.DEBUG)
 
-def construct_data_driven_model():
-    '''
-    Generates a data-driven MUT (Model Under Test) using Flowcean.
+def construct_data_driven_model() -> None:
+    """Generates a data-driven MUT (Model Under Test) using Flowcean.
 
     Returns:
         A trained Flowcean model.
-    '''
-    
-    csv_file = os.path.join(dirpath, dataset)
+    """
+    csv_file = dirpath / dataset
     df = pl.read_csv(csv_file)
 
     # Convert dataset into the format required to train the MUT
@@ -44,13 +42,12 @@ def construct_data_driven_model():
 
     # TODO (optional): To use a neural network instead, uncomment the block below,
     #                  and comment out other model definitions.
-    #                  Modify hyperparameters such as "learning_rate", "hidden_dimensions", 
+    #                  Modify hyperparameters such as "learning_rate", "hidden_dimensions",
     #                  and "max_epochs" as needed.
     #                  Refer to the Flowcean documentation for details.
     # learner = LightningLearner(
     #     module = MultilayerPerceptron(
     #         learning_rate=1e-3,
-    #         input_size=len(inputs),
     #         output_size=len(outputs),
     #         hidden_dimensions=[10, 10],
     #     ),
@@ -66,23 +63,21 @@ def construct_data_driven_model():
     )
 
     # Save model
-    model_file = os.path.join(dirpath, "model.fml")
-    with open(model_file, "wb") as f:
+    model_file = dirpath / "model.fml"
+    with Path.open(model_file, "wb") as f:
         model.save(f)
 
 
 def generate_test_inputs() -> None:
-    '''
-    Generates test inputs from a trained Flowcean model.
+    """Generates test inputs from a trained Flowcean model.
 
     Returns:
         A Polars DataFrame containing test inputs.
-    '''
-    model_file = os.path.join(dirpath, "model.fml")
-    csv_file = os.path.join(dirpath, dataset)
+    """
+    model_file = dirpath / "model.fml"
+    csv_file = dirpath / dataset
     df = pl.read_csv(csv_file)
 
-    test_reqs = os.path.join(dirpath, test_reqs_file)
     model = Model.load(model_file)
     initialize_random(42)
 
@@ -90,7 +85,7 @@ def generate_test_inputs() -> None:
     # TODO (optional): Set log=True to enable logging
     test_generator = ddtigGenerator(
         model,
-        n_testinputs=1000,        
+        n_testinputs=1000,
         test_coverage_criterium="dtc",
         dataset=df,
         epsilon=1.0,
@@ -100,10 +95,10 @@ def generate_test_inputs() -> None:
     test_generator.reset()
 
     predicate = PolarsPredicate(
-        (100>pl.col("Age")) & (pl.col("Age") > 40),
+        (pl.col("Age") < 100) & (pl.col("Age") > 40),
     )
 
-    
+
 
     test_model(
         model,
@@ -119,8 +114,7 @@ def generate_test_inputs() -> None:
     # TODO (optional): Uncomment to save the Hoeffding tree to a file
     #                  Useful if the MUT is not a decision tree
     # testpipeline.save_hoeffding_tree("PATH_TO_SAVE/FILE_NAME")
-    
-    return None
+
 
 
 
@@ -128,11 +122,10 @@ def main() -> None:
 
     # TODO (optional): Comment if model is already created
     construct_data_driven_model()
-    
-    test_set = generate_test_inputs()
+    generate_test_inputs()
+
 
 
 if __name__ == "__main__":
     main()
 
-        
