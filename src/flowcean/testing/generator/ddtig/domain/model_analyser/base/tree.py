@@ -1,14 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from sklearn.tree._tree import Tree as sklearnTree
-from river.tree import HoeffdingTreeRegressor as riverTree
+from river.tree import HoeffdingTreeRegressor, HoeffdingTreeClassifier
 from river.tree.nodes.branch import DTBranch
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 import logging
 
 logger = logging.getLogger(__name__)
 
-def convert_river_tree(river_tree: riverTree,
+def convert_river_tree(river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier,
                        feature_dict: dict) -> dict:
     """
     Extracts the structure of a River Hoeffding tree and stores it in a dictionary.
@@ -157,7 +157,7 @@ class TestTree():
 
     def __init__(
         self,
-        model_tree: riverTree | sklearnTree,
+        model_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier | sklearnTree,
         specs_handler: SystemSpecsHandler,
     ) -> None:
         """

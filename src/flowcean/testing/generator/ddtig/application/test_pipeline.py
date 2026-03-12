@@ -80,7 +80,7 @@ class TestPipeline():
         n_testinputs: int,
         test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
-        specs_file: Path | TextIO | None = None,
+        specs_file: Path | None = None,
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
@@ -189,6 +189,8 @@ class TestPipeline():
             # Generate Hoeffding tree only if it hasn't been created yet
             logger.info("Training Hoeffding Tree surrogate model for black-box model...")
             if self.hoeffding_tree is None:
+                if self.dataset is None:
+                    raise ValueError("Dataset is required to train the Hoeffding Tree surrogate model for black-box models.")
                 htree_obj = HoeffdingTree(self.dataset, self.seed, self.model_handler, self.specs_handler)
                 dtree = htree_obj.train_tree(performance_threshold=performance_threshold, 
                                             sample_limit=sample_limit, 

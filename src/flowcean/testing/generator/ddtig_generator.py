@@ -24,7 +24,7 @@ class ddtigGenerator(TestcaseGenerator):
         n_testinputs: int,
         test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
-        specs_file: Path | TextIO | None = None,
+        specs_file: Path | None = None,
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,

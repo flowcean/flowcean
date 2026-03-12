@@ -101,6 +101,19 @@ class HoeffdingTree():
                     **kwargs         
                 )
             )
+
+        def normalize_target(target: Any) -> Any:
+            if classification and isinstance(target, float):
+                return bool(target)
+            return target
+
+        def normalize_prediction(prediction: Any) -> bool | float | dict[bool, float]:
+            if isinstance(prediction, dict):
+                # River classifiers can return class-probability maps.
+                return {bool(key): float(value) for key, value in prediction.items()}
+            if isinstance(prediction, (bool, int, float)):
+                return bool(prediction) if classification else float(prediction)
+            return False if classification else 0.0
            
 
         i = 0
@@ -108,24 +121,21 @@ class HoeffdingTree():
 
         # Pre-train
         for x,y in self.samples:
-            if classification and isinstance(y, float):
-                y = round(y)
-            model.learn_one(x,y)
+            y_true = normalize_target(y)
+            model.learn_one(x, y_true)
 
         # Main training loop
         for x,y in self.samples:
-            if classification and isinstance(y, float):
-                y = round(y)
-
-            y_pred = model.predict_one(x)
-            metric.update(y, y_pred)
+            y_true = normalize_target(y)
+            y_pred = normalize_prediction(model.predict_one(x))
+            metric.update(y_true, y_pred)
 
             if metric.get() <= performance_threshold:
                 correct_predictions += 1
                 if correct_predictions == n_predictions:
                     break
             else:
-                model.learn_one(x, y)
+                model.learn_one(x, y_true)
                 correct_predictions = 0
             i += 1
 

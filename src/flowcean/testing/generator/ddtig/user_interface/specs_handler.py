@@ -53,8 +53,8 @@ class SystemSpecsHandler():
 
     def __init__(
         self,
-        data: pl.DataFrame,
-        specs_file: Path | TextIO,
+        data: pl.DataFrame | None = None,
+        specs_file: Path | None = None,
         ) -> None:
         """
         Loads specifications from a JSON file or infers them from a dataset.
@@ -106,7 +106,7 @@ class SystemSpecsHandler():
 
             logger.info("Specifications successfully extracted from dataset.")
 
-        else:
+        elif specs_file is not None:
             # Load specifications from JSON file
             with open(specs_file) as f:
                 try:
@@ -154,6 +154,8 @@ class SystemSpecsHandler():
                     raise TypeError("'min' must be smaller than or equal to 'max'.")
 
             logger.info("Specifications successfully extracted from file.")
+        else:
+            raise ValueError("Either data or specs_file must be provided to load specifications.")
 
 
     def get_n_features(self) -> int:
