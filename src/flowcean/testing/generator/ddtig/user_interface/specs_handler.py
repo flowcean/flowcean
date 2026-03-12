@@ -1,18 +1,18 @@
 from __future__ import annotations
+
 import json
-from pathlib import Path
-from typing import TextIO
-import polars as pl
 import logging
+from pathlib import Path
+
+import polars as pl
 
 logger = logging.getLogger(__name__)
 
-class SystemSpecsHandler():
-    """
-    A class that loads and decodes a specification file to extract information
+class SystemSpecsHandler:
+    """A class that loads and decodes a specification file to extract information
     required for generating test inputs.
 
-    Attributes
+    Attributes:
     ----------
     specs : dict
         Dictionary storing system specifications.
@@ -20,7 +20,7 @@ class SystemSpecsHandler():
     n_features : int
         Number of features.
 
-    Methods
+    Methods:
     -------
     get_n_features()
         Returns the number of features.
@@ -56,8 +56,7 @@ class SystemSpecsHandler():
         data: pl.DataFrame | None = None,
         specs_file: Path | None = None,
         ) -> None:
-        """
-        Loads specifications from a JSON file or infers them from a dataset.
+        """Loads specifications from a JSON file or infers them from a dataset.
         For details on defining specifications in JSON, refer to README.md.
 
         Example JSON structure:
@@ -92,15 +91,15 @@ class SystemSpecsHandler():
             self.n_features = len(column_names)
             for i in range(len(column_names)):
                 feature = {}
-                feature['name'] = column_names[i]
-                feature['min'] = mins[i]
-                feature['max'] = maxs[i]
+                feature["name"] = column_names[i]
+                feature["min"] = mins[i]
+                feature["max"] = maxs[i]
                 if dtypes[i].is_float():
-                    feature['type'] = 'float'
+                    feature["type"] = "float"
                 else:
-                    feature['type'] = 'int'
+                    feature["type"] = "int"
                 unique_vals = data.select(pl.col(column_names[i]).unique()).to_series()
-                feature['nominal'] = set(unique_vals) <= {0, 1}
+                feature["nominal"] = set(unique_vals) <= {0, 1}
                 features.append(feature)
             self.specs = {"features": features}
 
@@ -116,41 +115,41 @@ class SystemSpecsHandler():
                 except Exception as e:
                     raise RuntimeError(f"Failed to load specification file: {e}") from e
             # Validate JSON structure
-            if self.specs.get('features') is None:
+            if self.specs.get("features") is None:
                 raise LookupError("Invalid JSON structure. Refer to README.md.")
 
             self.n_features = self.get_n_features()
 
             for i in range(self.n_features):
-                feature = self.specs['features'][i]
+                feature = self.specs["features"][i]
 
                 # Validate presence of required keys
-                if not all(k in feature for k in ['name', 'min', 'max', 'type', 'nominal']) or len(feature) != 5:
+                if not all(k in feature for k in ["name", "min", "max", "type", "nominal"]) or len(feature) != 5:
                     raise LookupError("Invalid JSON structure. Refer to README.md.")
 
                 # Validate types
-                if not isinstance(feature['name'], str):
+                if not isinstance(feature["name"], str):
                     raise ValueError("'name' must be a string.")
 
-                if feature['type'] not in ['int', 'float']:
+                if feature["type"] not in ["int", "float"]:
                     raise ValueError("'type' must be either 'int' or 'float'.")
 
-                if not isinstance(feature['min'], (int, float)) or not isinstance(feature['max'], (int, float)):
+                if not isinstance(feature["min"], (int, float)) or not isinstance(feature["max"], (int, float)):
                     raise TypeError("'min' and 'max' must be int or float.")
 
-                if feature['type'] == 'int' and not (isinstance(feature['min'], int) and isinstance(feature['max'], int)):
+                if feature["type"] == "int" and not (isinstance(feature["min"], int) and isinstance(feature["max"], int)):
                     raise ValueError("'min' and 'max' must be int for type 'int'.")
 
-                if feature['type'] == 'float' and not all(isinstance(v, (int, float)) for v in [feature['min'], feature['max']]):
+                if feature["type"] == "float" and not all(isinstance(v, (int, float)) for v in [feature["min"], feature["max"]]):
                     raise ValueError("'min' and 'max' must be numeric for type 'float'.")
 
-                if not isinstance(feature['nominal'], bool):
+                if not isinstance(feature["nominal"], bool):
                     raise TypeError("'nominal' must be a boolean.")
 
-                if feature['nominal'] and feature['type'] != 'int':
+                if feature["nominal"] and feature["type"] != "int":
                     raise TypeError("Nominal features must be of type 'int'.")
-                
-                if feature['min'] > feature['max']:
+
+                if feature["min"] > feature["max"]:
                     raise TypeError("'min' must be smaller than or equal to 'max'.")
 
             logger.info("Specifications successfully extracted from file.")
@@ -159,64 +158,60 @@ class SystemSpecsHandler():
 
 
     def get_n_features(self) -> int:
-        """
-        Returns the number of features defined in the specifications.
+        """Returns the number of features defined in the specifications.
 
         Returns:
             Number of features.
         """
-        return len(self.specs['features'])
-    
-    
+        return len(self.specs["features"])
+
+
     def get_nominal_features(self) -> list:
-        """
-        Returns the indices of nominal features.
+        """Returns the indices of nominal features.
 
         Returns:
             A list containing indices of nominal features.
         """
         nominal_features = []
         for feature in range(self.n_features):
-            if (self.specs["features"][feature]['nominal']):
+            if (self.specs["features"][feature]["nominal"]):
                 nominal_features.append(feature)
         return nominal_features
-    
-    
+
+
     def get_numerical_features(self) -> list:
-        """
-        Returns the indices of numerical features.
+        """Returns the indices of numerical features.
 
         Returns:
             A list containing indices of numerical features.
         """
         numerical_features = []
         for feature in range(self.n_features):
-            if not (self.specs["features"][feature]['nominal']):
+            if not (self.specs["features"][feature]["nominal"]):
                 numerical_features.append(feature)
         return numerical_features
-    
+
 
     def get_int_features(self) -> list:
-        """
-        Returns the indices of features with type 'int'.
+        """Returns the indices of features with type 'int'.
 
         Returns:
             A list containing indices of integer-type features.
         """
         int_features = []
         for feature in range(self.n_features):
-            if (self.specs["features"][feature]['type'] == 'int'):
+            if (self.specs["features"][feature]["type"] == "int"):
                 int_features.append(feature)
         return int_features
-    
+
 
     def extract_minmax_values(self) -> dict:
-        """
-        Extracts the min and max values for each feature.
+        """Extracts the min and max values for each feature.
 
         Returns:
             Dictionary mapping feature index to its min and max values.
-            Example:
+
+        Example:
             {
                 0: {'min': 0.5, 'max': 5.3},
                 1: {'min': 0, 'max': 500},
@@ -225,20 +220,20 @@ class SystemSpecsHandler():
         """
         minmax_dict = {}
         for feature in range(self.n_features):
-            min_value = self.specs["features"][feature]['min']
-            max_value = self.specs["features"][feature]['max']
-            feature_range = {'min': min_value, 'max': max_value}
+            min_value = self.specs["features"][feature]["min"]
+            max_value = self.specs["features"][feature]["max"]
+            feature_range = {"min": min_value, "max": max_value}
             minmax_dict.update({feature: feature_range})
         return minmax_dict
-    
+
 
     def extract_input_types(self) -> dict:
-        """
-        Extract the input type of each feature from the specifications.
+        """Extract the input type of each feature from the specifications.
 
         Returns:
             A dictionary mapping feature index to its type.
-            Example:
+
+        Example:
                 {
                     0: {'type': 'float'},
                     1: {'type': 'int'},
@@ -247,34 +242,34 @@ class SystemSpecsHandler():
         """
         type_dict = {}
         for feature in range(self.n_features):
-            input_type = self.specs["features"][feature]['type']
-            feature_type = {'type': input_type}
+            input_type = self.specs["features"][feature]["type"]
+            feature_type = {"type": input_type}
             type_dict.update({feature: feature_type})
         return type_dict
-    
+
 
     def extract_feature_names(self) -> list:
-        """
-        Extract the name of each feature from the specifications.
+        """Extract the name of each feature from the specifications.
 
         Returns:
             A list of feature names.
-            Example:
+
+        Example:
                 ["pH", "temperature", "humidity"]
         """
         name_lst = []
         for feature in range(self.n_features):
-            name_lst.append(self.specs["features"][feature]['name'])
+            name_lst.append(self.specs["features"][feature]["name"])
         return name_lst
-    
+
 
     def extract_feature_names_with_idx(self) -> dict:
-        """
-        Extract feature names along with their corresponding indices.
+        """Extract feature names along with their corresponding indices.
 
         Returns:
             A dictionary mapping feature names to their indices.
-            Example:
+
+        Example:
                 {
                     "pH": 0,
                     "temperature": 1,
@@ -283,17 +278,17 @@ class SystemSpecsHandler():
         """
         name_dict = {}
         for feature in range(self.n_features):
-            name_dict[self.specs["features"][feature]['name']] = feature
+            name_dict[self.specs["features"][feature]["name"]] = feature
         return name_dict
-    
+
 
     def extract_feature_names_with_idx_reversed(self) -> dict:
-        """
-        Extract feature indices along with their corresponding names.
+        """Extract feature indices along with their corresponding names.
 
         Returns:
             A dictionary mapping feature indices to their names.
-            Example:
+
+        Example:
                 {
                     0: "pH",
                     1: "temperature",
@@ -302,5 +297,5 @@ class SystemSpecsHandler():
         """
         name_dict = {}
         for feature in range(self.n_features):
-            name_dict[feature] = self.specs["features"][feature]['name']
+            name_dict[feature] = self.specs["features"][feature]["name"]
         return name_dict

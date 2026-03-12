@@ -1,23 +1,29 @@
-import polars as pl
-from pathlib import Path
-from typing import Any, TextIO
-from typing import BinaryIO
-from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
-from tabulate import tabulate
-import pickle
-from flowcean.core import Model
-from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
-from flowcean.testing.generator.ddtig.application import ModelHandler
-from flowcean.testing.generator.ddtig.domain import TestTree, TestGenerator, TestCompiler, EquivalenceClassesHandler, HoeffdingTree
 import logging
+import pickle
+from pathlib import Path
+from typing import Any
+
+import polars as pl
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from tabulate import tabulate
+
+from flowcean.core import Model
+from flowcean.testing.generator.ddtig.application import ModelHandler
+from flowcean.testing.generator.ddtig.domain import (
+    EquivalenceClassesHandler,
+    HoeffdingTree,
+    TestCompiler,
+    TestGenerator,
+    TestTree,
+)
+from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 
 logger = logging.getLogger(__name__)
 
-class TestPipeline():
-    """
-    A class that defines the workflow for test input generation using the Flowcean framework.
+class TestPipeline:
+    """A class that defines the workflow for test input generation using the Flowcean framework.
 
-    Attributes
+    Attributes:
     ----------
     model_handler : ModelHandler
         Handles the Flowcean model and its predictions.
@@ -58,7 +64,7 @@ class TestPipeline():
     hoeffding_tree : HoeffdingTreeRegressor
         Hoeffding tree used to approximate complex black-box models.
     
-    Methods
+    Methods:
     -------
     execute()
         Executes the full test input generation workflow.
@@ -76,7 +82,7 @@ class TestPipeline():
     def __init__(
         self,
         model: Model,
-        
+
         n_testinputs: int,
         test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
@@ -92,8 +98,7 @@ class TestPipeline():
         max_depth: int = 5,
         hoeffding_tree_extra_params: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Initializes the TestPipeline.
+        """Initializes the TestPipeline.
 
         Args:
             model: The trained Flowcean model.
@@ -116,16 +121,16 @@ class TestPipeline():
         self.model = self.model_handler.get_ml_model()
         if test_coverage_criterium not in ["bva", "dtc"]:
             raise ValueError("Invalid test coverage criterium. Expected 'bva' or 'dtc'.")
-        
-        if (type(self.model) != DecisionTreeRegressor and 
-            type(self.model) != DecisionTreeClassifier and 
+
+        if (type(self.model) != DecisionTreeRegressor and
+            type(self.model) != DecisionTreeClassifier and
             dataset is None):
             raise ValueError("Missing required parameter: 'dataset'")
         if dataset is None and specs_file is None:
             raise ValueError("Missing required parameter: 'dataset' or 'specs_file'")
         self.n_testinputs = n_testinputs
         self.test_coverage_criterium = test_coverage_criterium
-        self.dataset = dataset 
+        self.dataset = dataset
         self.specs_handler = SystemSpecsHandler(data = dataset, specs_file = specs_file)
         self.feature_names = self.specs_handler.extract_feature_names()
         self.hoeffding_tree = None
@@ -142,17 +147,16 @@ class TestPipeline():
 
 
     def _execute(self,
-                test_coverage_criterium: str, 
-                n_testinputs: int, 
-                inverse_alloc: bool = False, 
+                test_coverage_criterium: str,
+                n_testinputs: int,
+                inverse_alloc: bool = False,
                 epsilon: float = 0.5,
                 performance_threshold: float = 0.3,
                 sample_limit: int = 50000,
                 n_predictions: int = 50,
                 max_depth: int = 5,
                 **kwargs) -> pl.DataFrame:
-        """
-        Executes the full test input generation workflow:
+        """Executes the full test input generation workflow:
 
             1. If model is black-box: train Hoeffding Tree.
             2. Convert decision tree into framework-conformant structure.
@@ -192,11 +196,11 @@ class TestPipeline():
                 if self.dataset is None:
                     raise ValueError("Dataset is required to train the Hoeffding Tree surrogate model for black-box models.")
                 htree_obj = HoeffdingTree(self.dataset, self.seed, self.model_handler, self.specs_handler)
-                dtree = htree_obj.train_tree(performance_threshold=performance_threshold, 
-                                            sample_limit=sample_limit, 
+                dtree = htree_obj.train_tree(performance_threshold=performance_threshold,
+                                            sample_limit=sample_limit,
                                             n_predictions=n_predictions,
-                                            max_depth=max_depth,                                            
-                                            classification=self.classification, 
+                                            max_depth=max_depth,
+                                            classification=self.classification,
                                             **kwargs)
                 self.hoeffding_tree = dtree
             else:
@@ -211,12 +215,12 @@ class TestPipeline():
         type_specs = self.specs_handler.extract_input_types()
         feature_names = self.specs_handler.extract_feature_names()
         n_features = self.specs_handler.get_n_features()
-        
+
         # Compute equivalence classes from the decision tree
         test_tree = TestTree(dtree, self.specs_handler)
         eqclassobj = EquivalenceClassesHandler(test_tree, minmax_specs, n_features)
         self.eqclasses = eqclassobj.get_equivalence_classes()
-        
+
         # Generate test inputs based on equivalence classes and coverage criteria
         testgenobj = TestGenerator(self.eqclasses, self.seed, type_specs)
         self.testinputs = testgenobj.generate_testinputs(test_coverage_criterium,
@@ -232,17 +236,14 @@ class TestPipeline():
         self.testinputs_df = testcompobj.compute_executable_testinputs(feature_names)
 
         return self.testinputs_df
-    
+
 
     def execute(self) -> pl.DataFrame:
-        """
-        Wrapper around `_execute()` to run the test input generation workflow with the parameters specified during initialization.
+        """Wrapper around `_execute()` to run the test input generation workflow with the parameters specified during initialization.
 
         Returns:
             Executable test inputs formatted for Flowcean.
         """
-        
-
         return self._execute(
             test_coverage_criterium=self.test_coverage_criterium,
             n_testinputs=self.n_testinputs,
@@ -254,7 +255,7 @@ class TestPipeline():
             max_depth=self.max_depth,
             **self.hoeffding_tree_extra_params,
         )
-    
+
 
     # Print equivalence classes with test input counts to a text file
     def _print_eqclasses(self) -> None:
@@ -262,25 +263,25 @@ class TestPipeline():
         columns.append("Number of test inputs")
         stringified_eqclasses = [[str(interval) for interval in eqclass] for eqclass in self.eqclasses]
         updated_eqclasses = [row + [self.n_testinputs_lst[i]] for i, row in enumerate(stringified_eqclasses)]
-        eqclasses_table = tabulate(updated_eqclasses, headers=columns, tablefmt='grid')
-        with open('equivalence_classes.txt', 'w', encoding='utf-8') as f:
+        eqclasses_table = tabulate(updated_eqclasses, headers=columns, tablefmt="grid")
+        with open("equivalence_classes.txt", "w", encoding="utf-8") as f:
             f.write(eqclasses_table)
-    
+
 
     # Print test plans to a text file
     def _print_testplans(self) -> None:
-        testplans_table = tabulate(self.testplans, headers=self.feature_names, tablefmt='grid')
-        with open('testplans.txt', 'w', encoding='utf-8') as f:
+        testplans_table = tabulate(self.testplans, headers=self.feature_names, tablefmt="grid")
+        with open("testplans.txt", "w", encoding="utf-8") as f:
             f.write(testplans_table)
-    
+
 
     # Print executable test inputs to a text file
     def _print_testinputs(self) -> None:
         rows = self.testinputs_df.rows()
-        testinputs_table = tabulate(rows, headers=self.feature_names, tablefmt='grid')
-        with open('testinputs.txt', 'w', encoding='utf-8') as f:
+        testinputs_table = tabulate(rows, headers=self.feature_names, tablefmt="grid")
+        with open("testinputs.txt", "w", encoding="utf-8") as f:
             f.write(testinputs_table)
-    
+
 
 
 
@@ -288,10 +289,10 @@ class TestPipeline():
     def _print_hoeffding_tree(self) -> None:
         if self.hoeffding_tree is not None:
             tree_img = self.hoeffding_tree.draw()
-            tree_img.render('hoeffding_tree', format='png', cleanup=True)
+            tree_img.render("hoeffding_tree", format="png", cleanup=True)
         else:
             print("No Hoeffding Tree to print.")
-    
+
 
     # Save the Hoeffding tree as a pickle file
     def save_hoeffding_tree(self, path) -> None:
@@ -300,11 +301,10 @@ class TestPipeline():
                 pickle.dump(self.hoeffding_tree, f)
         else:
             print("No Hoeffding Tree to save.")
-    
+
 
     def save_test_overview(self, print_option: list = [1, 2, 3, 4]) -> None:
-        """
-        Generates and prints multiple report files containing:
+        """Generates and prints multiple report files containing:
             1. Equivalence classes + Number of test inputs
             2. Test plans
             3. Test inputs 

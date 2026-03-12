@@ -1,17 +1,18 @@
 from __future__ import annotations
-import polars as pl
+
 import numpy as np
+import polars as pl
 from polars import DataFrame
 from sklearn.neighbors import KernelDensity
+
 from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 
 
-class DataModel():
-    """
-    A class used to generate synthetic samples based on the training data distribution.
+class DataModel:
+    """A class used to generate synthetic samples based on the training data distribution.
 
-    Attributes
+    Attributes:
     ----------
     data : pl.DataFrame
         Original training data used in the Flowcean model.
@@ -28,7 +29,7 @@ class DataModel():
     int_features : list
         List of indices for features of type int.
 
-    Methods
+    Methods:
     -------
     generate_dataset()
         Generate n random samples based on the data distribution or use original data.
@@ -40,10 +41,9 @@ class DataModel():
         data: pl.DataFrame,
         seed: int,
         model_handler: ModelHandler,
-        specs_handler: SystemSpecsHandler
+        specs_handler: SystemSpecsHandler,
     ) -> None:
-        """
-        Initializes the DataModel.
+        """Initializes the DataModel.
 
         Args:
             data : Original training data used in the Flowcean model.
@@ -57,11 +57,10 @@ class DataModel():
         self.model_handler = model_handler
 
         self.n_features = specs_handler.get_n_features()
-        self.int_features = specs_handler.get_int_features()     
+        self.int_features = specs_handler.get_int_features()
 
     def _compute_dist(self) -> KernelDensity:
-        """
-        Computes a kernel density estimate (KDE) of the training data.
+        """Computes a kernel density estimate (KDE) of the training data.
 
         Kernel Density Estimation (KDE) is a nonparametric method 
         for estimating the probability density function of a dataset. 
@@ -78,8 +77,7 @@ class DataModel():
     def _generate_samples(self,
                           n_samples: int,
                           int_features: list = []) -> DataFrame:
-        """
-        Generates n random input samples for all features using KDE.
+        """Generates n random input samples for all features using KDE.
 
         Args:
             n_samples : Number of samples to generate.
@@ -103,7 +101,7 @@ class DataModel():
         samples = pl.DataFrame()
         kde = self._compute_dist()
         samples_array = kde.sample(n_samples, random_state=self.seed)
-        for i in range(self.n_features):  
+        for i in range(self.n_features):
             # Round values for integer-type features
             if i in int_features:
                 feature_samples = np.round(samples_array[:,i]).astype(int).tolist()
@@ -111,12 +109,11 @@ class DataModel():
                 feature_samples = samples_array[:,i].tolist()
             samples.insert_column(i, pl.Series(self.col_names[i], feature_samples))
         return samples
-    
+
     def generate_dataset(self,
                          original_data: bool = False,
                          n_samples: int = 0) -> list:
-        """
-        Generates a dataset of inputs and corresponding model predictions.
+        """Generates a dataset of inputs and corresponding model predictions.
 
         If original_data is True, uses the original training data.
         Otherwise, generates synthetic samples using KDE.
@@ -137,5 +134,5 @@ class DataModel():
         training_outputs = self.model_handler.get_model_prediction(training_inputs).collect()
         samples_input_lst = training_inputs.to_dicts()
         samples_output_lst = pl.Series(training_outputs.select(training_outputs.columns[0])).to_list()
-        samples = [(inputs, output) for inputs, output in zip(samples_input_lst, samples_output_lst)]
+        samples = [(inputs, output) for inputs, output in zip(samples_input_lst, samples_output_lst, strict=False)]
         return samples

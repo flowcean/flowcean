@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
 
+import logging
+
+import polars as pl
+
+from flowcean.core.model import Model
 from flowcean.sklearn.model import SciKitModel
 from flowcean.torch.model import PyTorchModel
-from pathlib import Path
-from typing import BinaryIO
-from contextlib import nullcontext
-from flowcean.core.model import Model
-import polars as pl
-import logging
 
 logger = logging.getLogger(__name__)
 
-class ModelHandler():
-    """
-    A class to load a Flowcean model and access its underlying machine learning model.
+class ModelHandler:
+    """A class to load a Flowcean model and access its underlying machine learning model.
 
-    Attributes
+    Attributes:
     ----------
     model : flowcean.core.model.Model
         The loaded Flowcean model.
     
     
-    Methods
+    Methods:
     -------
     get_ml_model()
         Returns the underlying machine learning model from the Flowcean model.
@@ -38,8 +36,7 @@ class ModelHandler():
         self,
         model: Model,
     ) -> None:
-        """
-        Initializes the ModelHandler.
+        """Initializes the ModelHandler.
 
         Args:
             file : File containing the Flowcean model.
@@ -49,8 +46,7 @@ class ModelHandler():
 
 
     def get_ml_model(self):
-        """
-        Extracts the underlying machine learning model from the Flowcean model.
+        """Extracts the underlying machine learning model from the Flowcean model.
 
         Returns:
             The machine learning model.
@@ -63,11 +59,10 @@ class ModelHandler():
             raise ValueError(f"Unsupported model type: {type(self.model)}")
         logger.info("Extracted the underlying ML model from the Flowcean model successfully.")
         return ml_model
-    
+
 
     def get_model_prediction(self, input: pl.DataFrame) -> pl.LazyFrame:
-        """
-        Generates predictions using the Flowcean model.
+        """Generates predictions using the Flowcean model.
 
         Args:
             input: A Polars DataFrame containing input features.
@@ -76,11 +71,10 @@ class ModelHandler():
             A LazyFrame with predicted outputs.
         """
         return self.model.predict(input.lazy())
-    
-    
+
+
     def get_model_prediction_as_lst(self, input: pl.DataFrame) -> list:
-        """
-        Generates predictions using the Flowcean model and returns them as a list.
+        """Generates predictions using the Flowcean model and returns them as a list.
 
         Args:
             input: A Polars DataFrame containing input features.

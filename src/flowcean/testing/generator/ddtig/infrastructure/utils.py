@@ -1,12 +1,11 @@
-from typing import Any
 from itertools import product
+from typing import Any
 
 
 def get_all_combinations(first_val: Any,
                          second_val: Any,
                          n_vars: int) -> list:
-    """
-    Generate all distinct combinations of values for n variables,
+    """Generate all distinct combinations of values for n variables,
     where each variable can take one of two specified values.
 
     Args:
@@ -20,19 +19,17 @@ def get_all_combinations(first_val: Any,
                  [(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1),
                   (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)]
     """
-
     vals = []
     # Create a list of [first_val, second_val] for each variable
     for _ in range(n_vars):
         vals.append([first_val, second_val])
     # Generate all possible combinations using Cartesian product
-    return list(product(*vals)) 
+    return list(product(*vals))
 
 
 def split_tuple(tuple_to_split: tuple,
                 subtuple_lens: list) -> tuple:
-    """
-    Split a tuple into subtuples of specified lengths.
+    """Split a tuple into subtuples of specified lengths.
 
     Args:
         tuple_to_split: The tuple to be split.
@@ -54,8 +51,7 @@ def split_tuple(tuple_to_split: tuple,
 
 
 def reverse_list_by_value(numbers_list: list) -> list:
-    """
-    Reverse the values in a list based on their magnitude,
+    """Reverse the values in a list based on their magnitude,
     preserving the original positions.
 
     Args:
@@ -69,14 +65,14 @@ def reverse_list_by_value(numbers_list: list) -> list:
     # Sort values in ascending order and reverse them
     sorted_probs = sorted(numbers_list)
     reversed_probs = sorted_probs[::-1]
-    
+
     value_to_reversed = {}
     # Map each original value to its reversed counterpart
-    for orig, rev in zip(sorted_probs, reversed_probs):
-        if not orig in value_to_reversed:
+    for orig, rev in zip(sorted_probs, reversed_probs, strict=False):
+        if orig not in value_to_reversed:
             value_to_reversed[orig] = [rev]
         else:
             value_to_reversed[orig].append(rev)
-    
+
     # Replace each value in the original list with its reversed version
     return [value_to_reversed[p].pop(0) for p in numbers_list]

@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-import polars as pl
+import logging
 from typing import Any
+
+import polars as pl
 from river import metrics
-from river import preprocessing
-from river.tree import HoeffdingTreeRegressor, HoeffdingTreeClassifier
-from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
+from river.tree import HoeffdingTreeClassifier, HoeffdingTreeRegressor
+
 from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.domain import DataModel
-
-import logging
+from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 
 logger = logging.getLogger(__name__)
 
-class HoeffdingTree():
-    """
-    A class used to train a Hoeffding Tree using data generated from a neural network model.
+class HoeffdingTree:
+    """A class used to train a Hoeffding Tree using data generated from a neural network model.
 
-    Attributes
+    Attributes:
     ----------
     datamodel : DataModel
         Object used to generate synthetic training inputs based on the original dataset.
@@ -27,7 +26,7 @@ class HoeffdingTree():
     nominal_attributes : list
         List of indices for nominal features.
 
-    Methods
+    Methods:
     -------
     train_tree()
         Trains a Hoeffding Tree and returns the trained model.
@@ -42,8 +41,7 @@ class HoeffdingTree():
         model_handler: ModelHandler,
         specs_handler: SystemSpecsHandler,
     ) -> None:
-        """
-        Initializes the HoeffdingTree trainer.
+        """Initializes the HoeffdingTree trainer.
 
         Args:
             inputs : Original training dataset including target column.
@@ -59,8 +57,8 @@ class HoeffdingTree():
         self.samples = self.datamodel.generate_dataset(original_data=True)
         self.nominal_attributes = specs_handler.get_nominal_features()
 
-        
-        
+
+
 
     def train_tree(self,
                    performance_threshold: float,
@@ -68,8 +66,7 @@ class HoeffdingTree():
                    n_predictions: int,
                    classification: bool,
                    **kwargs: Any) -> HoeffdingTreeRegressor | HoeffdingTreeClassifier:
-        """
-        Trains a Hoeffding Tree using synthetic samples until performance criteria are met.
+        """Trains a Hoeffding Tree using synthetic samples until performance criteria are met.
 
         Args:
             performance_threshold : Minimum performance required to finalize the model.
@@ -88,7 +85,7 @@ class HoeffdingTree():
                     nominal_attributes=self.nominal_attributes,
                     binary_split=True,
                     grace_period=10,
-                    leaf_prediction='mc',
+                    leaf_prediction="mc",
                     **kwargs)
         else:
             metric = metrics.MAE()
@@ -97,8 +94,8 @@ class HoeffdingTree():
                     nominal_attributes=self.nominal_attributes,
                     binary_split=True,
                     grace_period=10,
-                    leaf_prediction='adaptive',
-                    **kwargs         
+                    leaf_prediction="adaptive",
+                    **kwargs,
                 )
             )
 
@@ -114,7 +111,7 @@ class HoeffdingTree():
             if isinstance(prediction, (bool, int, float)):
                 return bool(prediction) if classification else float(prediction)
             return False if classification else 0.0
-           
+
 
         i = 0
         correct_predictions = 0
@@ -151,4 +148,4 @@ class HoeffdingTree():
 
         logger.info("Hoeffding Tree training completed successfully.")
         return model
-    
+

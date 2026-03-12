@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
+import logging
 import math
 import random
-from flowcean.utils import get_seed
-from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval import Interval, IntervalEndpoint
-from flowcean.testing.generator.ddtig.infrastructure.utils import reverse_list_by_value
 
-import logging
+from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval import (
+    Interval,
+    IntervalEndpoint,
+)
+from flowcean.testing.generator.ddtig.infrastructure.utils import (
+    reverse_list_by_value,
+)
+
 logger = logging.getLogger(__name__)
 
-class TestGenerator():
-    """
-    A class that generates abstract test inputs for binary decision trees.
+class TestGenerator:
+    """A class that generates abstract test inputs for binary decision trees.
 
-    Attributes
+    Attributes:
     ----------
     equivalence_classes : list
         Equivalence classes extracted from the decision tree.
@@ -26,7 +30,7 @@ class TestGenerator():
     n_testinputs_lst : list
         Number of test inputs to generate for each equivalence class.
 
-    Methods
+    Methods:
     -------
     generate_testinputs()
         Generates abstract test inputs based on the selected coverage strategy.
@@ -39,8 +43,7 @@ class TestGenerator():
         seed: int,
         type_specs: dict,
     ) -> None:
-        """
-        Initializes the Test Generator.
+        """Initializes the Test Generator.
 
         Args:
             equivalence_classes : Equivalence classes extracted from the decision tree.
@@ -67,15 +70,14 @@ class TestGenerator():
                 max_upper = eqclass_interval.max_value + epsilon
                 test_ranges.append((max_lower, max_upper))
             return tuple(test_ranges)
-        else:
-            return ((eqclass_interval.min_value, eqclass_interval.max_value),)
-    
+        return ((eqclass_interval.min_value, eqclass_interval.max_value),)
+
 
     # Generates a test plan for Decision Tree Coverage (DTC).
     # Ensures at least one test input covers each path in the tree.
     def _dtc_testplan(self, eqclass_interval: Interval) -> tuple:
         if eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN:
-            if (self.type_specs[eqclass_interval.feature]['type'] == "int"):
+            if (self.type_specs[eqclass_interval.feature]["type"] == "int"):
                 lower = math.floor(eqclass_interval.min_value) + 1
             else:
                 lower = math.nextafter(eqclass_interval.min_value, eqclass_interval.max_value)
@@ -94,10 +96,9 @@ class TestGenerator():
             lower = tmp
         if lower == upper:
             return [lower]*n_testinputs
-        elif self.type_specs[feature]['type'] == "int":
+        if self.type_specs[feature]["type"] == "int":
             return [random.randint(math.ceil(lower), math.floor(upper)) for _ in range(n_testinputs)]
-        else:
-            return [random.uniform(lower, upper) for _ in range(n_testinputs)]
+        return [random.uniform(lower, upper) for _ in range(n_testinputs)]
 
 
     # Generates test inputs for a single equivalence class.
@@ -131,11 +132,11 @@ class TestGenerator():
                 else:
                     lower, upper = test_ranges[0]
                     input_samples.append(self._generate_randoms(lower, upper, n_testinputs, interval.feature))
-        testinputs = list(zip(*input_samples))
+        testinputs = list(zip(*input_samples, strict=False))
         self.testplans.append(testplan)
         return testinputs
-    
-    
+
+
     # Computes the number of test inputs to generate per equivalence class fairly while maintaining the total number of test inputs.
     def _generate_n_testinputs_list(self,
                                    n_testinputs: int,
@@ -144,12 +145,12 @@ class TestGenerator():
 
         exact_values = [n_testinputs * prio for prio in eqclass_prio]
         n_testinputs_lst = [int(x) for x in exact_values]
-        
+
         remainder = n_testinputs - sum(n_testinputs_lst)
-        
+
         fractional_parts = [(i, x % 1) for i, x in enumerate(exact_values)]
         fractional_parts.sort(key=lambda x: x[1], reverse=True)
-        
+
 
         for i in range(int(remainder)):
             index = fractional_parts[i][0]
@@ -158,15 +159,14 @@ class TestGenerator():
             n_testinputs_lst = reverse_list_by_value(n_testinputs_lst)
         return n_testinputs_lst
 
-    
+
     def generate_testinputs(self,
                            test_coverage_criterium: str,
                            eqclass_prio: list,
                            n_testinputs: int,
                            inverse_alloc: bool,
                            epsilon: float) -> list:
-        """
-        Generates abstract test inputs for all equivalence classes.
+        """Generates abstract test inputs for all equivalence classes.
 
         Args:
             test_coverage_criterium : Coverage strategy ("bva" or "dtc").
@@ -181,7 +181,7 @@ class TestGenerator():
         """
         testinputs = []
         self.n_testinputs_lst = self._generate_n_testinputs_list(n_testinputs, eqclass_prio, inverse_alloc)
-        for eqclass, n_testinputs in zip(self.equivalence_classes, self.n_testinputs_lst):
+        for eqclass, n_testinputs in zip(self.equivalence_classes, self.n_testinputs_lst, strict=False):
             testinputs_eqclass = self._generate_testinputs_eqclass(n_testinputs, test_coverage_criterium, eqclass, epsilon)
             testinputs += testinputs_eqclass
         logger.info("Generated test inputs for all equivalence classes successfully.")
