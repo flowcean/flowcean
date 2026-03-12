@@ -110,15 +110,14 @@ def test_model(
         test_failed = TestFailed(failure_data, failure_prediction)
         if path is None:
             raise test_failed
-
+        logging.info(f" {number_of_failures} tests failed. Writing details to {path}.")
         test_failed.to_file(path)
     elif number_of_failures == 0:
+        logging.info("All tests passed.")
         if path is not None:
             output_path = Path(path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text("All tests passed.", encoding="utf-8")
-        else:
-            logging.info("All tests passed.")
 
 class TestFailed(Exception):
     """Test failed exception.

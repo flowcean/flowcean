@@ -38,21 +38,21 @@ def construct_data_driven_model() -> None:
 
     # Create a regression tree using Flowcean
     # TODO (optional): Adjust "max_depth" to control the maximum depth of the decision tree
-    learner = RegressionTree(max_depth=7, random_state=42)
+    #learner = RegressionTree(max_depth=7, random_state=42)
 
     # TODO (optional): To use a neural network instead, uncomment the block below,
     #                  and comment out other model definitions.
     #                  Modify hyperparameters such as "learning_rate", "hidden_dimensions",
     #                  and "max_epochs" as needed.
     #                  Refer to the Flowcean documentation for details.
-    # learner = LightningLearner(
-    #     module = MultilayerPerceptron(
-    #         learning_rate=1e-3,
-    #         output_size=len(outputs),
-    #         hidden_dimensions=[10, 10],
-    #     ),
-    #     max_epochs=5,
-    # )
+    learner = LightningLearner(
+        module = MultilayerPerceptron(
+            learning_rate=1e-3,
+            output_size=len(outputs),
+            hidden_dimensions=[10, 10],
+        ),
+        max_epochs=5,
+    )
 
     # Train the model
     model = learn_offline(
@@ -79,7 +79,6 @@ def generate_test_inputs() -> None:
     df = pl.read_csv(csv_file)
 
     model = Model.load(model_file)
-    initialize_random(42)
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
@@ -95,17 +94,16 @@ def generate_test_inputs() -> None:
     test_generator.reset()
 
     predicate = PolarsPredicate(
-        (pl.col("Age") < 100) & (pl.col("Age") > 40),
+        (pl.col("BodyFat") < 20) & (pl.col("BodyFat") > 1),
     )
-
-
-
+    #prediction = model.predict(test_generator.df.lazy()).collect()
+    #print(prediction)
     test_model(
         model,
         test_generator,
         predicate,
         show_progress=True,
-        stop_after=4,
+        stop_after=40,
         path="test_failures.txt",
     )
 
@@ -113,7 +111,7 @@ def generate_test_inputs() -> None:
     # testpipeline.save_test_overview()
     # TODO (optional): Uncomment to save the Hoeffding tree to a file
     #                  Useful if the MUT is not a decision tree
-    # testpipeline.save_hoeffding_tree("PATH_TO_SAVE/FILE_NAME")
+    #test_generator.test_pipeline.save_hoeffding_tree("HoeffingTree")
 
 
 
@@ -121,6 +119,7 @@ def generate_test_inputs() -> None:
 def main() -> None:
 
     # TODO (optional): Comment if model is already created
+    initialize_random(544382)
     construct_data_driven_model()
     generate_test_inputs()
 

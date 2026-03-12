@@ -75,9 +75,8 @@ class ddtigGenerator(TestcaseGenerator):
             max_depth=max_depth,
             hoeffding_tree_extra_params=hoeffding_tree_extra_params,
         )
-        self.data = DataFrame(self.test_pipeline.execute())
-        self._streaming_env : StreamingOfflineEnvironment
-
+        self.df = self.test_pipeline.execute()
+        self.data = DataFrame(self.df)
         self.reset()
 
     def num_steps(self) -> int | None:
