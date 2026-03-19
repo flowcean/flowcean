@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 from river.tree.nodes.branch import DTBranch
 from sklearn.tree._tree import Tree as sklearnTree
@@ -30,7 +30,7 @@ def convert_river_tree(river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassif
     counter = 0
     # Traverse the tree using depth-first search.
     # Yields: parent index, parent node, child node, child index, branch
-    def iterate(node=None):
+    def iterate(node=None) -> Iterator[tuple]:
             if node is None:
                 yield None, None, river_tree._root, 0, None
                 yield from iterate(river_tree._root)

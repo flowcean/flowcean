@@ -76,9 +76,6 @@ class TestPipeline:
         Saves all intermediate results and outputs from the test input generation process.
     """
 
-    eqclass_prio = []
-
-
     def __init__(
         self,
         model: Model,
@@ -123,8 +120,8 @@ class TestPipeline:
             msg = "Invalid test coverage criterium. Expected 'bva' or 'dtc'."
             raise ValueError(msg)
 
-        if (type(self.model) != DecisionTreeRegressor and
-            type(self.model) != DecisionTreeClassifier and
+        if (type(self.model) is not DecisionTreeRegressor and
+            type(self.model) is not DecisionTreeClassifier and
             dataset is None):
             msg = "Missing required parameter: 'dataset'"
             raise ValueError(msg)
@@ -190,8 +187,8 @@ class TestPipeline:
         Returns:
             Executable test inputs formatted for Flowcean.
         """
-        logger.debug(f"epsilon: {epsilon}")
-        logger.debug(f"n_testinputs: {n_testinputs}")
+        logger.debug("epsilon: %s", epsilon)
+        logger.debug("n_testinputs: %s", n_testinputs)
         if not isinstance(self.model, (DecisionTreeRegressor, DecisionTreeClassifier)):
             # Generate Hoeffding tree only if it hasn't been created yet
             logger.info("Training Hoeffding Tree surrogate model for black-box model...")
@@ -268,23 +265,20 @@ class TestPipeline:
         stringified_eqclasses = [[str(interval) for interval in eqclass] for eqclass in self.eqclasses]
         updated_eqclasses = [[*row, self.n_testinputs_lst[i]] for i, row in enumerate(stringified_eqclasses)]
         eqclasses_table = tabulate(updated_eqclasses, headers=columns, tablefmt="grid")
-        with open("equivalence_classes.txt", "w", encoding="utf-8") as f:
-            f.write(eqclasses_table)
+        Path("equivalence_classes.txt").write_text(eqclasses_table, encoding="utf-8")
 
 
     # Print test plans to a text file
     def _print_testplans(self) -> None:
         testplans_table = tabulate(self.testplans, headers=self.feature_names, tablefmt="grid")
-        with open("testplans.txt", "w", encoding="utf-8") as f:
-            f.write(testplans_table)
+        Path("testplans.txt").write_text(testplans_table, encoding="utf-8")
 
 
     # Print executable test inputs to a text file
     def _print_testinputs(self) -> None:
         rows = self.testinputs_df.rows()
         testinputs_table = tabulate(rows, headers=self.feature_names, tablefmt="grid")
-        with open("testinputs.txt", "w", encoding="utf-8") as f:
-            f.write(testinputs_table)
+        Path("testinputs.txt").write_text(testinputs_table, encoding="utf-8")
 
 
 
@@ -299,10 +293,9 @@ class TestPipeline:
 
 
     # Save the Hoeffding tree as a pickle file
-    def save_hoeffding_tree(self, path) -> None:
+    def save_hoeffding_tree(self, path: str | Path) -> None:
         if self.hoeffding_tree is not None:
-            with open(path+".pkl", "wb") as f:
-                pickle.dump(self.hoeffding_tree, f)
+            Path(path).with_suffix(".pkl").write_bytes(pickle.dumps(self.hoeffding_tree))
         else:
             print("No Hoeffding Tree to save.")
 
@@ -325,7 +318,7 @@ class TestPipeline:
         """
         if print_option is None:
             print_option = [1, 2, 3, 4]
-        logger.info(f"Printing: {print_option}")
+        logger.info("Printing: %s", print_option)
         if 1 in print_option:
             self._print_eqclasses()
         if 2 in print_option:

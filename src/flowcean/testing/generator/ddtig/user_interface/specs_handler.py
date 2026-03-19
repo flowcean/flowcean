@@ -76,7 +76,6 @@ class SystemSpecsHandler:
             data : Dataset used to infer specifications if specs_file is not provided.
             specs_file : JSON file containing system specifications.
         """
-        
         if data is not None:
             # Drop the target column (assumed to be the last column)
             target_col = data.columns[-1]

@@ -22,7 +22,6 @@ def reverse_list_by_value(numbers_list: list) -> list:
         based on magnitude.
         Example: reverse_list_by_value([1, 4, 2, 3]) -> [4, 1, 3, 2]
     """
-    
     # Sort values in ascending order and reverse them
     sorted_probs = sorted(numbers_list)
     reversed_probs = sorted_probs[::-1]
@@ -101,7 +100,7 @@ class TestGenerator:
 
     # Generates a test plan for Decision Tree Coverage (DTC).
     # Ensures at least one test input covers each path in the tree.
-    def _dtc_testplan(self, eqclass_interval: Interval) -> tuple:
+    def _dtc_testplan(self, eqclass_interval: Interval) -> tuple[float, float]:
         if eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN:
             if (self.type_specs[eqclass_interval.feature]["type"] == "int"):
                 lower = math.floor(eqclass_interval.min_value) + 1
@@ -114,7 +113,7 @@ class TestGenerator:
 
 
     # Samples random values from a given interval for a specific feature.
-    def _generate_randoms(self, lower, upper, n_testinputs: int, feature: int) -> list:
+    def _generate_randoms(self, lower: float, upper: float, n_testinputs: int, feature: int) -> list:
         if lower > upper:
             tmp = upper
             upper = lower
@@ -143,8 +142,8 @@ class TestGenerator:
                 test_ranges = self._bva_testplan(epsilon, interval)
                 testplan.append(test_ranges)
                 if (len(test_ranges) == 2):
-                    half_n = n_testinputs / 2
-                    ns = [int(half_n + 0.5), int(half_n - 0.5)] if n_testinputs % 2 != 0 else [half_n, half_n]
+                    q, r = divmod(n_testinputs, 2)
+                    ns = [q + r, q]
                     input_samples_sublsts = []
                     n = ns[0]
                     for lower, upper in test_ranges:

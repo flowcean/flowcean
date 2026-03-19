@@ -248,7 +248,6 @@ class EquivalenceClassesHandler:
             The equivalence class that is the superset,
             or None if neither is a subset of the other.
         """
-
         from flowcean.testing.generator.ddtig.domain import Interval
 
         # Compare the first interval to determine initial superset

@@ -30,7 +30,6 @@ class TestCompiler:
             n_features : Number of features in the dataset.
             testinputs : List of abstract test inputs.
         """
-        
         self.n_features = n_features
         self.abst_testinputs = testinputs
 
@@ -52,7 +51,6 @@ class TestCompiler:
             DataFrame where each column represents a feature
             and each row represents a test input.
         """
-
         input_dict =  self._init_input_dict()
 
         # Populate input dictionary with values from abstract test inputs
