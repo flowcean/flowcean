@@ -36,7 +36,7 @@ class TestCompiler:
 
     # Initializes a dictionary to store test inputs sorted by feature index.
     def _init_input_dict(self) -> dict:
-        input_dict = dict()
+        input_dict = {}
         for feature in range(self.n_features):
             input_dict[str(feature)] = []
         return input_dict
@@ -61,5 +61,4 @@ class TestCompiler:
         input_dict = dict(zip(feature_names, list(input_dict.values()), strict=False))
 
         # Convert to polars DataFrame (Flowcean-compatible format)
-        exec_testinputs = pl.from_dict(input_dict, strict=False)
-        return exec_testinputs
+        return pl.from_dict(input_dict, strict=False)

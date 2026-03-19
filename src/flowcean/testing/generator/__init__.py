@@ -6,6 +6,6 @@ __all__ = [
 ]
 
 from .combination_generator import CombinationGenerator
+from .ddtig_generator import ddtigGenerator
 from .generator import TestcaseGenerator
 from .stochastic_generator import StochasticGenerator
-from .ddtig_generator import ddtigGenerator

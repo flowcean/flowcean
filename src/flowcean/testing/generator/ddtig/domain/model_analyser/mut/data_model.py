@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import polars as pl
 from polars import DataFrame
 from sklearn.neighbors import KernelDensity
 
-from flowcean.testing.generator.ddtig.application import ModelHandler
-from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
+if TYPE_CHECKING:
+    from flowcean.testing.generator.ddtig.application import ModelHandler
+    from flowcean.testing.generator.ddtig.user_interface import (
+        SystemSpecsHandler,
+    )
 
 
 class DataModel:
@@ -76,7 +81,7 @@ class DataModel:
 
     def _generate_samples(self,
                           n_samples: int,
-                          int_features: list = []) -> DataFrame:
+                          int_features: list | None = None) -> DataFrame:
         """Generates n random input samples for all features using KDE.
 
         Args:
@@ -98,6 +103,8 @@ class DataModel:
             │ 0.5265 ┆ 0.4673   ┆ 0.1601 ┆ 1   │
             └────────┴──────────┴────────┴─────┘
         """
+        if int_features is None:
+            int_features = []
         samples = pl.DataFrame()
         kde = self._compute_dist()
         samples_array = kde.sample(n_samples, random_state=self.seed)
@@ -134,5 +141,4 @@ class DataModel:
         training_outputs = self.model_handler.get_model_prediction(training_inputs).collect()
         samples_input_lst = training_inputs.to_dicts()
         samples_output_lst = pl.Series(training_outputs.select(training_outputs.columns[0])).to_list()
-        samples = [(inputs, output) for inputs, output in zip(samples_input_lst, samples_output_lst, strict=False)]
-        return samples
+        return [(inputs, output) for inputs, output in zip(samples_input_lst, samples_output_lst, strict=False)]

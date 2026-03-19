@@ -1,16 +1,17 @@
+from pathlib import Path
+from typing import Any
+
 import polars as pl
 
-from pathlib import Path
-from typing import Any, TextIO, Iterator
-
-from flowcean.testing.generator.ddtig.application.test_pipeline import TestPipeline
-from .generator import TestcaseGenerator
-from flowcean.core.data import Data
 from flowcean.core import Model
+from flowcean.core.data import Data
 from flowcean.polars.environments.dataframe import DataFrame
-from flowcean.polars.environments.streaming import StreamingOfflineEnvironment
+from flowcean.testing.generator.ddtig.application.test_pipeline import (
+    TestPipeline,
+)
 from flowcean.utils import get_seed
 
+from .generator import TestcaseGenerator
 
 
 class ddtigGenerator(TestcaseGenerator):

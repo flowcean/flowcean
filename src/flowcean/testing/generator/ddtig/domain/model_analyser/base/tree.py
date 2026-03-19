@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from river.tree import HoeffdingTreeClassifier, HoeffdingTreeRegressor
 from river.tree.nodes.branch import DTBranch
 from sklearn.tree._tree import Tree as sklearnTree
 
-from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
+if TYPE_CHECKING:
+    from river.tree import HoeffdingTreeClassifier, HoeffdingTreeRegressor
+
+    from flowcean.testing.generator.ddtig.user_interface import (
+        SystemSpecsHandler,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +109,7 @@ def convert_sklearn_tree(sklearn_tree: sklearnTree,
 
 @dataclass
 class Node:
-    """Represents a node in a TestTree.
-    """
+    """Represents a node in a TestTree."""
 
     def __init__(
         self,
@@ -133,7 +137,7 @@ class Node:
         self.split_threshold = split_threshold
         self.samples = samples
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"\nchild_left: {self.child_left},\nchild_right: {self.child_right},\nsplit_feature: {self.split_feature},\nsplit_feature_idx: {self.split_feature_idx},\nsplit_threshold: {self.split_threshold}, \nsamples: {self.samples}"
 
 @dataclass
@@ -184,7 +188,7 @@ class TestTree:
         return samples
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         tree_str = ""
         for idx, node in self.test_tree.items():
             tree_str += f"\nNode {idx}: {node!s}\n"

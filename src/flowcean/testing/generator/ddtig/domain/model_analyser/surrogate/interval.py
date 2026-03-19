@@ -48,9 +48,8 @@ class Interval:
         self.min_value = min_value
         self.max_value = max_value
 
-    def __str__(self):
-        """Returns a string representation of the interval.
-        """
+    def __str__(self) -> str:
+        """Returns a string representation of the interval."""
         return self.left_endpoint.value + \
             str(self.min_value) + "," + \
             str(self.max_value) + \
@@ -153,8 +152,7 @@ class Interval:
         return None
 
 class IntervalEndpoint(Enum):
-    """Enum representing the types of interval endpoints.
-    """
+    """Enum representing the types of interval endpoints."""
     LEFT_OPEN = "("
     LEFT_CLOSED = "["
     RIGHT_OPEN = ")"

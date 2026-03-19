@@ -1,13 +1,15 @@
+import logging
+from pathlib import Path
+
 import polars as pl
 import tqdm
-from pathlib import Path
-import logging
 
 from flowcean.core import Model
 from flowcean.core.data import Data
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.testing.predicates import Predicate
 
+logger = logging.getLogger(__name__)
 
 def test_model(
     model: Model,
@@ -110,10 +112,10 @@ def test_model(
         test_failed = TestFailed(failure_data, failure_prediction)
         if path is None:
             raise test_failed
-        logging.info(f" {number_of_failures} tests failed. Writing details to {path}.")
+        logger.info(f" {number_of_failures} tests failed. Writing details to {path}.")
         test_failed.to_file(path)
     elif number_of_failures == 0:
-        logging.info("All tests passed.")
+        logger.info("All tests passed.")
         if path is not None:
             output_path = Path(path)
             output_path.parent.mkdir(parents=True, exist_ok=True)

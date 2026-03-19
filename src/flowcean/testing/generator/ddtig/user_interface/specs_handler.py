@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import polars as pl
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -111,12 +114,15 @@ class SystemSpecsHandler:
                 try:
                     self.specs = json.load(f)
                 except json.JSONDecodeError as e:
-                    raise ValueError(f"Invalid JSON in specification file: {e}") from e
+                    msg = f"Invalid JSON in specification file: {e}"
+                    raise ValueError(msg) from e
                 except Exception as e:
-                    raise RuntimeError(f"Failed to load specification file: {e}") from e
+                    msg = f"Failed to load specification file: {e}"
+                    raise RuntimeError(msg) from e
             # Validate JSON structure
             if self.specs.get("features") is None:
-                raise LookupError("Invalid JSON structure. Refer to README.md.")
+                msg = "Invalid JSON structure. Refer to README.md."
+                raise LookupError(msg)
 
             self.n_features = self.get_n_features()
 
@@ -125,36 +131,46 @@ class SystemSpecsHandler:
 
                 # Validate presence of required keys
                 if not all(k in feature for k in ["name", "min", "max", "type", "nominal"]) or len(feature) != 5:
-                    raise LookupError("Invalid JSON structure. Refer to README.md.")
+                    msg = "Invalid JSON structure. Refer to README.md."
+                    raise LookupError(msg)
 
                 # Validate types
                 if not isinstance(feature["name"], str):
-                    raise ValueError("'name' must be a string.")
+                    msg = "'name' must be a string."
+                    raise ValueError(msg)
 
                 if feature["type"] not in ["int", "float"]:
-                    raise ValueError("'type' must be either 'int' or 'float'.")
+                    msg = "'type' must be either 'int' or 'float'."
+                    raise ValueError(msg)
 
                 if not isinstance(feature["min"], (int, float)) or not isinstance(feature["max"], (int, float)):
-                    raise TypeError("'min' and 'max' must be int or float.")
+                    msg = "'min' and 'max' must be int or float."
+                    raise TypeError(msg)
 
                 if feature["type"] == "int" and not (isinstance(feature["min"], int) and isinstance(feature["max"], int)):
-                    raise ValueError("'min' and 'max' must be int for type 'int'.")
+                    msg = "'min' and 'max' must be int for type 'int'."
+                    raise ValueError(msg)
 
                 if feature["type"] == "float" and not all(isinstance(v, (int, float)) for v in [feature["min"], feature["max"]]):
-                    raise ValueError("'min' and 'max' must be numeric for type 'float'.")
+                    msg = "'min' and 'max' must be numeric for type 'float'."
+                    raise ValueError(msg)
 
                 if not isinstance(feature["nominal"], bool):
-                    raise TypeError("'nominal' must be a boolean.")
+                    msg = "'nominal' must be a boolean."
+                    raise TypeError(msg)
 
                 if feature["nominal"] and feature["type"] != "int":
-                    raise TypeError("Nominal features must be of type 'int'.")
+                    msg = "Nominal features must be of type 'int'."
+                    raise TypeError(msg)
 
                 if feature["min"] > feature["max"]:
-                    raise TypeError("'min' must be smaller than or equal to 'max'.")
+                    msg = "'min' must be smaller than or equal to 'max'."
+                    raise TypeError(msg)
 
             logger.info("Specifications successfully extracted from file.")
         else:
-            raise ValueError("Either data or specs_file must be provided to load specifications.")
+            msg = "Either data or specs_file must be provided to load specifications."
+            raise ValueError(msg)
 
 
     def get_n_features(self) -> int:

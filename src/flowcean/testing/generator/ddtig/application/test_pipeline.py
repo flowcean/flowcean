@@ -120,14 +120,17 @@ class TestPipeline:
         self.model_handler = ModelHandler(model)
         self.model = self.model_handler.get_ml_model()
         if test_coverage_criterium not in ["bva", "dtc"]:
-            raise ValueError("Invalid test coverage criterium. Expected 'bva' or 'dtc'.")
+            msg = "Invalid test coverage criterium. Expected 'bva' or 'dtc'."
+            raise ValueError(msg)
 
         if (type(self.model) != DecisionTreeRegressor and
             type(self.model) != DecisionTreeClassifier and
             dataset is None):
-            raise ValueError("Missing required parameter: 'dataset'")
+            msg = "Missing required parameter: 'dataset'"
+            raise ValueError(msg)
         if dataset is None and specs_file is None:
-            raise ValueError("Missing required parameter: 'dataset' or 'specs_file'")
+            msg = "Missing required parameter: 'dataset' or 'specs_file'"
+            raise ValueError(msg)
         self.n_testinputs = n_testinputs
         self.test_coverage_criterium = test_coverage_criterium
         self.dataset = dataset
@@ -194,7 +197,8 @@ class TestPipeline:
             logger.info("Training Hoeffding Tree surrogate model for black-box model...")
             if self.hoeffding_tree is None:
                 if self.dataset is None:
-                    raise ValueError("Dataset is required to train the Hoeffding Tree surrogate model for black-box models.")
+                    msg = "Dataset is required to train the Hoeffding Tree surrogate model for black-box models."
+                    raise ValueError(msg)
                 htree_obj = HoeffdingTree(self.dataset, self.seed, self.model_handler, self.specs_handler)
                 dtree = htree_obj.train_tree(performance_threshold=performance_threshold,
                                             sample_limit=sample_limit,
@@ -262,7 +266,7 @@ class TestPipeline:
         columns = list(self.feature_names)
         columns.append("Number of test inputs")
         stringified_eqclasses = [[str(interval) for interval in eqclass] for eqclass in self.eqclasses]
-        updated_eqclasses = [row + [self.n_testinputs_lst[i]] for i, row in enumerate(stringified_eqclasses)]
+        updated_eqclasses = [[*row, self.n_testinputs_lst[i]] for i, row in enumerate(stringified_eqclasses)]
         eqclasses_table = tabulate(updated_eqclasses, headers=columns, tablefmt="grid")
         with open("equivalence_classes.txt", "w", encoding="utf-8") as f:
             f.write(eqclasses_table)
@@ -303,12 +307,12 @@ class TestPipeline:
             print("No Hoeffding Tree to save.")
 
 
-    def save_test_overview(self, print_option: list = [1, 2, 3, 4]) -> None:
+    def save_test_overview(self, print_option: list | None = None) -> None:
         """Generates and prints multiple report files containing:
             1. Equivalence classes + Number of test inputs
             2. Test plans
             3. Test inputs
-            4. Hoeffding Tree (if exists)
+            4. Hoeffding Tree (if exists).
 
         Args:
             print_option :
@@ -319,6 +323,8 @@ class TestPipeline:
                 - 4 → Hoeffding tree
                 Default: [1, 2, 3, 4]
         """
+        if print_option is None:
+            print_option = [1, 2, 3, 4]
         logger.info(f"Printing: {print_option}")
         if 1 in print_option:
             self._print_eqclasses()

@@ -154,11 +154,11 @@ class EquivalenceClassesHandler:
                 left_endpoint = IntervalEndpoint.LEFT_OPEN
                 right_endpoint = IntervalEndpoint.RIGHT_OPEN
                 # If min is NULL, interval is left closed and min is from specifications
-                if min_value == None:
+                if min_value is None:
                     left_endpoint = IntervalEndpoint.LEFT_CLOSED
                     min_value = self.minmax_values_specs[feature]["min"]
                 # If max is NULL, interval is right closed and max is from specifications
-                if max_value == None:
+                if max_value is None:
                     right_endpoint = IntervalEndpoint.RIGHT_CLOSED
                     max_value = self.minmax_values_specs[feature]["max"]
                 interval = (Interval(feature, left_endpoint, right_endpoint, min_value, max_value),)
@@ -260,10 +260,7 @@ class EquivalenceClassesHandler:
             return None
 
         # Identify which equivalence class contains the superset interval
-        if (interval_res == intervalA):
-            eqclass_large = eqclass1
-        else:
-            eqclass_large = eqclass2
+        eqclass_large = eqclass1 if interval_res == intervalA else eqclass2
 
         # Check consistency across all remaining intervals
         for idx in range(1, len(eqclass1)):

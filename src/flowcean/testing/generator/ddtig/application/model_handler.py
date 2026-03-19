@@ -56,7 +56,8 @@ class ModelHandler:
         elif (type(self.model) == PyTorchModel):
             ml_model = self.model.module
         else:
-            raise ValueError(f"Unsupported model type: {type(self.model)}")
+            msg = f"Unsupported model type: {type(self.model)}"
+            raise ValueError(msg)
         logger.info("Extracted the underlying ML model from the Flowcean model successfully.")
         return ml_model
 
