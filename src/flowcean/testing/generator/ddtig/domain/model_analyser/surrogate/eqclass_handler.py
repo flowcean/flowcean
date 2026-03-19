@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 
 import logging
@@ -110,14 +109,14 @@ class EquivalenceClassesHandler:
 
 
     # Collects all paths from the root to leaf nodes.
-    def _collect_all_paths(self, root) -> list:
+    def _collect_all_paths(self, root: int) -> list:
         path, paths = [], []
         self._collect_paths(root, path, paths)
         return paths
 
     # Extracts raw equivalence classes from tree paths.
     # Each leaf in the tree corresponds to one individual equivalence class.
-    def _extract_equivalence_classes(self, paths) -> list:
+    def _extract_equivalence_classes(self, paths: list) -> list:
         equivalence_classes = []
 
         # Traverse all paths from root to a leaf
@@ -139,7 +138,7 @@ class EquivalenceClassesHandler:
 
 
     # Formats raw equivalence classes into Interval objects.
-    def _format_equivalence_classes(self, equivalence_classes) -> list:
+    def _format_equivalence_classes(self, equivalence_classes: list) -> list:
         from flowcean.testing.generator.ddtig.domain import (
             Interval,
             IntervalEndpoint,
@@ -249,27 +248,28 @@ class EquivalenceClassesHandler:
             The equivalence class that is the superset,
             or None if neither is a subset of the other.
         """
+
         from flowcean.testing.generator.ddtig.domain import Interval
 
         # Compare the first interval to determine initial superset
-        intervalA = eqclass1[0]
-        intervalB = eqclass2[0]
-        interval_res = Interval.is_subset(intervalA, intervalB)
+        interval_a = eqclass1[0]
+        interval_b = eqclass2[0]
+        interval_res = Interval.is_subset(interval_a, interval_b)
 
         if interval_res is None:
             return None
 
         # Identify which equivalence class contains the superset interval
-        eqclass_large = eqclass1 if interval_res == intervalA else eqclass2
+        eqclass_large = eqclass1 if interval_res == interval_a else eqclass2
 
         # Check consistency across all remaining intervals
         for idx in range(1, len(eqclass1)):
-            intervalA = eqclass1[idx]
-            intervalB = eqclass2[idx]
-            interval_res = Interval.is_subset(intervalA, intervalB)
+            interval_a = eqclass1[idx]
+            interval_b = eqclass2[idx]
+            interval_res = Interval.is_subset(interval_a, interval_b)
 
-            if interval_res is None or (((interval_res == intervalA) and (eqclass_large != eqclass1)) or
-                  ((interval_res == intervalB) and (eqclass_large != eqclass2))):
+            if interval_res is None or (((interval_res == interval_a) and (eqclass_large != eqclass1)) or
+                  ((interval_res == interval_b) and (eqclass_large != eqclass2))):
                 return None
 
         return eqclass_large

@@ -110,10 +110,7 @@ class DataModel:
         samples_array = kde.sample(n_samples, random_state=self.seed)
         for i in range(self.n_features):
             # Round values for integer-type features
-            if i in int_features:
-                feature_samples = np.round(samples_array[:,i]).astype(int).tolist()
-            else:
-                feature_samples = samples_array[:,i].tolist()
+            feature_samples = np.round(samples_array[:, i]).astype(int).tolist() if i in int_features else samples_array[:, i].tolist()
             samples.insert_column(i, pl.Series(self.col_names[i], feature_samples))
         return samples
 
@@ -134,10 +131,7 @@ class DataModel:
             Example (n_samples = 1):
             [({'Length': 0.5093, 'Diameter': 0.3886, 'Height': 0.1106, 'M': 0}, 8.6006)]
         """
-        if original_data:
-            training_inputs = self.data
-        else:
-            training_inputs = self._generate_samples(n_samples, self.int_features)
+        training_inputs = self.data if original_data else self._generate_samples(n_samples, self.int_features)
         training_outputs = self.model_handler.get_model_prediction(training_inputs).collect()
         samples_input_lst = training_inputs.to_dicts()
         samples_output_lst = pl.Series(training_outputs.select(training_outputs.columns[0])).to_list()

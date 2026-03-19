@@ -44,17 +44,23 @@ class ddtigGenerator(TestcaseGenerator):
             model: The trained Flowcean model.
             reqs_file: Path to the test requirements file.
             dataset: Optional Polars DataFrame containing the original dataset.
-            specs_file: Path to a file containing feature specifications. If you provide a dataset containing system inputs and outputs that already encodes the necessary specifications, then you do not need to supply a separate system specification file.
+            specs_file: Path to a file containing feature specifications. If you provide a
+                dataset containing system inputs and outputs that already encodes the necessary
+                specifications, then you do not need to supply a separate system specification file.
             classification: Whether the task is a classification problem (default: False).
             inverse_alloc (optional) : If true, use inverse test allocation strategy.
             epsilon (optional) : Size of interval around boundaries for BVA testing.
 
             For Surrogate model training (only applicable for black-box models):
-                performance_threshold (optional) : Minimum performance required to export the Hoeffding Tree (only applicable for black-box models).
-                sample_limit (optional) : Maximum number of samples used to train the Hoeffding Tree (only applicable for black-box models).
-                n_predictions (optional) : Number of correct predictions required before exporting the Hoeffding Tree (only applicable for black-box models).
+                performance_threshold (optional) : Minimum performance required to export
+                    the Hoeffding Tree (only applicable for black-box models).
+                sample_limit (optional) : Maximum number of samples used to train the
+                    Hoeffding Tree (only applicable for black-box models).
+                n_predictions (optional) : Number of correct predictions required before
+                    exporting the Hoeffding Tree (only applicable for black-box models).
                 max_depth (optional) : Maximum depth of the Hoeffding tree.
-                hoeffding_tree_extra_params (optional) : Additional parameters for training the Hoeffding Tree (only applicable for black-box models).
+                hoeffding_tree_extra_params (optional) : Additional parameters for training
+                    the Hoeffding Tree (only applicable for black-box models).
         """
         super().__init__()
         self.n_testinputs = n_testinputs

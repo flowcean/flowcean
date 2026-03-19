@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import logging
 import math
 import random
@@ -7,11 +6,38 @@ from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval i
     Interval,
     IntervalEndpoint,
 )
-from flowcean.testing.generator.ddtig.infrastructure.utils import (
-    reverse_list_by_value,
-)
 
 logger = logging.getLogger(__name__)
+
+
+def reverse_list_by_value(numbers_list: list) -> list:
+    """Reverse the values in a list based on their magnitude,
+    preserving the original positions.
+
+    Args:
+        numbers_list: List of numeric values to reverse.
+
+    Returns:
+        A list where each value is replaced by its reversed counterpart
+        based on magnitude.
+        Example: reverse_list_by_value([1, 4, 2, 3]) -> [4, 1, 3, 2]
+    """
+    
+    # Sort values in ascending order and reverse them
+    sorted_probs = sorted(numbers_list)
+    reversed_probs = sorted_probs[::-1]
+
+    value_to_reversed = {}
+    # Map each original value to its reversed counterpart
+    for orig, rev in zip(sorted_probs, reversed_probs, strict=False):
+        if orig not in value_to_reversed:
+            value_to_reversed[orig] = [rev]
+        else:
+            value_to_reversed[orig].append(rev)
+
+    # Replace each value in the original list with its reversed version
+    return [value_to_reversed[p].pop(0) for p in numbers_list]
+
 
 class TestGenerator:
     """A class that generates abstract test inputs for binary decision trees.
@@ -88,8 +114,7 @@ class TestGenerator:
 
 
     # Samples random values from a given interval for a specific feature.
-    def _generate_randoms(self, lower, upper, n_testinputs, feature: int) -> list:
-        n_testinputs = int(n_testinputs)
+    def _generate_randoms(self, lower, upper, n_testinputs: int, feature: int) -> list:
         if lower > upper:
             tmp = upper
             upper = lower
@@ -119,10 +144,7 @@ class TestGenerator:
                 testplan.append(test_ranges)
                 if (len(test_ranges) == 2):
                     half_n = n_testinputs / 2
-                    if (n_testinputs % 2 != 0):
-                        ns = [int(half_n+0.5), int(half_n-0.5)]
-                    else:
-                        ns = [half_n, half_n]
+                    ns = [int(half_n + 0.5), int(half_n - 0.5)] if n_testinputs % 2 != 0 else [half_n, half_n]
                     input_samples_sublsts = []
                     n = ns[0]
                     for lower, upper in test_ranges:
@@ -181,8 +203,8 @@ class TestGenerator:
         """
         testinputs = []
         self.n_testinputs_lst = self._generate_n_testinputs_list(n_testinputs, eqclass_prio, inverse_alloc)
-        for eqclass, n_testinputs in zip(self.equivalence_classes, self.n_testinputs_lst, strict=False):
-            testinputs_eqclass = self._generate_testinputs_eqclass(n_testinputs, test_coverage_criterium, eqclass, epsilon)
+        for eqclass, n_eq_testinputs in zip(self.equivalence_classes, self.n_testinputs_lst, strict=False):
+            testinputs_eqclass = self._generate_testinputs_eqclass(n_eq_testinputs, test_coverage_criterium, eqclass, epsilon)
             testinputs += testinputs_eqclass
         logger.info("Generated test inputs for all equivalence classes successfully.")
         return testinputs

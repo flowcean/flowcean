@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import logging
 from typing import Any
 
@@ -140,10 +139,7 @@ class HoeffdingTree:
             if i == len(self.samples):
                 if len(self.samples) >= sample_limit:
                     break
-                if (len(self.samples) + self.N_SAMPLES) >= sample_limit:
-                    samples_to_generate = sample_limit - len(self.samples)
-                else:
-                    samples_to_generate = self.N_SAMPLES
+                samples_to_generate = sample_limit - len(self.samples) if len(self.samples) + self.N_SAMPLES >= sample_limit else self.N_SAMPLES
                 self.samples.extend(self.datamodel.generate_dataset(n_samples = samples_to_generate))
 
         logger.info("Hoeffding Tree training completed successfully.")

@@ -92,27 +92,27 @@ class Interval:
                 self.right_endpoint == IntervalEndpoint.LEFT_OPEN)
 
     @staticmethod
-    def is_subset(intervalA: Interval,
-                  intervalB: Interval) -> Interval | None:
+    def is_subset(interval_a: Interval,
+                  interval_b: Interval) -> Interval | None:
         """Determines which interval is a subset of the other.
 
         Args:
-            intervalA : First interval to compare.
-            intervalB : Second interval to compare.
+            interval_a : First interval to compare.
+            interval_b : Second interval to compare.
 
         Returns:
             The superset interval if one contains the other,
             otherwise None.
         """
         # Determine which interval is larger
-        if (intervalA.min_value <= intervalB.min_value and
-            intervalA.max_value >= intervalB.max_value):
-            interval_large = intervalA
-            interval_small = intervalB
-        elif (intervalA.min_value >= intervalB.min_value and
-            intervalA.max_value <= intervalB.max_value):
-            interval_large = intervalB
-            interval_small = intervalA
+        if (interval_a.min_value <= interval_b.min_value and
+            interval_a.max_value >= interval_b.max_value):
+            interval_large = interval_a
+            interval_small = interval_b
+        elif (interval_a.min_value >= interval_b.min_value and
+            interval_a.max_value <= interval_b.max_value):
+            interval_large = interval_b
+            interval_small = interval_a
         else:
             return None
 
@@ -136,19 +136,19 @@ class Interval:
             return None
 
         # Case 4: Same bounds
-        if (intervalA.min_value == intervalB.min_value and
-            intervalA.max_value == intervalB.max_value):
-            if (intervalA.is_closed()):
-                return intervalA
-            if (intervalA.is_open()):
-                return intervalB
-            if (intervalB.is_closed()):
-                return intervalB
-            if (intervalB.is_open()):
-                return intervalA
-            if (intervalA.left_endpoint == intervalB.left_endpoint and
-                intervalA.right_endpoint == intervalB.right_endpoint):
-                return intervalA
+        if (interval_a.min_value == interval_b.min_value and
+            interval_a.max_value == interval_b.max_value):
+            if (interval_a.is_closed()):
+                return interval_a
+            if (interval_a.is_open()):
+                return interval_b
+            if (interval_b.is_closed()):
+                return interval_b
+            if (interval_b.is_open()):
+                return interval_a
+            if (interval_a.left_endpoint == interval_b.left_endpoint and
+                interval_a.right_endpoint == interval_b.right_endpoint):
+                return interval_a
         return None
 
 class IntervalEndpoint(Enum):
