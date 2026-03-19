@@ -13,25 +13,25 @@ class EquivalenceClassesHandler:
     ----------
     test_tree : TestTree
         The decision tree structure.
-    
+
     minmax_values_specs : dict
         Dictionary storing min/max values for each feature from specifications.
-    
+
     n_samples : int
         Number of samples used to train the tree.
-    
+
     n_features : int
         Number of features in the dataset.
-    
+
 
     Methods:
     -------
     get_equivalence_classes()
         Extracts and formats equivalence classes from the decision tree.
-    
+
     to_str(eqclass)
         Converts a single equivalence class to a string.
-    
+
     to_strs(eqclasses, feature_names)
         Converts a list of equivalence classes to a readable string format.
     """

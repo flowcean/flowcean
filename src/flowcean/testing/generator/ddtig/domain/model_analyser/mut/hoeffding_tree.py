@@ -19,10 +19,10 @@ class HoeffdingTree:
     ----------
     datamodel : DataModel
         Object used to generate synthetic training inputs based on the original dataset.
-    
+
     samples : list
         Original training inputs transformed to River-compatible format with predictions.
-    
+
     nominal_attributes : list
         List of indices for nominal features.
 
@@ -148,4 +148,3 @@ class HoeffdingTree:
 
         logger.info("Hoeffding Tree training completed successfully.")
         return model
-

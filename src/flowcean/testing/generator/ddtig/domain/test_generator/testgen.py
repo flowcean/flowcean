@@ -20,7 +20,7 @@ class TestGenerator:
     ----------
     equivalence_classes : list
         Equivalence classes extracted from the decision tree.
-        
+
     type_specs : dict
         Input types for each feature as defined in the specifications.
 

@@ -15,7 +15,7 @@ def get_all_combinations(first_val: Any,
 
     Returns:
         List of all possible combinations.
-        Example: get_all_combinations(0, 1, 3) -> 
+        Example: get_all_combinations(0, 1, 3) ->
                  [(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1),
                   (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)]
     """
@@ -37,7 +37,7 @@ def split_tuple(tuple_to_split: tuple,
 
     Returns:
         A tuple of subtuples with the specified lengths.
-        Example: split_tuple((1, 2, 3, 4, 5, 6), [3, 2, 1]) -> 
+        Example: split_tuple((1, 2, 3, 4, 5, 6), [3, 2, 1]) ->
                  [(1, 2, 3), (4, 5), (6,)]
     """
     subtuples = []

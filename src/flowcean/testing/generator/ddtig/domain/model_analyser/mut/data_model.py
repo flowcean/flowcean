@@ -16,16 +16,16 @@ class DataModel:
     ----------
     data : pl.DataFrame
         Original training data used in the Flowcean model.
-    
+
     col_names : list
         Names of the columns in the training data.
-    
+
     n_features : int
         Number of features in the dataset.
-        
+
     model_handler : ModelHandler
         ModelHandler object used to produce predictions.
-    
+
     int_features : list
         List of indices for features of type int.
 
@@ -62,10 +62,10 @@ class DataModel:
     def _compute_dist(self) -> KernelDensity:
         """Computes a kernel density estimate (KDE) of the training data.
 
-        Kernel Density Estimation (KDE) is a nonparametric method 
-        for estimating the probability density function of a dataset. 
-        Kernel used is the Gaussian kernel, which assigns higher 
-        weights to nearby points and lower weights to distant ones, 
+        Kernel Density Estimation (KDE) is a nonparametric method
+        for estimating the probability density function of a dataset.
+        Kernel used is the Gaussian kernel, which assigns higher
+        weights to nearby points and lower weights to distant ones,
         producing a smooth, bell-shaped density curve.
 
         Returns:

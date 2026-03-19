@@ -10,7 +10,7 @@ class TestCompiler:
     ----------
     n_features : int
         Number of features in the dataset.
-        
+
     abst_testinputs : list
         List of abstract test inputs.
 

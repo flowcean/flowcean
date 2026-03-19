@@ -34,7 +34,7 @@ class ddtigGenerator(TestcaseGenerator):
         n_predictions: int = 50,
         max_depth: int = 5,
         hoeffding_tree_extra_params: dict[str, Any] | None = None,
-        
+
 
     ) -> None:
         """Initialize the stochastic generator.
@@ -58,7 +58,7 @@ class ddtigGenerator(TestcaseGenerator):
         super().__init__()
         self.n_testinputs = n_testinputs
         self.seed = get_seed()
-    
+
         self.test_pipeline = TestPipeline(
             model,
             dataset=dataset,
@@ -90,6 +90,3 @@ class ddtigGenerator(TestcaseGenerator):
 
     def _observe(self) -> Data:
         return self._streaming_env.observe()
-
-        
-

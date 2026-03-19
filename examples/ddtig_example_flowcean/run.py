@@ -7,12 +7,11 @@ import polars as pl
 from flowcean.core import Model
 from flowcean.core.strategies.offline import learn_offline
 from flowcean.polars import DataFrame
-from flowcean.sklearn import RegressionTree
+from flowcean.testing import test_model
 from flowcean.testing.generator import ddtigGenerator
 from flowcean.testing.predicates import PolarsPredicate
-from flowcean.testing.test import test_model
-from flowcean.utils import initialize_random
 from flowcean.torch import LightningLearner, MultilayerPerceptron
+from flowcean.utils import initialize_random
 
 dirpath = Path(Path(__file__).resolve()).parent
 
@@ -127,4 +126,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

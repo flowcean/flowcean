@@ -10,16 +10,16 @@ class Interval:
     ----------
     feature : int
         Index of the feature to which the interval belongs.
-    
+
     left_endpoint : IntervalEndpoint
         Indicates whether the interval is left-open or left-closed.
-    
+
     right_endpoint : IntervalEndpoint
         Indicates whether the interval is right-open or right-closed.
-    
+
     min_value : int | float
         Lower bound of the interval.
-    
+
     max_value : int | float
         Upper bound of the interval.
     """

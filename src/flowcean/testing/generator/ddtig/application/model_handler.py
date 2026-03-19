@@ -17,16 +17,16 @@ class ModelHandler:
     ----------
     model : flowcean.core.model.Model
         The loaded Flowcean model.
-    
-    
+
+
     Methods:
     -------
     get_ml_model()
         Returns the underlying machine learning model from the Flowcean model.
-    
+
     get_model_prediction()
         Returns predictions from the Flowcean model as a LazyFrame.
-    
+
     get_model_prediction_as_lst()
         Returns predictions from the Flowcean model as a Python list.
     """

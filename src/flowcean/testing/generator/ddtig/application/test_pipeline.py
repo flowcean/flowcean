@@ -27,43 +27,43 @@ class TestPipeline:
     ----------
     model_handler : ModelHandler
         Handles the Flowcean model and its predictions.
-    
+
     model : Decision Tree | Black-box Model
         The underlying machine learning model extracted from the Flowcean model.
-    
+
     dataset : pl.DataFrame
         The original training dataset.
-    
+
     specs_handler : SystemSpecsHandler
         Extracts system specifications and feature information.
-    
+
     requirements : dict
         Test requirements provided by the user.
-    
+
     classification : bool
         Indicates whether the task is classification.
-    
+
     eqclasses : list
         List of all equivalence classes.
-    
+
     testplans : list
         List of all test plans (intervals used to sample test inputs).
-    
+
     testinputs : list
         List of all generated test inputs.
-    
+
     n_testinputs_lst : list
         Number of test inputs to generate per equivalence class.
-    
+
     testinputs_df : pl.DataFrame
         Executable test inputs formatted for Flowcean.
-    
+
     feature_names : list
         Names of all input features.
-    
+
     hoeffding_tree : HoeffdingTreeRegressor
         Hoeffding tree used to approximate complex black-box models.
-    
+
     Methods:
     -------
     execute()
@@ -71,7 +71,7 @@ class TestPipeline:
 
     save_hoeffding_tree()
         Saves the generated Hoeffding tree to a file.
-    
+
     save_test_overview()
         Saves all intermediate results and outputs from the test input generation process.
     """
@@ -165,23 +165,23 @@ class TestPipeline:
             5. Compile test inputs into executable format.
 
         Args:
-            test_coverage_criterium: 
+            test_coverage_criterium:
                 Strategy for test coverage (e.g., Boundary Value Analysis or Decision Tree Coverage).
-            n_testinputs: 
+            n_testinputs:
                 Total number of test inputs to generate.
-            inverse_alloc (optional): 
+            inverse_alloc (optional):
                 If True, generate more test inputs for less important equivalence classes.
-            epsilon (optional): 
+            epsilon (optional):
                 Size of interval around boundaries for BVA testing.
 
             If self.model is a black-box model:
-                performance_threshold (optional): 
+                performance_threshold (optional):
                     Minimum performance required to export the Hoeffding Tree.
-                sample_limit (optional): 
+                sample_limit (optional):
                     Maximum number of samples used to train the Hoeffding Tree.
-                n_predictions (optional): 
+                n_predictions (optional):
                     Number of correct predictions required before exporting the model.
-                **kwargs: 
+                **kwargs:
                     Additional parameters for training the Hoeffding Tree.
 
         Returns:
@@ -307,11 +307,11 @@ class TestPipeline:
         """Generates and prints multiple report files containing:
             1. Equivalence classes + Number of test inputs
             2. Test plans
-            3. Test inputs 
+            3. Test inputs
             4. Hoeffding Tree (if exists)
 
         Args:
-            print_option : 
+            print_option :
                 List specifying which report files to print.
                 - 1 → Equivalence classes + Number of test inputs
                 - 2 → Test plans

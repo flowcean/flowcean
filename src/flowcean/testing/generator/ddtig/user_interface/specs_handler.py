@@ -16,7 +16,7 @@ class SystemSpecsHandler:
     ----------
     specs : dict
         Dictionary storing system specifications.
-        
+
     n_features : int
         Number of features.
 
@@ -27,10 +27,10 @@ class SystemSpecsHandler:
 
     get_nominal_features()
         Returns the indices of all nominal features.
-    
+
     get_numerical_features()
         Returns the indices of all numerical features.
-    
+
     get_int_features()
         Returns the indices of all features with type 'int'.
 
@@ -39,13 +39,13 @@ class SystemSpecsHandler:
 
     extract_input_types()
         Extracts value types from specifications.
-    
+
     extract_feature_names()
         Extracts feature names.
 
     extract_feature_names_with_idx()
         Extract feature names along with their corresponding indices.
-    
+
     extract_feature_names_with_idx_reversed()
         Extract feature indices along with their corresponding names.
     """
