@@ -83,6 +83,7 @@ class ddtigGenerator(TestcaseGenerator):
             hoeffding_tree_extra_params=hoeffding_tree_extra_params,
         )
         self.df = self.test_pipeline.execute()
+        # TODO: Debug: Remove after testing
         self.data = DataFrame(self.df)
         self.reset()
 
