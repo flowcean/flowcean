@@ -82,114 +82,105 @@ class SystemSpecsHandler:
             specs_file : JSON file containing system specifications.
         """
         if data is not None:
-            # Drop the target column (assumed to be the last column)
-            target_col = data.columns[-1]
-            data = data.drop(target_col)
-
-            # Infer specifications from dataset
-            features = []
-            column_names = data.columns
-            maxs = data.max().row(0)
-            mins = data.min().row(0)
-            dtypes = data.dtypes
-            self.n_features = len(column_names)
-            for i in range(len(column_names)):
-                feature = {}
-                feature["name"] = column_names[i]
-                feature["min"] = mins[i]
-                feature["max"] = maxs[i]
-                if dtypes[i].is_float():
-                    feature["type"] = "float"
-                else:
-                    feature["type"] = "int"
-                unique_vals = data.select(
-                    pl.col(column_names[i]).unique(),
-                ).to_series()
-                feature["nominal"] = set(unique_vals) <= {0, 1}
-                features.append(feature)
-            self.specs = {"features": features}
-
-            logger.info("Specifications successfully extracted from dataset.")
-
+            self._load_from_data(data)
         elif specs_file is not None:
-            # Load specifications from JSON file
-            with Path.open(specs_file) as f:
-                try:
-                    self.specs = json.load(f)
-                except json.JSONDecodeError as e:
-                    msg = f"Invalid JSON in specification file: {e}"
-                    raise ValueError(msg) from e
-                except Exception as e:
-                    msg = f"Failed to load specification file: {e}"
-                    raise RuntimeError(msg) from e
-            # Validate JSON structure
-            if self.specs.get("features") is None:
-                msg = "Invalid JSON structure. Refer to README.md."
-                raise LookupError(msg)
-
-            self.n_features = self.get_n_features()
-
-            for i in range(self.n_features):
-                feature = self.specs["features"][i]
-
-                # Validate presence of required keys
-                if (
-                    not all(
-                        k in feature for k in REQUIRED_FEATURE_KEYS
-                    )
-                    or len(feature) != len(REQUIRED_FEATURE_KEYS)
-                ):
-                    msg = "Invalid JSON structure. Refer to README.md."
-                    raise LookupError(msg)
-
-                # Validate types
-                if not isinstance(feature["name"], str):
-                    msg = "'name' must be a string."
-                    raise TypeError(msg)
-
-                if feature["type"] not in ["int", "float"]:
-                    msg = "'type' must be either 'int' or 'float'."
-                    raise TypeError(msg)
-
-                if not isinstance(
-                    feature["min"], (int, float),
-                ) or not isinstance(feature["max"], (int, float)):
-                    msg = "'min' and 'max' must be int or float."
-                    raise TypeError(msg)
-
-                if feature["type"] == "int" and not (
-                    isinstance(feature["min"], int)
-                    and isinstance(feature["max"], int)
-                ):
-                    msg = "'min' and 'max' must be int for type 'int'."
-                    raise TypeError(msg)
-
-                if feature["type"] == "float" and not all(
-                    isinstance(v, (int, float))
-                    for v in [feature["min"], feature["max"]]
-                ):
-                    msg = "'min' and 'max' must be numeric for type 'float'."
-                    raise TypeError(msg)
-
-                if not isinstance(feature["nominal"], bool):
-                    msg = "'nominal' must be a boolean."
-                    raise TypeError(msg)
-
-                if feature["nominal"] and feature["type"] != "int":
-                    msg = "Nominal features must be of type 'int'."
-                    raise TypeError(msg)
-
-                if feature["min"] > feature["max"]:
-                    msg = "'min' must be smaller than or equal to 'max'."
-                    raise TypeError(msg)
-
-            logger.info("Specifications successfully extracted from file.")
+            self._load_from_file(specs_file)
         else:
             msg = (
                 "Either data or specs_file must be provided "
                 "to load specifications."
             )
             raise ValueError(msg)
+
+    def _load_from_data(self, data: pl.DataFrame) -> None:
+        target_col = data.columns[-1]
+        data = data.drop(target_col)
+
+        features = []
+        column_names = data.columns
+        maxs = data.max().row(0)
+        mins = data.min().row(0)
+        dtypes = data.dtypes
+        self.n_features = len(column_names)
+
+        for i in range(len(column_names)):
+            feature = {
+                "name": column_names[i],
+                "min": mins[i],
+                "max": maxs[i],
+                "type": "float" if dtypes[i].is_float() else "int",
+            }
+            unique_vals = data.select(
+                pl.col(column_names[i]).unique(),
+            ).to_series()
+            feature["nominal"] = set(unique_vals) <= {0, 1}
+            features.append(feature)
+
+        self.specs = {"features": features}
+        logger.info("Specifications successfully extracted from dataset.")
+
+    def _load_from_file(self, specs_file: Path) -> None:
+        with Path.open(specs_file) as f:
+            try:
+                self.specs = json.load(f)
+            except json.JSONDecodeError as e:
+                msg = f"Invalid JSON in specification file: {e}"
+                raise ValueError(msg) from e
+            except Exception as e:
+                msg = f"Failed to load specification file: {e}"
+                raise RuntimeError(msg) from e
+
+        features = self.specs.get("features")
+        if features is None:
+            msg = "Invalid JSON structure. Refer to README.md."
+            raise LookupError(msg)
+
+        self.n_features = len(features)
+        for feature in features:
+            self._validate_feature(feature)
+        logger.info("Specifications successfully extracted from file.")
+
+    def _validate_feature(self, feature: dict) -> None:
+        if (
+            not all(k in feature for k in REQUIRED_FEATURE_KEYS)
+            or len(feature) != len(REQUIRED_FEATURE_KEYS)
+        ):
+            msg = "Invalid JSON structure. Refer to README.md."
+            raise LookupError(msg)
+
+        if not isinstance(feature["name"], str):
+            msg = "'name' must be a string."
+            raise TypeError(msg)
+        if feature["type"] not in ["int", "float"]:
+            msg = "'type' must be either 'int' or 'float'."
+            raise TypeError(msg)
+        if not isinstance(feature["min"], (int, float)) or not isinstance(
+            feature["max"],
+            (int, float),
+        ):
+            msg = "'min' and 'max' must be int or float."
+            raise TypeError(msg)
+        if feature["type"] == "int" and not (
+            isinstance(feature["min"], int)
+            and isinstance(feature["max"], int)
+        ):
+            msg = "'min' and 'max' must be int for type 'int'."
+            raise TypeError(msg)
+        if feature["type"] == "float" and not all(
+            isinstance(v, (int, float))
+            for v in [feature["min"], feature["max"]]
+        ):
+            msg = "'min' and 'max' must be numeric for type 'float'."
+            raise TypeError(msg)
+        if not isinstance(feature["nominal"], bool):
+            msg = "'nominal' must be a boolean."
+            raise TypeError(msg)
+        if feature["nominal"] and feature["type"] != "int":
+            msg = "Nominal features must be of type 'int'."
+            raise TypeError(msg)
+        if feature["min"] > feature["max"]:
+            msg = "'min' must be smaller than or equal to 'max'."
+            raise TypeError(msg)
 
     def get_n_features(self) -> int:
         """Returns the number of features defined in the specifications.
@@ -253,7 +244,7 @@ class SystemSpecsHandler:
             min_value = self.specs["features"][feature]["min"]
             max_value = self.specs["features"][feature]["max"]
             feature_range = {"min": min_value, "max": max_value}
-            minmax_dict.update({feature: feature_range})
+            minmax_dict[feature] = feature_range
         return minmax_dict
 
     def extract_input_types(self) -> dict:

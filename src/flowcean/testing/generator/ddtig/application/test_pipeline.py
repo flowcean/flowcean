@@ -19,10 +19,14 @@ from flowcean.testing.generator.ddtig.domain import (
 from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 
 logger = logging.getLogger(__name__)
+PRINT_EQCLASSES = 1
+PRINT_TESTPLANS = 2
+PRINT_TESTINPUTS = 3
+PRINT_TREE = 4
 
 
 class TestPipeline:
-    """A class that defines the workflow for test input generation using the Flowcean framework.
+    """Workflow for test input generation in Flowcean.
 
     Attributes:
     ----------
@@ -30,7 +34,7 @@ class TestPipeline:
         Handles the Flowcean model and its predictions.
 
     model : Decision Tree | Black-box Model
-        The underlying machine learning model extracted from the Flowcean model.
+        Underlying machine learning model extracted from Flowcean model.
 
     dataset : pl.DataFrame
         The original training dataset.
@@ -74,7 +78,7 @@ class TestPipeline:
         Saves the generated Hoeffding tree to a file.
 
     save_test_overview()
-        Saves all intermediate results and outputs from the test input generation process.
+        Saves intermediate results and generated outputs.
     """
 
     def __init__(
@@ -84,6 +88,7 @@ class TestPipeline:
         test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
         specs_file: Path | None = None,
+        *,
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
@@ -99,19 +104,20 @@ class TestPipeline:
         Args:
             model: The trained Flowcean model.
             n_testinputs: Total number of test inputs to generate.
-            test_coverage_criterium: Strategy for test coverage ("bva" or "dtc").
-            dataset (optional) : Original training dataset. Required if specs_file is not provided.
-            specs_file (optional) : File containing system specifications. Required if dataset is not provided.
-            classification (optional) : Whether the task is classification.
-            inverse_alloc (optional) : If true, use inverse test allocation strategy.
-            epsilon (optional) : Size of interval around boundaries for BVA testing.
-
-            For Surrogate model training (only applicable for black-box models):
-                performance_threshold (optional) : Minimum performance required to export the Hoeffding Tree (only applicable for black-box models).
-                sample_limit (optional) : Maximum number of samples used to train the Hoeffding Tree (only applicable for black-box models).
-                n_predictions (optional) : Number of correct predictions required before exporting the Hoeffding Tree (only applicable for black-box models).
-                max_depth (optional) : Maximum depth of the Hoeffding tree.
-                hoeffding_tree_extra_params (optional) : Additional parameters for training the Hoeffding Tree (only applicable for black-box models).
+            test_coverage_criterium: Coverage strategy, either bva or dtc.
+            dataset: Original training dataset.
+                Required if specs_file is not provided.
+            specs_file: File containing system specifications.
+                Required if dataset is not provided.
+            classification: Whether the task is classification.
+            inverse_alloc: Whether to use inverse test allocation.
+            epsilon: Boundary offset used for bva.
+            seed: Random seed for reproducibility.
+            performance_threshold: Minimum surrogate performance.
+            sample_limit: Maximum number of surrogate samples.
+            n_predictions: Consecutive correct predictions needed.
+            max_depth: Maximum Hoeffding tree depth.
+            hoeffding_tree_extra_params: Extra surrogate hyperparameters.
         """
         self.model_handler = ModelHandler(model)
         self.model = self.model_handler.get_ml_model()
@@ -155,15 +161,16 @@ class TestPipeline:
         self,
         test_coverage_criterium: str,
         n_testinputs: int,
+        *,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
         performance_threshold: float = 0.3,
         sample_limit: int = 50000,
         n_predictions: int = 50,
         max_depth: int = 5,
-        **kwargs,
+        **kwargs: Any,
     ) -> pl.DataFrame:
-        """Executes the full test input generation workflow:
+        """Executes the full test input generation workflow.
 
             1. If model is black-box: train Hoeffding Tree.
             2. Convert decision tree into framework-conformant structure.
@@ -173,23 +180,24 @@ class TestPipeline:
 
         Args:
             test_coverage_criterium:
-                Strategy for test coverage (e.g., Boundary Value Analysis or Decision Tree Coverage).
+                Strategy for test coverage.
             n_testinputs:
                 Total number of test inputs to generate.
             inverse_alloc (optional):
-                If True, generate more test inputs for less important equivalence classes.
+                If True, generate more test inputs for less
+                important equivalence classes.
             epsilon (optional):
                 Size of interval around boundaries for BVA testing.
-
-            If self.model is a black-box model:
-                performance_threshold (optional):
-                    Minimum performance required to export the Hoeffding Tree.
-                sample_limit (optional):
-                    Maximum number of samples used to train the Hoeffding Tree.
-                n_predictions (optional):
-                    Number of correct predictions required before exporting the model.
-                **kwargs:
-                    Additional parameters for training the Hoeffding Tree.
+            performance_threshold (optional):
+                Minimum performance required to export the Hoeffding Tree.
+            sample_limit (optional):
+                Maximum number of samples used to train the Hoeffding Tree.
+            n_predictions (optional):
+                Number of correct predictions required before export.
+            max_depth (optional):
+                Maximum depth of the Hoeffding Tree.
+            **kwargs:
+                Additional parameters for training the Hoeffding Tree.
 
         Returns:
             Executable test inputs formatted for Flowcean.
@@ -201,11 +209,15 @@ class TestPipeline:
         ):
             # Generate Hoeffding tree only if it hasn't been created yet
             logger.info(
-                "Training Hoeffding Tree surrogate model for black-box model...",
+                "Training Hoeffding Tree surrogate model "
+                "for black-box model...",
             )
             if self.hoeffding_tree is None:
                 if self.dataset is None:
-                    msg = "Dataset is required to train the Hoeffding Tree surrogate model for black-box models."
+                    msg = (
+                        "Dataset is required to train the Hoeffding "
+                        "Tree surrogate model for black-box models."
+                    )
                     raise ValueError(msg)
                 htree_obj = HoeffdingTree(
                     self.dataset,
@@ -227,7 +239,8 @@ class TestPipeline:
         else:
             # Use the decision tree directly if the model is a tree-based one
             logger.info(
-                "Using existing Decision Tree model for test input generation...",
+                "Using existing Decision Tree model "
+                "for test input generation...",
             )
             dtree = self.model.tree_
 
@@ -244,7 +257,7 @@ class TestPipeline:
         )
         self.eqclasses = eqclassobj.get_equivalence_classes()
 
-        # Generate test inputs based on equivalence classes and coverage criteria
+        # Generate test inputs from equivalence classes and coverage criteria.
         testgenobj = TestGenerator(self.eqclasses, self.seed, type_specs)
         self.testinputs = testgenobj.generate_testinputs(
             test_coverage_criterium,
@@ -265,7 +278,7 @@ class TestPipeline:
         return self.testinputs_df
 
     def execute(self) -> pl.DataFrame:
-        """Wrapper around `_execute()` to run the test input generation workflow with the parameters specified during initialization.
+        """Run test input generation with the initialized parameters.
 
         Returns:
             Executable test inputs formatted for Flowcean.
@@ -334,7 +347,9 @@ class TestPipeline:
             print("No Hoeffding Tree to save.")
 
     def save_test_overview(self, print_option: list | None = None) -> None:
-        """Generates and prints multiple report files containing:
+        """Generates and prints multiple report files.
+
+        Includes:
             1. Equivalence classes + Number of test inputs
             2. Test plans
             3. Test inputs
@@ -350,13 +365,18 @@ class TestPipeline:
                 Default: [1, 2, 3, 4]
         """
         if print_option is None:
-            print_option = [1, 2, 3, 4]
+            print_option = [
+                PRINT_EQCLASSES,
+                PRINT_TESTPLANS,
+                PRINT_TESTINPUTS,
+                PRINT_TREE,
+            ]
         logger.info("Printing: %s", print_option)
-        if 1 in print_option:
+        if PRINT_EQCLASSES in print_option:
             self._print_eqclasses()
-        if 2 in print_option:
+        if PRINT_TESTPLANS in print_option:
             self._print_testplans()
-        if 3 in print_option:
+        if PRINT_TESTINPUTS in print_option:
             self._print_testinputs()
-        if 4 in print_option:
+        if PRINT_TREE in print_option:
             self._print_hoeffding_tree()

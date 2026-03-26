@@ -105,6 +105,43 @@ class Interval:
         )
 
     @staticmethod
+    def _order_by_bounds(
+        interval_a: Interval,
+        interval_b: Interval,
+    ) -> tuple[Interval, Interval] | None:
+        if (
+            interval_a.min_value <= interval_b.min_value
+            and interval_a.max_value >= interval_b.max_value
+        ):
+            return interval_a, interval_b
+        if (
+            interval_a.min_value >= interval_b.min_value
+            and interval_a.max_value <= interval_b.max_value
+        ):
+            return interval_b, interval_a
+        return None
+
+    @staticmethod
+    def _same_bounds_superset(
+        interval_a: Interval,
+        interval_b: Interval,
+    ) -> Interval | None:
+        if interval_a.is_closed():
+            return interval_a
+        if interval_a.is_open():
+            return interval_b
+        if interval_b.is_closed():
+            return interval_b
+        if interval_b.is_open():
+            return interval_a
+        if (
+            interval_a.left_endpoint == interval_b.left_endpoint
+            and interval_a.right_endpoint == interval_b.right_endpoint
+        ):
+            return interval_a
+        return None
+
+    @staticmethod
     def is_subset(
         interval_a: Interval, interval_b: Interval,
     ) -> Interval | None:
@@ -118,21 +155,11 @@ class Interval:
             The superset interval if one contains the other,
             otherwise None.
         """
-        # Determine which interval is larger
-        if (
-            interval_a.min_value <= interval_b.min_value
-            and interval_a.max_value >= interval_b.max_value
-        ):
-            interval_large = interval_a
-            interval_small = interval_b
-        elif (
-            interval_a.min_value >= interval_b.min_value
-            and interval_a.max_value <= interval_b.max_value
-        ):
-            interval_large = interval_b
-            interval_small = interval_a
-        else:
+        ordered = Interval._order_by_bounds(interval_a, interval_b)
+        if ordered is None:
             return None
+
+        interval_large, interval_small = ordered
 
         # Case 1: Strict containment
         if (
@@ -146,45 +173,31 @@ class Interval:
             interval_large.min_value == interval_small.min_value
             and interval_large.max_value > interval_small.max_value
         ):
-            if (
+            left_ok = (
                 interval_small.left_endpoint == IntervalEndpoint.LEFT_OPEN
-            ) or (
-                interval_large.left_endpoint == IntervalEndpoint.LEFT_CLOSED
-            ):
-                return interval_large
-            return None
+                or interval_large.left_endpoint
+                == IntervalEndpoint.LEFT_CLOSED
+            )
+            return interval_large if left_ok else None
 
         # Case 3: Smaller lower bound, same upper bound
         if (
             interval_large.min_value < interval_small.min_value
             and interval_large.max_value == interval_small.max_value
         ):
-            if (
+            right_ok = (
                 interval_small.right_endpoint == IntervalEndpoint.RIGHT_OPEN
-            ) or (
-                interval_large.right_endpoint == IntervalEndpoint.RIGHT_CLOSED
-            ):
-                return interval_large
-            return None
+                or interval_large.right_endpoint
+                == IntervalEndpoint.RIGHT_CLOSED
+            )
+            return interval_large if right_ok else None
 
         # Case 4: Same bounds
         if (
             interval_a.min_value == interval_b.min_value
             and interval_a.max_value == interval_b.max_value
         ):
-            if interval_a.is_closed():
-                return interval_a
-            if interval_a.is_open():
-                return interval_b
-            if interval_b.is_closed():
-                return interval_b
-            if interval_b.is_open():
-                return interval_a
-            if (
-                interval_a.left_endpoint == interval_b.left_endpoint
-                and interval_a.right_endpoint == interval_b.right_endpoint
-            ):
-                return interval_a
+            return Interval._same_bounds_superset(interval_a, interval_b)
         return None
 
 

@@ -2,7 +2,7 @@ import logging
 import math
 import random
 
-from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval import (
+from flowcean.testing.generator.ddtig.domain import (
     Interval,
     IntervalEndpoint,
 )
@@ -183,6 +183,7 @@ class TestGenerator:
         self,
         n_testinputs: int,
         eqclass_prio: list,
+        *,
         inverse_alloc: bool,
     ) -> list:
 
@@ -206,6 +207,7 @@ class TestGenerator:
         test_coverage_criterium: str,
         eqclass_prio: list,
         n_testinputs: int,
+        *,
         inverse_alloc: bool,
         epsilon: float,
     ) -> list:
@@ -226,7 +228,9 @@ class TestGenerator:
         """
         testinputs = []
         self.n_testinputs_lst = self._generate_n_testinputs_list(
-            n_testinputs, eqclass_prio, inverse_alloc,
+            n_testinputs,
+            eqclass_prio,
+            inverse_alloc=inverse_alloc,
         )
         for eqclass, n_eq_testinputs in zip(
             self.equivalence_classes, self.n_testinputs_lst, strict=False,

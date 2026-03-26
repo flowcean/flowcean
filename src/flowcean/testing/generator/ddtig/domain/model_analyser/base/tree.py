@@ -37,11 +37,13 @@ def convert_river_tree(
     counter = 0
 
     # Traverse the tree using depth-first search.
+    root = vars(river_tree).get("_root")
+
     # Yields: parent index, parent node, child node, child index, branch
     def iterate(node: object | None = None) -> Iterator[tuple]:
         if node is None:
-            yield None, None, river_tree._root, 0, None
-            yield from iterate(river_tree._root)
+            yield None, None, root, 0, None
+            yield from iterate(root)
 
         nonlocal counter
         parent_no = counter
@@ -58,9 +60,7 @@ def convert_river_tree(
     # Build tree structure from traversal
     for parent_no, parent, child, child_no, branch_index in iterate():
         # Store new node in dict
-        if tree.get(child_no) is None:
-            new_node = Node()
-            tree[child_no] = new_node
+        tree.setdefault(child_no, Node())
 
         # Store feature of node if node is not a leaf
         if isinstance(child, DTBranch):

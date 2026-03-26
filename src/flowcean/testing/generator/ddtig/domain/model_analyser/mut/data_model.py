@@ -37,7 +37,8 @@ class DataModel:
     Methods:
     -------
     generate_dataset()
-        Generate n random samples based on the data distribution or use original data.
+        Generate random samples based on data distribution,
+        or use original data.
     """
 
     def __init__(

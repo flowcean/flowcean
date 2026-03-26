@@ -151,11 +151,13 @@ class EquivalenceClassesHandler:
                 max_value = eqclass[feature]["max"]
                 left_endpoint = IntervalEndpoint.LEFT_OPEN
                 right_endpoint = IntervalEndpoint.RIGHT_OPEN
-                # If min is NULL, interval is left closed and min is from specifications
+                # If min is NULL, interval is left closed and min is from
+                # specifications
                 if min_value is None:
                     left_endpoint = IntervalEndpoint.LEFT_CLOSED
                     min_value = self.minmax_values_specs[feature]["min"]
-                # If max is NULL, interval is right closed and max is from specifications
+                # If max is NULL, interval is right closed and max is
+                # from specifications
                 if max_value is None:
                     right_endpoint = IntervalEndpoint.RIGHT_CLOSED
                     max_value = self.minmax_values_specs[feature]["max"]
@@ -237,8 +239,10 @@ class EquivalenceClassesHandler:
 
     @staticmethod
     def is_subset(eqclass1: tuple, eqclass2: tuple) -> tuple | None:
-        """Compares the interval ranges of all features between two equivalence classes
-        and determines which one is a subset of the other.
+        """Compares interval ranges of features between classes.
+
+        Compares the interval ranges of all features between two equivalence
+        classes and determines which one is a subset of the other.
 
         An equivalence class is considered a subset only if all its
         intervals are strictly contained within the corresponding
