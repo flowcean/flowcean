@@ -108,7 +108,7 @@ predicate = PolarsPredicate(
 )
 
 # Test the model with the test data and predicate
-test_model(
+run_model_tests(
     model,
     test_generator,
     predicate,
@@ -122,7 +122,7 @@ Then, the generated test cases are saved to an Excel file for documentation purp
 Next, a predicate is defined, which should hold true for all test cases.
 In this case, the predicate checks that the output `z` is equal to the result of the -- logical and not learned -- XOR operation on the inputs `x` and `y`.
 For other use cases, a more complex predicate could be used, such as ensuring that a certain output is within a specified range at all times.
-Finally, the tests are executed using Flowcean's `test_model` function.
+Finally, the tests are executed using Flowcean's `run_model_tests` function.
 Depending on the configuration, the testing can either stop at the first failed test case or continue until all test cases have been executed.
 
 When running the tests for our learned XOR model, all test cases pass successfully, confirming that the model behaves as expected for all input combinations.

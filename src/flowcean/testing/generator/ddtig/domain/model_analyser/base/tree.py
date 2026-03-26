@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from river.tree.nodes.branch import DTBranch
 from sklearn.tree._tree import Tree as sklearnTree
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from river.tree import HoeffdingTreeClassifier, HoeffdingTreeRegressor
 
     from flowcean.testing.generator.ddtig.user_interface import (

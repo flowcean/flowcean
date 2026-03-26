@@ -7,7 +7,7 @@ import polars as pl
 from flowcean.core import Model
 from flowcean.core.strategies.offline import learn_offline
 from flowcean.polars import DataFrame
-from flowcean.testing import test_model
+from flowcean.testing import run_model_tests
 from flowcean.testing.generator import ddtigGenerator
 from flowcean.testing.predicates import PolarsPredicate
 from flowcean.torch import LightningLearner, MultilayerPerceptron
@@ -97,7 +97,7 @@ def generate_test_inputs() -> None:
     )
     #prediction = model.predict(test_generator.df.lazy()).collect()
     #print(prediction)
-    test_model(
+    run_model_tests(
         model,
         test_generator,
         predicate,

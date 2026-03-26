@@ -11,7 +11,7 @@ from flowcean.testing.predicates import Predicate
 
 logger = logging.getLogger(__name__)
 
-def test_model(
+def run_model_tests(
     model: Model,
     test_data: IncrementalEnvironment,
     predicate: Predicate,
@@ -112,7 +112,10 @@ def test_model(
         test_failed = TestFailed(failure_data, failure_prediction)
         if path is None:
             raise test_failed
-        logger.info(" %s tests failed. Writing details to %s.", number_of_failures, path)
+        logger.info(
+            " %s tests failed. Writing details to %s.",
+            number_of_failures, path
+        )
         test_failed.to_file(path)
     elif number_of_failures == 0:
         logger.info("All tests passed.")

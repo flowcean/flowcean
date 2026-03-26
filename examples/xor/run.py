@@ -8,7 +8,7 @@ from flowcean.core.tool import start_prediction_loop
 from flowcean.polars.adapter.dataframe_adapter import DataFrameAdapter
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.sklearn.regression_tree import RegressionTree
-from flowcean.testing import test_model
+from flowcean.testing import run_model_tests
 from flowcean.testing.domain import Discrete
 from flowcean.testing.generator import CombinationGenerator
 from flowcean.testing.predicates import PolarsPredicate
@@ -70,7 +70,7 @@ def main() -> None:
     )
 
     # Test the model with the test data and predicate
-    test_model(
+    run_model_tests(
         model,
         test_generator,
         predicate,
