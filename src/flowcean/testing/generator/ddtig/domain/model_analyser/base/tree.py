@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from river.tree.nodes.branch import DTBranch
 from sklearn.tree._tree import Tree as sklearnTree
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Any
 
     from river.tree import HoeffdingTreeClassifier, HoeffdingTreeRegressor
 
@@ -64,8 +65,11 @@ def convert_river_tree(
 
         # Store feature of node if node is not a leaf
         if isinstance(child, DTBranch):
-            tree[child_no].split_feature = child.feature
-            tree[child_no].split_feature_idx = feature_dict[child.feature]
+            # River's runtime node API exposes `feature`,
+            # but type stubs do not.
+            child_feature = cast("Any", child).feature
+            tree[child_no].split_feature = child_feature
+            tree[child_no].split_feature_idx = feature_dict[child_feature]
         else:
             # Get #samples for leaf node
             tree[child_no].samples = int(child.total_weight)
@@ -98,25 +102,28 @@ def convert_sklearn_tree(
     Returns:
         A dictionary representing the tree structure.
     """
-    n_nodes = sklearn_tree.node_count
+    # Scikit-learn's runtime Tree object exposes these attributes, but the
+    # available type information may be incomplete for static checkers.
+    sk_tree = cast("Any", sklearn_tree)
+    n_nodes = int(sk_tree.node_count)
     tree = {}
 
     # Traverse each node in the scikit-learn tree
     for node in range(n_nodes):
-        split_feature = feature_dict.get(sklearn_tree.feature[node])
+        split_feature = feature_dict.get(sk_tree.feature[node])
         if split_feature is None:
             split_feature = -2
         # Store info of sklearn node in our own Node object
         new_node = Node(
-            child_left=sklearn_tree.children_left[node],
-            child_right=sklearn_tree.children_right[node],
+            child_left=sk_tree.children_left[node],
+            child_right=sk_tree.children_right[node],
             split_feature=split_feature,
-            split_feature_idx=sklearn_tree.feature[node],
-            split_threshold=sklearn_tree.threshold[node],
+            split_feature_idx=sk_tree.feature[node],
+            split_threshold=sk_tree.threshold[node],
         )
         # Get #samples for leaf node
         if new_node.child_left == -1 and new_node.child_right == -1:
-            new_node.samples = sklearn_tree.n_node_samples[node]
+            new_node.samples = sk_tree.n_node_samples[node]
         tree[node] = new_node
     return tree
 

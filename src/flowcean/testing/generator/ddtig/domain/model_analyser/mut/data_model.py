@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import polars as pl
@@ -8,6 +8,8 @@ from polars import DataFrame
 from sklearn.neighbors import KernelDensity
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from flowcean.testing.generator.ddtig.application import ModelHandler
     from flowcean.testing.generator.ddtig.user_interface import (
         SystemSpecsHandler,
@@ -78,7 +80,7 @@ class DataModel:
             Fitted KDE model.
         """
         data = self.data.to_numpy()
-        return KernelDensity(bandwidth="silverman").fit(data)
+        return KernelDensity(bandwidth=cast("Any", "silverman")).fit(data)
 
     def _generate_samples(
         self,
@@ -111,6 +113,9 @@ class DataModel:
         samples = pl.DataFrame()
         kde = self._compute_dist()
         samples_array = kde.sample(n_samples, random_state=self.seed)
+        if samples_array is None:
+            msg = "KernelDensity failed to generate samples."
+            raise RuntimeError(msg)
         for i in range(self.n_features):
             # Round values for integer-type features
             feature_samples = (
