@@ -99,6 +99,11 @@ def generate_test_inputs() -> None:
     test_generator.save_csv("test_inputs.csv")
     test_generator.reset()
 
+    # optional: Uncomment to get more detailed outputs to files
+    test_generator.print_hoeffding_tree()
+    test_generator.print_eqclasses()
+    test_generator.print_testplans()
+
     predicate = PolarsPredicate(
         (pl.col("BodyFat") < BODYFAT_MAX) & (pl.col("BodyFat") > BODYFAT_MIN),
     )
@@ -112,9 +117,6 @@ def generate_test_inputs() -> None:
         stop_after=40,
         path="test_failures.txt",
     )
-
-    # optional: Uncomment to save all intermediate results and outputs to files
-    # testpipeline.save_test_overview()
 
     # optional: Uncomment to save the Hoeffding tree to a file
     #           Useful if the MUT is not a decision tree

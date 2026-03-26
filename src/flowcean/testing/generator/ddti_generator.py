@@ -15,7 +15,26 @@ from .generator import TestcaseGenerator
 
 
 class DDTIGenerator(TestcaseGenerator):
-    """A generator that produces random tests based on given domains."""
+    """Generates test inputs considering decision boundaries.
+
+    Methods:
+    -------
+    execute()
+        Executes the full test input generation workflow.
+
+    save_hoeffding_tree()
+        Saves the generated Hoeffding tree to a file.
+
+    print_eqclasses()
+        Prints the equivalence classes and their test input counts.
+
+    print_testplans()
+        Prints the test plans (intervals used to sample test inputs).
+
+    print_hoeffding_tree()
+        Prints the Hoeffding tree structure as a PNG.
+
+    """
 
     def __init__(
         self,
@@ -91,6 +110,18 @@ class DDTIGenerator(TestcaseGenerator):
 
     def step(self) -> None:
         self._streaming_env.step()
+
+    def print_eqclasses(self) -> None:
+        self.test_pipeline.print_eqclasses()
+
+    def print_testplans(self) -> None:
+        self.test_pipeline.print_testplans()
+
+    def print_hoeffding_tree(self) -> None:
+        self.test_pipeline.print_hoeffding_tree()
+
+    def save_hoeffding_tree(self, path: str | Path) -> None:
+        self.test_pipeline.save_hoeffding_tree(path)
 
     def _observe(self) -> Data:
         return self._streaming_env.observe()

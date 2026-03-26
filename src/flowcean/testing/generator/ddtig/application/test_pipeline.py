@@ -300,7 +300,7 @@ class TestPipeline:
         )
 
     # Print equivalence classes with test input counts to a text file
-    def _print_eqclasses(self) -> None:
+    def print_eqclasses(self) -> None:
         columns = list(self.feature_names)
         columns.append("Number of test inputs")
         stringified_eqclasses = [
@@ -322,7 +322,7 @@ class TestPipeline:
         )
 
     # Print test plans to a text file
-    def _print_testplans(self) -> None:
+    def print_testplans(self) -> None:
         testplans_table = tabulate(
             self.testplans,
             headers=self.feature_names,
@@ -330,18 +330,8 @@ class TestPipeline:
         )
         Path("testplans.txt").write_text(testplans_table, encoding="utf-8")
 
-    # Print executable test inputs to a text file
-    def _print_testinputs(self) -> None:
-        rows = self.testinputs_df.rows()
-        testinputs_table = tabulate(
-            rows,
-            headers=self.feature_names,
-            tablefmt="grid",
-        )
-        Path("testinputs.txt").write_text(testinputs_table, encoding="utf-8")
-
     # Render and save the Hoeffding tree as a PNG image
-    def _print_hoeffding_tree(self) -> None:
+    def print_hoeffding_tree(self) -> None:
         if self.hoeffding_tree is not None:
             tree_img = self.hoeffding_tree.draw()
             tree_img.render("hoeffding_tree", format="png", cleanup=True)
@@ -356,37 +346,3 @@ class TestPipeline:
             )
         else:
             print("No Hoeffding Tree to save.")
-
-    def save_test_overview(self, print_option: list | None = None) -> None:
-        """Generates and prints multiple report files.
-
-        Includes:
-            1. Equivalence classes + Number of test inputs
-            2. Test plans
-            3. Test inputs
-            4. Hoeffding Tree (if exists).
-
-        Args:
-            print_option: List specifying which report files to print.
-                - 1 → Equivalence classes + Number of test inputs
-                - 2 → Test plans
-                - 3 → Test inputs
-                - 4 → Hoeffding tree
-                Default: [1, 2, 3, 4]
-        """
-        if print_option is None:
-            print_option = [
-                PRINT_EQCLASSES,
-                PRINT_TESTPLANS,
-                PRINT_TESTINPUTS,
-                PRINT_TREE,
-            ]
-        logger.info("Printing: %s", print_option)
-        if PRINT_EQCLASSES in print_option:
-            self._print_eqclasses()
-        if PRINT_TESTPLANS in print_option:
-            self._print_testplans()
-        if PRINT_TESTINPUTS in print_option:
-            self._print_testinputs()
-        if PRINT_TREE in print_option:
-            self._print_hoeffding_tree()
