@@ -50,8 +50,6 @@ class DDTIGenerator(TestcaseGenerator):
             inverse_alloc: If True, allocate more tests to lower-priority
                 equivalence classes.
             epsilon: Interval offset used for boundary value analysis.
-
-            For surrogate model generation:
             performance_threshold: Minimum performance needed before
                 exporting the Hoeffding Tree.
             sample_limit: Maximum number of samples used to train the

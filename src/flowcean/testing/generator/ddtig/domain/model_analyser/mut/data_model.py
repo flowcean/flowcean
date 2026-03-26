@@ -21,19 +21,19 @@ class DataModel:
 
     Attributes:
     ----------
-    data : pl.DataFrame
+    data: pl.DataFrame
         Original training data used in the Flowcean model.
 
-    col_names : list
+    col_names: list
         Names of the columns in the training data.
 
-    n_features : int
+    n_features: int
         Number of features in the dataset.
 
-    model_handler : ModelHandler
+    model_handler: ModelHandler
         ModelHandler object used to produce predictions.
 
-    int_features : list
+    int_features: list
         List of indices for features of type int.
 
     Methods:
@@ -53,10 +53,10 @@ class DataModel:
         """Initializes the DataModel.
 
         Args:
-            data : Original training data used in the Flowcean model.
-            seed : Random seed for reproducibility.
-            model_handler : ModelHandler object used to produce predictions.
-            specs_handler : SystemSpecsHandler object storing
+            data: Original training data used in the Flowcean model.
+            seed: Random seed for reproducibility.
+            model_handler: ModelHandler object used to produce predictions.
+            specs_handler: SystemSpecsHandler object storing
                 system specifications.
         """
         self.data = data
@@ -90,8 +90,8 @@ class DataModel:
         """Generates n random input samples for all features using KDE.
 
         Args:
-            n_samples : Number of samples to generate.
-            int_features : List of indices for features of type int.
+            n_samples: Number of samples to generate.
+            int_features: List of indices for features of type int.
 
         Returns:
             DataFrame containing n synthetic samples.
@@ -141,9 +141,9 @@ class DataModel:
         Otherwise, generates synthetic samples using KDE.
 
         Args:
-            original_data : Whether to use original training
+            original_data: Whether to use original training
                 data or generate synthetic samples.
-            n_samples : Number of synthetic samples to generate.
+            n_samples: Number of synthetic samples to generate.
 
         Returns:
             List of tuples containing input dictionaries and model outputs.

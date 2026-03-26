@@ -19,15 +19,15 @@ class HoeffdingTree:
 
     Attributes:
     ----------
-    datamodel : DataModel
+    datamodel: DataModel
         Object used to generate synthetic training inputs based
         on the original dataset.
 
-    samples : list
+    samples: list
         Original training inputs transformed to River-compatible
         format with predictions.
 
-    nominal_attributes : list
+    nominal_attributes: list
         List of indices for nominal features.
 
     Methods:
@@ -50,11 +50,11 @@ class HoeffdingTree:
         """Initializes the HoeffdingTree trainer.
 
         Args:
-            inputs : Original training dataset including target column.
-            seed : Random seed for reproducible synthetic sample generation.
-            model_handler : Object used to generate predictions from
+            inputs: Original training dataset including target column.
+            seed: Random seed for reproducible synthetic sample generation.
+            model_handler: Object used to generate predictions from
                 the Flowcean model.
-            specs_handler : Object containing feature specifications
+            specs_handler: Object containing feature specifications
                 and metadata.
         """
         # Remove target column to isolate input features
@@ -170,14 +170,14 @@ class HoeffdingTree:
         Continue until performance criteria are met.
 
         Args:
-            performance_threshold : Minimum performance required to
+            performance_threshold: Minimum performance required to
                 finalize the model.
-            sample_limit : Maximum number of samples to use during training.
-            n_predictions : Number of consecutive correct predictions
+            sample_limit: Maximum number of samples to use during training.
+            n_predictions: Number of consecutive correct predictions
                 required to stop training.
-            classification : Indicates whether the task is
+            classification: Indicates whether the task is
                 classification or regression.
-            **kwargs : Additional hyperparameters for the Hoeffding Tree model.
+            **kwargs: Additional hyperparameters for the Hoeffding Tree model.
 
         Returns:
             Trained Hoeffding Tree model.

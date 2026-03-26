@@ -15,7 +15,7 @@ class ModelHandler:
 
     Attributes:
     ----------
-    model : flowcean.core.model.Model
+    model: flowcean.core.model.Model
         The loaded Flowcean model.
 
 
@@ -38,7 +38,7 @@ class ModelHandler:
         """Initializes the ModelHandler.
 
         Args:
-            model : Flowcean model instance.
+            model: Flowcean model instance.
         """
         # Load the Flowcean model from the given file
         self.model = model

@@ -8,10 +8,10 @@ class TestCompiler:
 
     Attributes:
     ----------
-    n_features : int
+    n_features: int
         Number of features in the dataset.
 
-    abst_testinputs : list
+    abst_testinputs: list
         List of abstract test inputs.
 
     Methods:
@@ -28,8 +28,8 @@ class TestCompiler:
         """Initializes the TestCompiler.
 
         Args:
-            n_features : Number of features in the dataset.
-            testinputs : List of abstract test inputs.
+            n_features: Number of features in the dataset.
+            testinputs: List of abstract test inputs.
         """
         self.n_features = n_features
         self.abst_testinputs = testinputs
@@ -50,7 +50,7 @@ class TestCompiler:
         Thus, the result can be executed on Flowcean models.
 
         Args:
-            feature_names : List of feature names in order of their indices.
+            feature_names: List of feature names in order of their indices.
 
         Returns:
             DataFrame where each column represents a feature

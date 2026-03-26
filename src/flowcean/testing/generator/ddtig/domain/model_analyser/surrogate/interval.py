@@ -10,19 +10,19 @@ class Interval:
 
     Attributes:
     ----------
-    feature : int
+    feature: int
         Index of the feature to which the interval belongs.
 
-    left_endpoint : IntervalEndpoint
+    left_endpoint: IntervalEndpoint
         Indicates whether the interval is left-open or left-closed.
 
-    right_endpoint : IntervalEndpoint
+    right_endpoint: IntervalEndpoint
         Indicates whether the interval is right-open or right-closed.
 
-    min_value : int | float
+    min_value: int | float
         Lower bound of the interval.
 
-    max_value : int | float
+    max_value: int | float
         Upper bound of the interval.
     """
 
@@ -37,12 +37,12 @@ class Interval:
         """Initializes an Interval object.
 
         Args:
-            feature : Index of the feature to which the interval belongs.
-            left_endpoint : Left endpoint type ('(' for open, '[' for closed).
-            right_endpoint : Right endpoint type
+            feature: Index of the feature to which the interval belongs.
+            left_endpoint: Left endpoint type ('(' for open, '[' for closed).
+            right_endpoint: Right endpoint type
                 (')' for open, ']' for closed).
-            min_value : Lower bound of the interval.
-            max_value : Upper bound of the interval.
+            min_value: Lower bound of the interval.
+            max_value: Upper bound of the interval.
         """
         self.feature = feature
         self.left_endpoint = left_endpoint
@@ -149,8 +149,8 @@ class Interval:
         """Determines which interval is a subset of the other.
 
         Args:
-            interval_a : First interval to compare.
-            interval_b : Second interval to compare.
+            interval_a: First interval to compare.
+            interval_b: Second interval to compare.
 
         Returns:
             The superset interval if one contains the other,

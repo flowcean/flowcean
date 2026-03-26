@@ -30,43 +30,43 @@ class TestPipeline:
 
     Attributes:
     ----------
-    model_handler : ModelHandler
+    model_handler: ModelHandler
         Handles the Flowcean model and its predictions.
 
-    model : Decision Tree | Black-box Model
+    model: Decision Tree | Black-box Model
         Underlying machine learning model extracted from Flowcean model.
 
-    dataset : pl.DataFrame
+    dataset: pl.DataFrame
         The original training dataset.
 
-    specs_handler : SystemSpecsHandler
+    specs_handler: SystemSpecsHandler
         Extracts system specifications and feature information.
 
-    requirements : dict
+    requirements: dict
         Test requirements provided by the user.
 
-    classification : bool
+    classification: bool
         Indicates whether the task is classification.
 
-    eqclasses : list
+    eqclasses: list
         List of all equivalence classes.
 
-    testplans : list
+    testplans: list
         List of all test plans (intervals used to sample test inputs).
 
-    testinputs : list
+    testinputs: list
         List of all generated test inputs.
 
-    n_testinputs_lst : list
+    n_testinputs_lst: list
         Number of test inputs to generate per equivalence class.
 
-    testinputs_df : pl.DataFrame
+    testinputs_df: pl.DataFrame
         Executable test inputs formatted for Flowcean.
 
-    feature_names : list
+    feature_names: list
         Names of all input features.
 
-    hoeffding_tree : HoeffdingTreeRegressor
+    hoeffding_tree: HoeffdingTreeRegressor
         Hoeffding tree used to approximate complex black-box models.
 
     Methods:
@@ -367,8 +367,7 @@ class TestPipeline:
             4. Hoeffding Tree (if exists).
 
         Args:
-            print_option :
-                List specifying which report files to print.
+            print_option: List specifying which report files to print.
                 - 1 → Equivalence classes + Number of test inputs
                 - 2 → Test plans
                 - 3 → Test inputs

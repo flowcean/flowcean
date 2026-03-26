@@ -12,16 +12,16 @@ class EquivalenceClassesHandler:
 
     Attributes:
     ----------
-    test_tree : TestTree
+    test_tree: TestTree
         The decision tree structure.
 
-    minmax_values_specs : dict
+    minmax_values_specs: dict
         Dictionary storing min/max values for each feature from specifications.
 
-    n_samples : int
+    n_samples: int
         Number of samples used to train the tree.
 
-    n_features : int
+    n_features: int
         Number of features in the dataset.
 
 
@@ -48,11 +48,11 @@ class EquivalenceClassesHandler:
         """Initializes the EquivalenceClassesHandler.
 
         Args:
-            test_tree : The decision tree used for extracting
+            test_tree: The decision tree used for extracting
                 equivalence classes.
-            minmax_values_specs : Dictionary containing min/max
+            minmax_values_specs: Dictionary containing min/max
                 values for each feature.
-            n_features : Number of features in the dataset.
+            n_features: Number of features in the dataset.
         """
         self.test_tree = test_tree.test_tree
         self.n_samples = test_tree.get_n_samples()
@@ -200,7 +200,7 @@ class EquivalenceClassesHandler:
         """Converts a single equivalence class to a string.
 
         Args:
-            eqclass : A tuple of Interval objects.
+            eqclass: A tuple of Interval objects.
 
         Returns:
             String representation of the equivalence class.
@@ -218,8 +218,8 @@ class EquivalenceClassesHandler:
         """Converts a list of equivalence classes to a readable string format.
 
         Args:
-            eqclasses : List of equivalence classes.
-            feature_names : List of feature names.
+            eqclasses: List of equivalence classes.
+            feature_names: List of feature names.
 
         Returns:
             Formatted string of all equivalence classes.
@@ -252,8 +252,8 @@ class EquivalenceClassesHandler:
         superset equivalence class if such a relationship exists.
 
         Args:
-            eqclass1 : First equivalence class (tuple of Interval objects).
-            eqclass2 : Second equivalence class (tuple of Interval objects).
+            eqclass1: First equivalence class (tuple of Interval objects).
+            eqclass2: Second equivalence class (tuple of Interval objects).
 
         Returns:
             The equivalence class that is the superset,

@@ -29,8 +29,8 @@ def convert_river_tree(
     Store the extracted structure in a dictionary.
 
     Args:
-        river_tree : A River Hoeffding tree.
-        feature_dict : Dictionary mapping feature names to their indices.
+        river_tree: A River Hoeffding tree.
+        feature_dict: Dictionary mapping feature names to their indices.
 
     Returns:
         A dictionary representing the tree structure.
@@ -96,8 +96,8 @@ def convert_sklearn_tree(
     Store the extracted structure in a dictionary.
 
     Args:
-        sklearn_tree : A scikit-learn decision tree.
-        feature_dict : Dictionary mapping feature indices to feature names.
+        sklearn_tree: A scikit-learn decision tree.
+        feature_dict: Dictionary mapping feature indices to feature names.
 
     Returns:
         A dictionary representing the tree structure.
@@ -144,12 +144,12 @@ class Node:
         """Initializes a node.
 
         Args:
-            child_left : Index of the left child node (-1 if leaf).
-            child_right : Index of the right child node (-1 if leaf).
-            split_feature : Feature used for splitting (-2 if leaf).
-            split_feature_idx : Index of the split feature (-2 if leaf).
-            split_threshold : Threshold value for splitting (-2.0 if leaf).
-            samples : Number of samples reaching this node (0 if not a leaf).
+            child_left: Index of the left child node (-1 if leaf).
+            child_right: Index of the right child node (-1 if leaf).
+            split_feature: Feature used for splitting (-2 if leaf).
+            split_feature_idx: Index of the split feature (-2 if leaf).
+            split_threshold: Threshold value for splitting (-2.0 if leaf).
+            samples: Number of samples reaching this node (0 if not a leaf).
         """
         self.child_left = child_left
         self.child_right = child_right
@@ -175,7 +175,7 @@ class TestTree:
 
     Attributes:
     ----------
-    test_tree : dict
+    test_tree: dict
         Dictionary representing the structure of a River or scikit-learn tree.
 
     Methods:
@@ -194,8 +194,8 @@ class TestTree:
         """Initializes the TestTree from a model tree.
 
         Args:
-            model_tree : A River or scikit-learn decision tree.
-            specs_handler : Object for accessing feature specifications.
+            model_tree: A River or scikit-learn decision tree.
+            specs_handler: Object for accessing feature specifications.
         """
         if isinstance(model_tree, sklearnTree):
             feature_dict = (

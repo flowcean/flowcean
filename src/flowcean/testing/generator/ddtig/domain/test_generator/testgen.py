@@ -43,16 +43,16 @@ class TestGenerator:
 
     Attributes:
     ----------
-    equivalence_classes : list
+    equivalence_classes: list
         Equivalence classes extracted from the decision tree.
 
-    type_specs : dict
+    type_specs: dict
         Input types for each feature as defined in the specifications.
 
-    testplans : list
+    testplans: list
         List of test plans used to sample test inputs.
 
-    n_testinputs_lst : list
+    n_testinputs_lst: list
         Number of test inputs to generate for each equivalence class.
 
     Methods:
@@ -70,11 +70,11 @@ class TestGenerator:
         """Initializes the Test Generator.
 
         Args:
-            equivalence_classes : Equivalence classes extracted from
+            equivalence_classes: Equivalence classes extracted from
                 the decision tree.
             seed: The random seed to use for reproducible
                 test input generation.
-            type_specs : Input types for each feature from the specifications.
+            type_specs: Input types for each feature from the specifications.
         """
         self.equivalence_classes = equivalence_classes
         self.type_specs = type_specs
@@ -229,12 +229,12 @@ class TestGenerator:
         """Generates abstract test inputs for all equivalence classes.
 
         Args:
-            test_coverage_criterium : Coverage strategy ("bva" or "dtc").
-            eqclass_prio : Importance scores for each equivalence class.
-            n_testinputs : Total number of test inputs to generate.
-            inverse_alloc : If True, allocate more inputs to less
+            test_coverage_criterium: Coverage strategy ("bva" or "dtc").
+            eqclass_prio: Importance scores for each equivalence class.
+            n_testinputs: Total number of test inputs to generate.
+            inverse_alloc: If True, allocate more inputs to less
                 important classes.
-            epsilon : Offset for BVA sampling.
+            epsilon: Offset for BVA sampling.
 
         Returns:
             List of abstract test inputs.

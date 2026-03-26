@@ -17,10 +17,10 @@ class SystemSpecsHandler:
 
     Attributes:
     ----------
-    specs : dict
+    specs: dict
         Dictionary storing system specifications.
 
-    n_features : int
+    n_features: int
         Number of features.
 
     Methods:
@@ -77,9 +77,9 @@ class SystemSpecsHandler:
         }
 
         Args:
-            data : Dataset used to infer specifications if specs_file
+            data: Dataset used to infer specifications if specs_file
                 is not provided.
-            specs_file : JSON file containing system specifications.
+            specs_file: JSON file containing system specifications.
         """
         if data is not None:
             self._load_from_data(data)
