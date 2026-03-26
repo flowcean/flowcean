@@ -139,7 +139,8 @@ class TestPipeline:
         self.test_coverage_criterium = test_coverage_criterium
         self.dataset = dataset
         self.specs_handler = SystemSpecsHandler(
-            data=dataset, specs_file=specs_file,
+            data=dataset,
+            specs_file=specs_file,
         )
         self.feature_names = self.specs_handler.extract_feature_names()
         self.hoeffding_tree = None
@@ -205,7 +206,8 @@ class TestPipeline:
         logger.debug("epsilon: %s", epsilon)
         logger.debug("n_testinputs: %s", n_testinputs)
         if not isinstance(
-            self.model, (DecisionTreeRegressor, DecisionTreeClassifier),
+            self.model,
+            (DecisionTreeRegressor, DecisionTreeClassifier),
         ):
             # Generate Hoeffding tree only if it hasn't been created yet
             logger.info(
@@ -253,7 +255,9 @@ class TestPipeline:
         # Compute equivalence classes from the decision tree
         test_tree = TestTree(dtree, self.specs_handler)
         eqclassobj = EquivalenceClassesHandler(
-            test_tree, minmax_specs, n_features,
+            test_tree,
+            minmax_specs,
+            n_features,
         )
         self.eqclasses = eqclassobj.get_equivalence_classes()
 
@@ -308,16 +312,21 @@ class TestPipeline:
             for i, row in enumerate(stringified_eqclasses)
         ]
         eqclasses_table = tabulate(
-            updated_eqclasses, headers=columns, tablefmt="grid",
+            updated_eqclasses,
+            headers=columns,
+            tablefmt="grid",
         )
         Path("equivalence_classes.txt").write_text(
-            eqclasses_table, encoding="utf-8",
+            eqclasses_table,
+            encoding="utf-8",
         )
 
     # Print test plans to a text file
     def _print_testplans(self) -> None:
         testplans_table = tabulate(
-            self.testplans, headers=self.feature_names, tablefmt="grid",
+            self.testplans,
+            headers=self.feature_names,
+            tablefmt="grid",
         )
         Path("testplans.txt").write_text(testplans_table, encoding="utf-8")
 
@@ -325,7 +334,9 @@ class TestPipeline:
     def _print_testinputs(self) -> None:
         rows = self.testinputs_df.rows()
         testinputs_table = tabulate(
-            rows, headers=self.feature_names, tablefmt="grid",
+            rows,
+            headers=self.feature_names,
+            tablefmt="grid",
         )
         Path("testinputs.txt").write_text(testinputs_table, encoding="utf-8")
 

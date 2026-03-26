@@ -84,7 +84,8 @@ def convert_river_tree(
 
 
 def convert_sklearn_tree(
-    sklearn_tree: sklearnTree, feature_dict: dict,
+    sklearn_tree: sklearnTree,
+    feature_dict: dict,
 ) -> dict:
     """Extract the structure of a scikit-learn decision tree.
 

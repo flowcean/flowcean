@@ -81,7 +81,9 @@ class DataModel:
         return KernelDensity(bandwidth="silverman").fit(data)
 
     def _generate_samples(
-        self, n_samples: int, int_features: list | None = None,
+        self,
+        n_samples: int,
+        int_features: list | None = None,
     ) -> DataFrame:
         """Generates n random input samples for all features using KDE.
 
@@ -117,7 +119,8 @@ class DataModel:
                 else samples_array[:, i].tolist()
             )
             samples.insert_column(
-                i, pl.Series(self.col_names[i], feature_samples),
+                i,
+                pl.Series(self.col_names[i], feature_samples),
             )
         return samples
 
@@ -158,6 +161,8 @@ class DataModel:
         return [
             (inputs, output)
             for inputs, output in zip(
-                samples_input_lst, samples_output_lst, strict=False,
+                samples_input_lst,
+                samples_output_lst,
+                strict=False,
             )
         ]

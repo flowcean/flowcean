@@ -141,10 +141,11 @@ class SystemSpecsHandler:
         logger.info("Specifications successfully extracted from file.")
 
     def _validate_feature(self, feature: dict) -> None:
-        if (
-            not all(k in feature for k in REQUIRED_FEATURE_KEYS)
-            or len(feature) != len(REQUIRED_FEATURE_KEYS)
-        ):
+        has_required_keys = all(
+            key in feature for key in REQUIRED_FEATURE_KEYS
+        )
+        has_expected_size = len(feature) == len(REQUIRED_FEATURE_KEYS)
+        if not has_required_keys or not has_expected_size:
             msg = "Invalid JSON structure. Refer to README.md."
             raise LookupError(msg)
 
@@ -161,8 +162,7 @@ class SystemSpecsHandler:
             msg = "'min' and 'max' must be int or float."
             raise TypeError(msg)
         if feature["type"] == "int" and not (
-            isinstance(feature["min"], int)
-            and isinstance(feature["max"], int)
+            isinstance(feature["min"], int) and isinstance(feature["max"], int)
         ):
             msg = "'min' and 'max' must be int for type 'int'."
             raise TypeError(msg)

@@ -109,8 +109,7 @@ class HoeffdingTree:
     ) -> bool | float | dict[bool, float]:
         if isinstance(prediction, dict):
             return {
-                bool(key): float(value)
-                for key, value in prediction.items()
+                bool(key): float(value) for key, value in prediction.items()
             }
         if isinstance(prediction, (bool, int, float)):
             return bool(prediction) if classification else float(prediction)

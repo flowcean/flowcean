@@ -74,7 +74,10 @@ class EquivalenceClassesHandler:
     # Updates the min/max bounds of a feature in an equivalence class
     # based on the parent node's split.
     def _update_equivalence_class(
-        self, equivalence_class: dict, parent: int, node: int,
+        self,
+        equivalence_class: dict,
+        parent: int,
+        node: int,
     ) -> None:
         split_feature_idx = self.test_tree[parent].split_feature_idx
         split_threshold = self.test_tree[parent].split_threshold
@@ -87,7 +90,6 @@ class EquivalenceClassesHandler:
 
     # Recursively collects all paths from the root to leaf nodes.
     def _collect_paths(self, node: int, path: list, paths: list) -> None:
-
         child_left = self.test_tree[node].child_left
         child_right = self.test_tree[node].child_right
         path.append(node)

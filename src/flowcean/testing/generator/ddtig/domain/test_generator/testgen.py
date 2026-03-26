@@ -84,7 +84,9 @@ class TestGenerator:
     # Generates a test plan for Boundary Value Analysis (BVA).
     # BVA samples around the boundaries of each interval.
     def _bva_testplan(
-        self, epsilon: float, eqclass_interval: Interval,
+        self,
+        epsilon: float,
+        eqclass_interval: Interval,
     ) -> tuple:
         if (
             eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN
@@ -110,7 +112,8 @@ class TestGenerator:
                 lower = math.floor(eqclass_interval.min_value) + 1
             else:
                 lower = math.nextafter(
-                    eqclass_interval.min_value, eqclass_interval.max_value,
+                    eqclass_interval.min_value,
+                    eqclass_interval.max_value,
                 )
         else:
             lower = eqclass_interval.min_value
@@ -119,7 +122,11 @@ class TestGenerator:
 
     # Samples random values from a given interval for a specific feature.
     def _generate_randoms(
-        self, lower: float, upper: float, n_testinputs: int, feature: int,
+        self,
+        lower: float,
+        upper: float,
+        n_testinputs: int,
+        feature: int,
     ) -> list:
         if lower > upper:
             tmp = upper
@@ -150,7 +157,10 @@ class TestGenerator:
                 testplan.append((lower, upper))
                 input_samples.append(
                     self._generate_randoms(
-                        lower, upper, n_testinputs, interval.feature,
+                        lower,
+                        upper,
+                        n_testinputs,
+                        interval.feature,
                     ),
                 )
             else:
@@ -163,7 +173,10 @@ class TestGenerator:
                     n = ns[0]
                     for lower, upper in test_ranges:
                         input_samples_sublsts += self._generate_randoms(
-                            lower, upper, n, interval.feature,
+                            lower,
+                            upper,
+                            n,
+                            interval.feature,
                         )
                         n = ns[1]
                     input_samples.append(input_samples_sublsts)
@@ -171,7 +184,10 @@ class TestGenerator:
                     lower, upper = test_ranges[0]
                     input_samples.append(
                         self._generate_randoms(
-                            lower, upper, n_testinputs, interval.feature,
+                            lower,
+                            upper,
+                            n_testinputs,
+                            interval.feature,
                         ),
                     )
         testinputs = list(zip(*input_samples, strict=False))
@@ -186,7 +202,6 @@ class TestGenerator:
         *,
         inverse_alloc: bool,
     ) -> list:
-
         exact_values = [n_testinputs * prio for prio in eqclass_prio]
         n_testinputs_lst = [int(x) for x in exact_values]
 
@@ -233,10 +248,15 @@ class TestGenerator:
             inverse_alloc=inverse_alloc,
         )
         for eqclass, n_eq_testinputs in zip(
-            self.equivalence_classes, self.n_testinputs_lst, strict=False,
+            self.equivalence_classes,
+            self.n_testinputs_lst,
+            strict=False,
         ):
             testinputs_eqclass = self._generate_testinputs_eqclass(
-                n_eq_testinputs, test_coverage_criterium, eqclass, epsilon,
+                n_eq_testinputs,
+                test_coverage_criterium,
+                eqclass,
+                epsilon,
             )
             testinputs += testinputs_eqclass
         logger.info(

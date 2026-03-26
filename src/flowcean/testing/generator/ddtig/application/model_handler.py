@@ -60,7 +60,8 @@ class ModelHandler:
         return ml_model
 
     def get_model_prediction(
-        self, input_features: pl.DataFrame,
+        self,
+        input_features: pl.DataFrame,
     ) -> pl.LazyFrame:
         """Generates predictions using the Flowcean model.
 
@@ -73,7 +74,8 @@ class ModelHandler:
         return self.model.predict(input_features.lazy())
 
     def get_model_prediction_as_lst(
-        self, input_features: pl.DataFrame,
+        self,
+        input_features: pl.DataFrame,
     ) -> list:
         """Generate predictions and return them as a Python list.
 

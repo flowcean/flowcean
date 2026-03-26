@@ -42,7 +42,8 @@ class TestCompiler:
         return input_dict
 
     def compute_executable_testinputs(
-        self, feature_names: list,
+        self,
+        feature_names: list,
     ) -> pl.DataFrame:
         """Convert abstract test inputs into a Polars DataFrame.
 

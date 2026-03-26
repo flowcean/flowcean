@@ -143,7 +143,8 @@ class Interval:
 
     @staticmethod
     def is_subset(
-        interval_a: Interval, interval_b: Interval,
+        interval_a: Interval,
+        interval_b: Interval,
     ) -> Interval | None:
         """Determines which interval is a subset of the other.
 
@@ -175,8 +176,7 @@ class Interval:
         ):
             left_ok = (
                 interval_small.left_endpoint == IntervalEndpoint.LEFT_OPEN
-                or interval_large.left_endpoint
-                == IntervalEndpoint.LEFT_CLOSED
+                or interval_large.left_endpoint == IntervalEndpoint.LEFT_CLOSED
             )
             return interval_large if left_ok else None
 
