@@ -9,8 +9,9 @@ from flowcean.torch.model import PyTorchModel
 
 logger = logging.getLogger(__name__)
 
+
 class ModelHandler:
-    """A class to load a Flowcean model and access its underlying machine learning model.
+    """Load a Flowcean model and expose its underlying ML model.
 
     Attributes:
     ----------
@@ -30,7 +31,6 @@ class ModelHandler:
         Returns predictions from the Flowcean model as a Python list.
     """
 
-
     def __init__(
         self,
         model: Model,
@@ -38,30 +38,30 @@ class ModelHandler:
         """Initializes the ModelHandler.
 
         Args:
-            file : File containing the Flowcean model.
+            model : Flowcean model instance.
         """
         # Load the Flowcean model from the given file
         self.model = model
 
-
     def get_ml_model(self) -> SupportsPredict | Module:
-        """Extracts the underlying machine learning model from the Flowcean model.
+        """Extract the underlying machine learning model.
 
         Returns:
             The machine learning model.
         """
-        if (type(self.model) is SciKitModel):
+        if type(self.model) is SciKitModel:
             ml_model = self.model.estimator
-        elif (type(self.model) is PyTorchModel):
+        elif type(self.model) is PyTorchModel:
             ml_model = self.model.module
         else:
             msg = f"Unsupported model type: {type(self.model)}"
             raise ValueError(msg)
-        logger.info("Extracted the underlying ML model from the Flowcean model successfully.")
+        logger.info("Extracted underlying ML model successfully.")
         return ml_model
 
-
-    def get_model_prediction(self, input_features: pl.DataFrame) -> pl.LazyFrame:
+    def get_model_prediction(
+        self, input_features: pl.DataFrame,
+    ) -> pl.LazyFrame:
         """Generates predictions using the Flowcean model.
 
         Args:
@@ -72,9 +72,10 @@ class ModelHandler:
         """
         return self.model.predict(input_features.lazy())
 
-
-    def get_model_prediction_as_lst(self, input_features: pl.DataFrame) -> list:
-        """Generates predictions using the Flowcean model and returns them as a list.
+    def get_model_prediction_as_lst(
+        self, input_features: pl.DataFrame,
+    ) -> list:
+        """Generate predictions and return them as a Python list.
 
         Args:
             input_features: A Polars DataFrame containing input features.

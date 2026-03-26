@@ -4,7 +4,9 @@ from enum import Enum
 
 
 class Interval:
-    """Represents an interval for a specific feature within an equivalence class.
+    """Represents an interval for a specific feature.
+
+    The interval belongs to one equivalence class.
 
     Attributes:
     ----------
@@ -24,7 +26,6 @@ class Interval:
         Upper bound of the interval.
     """
 
-
     def __init__(
         self,
         feature: int,
@@ -38,7 +39,8 @@ class Interval:
         Args:
             feature : Index of the feature to which the interval belongs.
             left_endpoint : Left endpoint type ('(' for open, '[' for closed).
-            right_endpoint : Right endpoint type (')' for open, ']' for closed).
+            right_endpoint : Right endpoint type
+                (')' for open, ']' for closed).
             min_value : Lower bound of the interval.
             max_value : Upper bound of the interval.
         """
@@ -50,10 +52,13 @@ class Interval:
 
     def __str__(self) -> str:
         """Returns a string representation of the interval."""
-        return self.left_endpoint.value + \
-            str(self.min_value) + "," + \
-            str(self.max_value) + \
-            self.right_endpoint.value
+        return (
+            self.left_endpoint.value
+            + str(self.min_value)
+            + ","
+            + str(self.max_value)
+            + self.right_endpoint.value
+        )
 
     def is_closed(self) -> bool:
         """Checks if the interval is fully closed [a, b].
@@ -61,8 +66,10 @@ class Interval:
         Returns:
             True if both endpoints are closed.
         """
-        return (self.left_endpoint == IntervalEndpoint.LEFT_CLOSED and
-                self.right_endpoint == IntervalEndpoint.RIGHT_CLOSED)
+        return (
+            self.left_endpoint == IntervalEndpoint.LEFT_CLOSED
+            and self.right_endpoint == IntervalEndpoint.RIGHT_CLOSED
+        )
 
     def is_open(self) -> bool:
         """Checks if the interval is fully open (a, b).
@@ -70,8 +77,10 @@ class Interval:
         Returns:
             True if both endpoints are open.
         """
-        return (self.left_endpoint == IntervalEndpoint.LEFT_OPEN and
-                self.right_endpoint == IntervalEndpoint.RIGHT_OPEN)
+        return (
+            self.left_endpoint == IntervalEndpoint.LEFT_OPEN
+            and self.right_endpoint == IntervalEndpoint.RIGHT_OPEN
+        )
 
     def is_right_open(self) -> bool:
         """Checks if the interval is right-open [a, b).
@@ -79,8 +88,10 @@ class Interval:
         Returns:
             True if left is closed and right is open.
         """
-        return (self.left_endpoint == IntervalEndpoint.LEFT_CLOSED and
-                self.right_endpoint == IntervalEndpoint.RIGHT_OPEN)
+        return (
+            self.left_endpoint == IntervalEndpoint.LEFT_CLOSED
+            and self.right_endpoint == IntervalEndpoint.RIGHT_OPEN
+        )
 
     def is_left_open(self) -> bool:
         """Checks if the interval is left-open (a, b].
@@ -88,12 +99,15 @@ class Interval:
         Returns:
             True if left is open and right is closed.
         """
-        return (self.left_endpoint == IntervalEndpoint.RIGHT_CLOSED and
-                self.right_endpoint == IntervalEndpoint.LEFT_OPEN)
+        return (
+            self.left_endpoint == IntervalEndpoint.RIGHT_CLOSED
+            and self.right_endpoint == IntervalEndpoint.LEFT_OPEN
+        )
 
     @staticmethod
-    def is_subset(interval_a: Interval,
-                  interval_b: Interval) -> Interval | None:
+    def is_subset(
+        interval_a: Interval, interval_b: Interval,
+    ) -> Interval | None:
         """Determines which interval is a subset of the other.
 
         Args:
@@ -105,54 +119,78 @@ class Interval:
             otherwise None.
         """
         # Determine which interval is larger
-        if (interval_a.min_value <= interval_b.min_value and
-            interval_a.max_value >= interval_b.max_value):
+        if (
+            interval_a.min_value <= interval_b.min_value
+            and interval_a.max_value >= interval_b.max_value
+        ):
             interval_large = interval_a
             interval_small = interval_b
-        elif (interval_a.min_value >= interval_b.min_value and
-            interval_a.max_value <= interval_b.max_value):
+        elif (
+            interval_a.min_value >= interval_b.min_value
+            and interval_a.max_value <= interval_b.max_value
+        ):
             interval_large = interval_b
             interval_small = interval_a
         else:
             return None
 
         # Case 1: Strict containment
-        if (interval_large.min_value < interval_small.min_value and
-            interval_large.max_value > interval_small.max_value):
+        if (
+            interval_large.min_value < interval_small.min_value
+            and interval_large.max_value > interval_small.max_value
+        ):
             return interval_large
 
         # Case 2: Same lower bound, larger upper bound
-        if (interval_large.min_value == interval_small.min_value and
-            interval_large.max_value > interval_small.max_value):
-            if (interval_small.left_endpoint == IntervalEndpoint.LEFT_OPEN) or (interval_large.left_endpoint == IntervalEndpoint.LEFT_CLOSED):
+        if (
+            interval_large.min_value == interval_small.min_value
+            and interval_large.max_value > interval_small.max_value
+        ):
+            if (
+                interval_small.left_endpoint == IntervalEndpoint.LEFT_OPEN
+            ) or (
+                interval_large.left_endpoint == IntervalEndpoint.LEFT_CLOSED
+            ):
                 return interval_large
             return None
 
         # Case 3: Smaller lower bound, same upper bound
-        if (interval_large.min_value < interval_small.min_value and
-            interval_large.max_value == interval_small.max_value):
-            if (interval_small.right_endpoint == IntervalEndpoint.RIGHT_OPEN) or (interval_large.right_endpoint == IntervalEndpoint.RIGHT_CLOSED):
+        if (
+            interval_large.min_value < interval_small.min_value
+            and interval_large.max_value == interval_small.max_value
+        ):
+            if (
+                interval_small.right_endpoint == IntervalEndpoint.RIGHT_OPEN
+            ) or (
+                interval_large.right_endpoint == IntervalEndpoint.RIGHT_CLOSED
+            ):
                 return interval_large
             return None
 
         # Case 4: Same bounds
-        if (interval_a.min_value == interval_b.min_value and
-            interval_a.max_value == interval_b.max_value):
-            if (interval_a.is_closed()):
+        if (
+            interval_a.min_value == interval_b.min_value
+            and interval_a.max_value == interval_b.max_value
+        ):
+            if interval_a.is_closed():
                 return interval_a
-            if (interval_a.is_open()):
+            if interval_a.is_open():
                 return interval_b
-            if (interval_b.is_closed()):
+            if interval_b.is_closed():
                 return interval_b
-            if (interval_b.is_open()):
+            if interval_b.is_open():
                 return interval_a
-            if (interval_a.left_endpoint == interval_b.left_endpoint and
-                interval_a.right_endpoint == interval_b.right_endpoint):
+            if (
+                interval_a.left_endpoint == interval_b.left_endpoint
+                and interval_a.right_endpoint == interval_b.right_endpoint
+            ):
                 return interval_a
         return None
 
+
 class IntervalEndpoint(Enum):
     """Enum representing the types of interval endpoints."""
+
     LEFT_OPEN = "("
     LEFT_CLOSED = "["
     RIGHT_OPEN = ")"

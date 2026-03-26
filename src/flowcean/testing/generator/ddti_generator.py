@@ -14,9 +14,8 @@ from flowcean.utils import get_seed
 from .generator import TestcaseGenerator
 
 
-class ddtigGenerator(TestcaseGenerator):
+class DDTIGenerator(TestcaseGenerator):
     """A generator that produces random tests based on given domains."""
-
 
     def __init__(
         self,
@@ -29,38 +28,39 @@ class ddtigGenerator(TestcaseGenerator):
         classification: bool = False,
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
-
         performance_threshold: float = 0.3,
         sample_limit: int = 50000,
         n_predictions: int = 50,
         max_depth: int = 5,
         hoeffding_tree_extra_params: dict[str, Any] | None = None,
-
-
     ) -> None:
         """Initialize the stochastic generator.
 
         Args:
             model: The trained Flowcean model.
-            reqs_file: Path to the test requirements file.
+            n_testinputs: Number of test inputs to generate.
+            test_coverage_criterium: Test coverage strategy identifier.
             dataset: Optional Polars DataFrame containing the original dataset.
-            specs_file: Path to a file containing feature specifications. If you provide a
-                dataset containing system inputs and outputs that already encodes the necessary
-                specifications, then you do not need to supply a separate system specification file.
-            classification: Whether the task is a classification problem (default: False).
-            inverse_alloc (optional) : If true, use inverse test allocation strategy.
-            epsilon (optional) : Size of interval around boundaries for BVA testing.
+            specs_file: Path to a file containing feature specifications.
+                If you provide a dataset containing system inputs and
+                outputs that already encodes the necessary specifications,
+                then you do not need to supply a separate system
+                specification file.
+            classification: Whether the task is a classification problem.
+            inverse_alloc: If True, allocate more tests to lower-priority
+                equivalence classes.
+            epsilon: Interval offset used for boundary value analysis.
 
-            For Surrogate model training (only applicable for black-box models):
-                performance_threshold (optional) : Minimum performance required to export
-                    the Hoeffding Tree (only applicable for black-box models).
-                sample_limit (optional) : Maximum number of samples used to train the
-                    Hoeffding Tree (only applicable for black-box models).
-                n_predictions (optional) : Number of correct predictions required before
-                    exporting the Hoeffding Tree (only applicable for black-box models).
-                max_depth (optional) : Maximum depth of the Hoeffding tree.
-                hoeffding_tree_extra_params (optional) : Additional parameters for training
-                    the Hoeffding Tree (only applicable for black-box models).
+            For surrogate model generation:
+            performance_threshold: Minimum performance needed before
+                exporting the Hoeffding Tree.
+            sample_limit: Maximum number of samples used to train the
+                Hoeffding Tree.
+            n_predictions: Number of consecutive correct predictions needed
+                before exporting the Hoeffding Tree.
+            max_depth: Maximum depth of the Hoeffding Tree.
+            hoeffding_tree_extra_params: Extra keyword arguments forwarded
+                to the Hoeffding Tree trainer.
         """
         super().__init__()
         self.n_testinputs = n_testinputs
@@ -82,9 +82,7 @@ class ddtigGenerator(TestcaseGenerator):
             max_depth=max_depth,
             hoeffding_tree_extra_params=hoeffding_tree_extra_params,
         )
-        self.df = self.test_pipeline.execute()
-        # TODO: Debug: Remove after testing
-        self.data = DataFrame(self.df)
+        self.data = DataFrame(self.test_pipeline.execute())
         self.reset()
 
     def num_steps(self) -> int | None:

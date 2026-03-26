@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class DataModel:
-    """A class used to generate synthetic samples based on the training data distribution.
+    """Generate synthetic samples from the training data distribution.
 
     Attributes:
     ----------
@@ -40,7 +40,6 @@ class DataModel:
         Generate n random samples based on the data distribution or use original data.
     """
 
-
     def __init__(
         self,
         data: pl.DataFrame,
@@ -54,7 +53,8 @@ class DataModel:
             data : Original training data used in the Flowcean model.
             seed : Random seed for reproducibility.
             model_handler : ModelHandler object used to produce predictions.
-            specs_handler : SystemSpecsHandler object storing system specifications.
+            specs_handler : SystemSpecsHandler object storing
+                system specifications.
         """
         self.data = data
         self.seed = seed
@@ -79,9 +79,9 @@ class DataModel:
         data = self.data.to_numpy()
         return KernelDensity(bandwidth="silverman").fit(data)
 
-    def _generate_samples(self,
-                          n_samples: int,
-                          int_features: list | None = None) -> DataFrame:
+    def _generate_samples(
+        self, n_samples: int, int_features: list | None = None,
+    ) -> DataFrame:
         """Generates n random input samples for all features using KDE.
 
         Args:
@@ -110,29 +110,53 @@ class DataModel:
         samples_array = kde.sample(n_samples, random_state=self.seed)
         for i in range(self.n_features):
             # Round values for integer-type features
-            feature_samples = np.round(samples_array[:, i]).astype(int).tolist() if i in int_features else samples_array[:, i].tolist()
-            samples.insert_column(i, pl.Series(self.col_names[i], feature_samples))
+            feature_samples = (
+                np.round(samples_array[:, i]).astype(int).tolist()
+                if i in int_features
+                else samples_array[:, i].tolist()
+            )
+            samples.insert_column(
+                i, pl.Series(self.col_names[i], feature_samples),
+            )
         return samples
 
-    def generate_dataset(self,
-                         original_data: bool = False,
-                         n_samples: int = 0) -> list:
+    def generate_dataset(
+        self,
+        *,
+        original_data: bool = False,
+        n_samples: int = 0,
+    ) -> list:
         """Generates a dataset of inputs and corresponding model predictions.
 
         If original_data is True, uses the original training data.
         Otherwise, generates synthetic samples using KDE.
 
         Args:
-            original_data : Whether to use original training data or generate synthetic samples.
+            original_data : Whether to use original training
+                data or generate synthetic samples.
             n_samples : Number of synthetic samples to generate.
 
         Returns:
             List of tuples containing input dictionaries and model outputs.
             Example (n_samples = 1):
-            [({'Length': 0.5093, 'Diameter': 0.3886, 'Height': 0.1106, 'M': 0}, 8.6006)]
+            [({'Length': 0.5093, 'Diameter': 0.3886,
+            'Height': 0.1106, 'M': 0}, 8.6006)]
         """
-        training_inputs = self.data if original_data else self._generate_samples(n_samples, self.int_features)
-        training_outputs = self.model_handler.get_model_prediction(training_inputs).collect()
+        training_inputs = (
+            self.data
+            if original_data
+            else self._generate_samples(n_samples, self.int_features)
+        )
+        training_outputs = self.model_handler.get_model_prediction(
+            training_inputs,
+        ).collect()
         samples_input_lst = training_inputs.to_dicts()
-        samples_output_lst = pl.Series(training_outputs.select(training_outputs.columns[0])).to_list()
-        return [(inputs, output) for inputs, output in zip(samples_input_lst, samples_output_lst, strict=False)]
+        samples_output_lst = pl.Series(
+            training_outputs.select(training_outputs.columns[0]),
+        ).to_list()
+        return [
+            (inputs, output)
+            for inputs, output in zip(
+                samples_input_lst, samples_output_lst, strict=False,
+            )
+        ]

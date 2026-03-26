@@ -8,7 +8,7 @@ from flowcean.core import Model
 from flowcean.core.strategies.offline import learn_offline
 from flowcean.polars import DataFrame
 from flowcean.testing import run_model_tests
-from flowcean.testing.generator import ddtigGenerator
+from flowcean.testing.generator import DDTIGenerator
 from flowcean.testing.predicates import PolarsPredicate
 from flowcean.torch import LightningLearner, MultilayerPerceptron
 from flowcean.utils import initialize_random
@@ -81,7 +81,7 @@ def generate_test_inputs() -> None:
 
     # Initialize the test pipeline and generate test inputs based on the test requirements
     # TODO (optional): Set log=True to enable logging
-    test_generator = ddtigGenerator(
+    test_generator = DDTIGenerator(
         model,
         n_testinputs=1000,
         test_coverage_criterium="dtc",

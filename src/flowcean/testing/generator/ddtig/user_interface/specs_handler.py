@@ -7,10 +7,13 @@ from pathlib import Path
 import polars as pl
 
 logger = logging.getLogger(__name__)
+REQUIRED_FEATURE_KEYS = ["name", "min", "max", "type", "nominal"]
+
 
 class SystemSpecsHandler:
-    """A class that loads and decodes a specification file to extract information
-    required for generating test inputs.
+    """Load and decode system specifications for test-input generation.
+
+    Supports loading from a JSON file or inferring values from a dataset.
 
     Attributes:
     ----------
@@ -54,8 +57,9 @@ class SystemSpecsHandler:
         self,
         data: pl.DataFrame | None = None,
         specs_file: Path | None = None,
-        ) -> None:
+    ) -> None:
         """Loads specifications from a JSON file or infers them from a dataset.
+
         For details on defining specifications in JSON, refer to README.md.
 
         Example JSON structure:
@@ -73,7 +77,8 @@ class SystemSpecsHandler:
         }
 
         Args:
-            data : Dataset used to infer specifications if specs_file is not provided.
+            data : Dataset used to infer specifications if specs_file
+                is not provided.
             specs_file : JSON file containing system specifications.
         """
         if data is not None:
@@ -97,7 +102,9 @@ class SystemSpecsHandler:
                     feature["type"] = "float"
                 else:
                     feature["type"] = "int"
-                unique_vals = data.select(pl.col(column_names[i]).unique()).to_series()
+                unique_vals = data.select(
+                    pl.col(column_names[i]).unique(),
+                ).to_series()
                 feature["nominal"] = set(unique_vals) <= {0, 1}
                 features.append(feature)
             self.specs = {"features": features}
@@ -126,7 +133,12 @@ class SystemSpecsHandler:
                 feature = self.specs["features"][i]
 
                 # Validate presence of required keys
-                if not all(k in feature for k in ["name", "min", "max", "type", "nominal"]) or len(feature) != 5:
+                if (
+                    not all(
+                        k in feature for k in REQUIRED_FEATURE_KEYS
+                    )
+                    or len(feature) != len(REQUIRED_FEATURE_KEYS)
+                ):
                     msg = "Invalid JSON structure. Refer to README.md."
                     raise LookupError(msg)
 
@@ -139,15 +151,23 @@ class SystemSpecsHandler:
                     msg = "'type' must be either 'int' or 'float'."
                     raise TypeError(msg)
 
-                if not isinstance(feature["min"], (int, float)) or not isinstance(feature["max"], (int, float)):
+                if not isinstance(
+                    feature["min"], (int, float),
+                ) or not isinstance(feature["max"], (int, float)):
                     msg = "'min' and 'max' must be int or float."
                     raise TypeError(msg)
 
-                if feature["type"] == "int" and not (isinstance(feature["min"], int) and isinstance(feature["max"], int)):
+                if feature["type"] == "int" and not (
+                    isinstance(feature["min"], int)
+                    and isinstance(feature["max"], int)
+                ):
                     msg = "'min' and 'max' must be int for type 'int'."
                     raise TypeError(msg)
 
-                if feature["type"] == "float" and not all(isinstance(v, (int, float)) for v in [feature["min"], feature["max"]]):
+                if feature["type"] == "float" and not all(
+                    isinstance(v, (int, float))
+                    for v in [feature["min"], feature["max"]]
+                ):
                     msg = "'min' and 'max' must be numeric for type 'float'."
                     raise TypeError(msg)
 
@@ -165,9 +185,11 @@ class SystemSpecsHandler:
 
             logger.info("Specifications successfully extracted from file.")
         else:
-            msg = "Either data or specs_file must be provided to load specifications."
+            msg = (
+                "Either data or specs_file must be provided "
+                "to load specifications."
+            )
             raise ValueError(msg)
-
 
     def get_n_features(self) -> int:
         """Returns the number of features defined in the specifications.
@@ -176,7 +198,6 @@ class SystemSpecsHandler:
             Number of features.
         """
         return len(self.specs["features"])
-
 
     def get_nominal_features(self) -> list:
         """Returns the indices of nominal features.
@@ -189,7 +210,6 @@ class SystemSpecsHandler:
             for feature in range(self.n_features)
             if self.specs["features"][feature]["nominal"]
         ]
-
 
     def get_numerical_features(self) -> list:
         """Returns the indices of numerical features.
@@ -215,7 +235,6 @@ class SystemSpecsHandler:
             if self.specs["features"][feature]["type"] == "int"
         ]
 
-
     def extract_minmax_values(self) -> dict:
         """Extracts the min and max values for each feature.
 
@@ -237,7 +256,6 @@ class SystemSpecsHandler:
             minmax_dict.update({feature: feature_range})
         return minmax_dict
 
-
     def extract_input_types(self) -> dict:
         """Extract the input type of each feature from the specifications.
 
@@ -258,7 +276,6 @@ class SystemSpecsHandler:
             type_dict.update({feature: feature_type})
         return type_dict
 
-
     def extract_feature_names(self) -> list:
         """Extract the name of each feature from the specifications.
 
@@ -268,8 +285,10 @@ class SystemSpecsHandler:
         Example:
                 ["pH", "temperature", "humidity"]
         """
-        return [self.specs["features"][feature]["name"] for feature in range(self.n_features)]
-
+        return [
+            self.specs["features"][feature]["name"]
+            for feature in range(self.n_features)
+        ]
 
     def extract_feature_names_with_idx(self) -> dict:
         """Extract feature names along with their corresponding indices.
@@ -284,8 +303,10 @@ class SystemSpecsHandler:
                     "humidity": 2
                 }
         """
-        return {self.specs["features"][feature]["name"]: feature for feature in range(self.n_features)}
-
+        return {
+            self.specs["features"][feature]["name"]: feature
+            for feature in range(self.n_features)
+        }
 
     def extract_feature_names_with_idx_reversed(self) -> dict:
         """Extract feature indices along with their corresponding names.
@@ -300,4 +321,7 @@ class SystemSpecsHandler:
                     2: "humidity"
                 }
         """
-        return {feature: self.specs["features"][feature]["name"] for feature in range(self.n_features)}
+        return {
+            feature: self.specs["features"][feature]["name"]
+            for feature in range(self.n_features)
+        }

@@ -8,11 +8,11 @@ from flowcean.testing.generator.ddtig.domain.model_analyser.surrogate.interval i
 )
 
 logger = logging.getLogger(__name__)
+BVA_SPLIT_RANGE_COUNT = 2
 
 
 def reverse_list_by_value(numbers_list: list) -> list:
-    """Reverse the values in a list based on their magnitude,
-    preserving the original positions.
+    """Reverse values by magnitude while preserving positions.
 
     Args:
         numbers_list: List of numeric values to reverse.
@@ -61,7 +61,6 @@ class TestGenerator:
         Generates abstract test inputs based on the selected coverage strategy.
     """
 
-
     def __init__(
         self,
         equivalence_classes: list,
@@ -71,8 +70,10 @@ class TestGenerator:
         """Initializes the Test Generator.
 
         Args:
-            equivalence_classes : Equivalence classes extracted from the decision tree.
-            seed: The random seed to use for reproducible test input generation.
+            equivalence_classes : Equivalence classes extracted from
+                the decision tree.
+            seed: The random seed to use for reproducible
+                test input generation.
             type_specs : Input types for each feature from the specifications.
         """
         self.equivalence_classes = equivalence_classes
@@ -82,9 +83,13 @@ class TestGenerator:
 
     # Generates a test plan for Boundary Value Analysis (BVA).
     # BVA samples around the boundaries of each interval.
-    def _bva_testplan(self, epsilon: float, eqclass_interval: Interval) -> tuple:
-        if (eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN or
-            eqclass_interval.right_endpoint == IntervalEndpoint.RIGHT_OPEN):
+    def _bva_testplan(
+        self, epsilon: float, eqclass_interval: Interval,
+    ) -> tuple:
+        if (
+            eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN
+            or eqclass_interval.right_endpoint == IntervalEndpoint.RIGHT_OPEN
+        ):
             test_ranges = []
             if eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN:
                 min_lower = eqclass_interval.min_value - epsilon
@@ -97,72 +102,89 @@ class TestGenerator:
             return tuple(test_ranges)
         return ((eqclass_interval.min_value, eqclass_interval.max_value),)
 
-
     # Generates a test plan for Decision Tree Coverage (DTC).
     # Ensures at least one test input covers each path in the tree.
     def _dtc_testplan(self, eqclass_interval: Interval) -> tuple[float, float]:
         if eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN:
-            if (self.type_specs[eqclass_interval.feature]["type"] == "int"):
+            if self.type_specs[eqclass_interval.feature]["type"] == "int":
                 lower = math.floor(eqclass_interval.min_value) + 1
             else:
-                lower = math.nextafter(eqclass_interval.min_value, eqclass_interval.max_value)
+                lower = math.nextafter(
+                    eqclass_interval.min_value, eqclass_interval.max_value,
+                )
         else:
             lower = eqclass_interval.min_value
         upper = eqclass_interval.max_value
         return (lower, upper)
 
-
     # Samples random values from a given interval for a specific feature.
-    def _generate_randoms(self, lower: float, upper: float, n_testinputs: int, feature: int) -> list:
+    def _generate_randoms(
+        self, lower: float, upper: float, n_testinputs: int, feature: int,
+    ) -> list:
         if lower > upper:
             tmp = upper
             upper = lower
             lower = tmp
         if lower == upper:
-            return [lower]*n_testinputs
+            return [lower] * n_testinputs
         if self.type_specs[feature]["type"] == "int":
-            return [random.randint(math.ceil(lower), math.floor(upper)) for _ in range(n_testinputs)]
+            return [
+                random.randint(math.ceil(lower), math.floor(upper))
+                for _ in range(n_testinputs)
+            ]
         return [random.uniform(lower, upper) for _ in range(n_testinputs)]
 
-
     # Generates test inputs for a single equivalence class.
-    def _generate_testinputs_eqclass(self,
-                                    n_testinputs: int,
-                                    test_coverage_criterium: str,
-                                    eqclass: tuple,
-                                    epsilon: float = 0.0) -> list:
+    def _generate_testinputs_eqclass(
+        self,
+        n_testinputs: int,
+        test_coverage_criterium: str,
+        eqclass: tuple,
+        epsilon: float = 0.0,
+    ) -> list:
         input_samples = []
         testplan = []
         for interval in eqclass:
             if test_coverage_criterium == "dtc":
                 lower, upper = self._dtc_testplan(interval)
                 testplan.append((lower, upper))
-                input_samples.append(self._generate_randoms(lower, upper, n_testinputs, interval.feature))
+                input_samples.append(
+                    self._generate_randoms(
+                        lower, upper, n_testinputs, interval.feature,
+                    ),
+                )
             else:
                 test_ranges = self._bva_testplan(epsilon, interval)
                 testplan.append(test_ranges)
-                if (len(test_ranges) == 2):
+                if len(test_ranges) == BVA_SPLIT_RANGE_COUNT:
                     q, r = divmod(n_testinputs, 2)
                     ns = [q + r, q]
                     input_samples_sublsts = []
                     n = ns[0]
                     for lower, upper in test_ranges:
-                        input_samples_sublsts += self._generate_randoms(lower, upper, n, interval.feature)
+                        input_samples_sublsts += self._generate_randoms(
+                            lower, upper, n, interval.feature,
+                        )
                         n = ns[1]
                     input_samples.append(input_samples_sublsts)
                 else:
                     lower, upper = test_ranges[0]
-                    input_samples.append(self._generate_randoms(lower, upper, n_testinputs, interval.feature))
+                    input_samples.append(
+                        self._generate_randoms(
+                            lower, upper, n_testinputs, interval.feature,
+                        ),
+                    )
         testinputs = list(zip(*input_samples, strict=False))
         self.testplans.append(testplan)
         return testinputs
 
-
-    # Computes the number of test inputs to generate per equivalence class fairly while maintaining the total number of test inputs.
-    def _generate_n_testinputs_list(self,
-                                   n_testinputs: int,
-                                   eqclass_prio: list,
-                                   inverse_alloc: bool) -> list:
+    # Compute test inputs per class while preserving total test count.
+    def _generate_n_testinputs_list(
+        self,
+        n_testinputs: int,
+        eqclass_prio: list,
+        inverse_alloc: bool,
+    ) -> list:
 
         exact_values = [n_testinputs * prio for prio in eqclass_prio]
         n_testinputs_lst = [int(x) for x in exact_values]
@@ -172,7 +194,6 @@ class TestGenerator:
         fractional_parts = [(i, x % 1) for i, x in enumerate(exact_values)]
         fractional_parts.sort(key=lambda x: x[1], reverse=True)
 
-
         for i in range(int(remainder)):
             index = fractional_parts[i][0]
             n_testinputs_lst[index] += 1
@@ -180,30 +201,41 @@ class TestGenerator:
             n_testinputs_lst = reverse_list_by_value(n_testinputs_lst)
         return n_testinputs_lst
 
-
-    def generate_testinputs(self,
-                           test_coverage_criterium: str,
-                           eqclass_prio: list,
-                           n_testinputs: int,
-                           inverse_alloc: bool,
-                           epsilon: float) -> list:
+    def generate_testinputs(
+        self,
+        test_coverage_criterium: str,
+        eqclass_prio: list,
+        n_testinputs: int,
+        inverse_alloc: bool,
+        epsilon: float,
+    ) -> list:
         """Generates abstract test inputs for all equivalence classes.
 
         Args:
             test_coverage_criterium : Coverage strategy ("bva" or "dtc").
             eqclass_prio : Importance scores for each equivalence class.
             n_testinputs : Total number of test inputs to generate.
-            inverse_alloc : If True, allocate more inputs to less important classes.
+            inverse_alloc : If True, allocate more inputs to less
+                important classes.
             epsilon : Offset for BVA sampling.
 
         Returns:
-            List of abstract test inputs. Each test input is a tuple of feature values.
+            List of abstract test inputs.
+            Each test input is a tuple of feature values.
             E.g.: [(1,2,3), (11,22,33), (87,29,38)]
         """
         testinputs = []
-        self.n_testinputs_lst = self._generate_n_testinputs_list(n_testinputs, eqclass_prio, inverse_alloc)
-        for eqclass, n_eq_testinputs in zip(self.equivalence_classes, self.n_testinputs_lst, strict=False):
-            testinputs_eqclass = self._generate_testinputs_eqclass(n_eq_testinputs, test_coverage_criterium, eqclass, epsilon)
+        self.n_testinputs_lst = self._generate_n_testinputs_list(
+            n_testinputs, eqclass_prio, inverse_alloc,
+        )
+        for eqclass, n_eq_testinputs in zip(
+            self.equivalence_classes, self.n_testinputs_lst, strict=False,
+        ):
+            testinputs_eqclass = self._generate_testinputs_eqclass(
+                n_eq_testinputs, test_coverage_criterium, eqclass, epsilon,
+            )
             testinputs += testinputs_eqclass
-        logger.info("Generated test inputs for all equivalence classes successfully.")
+        logger.info(
+            "Generated test inputs for all equivalence classes successfully.",
+        )
         return testinputs

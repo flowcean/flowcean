@@ -18,9 +18,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-def convert_river_tree(river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier,
-                       feature_dict: dict) -> dict:
-    """Extracts the structure of a River Hoeffding tree and stores it in a dictionary.
+
+def convert_river_tree(
+    river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier,
+    feature_dict: dict,
+) -> dict:
+    """Extract the structure of a River Hoeffding tree.
+
+    Store the extracted structure in a dictionary.
 
     Args:
         river_tree : A River Hoeffding tree.
@@ -30,28 +35,28 @@ def convert_river_tree(river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassif
         A dictionary representing the tree structure.
     """
     counter = 0
+
     # Traverse the tree using depth-first search.
     # Yields: parent index, parent node, child node, child index, branch
-    def iterate(node=None) -> Iterator[tuple]:
-            if node is None:
-                yield None, None, river_tree._root, 0, None
-                yield from iterate(river_tree._root)
+    def iterate(node: object | None = None) -> Iterator[tuple]:
+        if node is None:
+            yield None, None, river_tree._root, 0, None
+            yield from iterate(river_tree._root)
 
-            nonlocal counter
-            parent_no = counter
+        nonlocal counter
+        parent_no = counter
 
-            if isinstance(node, DTBranch):
-                for branch_index, child in enumerate(node.children):
-                    counter += 1
-                    yield parent_no, node, child, counter, branch_index
-                    if isinstance(child, DTBranch):
-                        yield from iterate(child)
+        if isinstance(node, DTBranch):
+            for branch_index, child in enumerate(node.children):
+                counter += 1
+                yield parent_no, node, child, counter, branch_index
+                if isinstance(child, DTBranch):
+                    yield from iterate(child)
 
     tree = {}
 
     # Build tree structure from traversal
     for parent_no, parent, child, child_no, branch_index in iterate():
-
         # Store new node in dict
         if tree.get(child_no) is None:
             new_node = Node()
@@ -68,17 +73,22 @@ def convert_river_tree(river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassif
         # If node has a parent, store node as either child left
         # or child right of parent node
         if parent_no is not None:
-            if (branch_index == 0):
+            if branch_index == 0:
                 tree[parent_no].child_left = child_no
             else:
                 tree[parent_no].child_right = child_no
-            tree[parent_no].split_threshold = float(parent.repr_branch(branch_index, shorten=True).split(" ")[-1])
+            tree[parent_no].split_threshold = float(
+                parent.repr_branch(branch_index, shorten=True).split(" ")[-1],
+            )
     return tree
 
 
-def convert_sklearn_tree(sklearn_tree: sklearnTree,
-                         feature_dict: dict) -> dict:
-    """Extracts the structure of a scikit-learn decision tree and stores it in a dictionary.
+def convert_sklearn_tree(
+    sklearn_tree: sklearnTree, feature_dict: dict,
+) -> dict:
+    """Extract the structure of a scikit-learn decision tree.
+
+    Store the extracted structure in a dictionary.
 
     Args:
         sklearn_tree : A scikit-learn decision tree.
@@ -96,12 +106,13 @@ def convert_sklearn_tree(sklearn_tree: sklearnTree,
         if split_feature is None:
             split_feature = -2
         # Store info of sklearn node in our own Node object
-        new_node = Node(child_left=sklearn_tree.children_left[node],
-                        child_right=sklearn_tree.children_right[node],
-                        split_feature=split_feature,
-                        split_feature_idx=sklearn_tree.feature[node],
-                        split_threshold=sklearn_tree.threshold[node],
-                        )
+        new_node = Node(
+            child_left=sklearn_tree.children_left[node],
+            child_right=sklearn_tree.children_right[node],
+            split_feature=split_feature,
+            split_feature_idx=sklearn_tree.feature[node],
+            split_threshold=sklearn_tree.threshold[node],
+        )
         # Get #samples for leaf node
         if new_node.child_left == -1 and new_node.child_right == -1:
             new_node.samples = sklearn_tree.n_node_samples[node]
@@ -140,7 +151,15 @@ class Node:
         self.samples = samples
 
     def __str__(self) -> str:
-        return f"\nchild_left: {self.child_left},\nchild_right: {self.child_right},\nsplit_feature: {self.split_feature},\nsplit_feature_idx: {self.split_feature_idx},\nsplit_threshold: {self.split_threshold}, \nsamples: {self.samples}"
+        return (
+            f"\nchild_left: {self.child_left},"
+            f"\nchild_right: {self.child_right},"
+            f"\nsplit_feature: {self.split_feature},"
+            f"\nsplit_feature_idx: {self.split_feature_idx},"
+            f"\nsplit_threshold: {self.split_threshold},"
+            f" \nsamples: {self.samples}"
+        )
+
 
 @dataclass
 class TestTree:
@@ -159,7 +178,9 @@ class TestTree:
 
     def __init__(
         self,
-        model_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier | sklearnTree,
+        model_tree: HoeffdingTreeRegressor
+        | HoeffdingTreeClassifier
+        | sklearnTree,
         specs_handler: SystemSpecsHandler,
     ) -> None:
         """Initializes the TestTree from a model tree.
@@ -169,9 +190,13 @@ class TestTree:
             specs_handler : Object for accessing feature specifications.
         """
         if isinstance(model_tree, sklearnTree):
-            feature_dict = specs_handler.extract_feature_names_with_idx_reversed()
+            feature_dict = (
+                specs_handler.extract_feature_names_with_idx_reversed()
+            )
             self.test_tree = convert_sklearn_tree(model_tree, feature_dict)
-            logger.info("Converted a scikit-learn tree to TestTree successfully.")
+            logger.info(
+                "Converted a scikit-learn tree to TestTree successfully.",
+            )
         else:
             feature_dict = specs_handler.extract_feature_names_with_idx()
             self.test_tree = convert_river_tree(model_tree, feature_dict)
@@ -188,7 +213,6 @@ class TestTree:
             if self.test_tree[key].samples != 0:
                 samples += self.test_tree[key].samples
         return samples
-
 
     def __str__(self) -> str:
         tree_str = ""

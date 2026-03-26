@@ -2,8 +2,9 @@ import polars as pl
 
 
 class TestCompiler:
-    """A class that transforms abstract test inputs into executable test inputs
-    compatible with Flowcean models.
+    """Transforms abstract test inputs into executable test inputs.
+
+    Compatible with Flowcean models.
 
     Attributes:
     ----------
@@ -40,9 +41,12 @@ class TestCompiler:
             input_dict[str(feature)] = []
         return input_dict
 
-    def compute_executable_testinputs(self, feature_names: list) -> pl.DataFrame:
-        """Converts abstract test inputs into a polars DataFrame for execution
-        on Flowcean models.
+    def compute_executable_testinputs(
+        self, feature_names: list,
+    ) -> pl.DataFrame:
+        """Convert abstract test inputs into a Polars DataFrame.
+
+        Thus, the result can be executed on Flowcean models.
 
         Args:
             feature_names : List of feature names in order of their indices.
@@ -51,13 +55,15 @@ class TestCompiler:
             DataFrame where each column represents a feature
             and each row represents a test input.
         """
-        input_dict =  self._init_input_dict()
+        input_dict = self._init_input_dict()
 
         # Populate input dictionary with values from abstract test inputs
         for ati in self.abst_testinputs:
             for feature, value in enumerate(ati):
                 input_dict[str(feature)].append(value)
-        input_dict = dict(zip(feature_names, list(input_dict.values()), strict=False))
+        input_dict = dict(
+            zip(feature_names, list(input_dict.values()), strict=False),
+        )
 
         # Convert to polars DataFrame (Flowcean-compatible format)
         return pl.from_dict(input_dict, strict=False)

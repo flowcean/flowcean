@@ -20,6 +20,7 @@ from flowcean.testing.generator.ddtig.user_interface import SystemSpecsHandler
 
 logger = logging.getLogger(__name__)
 
+
 class TestPipeline:
     """A class that defines the workflow for test input generation using the Flowcean framework.
 
@@ -79,7 +80,6 @@ class TestPipeline:
     def __init__(
         self,
         model: Model,
-
         n_testinputs: int,
         test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
@@ -88,7 +88,6 @@ class TestPipeline:
         inverse_alloc: bool = False,
         epsilon: float = 0.5,
         seed: int = 42,
-
         performance_threshold: float = 0.3,
         sample_limit: int = 50000,
         n_predictions: int = 50,
@@ -120,9 +119,11 @@ class TestPipeline:
             msg = "Invalid test coverage criterium. Expected 'bva' or 'dtc'."
             raise ValueError(msg)
 
-        if (type(self.model) is not DecisionTreeRegressor and
-            type(self.model) is not DecisionTreeClassifier and
-            dataset is None):
+        if (
+            type(self.model) is not DecisionTreeRegressor
+            and type(self.model) is not DecisionTreeClassifier
+            and dataset is None
+        ):
             msg = "Missing required parameter: 'dataset'"
             raise ValueError(msg)
         if dataset is None and specs_file is None:
@@ -131,7 +132,9 @@ class TestPipeline:
         self.n_testinputs = n_testinputs
         self.test_coverage_criterium = test_coverage_criterium
         self.dataset = dataset
-        self.specs_handler = SystemSpecsHandler(data = dataset, specs_file = specs_file)
+        self.specs_handler = SystemSpecsHandler(
+            data=dataset, specs_file=specs_file,
+        )
         self.feature_names = self.specs_handler.extract_feature_names()
         self.hoeffding_tree = None
         self.classification = classification
@@ -142,20 +145,24 @@ class TestPipeline:
         self.sample_limit = sample_limit
         self.n_predictions = n_predictions
         self.max_depth = max_depth
-        self.hoeffding_tree_extra_params = hoeffding_tree_extra_params if hoeffding_tree_extra_params is not None else {}
+        self.hoeffding_tree_extra_params = (
+            hoeffding_tree_extra_params
+            if hoeffding_tree_extra_params is not None
+            else {}
+        )
 
-
-
-    def _execute(self,
-                test_coverage_criterium: str,
-                n_testinputs: int,
-                inverse_alloc: bool = False,
-                epsilon: float = 0.5,
-                performance_threshold: float = 0.3,
-                sample_limit: int = 50000,
-                n_predictions: int = 50,
-                max_depth: int = 5,
-                **kwargs) -> pl.DataFrame:
+    def _execute(
+        self,
+        test_coverage_criterium: str,
+        n_testinputs: int,
+        inverse_alloc: bool = False,
+        epsilon: float = 0.5,
+        performance_threshold: float = 0.3,
+        sample_limit: int = 50000,
+        n_predictions: int = 50,
+        max_depth: int = 5,
+        **kwargs,
+    ) -> pl.DataFrame:
         """Executes the full test input generation workflow:
 
             1. If model is black-box: train Hoeffding Tree.
@@ -189,26 +196,39 @@ class TestPipeline:
         """
         logger.debug("epsilon: %s", epsilon)
         logger.debug("n_testinputs: %s", n_testinputs)
-        if not isinstance(self.model, (DecisionTreeRegressor, DecisionTreeClassifier)):
+        if not isinstance(
+            self.model, (DecisionTreeRegressor, DecisionTreeClassifier),
+        ):
             # Generate Hoeffding tree only if it hasn't been created yet
-            logger.info("Training Hoeffding Tree surrogate model for black-box model...")
+            logger.info(
+                "Training Hoeffding Tree surrogate model for black-box model...",
+            )
             if self.hoeffding_tree is None:
                 if self.dataset is None:
                     msg = "Dataset is required to train the Hoeffding Tree surrogate model for black-box models."
                     raise ValueError(msg)
-                htree_obj = HoeffdingTree(self.dataset, self.seed, self.model_handler, self.specs_handler)
-                dtree = htree_obj.train_tree(performance_threshold=performance_threshold,
-                                            sample_limit=sample_limit,
-                                            n_predictions=n_predictions,
-                                            max_depth=max_depth,
-                                            classification=self.classification,
-                                            **kwargs)
+                htree_obj = HoeffdingTree(
+                    self.dataset,
+                    self.seed,
+                    self.model_handler,
+                    self.specs_handler,
+                )
+                dtree = htree_obj.train_tree(
+                    performance_threshold=performance_threshold,
+                    sample_limit=sample_limit,
+                    n_predictions=n_predictions,
+                    max_depth=max_depth,
+                    classification=self.classification,
+                    **kwargs,
+                )
                 self.hoeffding_tree = dtree
             else:
                 dtree = self.hoeffding_tree
         else:
             # Use the decision tree directly if the model is a tree-based one
-            logger.info("Using existing Decision Tree model for test input generation...")
+            logger.info(
+                "Using existing Decision Tree model for test input generation...",
+            )
             dtree = self.model.tree_
 
         # Extract specification details for equivalence class computation
@@ -219,25 +239,30 @@ class TestPipeline:
 
         # Compute equivalence classes from the decision tree
         test_tree = TestTree(dtree, self.specs_handler)
-        eqclassobj = EquivalenceClassesHandler(test_tree, minmax_specs, n_features)
+        eqclassobj = EquivalenceClassesHandler(
+            test_tree, minmax_specs, n_features,
+        )
         self.eqclasses = eqclassobj.get_equivalence_classes()
 
         # Generate test inputs based on equivalence classes and coverage criteria
         testgenobj = TestGenerator(self.eqclasses, self.seed, type_specs)
-        self.testinputs = testgenobj.generate_testinputs(test_coverage_criterium,
-                                                       eqclassobj.eqclass_prio,
-                                                       n_testinputs,
-                                                       inverse_alloc=inverse_alloc,
-                                                       epsilon=epsilon)
+        self.testinputs = testgenobj.generate_testinputs(
+            test_coverage_criterium,
+            eqclassobj.eqclass_prio,
+            n_testinputs,
+            inverse_alloc=inverse_alloc,
+            epsilon=epsilon,
+        )
         self.testplans = testgenobj.testplans
         self.n_testinputs_lst = testgenobj.n_testinputs_lst
 
         # Compile test inputs into executable format for Flowcean
         testcompobj = TestCompiler(n_features, self.testinputs)
-        self.testinputs_df = testcompobj.compute_executable_testinputs(feature_names)
+        self.testinputs_df = testcompobj.compute_executable_testinputs(
+            feature_names,
+        )
 
         return self.testinputs_df
-
 
     def execute(self) -> pl.DataFrame:
         """Wrapper around `_execute()` to run the test input generation workflow with the parameters specified during initialization.
@@ -257,31 +282,39 @@ class TestPipeline:
             **self.hoeffding_tree_extra_params,
         )
 
-
     # Print equivalence classes with test input counts to a text file
     def _print_eqclasses(self) -> None:
         columns = list(self.feature_names)
         columns.append("Number of test inputs")
-        stringified_eqclasses = [[str(interval) for interval in eqclass] for eqclass in self.eqclasses]
-        updated_eqclasses = [[*row, self.n_testinputs_lst[i]] for i, row in enumerate(stringified_eqclasses)]
-        eqclasses_table = tabulate(updated_eqclasses, headers=columns, tablefmt="grid")
-        Path("equivalence_classes.txt").write_text(eqclasses_table, encoding="utf-8")
-
+        stringified_eqclasses = [
+            [str(interval) for interval in eqclass]
+            for eqclass in self.eqclasses
+        ]
+        updated_eqclasses = [
+            [*row, self.n_testinputs_lst[i]]
+            for i, row in enumerate(stringified_eqclasses)
+        ]
+        eqclasses_table = tabulate(
+            updated_eqclasses, headers=columns, tablefmt="grid",
+        )
+        Path("equivalence_classes.txt").write_text(
+            eqclasses_table, encoding="utf-8",
+        )
 
     # Print test plans to a text file
     def _print_testplans(self) -> None:
-        testplans_table = tabulate(self.testplans, headers=self.feature_names, tablefmt="grid")
+        testplans_table = tabulate(
+            self.testplans, headers=self.feature_names, tablefmt="grid",
+        )
         Path("testplans.txt").write_text(testplans_table, encoding="utf-8")
-
 
     # Print executable test inputs to a text file
     def _print_testinputs(self) -> None:
         rows = self.testinputs_df.rows()
-        testinputs_table = tabulate(rows, headers=self.feature_names, tablefmt="grid")
+        testinputs_table = tabulate(
+            rows, headers=self.feature_names, tablefmt="grid",
+        )
         Path("testinputs.txt").write_text(testinputs_table, encoding="utf-8")
-
-
-
 
     # Render and save the Hoeffding tree as a PNG image
     def _print_hoeffding_tree(self) -> None:
@@ -291,14 +324,14 @@ class TestPipeline:
         else:
             print("No Hoeffding Tree to print.")
 
-
     # Save the Hoeffding tree as a pickle file
     def save_hoeffding_tree(self, path: str | Path) -> None:
         if self.hoeffding_tree is not None:
-            Path(path).with_suffix(".pkl").write_bytes(pickle.dumps(self.hoeffding_tree))
+            Path(path).with_suffix(".pkl").write_bytes(
+                pickle.dumps(self.hoeffding_tree),
+            )
         else:
             print("No Hoeffding Tree to save.")
-
 
     def save_test_overview(self, print_option: list | None = None) -> None:
         """Generates and prints multiple report files containing:

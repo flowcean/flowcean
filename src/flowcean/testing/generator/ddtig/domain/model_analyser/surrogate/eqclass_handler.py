@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from typing import Any
 
 logger = logging.getLogger(__name__)
+
 
 class EquivalenceClassesHandler:
     """A class used to extract equivalence classes from a decision tree.
@@ -35,20 +37,21 @@ class EquivalenceClassesHandler:
         Converts a list of equivalence classes to a readable string format.
     """
 
-    ROOT_INDEX = 0      # Root index of decision trees is always 0
-
+    ROOT_INDEX = 0  # Root index of decision trees is always 0
 
     def __init__(
         self,
-        test_tree,
+        test_tree: Any,
         minmax_values_specs: dict,
         n_features: int,
     ) -> None:
         """Initializes the EquivalenceClassesHandler.
 
         Args:
-            test_tree : The decision tree used for extracting equivalence classes.
-            minmax_values_specs : Dictionary containing min/max values for each feature.
+            test_tree : The decision tree used for extracting
+                equivalence classes.
+            minmax_values_specs : Dictionary containing min/max
+                values for each feature.
             n_features : Number of features in the dataset.
         """
         self.test_tree = test_tree.test_tree
@@ -56,7 +59,6 @@ class EquivalenceClassesHandler:
         self.minmax_values_specs = minmax_values_specs
         self.n_features = n_features
         self.eqclass_prio = []
-
 
     # Initializes an empty equivalence class with None bounds.
     # Equivalence class is stored a dictionary with:
@@ -69,28 +71,22 @@ class EquivalenceClassesHandler:
             equivalence_class.update({feature: range_ec})
         return equivalence_class
 
-
     # Updates the min/max bounds of a feature in an equivalence class
     # based on the parent node's split.
-    def _update_equivalence_class(self,
-                                   equivalence_class: dict,
-                                   parent: int,
-                                   node: int) -> None:
+    def _update_equivalence_class(
+        self, equivalence_class: dict, parent: int, node: int,
+    ) -> None:
         split_feature_idx = self.test_tree[parent].split_feature_idx
         split_threshold = self.test_tree[parent].split_threshold
-        # Left child is reached when threshold is not exceeded -> Update max value of feature
-        if (self.test_tree[parent].child_left == node):
+        # Left child: threshold is not exceeded, update max value.
+        if self.test_tree[parent].child_left == node:
             equivalence_class[split_feature_idx]["max"] = split_threshold
-        # Right child is reached when threshold is exceeded -> Update min value of feature
+        # Right child: threshold is exceeded, update min value.
         else:
             equivalence_class[split_feature_idx]["min"] = split_threshold
 
-
     # Recursively collects all paths from the root to leaf nodes.
-    def _collect_paths(self,
-                        node: int,
-                        path: list,
-                        paths: list) -> None:
+    def _collect_paths(self, node: int, path: list, paths: list) -> None:
 
         child_left = self.test_tree[node].child_left
         child_right = self.test_tree[node].child_right
@@ -106,7 +102,6 @@ class EquivalenceClassesHandler:
 
         # Backtrack: remove the last element from the path
         path.pop()
-
 
     # Collects all paths from the root to leaf nodes.
     def _collect_all_paths(self, root: int) -> list:
@@ -130,12 +125,15 @@ class EquivalenceClassesHandler:
                 parent = node
             equivalence_classes.append(deepcopy(equivalence_class))
             if len(self.eqclass_prio) < len(paths):
-                # Compute importance of each eqclass depending on number of training samples reached that class
-                self.eqclass_prio.append(self.test_tree[parent].samples/self.n_samples)
+                # Compute importance of each eqclass depending on number of
+                # training samples that reached that class
+                self.eqclass_prio.append(
+                    self.test_tree[parent].samples / self.n_samples,
+                )
 
-        # Returns e.g., [{0: {'min': 0, 'max': 10}, 1: {'min': 3, 'max': None}}, {...}]
+            # Example:
+            # [{0: {'min': 0, 'max': 10}, 1: {'min': 3, 'max': None}}, ...]
         return equivalence_classes
-
 
     # Formats raw equivalence classes into Interval objects.
     def _format_equivalence_classes(self, equivalence_classes: list) -> list:
@@ -143,6 +141,7 @@ class EquivalenceClassesHandler:
             Interval,
             IntervalEndpoint,
         )
+
         equivalence_classes_formatted = []
 
         for eqclass in equivalence_classes:
@@ -160,15 +159,22 @@ class EquivalenceClassesHandler:
                 if max_value is None:
                     right_endpoint = IntervalEndpoint.RIGHT_CLOSED
                     max_value = self.minmax_values_specs[feature]["max"]
-                interval = (Interval(feature, left_endpoint, right_endpoint, min_value, max_value),)
+                interval = (
+                    Interval(
+                        feature,
+                        left_endpoint,
+                        right_endpoint,
+                        min_value,
+                        max_value,
+                    ),
+                )
 
-                # Each equivalence class is represented as a tuple with n elements,
+                # Each equivalence class is a tuple with n intervals,
                 # where n is the number of features
                 eqclass_formatted = eqclass_formatted + interval
             equivalence_classes_formatted.append(eqclass_formatted)
-        # Returns: List of formatted equivalence classes as tuples of Intervals.
+        # Returns formatted equivalence classes as tuples of Intervals.
         return equivalence_classes_formatted
-
 
     def get_equivalence_classes(self) -> list:
         """Extracts and formats equivalence classes from the decision tree.
@@ -179,10 +185,11 @@ class EquivalenceClassesHandler:
         self.eqclass_prio = []
         paths = self._collect_all_paths(self.ROOT_INDEX)
         equivalence_classes = self._extract_equivalence_classes(paths)
-        equivalence_classes_formatted = self._format_equivalence_classes(equivalence_classes)
+        equivalence_classes_formatted = self._format_equivalence_classes(
+            equivalence_classes,
+        )
         logger.info("Extracted equivalence classes successfully.")
         return equivalence_classes_formatted
-
 
     @staticmethod
     def to_str(eqclass: tuple) -> str:
@@ -201,7 +208,6 @@ class EquivalenceClassesHandler:
             eqclass_str += interval.__str__()
         eqclass_str += ")"
         return eqclass_str
-
 
     @staticmethod
     def to_strs(eqclasses: list, feature_names: list) -> str:
@@ -229,16 +235,15 @@ class EquivalenceClassesHandler:
             eqclasses_str += "}\n"
         return eqclasses_str
 
-
     @staticmethod
-    def is_subset(eqclass1: tuple,
-                  eqclass2: tuple) -> tuple | None:
+    def is_subset(eqclass1: tuple, eqclass2: tuple) -> tuple | None:
         """Compares the interval ranges of all features between two equivalence classes
         and determines which one is a subset of the other.
 
-        An equivalence class is considered a subset only if all its intervals are
-        strictly contained within the corresponding intervals of the other class.
-        The method returns the superset equivalence class if such a relationship exists.
+        An equivalence class is considered a subset only if all its
+        intervals are strictly contained within the corresponding
+        intervals of the other class. The method returns the
+        superset equivalence class if such a relationship exists.
 
         Args:
             eqclass1 : First equivalence class (tuple of Interval objects).
@@ -267,8 +272,13 @@ class EquivalenceClassesHandler:
             interval_b = eqclass2[idx]
             interval_res = Interval.is_subset(interval_a, interval_b)
 
-            if interval_res is None or (((interval_res == interval_a) and (eqclass_large != eqclass1)) or
-                  ((interval_res == interval_b) and (eqclass_large != eqclass2))):
+            if interval_res is None or (
+                ((interval_res == interval_a) and (eqclass_large != eqclass1))
+                or (
+                    (interval_res == interval_b)
+                    and (eqclass_large != eqclass2)
+                )
+            ):
                 return None
 
         return eqclass_large
