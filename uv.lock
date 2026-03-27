@@ -23,6 +23,7 @@ members = [
     "flowcean",
     "linear-data",
     "one-tank",
+    "passive-circuit",
     "robot-localization-failure",
 ]
 
@@ -3760,6 +3761,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/b2/3a/3f06f34820a31257d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/71/e7/40fb618334dcdf7c5a316c0e7343c5cd82d3d866edc100d98e29bc945ecd/partd-1.4.2-py3-none-any.whl", hash = "sha256:978e4ac767ec4ba5b86c6eaa52e5a2a3bc748a2ca839e8cc798f1cc6ce6efb0f", size = 18905, upload-time = "2024-05-06T19:51:39.271Z" },
 ]
+
+[[package]]
+name = "passive-circuit"
+version = "0.1.0"
+source = { virtual = "examples/passive_circuit" }
+dependencies = [
+    { name = "flowcean" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "flowcean", editable = "." }]
 
 [[package]]
 name = "pathspec"
