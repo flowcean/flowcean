@@ -9,7 +9,11 @@ extend-ignore-identifiers-re = [
   "arange",  # NumPy function
 ]
 
+[default.extend-words]
+utomatic = "utomatic"
+
 [files]
 extend-exclude = [
   "java/AutomataLearner/src/main/java/io/flowcean/learner/grpc/*.java",
+  "ruff.toml",
 ]
