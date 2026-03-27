@@ -96,7 +96,6 @@ def evaluate_offline(
 
     for model in models:
         predictions = model.predict(input_features)
-
         entries[model.name] = ReportEntry(
             {
                 metric.name: metric(output_features, predictions.lazy())
