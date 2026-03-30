@@ -107,8 +107,7 @@ def generate_test_inputs() -> None:
     predicate = PolarsPredicate(
         (pl.col("BodyFat") < BODYFAT_MAX) & (pl.col("BodyFat") > BODYFAT_MIN),
     )
-    # prediction = model.predict(test_generator.df.lazy()).collect()
-    # print(prediction)
+
     run_model_tests(
         model,
         test_generator,
@@ -118,14 +117,10 @@ def generate_test_inputs() -> None:
         path="test_failures.txt",
     )
 
-    # optional: Uncomment to save the Hoeffding tree to a file
-    #           Useful if the MUT is not a decision tree
-    # test_generator.test_pipeline.save_hoeffding_tree("HoeffingTree")
-
 
 def main() -> None:
-    # optional: Comment if model is already created
     initialize_random(544382)
+    # optional: Comment if model is already created
     construct_data_driven_model()
     generate_test_inputs()
 

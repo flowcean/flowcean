@@ -336,7 +336,7 @@ class TestPipeline:
             tree_img = self.hoeffding_tree.draw()
             tree_img.render("hoeffding_tree", format="png", cleanup=True)
         else:
-            print("No Hoeffding Tree to print.")
+            logger.error("No Hoeffding Tree to print.")
 
     # Save the Hoeffding tree as a pickle file
     def save_hoeffding_tree(self, path: str | Path) -> None:
@@ -345,4 +345,4 @@ class TestPipeline:
                 pickle.dumps(self.hoeffding_tree),
             )
         else:
-            print("No Hoeffding Tree to save.")
+            logger.error("No Hoeffding Tree to save.")

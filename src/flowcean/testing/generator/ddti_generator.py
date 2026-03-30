@@ -19,8 +19,6 @@ class DDTIGenerator(TestcaseGenerator):
 
     Methods:
     -------
-    execute()
-        Executes the full test input generation workflow.
 
     save_hoeffding_tree()
         Saves the generated Hoeffding tree to a file.
