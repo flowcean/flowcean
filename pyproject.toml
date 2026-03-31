@@ -39,6 +39,9 @@ dependencies = [
   "polars-u64-idx>=1.32.3",
   "cloudpickle>=3.1.1",
   "rich>=14.1.0",
+  "opencv-python>=4.11.0.86",
+  "matplotlib>=3.10.6",
+  "numba>=0.61.2",
 ]
 
 [project.optional-dependencies]

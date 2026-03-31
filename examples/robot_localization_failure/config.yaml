@@ -1,26 +1,8 @@
 rosbag:
   training_paths:
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_01
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_02
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_03
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_08
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_09
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_10
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_11
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_12
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_13
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_14
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_15
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_16
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_17
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_19
+    - ???
   evaluation_paths:
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_20
-    - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_21
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_22
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_23
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_24
-    # - recordings/rec_20250704_173434_sliced/rec_20250704_173434_id_26
+    - ???
   message_paths:
     - ros_msgs/sensor_msgs/msg/LaserScan.msg
     - ros_msgs/nav2_msgs/msg/Particle.msg
