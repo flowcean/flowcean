@@ -2,7 +2,7 @@
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from benchmarks import all_specs
+from benchmarks import all_specs, turbine_specs
 
 from flowcean.ode import plot_trace, simulate
 
@@ -10,7 +10,9 @@ mpl.use("Agg")
 
 
 def main() -> None:
-    specs = list(all_specs())
+    specs = list(turbine_specs())
+
+    # specs = list(all_specs())
 
     cols = 3
     rows = (len(specs) + cols - 1) // cols

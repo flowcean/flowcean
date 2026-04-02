@@ -15,6 +15,7 @@ from .relay_integrator import relay_integrator
 from .switched_linear import switched_linear
 from .tank_valves import tank_valves
 from .thermostat import thermostat
+from .turbine import turbine
 from .time_forced_switch import time_forced_switch
 from .time_varying_guard import time_varying_guard
 
@@ -117,6 +118,13 @@ def registry() -> dict[str, BenchmarkSpec]:
             description="Scalable cycle of linear modes with clock resets.",
             t_span=(0.0, 10.0),
         ),
+        BenchmarkSpec(
+            name="Wind Turbine",
+            factory=turbine,
+            tags=("wind", "turbine", "multimode"),
+            description="Wind turbine with multiple operational modes.",
+            t_span=(0.0, 100.0),
+        ),
     ]
 
     return {spec.name: spec for spec in specs}
@@ -126,6 +134,9 @@ def all_specs() -> Sequence[BenchmarkSpec]:
     """Return all benchmarks in deterministic order."""
     return list(registry().values())
 
+def turbine_specs() -> Sequence[BenchmarkSpec]:
+    """Return all benchmarks in deterministic order."""
+    return [spec for spec in registry().values() if "turbine" in spec.name.lower()]
 
 __all__ = [
     "BenchmarkSpec",
@@ -143,4 +154,6 @@ __all__ = [
     "thermostat",
     "time_forced_switch",
     "time_varying_guard",
+    "wind",
+    "turbine"
 ]
