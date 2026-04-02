@@ -19,7 +19,6 @@ class DDTIGenerator(TestcaseGenerator):
 
     Methods:
     -------
-
     save_hoeffding_tree()
         Saves the generated Hoeffding tree to a file.
 
@@ -57,7 +56,8 @@ class DDTIGenerator(TestcaseGenerator):
             model: The trained Flowcean model.
             n_testinputs: Number of test inputs to generate.
             test_coverage_criterium: Test coverage strategy identifier.
-            dataset: Optional Polars DataFrame containing the original dataset.
+            dataset: Polars DataFrame containing the original dataset.
+                Either the dataset or the specs_file must be provided.
             specs_file: Path to a file containing feature specifications.
                 If you provide a dataset containing system inputs and
                 outputs that already encodes the necessary specifications,

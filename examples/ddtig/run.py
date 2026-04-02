@@ -84,10 +84,8 @@ def generate_test_inputs() -> None:
 
     model = Model.load(model_file)
 
-    # Initialize the test pipeline and generate test inputs based on the
-    # test requirements
+    # Initialize the test pipeline and generate test inputs
 
-    # optional: Set log=True to enable logging
     test_generator = DDTIGenerator(
         model,
         n_testinputs=1000,
@@ -100,9 +98,9 @@ def generate_test_inputs() -> None:
     test_generator.reset()
 
     # optional: Uncomment to get more detailed outputs to files
-    test_generator.print_hoeffding_tree()
-    test_generator.print_eqclasses()
-    test_generator.print_testplans()
+    # test_generator.print_hoeffding_tree()
+    # test_generator.print_eqclasses()
+    # test_generator.print_testplans()
 
     predicate = PolarsPredicate(
         (pl.col("BodyFat") < BODYFAT_MAX) & (pl.col("BodyFat") > BODYFAT_MIN),

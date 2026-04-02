@@ -53,6 +53,10 @@ examples-coffee_machine:
   @echo "🚀 Running example: Coffee Machine"
   @uv run --directory ./examples/coffee_machine/ run.py
 
+examples-ddtig:
+  @echo "🚀 Running example: DDTIG"
+  @uv run --directory ./examples/ddtig/ run.py
+
 examples-linear_data:
   @echo "🚀 Running example: Linear Data"
   @uv run --directory ./examples/linear_data/ run.py
