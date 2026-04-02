@@ -1,5 +1,5 @@
 __all__ = [
-    "test_model",
+    "run_model_tests",
 ]
 
-from .test import test_model
+from .test import run_model_tests
