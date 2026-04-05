@@ -533,7 +533,7 @@ class ParticleCloudStatistics(Transform):
         """
         features = {}
 
-        max_distance, furthest_particle = self.cog_max_dist(list_of_particles)
+        max_distance, _furthest_particle = self.cog_max_dist(list_of_particles)
         features["cog_max_distance"] = max_distance
 
         features["cog_mean_dist"] = self.cog_mean_dist(list_of_particles)
@@ -552,7 +552,7 @@ class ParticleCloudStatistics(Transform):
             )
         )
 
-        min_distance, closest_particle = self.cog_min_dist(list_of_particles)
+        min_distance, _closest_particle = self.cog_min_dist(list_of_particles)
         features["cog_min_distance"] = min_distance
 
         features["cog_standard_deviation"] = self.cog_standard_deviation(

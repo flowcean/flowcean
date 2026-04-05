@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
@@ -66,7 +66,7 @@ def learn_offline(
 
 
 def evaluate_offline(
-    models: Model | Iterable[Model],
+    models: Model | Sequence[Model],
     environment: OfflineEnvironment,
     inputs: Sequence[str],
     outputs: Sequence[str],
@@ -87,14 +87,13 @@ def evaluate_offline(
     Returns:
         The evaluation report.
     """
-    if not isinstance(models, Iterable):
-        models = [models]
+    model_list = list(models) if isinstance(models, Sequence) else [models]
     data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
     entries: dict[str, ReportEntry] = {}
 
-    for model in models:
+    for model in model_list:
         predictions = model.predict(input_features)
 
         entries[model.name] = ReportEntry(
