@@ -60,6 +60,7 @@ def learn_offline(
     logger.info("Learning model")
     model = learner.learn(inputs=input_features, outputs=output_features)
 
+    model.pre_transform |= input_transform
     model.post_transform |= output_transform.inverse()
 
     return model

@@ -1,3 +1,4 @@
+from .linear_regression import LinearRegression
 from .metrics.classification import (
     Accuracy,
     ClassificationReport,
@@ -20,6 +21,7 @@ __all__ = [
     "Accuracy",
     "ClassificationReport",
     "FBetaScore",
+    "LinearRegression",
     "MaxError",
     "MeanAbsoluteError",
     "MeanAbsolutePercentageError",
