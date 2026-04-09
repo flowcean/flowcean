@@ -161,7 +161,7 @@ def turbine(
                 dx, # x
                 (Fa(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - params["cTe"] * dx - params["kTe"]*(x - params["xT0"])) / params["mTe"], # dx
                 dtheta, # theta
-                -2*params["damping_pitch"] * dtheta - params["freq_pitch"]**2 * (theta - target_pitch), # dtheta: 2nd order lag (3) in Schuler et al.
+                -2*params["damping_pitch"] * params["freq_pitch"] * dtheta - params["freq_pitch"]**2 * (theta - target_pitch), # dtheta: 2nd order lag (3) in Schuler et al.
                 (params["pitch_kp"]*error-target_pitch_diff)/params["pitch_ti"], # pitch_error_integral
             ],
             dtype=float,
