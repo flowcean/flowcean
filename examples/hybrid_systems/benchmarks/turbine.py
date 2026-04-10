@@ -80,6 +80,7 @@ def turbine(
     pitch_kp: float = 0.018827,
     pitch_ti: float = 2.33334,
     pitch_antiwindup:float = 1,
+    pitch_gsfactor:float = 0.1099965,
     pitch_min:float = 0.0,
     pitch_max:float = 1.5708,
     ### torque controller parameters
@@ -176,6 +177,9 @@ def turbine(
         error = omega/params["gearbox_ratio"] - params["omega_g_rated"]
         # PI controller
         u_ctrl = pitch_error_integral + params["pitch_kp"]*error
+        # gain scheduling
+        gs_factor = 1/(1+theta/params["pitch_gsfactor"])
+        u_ctrl = u_ctrl*gs_factor
         # saturation and anti-windup
         if u_ctrl > params["pitch_max"]:
             target_pitch = params["pitch_max"]
@@ -207,6 +211,7 @@ def turbine(
             # zone 2.5: transition 
             target_torque = params["torque_vs_slope25"]*(genspeed_f - params["torque_vs_sysp"])
         ###
+        
         return np.array(
             [
                 ((Ma(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - target_torque/(params["gearbox_ratio"])) / params["inertia"]), # omega from Schuler et al. Eq (1a)
@@ -244,6 +249,7 @@ def turbine(
             "pitch_kp": pitch_kp,
             "pitch_ti": pitch_ti,
             "pitch_antiwindup": pitch_antiwindup,
+            "pitch_gsfactor": pitch_gsfactor,
             "pitch_min": pitch_min,
             "pitch_max": pitch_max,
             "torque_vs_rtgnsp": torque_vs_rtgnsp,
