@@ -1,4 +1,4 @@
-"""Time-varying guard benchmark."""
+"""Wind turbine benchmark based on Schuler, S., Adegas, F. D., & Anta, A. (2016). Hybrid modelling of a wind turbine (benchmark proposal). Applied Verification for Continuous and Hybrid Systems (ARCH)."""
 
 from collections.abc import Mapping
 
@@ -42,7 +42,7 @@ class polymodel:
             ypred = ypred + self.coefficients[i] * t
         return ypred
 
-### from Schuler et al.
+### extracted from Simulink model provided by Schuler et al.
 cP_modelrm = polymodel(
     modelterms = np.array([[3,2,2,1,1,1,0,0,0,0],[0,1,0,2,1,0,3,2,1,0]]).T,
     coefficients = [-4.645506812711324e-04,-0.074780487295004,-0.002458175859067,-0.372740535667247,0.071114752590880,0.175932463831508,3.898087853290869,-3.514363457408013,1.599390296654579,-0.404129012120541],
@@ -69,30 +69,63 @@ def turbine(
     rho: float = 1.225,
     rotor_radius: float = 63.0,
     gearbox_ratio: float = 1/97,
-    cTe: float = 19325.0,
-    mTe: float = 480650.0,
-    kTe: float = 1942400.0,
-    omega_g_rated = 122.91,
+    cTe: float = 19324.63016950819,
+    mTe: float = 480654.25,
+    kTe: float = 1942359.456866688,
+    xT0: float = xt0,
+    # paper != matlab implementation (*vs/) (gearbox_ratio**2),
+    inertia: float = J_H + 3*J_B + J_G *((1/97)**2), # gearbox_ratio: float = 1/97,
+    ### pitch controller parameters
+    omega_g_rated:float = 122.91,
     pitch_kp: float = 0.018827,
     pitch_ti: float = 2.33334,
     pitch_antiwindup:float = 1,
     pitch_min:float = 0.0,
     pitch_max:float = 1.5708,
-    xT0: float = xt0,
-    # paper != matlab implementation (*vs/) (gearbox_ratio**2),
-    inertia: float = J_H + 3*J_B + J_G *((1/97)**2), # gearbox_ratio: float = 1/97,
+    ### torque controller parameters
+    torque_vs_rtpwr: float = 5296610,
+    torque_vs_rgn3mp: float = 0.01745329,
+    torque_vs_ctinsp: float = 70.16224,
+    torque_vs_rgn2k: float = 2.332287,
+    torque_vs_rgn2sp: float = 91.21091,
+    torque_vs_rtgnsp: float = 121.6805,
+    torque_vs_sysp: float = 110.6186363636364,
+    torque_vs_slope15: float = 921.8301525322547,
+    torque_vs_slope25: float = 3935.036001555392,
+    torque_vs_trgnsp: float = 119.0137720897636,
+
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
-    """Create a system with time-varying guard thresholds.
+    """Create a wind turbine with torque and pitch control.
 
     Args:
-        frequency: Frequency of the guard oscillation.
-        amplitude: Amplitude of the guard oscillation.
-        hysteresis: Guard hysteresis width.
-        drift: Drift magnitude per mode.
-        damping: Damping on the second state.
-        initial_state: Optional initial state.
-
+        damping_pitch: 
+        freq_pitch:
+        rho:
+        rotor_radius:
+        gearbox_ratio:
+        cTe:
+        mTe:
+        kTe:
+        xT0:
+        inertia:
+        omega_g_rated
+        pitch_kp:
+        pitch_ti:
+        pitch_antiwindup:
+        pitch_min:
+        pitch_max:
+        torque_vs_rtgnsp:
+        torque_vs_rgn3mp:
+        torque_vs_rtpwr:
+        torque_vs_rgn2k:
+        torque_vs_ctinsp:
+        torque_vs_rgn2sp:
+        torque_vs_slope15:
+        torque_vs_trgnsp:
+        torque_vs_sysp:
+        torque_vs_slope25:
+            
     Returns:
         HybridSystem with time-dependent guard surfaces.
     """
@@ -104,13 +137,15 @@ def turbine(
         return ts_ratio
 
     def Ma(rho, rotor_radius, theta, wind_speed, omega, dx):
-        # calculate aerodynamic torque
+        # calculate aerodynamic torque 
+        # Schuler et al. Eq (2)
         tipspeedratio = tipspeed_ratio(omega, rotor_radius, wind_speed, dx)
         ma = 1/2 * rho * np.pi * rotor_radius**3 * cp(tipspeedratio, theta) / tipspeedratio * (wind_speed - dx)**2
         return ma
     
     def Fa(rho, rotor_radius, theta, wind_speed, omega, dx):
         # calculate aerodynamic force
+        # Schuler et al. Eq (2)
         tipspeedratio = tipspeed_ratio(omega, rotor_radius, wind_speed, dx)
         fa = 1/2 * rho * np.pi * rotor_radius**2 * c_thrust(tipspeedratio, theta) * (wind_speed - dx)**2
         return fa
@@ -125,10 +160,6 @@ def turbine(
     
     """ end helper functions """
 
-    def control_pitch(error:float, pitch_error_integral: float,  kp:float
-    ):
-        target = pitch_error_integral + kp*error
-        return target
     
     def _flow_plant(
         time: float,
@@ -140,29 +171,50 @@ def turbine(
         """
         omega, x, dx, theta, dtheta, pitch_error_integral = state
         wind_speed = 10
-        target_torque = 1000
 
-
+        ### Pitch controller
         error = omega/params["gearbox_ratio"] - params["omega_g_rated"]
-        u_ctrl = control_pitch(error, pitch_error_integral, params["pitch_kp"])
+        # PI controller
+        u_ctrl = pitch_error_integral + params["pitch_kp"]*error
+        # saturation and anti-windup
         if u_ctrl > params["pitch_max"]:
             target_pitch = params["pitch_max"]
         elif u_ctrl < params["pitch_min"]:
             target_pitch = params["pitch_min"]
         else:
             target_pitch = u_ctrl
-
+        # controller output for the pitch angle
         target_pitch_diff = u_ctrl - target_pitch
+        ###
 
+        ### Torque controller
+        # Input: target_pitch, omega/params["gearbox_ratio"]
+        # Output: target_torque
+        genspeed_f = omega/params["gearbox_ratio"]
+        if (genspeed_f >= params["torque_vs_rtgnsp"]) or (target_pitch >= params["torque_vs_rgn3mp"]):
+            # zone 3: above rated speed, max power
+            target_torque = params["torque_vs_rtpwr"] / genspeed_f
+        elif genspeed_f <= params["torque_vs_ctinsp"]:
+            # zone 1: below cut-in speed, no torque
+            target_torque = 0.0
+        elif genspeed_f < params["torque_vs_rgn2sp"]:
+            # zone 1.5: linear ramp from zero to optimal torque
+            target_torque = params["torque_vs_slope15"]*(genspeed_f - params["torque_vs_ctinsp"])
+        elif genspeed_f < params["torque_vs_trgnsp"]:
+            # zone 2: between cut-in and rated speed, torque is quadratic function of generator speed
+            target_torque = params["torque_vs_rgn2k"] * genspeed_f**2
+        else:
+            # zone 2.5: transition 
+            target_torque = params["torque_vs_slope25"]*(genspeed_f - params["torque_vs_sysp"])
+        ###
         return np.array(
             [
-                # cp normally function of lambda, theta
-                ((Ma(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - target_torque/(params["gearbox_ratio"])) / params["inertia"]), # omega
+                ((Ma(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - target_torque/(params["gearbox_ratio"])) / params["inertia"]), # omega from Schuler et al. Eq (1a)
                 dx, # x
-                (Fa(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - params["cTe"] * dx - params["kTe"]*(x - params["xT0"])) / params["mTe"], # dx
+                (Fa(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - params["cTe"] * dx - params["kTe"]*(x - params["xT0"])) / params["mTe"], # dx from Schuler et al. Eq (1b)
                 dtheta, # theta
-                -2*params["damping_pitch"] * params["freq_pitch"] * dtheta - params["freq_pitch"]**2 * (theta - target_pitch), # dtheta: 2nd order lag (3) in Schuler et al.
-                (params["pitch_kp"]*error-target_pitch_diff)/params["pitch_ti"], # pitch_error_integral
+                -2*params["damping_pitch"] * params["freq_pitch"] * dtheta - params["freq_pitch"]**2 * (theta - target_pitch), # dtheta: 2nd order lag Eq. (3) in Schuler et al.
+                (params["pitch_kp"]*error-params["pitch_antiwindup"]*target_pitch_diff)/params["pitch_ti"], # pitch_error_integral
             ],
             dtype=float,
         )
@@ -173,7 +225,6 @@ def turbine(
         initial_state = np.array([omega0, xt0, 0, theta0, 0, pitch_error_integral0], dtype=float)
 
     return HybridSystem(
-        # modes={"unclamped": unclamped, "sat_low": sat_low, "sat_high": sat_high},
         modes={"operation": operation},
         transitions=transitions,
         initial_mode="operation",
@@ -195,5 +246,15 @@ def turbine(
             "pitch_antiwindup": pitch_antiwindup,
             "pitch_min": pitch_min,
             "pitch_max": pitch_max,
+            "torque_vs_rtgnsp": torque_vs_rtgnsp,
+            "torque_vs_rgn3mp": torque_vs_rgn3mp,
+            "torque_vs_rtpwr": torque_vs_rtpwr,
+            "torque_vs_rgn2k": torque_vs_rgn2k,
+            "torque_vs_ctinsp": torque_vs_ctinsp,
+            "torque_vs_rgn2sp": torque_vs_rgn2sp,
+            "torque_vs_slope15": torque_vs_slope15,
+            "torque_vs_trgnsp": torque_vs_trgnsp,
+            "torque_vs_sysp": torque_vs_sysp,
+            "torque_vs_slope25": torque_vs_slope25,
         },
     )
