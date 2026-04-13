@@ -59,18 +59,13 @@ class XGBoostClassifierModel(Model):
     def __getstate__(self) -> dict:
         """Remove callbacks when pickling (they contain unpickleable locks)."""
         state = self.__dict__.copy()
-        # Remove callbacks from the classifier before pickling
         if "classifier" in state:
-            classifier = state["classifier"]
-            params = classifier.get_params()
-            if "callbacks" in params:
-                # Create a new classifier without callbacks
-                params_without_callbacks = {
-                    k: v for k, v in params.items() if k != "callbacks"
-                }
-                state["classifier"] = XGBClassifier(**params_without_callbacks)
-                # Copy trained model (need _Booster for pickling)
-                state["classifier"]._Booster = classifier._Booster  # noqa: SLF001
+            # Copy the full fitted state and null out callbacks only
+            classifier_dict = state["classifier"].__dict__.copy()
+            classifier_dict["callbacks"] = None
+            new_classifier = XGBClassifier.__new__(XGBClassifier)
+            new_classifier.__dict__.update(classifier_dict)
+            state["classifier"] = new_classifier
         return state
 
     def __setstate__(self, state: dict) -> None:
@@ -127,18 +122,13 @@ class XGBoostRegressorModel(Model):
     def __getstate__(self) -> dict:
         """Remove callbacks when pickling (they contain unpickleable locks)."""
         state = self.__dict__.copy()
-        # Remove callbacks from the regressor before pickling
         if "regressor" in state:
-            regressor = state["regressor"]
-            params = regressor.get_params()
-            if "callbacks" in params:
-                # Create a new regressor without callbacks
-                params_without_callbacks = {
-                    k: v for k, v in params.items() if k != "callbacks"
-                }
-                state["regressor"] = XGBRegressor(**params_without_callbacks)
-                # Copy trained model (need _Booster for pickling)
-                state["regressor"]._Booster = regressor._Booster  # noqa: SLF001
+            # Copy the full fitted state and null out callbacks only
+            regressor_dict = state["regressor"].__dict__.copy()
+            regressor_dict["callbacks"] = None
+            new_regressor = XGBRegressor.__new__(XGBRegressor)
+            new_regressor.__dict__.update(regressor_dict)
+            state["regressor"] = new_regressor
         return state
 
     def __setstate__(self, state: dict) -> None:
