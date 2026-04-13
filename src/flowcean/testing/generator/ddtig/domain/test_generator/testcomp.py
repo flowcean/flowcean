@@ -1,0 +1,70 @@
+import polars as pl
+
+
+class TestCompiler:
+    """Transforms abstract test inputs into executable test inputs.
+
+    Compatible with Flowcean models.
+
+    Attributes:
+    ----------
+    n_features: int
+        Number of features in the dataset.
+
+    abst_testinputs: list
+        List of abstract test inputs.
+
+    Methods:
+    -------
+    compute_executable_testinputs()
+        Converts abstract test inputs into a polars DataFrame for execution.
+    """
+
+    def __init__(
+        self,
+        n_features: int,
+        testinputs: list,
+    ) -> None:
+        """Initializes the TestCompiler.
+
+        Args:
+            n_features: Number of features in the dataset.
+            testinputs: List of abstract test inputs.
+        """
+        self.n_features = n_features
+        self.abst_testinputs = testinputs
+
+    # Initializes a dictionary to store test inputs sorted by feature index.
+    def _init_input_dict(self) -> dict:
+        input_dict = {}
+        for feature in range(self.n_features):
+            input_dict[str(feature)] = []
+        return input_dict
+
+    def compute_executable_testinputs(
+        self,
+        feature_names: list,
+    ) -> pl.DataFrame:
+        """Convert abstract test inputs into a Polars DataFrame.
+
+        Thus, the result can be executed on Flowcean models.
+
+        Args:
+            feature_names: List of feature names in order of their indices.
+
+        Returns:
+            DataFrame where each column represents a feature
+            and each row represents a test input.
+        """
+        input_dict = self._init_input_dict()
+
+        # Populate input dictionary with values from abstract test inputs
+        for ati in self.abst_testinputs:
+            for feature, value in enumerate(ati):
+                input_dict[str(feature)].append(value)
+        input_dict = dict(
+            zip(feature_names, list(input_dict.values()), strict=False),
+        )
+
+        # Convert to polars DataFrame (Flowcean-compatible format)
+        return pl.from_dict(input_dict, strict=False)
