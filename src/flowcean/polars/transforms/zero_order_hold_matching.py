@@ -61,7 +61,7 @@ class ZeroOrderHold(Transform):
 
     def __init__(
         self,
-        features: list[str],
+        features: list[str] | None = None,
         name: str = "aligned",
         *,
         drop: bool = True,
@@ -69,7 +69,8 @@ class ZeroOrderHold(Transform):
         """Initialize the ZeroOrderHoldMatching transform.
 
         Args:
-            features: List of topics to align.
+            features: List of topics to align. If None, all features are
+                aligned.
             name: Name of the output time series feature.
             drop: Whether to drop the original features after alignment.
         """
@@ -83,6 +84,11 @@ class ZeroOrderHold(Transform):
             "Aligning features %s using zero-order-hold",
             self.features,
         )
+        if self.features is None:
+            logger.info(
+                "No features specified for ZOH alignment; using all features",
+            )
+            self.features = data.collect_schema().names()
         aligned = zero_order_hold_align(
             data,
             columns=self.features,
