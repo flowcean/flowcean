@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Example demonstrating learner progress callbacks.
 
 Run this example with:
@@ -9,6 +7,7 @@ Run this example with:
 import logging
 import os
 import tempfile
+from pathlib import Path
 
 import lightning
 import polars as pl
@@ -173,7 +172,7 @@ def demo_lightning_with_progress() -> None:
         callbacks=RichCallback(),
     )
 
-    current_directory = os.getcwd()
+    current_directory = Path.cwd()
     with tempfile.TemporaryDirectory() as temp_directory:
         os.chdir(temp_directory)
         try:
@@ -232,7 +231,10 @@ def main() -> None:
     )
     print("╚" + "=" * 58 + "╝")
     print(
-        "callbacks=None is silent by default. Rich output requires RichCallback()."
+        (
+            "callbacks=None is silent by default. Rich output requires "
+            "RichCallback()."
+        ),
     )
 
     demo_rich_callback()
