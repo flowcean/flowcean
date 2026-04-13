@@ -17,22 +17,10 @@ class Model(Named, Protocol):
     """Base class for models.
 
     A model is used to predict outputs for given inputs.
-
-    Optional Protocol Extensions:
-        For classification models that support probability predictions and
-        custom thresholds:
-        - Implement `_predict_proba` method to return class probabilities
-        - Implement `predict_proba` method (with preprocessing)
-        - Set `threshold` attribute to customize the decision boundary
-
-        Note: These are optional extensions. Models that don't implement
-        them (e.g., regressors) will work normally. Type checkers may show
-        warnings, but the code will work correctly at runtime.
     """
 
     pre_transform: Transform = Identity()
     post_transform: Transform = Identity()
-    threshold: float | None = None
 
     def preprocess(self, input_features: Data) -> Data:
         """Preprocess pipeline step."""
@@ -123,3 +111,26 @@ class Model(Named, Protocol):
             instance = pickle.load(file)
 
         return instance
+
+
+@runtime_checkable
+class ClassifierModel(Model, Protocol):
+    """Protocol for classifier models with threshold-based predictions.
+
+    Extends Model with probability predictions and a configurable decision
+    threshold. Implement this protocol for classifiers that support
+    ``predict_proba``.
+    """
+
+    threshold: float
+
+    def predict_proba(self, input_features: Data) -> Data:
+        """Predict class probabilities.
+
+        Args:
+            input_features: The inputs for which to predict probabilities.
+
+        Returns:
+            The predicted probabilities for the positive class.
+        """
+        ...

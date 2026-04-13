@@ -13,7 +13,7 @@ from .metrics.regression import (
     MeanSquaredError,
     R2Score,
 )
-from .model import SciKitModel
+from .model import SciKitClassifierModel, SciKitModel
 from .random_forest import RandomForestRegressorLearner
 from .regression_tree import RegressionTree
 
@@ -31,5 +31,6 @@ __all__ = [
     "RandomForestRegressorLearner",
     "Recall",
     "RegressionTree",
+    "SciKitClassifierModel",
     "SciKitModel",
 ]

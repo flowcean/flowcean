@@ -8,7 +8,7 @@ from typing_extensions import override
 from flowcean.core import Model, SupervisedLearner
 from flowcean.utils import get_seed
 
-from .model import SciKitModel
+from .model import SciKitClassifierModel
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class AdaBoost(SupervisedLearner):
         learning_rate: float = 1.0,
         algorithm: str = "deprecated",
         random_state: int | None = None,
-        threshold: float | None = None,
+        threshold: float = 0.5,
     ) -> None:
         """Initialize the AdaBoost classifier learner.
 
@@ -73,7 +73,7 @@ class AdaBoost(SupervisedLearner):
             )
 
         self.classifier.fit(x, y)
-        return SciKitModel(
+        return SciKitClassifierModel(
             self.classifier,
             output_names=[collected_outputs.columns[0]],
             threshold=self.threshold,

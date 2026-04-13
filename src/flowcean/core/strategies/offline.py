@@ -4,7 +4,7 @@ from collections.abc import Iterable, Sequence
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import Metric
-from flowcean.core.model import Model
+from flowcean.core.model import ClassifierModel, Model
 from flowcean.core.report import Report, ReportEntry
 from flowcean.core.transform import Identity, InvertibleTransform, Transform
 
@@ -108,7 +108,7 @@ def evaluate_offline(
 
 
 def tune_threshold(
-    model: Model,
+    model: ClassifierModel,
     environment: OfflineEnvironment,
     inputs: Sequence[str],
     outputs: Sequence[str],
@@ -120,12 +120,10 @@ def tune_threshold(
     """Find optimal decision threshold for a classifier.
 
     Evaluates the model at multiple threshold values and returns the threshold
-    that maximizes the given metric. Only works with models that support
-    probability predictions (i.e., have a threshold attribute and
-    predict_proba method).
+    that maximizes the given metric.
 
     Args:
-        model: The classifier model to tune. Must have a threshold attribute.
+        model: The classifier model to tune.
         environment: The offline environment with validation/test data.
         inputs: The input feature names.
         outputs: The output feature names.
@@ -139,10 +137,6 @@ def tune_threshold(
         Tuple of (best_threshold, results_dict) where results_dict maps
         each threshold to its metric score.
 
-    Raises:
-        AttributeError: If model does not have a threshold attribute.
-        ValueError: If model does not support probability predictions.
-
     Example:
         >>> from flowcean.sklearn.metrics.classification import FBetaScore
         >>> metric = FBetaScore(beta=1.0)
@@ -153,21 +147,6 @@ def tune_threshold(
         >>> model.threshold = best_threshold  # Apply the best threshold
     """
     import numpy as np
-
-    # Check if model supports thresholds
-    if not hasattr(model, "threshold"):
-        msg = (
-            f"Model {model.__class__.__name__} does not have a threshold "
-            "attribute. Only classifier models support threshold tuning."
-        )
-        raise AttributeError(msg)
-
-    if not hasattr(model, "predict_proba"):
-        msg = (
-            f"Model {model.__class__.__name__} does not implement "
-            "predict_proba. Threshold tuning requires probability predictions."
-        )
-        raise ValueError(msg)
 
     # Generate thresholds if not provided
     thresholds_to_test: Sequence[float]
@@ -244,12 +223,5 @@ def tune_threshold(
     finally:
         # Restore original threshold
         model.threshold = original_threshold
-
-    logger.info(
-        "Best threshold: %.3f with %s = %.4f",
-        best_threshold,
-        metric.name,
-        best_score,
-    )
 
     return best_threshold, results
