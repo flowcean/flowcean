@@ -18,6 +18,7 @@ members = [
     "active-learning",
     "automatic-lashing-platform",
     "boiler",
+    "callbacks",
     "coffee-machine",
     "energy-system",
     "flowcean",
@@ -426,6 +427,17 @@ wheels = [
 name = "boiler"
 version = "0.1.0"
 source = { virtual = "examples/boiler" }
+dependencies = [
+    { name = "flowcean" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "flowcean", editable = "." }]
+
+[[package]]
+name = "callbacks"
+version = "0.1.0"
+source = { virtual = "examples/callbacks" }
 dependencies = [
     { name = "flowcean" },
 ]
