@@ -102,3 +102,6 @@ ENV/
 
 # Flowcean models
 *.fml
+
+# git worktrees
+/.worktrees

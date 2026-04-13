@@ -39,7 +39,7 @@ docs-serve:
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs serve
 
-examples: examples-alp examples-boiler examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
+examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
@@ -52,6 +52,10 @@ examples-boiler:
 examples-coffee_machine:
   @echo "🚀 Running example: Coffee Machine"
   @uv run --directory ./examples/coffee_machine/ run.py
+
+examples-callbacks:
+  @echo "🚀 Running example: Callbacks"
+  @uv run --directory ./examples/callbacks/ run.py
 
 examples-ddtig:
   @echo "🚀 Running example: DDTIG"

@@ -92,6 +92,7 @@ members = [
   "examples/active_learning",
   "examples/automatic_lashing_platform",
   "examples/boiler",
+  "examples/callbacks",
   "examples/coffee_machine",
   "examples/energy_system",
   "examples/failure_time_prediction",

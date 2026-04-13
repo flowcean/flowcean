@@ -1,9 +1,11 @@
 """Unit tests for PyTorch Lightning learners and models."""
 
 import unittest
+from typing import cast
 from unittest.mock import patch
 
 import polars as pl
+import torch
 
 from flowcean.torch import LightningLearner, MultilayerPerceptron, PyTorchModel
 
@@ -80,3 +82,26 @@ class TestLightningLearner(unittest.TestCase):
             "y",
         ]
         assert result.module == self.simple_module
+
+    def test_learn_sets_example_input_and_preserves_default_logger(
+        self,
+    ) -> None:
+        """Tests LightningLearner keeps Lightning fit defaults intact."""
+        learner = LightningLearner(module=self.simple_module, batch_size=2)
+
+        with patch("lightning.Trainer") as mock_trainer:
+            mock_trainer.return_value.fit.return_value = None
+
+            learner.learn(self.inputs, self.outputs)
+
+        example_input_array = cast(
+            "torch.Tensor",
+            self.simple_module.example_input_array,
+        )
+        assert torch.equal(
+            example_input_array,
+            torch.tensor([1.0, 4.0]),
+        )
+        trainer_kwargs = mock_trainer.call_args.kwargs
+        assert trainer_kwargs["enable_progress_bar"] is False
+        assert "logger" not in trainer_kwargs
