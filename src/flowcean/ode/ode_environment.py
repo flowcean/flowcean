@@ -105,9 +105,9 @@ class OdeSystem(ABC, Generic[X]):
         """
 
     def step(self, dt: float) -> tuple[Sequence[float], Sequence[X]]:
-        """Step the mode forward in time.
+        """Step the environment forward in time.
 
-        Step the mode forward in time by integrating the differential equation
+        Step the environment forward in time by integrating the differential equation
         for a time step of dt.
 
         Args:

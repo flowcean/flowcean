@@ -1,10 +1,17 @@
 import unittest
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import polars as pl
 from polars.testing import assert_frame_equal
 
 from flowcean.core import Model, learn_incremental, learn_offline
+from flowcean.hydra import (
+    HybridDecisionTreeLearner,
+    HyDRAModel,
+    SelectorFeatureConfig,
+)
 from flowcean.polars import (
     DataFrame,
     Select,
@@ -13,6 +20,25 @@ from flowcean.polars import (
 )
 from flowcean.sklearn import RegressionTree, SciKitModel
 from flowcean.torch import LinearRegression, PyTorchModel
+
+
+class ConstantModel(Model):
+    def __init__(self, value: float, output_name: str = "y") -> None:
+        self.value = value
+        self.output_name = output_name
+
+    def _predict(
+        self,
+        input_features: pl.DataFrame | pl.LazyFrame,
+    ) -> pl.LazyFrame:
+        frame = (
+            input_features.collect()
+            if isinstance(input_features, pl.LazyFrame)
+            else input_features
+        )
+        return pl.DataFrame(
+            {self.output_name: [self.value] * frame.height},
+        ).lazy()
 
 
 class TestSaveLoad(unittest.TestCase):
@@ -47,13 +73,29 @@ class TestSaveLoad(unittest.TestCase):
         loaded_model = Model.load(model_bytes)
         assert isinstance(loaded_model, SciKitModel)
 
-        # Test a random prediction
         test_frame = pl.DataFrame(
             {"x": [0.5]},
         ).lazy()
         assert_frame_equal(
             model.predict(test_frame).collect(),
             loaded_model.predict(test_frame).collect(),
+        )
+
+    def test_save_load_model_via_path(self) -> None:
+        model = ConstantModel(3.14)
+
+        with TemporaryDirectory() as tmp_dir:
+            model_path = Path(tmp_dir) / "models" / "constant.fml"
+            model.save(model_path)
+
+            loaded_model = Model.load(model_path)
+
+        assert isinstance(loaded_model, ConstantModel)
+        assert_frame_equal(
+            loaded_model.predict(
+                pl.DataFrame({"x": [0.0, 1.0]}).lazy(),
+            ).collect(),
+            pl.DataFrame({"y": [3.14, 3.14]}),
         )
 
     def test_save_load_pytorch(self) -> None:
@@ -90,7 +132,6 @@ class TestSaveLoad(unittest.TestCase):
         loaded_model = Model.load(model_bytes)
         assert isinstance(loaded_model, PyTorchModel)
 
-        # Test a random prediction
         test_frame = pl.DataFrame(
             {"x": [0.5]},
         ).lazy()
@@ -129,13 +170,40 @@ class TestSaveLoad(unittest.TestCase):
 
         loaded_model = Model.load(model_bytes)
 
-        # Test a random prediction
         test_frame = pl.DataFrame(
             {"x": [0.5]},
         ).lazy()
         assert_frame_equal(
             model.predict(test_frame).collect(),
             loaded_model.predict(test_frame).collect(),
+        )
+
+    def test_save_load_selector_backed_hydra_model(self) -> None:
+        selector = HybridDecisionTreeLearner(
+            SelectorFeatureConfig(state_columns=("x",)),
+            random_state=7,
+            max_depth=2,
+        ).learn_from_traces(
+            [pl.DataFrame({"x": [0.0, 0.1, 1.0, 1.1], "mode": [0, 0, 1, 1]})],
+        )
+        model = HyDRAModel(
+            [ConstantModel(10.0), ConstantModel(20.0)],
+            input_features=["x"],
+            output_features=["y"],
+            selector=selector,
+        )
+
+        model_bytes = BytesIO()
+        model.save(model_bytes)
+        model_bytes.seek(0)
+
+        loaded_model = Model.load(model_bytes)
+        assert isinstance(loaded_model, HyDRAModel)
+
+        test_frame = pl.DataFrame({"x": [0.05, 1.05]}).lazy()
+        assert_frame_equal(
+            loaded_model.predict(test_frame).collect(),
+            pl.DataFrame({"y": [10.0, 20.0]}),
         )
 
 

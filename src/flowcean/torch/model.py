@@ -4,8 +4,19 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import polars as pl
-import torch
 from typing_extensions import override
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    import torch
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.model",
+        missing_dependencies={"torch"},
+    )
 
 from flowcean.core import Model
 

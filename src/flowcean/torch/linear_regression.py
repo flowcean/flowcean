@@ -1,8 +1,19 @@
 import polars as pl
-import torch
-from torch import Tensor, nn
-from torch.optim.sgd import SGD
 from typing_extensions import override
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    import torch
+    from torch import Tensor, nn
+    from torch.optim.sgd import SGD
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.linear_regression",
+        missing_dependencies={"torch"},
+    )
 
 from flowcean.core import SupervisedIncrementalLearner
 

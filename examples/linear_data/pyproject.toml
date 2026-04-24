@@ -2,7 +2,7 @@
 name = "linear-data"
 version = "0.1.0"
 requires-python = ">=3.10, <4.0"
-dependencies = ["flowcean"]
+dependencies = ["flowcean[torch]"]
 
 [tool.pyright]
 extends = "../../pyproject.toml"

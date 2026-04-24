@@ -1,8 +1,19 @@
 from typing import Any
 
 import polars as pl
-from xgboost import XGBClassifier, XGBRegressor
-from xgboost.callback import TrainingCallback
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    from xgboost import XGBClassifier, XGBRegressor
+    from xgboost.callback import TrainingCallback
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="xgboost",
+        module="flowcean.xgboost.learner",
+        missing_dependencies={"xgboost"},
+    )
 
 from flowcean.core import LearnerCallback, create_callback_manager
 from flowcean.core.learner import SupervisedLearner
