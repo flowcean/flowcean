@@ -22,7 +22,7 @@ from .learner import (
     SupervisedLearner,
 )
 from .metric import Metric
-from .model import Model
+from .model import ClassifierModel, Model
 from .report import Report, Reportable
 from .strategies.active import (
     Action,
@@ -33,7 +33,7 @@ from .strategies.active import (
 )
 from .strategies.deploy import deploy
 from .strategies.incremental import learn_incremental
-from .strategies.offline import evaluate_offline, learn_offline
+from .strategies.offline import evaluate_offline, learn_offline, tune_threshold
 from .transform import (
     ChainedTransforms,
     Identity,
@@ -54,6 +54,7 @@ __all__ = [
     "CallbackMixin",
     "ChainedOfflineEnvironments",
     "ChainedTransforms",
+    "ClassifierModel",
     "Data",
     "Environment",
     "Finished",
@@ -85,4 +86,5 @@ __all__ = [
     "learn_active",
     "learn_incremental",
     "learn_offline",
+    "tune_threshold",
 ]

@@ -74,6 +74,7 @@ class XGBoostClassifierLearner(SupervisedLearner):
     """Wrapper for XGBoost classifiers.
 
     Args:
+        threshold: Decision threshold for binary classification (default: 0.5).
         callbacks: Optional callbacks for progress feedback. Use `None` for
             silent learning.
         **kwargs: Arguments passed to XGBClassifier
@@ -82,9 +83,11 @@ class XGBoostClassifierLearner(SupervisedLearner):
 
     def __init__(
         self,
+        threshold: float = 0.5,
         callbacks: list[LearnerCallback] | LearnerCallback | None = None,
         **kwargs: Any,
     ) -> None:
+        self.threshold = threshold
         self.classifier = XGBClassifier(**kwargs)
         self.callback_manager = create_callback_manager(callbacks)
         super().__init__()
@@ -133,6 +136,7 @@ class XGBoostClassifierLearner(SupervisedLearner):
                 self.classifier,
                 input_features=inputs_collected.columns,
                 output_features=outputs_collected.columns,
+                threshold=self.threshold,
             )
 
             # Notify callbacks that learning is complete

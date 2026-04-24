@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 class Model(Named, Protocol):
     """Base class for models.
 
-    A model represents learned patterns extracted by a learner from data.
-    It is used to predict outputs for given inputs.
+    A model is used to predict outputs for given inputs.
     """
 
     pre_transform: Transform = Identity()
@@ -112,3 +111,26 @@ class Model(Named, Protocol):
             instance = pickle.load(file)
 
         return instance
+
+
+@runtime_checkable
+class ClassifierModel(Model, Protocol):
+    """Protocol for classifier models with threshold-based predictions.
+
+    Extends Model with probability predictions and a configurable decision
+    threshold. Implement this protocol for classifiers that support
+    ``predict_proba``.
+    """
+
+    threshold: float
+
+    def predict_proba(self, input_features: Data) -> Data:
+        """Predict class probabilities.
+
+        Args:
+            input_features: The inputs for which to predict probabilities.
+
+        Returns:
+            The predicted probabilities for the positive class.
+        """
+        ...

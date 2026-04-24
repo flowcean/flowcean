@@ -4,7 +4,7 @@ from collections.abc import Iterable, Sequence
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.metric import Metric
-from flowcean.core.model import Model
+from flowcean.core.model import ClassifierModel, Model
 from flowcean.core.report import Report, ReportEntry
 from flowcean.core.transform import Identity, InvertibleTransform, Transform
 
@@ -105,3 +105,123 @@ def evaluate_offline(
             },
         )
     return Report(entries)
+
+
+def tune_threshold(
+    model: ClassifierModel,
+    environment: OfflineEnvironment,
+    inputs: Sequence[str],
+    outputs: Sequence[str],
+    metric: Metric,
+    *,
+    thresholds: Sequence[float] | None = None,
+    num_thresholds: int = 19,
+) -> tuple[float, dict[float, float]]:
+    """Find optimal decision threshold for a classifier.
+
+    Evaluates the model at multiple threshold values and returns the threshold
+    that maximizes the given metric.
+
+    Args:
+        model: The classifier model to tune.
+        environment: The offline environment with validation/test data.
+        inputs: The input feature names.
+        outputs: The output feature names.
+        metric: The metric to optimize (e.g., FBetaScore, Accuracy).
+        thresholds: Specific thresholds to evaluate. If None, generates
+            num_thresholds evenly spaced values between 0.05 and 0.95.
+        num_thresholds: Number of thresholds to evaluate if thresholds is
+            None (default: 19).
+
+    Returns:
+        Tuple of (best_threshold, results_dict) where results_dict maps
+        each threshold to its metric score.
+
+    Example:
+        >>> from flowcean.sklearn.metrics.classification import FBetaScore
+        >>> metric = FBetaScore(beta=1.0)
+        >>> best_threshold, results = tune_threshold(
+        ...     model, eval_env, inputs, outputs, metric
+        ... )
+        >>> print(f"Best threshold: {best_threshold:.3f}")
+        >>> model.threshold = best_threshold  # Apply the best threshold
+    """
+    import numpy as np
+
+    # Generate thresholds if not provided
+    thresholds_to_test: Sequence[float]
+    if thresholds is None:
+        thresholds_to_test = list(np.linspace(0.05, 0.95, num_thresholds))
+    else:
+        thresholds_to_test = thresholds
+
+    # Store original threshold
+    original_threshold = model.threshold
+
+    # Evaluate at each threshold
+    results: dict[float, float] = {}
+    best_threshold = 0.5
+    best_score = -float("inf")
+
+    logger.info(
+        "Tuning threshold for %s using %s",
+        model.name,
+        metric.name,
+    )
+
+    try:
+        for threshold in thresholds_to_test:
+            # Set threshold and evaluate
+            model.threshold = float(threshold)
+            report = evaluate_offline(
+                model,
+                environment,
+                inputs,
+                outputs,
+                [metric],
+            )
+
+            # Extract metric score from report
+            # Report is dict[str, ReportEntry]
+            # ReportEntry is dict[str, Reportable]
+            model_entry = report.get(model.name)
+            if model_entry is None:
+                continue
+
+            score_value = model_entry.get(metric.name)
+            if score_value is None:
+                continue
+
+            # Convert Reportable to float (it should be a numeric value)
+            if isinstance(score_value, (int, float)):
+                score = float(score_value)
+            else:
+                # Try to convert via string representation
+                try:
+                    score = float(str(score_value))
+                except (ValueError, TypeError):
+                    logger.warning(
+                        "Could not convert metric value to float: %s",
+                        score_value,
+                    )
+                    continue
+
+            results[float(threshold)] = score
+
+            # Track best threshold
+            if score > best_score:
+                best_score = score
+                best_threshold = float(threshold)
+
+            logger.debug(
+                "Threshold %.3f: %s = %.4f",
+                threshold,
+                metric.name,
+                score,
+            )
+
+    finally:
+        # Restore original threshold
+        model.threshold = original_threshold
+
+    return best_threshold, results
