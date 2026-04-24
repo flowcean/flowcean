@@ -1,10 +1,13 @@
+from typing import NoReturn
+
+
 def raise_for_missing_optional_dependency(
     error: ModuleNotFoundError,
     *,
     extra: str,
     module: str,
     missing_dependencies: set[str],
-) -> None:
+) -> NoReturn:
     dependency = error.name or extra
     top_level_dependency = dependency.split(".", maxsplit=1)[0]
 

@@ -15,7 +15,7 @@ def test_hydra_package_exports_live_plot_callback() -> None:
     assert not hasattr(hydra, "HyDRACallback")
 
 
-def test_live_plot_callback_initializes_figure_on_start(
+def test_live_plot_callback_initializes_figure_on_start(  # noqa: C901
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     created_axes: list[object] = []
@@ -89,7 +89,7 @@ def test_live_plot_callback_initializes_figure_on_start(
     assert adjust_calls == [{"top": 0.82}]
 
 
-def test_live_plot_callback_reuses_figure_on_repeated_start(
+def test_live_plot_callback_reuses_figure_on_repeated_start(  # noqa: C901
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     subplot_calls = 0
@@ -193,7 +193,7 @@ def test_live_plot_callback_rejects_mismatched_trace_count() -> None:
         )
 
 
-def test_live_plot_callback_lifecycle_methods_redraw_without_overlay_state(
+def test_live_plot_callback_lifecycle_methods_redraw_without_overlay_state(  # noqa: C901
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     titles: list[str] = []
@@ -252,7 +252,10 @@ def test_live_plot_callback_lifecycle_methods_redraw_without_overlay_state(
         threshold=0.5,
     )
     callback.mode_finalized(
-        trace_index=0, start_index=0, end_index=1, mode_id=1
+        trace_index=0,
+        start_index=0,
+        end_index=1,
+        mode_id=1,
     )
     callback.learning_stopped(
         trace_index=0,
@@ -272,11 +275,11 @@ def test_live_plot_callback_lifecycle_methods_redraw_without_overlay_state(
         "finish: modes=1",
     ]
     assert draw_calls == len(titles)
-    assert callback._state.active_trace_index == 0
-    assert not hasattr(callback._state, "stop_reason")
+    assert callback._state.active_trace_index == 0  # noqa: SLF001
+    assert not hasattr(callback._state, "stop_reason")  # noqa: SLF001
 
 
-def test_live_plot_callback_mode_finalized_redraws_the_matching_trace(
+def test_live_plot_callback_mode_finalized_redraws_the_matching_trace(  # noqa: C901
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     plotted_y_values: list[list[float]] = []
@@ -335,7 +338,10 @@ def test_live_plot_callback_mode_finalized_redraws_the_matching_trace(
     callback.start(trace_count=2, threshold=0.5, start_width=2, step_width=1)
     callback.pending_segment_found(0, 0, 1)
     callback.mode_finalized(
-        trace_index=1, start_index=0, end_index=1, mode_id=1
+        trace_index=1,
+        start_index=0,
+        end_index=1,
+        mode_id=1,
     )
 
     assert plotted_y_values[-1] == [10.0, 20.0]
@@ -421,7 +427,11 @@ def test_live_plot_callback_tracks_finalized_segments_on_active_trace(
             pass
 
         def axvspan(
-            self, *_args: object, color: str, label: str, **_kwargs: object
+            self,
+            *_args: object,
+            color: str,
+            label: str,
+            **_kwargs: object,
         ) -> None:
             overlays.append((color, label))
 
@@ -497,7 +507,11 @@ def test_live_plot_callback_finalizes_all_accepted_spans_for_mode(
             pass
 
         def axvspan(
-            self, *_args: object, color: str, label: str, **_kwargs: object
+            self,
+            *_args: object,
+            color: str,
+            label: str,
+            **_kwargs: object,
         ) -> None:
             overlays.append((color, label))
 
@@ -557,7 +571,7 @@ def test_live_plot_callback_finalizes_all_accepted_spans_for_mode(
     assert ("C3", "mode 3 segment") not in overlays
 
 
-def test_live_plot_callback_clears_transient_overlays_after_finalization_and_finish(
+def test_live_plot_callback_clears_transient_overlays_after_finalization_and_finish(  # noqa: E501
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     overlays: list[tuple[str, str]] = []
@@ -570,7 +584,11 @@ def test_live_plot_callback_clears_transient_overlays_after_finalization_and_fin
             pass
 
         def axvspan(
-            self, *_args: object, color: str, label: str, **_kwargs: object
+            self,
+            *_args: object,
+            color: str,
+            label: str,
+            **_kwargs: object,
         ) -> None:
             overlays.append((color, label))
 

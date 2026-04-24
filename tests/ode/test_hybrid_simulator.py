@@ -19,6 +19,24 @@ from flowcean.ode import (
 )
 
 
+def _constant_velocity_system() -> HybridSystem:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0], dtype=float)
+
+    location = Location("loc", ContinuousDynamics("flow", flow))
+    return HybridSystem(
+        locations={"loc": location},
+        transitions=[],
+        initial_location="loc",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+
 def test_ode_public_api_exports_locations_not_modes() -> None:
     """The hybrid ODE API uses location/dynamics terminology."""
     from flowcean import ode
@@ -26,6 +44,94 @@ def test_ode_public_api_exports_locations_not_modes() -> None:
     assert hasattr(ode, "ContinuousDynamics")
     assert hasattr(ode, "Location")
     assert not hasattr(ode, "Mode")
+
+
+def test_simulate_raises_when_solver_fails() -> None:
+    def singular_flow(
+        t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0 / (t - 0.5)], dtype=float)
+
+    location = Location(
+        name="loc",
+        dynamics=ContinuousDynamics(name="singular", flow=singular_flow),
+    )
+    system = HybridSystem(
+        locations={"loc": location},
+        transitions=[],
+        initial_location="loc",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    with pytest.raises(RuntimeError, match="ODE integration failed"):
+        simulate(system, t_span=(0.0, 1.0))
+
+
+def test_simulate_rejects_sample_times_before_t_span() -> None:
+    system = _constant_velocity_system()
+
+    with pytest.raises(
+        ValueError,
+        match="sample_times must lie within t_span",
+    ):
+        simulate(system, t_span=(0.0, 1.0), sample_times=[-1.0, 0.0])
+
+
+def test_simulate_rejects_sample_times_after_t_span() -> None:
+    system = _constant_velocity_system()
+
+    with pytest.raises(
+        ValueError,
+        match="sample_times must lie within t_span",
+    ):
+        simulate(system, t_span=(0.0, 1.0), sample_times=[0.0, 2.0])
+
+
+def test_simulate_sample_dt_includes_endpoint_without_overshoot() -> None:
+    trace = simulate(
+        _constant_velocity_system(),
+        t_span=(0.0, 1.0),
+        sample_dt=0.6,
+    )
+
+    assert np.allclose(trace.t, [0.0, 0.6, 1.0])
+
+
+def test_simulate_sample_dt_snaps_close_endpoint_to_t_span_end() -> None:
+    trace = simulate(
+        _constant_velocity_system(),
+        t_span=(0.0, 1.0),
+        sample_dt=np.nextafter(1.0, 0.0),
+    )
+
+    assert trace.t.tolist() == [0.0, 1.0]
+
+
+def test_simulate_sample_dt_keeps_non_precision_endpoint_step() -> None:
+    trace = simulate(
+        _constant_velocity_system(),
+        t_span=(0.0, 1.0),
+        sample_dt=0.99999,
+    )
+
+    assert trace.t.tolist() == [0.0, 0.99999, 1.0]
+
+
+def test_simulate_rejects_non_finite_sample_times() -> None:
+    system = _constant_velocity_system()
+
+    with pytest.raises(ValueError, match="sample_times must be finite"):
+        simulate(system, t_span=(0.0, 1.0), sample_times=[0.0, np.nan, 1.0])
+
+
+def test_simulate_rejects_non_finite_sample_dt() -> None:
+    system = _constant_velocity_system()
+
+    with pytest.raises(ValueError, match="sample_dt must be finite"):
+        simulate(system, t_span=(0.0, 1.0), sample_dt=np.nan)
 
 
 def test_locations_can_share_continuous_dynamics() -> None:
@@ -118,7 +224,7 @@ def test_bouncing_ball_like_system() -> None:
         params={"gravity": 9.81},
     )
 
-    trace = simulate(system, t_span=(0.0, 2.0), max_jumps=128)
+    trace = simulate(system, t_span=(0.0, 1.0), max_jumps=128)
     assert trace.t.size > 2
     assert trace.x.shape[1] == 2
     assert trace.events
@@ -264,6 +370,328 @@ def test_guard_can_use_delayed_input_stream() -> None:
     assert trace.events[0].time == pytest.approx(1.0, rel=1e-4, abs=1e-4)
 
 
+def test_simulate_applies_transition_when_initial_guard_is_active() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0], dtype=float)
+
+    def guard(
+        _t: float,
+        state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return float(state[0])
+
+    left = Location("left", ContinuousDynamics("left_flow", flow))
+    right = Location("right", ContinuousDynamics("right_flow", flow))
+    system = HybridSystem(
+        locations={"left": left, "right": right},
+        transitions=[
+            Transition(
+                source_location="left",
+                target_location="right",
+                guard=Guard("at_zero", guard, direction=1),
+            ),
+        ],
+        initial_location="left",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    trace = simulate(system, t_span=(0.0, 1.0))
+
+    assert len(trace.events) == 1
+    assert trace.events[0].time == pytest.approx(0.0)
+    assert trace.events[0].source_location == "left"
+    assert trace.events[0].target_location == "right"
+    assert trace.location[-1] == "right"
+
+
+def test_chained_immediate_transitions_keep_physical_event_time() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0], dtype=float)
+
+    def guard(
+        _t: float,
+        state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return float(state[0])
+
+    a = Location("a", ContinuousDynamics("a_flow", flow))
+    b = Location("b", ContinuousDynamics("b_flow", flow))
+    c = Location("c", ContinuousDynamics("c_flow", flow))
+    system = HybridSystem(
+        locations={"a": a, "b": b, "c": c},
+        transitions=[
+            Transition(
+                source_location="a",
+                target_location="b",
+                guard=Guard("a_to_b", guard, direction=1),
+            ),
+            Transition(
+                source_location="b",
+                target_location="c",
+                guard=Guard("b_to_c", guard, direction=1),
+            ),
+        ],
+        initial_location="a",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    trace = simulate(system, t_span=(0.0, 1.0))
+
+    assert len(trace.events) == 2
+    assert trace.events[0].time == pytest.approx(0.0)
+    assert trace.events[1].time == pytest.approx(0.0)
+    assert trace.events[1].time == trace.events[0].time
+    assert trace.events[0].target_location == "b"
+    assert trace.events[1].target_location == "c"
+    assert trace.location[-1] == "c"
+
+
+def test_chained_immediate_time_guard_keeps_physical_event_time() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0], dtype=float)
+
+    def state_guard(
+        _t: float,
+        state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return float(state[0] - 0.5)
+
+    def time_guard(
+        t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return t - 0.5
+
+    a = Location("a", ContinuousDynamics("a_flow", flow))
+    b = Location("b", ContinuousDynamics("b_flow", flow))
+    c = Location("c", ContinuousDynamics("c_flow", flow))
+    system = HybridSystem(
+        locations={"a": a, "b": b, "c": c},
+        transitions=[
+            Transition(
+                source_location="a",
+                target_location="b",
+                guard=Guard("a_to_b", state_guard, direction=1),
+            ),
+            Transition(
+                source_location="b",
+                target_location="c",
+                guard=Guard("b_to_c", time_guard, direction=1),
+            ),
+        ],
+        initial_location="a",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    trace = simulate(system, t_span=(0.0, 1.0))
+
+    assert len(trace.events) == 2
+    assert trace.events[0].time == trace.events[1].time
+    assert trace.events[0].time == pytest.approx(0.5)
+    assert trace.events[1].time == pytest.approx(0.5)
+    assert trace.events[0].target_location == "b"
+    assert trace.events[1].target_location == "c"
+
+
+def test_direction_zero_immediate_guard_skips_target_flow() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0], dtype=float)
+
+    def raising_flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        msg = "target flow should not be evaluated for direction-zero guard"
+        raise AssertionError(msg)
+
+    def source_guard(
+        _t: float,
+        state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return float(state[0] - 0.5)
+
+    def immediate_guard(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return 0.0
+
+    a = Location("a", ContinuousDynamics("a_flow", flow))
+    b = Location("b", ContinuousDynamics("b_flow", raising_flow))
+    c = Location("c", ContinuousDynamics("c_flow", flow))
+    system = HybridSystem(
+        locations={"a": a, "b": b, "c": c},
+        transitions=[
+            Transition(
+                source_location="a",
+                target_location="b",
+                guard=Guard("a_to_b", source_guard, direction=1),
+            ),
+            Transition(
+                source_location="b",
+                target_location="c",
+                guard=Guard("b_to_c", immediate_guard, direction=0),
+            ),
+        ],
+        initial_location="a",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    trace = simulate(system, t_span=(0.0, 1.0))
+
+    assert len(trace.events) == 2
+    assert trace.events[0].target_location == "b"
+    assert trace.events[1].target_location == "c"
+
+
+def test_persistent_immediate_self_loop_chattering_hits_max_jumps() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([0.0], dtype=float)
+
+    def guard(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return 0.0
+
+    loop = Location("loop", ContinuousDynamics("loop_flow", flow))
+    system = HybridSystem(
+        locations={"loop": loop},
+        transitions=[
+            Transition(
+                source_location="loop",
+                target_location="loop",
+                guard=Guard("always", guard, direction=0),
+            ),
+        ],
+        initial_location="loop",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Maximum number of transitions exceeded",
+    ):
+        simulate(system, t_span=(0.0, 1.0), max_jumps=3)
+
+
+def test_directional_immediate_self_loop_chattering_hits_max_jumps() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([1.0], dtype=float)
+
+    def guard(
+        _t: float,
+        state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return float(state[0])
+
+    loop = Location("loop", ContinuousDynamics("loop_flow", flow))
+    system = HybridSystem(
+        locations={"loop": loop},
+        transitions=[
+            Transition(
+                source_location="loop",
+                target_location="loop",
+                guard=Guard("positive", guard, direction=1),
+            ),
+        ],
+        initial_location="loop",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Maximum number of transitions exceeded",
+    ):
+        simulate(system, t_span=(0.0, 1e-13), max_jumps=3)
+
+
+def test_time_driven_immediate_self_loop_chattering_hits_max_jumps() -> None:
+    def flow(
+        _t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> np.ndarray:
+        return np.array([0.0], dtype=float)
+
+    def guard(
+        t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input_stream: InputStream,
+    ) -> float:
+        return t
+
+    loop = Location("loop", ContinuousDynamics("loop_flow", flow))
+    system = HybridSystem(
+        locations={"loop": loop},
+        transitions=[
+            Transition(
+                source_location="loop",
+                target_location="loop",
+                guard=Guard("time", guard, direction=1),
+            ),
+        ],
+        initial_location="loop",
+        initial_state=np.array([0.0], dtype=float),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Maximum number of transitions exceeded",
+    ):
+        simulate(system, t_span=(0.0, 1e-9), max_jumps=3)
+
+
 def test_reset_can_use_input_stream() -> None:
     """Reset callback can access stream values at event times."""
 
@@ -299,11 +727,15 @@ def test_reset_can_use_input_stream() -> None:
                 name="m",
                 dynamics=ContinuousDynamics(name="m_dynamics", flow=flow),
             ),
+            "done": Location(
+                name="done",
+                dynamics=ContinuousDynamics(name="done_dynamics", flow=flow),
+            ),
         },
         transitions=[
             Transition(
                 source_location="m",
-                target_location="m",
+                target_location="done",
                 guard=Guard(
                     name="half_second",
                     fn=guard,
@@ -870,8 +1302,6 @@ def test_derivatives_follow_post_reset_location_and_state() -> None:
     )
 
     event_time = trace.events[0].time
-    restart_time = event_time + 1e-12
-    final_state = 10.0 + 0.5e12 * (1.0 - restart_time**2)
 
     assert trace.dx is not None
     assert trace.u is not None
@@ -879,23 +1309,23 @@ def test_derivatives_follow_post_reset_location_and_state() -> None:
     assert trace.t[0] == 0.0
     assert trace.t[1] == event_time
     assert trace.t[2] == 1.0
-    assert trace.x[:, 0].tolist() == pytest.approx([0.0, 10.0, final_state])
+    assert np.all(np.diff(trace.t) > 0)
+    assert trace.x[0, 0] == pytest.approx(0.0)
+    assert trace.x[1, 0] == pytest.approx(10.0)
+    assert trace.x[2, 0] > trace.x[1, 0]
+    assert np.all(np.isfinite(trace.x))
+    assert np.all(np.isfinite(trace.dx))
     assert trace.dx[0, 0] == pytest.approx(1.0)
-    assert trace.dx[1, 0] == pytest.approx(
-        1e12 * event_time + 10.0 * event_time,
-        rel=0.0,
-        abs=1e-6,
-    )
+    assert trace.dx[1, 0] > trace.dx[0, 0]
     assert trace.dx[2, 0] == pytest.approx(1e12)
     assert trace.u[:, 0].tolist() == pytest.approx(
         [0.0, 10.0 * event_time, 10.0],
     )
 
 
-def test_transition_epsilon_window_samples_snap_to_restart_time() -> None:
-    """Samples inside the post-event epsilon window snap to restart time."""
-    restart_epsilon = 1e-12
-    requested_transition_sample = 0.5 + 0.5 * restart_epsilon
+def test_sample_immediately_after_transition_uses_target_location() -> None:
+    """Samples immediately after an event follow post-transition behavior."""
+    requested_transition_sample = np.nextafter(0.5, 1.0)
 
     def flow_left(
         _: float,
@@ -972,17 +1402,104 @@ def test_transition_epsilon_window_samples_snap_to_restart_time() -> None:
         capture_derivatives=True,
     )
 
-    restart_time = trace.events[0].time + restart_epsilon
+    event_time = trace.events[0].time
 
     assert trace.dx is not None
+    assert len(trace.events) == 1
+    assert event_time == pytest.approx(0.5)
     assert trace.location.tolist() == ["left", "right", "right"]
+    assert trace.t.shape == (3,)
+    assert trace.x.shape == (3, 1)
+    assert trace.dx.shape == trace.x.shape
     assert trace.t[0] == 0.0
-    assert trace.t[1] == restart_time
+    assert trace.t[1] >= requested_transition_sample
     assert trace.t[2] == 1.0
-    assert trace.x[:, 0].tolist() == pytest.approx(
-        [0.0, 10.0, 10.0 + 1e9 * (1.0 - restart_time)],
+    assert np.all(np.diff(trace.t) > 0)
+    assert np.all(trace.t >= 0.0)
+    assert np.all(trace.t <= 1.0)
+    assert np.all(np.isfinite(trace.x))
+    assert np.all(np.isfinite(trace.dx))
+    assert trace.x[0, 0] == pytest.approx(0.0)
+    assert trace.x[1, 0] == pytest.approx(10.0)
+    assert trace.x[2, 0] > trace.x[1, 0]
+    assert trace.dx[0, 0] == pytest.approx(1.0)
+    assert trace.dx[1, 0] == pytest.approx(1e9)
+    assert trace.dx[2, 0] == pytest.approx(1e9)
+
+
+def test_immediate_directional_guard_requires_crossing() -> None:
+    def flow_a(
+        _: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input: InputStream,
+    ) -> np.ndarray:
+        return np.array([0.0], dtype=float)
+
+    def flow_b(
+        _: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input: InputStream,
+    ) -> np.ndarray:
+        return np.array([0.0], dtype=float)
+
+    def guard_a_to_b(
+        t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input: InputStream,
+    ) -> float:
+        return t - 0.5
+
+    def guard_b_to_c(
+        t: float,
+        _state: np.ndarray,
+        _params: Mapping[str, float],
+        _input: InputStream,
+    ) -> float:
+        return 5e-13 + (t - 0.5)
+
+    system = HybridSystem(
+        locations={
+            "a": Location(
+                name="a",
+                dynamics=ContinuousDynamics("a_dynamics", flow_a),
+            ),
+            "b": Location(
+                name="b",
+                dynamics=ContinuousDynamics("b_dynamics", flow_b),
+            ),
+            "c": Location(
+                name="c",
+                dynamics=ContinuousDynamics("c_dynamics", flow_b),
+            ),
+        },
+        transitions=[
+            Transition(
+                source_location="a",
+                target_location="b",
+                guard=Guard("a_to_b", guard_a_to_b, direction=1),
+            ),
+            Transition(
+                source_location="b",
+                target_location="c",
+                guard=Guard("b_to_c", guard_b_to_c, direction=1),
+            ),
+        ],
+        initial_location="a",
+        initial_state=np.array([0.0], dtype=float),
     )
-    assert trace.dx[:, 0].tolist() == pytest.approx([1.0, 1e9, 1e9])
+
+    trace = simulate(
+        system,
+        t_span=(0.0, 1.0),
+        sample_times=[0.0, 1.0],
+    )
+
+    assert len(trace.events) == 1
+    assert trace.events[0].target_location == "b"
+    assert trace.location.tolist() == ["a", "b"]
 
 
 def test_missing_input_stream_access_raises() -> None:

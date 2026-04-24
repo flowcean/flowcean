@@ -135,7 +135,9 @@ def registry() -> dict[str, BenchmarkSpec]:
             name="Location Cycle",
             factory=lambda: mode_cycle(modes=6, dimension=3, dwell_time=0.4),
             tags=("scalable", "time", "multimode"),
-            description="Scalable cycle of linear locations with clock resets.",
+            description=(
+                "Scalable cycle of linear locations with clock resets."
+            ),
             t_span=(0.0, 10.0),
         ),
     ]

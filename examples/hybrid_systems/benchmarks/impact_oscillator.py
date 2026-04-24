@@ -41,13 +41,16 @@ def impact_oscillator(
         t: float,
         state: np.ndarray,
         params: Mapping[str, float],
-        input_stream: InputStream,
+        _input: InputStream,
     ) -> np.ndarray:
         position, velocity = state
+        periodic_forcing = params["forcing"] * np.sin(
+            params["forcing_freq"] * t,
+        )
         accel = (
             -params["stiffness"] * position
             - params["damping"] * velocity
-            + float(input_stream(t)[0])
+            + periodic_forcing
         )
         return np.array([velocity, accel], dtype=float)
 

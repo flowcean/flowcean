@@ -28,8 +28,9 @@ def tank_valves(
 ) -> HybridSystem:
     """Create a two-tank benchmark with valve-controlled inter-tank flow.
 
-    The system has two locations: valve open/closed. Flow between tanks depends on
-    the valve state and level difference. Guards are based on level thresholds.
+    The system has two locations: valve open/closed. Flow between tanks depends
+    on the valve state and level difference. Guards are based on level
+    thresholds.
 
     Args:
         area_1: Cross-sectional area of tank 1.

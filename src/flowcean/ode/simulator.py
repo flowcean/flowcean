@@ -149,6 +149,9 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
             solve_kwargs["max_step"] = max_step
 
         result = solve_ivp(**solve_kwargs)
+        if not result.success:
+            message = f"ODE integration failed: {result.message}"
+            raise RuntimeError(message)
 
         t_segments.append(result.t)
         x_segments.append(result.y.T)
@@ -166,44 +169,66 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
             result.t_events,
             result.y_events,
         )
-        if event_time - t_current <= time_epsilon:
-            break
+        is_zero_time_event = event_time - t_current <= time_epsilon
         transition = transitions[triggered_index]
         jumps += 1
         if jumps > max_jumps:
             message = "Maximum number of transitions exceeded."
             raise RuntimeError(message)
 
-        if transition.reset is None:
-            new_state = event_state
-            reset_name = None
-        else:
-            new_state = transition.reset.fn(
-                event_time,
-                event_state,
-                transition.reset.params,
-                effective_input_stream,
-            )
-            reset_name = transition.reset.name
-
-        events.append(
-            Event(
-                time=event_time,
-                source_location=transition.source_location,
-                target_location=transition.target_location,
-                guard=transition.guard.name,
-                reset=reset_name,
-                state=new_state,
-            ),
+        state, event = _apply_transition(
+            transition,
+            event_time,
+            event_state,
+            effective_input_stream,
         )
+        events.append(event)
 
         if transition.target_location not in system.locations:
             message = f"Unknown target location: {transition.target_location}"
             raise ValueError(message)
 
         location = system.locations[transition.target_location]
-        t_current = min(t_final, event_time + time_epsilon)
-        state = new_state
+        while True:
+            transitions = system.transitions_from(location.name)
+            immediate_index = _immediate_transition_index(
+                transitions,
+                location,
+                event_time,
+                state,
+                system.params,
+                effective_input_stream,
+                time_epsilon,
+            )
+            if immediate_index is None:
+                break
+
+            transition = transitions[immediate_index]
+            jumps += 1
+            if jumps > max_jumps:
+                message = "Maximum number of transitions exceeded."
+                raise RuntimeError(message)
+
+            state, event = _apply_transition(
+                transition,
+                event_time,
+                state,
+                effective_input_stream,
+            )
+            events.append(event)
+
+            if transition.target_location not in system.locations:
+                message = (
+                    f"Unknown target location: {transition.target_location}"
+                )
+                raise ValueError(message)
+
+            location = system.locations[transition.target_location]
+
+        if is_zero_time_event:
+            t_current = min(t_final, t_current + time_epsilon)
+        else:
+            t_current = min(t_final, event_time + time_epsilon)
 
     if sample_grid is None:
         t_all = _concat_segments(t_segments)
@@ -379,6 +404,78 @@ def _first_event(
     return earliest_index, earliest_time, earliest_state
 
 
+def _apply_transition(
+    transition: Transition,
+    event_time: float,
+    event_state: np.ndarray,
+    input_stream: InputStream,
+) -> tuple[np.ndarray, Event]:
+    if transition.reset is None:
+        new_state = event_state
+        reset_name = None
+    else:
+        new_state = transition.reset.fn(
+            event_time,
+            event_state,
+            transition.reset.params,
+            input_stream,
+        )
+        reset_name = transition.reset.name
+
+    return new_state, Event(
+        time=event_time,
+        source_location=transition.source_location,
+        target_location=transition.target_location,
+        guard=transition.guard.name,
+        reset=reset_name,
+        state=new_state,
+    )
+
+
+def _immediate_transition_index(
+    transitions: Sequence[Transition],
+    location: Location,
+    time: float,
+    state: np.ndarray,
+    system_params: Mapping[str, float],
+    input_stream: InputStream,
+    time_epsilon: float,
+) -> int | None:
+    params = {**system_params, **location.dynamics.params}
+    next_state: np.ndarray | None = None
+
+    for index, transition in enumerate(transitions):
+        guard = transition.guard
+        value = guard.fn(time, state, params, input_stream)
+        if abs(value) > time_epsilon:
+            continue
+        if guard.direction == 0:
+            return index
+
+        if next_state is None:
+            derivative = _coerce_derivative(
+                location.dynamics.flow(time, state, params, input_stream),
+                state_dim=state.shape[0],
+            )
+            next_state = state + time_epsilon * derivative
+
+        next_value = guard.fn(
+            time + time_epsilon,
+            next_state,
+            params,
+            input_stream,
+        )
+        if guard.direction > 0:
+            next_triggers = value <= 0.0 and next_value > 0.0
+        else:
+            next_triggers = value >= 0.0 and next_value < 0.0
+
+        if next_triggers:
+            return index
+
+    return None
+
+
 def _concat_segments(segments: Sequence[np.ndarray]) -> np.ndarray:
     """Concatenate solver segments while avoiding duplicate boundary points."""
     if not segments:
@@ -402,18 +499,36 @@ def _prepare_sample_times(
         raise ValueError(message)
     if sample_times is not None:
         times = np.asarray(list(sample_times), dtype=float)
+        if times.size and not np.all(np.isfinite(times)):
+            message = "sample_times must be finite."
+            raise ValueError(message)
     else:
-        if sample_dt is None or sample_dt <= 0:
+        if sample_dt is None or not np.isfinite(sample_dt):
+            message = "sample_dt must be finite."
+            raise ValueError(message)
+        if sample_dt <= 0:
             message = "sample_dt must be positive."
             raise ValueError(message)
-        times = np.arange(
-            t_span[0],
-            t_span[1] + 0.5 * sample_dt,
-            sample_dt,
-            dtype=float,
+        times = np.arange(t_span[0], t_span[1], sample_dt, dtype=float)
+        endpoint_atol = float(
+            np.finfo(float).eps * max(1.0, abs(float(t_span[1]))),
         )
+        if times.size and np.isclose(
+            times[-1],
+            t_span[1],
+            rtol=0.0,
+            atol=endpoint_atol,
+        ):
+            times[-1] = float(t_span[1])
+        else:
+            times = np.append(times, float(t_span[1]))
     if times.size and np.any(np.diff(times) < 0):
         message = "sample_times must be sorted in ascending order."
+        raise ValueError(message)
+    if times.size and (
+        float(times[0]) < t_span[0] or float(times[-1]) > t_span[1]
+    ):
+        message = "sample_times must lie within t_span."
         raise ValueError(message)
     return times
 

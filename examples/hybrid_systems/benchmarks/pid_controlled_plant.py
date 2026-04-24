@@ -116,7 +116,8 @@ def pid_controlled_plant(
     """Create a PID-controlled second-order plant with saturation.
 
     The state is [position, velocity, integral_error]. The controller tracks a
-    sinusoidal setpoint and saturates the control input, yielding hybrid locations.
+    sinusoidal setpoint and saturates the control input, yielding hybrid
+    locations.
 
     Args:
         kp: Proportional gain.

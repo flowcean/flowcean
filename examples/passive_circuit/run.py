@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -18,9 +19,23 @@ from flowcean.polars import DataFrame
 from flowcean.utils import get_seed, initialize_random
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from flowcean.hydra.model import HyDRAModel
 
 EXAMPLE_SEED = 42
+
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run the passive circuit example.",
+    )
+    parser.add_argument(
+        "--live-plot",
+        action="store_true",
+        help="show HyDRA live plot callbacks while learning",
+    )
+    return parser.parse_args(argv)
 
 
 class SelectorDiagnostics(Protocol):
@@ -59,7 +74,7 @@ def print_selector_outputs(
     print("selector_svg", svg_path)
 
 
-def main() -> None:
+def main(*, live_plot: bool = False) -> None:
     from pysr import PySRRegressor
 
     from flowcean.pysr import PySRLearner
@@ -75,11 +90,13 @@ def main() -> None:
         SelectorFeatureConfig(input_columns=tuple(inputs)),
         random_state=7,
     )
-    callback = HyDRALivePlotCallback(
-        traces=[raw_trace.select(inputs + outputs)],
-        y_columns=("I1",),
-        x_column=None,
-    )
+    callback = None
+    if live_plot:
+        callback = HyDRALivePlotCallback(
+            traces=[raw_trace.select(inputs + outputs)],
+            y_columns=("I1",),
+            x_column=None,
+        )
     learner = HyDRALearner(
         regressor_factory=lambda: PySRLearner(
             model=PySRRegressor(
@@ -115,8 +132,10 @@ def main() -> None:
     if model.selector is not None:
         print_selector_outputs(model.selector)
 
-    plt.show()
+    if live_plot:
+        plt.show()
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(live_plot=args.live_plot)

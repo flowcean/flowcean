@@ -64,23 +64,24 @@ def time_varying_guard(
             dtype=float,
         )
 
+    def threshold(t: float, params: Mapping[str, float]) -> float:
+        return params["amplitude"] * np.sin(params["frequency"] * t)
+
     def guard_right(
         t: float,
         state: np.ndarray,
         _params: Mapping[str, float],
-        input_stream: InputStream,
+        _input: InputStream,
     ) -> float:
-        threshold = float(input_stream(t)[0])
-        return state[0] - (threshold + 0.5 * _params["hysteresis"])
+        return state[0] - (threshold(t, _params) + 0.5 * _params["hysteresis"])
 
     def guard_left(
         t: float,
         state: np.ndarray,
         _params: Mapping[str, float],
-        input_stream: InputStream,
+        _input: InputStream,
     ) -> float:
-        threshold = float(input_stream(t)[0])
-        return state[0] - (threshold - 0.5 * _params["hysteresis"])
+        return state[0] - (threshold(t, _params) - 0.5 * _params["hysteresis"])
 
     left_dynamics = ContinuousDynamics(name="left_dynamics", flow=flow_left)
     right_dynamics = ContinuousDynamics(name="right_dynamics", flow=flow_right)

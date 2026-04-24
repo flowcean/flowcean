@@ -1,7 +1,3 @@
-import ast
-import importlib
-import inspect
-from pathlib import Path
 from types import SimpleNamespace
 
 import polars as pl
@@ -9,6 +5,113 @@ import pytest
 
 from flowcean.hydra.replay import HyDRAReplayEmitter
 from tests.hydra.test_hydra import AlwaysZeroLearner
+
+
+class RecordingCallback:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, dict[str, object]]] = []
+
+    def _record(self, name: str, **payload: object) -> None:
+        self.calls.append((name, payload))
+
+    def start(
+        self,
+        *,
+        trace_count: int,
+        threshold: float,
+        start_width: int,
+        step_width: int,
+    ) -> None:
+        self._record(
+            "start",
+            trace_count=trace_count,
+            threshold=threshold,
+            start_width=start_width,
+            step_width=step_width,
+        )
+
+    def pending_segment_found(
+        self,
+        trace_index: int,
+        start_index: int,
+        end_index: int,
+    ) -> None:
+        self._record(
+            "pending_segment_found",
+            trace_index=trace_index,
+            start_index=start_index,
+            end_index=end_index,
+        )
+
+    def candidate_window_evaluated(
+        self,
+        trace_index: int,
+        start_index: int,
+        end_index: int,
+        window_size: int,
+        fit: float,
+    ) -> None:
+        self._record(
+            "candidate_window_evaluated",
+            trace_index=trace_index,
+            start_index=start_index,
+            end_index=end_index,
+            window_size=window_size,
+            fit=fit,
+        )
+
+    def accurate_segment_found(
+        self,
+        *,
+        trace_index: int,
+        start_index: int,
+        end_index: int,
+        mode_id: int,
+        threshold: float,
+    ) -> None:
+        self._record(
+            "accurate_segment_found",
+            trace_index=trace_index,
+            start_index=start_index,
+            end_index=end_index,
+            mode_id=mode_id,
+            threshold=threshold,
+        )
+
+    def mode_finalized(
+        self,
+        *,
+        trace_index: int,
+        start_index: int,
+        end_index: int,
+        mode_id: int,
+    ) -> None:
+        self._record(
+            "mode_finalized",
+            trace_index=trace_index,
+            start_index=start_index,
+            end_index=end_index,
+            mode_id=mode_id,
+        )
+
+    def learning_stopped(
+        self,
+        *,
+        trace_index: int,
+        start_index: int,
+        end_index: int,
+        reason: str,
+    ) -> None:
+        self._record(
+            "learning_stopped",
+            trace_index=trace_index,
+            start_index=start_index,
+            end_index=end_index,
+            reason=reason,
+        )
+
+    def finish(self, *, final_mode_count: int) -> None:
+        self._record("finish", final_mode_count=final_mode_count)
 
 
 def test_hydra_replay_emitter_records_steps_and_final_replay() -> None:
@@ -143,28 +246,37 @@ def test_hydra_learner_accepts_live_plot_callback(
     assert len(subplots_calls) == 1
 
 
-def test_hydra_learner_uses_start_and_self_callback_directly() -> None:
+def test_hydra_learner_reports_callback_lifecycle_behavior() -> None:
     from flowcean.hydra.learner import HyDRALearner
 
-    source = inspect.getsource(HyDRALearner.learn)
+    callback = RecordingCallback()
+    learner = HyDRALearner(
+        regressor_factory=AlwaysZeroLearner,
+        threshold=0.5,
+        start_width=2,
+        step_width=1,
+        callback=callback,
+    )
 
-    assert "_prepare_callback" not in source
-    assert ".start(" in source
-    assert "self.callback" in source
+    learner.learn(
+        pl.DataFrame({"x": [0.0, 0.1]}).lazy(),
+        pl.DataFrame({"y": [0.0, 0.0]}).lazy(),
+    )
 
-
-def test_hydra_internal_helpers_do_not_accept_callback_parameters() -> None:
-    from flowcean.hydra.learner import HyDRALearner
-
-    learn_new_flow_params = inspect.signature(
-        HyDRALearner.learn_new_flow,
-    ).parameters
-    discover_modes_params = inspect.signature(
-        HyDRALearner.__dict__["_discover_modes"],
-    ).parameters
-
-    assert "callback" not in learn_new_flow_params
-    assert "callback" not in discover_modes_params
+    call_names = [name for name, _payload in callback.calls]
+    assert call_names[0] == "start"
+    assert "pending_segment_found" in call_names
+    assert "candidate_window_evaluated" in call_names
+    assert "accurate_segment_found" in call_names
+    assert "mode_finalized" in call_names
+    assert call_names[-1] == "finish"
+    assert callback.calls[0][1] == {
+        "trace_count": 1,
+        "threshold": 0.5,
+        "start_width": 2,
+        "step_width": 1,
+    }
+    assert callback.calls[-1][1] == {"final_mode_count": 1}
 
 
 def test_hydra_learner_populates_replay_on_success() -> None:
@@ -315,54 +427,3 @@ def test_hydra_learner_finalized_mode_uses_accepted_segment_bounds(
     assert finalized_step.kind == "mode_finalized"
     assert finalized_step.mode_id == 0
     assert (finalized_step.start_index, finalized_step.end_index) == (1, 2)
-
-
-def test_passive_circuit_example_uses_live_plot_callback_end_to_end(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2]))
-    module = importlib.import_module("examples.passive_circuit.run")
-    module_ast = ast.parse(inspect.getsource(module))
-    main_ast = ast.parse(inspect.getsource(module.main))
-
-    hydra_import_names = {
-        alias.name
-        for statement in ast.walk(module_ast)
-        if isinstance(statement, ast.ImportFrom)
-        and statement.module == "flowcean.hydra"
-        for alias in statement.names
-    }
-
-    callback_names = {
-        statement.targets[0].id
-        for statement in ast.walk(main_ast)
-        if isinstance(statement, ast.Assign)
-        and len(statement.targets) == 1
-        and isinstance(statement.targets[0], ast.Name)
-        and isinstance(statement.value, ast.Call)
-        and isinstance(statement.value.func, ast.Name)
-        and statement.value.func.id == "HyDRALivePlotCallback"
-    }
-
-    assert "HyDRALivePlotCallback" in hydra_import_names
-    assert "HyDRAReplayEmitter" not in hydra_import_names
-    assert callback_names
-    assert any(
-        isinstance(statement, ast.Call)
-        and isinstance(statement.func, ast.Name)
-        and statement.func.id == "HyDRALearner"
-        and any(
-            keyword.arg == "callback"
-            and isinstance(keyword.value, ast.Name)
-            and keyword.value.id in callback_names
-            for keyword in statement.keywords
-        )
-        for statement in ast.walk(main_ast)
-    )
-    assert not any(
-        isinstance(statement, ast.FunctionDef)
-        and statement.name == "save_hydra_replay_plot"
-        for statement in ast.walk(module_ast)
-    )
-    assert "plot_hydra_replay_step" not in hydra_import_names
-    assert "HyDRAModel" not in hydra_import_names

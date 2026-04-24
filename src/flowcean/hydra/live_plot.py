@@ -196,11 +196,14 @@ class HyDRALivePlotCallback(HyDRACallback):
         return trace.get_column(self._x_column).to_list()
 
     def _span_bounds(
-        self, x_values: list[Any], start_index: int, end_index: int
+        self,
+        x_values: list[Any],
+        start_index: int,
+        end_index: int,
     ) -> tuple[Any, Any]:
         return (x_values[start_index], x_values[end_index])
 
-    def _redraw(self, *, title: str) -> None:
+    def _redraw(self, *, title: str) -> None:  # noqa: C901
         if self._axes is None or self._figure is None:
             return
         trace_index = self._state.active_trace_index or 0
@@ -209,7 +212,9 @@ class HyDRALivePlotCallback(HyDRACallback):
         self._axes.clear()
         for y_column in self._y_columns:
             self._axes.plot(
-                x_values, trace.get_column(y_column).to_list(), label=y_column
+                x_values,
+                trace.get_column(y_column).to_list(),
+                label=y_column,
             )
 
         for (
@@ -254,7 +259,9 @@ class HyDRALivePlotCallback(HyDRACallback):
             )
             if overlay_trace_index == trace_index:
                 start, end = self._span_bounds(
-                    x_values, start_index, end_index
+                    x_values,
+                    start_index,
+                    end_index,
                 )
                 self._axes.axvspan(
                     start,
@@ -271,7 +278,9 @@ class HyDRALivePlotCallback(HyDRACallback):
             )
             if overlay_trace_index == trace_index:
                 start, end = self._span_bounds(
-                    x_values, start_index, end_index
+                    x_values,
+                    start_index,
+                    end_index,
                 )
                 self._axes.axvspan(
                     start,

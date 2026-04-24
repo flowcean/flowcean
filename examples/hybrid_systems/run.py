@@ -1,12 +1,13 @@
 """Run hybrid system benchmarks and visualize traces."""
 
 import matplotlib as mpl
+
+mpl.use("Agg")
+
 import matplotlib.pyplot as plt
 from benchmarks import all_specs
 
 from flowcean.ode import plot_trace, simulate
-
-mpl.use("Agg")
 
 
 def main() -> None:

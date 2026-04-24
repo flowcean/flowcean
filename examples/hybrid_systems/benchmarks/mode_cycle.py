@@ -100,7 +100,8 @@ def mode_cycle(
 ) -> HybridSystem:
     """Create a scalable hybrid system that cycles through locations.
 
-    The system has `modes` locations, each with linear dynamics active for `dwell_time`.
+    The system has `modes` locations, each with linear dynamics active for
+    `dwell_time`.
     A clock state is appended and reset on each transition, making the number
     of locations and state dimension scalable for benchmarking.
 

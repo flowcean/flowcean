@@ -1,6 +1,6 @@
 import os
 import platform
-from typing import Any
+from typing import Any, cast
 
 import polars as pl
 from typing_extensions import override
@@ -177,7 +177,7 @@ class LightningLearner(SupervisedLearner):
         )
 
         lightning_callbacks: list[lightning.Callback] = [
-            bridge_callback,
+            cast("lightning.Callback", bridge_callback),
             EarlyStopping(
                 monitor="train_loss",
                 patience=10,

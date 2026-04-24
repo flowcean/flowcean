@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class SelectorTrainingIncompleteError(ValueError):
-    """Raised when selector learning is attempted on partially labeled traces."""
+    """Raised when selector learning sees partially labeled traces."""
 
 
 @dataclass(frozen=True)
