@@ -13,6 +13,7 @@ from flowcean.core.learner import (
 from flowcean.core.model import Model
 from flowcean.hydra.callbacks import HyDRACallback
 from flowcean.hydra.model import HyDRAModel
+from flowcean.hydra.schema import HyDRATraceSchema
 from flowcean.hydra.selector import (
     HybridDecisionTreeLearner,
     HybridDecisionTreeModel,
@@ -51,6 +52,7 @@ class HyDRALearner(SupervisedLearner):
     step_width: int
     selector_learner: HybridDecisionTreeLearner | None
     callback: HyDRACallback | None
+    trace_schema: HyDRATraceSchema | None
 
     def __init__(
         self,
@@ -60,6 +62,7 @@ class HyDRALearner(SupervisedLearner):
         step_width: int = 5,
         selector_learner: HybridDecisionTreeLearner | None = None,
         callback: HyDRACallback | None = None,
+        trace_schema: HyDRATraceSchema | None = None,
     ) -> None:
         super().__init__()
         if threshold < 0:
@@ -77,6 +80,7 @@ class HyDRALearner(SupervisedLearner):
         self.step_width = step_width
         self.selector_learner = selector_learner
         self.callback = callback
+        self.trace_schema = trace_schema
 
     def learn_new_flow(
         self,
@@ -167,9 +171,10 @@ class HyDRALearner(SupervisedLearner):
             A HyDRAModel containing the learned modes.
 
         """
-        traces = self._initialize_traces(inputs, outputs)
         input_columns = inputs.collect_schema().names()
         output_columns = outputs.collect_schema().names()
+        self._validate_trace_schema_for_learning(input_columns, output_columns)
+        traces = self._initialize_traces(inputs, outputs)
         if self.callback is not None:
             self.callback.start(
                 trace_count=len(traces),
@@ -197,12 +202,29 @@ class HyDRALearner(SupervisedLearner):
             input_features=input_columns,
             output_features=output_columns,
             selector=selector,
+            trace_schema=self.trace_schema,
         )
 
         if self.callback is not None:
             self.callback.finish(final_mode_count=len(learned_modes.models))
 
         return model
+
+    def _validate_trace_schema_for_learning(
+        self,
+        input_columns: list[str],
+        output_columns: list[str],
+    ) -> None:
+        if self.trace_schema is None:
+            return
+        self.trace_schema.validate_input_features(input_columns)
+        self.trace_schema.validate_output_features(output_columns)
+        self.trace_schema.validate_state_derivative_width()
+        if len(self.trace_schema.derivative) != 1:
+            message = (
+                "HyDRALearner currently supports single-output training only."
+            )
+            raise ValueError(message)
 
     def _discover_modes(
         self,
