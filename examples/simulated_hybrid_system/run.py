@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Protocol
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +21,7 @@ from flowcean.ode import (
     InputStream,
     Location,
     Transition,
+    plot_trace,
     simulate,
     trace_to_polars,
 )
@@ -30,8 +31,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     import polars as pl
-
-    from flowcean.hydra.model import HyDRAModel
 
 EXAMPLE_SEED = 42
 
@@ -144,6 +143,14 @@ def simulate_training_data() -> pl.DataFrame:
         capture_derivatives=True,
         sample_dt=0.02,
     )
+    # plot_trace(
+    #     trace,
+    #     show_locations=True,
+    #     show_location_labels=False,
+    #     show_events=True,
+    #     show_event_labels=False,
+    #     show=True,
+    # )
     return trace_to_polars(
         trace,
         state_names=("x",),
