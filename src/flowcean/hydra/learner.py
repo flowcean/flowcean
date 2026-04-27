@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import dataclass
 
 import numpy as np
@@ -134,7 +135,7 @@ class HyDRALearner(SupervisedLearner):
             logger.info("Window size %d produced fit %s", window_size, fit)
             if fit < self.threshold:
                 best_fit = fit
-                best_function = function
+                best_function = deepcopy(function)
             else:
                 # Keep the current HyDRA heuristic: once a larger window misses
                 # the threshold, stop instead of scanning even larger windows.

@@ -106,6 +106,7 @@ members = [
   "examples/one_tank",
   "examples/robot_localization_failure",
   "examples/passive_circuit",
+  "examples/simulated_hybrid_system",
 ]
 
 [tool.pytest.ini_options]

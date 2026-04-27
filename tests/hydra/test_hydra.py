@@ -75,6 +75,21 @@ class WindowSizeLearner(SupervisedIncrementalLearner):
         return WindowSizeModel(inputs.collect().height)
 
 
+class ReusedWindowSizeLearner(WindowSizeLearner):
+    def __init__(self) -> None:
+        self.model = WindowSizeModel(0)
+
+    def learn_incremental(
+        self,
+        inputs: pl.LazyFrame,
+        outputs: pl.LazyFrame,
+    ) -> WindowSizeModel:
+        del outputs
+        self.model.window_size = inputs.collect().height
+        self.model.value = float(self.model.window_size)
+        return self.model
+
+
 class ZeroWindowSizeModel(ConstantModel):
     def __init__(self, window_size: int) -> None:
         super().__init__(0.0)
@@ -218,6 +233,33 @@ def test_learn_new_flow_returns_last_passing_window() -> None:
     model = learner.learn_new_flow(
         data,
         WindowSizeLearner(),
+        ["x"],
+        ["y"],
+        trace_index=0,
+        segment_start_index=0,
+    )
+
+    assert isinstance(model, WindowSizeModel)
+    assert model.window_size == 2
+
+
+def test_learn_new_flow_retains_last_passing_model_when_learner_reuses_it() -> None:
+    learner = HyDRALearner(
+        regressor_factory=ReusedWindowSizeLearner,
+        threshold=0.5,
+        start_width=2,
+        step_width=2,
+    )
+    data = pl.DataFrame(
+        {
+            "x": [0.0, 1.0, 2.0, 3.0],
+            "y": [2.0, 2.0, 4.0, 4.0],
+        },
+    )
+
+    model = learner.learn_new_flow(
+        data,
+        ReusedWindowSizeLearner(),
         ["x"],
         ["y"],
         trace_index=0,

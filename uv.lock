@@ -27,6 +27,7 @@ members = [
     "one-tank",
     "passive-circuit",
     "robot-localization-failure",
+    "simulated-hybrid-system",
 ]
 
 [[package]]
@@ -5564,6 +5565,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/7b/de/a028279676bc2ca3a
 wheels = [
     { url = "https://files.pythonhosted.org/packages/22/f7/6eeb75eddd6e64a31f7f8b406a1a1e0d9e85622fc162399f3f84eb4c9a05/simpy-3.0.13-py2.py3-none-any.whl", hash = "sha256:b588d7074bcbf400323d575f3aa95e47f152bce56cdf1f58d705846262f93d81", size = 29122, upload-time = "2020-04-05T14:14:08.79Z" },
 ]
+
+[[package]]
+name = "simulated-hybrid-system"
+version = "0.1.0"
+source = { virtual = "examples/simulated_hybrid_system" }
+dependencies = [
+    { name = "flowcean", extra = ["pysr"] },
+]
+
+[package.metadata]
+requires-dist = [{ name = "flowcean", extras = ["pysr"], editable = "." }]
 
 [[package]]
 name = "six"
