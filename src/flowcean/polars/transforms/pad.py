@@ -86,7 +86,7 @@ class Pad(Transform):
                     .alias("value"),
                 )
                 .map_elements(
-                    lambda x: self.__map_elements__(x),
+                    self.__map_elements__,
                     return_dtype=pl.List(
                         pl.Struct(
                             {

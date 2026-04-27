@@ -11,7 +11,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.14"
+    rev: "v0.15.12"
     hooks:
       - id: ruff-check
         types_or: [python, pyi]
@@ -21,7 +21,7 @@ repos:
         args: [--check]
 
   - repo: https://github.com/crate-ci/typos
-    rev: "v1.35.6"
+    rev: "v1.45.1"
     hooks:
       - id: typos
         args: [--force-exclude]

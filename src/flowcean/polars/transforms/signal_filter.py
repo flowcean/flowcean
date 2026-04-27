@@ -58,9 +58,7 @@ class SignalFilter(Transform):
                     .alias("value"),
                 )
                 .map_elements(
-                    lambda series: self.filter_data(
-                        series,
-                    ),
+                    self.filter_data,
                     return_dtype=pl.List(
                         pl.Struct(
                             {
