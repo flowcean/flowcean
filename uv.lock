@@ -1570,7 +1570,7 @@ wheels = [
 
 [[package]]
 name = "flowcean"
-version = "0.7.0"
+version = "0.8.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "cloudpickle" },
@@ -1581,7 +1581,6 @@ dependencies = [
     { name = "omegaconf" },
     { name = "opcua" },
     { name = "polars", extra = ["style", "xlsxwriter"] },
-    { name = "polars-u64-idx" },
     { name = "protobuf" },
     { name = "rich" },
     { name = "rosbags" },
@@ -1669,7 +1668,6 @@ requires-dist = [
     { name = "palaestrai", marker = "extra == 'palaestrai'", specifier = ">=3.5.8" },
     { name = "palaestrai-agents", marker = "extra == 'palaestrai'", specifier = ">=3.5.4" },
     { name = "polars", extras = ["style", "xlsxwriter"], specifier = ">=1.33.0" },
-    { name = "polars-u64-idx", specifier = ">=1.32.3" },
     { name = "protobuf", specifier = ">=5.28.2" },
     { name = "pysr", marker = "extra == 'pysr'", specifier = ">=1.5.9" },
     { name = "rich", specifier = ">=14.1.0" },
@@ -4206,20 +4204,6 @@ wheels = [
 ]
 
 [[package]]
-name = "polars-u64-idx"
-version = "1.33.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a6/2d/21a6c64da9024d90c188f226e36625c779478caa0774c67edfe33d2022af/polars_u64_idx-1.33.1.tar.gz", hash = "sha256:c93f832dc3c0e8ef6877b861668f4641f271cd55295764a245ca216cb7dac755", size = 4821436, upload-time = "2025-09-09T08:37:53.745Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/42/9a195c0f89704ee12b56cde1a6e03542542881d8ce897bc89b2204658890/polars_u64_idx-1.33.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:1638c734a3bb3343bd1cc018a0d0a7703b0f394e0cf0c74e6ded1fa45c7b8524", size = 38999382, upload-time = "2025-09-09T08:37:27.235Z" },
-    { url = "https://files.pythonhosted.org/packages/8e/83/fa59b0fced320a640e318496c6965a902e045563fa2a29c8b12d80013bea/polars_u64_idx-1.33.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:7ee4f830dfb3b04a8ec8f971ad4354de7f403722b68e80d8153d251328e5347f", size = 35512080, upload-time = "2025-09-09T08:37:31.132Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/87/43561d06100aa368d2232a31d0f2ea7974f436f5c7dd7d876883891b69e5/polars_u64_idx-1.33.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b5c8abae1a3a4f7a637877b61536c43ba675a2cbfe0860c08d48a7f65e78ee4e", size = 39658976, upload-time = "2025-09-09T08:37:35.273Z" },
-    { url = "https://files.pythonhosted.org/packages/39/2c/0560f550e472e47db34ee8900f82714ec1a0106b0f444ab2ae690a152f01/polars_u64_idx-1.33.1-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:09d8b49e8a9d37658f9afa38f43558fe6b070ccfef2cc3e81d4ba60615462183", size = 36572444, upload-time = "2025-09-09T08:37:39.116Z" },
-    { url = "https://files.pythonhosted.org/packages/f2/ff/6c5b669659b9092a56bbb2b65a280192e251dea7ea1641675611250648f7/polars_u64_idx-1.33.1-cp39-abi3-win_amd64.whl", hash = "sha256:225f9ab8cc37a15d5de243a748e6e865b13c686e057cf57aaebee9b5e07cef4b", size = 39358320, upload-time = "2025-09-09T08:37:42.604Z" },
-    { url = "https://files.pythonhosted.org/packages/61/dc/36c56cecfd6b6a889ec40b6511f21362d5981a92e5e61b5fa89011523ec8/polars_u64_idx-1.33.1-cp39-abi3-win_arm64.whl", hash = "sha256:48e9cd8a6d7b21ee0863a3706d9a05c66a39339d35088685da095d201881d668", size = 35350509, upload-time = "2025-09-09T08:37:45.895Z" },
-]
-
-[[package]]
 name = "pre-commit"
 version = "4.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -5142,7 +5126,7 @@ dependencies = [
     { name = "optuna" },
     { name = "pillow" },
     { name = "plotly" },
-    { name = "polars-u64-idx" },
+    { name = "polars" },
     { name = "pyqt6" },
 ]
 
@@ -5156,7 +5140,7 @@ requires-dist = [
     { name = "optuna", specifier = ">=4.5.0" },
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "plotly", specifier = ">=6.0.1" },
-    { name = "polars-u64-idx", specifier = ">=1.32.3" },
+    { name = "polars", specifier = ">=1.33.0" },
     { name = "pyqt6", specifier = ">=6.9.0" },
 ]
 

@@ -13,6 +13,7 @@ jobs:
       - itl
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -44,7 +45,7 @@ jobs:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Build package
-        run: uvx --from build pyproject-build --installer uv
+        run: uv build --no-sources
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -54,7 +55,4 @@ jobs:
             dist/flowcean-*.tar.gz
 
       - name: Publish package
-        run: uvx twine upload dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: uv publish
