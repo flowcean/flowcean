@@ -16,10 +16,10 @@ jobs:
       id-token: write
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           prune-cache: false
           cache-local-path: "${{ runner.workspace }}/.cache/uv"
@@ -48,7 +48,7 @@ jobs:
         run: uv build --no-sources
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           prerelease: ${{ steps.version.outputs.is_prerelease }}
           files: |
