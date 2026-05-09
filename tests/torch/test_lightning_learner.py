@@ -98,10 +98,7 @@ class TestLightningLearner(unittest.TestCase):
             "torch.Tensor",
             self.simple_module.example_input_array,
         )
-        assert torch.equal(
-            example_input_array,
-            torch.tensor([1.0, 4.0]),
-        )
+        assert example_input_array.equal(torch.Tensor([1.0, 4.0]))
         trainer_kwargs = mock_trainer.call_args.kwargs
         assert trainer_kwargs["enable_progress_bar"] is False
         assert "logger" not in trainer_kwargs

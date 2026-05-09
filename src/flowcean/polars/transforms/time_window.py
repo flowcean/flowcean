@@ -1,9 +1,9 @@
 import logging
 import math
 from collections.abc import Iterable
+from typing import override
 
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import Transform
 from flowcean.polars.is_time_series import is_timeseries_feature

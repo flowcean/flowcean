@@ -1,7 +1,7 @@
 import logging
 import time
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -278,7 +278,7 @@ class OPCAdapter(Adapter):
 
             # Record a sample of data
             results = self.client.get_values(self.input_features.values())
-            now = datetime.now(tz=timezone.utc)
+            now = datetime.now(tz=UTC)
             self.recorded_data = pl.concat(
                 [
                     self.recorded_data,

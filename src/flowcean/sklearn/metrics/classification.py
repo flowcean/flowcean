@@ -1,7 +1,6 @@
-from typing import Any
+from typing import Any, override
 
 from sklearn import metrics
-from typing_extensions import override
 
 from flowcean.core import Data, Metric
 from flowcean.polars import LazyMixin, SelectMixin

@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Protocol, runtime_checkable
-
-from typing_extensions import override
+from typing import Protocol, override, runtime_checkable
 
 from flowcean.core.data import Data
 from flowcean.core.environment.base import Environment

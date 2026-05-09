@@ -1,13 +1,12 @@
 import logging
 import queue
 import threading
-from typing import Any
+from typing import Any, override
 
 import mosaik_api_v3
 import numpy as np
 from mosaik.exceptions import SimulationError
 from mosaik_api_v3.types import Meta
-from typing_extensions import override
 
 logger = logging.getLogger("flowcean.mosaik.simulator")
 META = {

@@ -13,12 +13,13 @@ jobs:
       - itl
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           prune-cache: false
           cache-local-path: "${{ runner.workspace }}/.cache/uv"
@@ -44,17 +45,14 @@ jobs:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Build package
-        run: uvx --from build pyproject-build --installer uv
+        run: uv build --no-sources
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           prerelease: ${{ steps.version.outputs.is_prerelease }}
           files: |
             dist/flowcean-*.tar.gz
 
       - name: Publish package
-        run: uvx twine upload dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: uv publish

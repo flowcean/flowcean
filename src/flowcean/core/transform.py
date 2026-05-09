@@ -45,10 +45,17 @@ restored = transform.inverse()(transformed)
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, cast, final, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Protocol,
+    Self,
+    cast,
+    final,
+    override,
+    runtime_checkable,
+)
 
 import cloudpickle
-from typing_extensions import Self, override
 
 from .named import Named
 

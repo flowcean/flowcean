@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, override
 
 from sklearn import metrics
-from typing_extensions import override
 
 from flowcean.core import Data, Metric, Reportable
 from flowcean.polars import LazyMixin, SelectMixin

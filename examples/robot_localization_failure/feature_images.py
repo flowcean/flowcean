@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sized
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, TypeVar, override
 
 import numpy as np
 import polars as pl
@@ -12,7 +12,6 @@ from scipy.spatial.transform import Rotation
 from torch import Tensor
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from typing_extensions import override
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class InMemoryCaching(Dataset[T], Generic[T]):
+class InMemoryCaching[T](Dataset[T]):
     """Wraps any sized Dataset and caches items in memory per-index."""
 
     def __init__(

@@ -11,7 +11,7 @@ First step when using Flowcean is to think about your problem at hand and specif
 - What kind of learning process is required?
 
 According to these questions Flowcean offers different learning environments (offline, incremental and active).
-To decide what kind approach you need see (link).
+To decide what kind approach you need, see [Learning Strategies](../user_guide/learning_strategies.md).
 
 In this example, we have a simulation that requires a floating point value as input and returns a value as output (randomly chosen in this case).
 The objective of the learning process is to predict the output based on the simulation's input value.
@@ -59,7 +59,7 @@ For this example we chose the active learning strategy as we have a simulation a
 The strategy is implemented as a model.
 
 ```python
-from flowcean.strategies.active import learn_active
+from flowcean.core import learn_active
 
 model = learn_active(
     environment,
@@ -73,7 +73,7 @@ The full code will look like this:
 
 ```python
 import flowcean.cli
-from flowcean.strategies.active import learn_active
+from flowcean.core import learn_active
 
 def main() -> None:
     flowcean.cli.initialize()
@@ -117,7 +117,7 @@ With this, we define the environment class `MyEnvironment`.
 
 ```python
 from flowcean.core import ActiveOnlineEnvironment
-from flowcean.strategies.active import StopLearning
+from flowcean.core import StopLearning
 
 class MyEnvironment(ActiveOnlineEnvironment[Action, ReinforcementObservation]):
     state: float
@@ -328,7 +328,7 @@ The model itself does not contain the learning algorithm.
 It contains the prediction function given by the learner to predict output values based on a given input.
 
 ```python
-from flowcean.strategies.active import StopLearning, learn_active
+from flowcean.core import StopLearning, learn_active
 
 class MyModel(Model):
     best_action: float

@@ -24,6 +24,7 @@ def learn_incremental(
         inputs: The input feature names.
         outputs: The output feature names.
         input_transform: The transform to apply to the input features.
+            Will be part of the final model.
         output_transform: The transform to apply to the output features.
             Its inverse will be part of the final model.
 
@@ -55,6 +56,7 @@ def learn_incremental(
         message = "No data found in environment."
         raise ValueError(message)
 
+    model.pre_transform |= input_transform
     model.post_transform |= output_transform.inverse()
 
     return model

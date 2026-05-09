@@ -1,12 +1,22 @@
 import os
 import platform
-from typing import Any
+from typing import Any, cast, override
 
-import lightning
 import polars as pl
-from lightning.pytorch.callbacks.early_stopping import EarlyStopping
-from torch.utils.data import DataLoader
-from typing_extensions import override
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    import lightning
+    from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+    from torch.utils.data import DataLoader
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.lightning_learner",
+        missing_dependencies={"lightning", "torch"},
+    )
 
 from flowcean.core import (
     LearnerCallback,
@@ -166,7 +176,7 @@ class LightningLearner(SupervisedLearner):
         )
 
         lightning_callbacks: list[lightning.Callback] = [
-            bridge_callback,
+            cast("lightning.Callback", bridge_callback),
             EarlyStopping(
                 monitor="train_loss",
                 patience=10,

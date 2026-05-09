@@ -6,7 +6,7 @@ A schematic drawing of the system is shown in the following figure.
 
 ![The one-tank system](./images/one_tank.svg)
 
-The complete source code for this example can be found [in the repository](https://github.com/flowcean/flowcean/blob/main/examples/one_tank/run.py).
+The complete source code for this example can be found [in the repository](https://github.com/flowcean/flowcean/blob/main/examples/one_tank/run_offline.py).
 See also [Run this example](#run-this-example) on how to run this example locally.
 
 The dynamics of the system follow an ordinary differential equation (ODE).
@@ -291,12 +291,11 @@ After a short moment you should see the learning results from both methods and t
 
 ### From source
 
-Follow the [installation guide](../getting_started/installation.md) to install Flowcean and it's dependencies from source.
-Afterwards you can navigate to the `examples` folder and run the examples.
+Follow the [installation guide](../getting_started/installation.md) to install Flowcean and its dependencies from source.
+Afterwards you can run the example from the repository root.
 
 ```sh
-cd examples/one_tank
-python run.py
+uv run --directory ./examples/one_tank python run_offline.py
 ```
 
 [^1]: <https://de.mathworks.com/help/slcontrol/ug/watertank-simulink-model.html>.

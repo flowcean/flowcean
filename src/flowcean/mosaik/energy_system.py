@@ -4,7 +4,7 @@ import queue
 import threading
 from collections.abc import Callable, Sequence
 from copy import copy
-from typing import Any
+from typing import Any, override
 
 import midas
 import mosaik
@@ -15,7 +15,6 @@ from midas_store.meta import META
 from mosaik.exceptions import SimulationError
 from numpy.random import RandomState
 from numpy.typing import NDArray
-from typing_extensions import override
 
 from flowcean.core import (
     Action,

@@ -1,8 +1,19 @@
 import logging
+from typing import override
 
 import polars as pl
-from river.base import Regressor
-from typing_extensions import override
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    from river.base import Regressor
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="river",
+        module="flowcean.river.learner",
+        missing_dependencies={"river"},
+    )
 
 from flowcean.core import (
     LearnerCallback,

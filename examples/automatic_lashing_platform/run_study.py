@@ -203,30 +203,31 @@ def print_data(
     ):
         index = i if args.print_distributed else c
         print(f"Index: {index}")
+        weight = round(
+            observed_data.select("containerWeight").row(index)[0],
+            3,
+        )
+        initial_pressure = round(
+            observed_data.select("p_initial").row(index)[0],
+            3,
+        )
+        temperature = round(observed_data.select("T").row(index)[0], 3)
         print(
-            f"Weight: {
-                round(observed_data.select('containerWeight').row(index)[0], 3)
-            }",
+            f"Weight: {weight}",
         )
         print(
-            f"Active Valves: {
-                observed_data.select('activeValveCount').row(index)[0]
-            }",
+            f"Active Valves: "
+            f"{observed_data.select('activeValveCount').row(index)[0]}",
         )
         print(
-            f"Initial Pressure: {
-                round(observed_data.select('p_initial').row(index)[0], 3)
-            }",
+            f"Initial Pressure: {initial_pressure}",
         )
         print(
-            f"Temperature: {
-                round(observed_data.select('T').row(index)[0], 3)
-            }",
+            f"Temperature: {temperature}",
         )
         print(
-            f"Accumulated Pressures: \n{
-                observed_data.select('^p_accumulator_.*$').row(index)
-            }",
+            f"Accumulated Pressures: \n"
+            f"{observed_data.select('^p_accumulator_.*$').row(index)}",
         )
 
 
@@ -236,33 +237,32 @@ def print_row(observed_data: Any) -> None:
         index = input("Enter the row index to print or 'x' to quit: ")
         if index == "x":
             break
+        row_index = int(index)
+        weight = round(
+            observed_data.select("containerWeight").row(row_index)[0],
+            3,
+        )
+        initial_pressure = round(
+            observed_data.select("p_initial").row(row_index)[0],
+            3,
+        )
+        temperature = round(observed_data.select("T").row(row_index)[0], 3)
         print(
-            f"Weight: {
-                round(
-                    observed_data.select('containerWeight').row(int(index))[0],
-                    3,
-                )
-            }",
+            f"Weight: {weight}",
         )
         print(
-            f"Active Valves: {
-                observed_data.select('activeValveCount').row(int(index))[0]
-            }",
+            f"Active Valves: "
+            f"{observed_data.select('activeValveCount').row(row_index)[0]}",
         )
         print(
-            f"Initial Pressure: {
-                round(observed_data.select('p_initial').row(int(index))[0], 3)
-            }",
+            f"Initial Pressure: {initial_pressure}",
         )
         print(
-            f"Temperature: {
-                round(observed_data.select('T').row(int(index))[0], 3)
-            }",
+            f"Temperature: {temperature}",
         )
         print(
-            f"Accumulated Pressures: \n{
-                observed_data.select('^p_accumulator_.*$').row(int(index))
-            }",
+            f"Accumulated Pressures: \n"
+            f"{observed_data.select('^p_accumulator_.*$').row(row_index)}",
         )
 
 

@@ -39,7 +39,7 @@ docs-serve:
   @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @uv run mkdocs serve
 
-examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor
+examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor examples-trace_prediction examples-hs-simple examples-hybrid_systems examples-simulated_hybrid_system
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
@@ -81,6 +81,22 @@ examples-energy_system:
 examples-xor:
   @echo "🚀 Running example: XOR"
   @uv run --directory ./examples/xor/ run.py
+
+examples-trace_prediction:
+  @echo "🚀 Running example: Trace Prediction"
+  @uv run --directory ./examples/trace_prediction/ python run.py
+
+examples-hs-simple:
+  @echo "🚀 Running example: Minimal Hybrid System"
+  @uv run --directory ./examples/hs-simple/ python main.py
+
+examples-hybrid_systems:
+  @echo "🚀 Running example: Hybrid Systems"
+  @uv run --directory ./examples/hybrid_systems/ python run.py
+
+examples-simulated_hybrid_system:
+  @echo "🚀 Running example: Simulated Hybrid System"
+  @uv run --directory ./examples/simulated_hybrid_system/ python run.py
 
 generate-proto:
   @echo "🚀 Generating Python and Java definitions from gRPC proto files"

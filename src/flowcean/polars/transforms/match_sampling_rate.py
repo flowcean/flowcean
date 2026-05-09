@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, TypeAlias, cast
+from typing import Literal, cast
 
 import polars as pl
 import polars.selectors as cs
@@ -9,8 +9,8 @@ from flowcean.core import Transform
 logger = logging.getLogger(__name__)
 
 
-MatchSamplingRateMethod: TypeAlias = Literal["linear", "nearest"]
-FillStrategy: TypeAlias = Literal[
+MatchSamplingRateMethod = Literal["linear", "nearest"]
+FillStrategy = Literal[
     "forward",
     "backward",
     "min",

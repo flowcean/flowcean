@@ -1,8 +1,8 @@
 from dataclasses import dataclass
+from typing import Self, override
 
 import polars as pl
 from polars._typing import PythonLiteral
-from typing_extensions import Self, override
 
 from flowcean.core import Data, Invertible, Transform
 from flowcean.polars import is_timeseries_feature

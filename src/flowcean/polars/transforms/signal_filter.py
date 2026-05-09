@@ -1,16 +1,15 @@
 import logging
 from collections.abc import Iterable
-from typing import Literal, TypeAlias
+from typing import Literal, override
 
 import polars as pl
 from scipy.signal import butter, sosfilt
-from typing_extensions import override
 
 from flowcean.core import Transform
 
 logger = logging.getLogger(__name__)
 
-SignalFilterType: TypeAlias = Literal["lowpass", "highpass"]
+SignalFilterType = Literal["lowpass", "highpass"]
 
 
 class SignalFilter(Transform):
@@ -58,9 +57,7 @@ class SignalFilter(Transform):
                     .alias("value"),
                 )
                 .map_elements(
-                    lambda series: self.filter_data(
-                        series,
-                    ),
+                    self.filter_data,
                     return_dtype=pl.List(
                         pl.Struct(
                             {

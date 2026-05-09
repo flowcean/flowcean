@@ -1,15 +1,14 @@
 import logging
 from collections.abc import Iterable
-from typing import Literal, TypeAlias
+from typing import Literal, override
 
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import Transform
 
 logger = logging.getLogger(__name__)
 
-DiscreteDerivativeKind: TypeAlias = Literal["forward", "backward", "central"]
+DiscreteDerivativeKind = Literal["forward", "backward", "central"]
 
 
 class DiscreteDerivative(Transform):

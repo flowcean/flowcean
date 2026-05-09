@@ -1,4 +1,5 @@
 import bisect
+from typing import override
 
 import cv2
 import numpy as np
@@ -7,7 +8,6 @@ from matplotlib import pyplot as plt
 from numba import njit
 from scipy.spatial.transform import Rotation
 from tqdm import tqdm
-from typing_extensions import override
 
 from flowcean.core.transform import Transform
 

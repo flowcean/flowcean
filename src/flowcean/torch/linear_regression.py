@@ -1,8 +1,20 @@
+from typing import override
+
 import polars as pl
-import torch
-from torch import Tensor, nn
-from torch.optim.sgd import SGD
-from typing_extensions import override
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    import torch
+    from torch import Tensor, nn
+    from torch.optim.sgd import SGD
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.linear_regression",
+        missing_dependencies={"torch"},
+    )
 
 from flowcean.core import SupervisedIncrementalLearner
 
@@ -49,8 +61,12 @@ class LinearRegression(SupervisedIncrementalLearner):
     ) -> PyTorchModel:
         self.optimizer.zero_grad()
         dfs = pl.collect_all([inputs, outputs])
-        features = torch.from_numpy(dfs[0].to_numpy(writable=True))
-        labels = torch.from_numpy(dfs[1].to_numpy(writable=True))
+        features = torch.from_numpy(  # pyright: ignore[reportPrivateImportUsage]
+            dfs[0].to_numpy(writable=True),
+        )
+        labels = torch.from_numpy(  # pyright: ignore[reportPrivateImportUsage]
+            dfs[1].to_numpy(writable=True),
+        )
         prediction = self.model(features)
         loss = self.loss(prediction, labels)
         loss.backward()

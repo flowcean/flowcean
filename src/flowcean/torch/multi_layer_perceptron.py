@@ -1,10 +1,19 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
-import lightning
-import torch
-from torch import Tensor
-from torch.optim.adam import Adam
-from typing_extensions import override
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    import lightning
+    import torch
+    from torch import Tensor
+    from torch.optim.adam import Adam
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.multi_layer_perceptron",
+        missing_dependencies={"lightning", "torch"},
+    )
 
 if TYPE_CHECKING:
     from torch.nn import Module

@@ -1,10 +1,9 @@
 import io
-from typing import Any
+from typing import Any, Self, override
 
 import torch
 from harl.sac.muscle import SACMuscle
 from palaestrai.types.mode import Mode
-from typing_extensions import Self, override
 
 from flowcean.core import (
     Action,

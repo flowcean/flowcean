@@ -1,9 +1,8 @@
 import logging
 from collections.abc import Iterable
-from typing import Any, cast
+from typing import Any, cast, override
 
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import Transform
 from flowcean.polars.is_time_series import is_timeseries_feature
@@ -86,7 +85,7 @@ class Pad(Transform):
                     .alias("value"),
                 )
                 .map_elements(
-                    lambda x: self.__map_elements__(x),
+                    self.__map_elements__,
                     return_dtype=pl.List(
                         pl.Struct(
                             {

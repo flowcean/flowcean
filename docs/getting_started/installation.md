@@ -1,86 +1,107 @@
 # Installation
 
-This page explains how to setup the python development environment for flowcean.
+This page covers installing Flowcean for a project and setting up a local development checkout.
 
-Start with cloning the repository:
+## User Install From PyPI
+
+Use this setup when you want to use Flowcean in your own Python project.
+
+=== "via `uv`"
+
+    Create a project and add Flowcean from PyPI:
+
+    ```bash
+    uv init flowcean-project
+    cd flowcean-project
+    uv add flowcean
+    ```
+
+    If you need PySR support, add the PySR extra:
+
+    ```bash
+    uv add "flowcean[pysr]"
+    ```
+
+=== "via `pip`"
+
+    Create and activate a virtual environment, then install Flowcean from PyPI:
+
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install flowcean
+    ```
+
+    If you need PySR support, install the PySR extra:
+
+    ```bash
+    python -m pip install "flowcean[pysr]"
+    ```
+
+## Developer Setup From Git
+
+Use this setup when you want to work on Flowcean itself.
 
 ```bash
 git clone https://github.com/flowcean/flowcean
 cd flowcean
+uv sync
 ```
 
-Continue with installation of dependencies.
+If you cannot use `uv`, create and activate a virtual environment, then install Flowcean in editable mode:
 
-=== "via `uv`"
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
 
-    Use `uv` to update the project's environment and install the `flowcean` package:
-
-    ```bash
-    uv sync
-    ```
-
-=== "via `pip`"
-
-    Create a new virtual environment:
-
-    ```bash
-    python -m venv <path-to-venv>
-    ```
-
-    Activate the virtual environment:
-
-    ```bash
-    . <path-to-venv>
-    ```
-
-    Ensure you are in your virtual environment.
-
-    ```bash
-    echo $VIRTUAL_ENV
-    ```
-
-    This should show the path to an active virtual environment.
-
-    Then, you can install the `flowcean` package in editable mode (allowing for modifications to the source code) using pip:
-
-    ```bash
-    pip install -e .
-    ```
-
-    Confirm the installation:
-
-    ```bash
-    pip show flowcean
-    ```
-
-    This command should display package information verifying that `flowcean` is installed.
+`uv sync` is the recommended developer setup because it installs the full workspace and development toolchain. The pip editable fallback supports basic editable imports; you may need additional development tools before running checks, docs, or tests.
 
 ## Verifying Installation
 
-To verify that `flowcean` is installed correctly, open a Python shell
+Run an import-only smoke test from the environment where you installed Flowcean.
+
+=== "via `uv`"
+
+    From a `uv` project or development checkout, run:
+
+    ```bash
+    uv run python - <<'PY'
+    import flowcean
+    PY
+    ```
+
+=== "via `pip`"
+
+    From an activated virtual environment, run:
+
+    ```bash
+    python - <<'PY'
+    import flowcean
+    PY
+    ```
+
+If the command exits without an error, Python can import Flowcean.
+
+## Plotting Backend
+
+Many examples can run headless or write plot files without opening a window. If you want interactive Matplotlib windows, your system may need a GUI backend such as PyQt6.
 
 === "via `uv`"
 
     ```bash
-    uv run python
+    uv add PyQt6
     ```
 
 === "via `pip`"
 
     ```bash
-    . <path-to-venv>
-    python
+    python -m pip install PyQt6
     ```
-
-and try importing the package:
-
-```python
-import flowcean
-```
-
-If no errors occur, the installation was successful.
 
 ## Getting Started
 
-After installation, you can begin using Flowcean in your projects.
-For initial usage, refer to the [New Project Guide](new_project.md) to explore how Flowcean is used for your project.
+After installation, start with the [New Project Guide](new_project.md).

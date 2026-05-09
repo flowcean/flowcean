@@ -1,11 +1,11 @@
 import pickle
 from collections.abc import Callable
 from pickle import PickleBuffer
-from typing import Any, TypeAlias
+from typing import Any
 
 from _typeshed import SupportsWrite
 
-_BufferCallback: TypeAlias = Callable[[PickleBuffer], Any] | None
+type _BufferCallback = Callable[[PickleBuffer], Any] | None
 
 def dump(
     obj: Any,

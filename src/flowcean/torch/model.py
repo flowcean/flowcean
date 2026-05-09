@@ -1,11 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, override
 
 import numpy as np
 import polars as pl
-import torch
-from typing_extensions import override
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    import torch
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.model",
+        missing_dependencies={"torch"},
+    )
 
 from flowcean.core import Model
 
@@ -47,9 +57,9 @@ class PyTorchModel(Model):
                 },
             ).lazy()
 
-        inputs = torch.as_tensor(
+        inputs = torch.as_tensor(  # pyright: ignore[reportPrivateImportUsage]
             collected_inputs.to_numpy(),
-            dtype=torch.float32,
+            dtype=torch.float32,  # pyright: ignore[reportPrivateImportUsage]
         )
         self.module.eval()
         module_device = self._module_device()
@@ -64,7 +74,7 @@ class PyTorchModel(Model):
         prediction_array = np.concatenate(predictions, axis=0)
         return pl.DataFrame(prediction_array, schema=self.output_names).lazy()
 
-    def _module_device(self) -> torch.device:
+    def _module_device(self) -> Any:
         """Determine the device where the wrapped module expects inputs."""
         first_parameter = next(self.module.parameters(), None)
         if first_parameter is not None:
@@ -74,7 +84,7 @@ class PyTorchModel(Model):
         if first_buffer is not None:
             return first_buffer.device
 
-        return torch.device("cpu")
+        return torch.device("cpu")  # pyright: ignore[reportPrivateImportUsage]
 
     def _iter_input_batches(
         self,

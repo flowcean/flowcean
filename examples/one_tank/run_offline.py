@@ -2,13 +2,13 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self, override
 
 import numpy as np
 import polars as pl
 import torch
 from numpy.typing import NDArray
-from typing_extensions import Self, override
 
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
@@ -137,14 +137,14 @@ def main() -> None:
             RegressionTree(max_depth=4),
         ),
     ]:
-        t_start = datetime.now(tz=timezone.utc)
+        t_start = datetime.now(tz=UTC)
         model = learn_offline(
             train,
             learner,
             inputs,
             outputs,
         )
-        delta_t = datetime.now(tz=timezone.utc) - t_start
+        delta_t = datetime.now(tz=UTC) - t_start
         print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
         report = evaluate_offline(

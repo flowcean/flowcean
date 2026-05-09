@@ -1,18 +1,17 @@
 import logging
 import math
-from typing import Literal, TypeAlias, cast
+from typing import Literal, cast, override
 
 import numpy as np
 import polars as pl
 from scipy.interpolate import CubicSpline
-from typing_extensions import override
 
 from flowcean.core import Transform
 from flowcean.polars.is_time_series import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
-InterpolationMethod: TypeAlias = Literal["linear", "cubic"]
+InterpolationMethod = Literal["linear", "cubic"]
 
 
 class Resample(Transform):

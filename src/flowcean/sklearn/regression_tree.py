@@ -1,9 +1,9 @@
 import logging
+from typing import override
 
 import polars as pl
 from numpy.typing import NDArray
 from sklearn.tree import DecisionTreeRegressor, export_graphviz
-from typing_extensions import override
 
 from flowcean.core import (
     LearnerCallback,

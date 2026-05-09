@@ -1,9 +1,9 @@
 from collections.abc import Iterable
 from pathlib import Path
+from typing import override
 
 import polars as pl
 from matplotlib import pyplot as plt
-from typing_extensions import override
 
 from flowcean.core import OfflineEnvironment, Transform
 from flowcean.core.model import Model

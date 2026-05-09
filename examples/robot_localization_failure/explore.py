@@ -5,7 +5,9 @@ import polars as pl
 from custom_transforms.map_image import crop_map_image
 from custom_transforms.particle_cloud_image import particles_to_image
 from custom_transforms.scan_image import scan_to_image
-from dash import Dash, Input, Output, callback, dcc, html
+from dash import Dash, Input, Output, callback, html
+from dash.dcc.Graph import Graph
+from dash.dcc.Input import Input as DccInput
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
 
@@ -134,7 +136,7 @@ app.layout = [
         children="Inspecting Robot Localization Data",
         style={"textAlign": "center"},
     ),
-    dcc.Input(
+    DccInput(
         id="sample_i",
         value=0,
         type="number",
@@ -142,21 +144,21 @@ app.layout = [
         max=n_samples,
         step=1,
     ),
-    dcc.Input(
+    DccInput(
         id="image_width",
         value=100,
         type="number",
         min=2,
         max=1000,
     ),
-    dcc.Input(
+    DccInput(
         id="image_height",
         value=100,
         type="number",
         min=2,
         max=1000,
     ),
-    dcc.Input(
+    DccInput(
         id="width_meters",
         value=15,
         type="number",
@@ -167,25 +169,25 @@ app.layout = [
     html.Div(
         children=[
             html.Div(
-                children=[dcc.Graph(id="full_map_image")],
+                children=[Graph(id="full_map_image")],
                 className="three columns",
             ),
             html.Div(
-                children=[dcc.Graph(id="map_image")],
+                children=[Graph(id="map_image")],
                 className="three columns",
             ),
             html.Div(
-                children=[dcc.Graph(id="scan_image")],
+                children=[Graph(id="scan_image")],
                 className="three columns",
             ),
             html.Div(
-                children=[dcc.Graph(id="particle_image")],
+                children=[Graph(id="particle_image")],
                 className="three columns",
             ),
         ],
         className="row",
     ),
-    dcc.Graph(id="position_error"),
+    Graph(id="position_error"),
 ]
 
 

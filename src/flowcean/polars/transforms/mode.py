@@ -1,9 +1,8 @@
 import logging
 from collections.abc import Iterable
-from typing import cast
+from typing import cast, override
 
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import Transform
 from flowcean.polars.time_series_type import get_time_series_value_type

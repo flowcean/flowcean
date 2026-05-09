@@ -2,13 +2,12 @@ import logging
 import math
 from pathlib import Path
 from statistics import mean, median, stdev
-from typing import Any, cast
+from typing import Any, cast, override
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from midas_palaestrai import ArlDefenderObjective
-from typing_extensions import override
 
 import flowcean.cli
 from flowcean.core import Action, ActiveInterface, Observation

@@ -1,12 +1,12 @@
 import io
 from collections.abc import Sequence
 from pathlib import Path
+from typing import override
 
 import numpy as np
 import torch
 from harl.sac.brain import SACBrain
 from palaestrai.agent.objective import Objective
-from typing_extensions import override
 
 from flowcean.core.learner import ActiveLearner
 from flowcean.core.model import Model

@@ -1,9 +1,9 @@
 import logging
+from typing import override
 
 import polars as pl
 from numpy.typing import NDArray
 from sklearn.ensemble import RandomForestRegressor
-from typing_extensions import override
 
 from flowcean.core import LearnerCallback, create_callback_manager
 from flowcean.core.learner import SupervisedLearner

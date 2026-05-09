@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, final, runtime_checkable
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, Protocol, final, override, runtime_checkable
 
 from flowcean.core.environment.base import Environment
 from flowcean.core.environment.incremental import (

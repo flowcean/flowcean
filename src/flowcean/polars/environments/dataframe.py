@@ -3,13 +3,12 @@ from __future__ import annotations
 from collections.abc import Collection, Iterable
 from itertools import islice
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Self, cast, override
 from urllib.parse import urlparse
 
 import polars as pl
 from ruamel.yaml import YAML
 from tqdm import tqdm
-from typing_extensions import Self, override
 
 from flowcean.core import OfflineEnvironment
 from flowcean.polars.environments.streaming import StreamingOfflineEnvironment

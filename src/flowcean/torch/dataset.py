@@ -1,6 +1,17 @@
 import polars as pl
-from torch import Tensor
-from torch.utils.data import Dataset
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    from torch import Tensor
+    from torch.utils.data import Dataset
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="torch",
+        module="flowcean.torch.dataset",
+        missing_dependencies={"torch"},
+    )
 
 
 class TorchDataset(Dataset[tuple[Tensor, Tensor]]):

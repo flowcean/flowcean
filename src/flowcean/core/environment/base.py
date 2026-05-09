@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, final, runtime_checkable
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Protocol, Self, final, runtime_checkable
 
 from flowcean.core.named import Named
 from flowcean.core.transform import Identity, Transform

@@ -2,9 +2,9 @@ import logging
 import random
 from copy import copy
 from statistics import mean, median, stdev
+from typing import override
 
 import numpy as np
-from typing_extensions import override
 
 import flowcean.cli
 from flowcean.core import (

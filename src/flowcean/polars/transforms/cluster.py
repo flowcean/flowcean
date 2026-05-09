@@ -1,10 +1,9 @@
 import logging
 from collections.abc import Iterable
-from typing import Any, Protocol
+from typing import Any, Protocol, cast, override
 
 import numpy.typing as npt
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import Transform
 
@@ -53,7 +52,10 @@ class Cluster(Transform):
             data = data.collect()
 
         cluster_features = data.to_numpy(writable=True)
-        labels = self.clusterer.predict(cluster_features)
+        labels = cast(
+            "Iterable[Any]",
+            self.clusterer.predict(cluster_features),
+        )
         data = data.with_columns(
             pl.Series(self.cluster_feature_name, labels),
         )

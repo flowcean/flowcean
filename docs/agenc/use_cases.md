@@ -37,6 +37,6 @@ In the worst case, some units or parts of the grid have to be disconnected but, 
 
 Monitoring the state of the power grid with AI can help the operator to keep an overview what is going on in the power grid.
 With Flowcean, an Reinforcement Learning agent will be developed that utilizes a power grid simulation to monitor the power grid state.
-The future actions of the RL agent will be used as recommmendations for an operator.
+The future actions of the RL agent will be used as recommendations for an operator.
 The operator can decide which of those actions will be applied.
 With those information, the power grid environment of the agent can be updated and the process repeated.

@@ -50,12 +50,9 @@ import logging
 
 import flowcean.cli
 import polars as pl
-from flowcean.environments.dataset import Dataset
-from flowcean.environments.train_test_split import TrainTestSplit
-from flowcean.learners.linear_regression import LinearRegression
-from flowcean.metrics import MeanAbsoluteError, MeanSquaredError
-from flowcean.strategies.incremental import learn_incremental
-from flowcean.strategies.offline import evaluate_offline
+from flowcean.core import evaluate_offline, learn_incremental
+from flowcean.polars import DataFrame, TrainTestSplit
+from flowcean.sklearn import LinearRegression, MeanAbsoluteError, MeanSquaredError
 
 logger = logging.getLogger(__name__)
 
@@ -65,13 +62,13 @@ N = 1_000
 def main() -> None:
     flowcean.cli.initialize()
 
-    data = Dataset(
+    data = DataFrame(
         pl.DataFrame(
             {
                 "x": pl.arange(0, N, eager=True).cast(pl.Float32) / N,
                 "y": pl.arange(N, 0, -1, eager=True).cast(pl.Float32) / N,
             },
-        ),
+        ).lazy(),
     )
     data.load()
     train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(data)

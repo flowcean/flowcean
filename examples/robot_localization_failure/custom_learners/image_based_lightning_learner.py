@@ -4,14 +4,15 @@ import logging
 import os
 import platform
 from collections.abc import Callable
+from typing import override
 
 import lightning
+import numpy as np
 import polars as pl
 import torch
 from feature_images import FeatureImagesData, InMemoryCaching
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from torch.utils.data import DataLoader, Dataset
-from typing_extensions import override
 
 from flowcean.core import Model, SupervisedLearner
 
@@ -150,6 +151,6 @@ class ImageBasedPyTorchModel(Model):
                 preds = (
                     outputs > self.binary_classification_threshold
                 ).float()
-                predictions.append(preds)
-        predictions = torch.cat(predictions, dim=0).numpy()
+                predictions.append(preds.detach().cpu().numpy())
+        predictions = np.concatenate(predictions, axis=0)
         return pl.DataFrame(predictions, schema=self.output_names).lazy()

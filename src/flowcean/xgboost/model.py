@@ -1,6 +1,18 @@
+from typing import override
+
 import polars as pl
-from typing_extensions import override
-from xgboost import XGBClassifier, XGBRegressor
+
+from flowcean._optional import raise_for_missing_optional_dependency
+
+try:
+    from xgboost import XGBClassifier, XGBRegressor
+except ModuleNotFoundError as error:
+    raise_for_missing_optional_dependency(
+        error,
+        extra="xgboost",
+        module="flowcean.xgboost.model",
+        missing_dependencies={"xgboost"},
+    )
 
 from flowcean.core.model import Model
 from flowcean.core.transform import Identity

@@ -17,7 +17,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Buildah
         run: |
           sudo apt-get update
@@ -46,7 +46,7 @@ jobs:
           registry: ${{ env.REGISTRY }}/${{ github.repository }}
       - name: Generate artifact attestation
         id: attest
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}

@@ -1,9 +1,9 @@
 import logging
 from math import nan
+from typing import override
 
 import polars as pl
 from scipy.spatial.transform import Rotation
-from typing_extensions import override
 
 from flowcean.core.transform import Transform
 

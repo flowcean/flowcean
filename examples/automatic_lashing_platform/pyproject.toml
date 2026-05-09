@@ -1,9 +1,9 @@
 [project]
 name = "automatic-lashing-platform"
 version = "0.1.0"
-requires-python = ">=3.10, <4.0"
+requires-python = ">=3.12, <4.0"
 dependencies = [
-    "flowcean",
+    "flowcean[torch,xgboost]",
     "matplotlib",
     "graphviz",
 ]

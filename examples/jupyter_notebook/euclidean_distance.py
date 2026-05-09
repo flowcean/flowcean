@@ -1,8 +1,7 @@
 import logging
-from typing import Any
+from typing import Any, override
 
 import polars as pl
-from typing_extensions import override
 
 from flowcean.core import Metric
 

@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from typing import Generic, TypeVar, cast
+from typing import Self, cast, override
 
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 from scipy.integrate import solve_ivp
-from typing_extensions import Self, override
 
 from flowcean.core import IncrementalEnvironment
 
@@ -51,10 +50,7 @@ class OdeState(ABC):
         """
 
 
-X = TypeVar("X", bound=OdeState)
-
-
-class OdeSystem(ABC, Generic[X]):
+class OdeSystem[X: OdeState](ABC):
     r"""System governed by an ordinary differential equation.
 
     This class represents a continuous system. The system is defined by a
@@ -105,10 +101,10 @@ class OdeSystem(ABC, Generic[X]):
         """
 
     def step(self, dt: float) -> tuple[Sequence[float], Sequence[X]]:
-        """Step the mode forward in time.
+        """Step the environment forward in time.
 
-        Step the mode forward in time by integrating the differential equation
-        for a time step of dt.
+        Step the environment forward in time by integrating the
+        differential equation for a time step of dt.
 
         Args:
             dt: Time step.
@@ -134,7 +130,7 @@ class OdeSystem(ABC, Generic[X]):
         return ts, states
 
 
-class OdeEnvironment(IncrementalEnvironment, Generic[X]):
+class OdeEnvironment[X: OdeState](IncrementalEnvironment):
     """Environment governed by an ordinary differential equation.
 
     This environment integrates an OdeSystem to generate a sequence of states.

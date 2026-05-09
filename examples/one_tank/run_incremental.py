@@ -1,12 +1,12 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self, override
 
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 from river import tree
-from typing_extensions import Self, override
 
 import flowcean.cli
 from flowcean.core import evaluate_offline, learn_incremental
@@ -130,14 +130,14 @@ def main() -> None:
         model=tree.HoeffdingTreeRegressor(grace_period=50, max_depth=5),
     )
 
-    t_start = datetime.now(tz=timezone.utc)
+    t_start = datetime.now(tz=UTC)
     model = learn_incremental(
         train,
         learner,
         inputs,
         outputs,
     )
-    delta_t = datetime.now(tz=timezone.utc) - t_start
+    delta_t = datetime.now(tz=UTC) - t_start
     print(f"Learning took {np.round(delta_t.microseconds / 1000, 1)} ms")
 
     report = evaluate_offline(

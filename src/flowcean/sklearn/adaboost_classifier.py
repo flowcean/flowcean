@@ -1,9 +1,9 @@
 import logging
+from typing import override
 
 import numpy as np
 import polars as pl
 from sklearn.ensemble import AdaBoostClassifier
-from typing_extensions import override
 
 from flowcean.core import Model, SupervisedLearner
 from flowcean.utils import get_seed
@@ -27,7 +27,6 @@ class AdaBoost(SupervisedLearner):
         *,
         n_estimators: int = 50,
         learning_rate: float = 1.0,
-        algorithm: str = "deprecated",
         random_state: int | None = None,
         threshold: float = 0.5,
     ) -> None:
@@ -39,7 +38,6 @@ class AdaBoost(SupervisedLearner):
             estimator=estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
-            algorithm=algorithm,
             random_state=random_state or get_seed(),
         )
         self.threshold = threshold

@@ -42,7 +42,12 @@ class ComplexCNN(lightning.LightningModule):
         )
 
         # Compute flattened size dynamically
-        dummy_input = torch.zeros(1, 1, image_size, image_size)
+        dummy_input = torch.zeros(  # pyright: ignore[reportPrivateImportUsage]
+            1,
+            1,
+            image_size,
+            image_size,
+        )
         conv_output = self.conv_layers(dummy_input)
         flattened_size = conv_output.view(1, -1).size(1)  # 128 * 4 * 4 = 2048
 
@@ -61,7 +66,7 @@ class ComplexCNN(lightning.LightningModule):
         x = self.conv_layers(x)
         x = x.view(x.size(0), -1)  # Flatten
         x = self.fc_layers(x)
-        return torch.sigmoid(x)
+        return x.sigmoid()
 
     def training_step(
         self,

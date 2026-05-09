@@ -88,14 +88,13 @@ def evaluate_offline(
     Returns:
         The evaluation report.
     """
-    if not isinstance(models, Iterable):
-        models = [models]
+    model_list = list(models) if isinstance(models, Iterable) else [models]
     data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
     entries: dict[str, ReportEntry] = {}
 
-    for model in models:
+    for model in model_list:
         predictions = model.predict(input_features)
 
         entries[model.name] = ReportEntry(
