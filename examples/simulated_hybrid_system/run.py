@@ -14,7 +14,7 @@ from flowcean.hydra import (
     HyDRALearner,
     HyDRAModel,
     HyDRATraceSchema,
-    LogCallback,
+    PlotCallback,
     SelectorFeatureConfig,
     StateTraceComparison,
     compare_state_traces,
@@ -126,18 +126,20 @@ def main() -> None:
         derivative_names=("dx",),
     )
     schema = HyDRATraceSchema(time="t", state=("x",), derivative=("dx",))
+    callback = PlotCallback(reference_trace, dims=[0])
     learner = HyDRALearner(
         regressor_factory=lambda: PySRLearner(
             model=PySRRegressor(
+                niterations=10,
                 # random_state=flowcean.utils.get_seed(),
             ),
         ),
         threshold=1e-2,
         selector_learner=HybridDecisionTreeLearner(
-            SelectorFeatureConfig(input_features=("x",)),
+            SelectorFeatureConfig(state_features=("x",)),
             random_state=7,
         ),
-        callback=LogCallback(),
+        callback=callback,
         trace_schema=schema,
     )
 

@@ -6,12 +6,13 @@ __all__ = (
     "HybridDecisionTreeModel",
     "LogCallback",
     "ModePredictionResult",
+    "PlotCallback",
     "SelectorFeatureConfig",
     "StateTraceComparison",
     "compare_state_traces",
 )
 
-from .callbacks import LogCallback
+from .callbacks import LogCallback, PlotCallback
 from .learner import HyDRALearner
 from .model import HyDRAModel
 from .schema import HyDRATraceSchema
