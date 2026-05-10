@@ -8,6 +8,6 @@ Examples of CPS include measuring devices, sorting machines, and robots.
 These are networked computer systems (_cyber_) that interact directly with the environment (_physical_) through sensors and actuators, following the logic of input, computation, and output.
 
 The goal of the AGenC project is to create a toolkit with standardized methods and interoperable technology solutions for modeling CPS across various application areas.
-AGenC stands for *A*utomatic *Gen*eration of Models for Prediction, Testing, and Monitoring of *C*yber-Physical Systems.
+AGenC stands for Automatic Generation of Models for Prediction, Testing, and Monitoring of Cyber-Physical Systems.
 
 This work is funded by BMBF project AGenC no. 16IS22047A.

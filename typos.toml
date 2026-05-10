@@ -1,4 +1,5 @@
 [default]
+extend-words = { CPY = "CPY" }
 extend-ignore-words-re = [
   "MAPE", # MeanAveragePercentageError
   "TPE",  # TreeParzenEstimator
