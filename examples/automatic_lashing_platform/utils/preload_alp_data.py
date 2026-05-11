@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def main() -> None:
+def preload_alp_data() -> None:
     flowcean.cli.initialize()
     time_start = time.time()
     data = ChainedOfflineEnvironments(
@@ -47,4 +47,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    preload_alp_data()

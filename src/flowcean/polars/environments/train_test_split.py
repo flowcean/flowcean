@@ -42,11 +42,14 @@ class TrainTestSplit:
     def split(
         self,
         environment: OfflineEnvironment,
+        seed: int | None = None,
     ) -> tuple[DataFrame, DataFrame]:
         """Split the data into train and test sets.
 
         Args:
             environment: The environment to split.
+            seed: Seed used when shuffling. If omitted, a seed is drawn from
+                the shared flowcean RNG for backward compatibility.
         """
         logger.info("Splitting data into train and test sets")
         data = environment.observe().collect(engine="streaming")
@@ -55,7 +58,7 @@ class TrainTestSplit:
             data,
             lengths=[pivot, len(data) - pivot],
             shuffle=self.shuffle,
-            seed=get_seed(),
+            seed=seed if seed is not None else get_seed(),
         )
         return DataFrame(splits[0].lazy()), DataFrame(splits[1].lazy())
 
