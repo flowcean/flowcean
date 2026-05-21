@@ -111,17 +111,28 @@ def main() -> None:
         learning_rate=0.1,
         random_state=flowcean.utils.random.get_seed(),
     )
+
+    inputs = [
+        "^p_accumulator_.*$",
+        "active_valve_count",
+        "T",
+    ]
+
+    outputs = [
+        "container_weight",
+    ]
+
     model = learn_offline(
         train_env,
         learner,
-        ["^p_accumulator_[0-9]*$"],
-        ["container_weight"],
+        inputs,
+        outputs,
     )
     report = evaluate_offline(
         model,
         test_env,
-        ["^p_accumulator_[0-9]*$"],
-        ["container_weight"],
+        inputs,
+        outputs,
         [
             MeanAbsoluteError(),
             MeanSquaredError(),
