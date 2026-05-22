@@ -55,8 +55,8 @@ cT_modelrm = polymodel(
 ###
 
 def turbine(
-    damping_pitch: float = 0.7,
-    freq_pitch: float = 6.2832,
+    pitch_damping: float = 0.7,
+    pitch_freq: float = 6.2832,
     rho: float = 1.225,
     rotor_radius: float = 63.0,
     gearbox_ratio: float = 1/97,
@@ -91,22 +91,22 @@ def turbine(
     """Create a wind turbine with torque and pitch control.
 
     Args:
-        damping_pitch: 
-        freq_pitch:
-        rho:
+        pitch_damping: damping factor of the pitch actuator
+        pitch_freq: natural frequency of the pitch actuator
+        rho: air density
         rotor_radius:
         gearbox_ratio:
-        cTe:
-        mTe:
-        kTe:
-        xT0:
+        cTe: structural damping
+        mTe: tower equivalent model mass
+        kTe: bending stiffness
+        xT0: static tower top position
         inertia:
-        omega_g_rated
-        pitch_kp:
-        pitch_ti:
-        pitch_antiwindup:
-        pitch_min:
-        pitch_max:
+        omega_g_rated: rated generator speed target (rad/s)
+        pitch_kp: proportional gain for the pitch controller
+        pitch_ti: integral time for the pitch controller
+        pitch_antiwindup: 
+        pitch_min: minimal pitch angle (rad)
+        pitch_max:maximal pitch angle (rad)
         torque_vs_rtgnsp:
         torque_vs_rgn3mp:
         torque_vs_rtpwr:
@@ -119,7 +119,7 @@ def turbine(
         torque_vs_slope25:
             
     Returns:
-        HybridSystem with time-dependent guard surfaces.
+        HybridSystem of a wind turbine with torque and pitch control.
     """
     
     """ helper functions """
@@ -209,7 +209,7 @@ def turbine(
                 dx, # x
                 (Fa(params["rho"], params["rotor_radius"], theta, wind_speed, omega, dx) - params["cTe"] * dx - params["kTe"]*(x - params["xT0"])) / params["mTe"], # dx from Schuler et al. Eq (1b)
                 dtheta, # theta
-                -2*params["damping_pitch"] * params["freq_pitch"] * dtheta - params["freq_pitch"]**2 * (theta - target_pitch), # dtheta: 2nd order lag Eq. (3) in Schuler et al.
+                -2*params["pitch_damping"] * params["pitch_freq"] * dtheta - params["pitch_freq"]**2 * (theta - target_pitch), # dtheta: 2nd order lag Eq. (3) in Schuler et al.
                 (params["pitch_kp"]*error-params["pitch_antiwindup"]*target_pitch_diff)/params["pitch_ti"], # pitch_error_integral
             ],
             dtype=float,
@@ -229,8 +229,8 @@ def turbine(
         initial_location=operation,
         initial_state=initial_state,
         parameters={
-            "damping_pitch": damping_pitch,
-            "freq_pitch": freq_pitch,
+            "pitch_damping": pitch_damping,
+            "pitch_freq": pitch_freq,
             "rho": rho,
             "rotor_radius": rotor_radius,
             "gearbox_ratio": gearbox_ratio,
