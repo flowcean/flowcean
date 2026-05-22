@@ -103,6 +103,7 @@ def evaluate_offline(
                 for metric in metrics
             },
         )
+
     return Report(entries)
 
 

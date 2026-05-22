@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Literal, Protocol, cast
 
 import numpy as np
 import polars as pl
@@ -13,6 +13,8 @@ from rich.table import Table
 if TYPE_CHECKING:
     from great_tables import GT
     from rich.style import StyleType
+
+    from flowcean.core.model import Model
 
 
 class Reportable(Protocol):
@@ -134,6 +136,74 @@ class Report(dict[str, ReportEntry]):
                 expand=False,
             )
             console.print(panel)
+
+    def select_best_model(
+        self,
+        metric_name: str,
+        models_by_name: dict[str, Model],
+        *,
+        mode: Literal["max", "min"] = "max",
+        nested_aggregation: Literal["mean", "max", "min"] = "mean",
+    ) -> Model:
+        """Select the best model from the report based on a metric.
+
+        Args:
+            metric_name: Name of the metric to select by.
+            models_by_name: Dictionary mapping model names to Model instances.
+            mode: Either "max" to maximize the metric or "min" to minimize it.
+            nested_aggregation: How to aggregate nested metrics (e.g.,
+                per-class scores). Options are "mean" (arithmetic mean), "max"
+                (maximum value), or "min" (minimum value).
+
+        Returns:
+            The Model instance with the best metric value.
+
+        Raises:
+            ValueError: If the metric is not found for any model in the report,
+                or if the best model name is not in models_by_name,
+                or if the report is empty.
+        """
+        if not self:
+            msg = "Report is empty"
+            raise ValueError(msg)
+
+        def get_score(model_name: str) -> float:
+            entry = self[model_name]
+            if metric_name not in entry:
+                msg = (
+                    f"Model '{model_name}' does not have "
+                    f"metric '{metric_name}'"
+                )
+                raise ValueError(msg)
+
+            value = entry[metric_name]
+            if isinstance(value, Mapping):
+                value = cast("Mapping[str, Reportable]", value)
+                vals = [float(str(v)) for v in value.values()]
+                if not vals:
+                    msg = (
+                        f"Model '{model_name}' has empty nested "
+                        f"metric '{metric_name}'"
+                    )
+                    raise ValueError(msg)
+
+                # Apply chosen aggregation method
+                if nested_aggregation == "mean":
+                    return sum(vals) / len(vals)
+                if nested_aggregation == "max":
+                    return max(vals)
+                # min
+                return min(vals)
+            return float(str(value))
+
+        factor = 1 if mode == "max" else -1
+        best_name = max(self.keys(), key=lambda name: factor * get_score(name))
+
+        if best_name not in models_by_name:
+            msg = f"Model '{best_name}' not found in models_by_name dictionary"
+            raise ValueError(msg)
+
+        return models_by_name[best_name]
 
 
 def _format_value(value: Reportable) -> str:
