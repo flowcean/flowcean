@@ -3,7 +3,13 @@ from __future__ import annotations
 import pickle
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Protocol, final, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    BinaryIO,
+    Protocol,
+    final,
+    runtime_checkable,
+)
 
 from .named import Named
 from .transform import Identity, Transform
