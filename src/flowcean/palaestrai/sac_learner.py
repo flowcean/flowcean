@@ -109,8 +109,8 @@ class SACLearner(ActiveLearner):
 
         self.brain = SACBrain(**self.brain_params)
         self.brain._seed = 0  # noqa: SLF001
-        self.brain._sensors = convert_to_sensor_information(self.observation)  # noqa: SLF001
-        self.brain._actuators = convert_to_actuator_information(self.action)  # noqa: SLF001
+        self.brain.sensors = convert_to_sensor_information(self.observation)
+        self.brain.actuators = convert_to_actuator_information(self.action)
         self.brain.setup()
 
         self.model = SACModel(
