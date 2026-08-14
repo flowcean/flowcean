@@ -16,6 +16,7 @@ from .switched_linear import switched_linear
 from .tank_valves import tank_valves
 from .thermostat import thermostat, thermostat_target_stream
 from .thermostat_delay import thermostat_delay, thermostat_cooling_stream
+from .thermostat_varying_delay import thermostat_varying_delay, thermostat_variance_stream
 from .time_forced_switch import time_forced_switch
 from .time_varying_event_surface import (
     time_varying_event_surface,
@@ -56,10 +57,18 @@ def registry() -> dict[str, BenchmarkSpec]:
         BenchmarkSpec(
             name="Thermostat with Delay",
             factory=thermostat_delay,
-            tags=("hysteresis", "threshold", "switching"),
+            tags=("hysteresis", "threshold", "switching", "delay"),
             description="Two-location thermostat with temperature thresholds and delay.",
             t_span=(0.0, 30.0),
             input_stream=thermostat_cooling_stream,
+        ),
+        BenchmarkSpec(
+            name="Thermostat with Varying Delay",
+            factory=thermostat_varying_delay,
+            tags=("hysteresis", "threshold", "switching", "delay"),
+            description="Two-location thermostat with temperature thresholds and varying delay.",
+            t_span=(0.0, 30.0),
+            input_stream=thermostat_variance_stream,
         ),
         BenchmarkSpec(
             name="Hybrid Oscillator",
@@ -146,6 +155,12 @@ def all_specs() -> Sequence[BenchmarkSpec]:
     """Return all benchmarks in deterministic order."""
     return list(registry().values())
 
+def delay_specs() -> Sequence[BenchmarkSpec]:
+    """Return all delay benchmarks."""
+    return [
+        spec for spec in all_specs()
+        if "delay" in spec.tags
+    ]
 
 __all__ = [
     "BenchmarkSpec",
@@ -163,6 +178,7 @@ __all__ = [
     "tank_valves",
     "thermostat",
     "thermostat_delay",
+    "thermostat_varying_delay",
     "thermostat_target_stream",
     "time_forced_switch",
     "time_varying_event_surface",
