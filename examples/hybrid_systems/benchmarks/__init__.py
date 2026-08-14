@@ -15,6 +15,7 @@ from .relay_integrator import relay_integrator
 from .switched_linear import switched_linear
 from .tank_valves import tank_valves
 from .thermostat import thermostat, thermostat_target_stream
+from .thermostat_delay import thermostat_delay, thermostat_cooling_stream
 from .time_forced_switch import time_forced_switch
 from .time_varying_event_surface import (
     time_varying_event_surface,
@@ -51,6 +52,14 @@ def registry() -> dict[str, BenchmarkSpec]:
             description="Two-location thermostat with temperature thresholds.",
             t_span=(0.0, 10.0),
             input_stream=thermostat_target_stream,
+        ),
+        BenchmarkSpec(
+            name="Thermostat with Delay",
+            factory=thermostat_delay,
+            tags=("hysteresis", "threshold", "switching"),
+            description="Two-location thermostat with temperature thresholds and delay.",
+            t_span=(0.0, 30.0),
+            input_stream=thermostat_cooling_stream,
         ),
         BenchmarkSpec(
             name="Hybrid Oscillator",
@@ -153,6 +162,7 @@ __all__ = [
     "switched_linear",
     "tank_valves",
     "thermostat",
+    "thermostat_delay",
     "thermostat_target_stream",
     "time_forced_switch",
     "time_varying_event_surface",
