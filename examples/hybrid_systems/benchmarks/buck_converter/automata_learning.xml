@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" math="SpaceEx" version="0.2">
+   <component id="ExampleSystems/BuckConverter/automata_learning_sys">
+      <param controlled="true" d1="1" d2="1" dynamics="any" local="false" name="x1" type="real"/>
+      <param controlled="true" d1="1" d2="1" dynamics="any" local="false" name="x2" type="real"/>
+      <location id="1" name="loc1">
+         <flow>x1' == 0.9974 * x1 - 0.003572 * x2 + 0.00346 &amp;
+ x2' == 0.004823 * x1 + 0.9995 * x2 + 0.00000007171</flow>
+      </location>
+      <location id="2" name="loc2">
+         <flow>x1' == 0.9981 * x1 - 0.003797 * x2 + 0.0001616 &amp;
+ x2' == 0.004824 * x1 + 0.9995 * x2 - 0.000000000000000009985</flow>
+      </location>
+      <location id="3" name="loc3">
+         <flow>x1' == 0.9379 * x1 + 0.00009383 * x2 - 0.0001309 &amp;
+ x2' == 0.0001547 * x1 + 0.9995 * x2 + 0.0000002947</flow>
+      </location>
+      <transition asap="false" bezier="false" source="1" target="2" timedriven="false">
+         <guard>-0.004985 * x1 - 2.025 * x2 + 1.0 &lt; 0.0</guard>
+         <labelposition/>
+         <middlepoint/>
+      </transition>
+      <transition asap="false" bezier="false" source="2" target="3" timedriven="false">
+         <guard>898.1 * x1 - 3.278 * x2 + 1.0 &lt; 0.0</guard>
+         <labelposition/>
+         <middlepoint/>
+      </transition>
+      <transition asap="false" bezier="false" source="3" target="1" timedriven="false">
+         <guard>-0.01239 * x1 - 2.059 * x2 + 1.0 &gt; 0.0</guard>
+         <labelposition/>
+         <middlepoint/>
+      </transition>
+   </component>
+   <component id="ExampleSystems/BuckConverter/automata_learning_net">
+      <param controlled="true" d1="1" d2="1" dynamics="any" local="false" name="x1" type="real"/>
+      <param controlled="true" d1="1" d2="1" dynamics="any" local="false" name="x2" type="real"/>
+      <bind as="ExampleSystems/BuckConverter/automata_learning" component="ExampleSystems/BuckConverter/automata_learning_sys">
+         <map key="x1">x1</map>
+         <map key="x2">x2</map>
+      </bind>
+   </component>
+</sspaceex>
