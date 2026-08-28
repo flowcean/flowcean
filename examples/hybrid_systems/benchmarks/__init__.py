@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from flowcean.ode import HybridSystem, InputStream
 
 from .bouncing_ball import bouncing_ball
+from .buck_converter import buck_converter
 from .hybrid_oscillator import hybrid_oscillator
 from .impact_oscillator import impact_input_stream, impact_oscillator
 from .mode_cycle import mode_cycle
@@ -128,6 +129,15 @@ def registry() -> dict[str, BenchmarkSpec]:
             ),
             t_span=(0.0, 10.0),
         ),
+        BenchmarkSpec(
+            name="Buck Converter (SpaceEx)",
+            factory=buck_converter,
+            tags=("spaceex", "linear", "multimode"),
+            description=(
+                "Three-location buck converter converted from SpaceEx."
+            ),
+            t_span=(0.0, 10.0),
+        ),
     ]
 
     return {spec.name: spec for spec in specs}
@@ -142,6 +152,7 @@ __all__ = [
     "BenchmarkSpec",
     "all_specs",
     "bouncing_ball",
+    "buck_converter",
     "hybrid_oscillator",
     "impact_input_stream",
     "impact_oscillator",
