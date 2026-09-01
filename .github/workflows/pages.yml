@@ -33,9 +33,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
-        with:
-          prune-cache: false
-          cache-local-path: "${{ runner.workspace }}/.cache/uv"
 
       - name: Set up just
         uses: extractions/setup-just@v4

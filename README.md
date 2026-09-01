@@ -31,7 +31,7 @@ See the [installation guide](https://flowcean.me/getting_started/installation/) 
 
 ## Documentation
 
-Flowcean documentation is available at [flowcean.me](https://flowcean.me).
+Flowcean documentation is available at [flowcean.me](https://flowcean.me). User-visible changes are recorded in the [changelog](https://github.com/flowcean/flowcean/blob/main/CHANGELOG.md).
 
 ## Contributing
 

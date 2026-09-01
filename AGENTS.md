@@ -1,14 +1,14 @@
 # AGENTS.md
 
 ## Workflow
-- Use `uv` and `just` as the source of truth. CI runs `just check`, `just test`, `just docs`, and selected `just examples-<name>` targets.
+- Use `uv` and `just` as the source of truth. CI runs `just check`, `just test`, `just package`, `just docs`, and selected `just examples-<name>` targets.
 - `just check` = `uv lock --locked`, `uv run pre-commit run --all-files`, `uv run --all-packages --all-extras basedpyright`, `uv run deptry src`.
 - `just test` = `uv run python -m pytest tests --cov --cov-config=pyproject.toml`.
 - Focused test: `uv run pytest tests/path/test_file.py -v` or `uv run pytest tests/path/test_file.py::test_name -v`.
 - Focused example: `uv run --directory ./examples/<name>/ run.py`. Do not assume every workspace example also has a `just examples-<name>` target; `passive_circuit` does not.
 
 ## CI And Generated Outputs
-- PR CI has four jobs in `.github/workflows/ci.yml`: checks, tests, docs, and an examples matrix.
+- PR CI has five jobs in `.github/workflows/ci.yml`: checks, tests, package, docs, and an examples matrix.
 - `just docs` requires JDK 21 and Maven. It runs `mvn javadoc:javadoc -q -f java/AutomataLearner/pom.xml`, replaces `docs/examples/java-automata/`, then runs `uv run mkdocs build --strict`.
 - Example CI pulls DVC data first: `uv run dvc pull --verbose --recursive examples/<name>` before running the example. Local runs that depend on tracked example data need the same prep.
 - Do not hand-edit `src/flowcean/grpc/_generated/*`; regenerate Python and Java stubs with `just generate-proto` from `src/flowcean/grpc/proto/learner.proto`.
