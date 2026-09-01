@@ -8,6 +8,10 @@ on:
   merge_group:
     types: [checks_requested]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Checks
@@ -20,9 +24,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
-        with:
-          prune-cache: false
-          cache-local-path: "${{ runner.workspace }}/.cache/uv"
 
       - name: Set up just
         uses: extractions/setup-just@v4
@@ -41,15 +42,30 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
-        with:
-          prune-cache: false
-          cache-local-path: "${{ runner.workspace }}/.cache/uv"
 
       - name: Set up just
         uses: extractions/setup-just@v4
 
       - name: Run tests
         run: just test
+
+  package:
+    name: Package
+    runs-on:
+      - self-hosted
+      - itl
+    steps:
+      - name: Check out
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up just
+        uses: extractions/setup-just@v4
+
+      - name: Build package distributions
+        run: just package
 
   docs:
     name: Documentation
@@ -69,9 +85,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
-        with:
-          prune-cache: false
-          cache-local-path: "${{ runner.workspace }}/.cache/uv"
 
       - name: Set up just
         uses: extractions/setup-just@v4
@@ -95,9 +108,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
-        with:
-          prune-cache: false
-          cache-local-path: "${{ runner.workspace }}/.cache/uv"
 
       - name: Set up just
         uses: extractions/setup-just@v4
@@ -105,7 +115,7 @@ jobs:
       - name: Set up DVC
         run: |
           uv run dvc --version
-          uv run dvc config cache.dir ${{ runner.workspace }}/.cache/dvc
+          uv run dvc config cache.dir ${{ github.workspace }}/../.cache/dvc
 
       - name: DVC pull
         run: |

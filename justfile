@@ -23,6 +23,11 @@ test:
   @echo "🚀 Testing code: Running pytest"
   @uv run python -m pytest tests --cov --cov-config=pyproject.toml
 
+package:
+  @echo "🚀 Building package distributions"
+  @rm -rf dist
+  @uv build --no-sources
+
 docs:
   @echo "🚀 Building documentation..."
   @echo "   - Running javadoc"
