@@ -60,10 +60,10 @@ from flowcean.polars import (DataFrame, Filter, Flatten, Lambda, Resample, Selec
 data = DataFrame.from_parquet("path/to/dataset.parquet")
   | Lambda(lambda df: df.limit(50_000)) # Use a subset of the data for faster training
   | Select([
-      "p_accumulator",
-      "T",
-      "active_valve_count",
-      "container_weight"
+        "p_accumulator",
+        "container_weight",
+        "active_valve_count",
+        "T",
   ])                                    # Select the relevant source and target features
   | Filter("active_valve_count > 0")    # Filter out samples where no valves are active
   | Resample(0.25)                      # Downsample time series features to 4 Hz to reduce dimensionality
@@ -80,10 +80,10 @@ Then split the data into a test and a training set.
 ```python
 from flowcean.polars import TrainTestSplit
 
-train_env, test_env = TrainTestSplit(
-    ratio=0.8,
-    shuffle=True,
-).split(data)
+train_env, test_env = TrainTestSplit(ratio=0.8, shuffle=True).split(
+    data,
+    seed=seed,
+)
 ```
 
 Next, setup a gradient boosted regression learner and define the input and target features.
@@ -92,9 +92,10 @@ Next, setup a gradient boosted regression learner and define the input and targe
 from flowcean.xgboost import XGBoostRegressorLearner
 
 learner = XGBoostRegressorLearner(
-    n_estimators=10,              # Use 10 boosting rounds
-    max_depth=20,                 # Allow for deep trees to capture complex relationships
-    objective="reg:squarederror", # Aim for minimizing the mean squared error
+    n_estimators=40,               # Use 40 boosting rounds
+    max_depth=30,                  # Allow for deep trees to capture complex
+    learning_rate=0.1,
+    random_state=flowcean.utils.random.get_seed(),   # Use seed for reproducible results
 )
 
 inputs = [
@@ -133,7 +134,11 @@ report = evaluate_offline(
     test_env,
     inputs,
     outputs,
-    [MeanAbsoluteError(), MeanSquaredError()],
+    [
+        MeanAbsoluteError(),
+        MeanSquaredError(),
+        MeanAbsolutePercentageError(),
+    ],
 )
 
 print(report)
