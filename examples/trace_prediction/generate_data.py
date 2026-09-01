@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
-from flowcean.ode import (
+from flowcean.hybrid import (
     ContinuousDynamics,
     CrossingDirection,
     EventSurface,

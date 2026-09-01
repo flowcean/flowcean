@@ -1,20 +1,20 @@
 # Hybrid Systems Gallery
 
-This example renders the registered hybrid-system benchmark gallery and prints a short summary for each benchmark.
+This example simulates the registered hybrid-system benchmarks, prints a concise summary for each system, and renders the results as a gallery.
 
-Run the gallery from the repository root:
+Run it from the repository root:
 
 ```bash
 uv run --directory ./examples/hybrid_systems python run.py
 ```
 
-The rendered gallery is written to `examples/hybrid_systems/outputs/benchmarks.png`.
+The command writes `examples/hybrid_systems/outputs/benchmarks.png`.
 
-You can also import the registry and simulate individual benchmarks directly:
+The canonical benchmark registry is available from `flowcean.hybrid.benchmarks`:
 
 ```python
-from examples.hybrid_systems.benchmarks import registry
-from flowcean.ode import simulate
+from flowcean.hybrid import simulate
+from flowcean.hybrid.benchmarks import registry
 
 spec = registry()["Thermostat"]
 trace = simulate(

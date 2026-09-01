@@ -4,11 +4,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from pysr import PySRRegressor
-from system import thermostat, thermostat_target_stream
 
 import flowcean.cli
 import flowcean.utils
-from flowcean.hydra import (
+from flowcean.hybrid import (
     HybridDecisionTreeLearner,
     HybridDecisionTreeModel,
     HyDRALearner,
@@ -17,18 +16,20 @@ from flowcean.hydra import (
     PlotCallback,
     SelectorFeatureConfig,
     StateTraceComparison,
-    compare_state_traces,
-)
-from flowcean.ode import (
     Trace,
+    compare_state_traces,
     plot_trace,
     simulate,
     trace_to_polars,
 )
+from flowcean.hybrid.benchmarks.thermostat import (
+    thermostat,
+    thermostat_target_stream,
+)
 from flowcean.pysr import PySRLearner
 
 EXAMPLE_SEED = 42
-HYDRA_LOGGER = "flowcean.hydra.learner"
+HYDRA_LOGGER = "flowcean.hybrid.hydra.learner"
 OUTPUT_DIR = Path("outputs")
 
 

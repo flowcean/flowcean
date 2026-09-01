@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from flowcean.ode import (
+from flowcean.hybrid import (
     ContinuousDynamics,
     CrossingDirection,
     EventSurface,

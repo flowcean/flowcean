@@ -14,12 +14,8 @@ mpl.use("Agg")
 
 import matplotlib.pyplot as plt
 
-try:
-    from .benchmarks import BenchmarkSpec, all_specs
-except ImportError:
-    from benchmarks import BenchmarkSpec, all_specs
-
-from flowcean.ode import Trace, plot_trace, simulate
+from flowcean.hybrid import Trace, plot_trace, simulate
+from flowcean.hybrid.benchmarks import BenchmarkSpec, all_specs
 
 
 @dataclass(frozen=True)

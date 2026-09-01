@@ -26,6 +26,7 @@ ignore = [
   "S311",    # pseudo-random number generation
   "T201",    # allow print
   "TD",      # To-Do rules
+  "TID252",  # allow explicit parent-relative imports
 ]
 
 [lint.per-file-ignores]
@@ -46,7 +47,6 @@ ignore = [
   "PLR2004", # magic value comparison
   "PLR6301", # no self use in methods
   "S101",    # asserts
-  "TID252",  # relative imports
 ]
 
 [lint.isort]
