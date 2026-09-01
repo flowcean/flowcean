@@ -2,10 +2,8 @@
 
 from pathlib import Path
 
-from benchmarks import all_specs
-
-from flowcean.ode import simulate
-from flowcean.ode.io import save_traces_parquet
+from flowcean.hybrid import save_traces_parquet, simulate
+from flowcean.hybrid.benchmarks import all_specs
 
 
 def main() -> None:

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
 import flowcean.cli
-from flowcean.hydra import (
+from flowcean.hybrid import (
     HybridDecisionTreeLearner,
     HyDRALearner,
     LogCallback,
@@ -19,7 +19,7 @@ from flowcean.utils import get_seed, initialize_random
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from flowcean.hydra.model import HyDRAModel
+    from flowcean.hybrid.hydra.model import HyDRAModel
 
 EXAMPLE_SEED = 42
 

@@ -1,301 +1,51 @@
-# One-Tank Example
+# One-Tank Offline Learning
 
-This example shows how to train two different models to predict the time-series behavior of a single water tank with a height-dependent outflow and a time-varying inflow.
-It is inspired by the one-tank Simulink model used for control design[^1].
-A schematic drawing of the system is shown in the following figure.
+This example identifies a one-step predictor from a simulated water-tank trace. It uses the same system definition and simulation as the [incremental learning variant](one_tank_incremental.md), while training each model from a fixed dataset.
 
 ![The one-tank system](./images/one_tank.svg)
 
-The complete source code for this example can be found [in the repository](https://github.com/flowcean/flowcean/blob/main/examples/one_tank/run_offline.py).
-See also [Run this example](#run-this-example) on how to run this example locally.
+## System and Data
 
-The dynamics of the system follow an ordinary differential equation (ODE).
-ODEs describe the derivative of a variable (e.g. it's change over time) as a function of the variable itself.
+The water level $x$ follows
 
-For this example the system is described by the equation
+$$
+\dot{x} = \frac{b V(t) - a \sqrt{x}}{A},
+$$
 
-$$ \dot{x} = \frac{b V(t) - a \sqrt{x}}{A} $$
+where $A = 5$ is the tank area, $a = 0.5$ is the outflow rate, $b = 2$ is the inflow rate, and
 
-where $x$ is the water level in the tank, $\dot{x}$ is the change of the water level over time, $V(t)$ is the time-dependent inflow, $A$ is the tank area, and $a$ and $b$ are scaling constants for the equation.
-The solution of an ODE is not a single value, but a function (here $x(t)$) or a series of its values for different times $t$.
-As solving this ODE analytically is quite complicated, a numerical solver is used which computes solution points starting from an initial value.
-In this example, the initial value is the initial level of the liquid $x(0) = x_0$ in the tank.
+$$
+V(t) = \max\left(0, \sin\left(2 \pi t / 10\right)\right).
+$$
 
-The free parameters from the above equation are set to
+[`examples/one_tank/system.py`](https://github.com/flowcean/flowcean/blob/main/examples/one_tank/system.py) is the single source of this simulation. `one_tank_system()` represents the dynamics as a one-location `HybridSystem` with no transitions, and `simulate_one_tank()` returns a deterministic trace sampled from 0 to 25 seconds at 0.1-second intervals.
 
-| $A$ | $b$ | $a$   |
-| --- | --- | ----- |
-| $5$ | $2$ | $0.5$ |
+Both learning variants consume the resulting `t` and `h` columns. A three-sample `SlidingWindow` creates `h_0`, `h_1`, and `h_2`; the learners predict `h_2` from the two preceding levels `h_0` and `h_1`.
 
-The inflow is given by $V(t) = \mathrm{max}\left(0, \sin\left( 2 \pi \frac{1}{10} t \right)\right)$ and the initial condition is $x_0 = 1$.
-Using a suitable numerical solution algorithm, the equation can be solved for the level $x_n$.
-Since the solution is not continuous, the level is not a function of time, but a discrete function of the sample number $n$.
-The corresponding time can be calculated by multiplying the sample number $n$ by the step size $T$ between two samples.
-The graph below shows the development of the water level $x$ from zero to ten seconds.
+## Offline Workflow
 
-![Differential equation solution plotted over time](./images/one_tank_graph.svg)
+[`run_offline.py`](https://github.com/flowcean/flowcean/blob/main/examples/one_tank/run_offline.py) performs these steps:
 
-## Learning Models
+1. Simulate the shared one-tank `HybridSystem`.
+2. Apply a three-sample sliding window.
+3. Shuffle and split the fixed data into 80 percent training and 20 percent test observations with seed 42.
+4. Train a regression tree, a PyTorch multilayer perceptron, and a two-tree ensemble with `learn_offline`.
+5. Evaluate each model with mean absolute error, mean squared error, and maximum error.
 
-After setting up the simulation, we want to use two different learners to predict the level of the tank $x[n]$ given the current input $V[n]$ and the level and input in the previous two time steps.
-The unknown function we are looking for and that we want to learn is
+The script prints training times and evaluation reports. Reported values can vary across platforms and ML backend versions.
 
-$$ x*n = f\left(V_n, x*{n-1}, V*{n-1}, x*{n-2}, V\_{n-2}\right). $$
+## Run
 
-To do this, we first need data to learn the function's representation in flowcean.
-Normally this data would be recorded from a real CPS and imported into the framework as a CSV, ROS bag or something similar.
-However, since we know the differential equation describing the system behavior, we can also use this equation to generate data.
-We can do this by using an [`ODEEnvironment`](../reference/flowcean/ode/index.md#flowcean.ode.OdeEnvironment) to model the ODE as an [`IncrementalEnvironment`](../reference/flowcean/core/index.md#flowcean.core.IncrementalEnvironment) within the framework.
-
-To do so, a special `OneTank` class is created which inherits from the general Flowcean `OdeSystem` class.
-
-```python
-class OneTank(OdeSystem[TankState]):
-    def __init__(
-        self,
-        *,
-        area: float,
-        outflow_rate: float,
-        inflow_rate: float,
-        initial_t: float = 0,
-        initial_state: TankState,
-    ) -> None:
-        super().__init__(
-            initial_t,
-            initial_state,
-        )
-        self.area = area
-        self.outflow_rate = outflow_rate
-        self.inflow_rate = inflow_rate
-
-    @override
-    def flow(
-        self,
-        t: float,
-        state: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        pump_voltage = np.max([0, np.sin(2 * np.pi * 1 / 10 * t)])
-        tank = TankState.from_numpy(state)
-        d_level = (
-            self.inflow_rate * pump_voltage
-            - self.outflow_rate * np.sqrt(tank.water_level)
-        ) / self.area
-        return np.array([d_level])
-```
-
-The `OneTank` class describes the differential equation in the `flow` as well as all parameters needed to evaluate it.
-The type parameter `TankState` is used to map the general numpy array holding the current state of the simulation to a more tangible representation.
-The state of an `ODESystem` can also be used for systems with multiple states, where the behavior might change when certain conditions are met.
-For this example, with only a single state, the `TankState` class simply maps the water level in the tank to the first entry in the state vector
-
-```python
-class TankState(State):
-    water_level: float
-
-    @override
-    def as_numpy(self) -> NDArray[np.float64]:
-        return np.array([self.water_level])
-
-    @classmethod
-    @override
-    def from_numpy(cls, state: NDArray[np.float64]) -> Self:
-        return cls(state[0])
-```
-
-The `ODESystem` can now be constructed by creating an instance of the `OneTank` class with the parameters given above
-
-```python
-    system = OneTank(
-        area=5,
-        outflow_rate=0.5,
-        inflow_rate=2,
-        initial_state=TankState(water_level=1),
-    )
-```
-
-From the system, an `OdeEnvironment` can be constructed
-
-```python
-    data_incremental = OdeEnvironment(
-        system,
-        dt=0.1,
-        map_to_dataframe=lambda ts, xs: pl.DataFrame(
-            {
-                "t": ts,
-                "h": [x.water_level for x in xs],
-            },
-        ),
-    ).load()
-```
-
-Beside the ODE, the time resolution `dt` and the mapping function `map_to_dataframe` are passed to the constructor.
-The mapping function describes how the generated solutions for different points in time can be mapped into a data frame for further processing within Flowcean.
-
-The generated output of the `OdeEnvironment` environment has the form
-
-| $x$     | $V$     |
-| ------- | ------- |
-| $x[0]$  | $V[0]$  |
-| $x[1]$  | $V[1]$  |
-| $\dots$ | $\dots$ |
-| $x[N]$  | $V[N]$  |
-
-Since the learners we will use later only support learning on a fixed amount of data (called "[offline learners](../user_guide/learning_strategies.md)" in the framework), we need to convert the incremental dataset into a fixed size dataset.
-This can be done by calling the [`collect(env, N)`](../reference/flowcean/polars/index.md#flowcean.polars.collect) method on any `IncrementalEnvironment` to get $N$ samples and feed those into a [`DataFrame`](../reference/flowcean/polars/index.md#flowcean.polars.DataFrame).
-
-```python
-data = DataFrame(data_incremental.load().take(250))
-```
-
-Until now, the data is in a time series format with each row representing a sampled value at the step $n$.
-However, for our prediction of the current fill level $x[n]$, as described by the equation above, we need the current input $V[n]$ and the values of the two previous time steps as a single sample.
-To achieve this we use a [`SlidingWindow`](../reference/flowcean/polars/index.md#flowcean.polars.SlidingWindow) transform.
-See the linked documentation for a more detailed explanation of how the transform works.
-
-```python
-data = data.with_transform(SlidingWindow(window_size=3))
-```
-
-Now that the data is in the correct format, it can be split into a test set with 80% of the samples and a training set with the remaining 20%.
-This is done by using a [`TrainTestSplit`](../reference/flowcean/polars/index.md#flowcean.polars.TrainTestSplit) operation and helps with evaluating the learned models performance after training.
-To make the learning less biased, the samples are shuffled before splitting.
-
-```python
-train, test = TrainTestSplit(ratio=0.8, shuffle=True).split(data)
-```
-
-With the training data generated, fully transformed and split it's time to use learning algorithms to learn the prediction function from the beginning of this section.
-We use two different learners which both belong the category of [offline learners](../user_guide/learning_strategies.md).
-
-First, a [regression tree](../reference/flowcean/sklearn/index.md#flowcean.sklearn.RegressionTree) is used to learn a model.
-The implementation of this learner is part of the scikit-learn library.
-The learned model consists of a sequence of binary questions / comparisons that lead to the model result.
-The maximum depth, i.e. the number of questions asked on each path, is limited to five.
-The learner class is created and the helper method [`learn_offline`](../reference/flowcean/core/index.md#flowcean.core.learn_offline) called to start the training process
-
-```python
-regression_learner = RegressionTree(max_depth=5)
-regression_model = learn_offline(
-    train,
-    regression_learner,
-    inputs,
-    outputs,
-)
-```
-
-The `inputs` and `outputs` variables contain the names of the input and output fields in the `train' dataframe.
-
-Secondly a [multi-layer perceptron](../reference/flowcean/torch/index.md#flowcean.torch.MultilayerPerceptron) is used to create a model.
-This type of model consists of a set of neurones arranged in layers which are connected with the previous layer.
-The value of each neuron is calculated by weighting and summing up the values of the neurons in the previous layer and applying a non-linear function; in this case a [leaky ReLU function](<https://en.wikipedia.org/wiki/Rectifier_(neural_networks)#Leaky_ReLU>).
-The result can be read from the neurons of the last layer.
-The implementation of this learner uses the [lightning framework](https://lightning.ai/docs/pytorch/stable/) which is a high-level wrapper around the well known [PyTorch](https://pytorch.org/) library.
-
-```python
-perceptron_learner = LightningLearner(
-    module=MultilayerPerceptron(
-        learning_rate=1e-3,
-        output_size=len(outputs),
-        hidden_dimensions=[10, 10],
-        ),
-    max_epochs=100,
-)
-perceptron_model = learn_offline(
-    train,
-    perceptron_learner,
-    inputs,
-    outputs,
-)
-```
-
-As a third option, an [`EnsembleLearner`](../reference/flowcean/ensemble/index.md#flowcean.ensemble.EnsembleLearner) is used to combine two [regression tree](../reference/flowcean/sklearn/index.md#flowcean.sklearn.RegressionTree) learners into a single model.
-The idea of an ensemble learner is to combine multiple different learning algorithms to create a single model.
-The learners are used to iterativly improve the model by learning the residuals of the previous learners.
-By combining the results, a better estimate can be achieved than by using a single learner alone.
-
-```python
-ensemble_learner = EnsembleLearner(
-    RegressionTree(max_depth=4),
-    RegressionTree(max_depth=4),
-)
-ensemble_model = learn_offline(
-    train,
-    ensemble_learner,
-    inputs,
-    outputs,
-)
-```
-
-The final step is to evaluate the obtained models.
-This is done to estimate how well they are able to describe the unknown function as described above.
-Flowcean ships with a couple of different metrics which can be used for this purpose.
-Depending on the underlying problem, different metrics can be reasonable to apply.
-For this example the [`MeanAbsoluteError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanAbsoluteError), [`MeanSquaredError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MeanSquaredError) and [`MaxError`](../reference/flowcean/sklearn/index.md#flowcean.sklearn.MaxError) error are used.
-These metrics are useful when the output of the learned function is a (more or less) continuous value and the deviation from the actual value is of interest.
-The helper method [`evaluate_offline`](../reference/flowcean/core/index.md#flowcean.core.evaluate_offline) allows for easy evaluation of multiple metrics for a learned model.
-
-```python
-regression_report = evaluate_offline(
-    regression_model,
-    test,
-    inputs,
-    outputs,
-    [MeanAbsoluteError(), MeanSquaredError(), MaxError()],
-)
-
-perceptron_report = evaluate_offline(
-    perceptron_model,
-    test,
-    inputs,
-    outputs,
-    [MeanAbsoluteError(), MeanSquaredError(), MaxError()],
-)
-
-ensemble_report = evaluate_offline(
-    ensemble_model,
-    test,
-    inputs,
-    outputs,
-    [MeanAbsoluteError(), MeanSquaredError(), MaxError()],
-)
-```
-
-For this example, the resulting metrics are about
-
-| Learner                | Runtime              | Mean Absolute Error | Mean Squared Error | Max Error        |
-| ---------------------- | -------------------- | ------------------- | ------------------ | ---------------- |
-| Regression Tree        | $10\: \mathrm{ms}$   | $0.0243$            | $0.0008$           | $0.0546$         |
-| Multi-layer Perceptron | $918\: \mathrm{ms}$  | $0.1838$            | $0.0561$           | $0.4820$         |
-| Ensemble Learner       | $16\: \mathrm{ms}$   | $0.0224$            | $0.0007$           | $0.0474$         |
-
-Depending on the size of the dataset, the way the train and test set are split and shuffled, the learners configuration and other random facts, these values may vary.
-However, it is clear, that both learners produced models with relative small errors ($\sim 2\%$ and $\sim 6\%$) which could be used for tasks such as prediction.
-
-## Run this example
-
-To run this example first make sure you followed the [installation instructions](../getting_started/prerequisites.md) to setup python and `just`.
-Afterwards you can either use `just` or run the examples from source.
-
-### Just
-
-The easiest way to run this example is using `just`.
-Follow the [installation guide](../getting_started/installation.md) to clone Flowcean but stop before installing it or any of its dependencies.
-Now you can run the example using
-
-```sh
-just examples-one_tank
-```
-
-This command will take care of installing any required dependencies in a separate environment.
-After a short moment you should see the learning results from both methods and the achieved metric values.
-
-### From source
-
-Follow the [installation guide](../getting_started/installation.md) to install Flowcean and its dependencies from source.
-Afterwards you can run the example from the repository root.
+From the repository root:
 
 ```sh
 uv run --directory ./examples/one_tank python run_offline.py
 ```
 
-[^1]: <https://de.mathworks.com/help/slcontrol/ug/watertank-simulink-model.html>.
+To run both the offline and incremental variants:
+
+```sh
+just examples-one_tank
+```
+
+See the [Hybrid Systems guide](../user_guide/hybrid_systems.md) for the simulation model and [Learning Strategies](../user_guide/learning_strategies.md) for offline learning concepts.

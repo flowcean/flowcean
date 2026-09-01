@@ -3,55 +3,45 @@ hide:
   - navigation
 ---
 
-# Welcome to Flowcean
+# Flowcean
 
-**Flowcean** is an advanced, versatile framework designed to streamline the automatic generation of models for cyber-physical systems (CPS).
-Whether you are developing solutions for smart grids, autonomous vehicles, or industrial automation, Flowcean provides a higher-level abstraction to generalize the learning and modeling approach for CPS across various domains.
+Flowcean is a research-oriented Python toolkit for defining, simulating, identifying, evaluating, and reproducing models of cyber-physical systems.
 
-![Flowcean Pipeline](assets/pipeline-light.svg#only-light)
-![Flowcean Pipeline](assets/pipeline-dark.svg#only-dark)
+Flowcean builds on research into automatic model generation for CPS. Its modular environments, transforms, learning strategies, metrics, adapters, and backend integrations support a broad range of data-driven modeling studies. First-class support for hybrid dynamical systems adds explicit system structure and simulation to this established foundation without requiring every CPS model to be hybrid.
 
-## What is Flowcean?
+## Capabilities
 
-Flowcean is designed to simplify and accelerate the process of creating, deploying, and managing models for cyber-physical systems.
-Here’s what Flowcean can do:
+- Define and simulate hybrid systems with continuous dynamics, events, transitions, and resets.
+- Identify hybrid dynamics and mode selectors with HyDRA.
+- Learn models from datasets, incremental streams, active environments, simulations, or connected CPS data sources.
+- Compose reusable environments, transforms, learners, models, metrics, adapters, and evaluation strategies across studies.
 
-- **Automatic Model Generation**: Flowcean automates the creation of models tailored to cyber-physical systems, allowing you to focus on refining performance rather than starting from scratch.
-- **Domain-Agnostic Flexibility**: Generate models for diverse domains, whether you’re working offline, incrementally, or through active learning approaches.
-- **Custom Data Environments**: Integrate your project-specific data sources seamlessly, enabling personalized modeling.
-- **Comprehensive Evaluation**: Evaluate your models with standard metrics or extend the framework to include your own custom evaluation.
-- **Python-Based with gRPC Interface**: Flowcean is written in Python and allows easy connection to any learning algorithm via a gRPC interface, providing flexibility and compatibility with your existing toolchains.
+## Start Here
 
-## Why Flowcean?
-
-Flowcean stands out as the go-to framework for cyber-physical system modeling for several reasons:
-
-- **Unified Framework**: Manage every aspect of CPS modeling under one roof, reducing complexity and increasing efficiency.
-- **Extensibility**: Easily extend Flowcean across various learning strategies, whether you're working with traditional machine learning methods or cutting-edge techniques.
-- **Modular and Customizable Pipelines**: Compose and customize machine learning pipelines from a modular toolbox, tailoring solutions to your specific needs.
-- **Reusable Models**: Save and reuse your models for future predictions, enhancing productivity and consistency across projects.
-
-## Getting Started with Flowcean
-
-Getting started with Flowcean is simple.
-To install the framework, use the following command:
+Install Flowcean from PyPI:
 
 ```sh
 pip install flowcean
 ```
 
-For a more detailed guide on setting up your first project, visit our [Getting Started](getting_started/installation.md) page.
+Then choose a path:
+
+- Follow the [installation guide](getting_started/installation.md) for user and developer setups.
+- Build the [minimal hybrid system](examples/hs_simple.md).
+- Browse the [hybrid systems benchmark gallery](examples/hybrid_systems.md).
+- Run the [simulated hybrid system identification](examples/simulated_hybrid_system.md) workflow.
+- Explore the [user guide overview](user_guide/overview.md), [modules](user_guide/modules.md), and [learning strategies](user_guide/learning_strategies.md) for Flowcean's general model-learning toolkit.
 
 ## Citation
 
-If you use Flowcean in your research or project, please consider citing the following references:
+If you use Flowcean in research, please consider citing:
 
 - Towards the Automatic Generation of Models for Prediction, Monitoring, and Testing of Cyber-Physical Systems, IEEE International Conference on Emerging Technologies and Factory Automation (ETFA), 2023.
-- Flowcean - Model Learning for Cyber-Physical Systems, Italian Workshop on Artificial Intelligence and Applications for Business and Industries (AIABI) @ AIxIA, 2024, ArXiv, [abs/2603.12015](https://arxiv.org/abs/2603.12015).
+- Flowcean - Model Learning for Cyber-Physical Systems, Italian Workshop on Artificial Intelligence and Applications for Business and Industries (AIABI) at AIxIA, 2024, ArXiv, [abs/2603.12015](https://arxiv.org/abs/2603.12015).
 
 ## Acknowledgement
 
-This work has been funded by BMBF project AGenC no. 16IS22047A
+This work has been funded by BMBF project AGenC no. 16IS22047A.
 
 ![BMBF](assets/BMBF-light.svg#only-light)
 ![BMBF](assets/BMBF-dark.svg#only-dark)

@@ -9,25 +9,34 @@
 [![Pyright](https://img.shields.io/badge/types-Pyright-blue.svg)](https://github.com/microsoft/pyright)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-An advanced, versatile framework to streamline the automatic generation of models for cyber-physical systems.
+Flowcean is a research-oriented Python toolkit for defining, simulating, identifying, evaluating, and reproducing models of cyber-physical systems.
 
-## Highlights
+Flowcean builds on research into automatic model generation for CPS. Its established environments, transforms, offline, incremental, and active learning strategies, metrics, adapters, and backend integrations remain central to the toolkit. First-class support for hybrid dynamical systems connects these capabilities to explicit system structure and simulation without restricting Flowcean to hybrid models.
 
-- 🚀 automates the creation of models tailored to cyber-physical systems.
-- 🧠 abstracts over learning frameworks
-- ✔️ models for offline, incrementally, or active learning.
-- 🗃️ integrates custom data sources.
-- 🔍 evaluate models with standard metrics.
-- 🐍 written in Python, easy connection via a gRPC interface
+## Capabilities
+
+- Define and simulate hybrid systems with continuous dynamics, events, transitions, and resets.
+- Identify hybrid dynamics and mode selectors with HyDRA.
+- Learn models from offline datasets, incremental streams, and active environments.
+- Compose reusable environments, transforms, learners, models, metrics, and evaluation strategies.
+- Integrate established Python ML libraries and external learners through backend packages, adapters, and gRPC.
+
+## Installation
+
+```sh
+pip install flowcean
+```
+
+See the [installation guide](https://flowcean.me/getting_started/installation/) and [hybrid systems guide](https://flowcean.me/user_guide/hybrid_systems/) for the next steps.
 
 ## Documentation
 
-flowcean's documentation is available at [flowcean.me](https://flowcean.me).
+Flowcean documentation is available at [flowcean.me](https://flowcean.me).
 
 ## Contributing
 
-We strive for open-source contributions that drive research forward and would love to see you get involved. See our [code of conduct](https://github.com/flowcean/flowcean/blob/main/CODE_OF_CONDUCT.md) to get started.
+We welcome open-source contributions that advance CPS modeling research. See the [code of conduct](https://github.com/flowcean/flowcean/blob/main/CODE_OF_CONDUCT.md) before contributing.
 
 ## License
 
-flowcean is licensed under the 3-Clause BSD License ([LICENSE](https://github.com/flowcean/flowcean/blob/main/LICENSE) or [https://opensource.org/license/bsd-3-clause](https://opensource.org/license/bsd-3-clause)).
+Flowcean is licensed under the 3-Clause BSD License ([LICENSE](https://github.com/flowcean/flowcean/blob/main/LICENSE) or [https://opensource.org/license/bsd-3-clause](https://opensource.org/license/bsd-3-clause)).

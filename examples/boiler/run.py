@@ -5,7 +5,7 @@ import polars as pl
 
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
-from flowcean.ode import (
+from flowcean.hybrid import (
     ContinuousDynamics,
     CrossingDirection,
     EventSurface,

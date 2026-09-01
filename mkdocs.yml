@@ -108,14 +108,14 @@ nav:
       - Adapter: user_guide/adapter.md
       - Glossary: user_guide/glossary.md
   - Examples:
-      - Automatic Lashing Platform: examples/automatic_lashing_platform.md
-      - Coffee Machine: examples/coffee_machine.md
       - Minimal Hybrid System: examples/hs_simple.md
       - Hybrid Systems Gallery: examples/hybrid_systems.md
-      - One Tank: examples/one_tank.md
-      - One Tank Incremental: examples/one_tank_incremental.md
-      - Robot Localization Failure: examples/robot_localization_failure.md
       - Simulated Hybrid System Identification: examples/simulated_hybrid_system.md
+      - One Tank Offline: examples/one_tank.md
+      - One Tank Incremental: examples/one_tank_incremental.md
+      - Automatic Lashing Platform: examples/automatic_lashing_platform.md
+      - Coffee Machine: examples/coffee_machine.md
+      - Robot Localization Failure: examples/robot_localization_failure.md
       - Trace Prediction: examples/trace_prediction.md
       - XOR Function: examples/xor.md
       - Jupyter Notebook Turtlesim: examples/jupyter_notebook_turtlesim.md
