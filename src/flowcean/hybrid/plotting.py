@@ -130,39 +130,36 @@ def _state_plot_data(trace: Trace) -> tuple[np.ndarray, np.ndarray]:
     if not trace.events:
         return trace.t, trace.x
 
-    times: list[float] = []
-    states: list[np.ndarray] = []
-    event_index = 0
+    time_parts: list[np.ndarray] = []
+    state_parts: list[np.ndarray] = []
+    start = 0
 
-    for time, state in zip(trace.t, trace.x, strict=True):
-        while (
-            event_index < len(trace.events)
-            and trace.events[event_index].time <= time
-        ):
-            event = trace.events[event_index]
-            times.extend((event.time, np.nan, event.time))
-            states.extend(
-                (
-                    event.state_before,
-                    np.full(event.state_before.shape, np.nan),
-                    event.state_after,
-                ),
-            )
-            event_index += 1
-        times.append(float(time))
-        states.append(state)
-
-    for event in trace.events[event_index:]:
-        times.extend((event.time, np.nan, event.time))
-        states.extend(
+    for event in trace.events:
+        stop = int(np.searchsorted(trace.t, event.time, side="left"))
+        time_parts.extend(
             (
-                event.state_before,
-                np.full(event.state_before.shape, np.nan),
-                event.state_after,
+                trace.t[start:stop],
+                np.full(3, event.time),
             ),
         )
+        state_parts.extend(
+            (
+                trace.x[start:stop],
+                np.vstack(
+                    (
+                        event.state_before,
+                        np.full(event.state_before.shape, np.nan),
+                        event.state_after,
+                    ),
+                ),
+            ),
+        )
+        start = stop
 
-    return np.asarray(times, dtype=float), np.vstack(states)
+    time_parts.append(trace.t[start:])
+    state_parts.append(trace.x[start:])
+
+    return np.concatenate(time_parts), np.concatenate(state_parts)
 
 
 def _location_segments(

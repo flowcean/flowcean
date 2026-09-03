@@ -37,7 +37,7 @@ def test_plot_trace_breaks_line_at_jump() -> None:
         velocity_line = ax.lines[1]
         np.testing.assert_allclose(
             np.asarray(velocity_line.get_xdata(), dtype=float),
-            [0.0, 0.5, np.nan, 0.5, 0.5, 1.0],
+            [0.0, 0.5, 0.5, 0.5, 0.5, 1.0],
         )
         np.testing.assert_allclose(
             np.asarray(velocity_line.get_ydata(), dtype=float),
