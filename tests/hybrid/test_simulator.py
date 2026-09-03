@@ -4,11 +4,16 @@ import numpy as np
 import pytest
 
 from flowcean.hybrid import (
+    AmbiguousTransitionError,
     CrossingDirection,
     EventSurface,
     HybridSystem,
+    InvalidEventSurfaceValueError,
     Location,
     Reset,
+    SimulationProgressError,
+    SurfaceEntryError,
+    SurfaceEntryPolicy,
     Transition,
     simulate,
 )
@@ -102,6 +107,239 @@ def test_opposite_crossing_direction_does_not_trigger() -> None:
     np.testing.assert_allclose(trace.x[:, 0], [-0.5, 0.0, 0.5], atol=1e-7)
 
 
+def test_entry_evaluation_is_atomic_and_error_precedes_ambiguity() -> None:
+    """All surfaces run once before ERROR wins over multiple TRIGGERs."""
+    source = Location(lambda: np.array([0.0]), label="source")
+    targets = [
+        Location(lambda: np.array([0.0]), label=f"target-{index}")
+        for index in range(4)
+    ]
+    calls = [0, 0, 0, 0]
+
+    def surface(index: int) -> float:
+        calls[index] += 1
+        return 0.0
+
+    transitions = [
+        Transition(
+            source,
+            target,
+            EventSurface(
+                lambda index=index: surface(index),
+                label=f"s{index}",
+            ),
+            entry_policy=policy,
+        )
+        for index, (target, policy) in enumerate(
+            zip(
+                targets,
+                [
+                    SurfaceEntryPolicy.ERROR,
+                    SurfaceEntryPolicy.ERROR,
+                    SurfaceEntryPolicy.TRIGGER,
+                    SurfaceEntryPolicy.TRIGGER,
+                ],
+                strict=True,
+            ),
+        )
+    ]
+    system = HybridSystem(
+        [source, *targets],
+        transitions,
+        source,
+        np.array([0.0]),
+    )
+
+    with pytest.raises(SurfaceEntryError, match="s0") as caught:
+        simulate(system, (0.0, 1.0))
+
+    assert calls == [1, 1, 1, 1]
+    assert "s1" in str(caught.value)
+    assert "TRIGGER" in " ".join(caught.value.__notes__)
+
+
+def test_nan_entry_value_precedes_zero_entry_errors() -> None:
+    """NaN is reported before any policy-based zero handling."""
+    source = Location(lambda: np.array([0.0]), label="source")
+    nan_target = Location(lambda: np.array([0.0]), label="nan-target")
+    zero_target = Location(lambda: np.array([0.0]), label="zero-target")
+    system = HybridSystem(
+        [source, nan_target, zero_target],
+        [
+            Transition(
+                source,
+                zero_target,
+                EventSurface(lambda: 0.0, label="zero"),
+            ),
+            Transition(
+                source,
+                nan_target,
+                EventSurface(lambda: np.nan, label="not-a-number"),
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    with pytest.raises(InvalidEventSurfaceValueError, match="not-a-number"):
+        simulate(system, (0.0, 1.0))
+
+
+def test_multiple_entry_triggers_are_ambiguous() -> None:
+    """Two exact-zero TRIGGER surfaces cannot select an ordering."""
+    source = Location(lambda: np.array([0.0]), label="source")
+    first = Location(lambda: np.array([0.0]), label="first")
+    second = Location(lambda: np.array([0.0]), label="second")
+    system = HybridSystem(
+        [source, first, second],
+        [
+            Transition(
+                source,
+                first,
+                EventSurface(lambda: 0.0, label="first-trigger"),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+            Transition(
+                source,
+                second,
+                EventSurface(lambda: -0.0, label="second-trigger"),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    with pytest.raises(
+        AmbiguousTransitionError,
+        match="first-trigger",
+    ) as caught:
+        simulate(system, (0.0, 1.0))
+
+    assert "second-trigger" in str(caught.value)
+
+
+@pytest.mark.parametrize("zero", [0.0, -0.0])
+def test_exact_zero_uses_entry_policy(zero: float) -> None:
+    """Both signs of exact floating-point zero count as on-surface."""
+    source = Location(lambda: np.array([0.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [Transition(source, target, lambda: zero)],
+        source,
+        np.array([0.0]),
+    )
+
+    with pytest.raises(SurfaceEntryError):
+        simulate(system, (0.0, 0.1))
+
+
+@pytest.mark.parametrize("value", [1e-300, -1e-300, np.inf, -np.inf])
+def test_nonzero_and_infinite_entry_values_are_signed_values(
+    value: float,
+) -> None:
+    """No tolerance collapses tiny values or infinities onto the surface."""
+    source = Location(lambda: np.array([0.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [Transition(source, target, lambda: value)],
+        source,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 0.1))
+
+    assert trace.events == ()
+
+
+def test_continue_allows_departure_in_opposite_direction() -> None:
+    """CONTINUE passes an entry-zero surface unchanged to the solver."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(
+                    lambda state: state[0],
+                    direction=CrossingDirection.FALLING,
+                ),
+                entry_policy=SurfaceEntryPolicy.CONTINUE,
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 0.25), sample_times=[0.0, 0.25])
+
+    assert trace.events == ()
+    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.25])
+
+
+def test_continue_same_direction_reports_no_progress() -> None:
+    """A solver root at the segment start is rejected before recording it."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(
+                    lambda state: state[0],
+                    direction=CrossingDirection.RISING,
+                ),
+                entry_policy=SurfaceEntryPolicy.CONTINUE,
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    with pytest.raises(
+        SimulationProgressError,
+        match="did not advance",
+    ) as caught:
+        simulate(system, (0.0, 0.25))
+
+    notes = " ".join(caught.value.__notes__)
+    assert "stateful callbacks" in notes
+    assert "continuous event surfaces" in notes
+
+
+def test_nan_during_solver_event_evaluation_is_rejected() -> None:
+    """NaN checks also cover evaluations made by continuous integration."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(
+                    lambda t: 1.0 if t == 0.0 else np.nan,
+                    label="unstable-surface",
+                ),
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    with pytest.raises(
+        InvalidEventSurfaceValueError,
+        match="continuous integration",
+    ):
+        simulate(system, (0.0, 1.0))
+
+
 def test_transition_reset_is_reflected_in_event_record() -> None:
     """A transition records labels and its post-reset state."""
     source = Location(lambda: np.array([1.0]), label="charging")
@@ -151,6 +389,7 @@ def _immediate_chain_system() -> HybridSystem:
                 third,
                 EventSurface(lambda state: state[0] - 2.0, label="at-two"),
                 Reset(lambda state: state + 1.0, label="increment"),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
             ),
         ],
         first,
@@ -183,6 +422,42 @@ def test_immediate_transition_chain_occurs_at_one_time() -> None:
     np.testing.assert_allclose(trace.events[1].state_after, [3.0])
     assert trace.location.tolist() == ["first", "third", "third"]
     np.testing.assert_allclose(trace.x[:, 0], [-0.5, 3.0, 3.0], atol=1e-7)
+
+
+def test_exact_restart_detects_a_root_less_than_epsilon_after_event() -> None:
+    """A post-jump segment starts at the event time without skipping ahead."""
+    first = Location(lambda: np.array([1.0]), label="first")
+    second = Location(lambda: np.array([1.0]), label="second")
+    third = Location(lambda: np.array([0.0]), label="third")
+    delay = 5e-13
+    system = HybridSystem(
+        [first, second, third],
+        [
+            Transition(
+                first,
+                second,
+                EventSurface(lambda t: t - 0.5, label="first-event"),
+                Reset(lambda: np.array([0.0])),
+            ),
+            Transition(
+                second,
+                third,
+                EventSurface(
+                    lambda state: state[0] - delay,
+                    label="nearby-event",
+                ),
+            ),
+        ],
+        first,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 1.0), max_step=0.1)
+
+    assert len(trace.events) == 2
+    separation = trace.events[1].time - trace.events[0].time
+    assert 0.0 < separation < 1e-12
+    assert trace.events[1].event_surface == "nearby-event"
 
 
 def test_event_states_are_independent_snapshots() -> None:
@@ -342,6 +617,7 @@ def test_initial_time_transition_is_right_continuous() -> None:
                 target,
                 EventSurface(lambda state: state[0]),
                 lambda: np.array([4.0]),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
             ),
         ],
         source,
@@ -361,6 +637,41 @@ def test_initial_time_transition_is_right_continuous() -> None:
     assert event.microstep == 0
     np.testing.assert_allclose(event.state_before, [0.0])
     np.testing.assert_allclose(event.state_after, [4.0])
+
+
+def test_initial_trigger_chain_uses_zero_based_microsteps() -> None:
+    """An initial entry chain starts with microstep zero at the start time."""
+    first = Location(lambda: np.array([0.0]), label="first")
+    second = Location(lambda: np.array([0.0]), label="second")
+    third = Location(lambda: np.array([0.0]), label="third")
+    system = HybridSystem(
+        [first, second, third],
+        [
+            Transition(
+                first,
+                second,
+                lambda state: state[0],
+                lambda: np.array([1.0]),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+            Transition(
+                second,
+                third,
+                lambda state: state[0] - 1.0,
+                lambda: np.array([2.0]),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+        ],
+        first,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 1.0), sample_times=[0.0, 0.5, 1.0])
+
+    assert [event.time for event in trace.events] == [0.0, 0.0]
+    assert [event.microstep for event in trace.events] == [0, 1]
+    assert trace.location.tolist() == ["third", "third", "third"]
+    np.testing.assert_allclose(trace.x[:, 0], [2.0, 2.0, 2.0])
 
 
 def test_final_time_transition_is_included_and_right_continuous() -> None:
@@ -399,6 +710,41 @@ def test_final_time_transition_is_included_and_right_continuous() -> None:
     np.testing.assert_allclose(adaptive.dx[-1], [-2.0])
     np.testing.assert_allclose(fixed.dx[-1], adaptive.dx[-1])
     np.testing.assert_array_equal(fixed.t, [0.0, 0.5, 1.0])
+
+
+def test_final_time_target_entry_trigger_uses_next_microstep() -> None:
+    """Target entry is resolved even when a continuous root is at t_final."""
+    first = Location(lambda: np.array([0.0]), label="first")
+    second = Location(lambda: np.array([0.0]), label="second")
+    third = Location(lambda: np.array([0.0]), label="third")
+    system = HybridSystem(
+        [first, second, third],
+        [
+            Transition(
+                first,
+                second,
+                lambda t: t - 1.0,
+                lambda: np.array([3.0]),
+            ),
+            Transition(
+                second,
+                third,
+                lambda state: state[0] - 3.0,
+                lambda: np.array([4.0]),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+        ],
+        first,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 1.0), sample_dt=0.25)
+
+    assert [event.time for event in trace.events] == pytest.approx([1.0, 1.0])
+    assert [event.microstep for event in trace.events] == [0, 1]
+    np.testing.assert_array_equal(trace.t, [0.0, 0.25, 0.5, 0.75, 1.0])
+    np.testing.assert_allclose(trace.x[-1], [4.0])
+    assert trace.location[-1] == "third"
 
 
 def test_inputs_and_derivatives_are_captured_on_sample_grid() -> None:

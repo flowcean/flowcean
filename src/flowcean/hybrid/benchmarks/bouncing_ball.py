@@ -11,6 +11,7 @@ from ..hybrid_system import (
     Location,
     Parameters,
     Reset,
+    SurfaceEntryPolicy,
     Transition,
 )
 
@@ -80,6 +81,7 @@ def bouncing_ball(
         target=location,
         event=event,
         reset=reset_map,
+        entry_policy=SurfaceEntryPolicy.CONTINUE,
     )
 
     if initial_state is None:

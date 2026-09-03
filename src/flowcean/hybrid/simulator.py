@@ -10,17 +10,37 @@ from scipy.integrate import solve_ivp
 
 from .hybrid_system import (
     Event,
-    EventSurfaceFunction,
     HybridSystem,
     Input,
     InputStream,
     Location,
     Parameters,
     State,
+    SurfaceEntryPolicy,
     Trace,
     Transition,
     display_label,
 )
+
+
+class HybridSimulationError(RuntimeError):
+    """Base class for hybrid simulation runtime failures."""
+
+
+class InvalidEventSurfaceValueError(HybridSimulationError):
+    """Raised when an event surface returns NaN."""
+
+
+class SurfaceEntryError(HybridSimulationError):
+    """Raised when an ERROR surface is zero on location entry."""
+
+
+class AmbiguousTransitionError(HybridSimulationError):
+    """Raised when multiple TRIGGER surfaces are zero on location entry."""
+
+
+class SimulationProgressError(HybridSimulationError):
+    """Raised when a solver event does not advance physical time."""
 
 
 def ensure_state(state: Iterable[float]) -> State:
@@ -37,25 +57,33 @@ class _EventFn:
 
     def __init__(
         self,
-        event: EventSurfaceFunction,
+        transition: Transition,
         parameters: Parameters,
-        direction: int,
         input_stream: InputStream,
     ) -> None:
-        self._event = event
+        self._transition = transition
         self._parameters = parameters
         self._input_stream = input_stream
-        self.direction = int(direction)
+        self.direction = int(transition.event.direction)
         self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
-        return _call_hybrid_callback(
-            self._event,
-            t,
-            y,
-            self._parameters,
-            self._input_stream,
+        value = float(
+            _call_hybrid_callback(
+                self._transition.event.fn,
+                t,
+                y,
+                self._parameters,
+                self._input_stream,
+            ),
         )
+        if np.isnan(value):
+            raise _invalid_surface_value_error(
+                [self._transition],
+                t,
+                context="during continuous integration",
+            )
+        return value
 
 
 class _RolloutResult(NamedTuple):
@@ -73,6 +101,15 @@ class _Boundary(NamedTuple):
     time: float
     state: np.ndarray
     location: Location
+
+
+class _EntryResult(NamedTuple):
+    """State after resolving a chain of location-entry transitions."""
+
+    state: np.ndarray
+    location: Location
+    events: tuple[Event, ...]
+    jumps: int
 
 
 def simulate(  # noqa: C901, PLR0912, PLR0915
@@ -148,9 +185,25 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
     t_final = float(t_span[1])
     jumps = 0
 
-    time_epsilon = 1e-12
     sample_grid = _prepare_sample_times(t_span, sample_times, sample_dt)
     needs_dense = dense_output or sample_grid is not None
+
+    initial_entry = _settle_location_entries(
+        system,
+        location,
+        state,
+        t_current,
+        effective_input_stream,
+        first_microstep=0,
+        jumps=jumps,
+        max_jumps=max_jumps,
+    )
+    state = initial_entry.state
+    location = initial_entry.location
+    jumps = initial_entry.jumps
+    events.extend(initial_entry.events)
+    if initial_entry.events:
+        boundaries.append(_Boundary(t_current, state.copy(), location))
 
     while t_current < t_final:
         transitions = system.transitions_from(location)
@@ -160,6 +213,7 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
             location.parameters,
             effective_input_stream,
         )
+        segment_start = t_current
 
         solve_kwargs = {
             "fun": _wrap_flow(
@@ -167,7 +221,7 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
                 system.parameters,
                 effective_input_stream,
             ),
-            "t_span": (t_current, t_final),
+            "t_span": (segment_start, t_final),
             "y0": state,
             "events": event_fns or None,
             "rtol": rtol,
@@ -180,7 +234,7 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
         result = solve_ivp(**solve_kwargs)
         if not result.success:
             message = f"ODE integration failed: {result.message}"
-            raise RuntimeError(message)
+            raise HybridSimulationError(message)
 
         t_segments.append(result.t)
         x_segments.append(result.y.T)
@@ -198,66 +252,50 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
             result.t_events,
             result.y_events,
         )
-        is_zero_time_event = event_time - t_current <= time_epsilon
-        transition = transitions[triggered_index]
-        jumps += 1
-        if jumps > max_jumps:
-            message = "Maximum number of transitions exceeded."
-            raise RuntimeError(message)
+        if event_time <= segment_start:
+            progress_context = (
+                f"segment start={segment_start!r}, event time={event_time!r}"
+            )
+            message = (
+                f"An event did not advance physical time ({progress_context})."
+            )
+            error = SimulationProgressError(message)
+            error.add_note(
+                "This can result from stateful callbacks, discontinuous event "
+                "surfaces, or insufficient floating-point time resolution. "
+                "Use deterministic callbacks and continuous event surfaces.",
+            )
+            raise error
 
-        microstep = 0
+        transition = transitions[triggered_index]
+        jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
             event_time,
             event_state,
             system.parameters,
             effective_input_stream,
-            microstep=microstep,
+            microstep=0,
         )
         events.append(event)
-
         location = transition.target
-        while True:
-            transitions = system.transitions_from(location)
-            immediate_index = _immediate_transition_index(
-                transitions,
-                location,
-                event_time,
-                state,
-                system.parameters,
-                effective_input_stream,
-                time_epsilon,
-            )
-            if immediate_index is None:
-                break
 
-            transition = transitions[immediate_index]
-            jumps += 1
-            if jumps > max_jumps:
-                message = "Maximum number of transitions exceeded."
-                raise RuntimeError(message)
-
-            microstep += 1
-            state, event = _apply_transition(
-                transition,
-                event_time,
-                state,
-                system.parameters,
-                effective_input_stream,
-                microstep=microstep,
-            )
-            events.append(event)
-
-            location = transition.target
-
-        boundaries.append(
-            _Boundary(event_time, state.copy(), location),
+        target_entry = _settle_location_entries(
+            system,
+            location,
+            state,
+            event_time,
+            effective_input_stream,
+            first_microstep=1,
+            jumps=jumps,
+            max_jumps=max_jumps,
         )
-
-        if is_zero_time_event:
-            t_current = min(t_final, t_current + time_epsilon)
-        else:
-            t_current = min(t_final, event_time + time_epsilon)
+        state = target_entry.state
+        location = target_entry.location
+        jumps = target_entry.jumps
+        events.extend(target_entry.events)
+        boundaries.append(_Boundary(event_time, state.copy(), location))
+        t_current = event_time
 
     if sample_grid is None:
         t_all = _concat_segments(t_segments)
@@ -408,14 +446,11 @@ def _build_event_functions(
     """Create SciPy-compatible event functions for transitions."""
     event_functions: list[_EventFn] = []
     for transition in transitions:
-        event = transition.event
-
         parameters = {**system_parameters, **location_parameters}
         event_functions.append(
             _EventFn(
-                event.fn,
+                transition,
                 parameters,
-                int(event.direction),
                 input_stream,
             ),
         )
@@ -552,61 +587,159 @@ def _apply_transition(
     )
 
 
-def _immediate_transition_index(
+def _settle_location_entries(
+    system: HybridSystem,
+    location: Location,
+    state: np.ndarray,
+    time: float,
+    input_stream: InputStream,
+    *,
+    first_microstep: int,
+    jumps: int,
+    max_jumps: int,
+) -> _EntryResult:
+    """Resolve explicit entry-trigger transitions until a location settles."""
+    entry_events: list[Event] = []
+    microstep = first_microstep
+
+    while True:
+        transitions = system.transitions_from(location)
+        values = _evaluate_entry_surfaces(
+            transitions,
+            location,
+            time,
+            state,
+            system.parameters,
+            input_stream,
+        )
+        zero_error = [
+            transition
+            for transition, value in zip(transitions, values, strict=True)
+            if value == 0.0
+            and transition.entry_policy is SurfaceEntryPolicy.ERROR
+        ]
+        if zero_error:
+            descriptions = _transition_descriptions(zero_error)
+            error = SurfaceEntryError(
+                "Event surfaces are zero while entering "
+                f"{display_label(location)!r} at t={time!r}: {descriptions}.",
+            )
+            error.add_note(
+                "Choose an explicit entry_policy for each implicated "
+                "transition: TRIGGER for an immediate jump or CONTINUE to "
+                "begin continuous integration from the surface.",
+            )
+            raise error
+
+        zero_trigger = [
+            transition
+            for transition, value in zip(transitions, values, strict=True)
+            if value == 0.0
+            and transition.entry_policy is SurfaceEntryPolicy.TRIGGER
+        ]
+        if len(zero_trigger) > 1:
+            descriptions = _transition_descriptions(zero_trigger)
+            error = AmbiguousTransitionError(
+                "Multiple transitions request an entry-time jump from "
+                f"{display_label(location)!r} at t={time!r}: {descriptions}.",
+            )
+            error.add_note(
+                "Make at most one outgoing TRIGGER surface zero on entry, "
+                "or change the model so the entry state selects one target.",
+            )
+            raise error
+        if not zero_trigger:
+            return _EntryResult(
+                state=state,
+                location=location,
+                events=tuple(entry_events),
+                jumps=jumps,
+            )
+
+        transition = zero_trigger[0]
+        jumps = _increment_jumps(jumps, max_jumps)
+        state, event = _apply_transition(
+            transition,
+            time,
+            state,
+            system.parameters,
+            input_stream,
+            microstep=microstep,
+        )
+        entry_events.append(event)
+        location = transition.target
+        microstep += 1
+
+
+def _evaluate_entry_surfaces(
     transitions: Sequence[Transition],
     location: Location,
     time: float,
     state: np.ndarray,
     system_parameters: Parameters,
     input_stream: InputStream,
-    time_epsilon: float,
-) -> int | None:
+) -> list[float]:
+    """Evaluate every outgoing event surface once before making a decision."""
     parameters = {**system_parameters, **location.parameters}
-    next_state: np.ndarray | None = None
-
-    for index, transition in enumerate(transitions):
-        event = transition.event
-        value = _call_hybrid_callback(
-            event.fn,
+    values = [
+        float(
+            _call_hybrid_callback(
+                transition.event.fn,
+                time,
+                state,
+                parameters,
+                input_stream,
+            ),
+        )
+        for transition in transitions
+    ]
+    invalid = [
+        transition
+        for transition, value in zip(transitions, values, strict=True)
+        if np.isnan(value)
+    ]
+    if invalid:
+        raise _invalid_surface_value_error(
+            invalid,
             time,
-            state,
-            parameters,
-            input_stream,
+            context=f"while entering {display_label(location)!r}",
         )
-        if abs(value) > time_epsilon:
-            continue
-        if event.direction == 0:
-            return index
+    return values
 
-        if next_state is None:
-            derivative = _coerce_derivative(
-                _call_hybrid_callback(
-                    location.dynamics.flow,
-                    time,
-                    state,
-                    parameters,
-                    input_stream,
-                ),
-                state_dim=state.shape[0],
-            )
-            next_state = state + time_epsilon * derivative
 
-        next_value = _call_hybrid_callback(
-            event.fn,
-            time + time_epsilon,
-            next_state,
-            parameters,
-            input_stream,
-        )
-        if event.direction > 0:
-            next_triggers = value <= 0.0 and next_value > 0.0
-        else:
-            next_triggers = value >= 0.0 and next_value < 0.0
+def _invalid_surface_value_error(
+    transitions: Sequence[Transition],
+    time: float,
+    *,
+    context: str,
+) -> InvalidEventSurfaceValueError:
+    descriptions = _transition_descriptions(transitions)
+    error = InvalidEventSurfaceValueError(
+        f"Event surfaces returned NaN {context} at t={time!r}: "
+        f"{descriptions}.",
+    )
+    error.add_note(
+        "An event surface must return a scalar value other than NaN; exact "
+        "zero denotes the surface and signed nonzero values denote its sides.",
+    )
+    return error
 
-        if next_triggers:
-            return index
 
-    return None
+def _transition_descriptions(transitions: Sequence[Transition]) -> str:
+    return ", ".join(
+        f"{display_label(transition.source)} -> "
+        f"{display_label(transition.target)} "
+        f"[{display_label(transition.event)}]"
+        for transition in transitions
+    )
+
+
+def _increment_jumps(jumps: int, max_jumps: int) -> int:
+    jumps += 1
+    if jumps > max_jumps:
+        message = "Maximum number of transitions exceeded."
+        raise HybridSimulationError(message)
+    return jumps
 
 
 def _concat_segments(segments: Sequence[np.ndarray]) -> np.ndarray:
@@ -849,9 +982,7 @@ def _rollout_segments(
             strict=False,
         ),
     ):
-        t_start = (
-            float(t_segments[index - 1][-1]) if index > 0 else float(t_seg[0])
-        )
+        t_start = float(t_seg[0])
         t_end = float(t_seg[-1])
         if index < last_segment_index:
             mask = (sample_times >= t_start) & (sample_times < t_end)
@@ -860,13 +991,10 @@ def _rollout_segments(
         if not np.any(mask):
             continue
         times = sample_times[mask]
-        segment_start = float(t_seg[0])
         eval_times = times.copy()
         exact_boundary_mask = np.zeros(times.shape, dtype=bool)
         if index > 0:
             exact_boundary_mask = times == t_start
-            epsilon_mask = (times > t_start) & (times < segment_start)
-            eval_times[epsilon_mask] = segment_start
         sampled_t.append(times)
         sampled_eval_t.append(eval_times)
         if sol is not None:

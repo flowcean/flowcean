@@ -3,7 +3,14 @@
 import numpy as np
 import pytest
 
-from flowcean.hybrid import HybridSystem, Location, Transition, simulate
+from flowcean.hybrid import (
+    CrossingDirection,
+    HybridSystem,
+    Location,
+    SurfaceEntryPolicy,
+    Transition,
+    simulate,
+)
 
 
 def _zero_flow() -> np.ndarray:
@@ -64,6 +71,53 @@ def test_hybrid_system_requires_transition_endpoints_in_locations() -> None:
             included,
             np.array([0.0]),
         )
+
+
+def test_transition_entry_policy_defaults_and_requires_exact_enum() -> None:
+    """Entry policy is explicit, keyword-only, and strongly typed."""
+    source = Location(_zero_flow)
+    target = Location(_zero_flow)
+
+    transition = Transition(source, target, lambda: 1.0)
+
+    assert transition.entry_policy is SurfaceEntryPolicy.ERROR
+    assert [policy.value for policy in SurfaceEntryPolicy] == [
+        "error",
+        "trigger",
+        "continue",
+    ]
+    for invalid in ("trigger", CrossingDirection.EITHER, 0):
+        with pytest.raises(TypeError, match="SurfaceEntryPolicy"):
+            Transition(
+                source,
+                target,
+                lambda: 1.0,
+                entry_policy=invalid,  # pyright: ignore[reportArgumentType]
+            )
+    with pytest.raises(TypeError):
+        Transition(
+            source,
+            target,
+            lambda: 1.0,
+            None,
+            SurfaceEntryPolicy.TRIGGER,  # pyright: ignore[reportCallIssue]
+        )
+
+
+def test_self_transition_without_reset_has_explanatory_note() -> None:
+    """A no-op self-transition is rejected with modeling alternatives."""
+    location = Location(_zero_flow)
+
+    with pytest.raises(ValueError, match="requires a reset") as caught:
+        Transition(location, location, lambda: 1.0)
+
+    notes = " ".join(caught.value.__notes__)
+    assert "neither location nor state" in notes
+    assert "root localization" in notes
+    assert "reset" in notes
+    assert "another target" in notes
+    assert "remove the transition" in notes
+    assert "Flowcean" not in f"{caught.value} {notes}"
 
 
 def test_location_parameters_override_globals_for_callbacks() -> None:

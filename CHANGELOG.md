@@ -15,6 +15,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 - Hybrid-system definitions, simulation, trace conversion, and plotting now use the `flowcean.hybrid` namespace ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - HyDRA is now available from `flowcean.hybrid.hydra` and through the `flowcean.hybrid` public API ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - Hybrid trace events now expose independent `state_before` and `state_after` snapshots plus a zero-based `microstep`; these replace the ambiguous `Event.state` field.
+- Hybrid transitions now expose explicit exact-zero entry policies, and simulation restarts from post-jump states at the exact event time.
 
 ### Fixed
 
