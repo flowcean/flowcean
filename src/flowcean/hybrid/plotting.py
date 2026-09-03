@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from itertools import cycle
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import rcParams
 from matplotlib.axes import Axes
 
@@ -47,8 +48,9 @@ def plot_trace(
         message = "Failed to create matplotlib axes."
         raise RuntimeError(message)
 
+    plot_times, plot_states = _state_plot_data(trace)
     for dim in dims:
-        ax.plot(trace.t, trace.x[:, dim], label=f"x{dim}")
+        ax.plot(plot_times, plot_states[:, dim], label=f"x{dim}")
 
     if show_locations:
         _plot_location_spans(
@@ -121,6 +123,43 @@ def plot_phase(
         plt.show()
 
     return ax
+
+
+def _state_plot_data(trace: Trace) -> tuple[np.ndarray, np.ndarray]:
+    """Split plotted trajectories at discontinuous state resets."""
+    if not trace.events:
+        return trace.t, trace.x
+
+    time_parts: list[np.ndarray] = []
+    state_parts: list[np.ndarray] = []
+    start = 0
+
+    for event in trace.events:
+        stop = int(np.searchsorted(trace.t, event.time, side="left"))
+        time_parts.extend(
+            (
+                trace.t[start:stop],
+                np.full(3, event.time),
+            ),
+        )
+        state_parts.extend(
+            (
+                trace.x[start:stop],
+                np.vstack(
+                    (
+                        event.state_before,
+                        np.full(event.state_before.shape, np.nan),
+                        event.state_after,
+                    ),
+                ),
+            ),
+        )
+        start = stop
+
+    time_parts.append(trace.t[start:])
+    state_parts.append(trace.x[start:])
+
+    return np.concatenate(time_parts), np.concatenate(state_parts)
 
 
 def _location_segments(
