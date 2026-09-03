@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from itertools import cycle
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import rcParams
 from matplotlib.axes import Axes
 
@@ -47,8 +48,9 @@ def plot_trace(
         message = "Failed to create matplotlib axes."
         raise RuntimeError(message)
 
+    plot_times, plot_states = _state_plot_data(trace)
     for dim in dims:
-        ax.plot(trace.t, trace.x[:, dim], label=f"x{dim}")
+        ax.plot(plot_times, plot_states[:, dim], label=f"x{dim}")
 
     if show_locations:
         _plot_location_spans(
@@ -121,6 +123,34 @@ def plot_phase(
         plt.show()
 
     return ax
+
+
+def _state_plot_data(trace: Trace) -> tuple[np.ndarray, np.ndarray]:
+    """Restore left-limit event states for visually correct jump lines."""
+    if not trace.events:
+        return trace.t, trace.x
+
+    times: list[float] = []
+    states: list[np.ndarray] = []
+    event_index = 0
+
+    for time, state in zip(trace.t, trace.x, strict=True):
+        while (
+            event_index < len(trace.events)
+            and trace.events[event_index].time <= time
+        ):
+            event = trace.events[event_index]
+            times.extend((event.time, event.time))
+            states.extend((event.state_before, event.state_after))
+            event_index += 1
+        times.append(float(time))
+        states.append(state)
+
+    for event in trace.events[event_index:]:
+        times.extend((event.time, event.time))
+        states.extend((event.state_before, event.state_after))
+
+    return np.asarray(times, dtype=float), np.vstack(states)
 
 
 def _location_segments(
