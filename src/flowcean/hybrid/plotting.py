@@ -126,7 +126,7 @@ def plot_phase(
 
 
 def _state_plot_data(trace: Trace) -> tuple[np.ndarray, np.ndarray]:
-    """Restore left-limit event states for visually correct jump lines."""
+    """Split plotted trajectories at discontinuous state resets."""
     if not trace.events:
         return trace.t, trace.x
 
@@ -140,15 +140,27 @@ def _state_plot_data(trace: Trace) -> tuple[np.ndarray, np.ndarray]:
             and trace.events[event_index].time <= time
         ):
             event = trace.events[event_index]
-            times.extend((event.time, event.time))
-            states.extend((event.state_before, event.state_after))
+            times.extend((event.time, np.nan, event.time))
+            states.extend(
+                (
+                    event.state_before,
+                    np.full(event.state_before.shape, np.nan),
+                    event.state_after,
+                ),
+            )
             event_index += 1
         times.append(float(time))
         states.append(state)
 
     for event in trace.events[event_index:]:
-        times.extend((event.time, event.time))
-        states.extend((event.state_before, event.state_after))
+        times.extend((event.time, np.nan, event.time))
+        states.extend(
+            (
+                event.state_before,
+                np.full(event.state_before.shape, np.nan),
+                event.state_after,
+            ),
+        )
 
     return np.asarray(times, dtype=float), np.vstack(states)
 

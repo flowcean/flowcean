@@ -6,8 +6,8 @@ import numpy as np
 from flowcean.hybrid import Event, Trace, plot_trace
 
 
-def test_plot_trace_restores_left_limit_at_jump() -> None:
-    """A right-continuous trace still plots a vertical state reset."""
+def test_plot_trace_breaks_line_at_jump() -> None:
+    """A right-continuous trace does not connect reset boundary states."""
     event = Event(
         time=0.5,
         source_location="flight",
@@ -37,11 +37,11 @@ def test_plot_trace_restores_left_limit_at_jump() -> None:
         velocity_line = ax.lines[1]
         np.testing.assert_allclose(
             np.asarray(velocity_line.get_xdata(), dtype=float),
-            [0.0, 0.5, 0.5, 0.5, 1.0],
+            [0.0, 0.5, np.nan, 0.5, 0.5, 1.0],
         )
         np.testing.assert_allclose(
             np.asarray(velocity_line.get_ydata(), dtype=float),
-            [0.0, -4.0, 3.0, 3.0, -2.0],
+            [0.0, -4.0, np.nan, 3.0, 3.0, -2.0],
         )
     finally:
         plt.close(figure)
