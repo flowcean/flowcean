@@ -100,7 +100,7 @@ def test_mode_cycle_resets_clock_and_cycles_locations() -> None:
         atol=1e-9,
     )
     np.testing.assert_allclose(
-        [event.state[-1] for event in trace.events],
+        [event.state_after[-1] for event in trace.events],
         0.0,
         atol=1e-12,
     )

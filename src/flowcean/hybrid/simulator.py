@@ -67,6 +67,14 @@ class _RolloutResult(NamedTuple):
     location: np.ndarray
 
 
+class _Boundary(NamedTuple):
+    """Final quiescent state and location at a physical event time."""
+
+    time: float
+    state: np.ndarray
+    location: Location
+
+
 def simulate(  # noqa: C901, PLR0912, PLR0915
     system: HybridSystem,
     t_span: tuple[float, float],
@@ -134,6 +142,7 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
     location_segments: list[np.ndarray] = []
     sol_segments: list[Callable[[np.ndarray], np.ndarray] | None] = []
     events: list[Event] = []
+    boundaries: list[_Boundary] = []
 
     t_current = float(t_span[0])
     t_final = float(t_span[1])
@@ -196,12 +205,14 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
             message = "Maximum number of transitions exceeded."
             raise RuntimeError(message)
 
+        microstep = 0
         state, event = _apply_transition(
             transition,
             event_time,
             event_state,
             system.parameters,
             effective_input_stream,
+            microstep=microstep,
         )
         events.append(event)
 
@@ -226,16 +237,22 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
                 message = "Maximum number of transitions exceeded."
                 raise RuntimeError(message)
 
+            microstep += 1
             state, event = _apply_transition(
                 transition,
                 event_time,
                 state,
                 system.parameters,
                 effective_input_stream,
+                microstep=microstep,
             )
             events.append(event)
 
             location = transition.target
+
+        boundaries.append(
+            _Boundary(event_time, state.copy(), location),
+        )
 
         if is_zero_time_event:
             t_current = min(t_final, t_current + time_epsilon)
@@ -246,6 +263,16 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
         t_all = _concat_segments(t_segments)
         x_all = _concat_segments(x_segments)
         location_objects = _concat_segments(location_segments)
+        _apply_boundaries(
+            t_all,
+            x_all,
+            location_objects,
+            boundaries,
+        )
+        unique_times = _unique_time_mask(t_all)
+        t_all = t_all[unique_times]
+        x_all = x_all[unique_times]
+        location_objects = location_objects[unique_times]
         location_all = _location_labels(location_objects)
         u_all = None
         dx_all = None
@@ -277,6 +304,7 @@ def simulate(  # noqa: C901, PLR0912, PLR0915
         x_segments,
         location_segments,
         sol_segments,
+        boundaries,
     )
     u_all = None
     dx_all = None
@@ -491,18 +519,24 @@ def _apply_transition(
     event_state: np.ndarray,
     system_parameters: Parameters,
     input_stream: InputStream,
+    *,
+    microstep: int,
 ) -> tuple[np.ndarray, Event]:
+    state_before = ensure_state(event_state).copy()
     parameters = {**system_parameters, **transition.source.parameters}
     if transition.reset is None:
-        new_state = event_state
+        new_state = state_before.copy()
         reset_label = None
     else:
-        new_state = _call_hybrid_callback(
-            transition.reset.fn,
-            event_time,
-            event_state,
-            parameters,
-            input_stream,
+        new_state = _coerce_reset(
+            _call_hybrid_callback(
+                transition.reset.fn,
+                event_time,
+                state_before.copy(),
+                parameters,
+                input_stream,
+            ),
+            state_dim=state_before.shape[0],
         )
         reset_label = display_label(transition.reset)
 
@@ -512,7 +546,9 @@ def _apply_transition(
         target_location=display_label(transition.target),
         event_surface=display_label(transition.event),
         reset=reset_label,
-        state=new_state,
+        state_before=state_before.copy(),
+        state_after=new_state.copy(),
+        microstep=microstep,
     )
 
 
@@ -582,6 +618,26 @@ def _concat_segments(segments: Sequence[np.ndarray]) -> np.ndarray:
     return np.concatenate(
         [segments[0], *[segment[1:] for segment in segments[1:]]],
     )
+
+
+def _unique_time_mask(times: np.ndarray) -> np.ndarray:
+    """Select one row for each time from a monotone adaptive trace."""
+    mask = np.ones(times.shape, dtype=bool)
+    mask[1:] = np.diff(times) != 0.0
+    return mask
+
+
+def _apply_boundaries(
+    times: np.ndarray,
+    states: np.ndarray,
+    locations: np.ndarray,
+    boundaries: Sequence[_Boundary],
+) -> None:
+    """Replace event-time rows with their final quiescent values."""
+    for boundary in boundaries:
+        matches = times == boundary.time
+        states[matches] = boundary.state
+        locations[matches] = boundary.location
 
 
 def _location_labels(locations: np.ndarray) -> np.ndarray:
@@ -697,6 +753,19 @@ def _capture_derivatives(
     return np.vstack(derivatives)
 
 
+def _coerce_reset(candidate: object, *, state_dim: int) -> np.ndarray:
+    reset_state = np.asarray(candidate, dtype=float)
+    if reset_state.ndim == 0 and state_dim == 1:
+        return reset_state.reshape(1)
+    if reset_state.ndim != 1:
+        message = "Reset must return a 1D state matching the state dimension."
+        raise ValueError(message)
+    if reset_state.shape[0] != state_dim:
+        message = "Reset state must match the state dimension."
+        raise ValueError(message)
+    return reset_state.copy()
+
+
 def _coerce_derivative(candidate: object, *, state_dim: int) -> np.ndarray:
     derivative = np.asarray(candidate, dtype=float)
     if derivative.ndim == 0 and state_dim == 1:
@@ -755,6 +824,7 @@ def _rollout_segments(
     x_segments: Sequence[np.ndarray],
     location_segments: Sequence[np.ndarray],
     sol_segments: Sequence[Callable[[np.ndarray], np.ndarray] | None],
+    boundaries: Sequence[_Boundary],
 ) -> _RolloutResult:
     if sample_times.size == 0:
         return _RolloutResult(
@@ -792,14 +862,12 @@ def _rollout_segments(
         times = sample_times[mask]
         segment_start = float(t_seg[0])
         eval_times = times.copy()
-        reported_times = times.copy()
         exact_boundary_mask = np.zeros(times.shape, dtype=bool)
         if index > 0:
             exact_boundary_mask = times == t_start
             epsilon_mask = (times > t_start) & (times < segment_start)
             eval_times[epsilon_mask] = segment_start
-            reported_times[epsilon_mask] = segment_start
-        sampled_t.append(reported_times)
+        sampled_t.append(times)
         sampled_eval_t.append(eval_times)
         if sol is not None:
             values = sol(eval_times).T
@@ -820,12 +888,19 @@ def _rollout_segments(
             location=np.empty((0,), dtype=object),
         )
 
-    return _RolloutResult(
+    result = _RolloutResult(
         t=np.concatenate(sampled_t),
         eval_t=np.concatenate(sampled_eval_t),
         x=np.concatenate(sampled_x),
         location=np.concatenate(sampled_location),
     )
+    _apply_boundaries(
+        result.t,
+        result.x,
+        result.location,
+        boundaries,
+    )
+    return result
 
 
 def _interpolate_segment(

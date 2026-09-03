@@ -127,7 +127,9 @@ def test_transition_reset_is_reflected_in_event_record() -> None:
     assert event.target_location == "idle"
     assert event.event_surface == "full"
     assert event.reset == "drain"
-    np.testing.assert_allclose(event.state, [0.25], atol=1e-7)
+    np.testing.assert_allclose(event.state_before, [1.0], atol=1e-7)
+    np.testing.assert_allclose(event.state_after, [0.25], atol=1e-7)
+    assert event.microstep == 0
     np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.25, 0.25], atol=1e-7)
 
 
@@ -170,9 +172,83 @@ def test_immediate_transition_chain_occurs_at_one_time() -> None:
         "second",
         "third",
     ]
-    np.testing.assert_allclose(trace.events[-1].state, [3.0])
+    assert [event.microstep for event in trace.events] == [0, 1]
+    np.testing.assert_allclose(
+        trace.events[0].state_before,
+        [0.0],
+        atol=1e-12,
+    )
+    np.testing.assert_allclose(trace.events[0].state_after, [2.0])
+    np.testing.assert_allclose(trace.events[1].state_before, [2.0])
+    np.testing.assert_allclose(trace.events[1].state_after, [3.0])
     assert trace.location.tolist() == ["first", "third", "third"]
     np.testing.assert_allclose(trace.x[:, 0], [-0.5, 3.0, 3.0], atol=1e-7)
+
+
+def test_event_states_are_independent_snapshots() -> None:
+    """Event states do not alias reset results or trace storage."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    reset_result = np.array([4.0])
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(lambda state: state[0] - 1.0),
+                lambda: reset_result,
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 2.0))
+    event = trace.events[0]
+    boundary = trace.t == event.time
+    reset_result[0] = 99.0
+
+    np.testing.assert_allclose(event.state_before, [1.0])
+    np.testing.assert_allclose(event.state_after, [4.0])
+
+    event.state_before[0] = 2.0
+    event.state_after[0] = 5.0
+    np.testing.assert_allclose(trace.x[boundary], [[4.0]])
+
+    trace.x[boundary] = -1.0
+    np.testing.assert_allclose(event.state_before, [2.0])
+    np.testing.assert_allclose(event.state_after, [5.0])
+
+
+def test_adaptive_trace_is_right_continuous_at_event_boundary() -> None:
+    """Adaptive output has one final target-location row at a jump."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([2.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(lambda state: state[0] - 0.5),
+                lambda: np.array([10.0]),
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 1.0), capture_derivatives=True)
+    event_time = trace.events[0].time
+    boundary_indices = np.flatnonzero(trace.t == event_time)
+
+    assert boundary_indices.size == 1
+    boundary_index = int(boundary_indices[0])
+    np.testing.assert_allclose(trace.x[boundary_index], [10.0])
+    assert trace.location[boundary_index] == "target"
+    assert trace.dx is not None
+    np.testing.assert_allclose(trace.dx[boundary_index], [2.0])
 
 
 def test_max_jumps_limits_immediate_transition_chains() -> None:
@@ -217,6 +293,112 @@ def test_fixed_sample_grid_uses_post_reset_state_at_event() -> None:
         "after",
         "after",
     ]
+
+
+def test_fixed_grid_preserves_off_grid_event_and_requested_times() -> None:
+    """Off-grid jumps stay in events without changing the requested grid."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(lambda state: state[0] - 0.5),
+                lambda: np.array([3.0]),
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+    requested = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+
+    trace = simulate(system, (0.0, 1.0), sample_times=requested)
+
+    np.testing.assert_array_equal(trace.t, requested)
+    assert trace.events[0].time == pytest.approx(0.5)
+    assert not np.any(trace.t == trace.events[0].time)
+    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.2, 0.4, 3.0, 3.0, 3.0])
+    assert trace.location.tolist() == [
+        "source",
+        "source",
+        "source",
+        "target",
+        "target",
+        "target",
+    ]
+
+
+def test_initial_time_transition_is_right_continuous() -> None:
+    """A transition on the initial surface replaces the initial trace row."""
+    source = Location(lambda: np.array([0.0]), label="source")
+    target = Location(lambda: np.array([1.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(lambda state: state[0]),
+                lambda: np.array([4.0]),
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    trace = simulate(system, (0.0, 1.0), capture_derivatives=True)
+
+    np.testing.assert_allclose(trace.t[0], 0.0)
+    assert np.count_nonzero(trace.t == 0.0) == 1
+    np.testing.assert_allclose(trace.x[0], [4.0])
+    assert trace.location[0] == "target"
+    assert trace.dx is not None
+    np.testing.assert_allclose(trace.dx[0], [1.0])
+    event = trace.events[0]
+    assert event.time == 0.0
+    assert event.microstep == 0
+    np.testing.assert_allclose(event.state_before, [0.0])
+    np.testing.assert_allclose(event.state_after, [4.0])
+
+
+def test_final_time_transition_is_included_and_right_continuous() -> None:
+    """A jump at the end of t_span supplies the final trace row."""
+    source = Location(lambda: np.array([1.0]), label="source")
+    target = Location(lambda: np.array([-2.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(lambda t: t - 1.0),
+                lambda: np.array([5.0]),
+            ),
+        ],
+        source,
+        np.array([0.0]),
+    )
+
+    adaptive = simulate(system, (0.0, 1.0), capture_derivatives=True)
+    fixed = simulate(
+        system,
+        (0.0, 1.0),
+        sample_times=[0.0, 0.5, 1.0],
+        capture_derivatives=True,
+    )
+
+    assert len(adaptive.events) == len(fixed.events) == 1
+    assert adaptive.events[0].time == pytest.approx(1.0)
+    np.testing.assert_allclose(adaptive.x[-1], [5.0])
+    np.testing.assert_allclose(fixed.x[-1], adaptive.x[-1])
+    assert adaptive.location[-1] == fixed.location[-1] == "target"
+    assert adaptive.dx is not None
+    assert fixed.dx is not None
+    np.testing.assert_allclose(adaptive.dx[-1], [-2.0])
+    np.testing.assert_allclose(fixed.dx[-1], adaptive.dx[-1])
+    np.testing.assert_array_equal(fixed.t, [0.0, 0.5, 1.0])
 
 
 def test_inputs_and_derivatives_are_captured_on_sample_grid() -> None:
