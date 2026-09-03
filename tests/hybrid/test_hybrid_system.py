@@ -94,6 +94,6 @@ def test_location_parameters_override_globals_for_callbacks() -> None:
 
     assert len(trace.events) == 1
     assert trace.events[0].time == pytest.approx(0.5, abs=1e-7)
-    assert trace.events[0].state == pytest.approx(np.array([4.0]))
+    assert trace.events[0].state_after == pytest.approx(np.array([4.0]))
     assert trace.x[1] == pytest.approx(np.array([4.0]))
     assert trace.location.tolist() == ["source", "target", "target"]

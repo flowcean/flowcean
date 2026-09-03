@@ -348,7 +348,9 @@ class Event:
     target_location: str
     event_surface: str
     reset: str | None
-    state: State
+    state_before: State
+    state_after: State
+    microstep: int
 
 
 @dataclass(frozen=True)
