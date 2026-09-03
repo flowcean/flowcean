@@ -11,6 +11,7 @@ from ..hybrid_system import (
     Location,
     Parameters,
     Reset,
+    SurfaceEntryPolicy,
     Transition,
 )
 
@@ -111,6 +112,7 @@ def impact_oscillator(
             reset,
             label="bounce",
         ),
+        entry_policy=SurfaceEntryPolicy.CONTINUE,
     )
 
     if initial_state is None:

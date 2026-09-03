@@ -10,6 +10,7 @@ from ..hybrid_system import (
     InputStream,
     Location,
     Parameters,
+    SurfaceEntryPolicy,
     Transition,
 )
 
@@ -156,6 +157,7 @@ def pid_controlled_plant(
                 direction=CrossingDirection.RISING,
                 label="hit_high",
             ),
+            entry_policy=SurfaceEntryPolicy.CONTINUE,
         ),
         Transition(
             source=linear,
@@ -165,6 +167,7 @@ def pid_controlled_plant(
                 direction=CrossingDirection.FALLING,
                 label="hit_low",
             ),
+            entry_policy=SurfaceEntryPolicy.CONTINUE,
         ),
         Transition(
             source=sat_high,
@@ -174,6 +177,7 @@ def pid_controlled_plant(
                 direction=CrossingDirection.FALLING,
                 label="leave_high",
             ),
+            entry_policy=SurfaceEntryPolicy.CONTINUE,
         ),
         Transition(
             source=sat_low,
@@ -183,6 +187,7 @@ def pid_controlled_plant(
                 direction=CrossingDirection.RISING,
                 label="leave_low",
             ),
+            entry_policy=SurfaceEntryPolicy.CONTINUE,
         ),
     ]
 

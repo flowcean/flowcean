@@ -2,7 +2,7 @@
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from typing import Protocol, overload
 
 import numpy as np
@@ -59,6 +59,14 @@ class CrossingDirection(IntEnum):
     FALLING = -1
     EITHER = 0
     RISING = 1
+
+
+class SurfaceEntryPolicy(StrEnum):
+    """Behavior when a transition surface is zero on location entry."""
+
+    ERROR = "error"
+    TRIGGER = "trigger"
+    CONTINUE = "continue"
 
 
 @dataclass(frozen=True, eq=False)
@@ -193,12 +201,15 @@ class Transition:
         target: Target location.
         event: Event surface that triggers the transition.
         reset: Optional reset applied upon transition.
+        entry_policy: Behavior when the event surface is exactly zero upon
+            entry to the source location.
     """
 
     source: Location
     target: Location
     event: EventSurface
     reset: Reset | None = None
+    entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR
 
     def __init__(
         self,
@@ -206,6 +217,8 @@ class Transition:
         target: Location,
         event: EventSurface | Callable[..., float],
         reset: Reset | Callable[..., State] | None = None,
+        *,
+        entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR,
     ) -> None:
         if not isinstance(source, Location):
             message = "source must be a Location."
@@ -227,10 +240,27 @@ class Transition:
         else:
             message = "reset must be a Reset, callable, or None."
             raise TypeError(message)
+        if type(entry_policy) is not SurfaceEntryPolicy:
+            message = "entry_policy must be a SurfaceEntryPolicy."
+            raise TypeError(message)
+        if source is target and transition_reset is None:
+            message = (
+                "A transition with identical source and target locations "
+                "requires a reset."
+            )
+            error = ValueError(message)
+            error.add_note(
+                "The jump changes neither location nor state, so approximate "
+                "root localization can redetect the crossing. Add a reset "
+                "that defines a post-jump state, use another target, or "
+                "remove the transition.",
+            )
+            raise error
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "event", event_surface)
         object.__setattr__(self, "reset", transition_reset)
+        object.__setattr__(self, "entry_policy", entry_policy)
 
 
 @dataclass(frozen=True, eq=False)

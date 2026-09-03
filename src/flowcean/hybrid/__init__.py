@@ -15,6 +15,7 @@ from .hybrid_system import (
     Parameters,
     Reset,
     ResetFunction,
+    SurfaceEntryPolicy,
     Trace,
     Transition,
 )
@@ -36,9 +37,18 @@ from .io import (
     traces_to_polars,
 )
 from .plotting import plot_phase, plot_trace
-from .simulator import generate_traces, simulate
+from .simulator import (
+    AmbiguousTransitionError,
+    HybridSimulationError,
+    InvalidEventSurfaceValueError,
+    SimulationProgressError,
+    SurfaceEntryError,
+    generate_traces,
+    simulate,
+)
 
 __all__ = (
+    "AmbiguousTransitionError",
     "ContinuousDynamics",
     "CrossingDirection",
     "Event",
@@ -50,9 +60,11 @@ __all__ = (
     "HyDRATraceSchema",
     "HybridDecisionTreeLearner",
     "HybridDecisionTreeModel",
+    "HybridSimulationError",
     "HybridSystem",
     "Input",
     "InputStream",
+    "InvalidEventSurfaceValueError",
     "Location",
     "LogCallback",
     "ModePredictionResult",
@@ -61,7 +73,10 @@ __all__ = (
     "Reset",
     "ResetFunction",
     "SelectorFeatureConfig",
+    "SimulationProgressError",
     "StateTraceComparison",
+    "SurfaceEntryError",
+    "SurfaceEntryPolicy",
     "Trace",
     "Transition",
     "benchmarks",

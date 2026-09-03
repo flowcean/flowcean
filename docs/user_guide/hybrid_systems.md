@@ -12,6 +12,7 @@ from flowcean.hybrid import (
     HybridSystem,
     Location,
     Reset,
+    SurfaceEntryPolicy,
     Transition,
     simulate,
 )
@@ -35,27 +36,34 @@ Callbacks may declare only the arguments they need when they retain the canonica
 
 ## Transitions and Resets
 
-A transition connects one source location to one target location. Its event surface is a scalar function whose zero crossing can trigger the transition. `CrossingDirection.RISING`, `FALLING`, and `EITHER` restrict which crossing directions are accepted.
+A transition connects one source location to one target location. Its event surface is a scalar function whose zero crossing can trigger the transition. `CrossingDirection.RISING`, `FALLING`, and `EITHER` restrict which crossing directions are accepted during continuous evolution.
 
-An event surface describes a numerical zero crossing, not a Boolean region. For example, a falling surface does not fire merely because its value is already negative. Choose an initial location that is consistent with the initial state. If a surface is exactly zero initially and the trajectory moves through it in the configured direction, the transition can occur at the initial time.
+An event surface describes a numerical zero crossing, not a Boolean region. For example, a falling surface does not fire merely because its value is already negative. Whenever simulation enters a location—including the initial location—the simulator evaluates every outgoing surface exactly once before deciding what to do. A value equal to `0.0` (including `-0.0`) is on the surface. Arbitrarily small nonzero values and positive or negative infinity retain their sign; NaN is invalid.
 
-For each continuous segment, the simulator:
+Each transition's `entry_policy` determines what exact zero means on entry:
+
+- `SurfaceEntryPolicy.ERROR` (the default) raises `SurfaceEntryError`, requiring the model to make its intent explicit.
+- `SurfaceEntryPolicy.TRIGGER` performs the transition immediately at the same physical time.
+- `SurfaceEntryPolicy.CONTINUE` leaves the transition inactive for entry handling and passes the zero-valued surface unchanged to continuous integration. Use this when a trajectory naturally enters a boundary and departs in the direction opposite to the transition.
+
+Entry decisions are atomic. NaN takes precedence over every policy. Any zero `ERROR` surface is reported before trigger selection. More than one zero `TRIGGER` surface raises `AmbiguousTransitionError`; exactly one performs a jump, applies its reset, enters the target, and repeats entry evaluation there. A `CONTINUE` surface does nothing during entry handling.
+
+For each settled continuous segment, the simulator:
 
 1. Integrates the active location's dynamics until the earliest detected outgoing event or the end of the time span.
 2. Records the state immediately before the transition.
 3. Applies the optional reset using the source location's effective parameters.
-4. Enters the target location.
-5. Checks whether the resulting state immediately activates another transition.
+4. Enters the target location and resolves its entry policy before integrating again.
 
-Without a reset, the continuous state is unchanged by the transition. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
+Without a reset, the continuous state is unchanged by a transition. A transition whose source and target are the same location therefore requires a reset. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
 
-!!! warning "Simultaneous transitions"
+!!! warning "Simultaneous entry transitions"
 
-    Multiple outgoing transitions that become active simultaneously are ambiguous. Models must not depend on their ordering.
+    Multiple exact-zero `TRIGGER` surfaces on one location entry are ambiguous and stop simulation. Design the entry state or policies so that at most one requests an immediate jump.
 
 ## Physical Time and Microsteps
 
-`Event.time` is physical simulation time. Immediate transitions caused by a reset do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain.
+`Event.time` is physical simulation time. Immediate transitions caused by a reset do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain. An initial-entry trigger has microstep 0. A continuously detected crossing also has microstep 0, and triggers on successive target entries use microsteps 1, 2, and so on.
 
 Suppose a transition from A to B resets the state onto an event surface in B, which immediately causes a transition from B to C:
 
@@ -66,6 +74,8 @@ Suppose a transition from A to B resets the state onto an event surface in B, wh
 | Trace row | 1.0 | - | C | Final state after the complete chain |
 
 Every transition in the chain counts toward `max_jumps`. Simulation raises an error if that limit is exceeded.
+
+After a continuous crossing, integration restarts at the exact event time with the post-jump state; the simulator does not offset time to move away from the root. A location must be settled before this restart. If the ODE solver nevertheless returns an event at or before the segment start, simulation raises `SimulationProgressError` rather than applying the transition. This usually indicates stateful callbacks, a discontinuous event surface, or insufficient floating-point time resolution; use deterministic callbacks and continuous surfaces.
 
 ## Trace Boundary Semantics
 

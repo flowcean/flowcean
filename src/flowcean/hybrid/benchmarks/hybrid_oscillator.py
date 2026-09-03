@@ -10,6 +10,7 @@ from ..hybrid_system import (
     InputStream,
     Location,
     Parameters,
+    SurfaceEntryPolicy,
     Transition,
 )
 
@@ -91,6 +92,7 @@ def hybrid_oscillator(
             direction=CrossingDirection.RISING,
             label="cross_right",
         ),
+        entry_policy=SurfaceEntryPolicy.CONTINUE,
     )
     to_left = Transition(
         source=right,
@@ -100,6 +102,7 @@ def hybrid_oscillator(
             direction=CrossingDirection.FALLING,
             label="cross_left",
         ),
+        entry_policy=SurfaceEntryPolicy.CONTINUE,
     )
 
     if initial_state is None:
