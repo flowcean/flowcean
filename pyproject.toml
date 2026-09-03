@@ -104,6 +104,7 @@ members = [
   "examples/robot_localization_failure",
   "examples/passive_circuit",
   "examples/simulated_hybrid_system",
+  "examples/system_behavior_learning",
   "examples/trace_prediction",
 ]
 

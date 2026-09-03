@@ -96,7 +96,7 @@ jobs:
     name: Examples
     strategy:
       matrix:
-        example: ["boiler", "linear_data", "one_tank", "xor", "trace_prediction", "hs-simple", "hybrid_systems", "simulated_hybrid_system"]
+        example: ["boiler", "linear_data", "one_tank", "xor", "trace_prediction", "hs-simple", "hybrid_systems", "simulated_hybrid_system", "system_behavior_learning"]
     runs-on:
       - self-hosted
       - itl
