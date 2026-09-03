@@ -16,6 +16,7 @@ members = [
     "coffee-machine",
     "energy-system",
     "flowcean",
+    "flowcean-example-system-behavior-learning",
     "flowcean-example-trace-prediction",
     "hs-simple",
     "hybrid-systems",
@@ -1458,6 +1459,25 @@ dev = [
     { name = "torch", specifier = ">=2.5.0" },
     { name = "typos", specifier = ">=1.46.0" },
     { name = "xgboost", specifier = ">=3.0.2" },
+]
+
+[[package]]
+name = "flowcean-example-system-behavior-learning"
+version = "0.1.0"
+source = { virtual = "examples/system_behavior_learning" }
+dependencies = [
+    { name = "flowcean" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scikit-learn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "flowcean", editable = "." },
+    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "numpy", specifier = ">=1.26.4" },
+    { name = "scikit-learn", specifier = ">=1.5.2" },
 ]
 
 [[package]]

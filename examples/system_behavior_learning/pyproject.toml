@@ -1,0 +1,16 @@
+[project]
+name = "flowcean-example-system-behavior-learning"
+version = "0.1.0"
+requires-python = ">=3.12, <4.0"
+dependencies = [
+  "flowcean",
+  "matplotlib>=3.10.8",
+  "numpy>=1.26.4",
+  "scikit-learn>=1.5.2",
+]
+
+[tool.uv.sources]
+flowcean = { workspace = true }
+
+[tool.pyright]
+extends = "../../pyproject.toml"
