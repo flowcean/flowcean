@@ -1400,7 +1400,7 @@ dev = [
 requires-dist = [
     { name = "cloudpickle", specifier = ">=3.1.1" },
     { name = "docker", specifier = ">=7.1.0" },
-    { name = "grpcio", specifier = ">=1.67.0" },
+    { name = "grpcio", specifier = ">=1.72.1" },
     { name = "lightning", marker = "extra == 'palaestrai'", specifier = ">=2.4.0" },
     { name = "lightning", marker = "extra == 'torch'", specifier = ">=2.4.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
@@ -1414,7 +1414,7 @@ requires-dist = [
     { name = "palaestrai", marker = "extra == 'palaestrai'", specifier = ">=3.5.8" },
     { name = "palaestrai-agents", marker = "extra == 'palaestrai'", specifier = ">=3.5.4" },
     { name = "polars", extras = ["style", "xlsxwriter"], specifier = ">=1.33.0" },
-    { name = "protobuf", specifier = ">=5.28.2" },
+    { name = "protobuf", specifier = ">=6.30.0" },
     { name = "pysr", marker = "extra == 'pysr'", specifier = ">=1.5.9" },
     { name = "rich", specifier = ">=14.1.0" },
     { name = "river", marker = "extra == 'river'", specifier = ">=0.21.0" },
