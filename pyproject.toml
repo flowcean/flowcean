@@ -59,6 +59,11 @@ Source = "https://github.com/flowcean/flowcean"
 requires = ["uv_build>=0.11.7,<0.12"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+source-exclude = [
+  "/src/flowcean/grpc/proto/protoc-gen-grpc-java",
+]
+
 [dependency-groups]
 dev = [
   "asyncssh>=2.18.0",
