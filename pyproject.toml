@@ -84,7 +84,6 @@ dev = [
   "mypy-protobuf>=3.0.0",
   "pre-commit>=4.6.0",
   "pysr>=1.5.9",
-  "pyright>=1.1.409",
   "pytest-cov>=7.1.0",
   "pytest>=9.0.3",
   "river>=0.21.0",
