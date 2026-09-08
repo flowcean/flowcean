@@ -124,15 +124,9 @@ install_clang = "bash -c 'sudo apt-get install -y clang'"
 
 [tool.coverage.run]
 source_pkgs = ["flowcean"]
-omit = ["src/flowcean/grpc/_generated/*"]
+omit = ["*/flowcean/grpc/_generated/*"]
 branch = true
-parallel = true
 
 [tool.coverage.report]
 skip_empty = true
-exclude_also = [
-  "pass",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
-]
+show_missing = true
