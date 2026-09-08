@@ -41,9 +41,9 @@ class SACModel(Model):
         self.data_for_brain: dict[str, Any] = {}
 
         if training_mode:
-            self.muscle._mode = Mode.TRAIN  # noqa: SLF001
+            self.muscle._mode = Mode.TRAIN
         else:
-            self.muscle._mode = Mode.TEST  # noqa: SLF001
+            self.muscle._mode = Mode.TEST
 
     @override
     def _predict(self, input_features: Observation) -> Action:
@@ -66,7 +66,7 @@ class SACModel(Model):
 
     def save_state(self) -> dict[str, Any]:
         bio = io.BytesIO()
-        torch.save(self.muscle._model, bio)  # noqa: SLF001
+        torch.save(self.muscle._model, bio)
         bio.seek(0)
         action = [interface_dict(a) for a in self.action.actuators]
         observation = [interface_dict(s) for s in self.observation.sensors]
@@ -100,7 +100,7 @@ class SACModel(Model):
             self.muscle.update(update)
 
     def train(self) -> None:
-        self.muscle._mode = Mode.TRAIN  # noqa: SLF001
+        self.muscle._mode = Mode.TRAIN
 
     def eval(self) -> None:
-        self.muscle._mode = Mode.TEST  # noqa: SLF001
+        self.muscle._mode = Mode.TEST

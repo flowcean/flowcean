@@ -61,7 +61,7 @@ class LoggingCallback(LearnerCallback):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,  # noqa: ARG002
+        model: Model,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Log learning completion."""

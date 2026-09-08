@@ -15,7 +15,7 @@ def initialize_random(seed: int) -> None:
     Args:
         seed: The seed to initialize the random number generator with.
     """
-    global rng  # noqa: PLW0603
+    global rng
     rng = np.random.default_rng(seed)
     random.seed(get_seed())
     pl.set_random_seed(get_seed())

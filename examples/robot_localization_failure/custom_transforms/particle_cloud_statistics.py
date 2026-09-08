@@ -673,7 +673,7 @@ class ParticleCloudStatistics(Transform):
 
         return {"x": mean_x, "y": mean_y}
 
-    def welzl(  # noqa: PLR0911
+    def welzl(
         self,
         points: list[tuple],
         boundary: list[tuple[float, float]] | None = None,
@@ -682,14 +682,14 @@ class ParticleCloudStatistics(Transform):
         if boundary is None:
             boundary = []
 
-        if not points or len(boundary) == 3:  # noqa: PLR2004
+        if not points or len(boundary) == 3:
             if len(boundary) == 0:
                 return ((0, 0), 0)
             if len(boundary) == 1:
                 return (boundary[0], 0)
-            if len(boundary) == 2:  # noqa: PLR2004
+            if len(boundary) == 2:
                 return self.circle_from_two_points(boundary[0], boundary[1])
-            if len(boundary) == 3:  # noqa: PLR2004
+            if len(boundary) == 3:
                 try:
                     return self.circle_from_three_points(
                         boundary[0],

@@ -517,7 +517,7 @@ class ScanMapStatistics(Transform):
         plt.tight_layout()
         plt.savefig("detected_lines.png")
 
-    def derive_scan_point_features(self, data: pl.DataFrame) -> pl.DataFrame:  # noqa: PLR0915 this cannot be split
+    def derive_scan_point_features(self, data: pl.DataFrame) -> pl.DataFrame:
         """Derive features based on the scan points and the occupancy map."""
         map_array = self.occupancy_map["data"]
         width = self.occupancy_map["info.width"]

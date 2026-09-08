@@ -111,7 +111,7 @@ class KLDivergence(Transform):
         min_val = min(feature_values)
         max_val = max(feature_values)
         bins = np.arange(min_val, max_val + bin_size, bin_size)
-        if len(bins) < 2:  # noqa: PLR2004
+        if len(bins) < 2:
             return 0.0
 
         counts_localized, _ = np.histogram(values_localized, bins=bins)

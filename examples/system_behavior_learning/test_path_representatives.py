@@ -1,5 +1,4 @@
 # Assertions and fixed numerical fixtures are intentional in tests.
-# ruff: noqa: PLR2004, S101
 
 from __future__ import annotations
 

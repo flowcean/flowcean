@@ -112,7 +112,7 @@ class _EntryResult(NamedTuple):
     jumps: int
 
 
-def simulate(  # noqa: C901, PLR0912, PLR0915
+def simulate(
     system: HybridSystem,
     t_span: tuple[float, float],
     x0: Iterable[float] | None = None,

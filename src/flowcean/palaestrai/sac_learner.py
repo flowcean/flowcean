@@ -108,7 +108,7 @@ class SACLearner(ActiveLearner):
         self.observation = filter_observation(observation, self.sensor_ids)
 
         self.brain = SACBrain(**self.brain_params)
-        self.brain._seed = 0  # noqa: SLF001
+        self.brain._seed = 0
         self.brain.sensors = convert_to_sensor_information(self.observation)
         self.brain.actuators = convert_to_actuator_information(self.action)
         self.brain.setup()
@@ -191,7 +191,7 @@ class SACLearner(ActiveLearner):
             bio = io.BytesIO()
             bio.write(fp.read())
         bio.seek(0)
-        self.brain.actor = torch.load(bio, map_location=self.brain._device)  # noqa: SLF001
+        self.brain.actor = torch.load(bio, map_location=self.brain._device)
 
         bio.seek(0)
         self.model.update(bio)
@@ -202,14 +202,14 @@ class SACLearner(ActiveLearner):
         bio.seek(0)
         self.brain.actor_target = torch.load(
             bio,
-            map_location=self.brain._device,  # noqa: SLF001
+            map_location=self.brain._device,
         )
 
         with (Path(file_path) / "sac_critic").open("rb") as fp:
             bio = io.BytesIO()
             bio.write(fp.read())
         bio.seek(0)
-        self.brain.critic = torch.load(bio, map_location=self.brain._device)  # noqa: SLF001
+        self.brain.critic = torch.load(bio, map_location=self.brain._device)
 
         with (Path(file_path) / "sac_critic_target").open("rb") as fp:
             bio = io.BytesIO()
@@ -217,5 +217,5 @@ class SACLearner(ActiveLearner):
         bio.seek(0)
         self.brain.critic_target = torch.load(
             bio,
-            map_location=self.brain._device,  # noqa: SLF001
+            map_location=self.brain._device,
         )
