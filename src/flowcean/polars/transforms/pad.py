@@ -31,7 +31,7 @@ class Pad(Transform):
         self,
         length: float,
         *,
-        features: None | str | Iterable[str] = None,
+        features: str | Iterable[str] | None = None,
     ) -> None:
         """Initializes the Pad transform.
 

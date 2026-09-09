@@ -1,5 +1,6 @@
 import logging
-from typing import override
+from collections.abc import Hashable
+from typing import Any, cast, override
 
 import polars as pl
 
@@ -37,7 +38,11 @@ class RiverModel(Model):
             if isinstance(input_features, pl.LazyFrame)
             else input_features
         )
-        predictions = [self.model.predict_one(row) for row in df.to_dicts()]
+        # River accepts hashable feature names; Polars column names are strings.
+        predictions = [
+            self.model.predict_one(cast("dict[Hashable, Any]", row))
+            for row in df.to_dicts()
+        ]
         return pl.LazyFrame({self.output_column: predictions})
 
 
@@ -93,7 +98,7 @@ class RiverLearner(SupervisedIncrementalLearner):
                 ),
                 start=1,
             ):
-                xi = dict(input_row)  # Convert input row to a dictionary
+                xi = cast("dict[Hashable, Any]", dict(input_row))
                 yi = next(
                     iter(output_row.values()),
                 )  # Extract the first (and only) output value

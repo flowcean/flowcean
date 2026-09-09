@@ -67,7 +67,7 @@ learner = SACLearner(
     actuator_ids,
     sensor_ids,
     ArlDefenderObjective(),  # Objective function for voltage stability
-    **params
+    **params,
 )
 ```
 

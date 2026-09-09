@@ -42,7 +42,9 @@ inputs = [
 ]
 outputs = ["temperature_3"]
 
-trace = DataFrame.from_csv(Path("examples/trace_prediction/data/thermostat_trace.csv"))
+trace = DataFrame.from_csv(
+    Path("examples/trace_prediction/data/thermostat_trace.csv")
+)
 train, test = TrainTestSplit(ratio=0.8, shuffle=False).split(trace)
 window = SlidingWindow(window_size=4)
 

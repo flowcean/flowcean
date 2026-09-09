@@ -129,7 +129,7 @@ model = learn_offline(
     learner,
     inputs,
     outputs,
-    )
+)
 ```
 
 ## Generate Test Inputs
@@ -161,7 +161,6 @@ By uncommenting the function calls more insights into the input generation and t
 The generated test cases are executed and the results are checked against the predicate. The predicate can either be concrete values or expressions that should evaluate to true for all test cases.
 
 ```python
-
 predicate = PolarsPredicate(
     (pl.col("BodyFat") < BODYFAT_MAX) & (pl.col("BodyFat") > BODYFAT_MIN),
 )
@@ -174,7 +173,6 @@ run_model_tests(
     stop_after=40,
     path="test_failures.txt",
 )
-
 ```
 
 

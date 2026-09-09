@@ -92,19 +92,19 @@ Next, setup a gradient boosted regression learner and define the input and targe
 from flowcean.xgboost import XGBoostRegressorLearner
 
 learner = XGBoostRegressorLearner(
-    n_estimators=10,              # Use 10 boosting rounds
-    max_depth=20,                 # Allow for deep trees to capture complex relationships
-    objective="reg:squarederror", # Aim for minimizing the mean squared error
+    n_estimators=10,  # Use 10 boosting rounds
+    max_depth=20,  # Allow for deep trees to capture complex relationships
+    objective="reg:squarederror",  # Aim for minimizing the mean squared error
 )
 
 inputs = [
     "^p_accumulator_.*$",  # All time series features of the accumulator pressure
     "active_valve_count",  # Number of active valves
-    "T",                   # Ambient temperature
+    "T",  # Ambient temperature
 ]
 
 outputs = [
-    "container_weight",    # Target feature: container weight
+    "container_weight",  # Target feature: container weight
 ]
 ```
 
@@ -119,7 +119,6 @@ model = learn_offline(
     inputs,
     outputs,
 )
-
 ```
 
 Once the model is trained, it can be evaluated on the test set to assess its performance.
