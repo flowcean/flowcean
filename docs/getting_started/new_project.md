@@ -30,6 +30,7 @@ output).
 
 ```python
 import flowcean.cli
+
 flowcean.cli.initialize()
 ```
 
@@ -75,6 +76,7 @@ The full code will look like this:
 import flowcean.cli
 from flowcean.core import learn_active
 
+
 def main() -> None:
     flowcean.cli.initialize()
 
@@ -107,6 +109,7 @@ from dataclasses import dataclass
 
 Action = float
 
+
 @dataclass
 class ReinforcementObservation:
     reward: float
@@ -119,12 +122,12 @@ With this, we define the environment class `MyEnvironment`.
 from flowcean.core import ActiveOnlineEnvironment
 from flowcean.core import StopLearning
 
+
 class MyEnvironment(ActiveOnlineEnvironment[Action, ReinforcementObservation]):
     state: float
     max_value: float
     last_action: Action | None
     max_num_iterations: int
-
 ```
 
 The *state* contains the value that is determined by the environment in each simulation step, which is the value that should be predicted by the input value.
@@ -169,6 +172,7 @@ The last crucial function to implement is the `observe` function.
 
 It is important that this functions does not do any changes of the environment object, i.e., calling it multiple times provides the same results.
 
+<!-- fmt: off -->
 ```python
 
     @override
@@ -183,6 +187,7 @@ It is important that this functions does not do any changes of the environment o
             return nan
         return self.max_value - abs(self.state - self.last_action)
 ```
+<!-- fmt: on -->
 
 The full code for the environment definition is shown below:
 
@@ -192,10 +197,12 @@ from flowcean.core import ActiveOnlineEnvironment
 
 Action = float
 
+
 @dataclass
 class ReinforcementObservation:
     reward: float
     sensor: float
+
 
 class MyEnvironment(ActiveOnlineEnvironment[Action, ReinforcementObservation]):
     state: float
@@ -256,6 +263,7 @@ We can define a learner class based on the Action and ReinforcementObservation o
 
 ```python
 from flowcean.core import ActiveLearner
+
 
 class MyLearner(ActiveLearner[Action, ReinforcementObservation]):
     model: MyModel
@@ -329,6 +337,7 @@ It contains the prediction function given by the learner to predict output value
 
 ```python
 from flowcean.core import StopLearning, learn_active
+
 
 class MyModel(Model):
     best_action: float

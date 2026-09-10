@@ -6,48 +6,47 @@ target-version = "py312"
 preview = false
 docstring-code-format = true
 docstring-code-line-length = 80
-exclude = ["*.ipynb"]
 
 [lint]
 preview = false
-select = ["ALL"]
+select = [
+  # Fundamental Python mistakes; formatting is handled separately.
+  "E4", "E7", "E9", "F",
+  # Import ordering and modern Python syntax.
+  "I", "UP",
+  # Common bugs and useful simplifications.
+  "B", "SIM", "C4", "PIE", "RUF",
+  # Pylint errors and warnings, not refactoring prescriptions.
+  "PLE", "PLW",
+  # Datetimes and logging.
+  "DTZ", "LOG", "G",
+  # Security-sensitive constructs and accidental console/debug output.
+  "S", "T10", "T20",
+  # Scientific Python.
+  "NPY",
+  # Tests, annotations, stubs, and suppression hygiene.
+  "PT", "ANN", "PYI", "PGH",
+  # Consistency of existing docstrings.
+  "D",
+]
 ignore = [
-  "A005",    # module shadows standard library imports
-  "ANN401",  # dynamically typed expressions (typing.Any) are disallowed
-  "CPY001",  # missing copyright notice
-  "D10",     # missing docstrings
-  "ERA001",  # commented-out code
-  "ISC001",  # implicit string concatenation
-  "N818",    # Error suffix on exceptions
-  "PD",      # pandas
-  "PLC0415", # import at top of file
-  "PLR0913", # too many arguments
-  "S301",    # pickle usage
-  "S311",    # pseudo-random number generation
-  "T201",    # allow print
-  "TD",      # To-Do rules
-  "TID252",  # allow explicit parent-relative imports
+  "ANN401",  # Any is legitimate at dynamic integration boundaries.
+  "D10",     # Don't require boilerplate docstrings everywhere.
+  "D206",    # Formatter owns docstring indentation.
+  "D300",    # Formatter owns docstring quoting.
+  "PLW0603", # Deliberate module-level state isn't inherently wrong.
+  "S311",    # Scientific randomness isn't cryptographic randomness.
 ]
 
 [lint.per-file-ignores]
-"**/examples/**/*" = [
-  "D10",    # missing docstrings
-  "INP001", # implicit namespace packages
-  "T",      # print
-]
-"**/scripts/*" = [
-  "D10",    # missing docstrings
-  "INP001", # implicit namespace packages
-  "T",      # print
-]
-"**/tests/**/*" = [
-  "D10",     # missing docstrings
-  "INP001",  # implicit namespace packages
-  "PLC1901", # compare to empty string
-  "PLR2004", # magic value comparison
-  "PLR6301", # no self use in methods
-  "S101",    # asserts
-]
+"**/tests/**/*" = ["ANN", "S101", "T20"]
+"**/examples/**/*" = ["ANN", "S101", "T20"]
+"**/scripts/**/*" = ["ANN", "T20"]
+# Model persistence intentionally uses pickle; loading requires trusted input.
+"src/flowcean/core/model.py" = ["S301"]
+# These components explicitly report predictions or progress to the console.
+"src/flowcean/polars/environments/datasetprediction.py" = ["T201"]
+"src/flowcean/hybrid/hydra/callbacks.py" = ["T201"]
 
 [lint.isort]
 known-first-party = ["flowcean"]

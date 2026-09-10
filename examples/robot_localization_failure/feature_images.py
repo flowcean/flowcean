@@ -30,7 +30,7 @@ class InMemoryCaching[T](Dataset[T]):
             msg = "requires a Sized dataset (__len__ implemented)"
             raise TypeError(msg)
         self._dataset = dataset
-        self._cache: list[None | T] = [None] * len(dataset)
+        self._cache: list[T | None] = [None] * len(dataset)
 
     def __len__(self) -> int:
         return len(self._dataset)

@@ -52,7 +52,11 @@ import flowcean.cli
 import polars as pl
 from flowcean.core import evaluate_offline, learn_incremental
 from flowcean.polars import DataFrame, TrainTestSplit
-from flowcean.sklearn import LinearRegression, MeanAbsoluteError, MeanSquaredError
+from flowcean.sklearn import (
+    LinearRegression,
+    MeanAbsoluteError,
+    MeanSquaredError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -99,5 +103,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 ```

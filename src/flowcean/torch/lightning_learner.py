@@ -47,7 +47,7 @@ class LightningCallbackBridge(lightning.Callback):
     def on_train_start(
         self,
         trainer: lightning.Trainer,
-        pl_module: lightning.LightningModule,  # noqa: ARG002
+        pl_module: lightning.LightningModule,
     ) -> None:
         """Called when training starts."""
         context = {
@@ -64,8 +64,8 @@ class LightningCallbackBridge(lightning.Callback):
         self,
         trainer: lightning.Trainer,
         pl_module: lightning.LightningModule,
-        outputs: Any,  # noqa: ARG002
-        batch: Any,  # noqa: ARG002
+        outputs: Any,
+        batch: Any,
         batch_idx: int,
     ) -> None:
         """Called after each training batch."""

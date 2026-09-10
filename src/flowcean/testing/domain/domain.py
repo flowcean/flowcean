@@ -25,7 +25,7 @@ class Domain(ABC):
         """Get a random value from the domain for the feature."""
         return self.get_value()
 
-    def set_seed(self, seed: int) -> None:  # noqa: ARG002
+    def set_seed(self, seed: int) -> None:
         """Set the seed for the random number generator.
 
         Args:

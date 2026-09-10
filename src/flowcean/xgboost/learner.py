@@ -46,7 +46,7 @@ class XGBoostCallbackBridge(TrainingCallback):
 
     def after_iteration(
         self,
-        model: Any,  # noqa: ARG002
+        model: Any,
         epoch: int,
         evals_log: dict[str, Any],
     ) -> bool:

@@ -15,13 +15,13 @@ if TYPE_CHECKING:
 class SupportsPredict(Protocol):
     """Protocol describing an object that has a `predict` method."""
 
-    def predict(self, X: Any) -> NDArray: ...  # noqa: N803
+    def predict(self, X: Any) -> NDArray: ...
 
 
 class SupportsPredictProba(Protocol):
     """Protocol describing an object that has a `predict_proba` method."""
 
-    def predict_proba(self, X: Any) -> NDArray: ...  # noqa: N803
+    def predict_proba(self, X: Any) -> NDArray: ...
 
 
 class SciKitModel(Model):

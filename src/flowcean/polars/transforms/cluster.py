@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class Clusterer(Protocol):
-    def fit(self, X: npt.ArrayLike) -> Any: ...  # noqa: N803, scikit-learn style
-    def predict(self, X: npt.ArrayLike) -> npt.ArrayLike: ...  # noqa: N803, scikit-learn style
+    def fit(self, X: npt.ArrayLike) -> Any: ...
+    def predict(self, X: npt.ArrayLike) -> npt.ArrayLike: ...
 
 
 class Cluster(Transform):

@@ -12,29 +12,29 @@ ROS allows users to record robotics data, such as sensor data or internal data o
 from flowcean.environments.rosbag import RosbagLoader
 
 environment = RosbagLoader(
-            path="rec_20241021_152106",
-            topics={
-                "/amcl_pose": [
-                    "pose.pose.position.x",
-                    "pose.pose.position.y",
-                ],
-                "/momo/pose": [
-                    "pose.position.x",
-                    "pose.position.y",
-                ],
-                "/scan": [
-                    "ranges",
-                ],
-                "/particle_cloud": ["particles"],
-                "/position_error": ["data"],
-                "/heading_error": ["data"],
-            },
-            msgpaths=[
-                "/opt/ros/humble/share/sensor_msgs/msg/LaserScan.msg",
-                "/opt/ros/humble/share/nav2_msgs/msg/ParticleCloud.msg",
-                "/opt/ros/humble/share/nav2_msgs/msg/Particle.msg",
-            ],
-        )
+    path="rec_20241021_152106",
+    topics={
+        "/amcl_pose": [
+            "pose.pose.position.x",
+            "pose.pose.position.y",
+        ],
+        "/momo/pose": [
+            "pose.position.x",
+            "pose.position.y",
+        ],
+        "/scan": [
+            "ranges",
+        ],
+        "/particle_cloud": ["particles"],
+        "/position_error": ["data"],
+        "/heading_error": ["data"],
+    },
+    msgpaths=[
+        "/opt/ros/humble/share/sensor_msgs/msg/LaserScan.msg",
+        "/opt/ros/humble/share/nav2_msgs/msg/ParticleCloud.msg",
+        "/opt/ros/humble/share/nav2_msgs/msg/Particle.msg",
+    ],
+)
 ```
 
 The `RosbagLoader` requires a list of ROS topics to be loaded along with a specification which fields of the ROS message should be extracted. Here is a brief explanation of the topics that are loaded in this example:

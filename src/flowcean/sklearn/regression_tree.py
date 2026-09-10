@@ -29,7 +29,7 @@ class RegressionTree(SupervisedLearner):
     def __init__(
         self,
         *,
-        dot_graph_export_path: None | str = None,
+        dot_graph_export_path: str | None = None,
         criterion: str = "squared_error",
         splitter: str = "best",
         max_depth: int | None = None,

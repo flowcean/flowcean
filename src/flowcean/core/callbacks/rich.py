@@ -119,7 +119,7 @@ class RichCallback(LearnerCallback):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,  # noqa: ARG002
+        model: Model,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Display learning completion message."""
@@ -179,7 +179,7 @@ class RichSpinnerCallback(LearnerCallback):
     def on_learning_start(
         self,
         learner: Named,
-        context: dict[str, Any] | None = None,  # noqa: ARG002
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Display learning start message with spinner."""
         text = Text()
@@ -200,8 +200,8 @@ class RichSpinnerCallback(LearnerCallback):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,  # noqa: ARG002
-        metrics: dict[str, Any] | None = None,  # noqa: ARG002
+        model: Model,
+        metrics: dict[str, Any] | None = None,
     ) -> None:
         """Display learning completion message."""
         if self._live:

@@ -46,7 +46,7 @@ class CallbackMixin:
     def _setup_callbacks(
         self,
         callbacks: list[LearnerCallback] | LearnerCallback | None = None,
-        use_default: bool = True,  # noqa: FBT001, FBT002
+        use_default: bool = True,
     ) -> CallbackManager:
         """Set up the callback manager."""
         if callbacks is None and use_default:
