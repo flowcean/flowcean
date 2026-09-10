@@ -1,5 +1,5 @@
 [project]
-name = "linear-data"
+name = "multi-linear-data"
 version = "0.1.0"
 requires-python = ">=3.12, <4.0"
 dependencies = ["flowcean"]

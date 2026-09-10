@@ -21,6 +21,7 @@ members = [
     "hs-simple",
     "hybrid-systems",
     "linear-data",
+    "multi-linear-data",
     "one-tank",
     "passive-circuit",
     "robot-localization-failure",
@@ -3956,6 +3957,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/9d/1d02994c7ae2603c98100984428ff0f67443572133bc18eca6058f732c1b/msgpack-1.2.2-cp315-cp315t-win_amd64.whl", hash = "sha256:6f53285f20d592ed309ee19e509cc4c77a3bda1db02ad67e8a0949bb227a5a6d", size = 78766, upload-time = "2026-08-27T10:03:45.036Z" },
     { url = "https://files.pythonhosted.org/packages/60/54/89ed16e6f966a050dc78b0e94a545025211b07ce9f4bdfe07dff70c03fc2/msgpack-1.2.2-cp315-cp315t-win_arm64.whl", hash = "sha256:a378e12ccc06d76efde115caf4073b7e5ff3cc18291d1341f9e65fb882e3f754", size = 71819, upload-time = "2026-08-27T10:03:46.375Z" },
 ]
+
+[[package]]
+name = "multi-linear-data"
+version = "0.1.0"
+source = { virtual = "examples/multi_linear_data" }
+dependencies = [
+    { name = "flowcean" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "flowcean", editable = "." }]
 
 [[package]]
 name = "multidict"
