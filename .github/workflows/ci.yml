@@ -61,6 +61,25 @@ jobs:
       - name: Build package distributions
         run: just package
 
+      - name: Smoke-test installed wheel
+        shell: bash
+        run: |
+          smoke_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/flowcean-wheel.XXXXXX")"
+          trap 'rm -rf "$smoke_dir"' EXIT
+          uv venv --python 3.14 "$smoke_dir"
+          uv pip install --python "$smoke_dir/bin/python" dist/*.whl
+          "$smoke_dir/bin/python" -I - <<'PY'
+          import importlib
+          import sys
+          from pathlib import Path
+
+          for name in ("core", "polars", "sklearn", "grpc"):
+              module = importlib.import_module(f"flowcean.{name}")
+              path = Path(module.__file__).resolve()
+              assert path.is_relative_to(Path(sys.prefix).resolve()), path
+              print(f"Imported {module.__name__} from {path}")
+          PY
+
   docs:
     name: Documentation
     runs-on: ubuntu-24.04
