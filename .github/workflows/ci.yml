@@ -122,7 +122,6 @@ jobs:
         uses: extractions/setup-just@v4
 
       - name: Resolve Julia executable
-        if: ${{ matrix.example == 'simulated_hybrid_system' }}
         shell: bash
         run: |
           # Remove once JuliaCall includes the fix for:
