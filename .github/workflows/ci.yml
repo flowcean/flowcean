@@ -112,15 +112,6 @@ jobs:
       - name: Set up just
         uses: extractions/setup-just@v4
 
-      - name: Set up DVC
-        run: |
-          uv run dvc --version
-          uv run dvc config cache.dir ${{ github.workspace }}/../.cache/dvc
-
-      - name: DVC pull
-        run: |
-          uv run dvc pull --verbose --recursive examples/${{ matrix.example }}
-
       - name: Run Example [${{ matrix.example }}]
         run: |
           just examples-${{ matrix.example }}
