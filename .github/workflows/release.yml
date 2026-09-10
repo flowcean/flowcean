@@ -8,9 +8,7 @@ on:
 jobs:
   publish:
     name: Publish
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       id-token: write

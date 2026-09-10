@@ -17,9 +17,7 @@ concurrency:
 jobs:
   documentation:
     name: Build & Deploy Documentation
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out
         uses: actions/checkout@v6
