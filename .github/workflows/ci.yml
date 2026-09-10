@@ -15,9 +15,7 @@ concurrency:
 jobs:
   check:
     name: Checks
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out
         uses: actions/checkout@v6
@@ -33,9 +31,7 @@ jobs:
 
   tests:
     name: Tests
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out
         uses: actions/checkout@v6
@@ -51,9 +47,7 @@ jobs:
 
   package:
     name: Package
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out
         uses: actions/checkout@v6
@@ -69,9 +63,7 @@ jobs:
 
   docs:
     name: Documentation
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out
         uses: actions/checkout@v6
@@ -97,9 +89,7 @@ jobs:
     strategy:
       matrix:
         example: ["boiler", "linear_data", "one_tank", "xor", "trace_prediction", "hs-simple", "hybrid_systems", "simulated_hybrid_system", "system_behavior_learning"]
-    runs-on:
-      - self-hosted
-      - itl
+    runs-on: ubuntu-24.04
     env:
       CUDA_VISIBLE_DEVICES: ""
     steps:
