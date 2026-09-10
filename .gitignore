@@ -73,10 +73,6 @@ target/
 # IPython Notebook
 .ipynb_checkpoints
 
-# Keep local interpreter overrides untracked, except the development default.
-.python-version
-!/.python-version
-
 # celery beat schedule file
 celerybeat-schedule
 
