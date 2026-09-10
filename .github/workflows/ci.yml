@@ -121,6 +121,17 @@ jobs:
       - name: Set up just
         uses: extractions/setup-just@v4
 
+      - name: Resolve Julia executable
+        if: ${{ matrix.example == 'simulated_hybrid_system' }}
+        shell: bash
+        run: |
+          # Remove once JuliaCall includes the fix for:
+          # https://github.com/JuliaPy/PythonCall.jl/issues/816
+          if julia_exe="$(command -v julia)"; then
+            julia_exe="$(readlink -f "$julia_exe")"
+            dirname "$julia_exe" >> "$GITHUB_PATH"
+          fi
+
       - name: Run Example [${{ matrix.example }}]
         run: |
           just examples-${{ matrix.example }}
