@@ -104,10 +104,8 @@ examples-simulated_hybrid_system:
   @uv run --directory ./examples/simulated_hybrid_system/ python run.py
 
 examples-system_behavior_learning:
-  @echo "🚀 Running example: System Behavior Learning"
-  @uv run pytest examples/system_behavior_learning -q
-  @uv run --directory ./examples/system_behavior_learning/ python run.py
-  @uv run --directory ./examples/system_behavior_learning/ python run_path_representatives.py --output-dir outputs
+  @echo "🚀 Testing example: System Behavior Learning"
+  @uv run pytest examples/system_behavior_learning/tests -q
 
 generate-proto:
   @echo "🚀 Generating Python and Java definitions from gRPC proto files"

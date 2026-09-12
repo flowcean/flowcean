@@ -2075,6 +2075,7 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "threadpoolctl" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -2085,6 +2086,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.5.2" },
     { name = "scipy", specifier = ">=1.15.0" },
     { name = "threadpoolctl", specifier = ">=3.6" },
+    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [[package]]

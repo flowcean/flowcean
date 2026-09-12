@@ -9,6 +9,7 @@ dependencies = [
   "scikit-learn>=1.5.2",
   "scipy>=1.15.0",
   "threadpoolctl>=3.6",
+  "tqdm>=4.67.1",
 ]
 
 [tool.uv.sources]
