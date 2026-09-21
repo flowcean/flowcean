@@ -116,7 +116,7 @@ def registry() -> dict[str, BenchmarkSpec]:
             factory=tank_valves,
             tags=("flow", "valves", "nonlinear"),
             description="Two-tank system with valve-controlled flow.",
-            t_span=(0.0, 5.0),
+            t_span=(0.0, 300.0),
         ),
         BenchmarkSpec(
             name="Location Cycle",
