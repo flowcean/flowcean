@@ -6,7 +6,7 @@ This is achieved by organizing functionalities in modules as shown in th figure 
 ![Flowcean Modules](../assets/flowcean_modules.svg)
 
 Note, that modules described here do not coincide with Python modules on the implementation side.
-If you want to know more about a specific Python module of Flowcean please refer to the [API Reference](https://flowcean.me/reference/flowcean/).
+If you want to know more about a specific Python module of Flowcean please refer to the [API Reference](../reference/index.md).
 In the following, the term _module_ always refers to modules for the conceptual idea of Flowcean.
 Anyways, some of the Flowcean modules form Python modules as well which we discuss at the end of this page.
 
@@ -29,12 +29,11 @@ Transforms are all kind of preliminary operations on datasets which might be pre
 
 ## Reference to Python API
 
-On the implementation side, abstract base classes of the _Model_, _Metric_, _Learner_, and _Transform_ are included in the Python module [_core_](https://flowcean.me/reference/flowcean/core/).
+On the implementation side, abstract base classes of the _Model_, _Metric_, _Learner_, and _Transform_ are included in the Python module [_core_](../reference/core.md).
 Furthermore, the core includes the three main environments.
 
-Concrete implementations of [models](https://flowcean.me/reference/flowcean/models/), [metrics](https://flowcean.me/reference/flowcean/metrics/), [learners](https://flowcean.me/reference/flowcean/learners/), and [transforms](https://flowcean.me/reference/flowcean/transforms/) form individual Python modules.
-Backend packages implement concrete learners and models, including `flowcean.aalpy` for passive automata learning in Python.
-Learning strategies form a further Python module.
+Concrete models, metrics, and learners are exposed by the [backend packages](../reference/index.md#learners-and-models), including [flowcean.aalpy](../reference/aalpy.md) for passive automata learning in Python. Reusable dataframe transforms are exposed by [flowcean.polars](../reference/polars.md).
+Learning strategies are exposed by [flowcean.core](../reference/core.md).
 As strategies are Python-functions, no abstract base class exists.
 Three main strategies based on the three types of environments are explained in the section [Learning Strategies](https://flowcean.me/user_guide/learning_strategies/).
 

@@ -39,7 +39,7 @@ More information on learning strategies can be found [here](https://flowcean.me/
 How the evaluation of models is done in Flowcean, is explained [here](https://flowcean.me/user_guide/evaluation/).
 
 Below, is a basic code implementation of an environment definition.
-In this case, the environment is a _DataSet_ which is a type of [OfflineEnvironment](https://flowcean.me/reference/flowcean/core/environment/offline/).
+In this case, the environment is a _DataSet_ which is a type of [OfflineEnvironment](../reference/core.md#flowcean.core.OfflineEnvironment).
 Its [learner](https://flowcean.me/user_guide/model/) is a linear regression algorithm.
 It uses an incremental [Learning Strategy](https://flowcean.me/user_guide/learning_strategies/).
 In this example, no model is saved or loaded.

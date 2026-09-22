@@ -4,6 +4,15 @@
     --md-primary-fg-color--dark: #005b7f;
 }
 
+[data-md-color-scheme="slate"] {
+    --md-primary-fg-color: #68b4d3;
+    --md-primary-fg-color--light: #92cce2;
+    --md-primary-fg-color--dark: #368aac;
+}
+
+[data-md-color-scheme="slate"] .md-logo img {
+    filter: brightness(0) invert(1);
+}
 
 .md-header__button.md-logo img,
 .md-header__button.md-logo svg {

@@ -9,7 +9,8 @@
 
 ## CI And Generated Outputs
 - PR CI has five jobs in `.github/workflows/ci.yml`: checks, tests, package, docs, and an examples matrix.
-- `just docs` runs `uv run mkdocs build --strict`.
+- `just docs` runs `uv run --only-group docs zensical build --strict` using `zensical.toml` and writes `site/`. `just docs-serve` starts the preview server. Documentation dependencies are isolated in the `docs` dependency group; no Java toolchain is needed.
+- API reference pages in `docs/reference/` document public package exports with mkdocstrings. Keep their links and the explicit navigation in `zensical.toml` in sync when adding public packages.
 - Examples with DVC-tracked data need `uv run dvc pull --recursive examples/<name>` before running locally. The Coffee Machine example is not in the CI examples matrix because it requires this external data.
 
 ## Repo Shape
