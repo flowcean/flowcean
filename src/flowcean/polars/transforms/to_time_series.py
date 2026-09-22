@@ -6,12 +6,14 @@ from flowcean.core import Transform
 
 
 class ToTimeSeries(Transform):
-    """Collect rows sharing one time axis into a multivariate time series.
+    """Collect rows sharing one time axis into one time series.
 
     The result has one row and one column named ``name``, with dtype
-    ``List(Struct({time: <time dtype>, value: Struct({...})}))``. Each sample's
-    ``value`` contains all input columns except ``time_feature``, retaining
-    their names and dtypes. Even a single value column remains struct-valued.
+    ``List(Struct({time: <time dtype>, value: <value dtype>}))``. With exactly
+    one non-time column, each sample's ``value`` is that column's value,
+    retaining its dtype. With two or more non-time columns, ``value`` is a
+    struct retaining their names, order, and dtypes. Scalar-series transforms
+    such as ``Mean`` and ``Resample`` require the single-value-column form.
     Input row order is preserved; timestamps are not sorted.
 
     Empty input produces one empty list with the same nested schema. If the
@@ -52,11 +54,12 @@ class ToTimeSeries(Transform):
             for feature in data.collect_schema().names()
             if feature != self.time_feature
         ]
-        values = (
-            pl.struct(value_features)
-            if value_features
-            else pl.lit({}, dtype=pl.Struct({}))
-        )
+        if len(value_features) == 1:
+            values = pl.col(value_features[0])
+        elif value_features:
+            values = pl.struct(value_features)
+        else:
+            values = pl.lit({}, dtype=pl.Struct({}))
         return data.select(
             pl.struct(
                 pl.col(self.time_feature).alias("time"),
