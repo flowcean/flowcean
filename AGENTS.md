@@ -6,6 +6,7 @@
 - `just test` = `uv run python -m pytest tests --cov --cov-config=pyproject.toml`.
 - Focused test: `uv run pytest tests/path/test_file.py -v` or `uv run pytest tests/path/test_file.py::test_name -v`.
 - Focused example: `uv run --directory ./examples/<name>/ run.py`. Do not assume every workspace example also has a `just examples-<name>` target; `passive_circuit` does not.
+- Before opening a PR, update `CHANGELOG.md` under `Unreleased` for notable user-facing changes, especially changes to public APIs, behavior, defaults, or compatibility. Internal-only changes do not normally require an entry.
 
 ## CI And Generated Outputs
 - PR CI has five jobs in `.github/workflows/ci.yml`: checks, tests, package, docs, and an examples matrix.
@@ -22,4 +23,4 @@
 ## Gotchas
 - Do not assume every `examples/*` directory is wired the same way. If an example uses `flowcean = { workspace = true }`, keep `[tool.uv.workspace].members` in sync, and update `justfile` plus the CI examples matrix if it should be runnable there.
 - Pytest stability for real PySR tests depends on `tests/conftest.py` setting `PYTHON_JULIACALL_THREADS=1`; keep that in place unless you have a verified replacement.
-- Project-local worktrees belong under `.worktrees/`, which is already ignored in `.gitignore`.
+- Keep the central worktree on `main` and free of implementation changes. Create or reuse a task worktree under `.worktrees/`, which is already ignored in `.gitignore`, for every repository modification.
