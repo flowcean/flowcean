@@ -10,7 +10,7 @@ just docs
 ```
 
 `just` invokes `uv` to install the dedicated `docs` dependency group and build in strict mode.
-The generated site is written to `site/`; no Java toolchain is required.
+The generated site is written to `site/`.
 
 The [API reference](../reference/index.md) uses hand-authored pages in `docs/reference/` and mkdocstrings directives to document public Python package exports.
 When adding a reference page, also add it to the navigation in `zensical.toml`.
