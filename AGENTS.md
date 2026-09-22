@@ -9,15 +9,14 @@
 
 ## CI And Generated Outputs
 - PR CI has five jobs in `.github/workflows/ci.yml`: checks, tests, package, docs, and an examples matrix.
-- `just docs` requires JDK 21 and Maven. It runs `mvn javadoc:javadoc -q -f java/AutomataLearner/pom.xml`, replaces `docs/examples/java-automata/`, then runs `uv run mkdocs build --strict`.
-- Example CI pulls DVC data first: `uv run dvc pull --verbose --recursive examples/<name>` before running the example. Local runs that depend on tracked example data need the same prep.
-- Do not hand-edit `src/flowcean/grpc/_generated/*`; regenerate Python and Java stubs with `just generate-proto` from `src/flowcean/grpc/proto/learner.proto`.
+- `just docs` runs `uv run mkdocs build --strict`.
+- Examples with DVC-tracked data need `uv run dvc pull --recursive examples/<name>` before running locally. The Coffee Machine example is not in the CI examples matrix because it requires this external data.
 
 ## Repo Shape
 - `src/flowcean/__init__.py` is empty; the usable public API is exposed from subpackages like `flowcean.core`, `flowcean.polars`, and backend packages.
 - `src/flowcean/core/` is the main wiring layer: shared abstractions, callbacks, and `learn_offline` / `learn_incremental` / `learn_active`.
 - `src/flowcean/core/strategies/offline.py` is the clearest end-to-end reference for the offline learn/evaluate flow.
-- `src/flowcean/polars/` owns dataframe environments and most transforms. Backend-specific learners/models live in sibling packages such as `sklearn/`, `torch/`, `river/`, `xgboost/`, `pysr/`, `hydra/`, and `grpc/`.
+- `src/flowcean/polars/` owns dataframe environments and most transforms. Backend-specific learners/models live in sibling packages such as `sklearn/`, `torch/`, `river/`, `xgboost/`, `pysr/`, `hydra/`, and `aalpy/`.
 - Callback helpers are intentionally importable from both `flowcean.core.callbacks` and `flowcean.core`. `get_default_callbacks()` returns `[]`, so learners stay silent unless callbacks are passed explicitly.
 
 ## Gotchas

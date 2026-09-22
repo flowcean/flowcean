@@ -5,12 +5,6 @@ extend-ignore-words-re = [
   "TPE",  # TreeParzenEstimator
 ]
 extend-ignore-identifiers-re = [
-  "OTUtils", # LearnLib convenience wrapper
   "NDArray", # NumPy type alias
   "arange",  # NumPy function
-]
-
-[files]
-extend-exclude = [
-  "java/AutomataLearner/src/main/java/io/flowcean/learner/grpc/*.java",
 ]

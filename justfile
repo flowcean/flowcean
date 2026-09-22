@@ -30,18 +30,11 @@ package:
 
 docs:
   @echo "🚀 Building documentation..."
-  @echo "   - Running javadoc"
-  @mvn javadoc:javadoc -q -f java/AutomataLearner/pom.xml
-  @rm -rf docs/examples/java-automata/
-  @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
   @echo "   - Running mkdocs"
   @uv run mkdocs build --strict
 
 docs-serve:
-  @echo "🚀 Serving documentation: Running javadoc and mkdocs"
-  @mvn javadoc:javadoc -f java/AutomataLearner/pom.xml
-  @rm -rf docs/examples/java-automata/
-  @mv java/AutomataLearner/target/site/* docs/examples/java-automata/
+  @echo "Serving documentation: Running mkdocs"
   @uv run mkdocs serve
 
 examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor examples-trace_prediction examples-hs-simple examples-hybrid_systems examples-simulated_hybrid_system examples-system_behavior_learning
@@ -108,9 +101,3 @@ examples-system_behavior_learning:
   @uv run pytest examples/system_behavior_learning -q
   @uv run --directory ./examples/system_behavior_learning/ python run.py
   @uv run --directory ./examples/system_behavior_learning/ python run_path_representatives.py --output-dir outputs
-
-generate-proto:
-  @echo "🚀 Generating Python and Java definitions from gRPC proto files"
-  @uv run python -m grpc_tools.protoc --proto_path=. --python_out=. --mypy_out=. --grpc_python_out=. --mypy_grpc_out=. src/flowcean/grpc/proto/learner.proto
-  @protoc --plugin=protoc-gen-grpc-java=src/flowcean/grpc/proto/protoc-gen-grpc-java --grpc-java_out=. --experimental_allow_proto3_optional=true ./src/flowcean/grpc/proto/learner.proto
-  @protoc --plugin=protoc-gen-grpc-java=src/flowcean/grpc/proto/protoc-gen-grpc-java --java_out=. --experimental_allow_proto3_optional=true ./src/flowcean/grpc/proto/learner.proto

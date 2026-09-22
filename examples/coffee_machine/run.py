@@ -1,36 +1,53 @@
 #!/usr/bin/env python
 
 from pathlib import Path
+from typing import override
 
+import polars as pl
 from tqdm import tqdm
 
 import flowcean.cli
+from flowcean.aalpy import RPNIMealyLearner
 from flowcean.core import (
     ChainedOfflineEnvironments,
+    Metric,
     evaluate_offline,
     learn_offline,
 )
-from flowcean.grpc import GrpcPassiveAutomataLearner
-from flowcean.polars import (
-    DataFrame,
-    Explode,
-    Select,
-    ToTimeSeries,
-    TrainTestSplit,
-    Unnest,
-    collect,
-)
-from flowcean.sklearn import MeanAbsoluteError, MeanSquaredError
+from flowcean.polars import DataFrame, Lambda, TrainTestSplit, collect
+
+
+class TraceAccuracy(Metric):
+    """Fraction of completely correct output words."""
+
+    @override
+    def _compute(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> float:
+        expected = true.collect().to_series()
+        actual = predicted.collect().to_series()
+        return sum((expected == actual).to_list()) / len(expected)
+
+
+def _to_words(data: pl.LazyFrame) -> pl.LazyFrame:
+    """Sort one synchronized trace and collect its input/output words."""
+    return data.sort("t", maintain_order=True).select(
+        pl.col("input").implode(),
+        pl.col("output").implode(),
+    )
 
 
 def main() -> None:
     flowcean.cli.initialize()
 
+    paths = sorted(Path("./data").glob("*.csv"))
+    if not paths:
+        msg = "No Coffee Machine CSV traces found. Run 'uv run dvc pull --recursive examples/coffee_machine' from the repository root."
+        raise FileNotFoundError(msg)
+
     data = ChainedOfflineEnvironments(
         [
-            DataFrame.from_uri("file:" + path.as_posix()) | ToTimeSeries("t")
+            DataFrame.from_uri("file:" + path.as_posix()) | Lambda(_to_words)
             for path in tqdm(
-                list(Path("./data").glob("*.csv")),
+                paths,
                 desc="Loading environments",
             )
         ],
@@ -39,10 +56,7 @@ def main() -> None:
         collect(data),
     )
 
-    learner = GrpcPassiveAutomataLearner.run_docker(
-        image="ghcr.io/flowcean/flowcean/java-automata-learner:latest",
-        pull=False,
-    )
+    learner = RPNIMealyLearner()
     inputs = ["input"]
     outputs = ["output"]
 
@@ -53,16 +67,12 @@ def main() -> None:
         outputs,
     )
 
-    model.post_transform |= (
-        Explode(["output"]) | Unnest(["output"]) | Select(["value"])
-    )
-
     report = evaluate_offline(
         model,
         test,
         inputs,
         outputs,
-        [MeanAbsoluteError(), MeanSquaredError()],
+        [TraceAccuracy()],
     )
     print(report)
 

@@ -26,7 +26,7 @@ Evaluate models with task-appropriate metrics or trajectory comparisons. Environ
 - [`flowcean.core`](../reference/flowcean/core/index.md) provides environments, learners, models, metrics, transforms, callbacks, and learning strategies.
 - [`flowcean.polars`](../reference/flowcean/polars/index.md) provides dataframe environments, datasets, time-series support, and reusable transforms.
 - Backend packages such as `flowcean.sklearn`, `flowcean.river`, `flowcean.torch`, and `flowcean.pysr` connect concrete learning algorithms.
-- Adapters and `flowcean.grpc` connect Flowcean studies to CPS data sources and external learners.
+- Adapters connect Flowcean studies to CPS data sources; `flowcean.aalpy` learns automata locally from traces.
 
 See the [modules](modules.md) for the established conceptual architecture, the [API reference](../reference/flowcean/index.md) for implementation details, and the [examples](../examples/hs_simple.md) for runnable studies. The initial Flowcean concepts and research context are presented by Knitt et al. [^1].
 
