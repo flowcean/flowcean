@@ -38,9 +38,7 @@ def _flow(
     )
 
 
-def test_component_equations_match_hand_calculation_and_famos_rounding() -> (
-    None
-):
+def test_component_equations_match_hand_calculation() -> None:
     system = buck_converter()
     state = np.array([2.0, 7.0])
     params = {
@@ -76,33 +74,6 @@ def test_component_equations_match_hand_calculation_and_famos_rounding() -> (
     np.testing.assert_allclose(
         _flow(system, "zero_current", state, params),
         zero_expected,
-    )
-
-    # These independently rounded FaMoS coefficients are the published
-    # component values' linearized constants for the default parameters.
-    source_rounded = np.array(
-        [
-            -271.6981 * current - 377.3585 * voltage + 377.3585 * 24.0,
-            454.5455 * current - 45.4545 * voltage,
-        ],
-    )
-    np.testing.assert_allclose(
-        _flow(system, "switch_on", state),
-        source_rounded,
-        rtol=0.0,
-        atol=5e-4,
-    )
-    source_off_rounded = np.array(
-        [
-            -196.2264 * current - 377.3585 * voltage,
-            454.5455 * current - 45.4545 * voltage,
-        ],
-    )
-    np.testing.assert_allclose(
-        _flow(system, "switch_off", state),
-        source_off_rounded,
-        rtol=0.0,
-        atol=5e-4,
     )
 
 
@@ -311,8 +282,8 @@ def test_numerically_coincident_boundaries_settle_at_one_time() -> None:
         (0.0, nominal_time + 1e-5),
     )
 
-    # Default solver tolerances previously left a 3.73e-13 V residual,
-    # causing the second event to fail to advance physical time.
+    # Event localization can leave a tiny voltage residual at the shared
+    # boundary; both transitions must settle without advancing time.
     assert len(trace.events) == 2
     current_zero, switch_on = trace.events
     assert current_zero.target_location == "zero_current"

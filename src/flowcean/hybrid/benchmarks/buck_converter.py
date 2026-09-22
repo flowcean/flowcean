@@ -141,25 +141,60 @@ def buck_converter(
 ) -> HybridSystem:
     """Create a physical hysteretic nonsynchronous buck converter.
 
-    The state is ``[inductor_current, capacitor_voltage]`` in amperes and
-    volts. ``switch_on`` supplies the inductor from the source,
-    ``switch_off`` conducts through an ideal freewheel diode, and
-    ``zero_current`` represents the diode-blocking boundary. The diode is
-    ideal: it has no voltage drop and cannot conduct negative current. The
-    transition into ``zero_current`` resets current exactly to zero to make
-    that physical boundary robust under numerical event localization. At
-    zero current, lower-threshold voltage residuals within event-time
-    localization precision are also snapped to the threshold, allowing
-    coincident events to settle without an artificial integration step.
+    A buck converter is a step-down DC-DC power circuit. A controlled switch
+    connects a constant-voltage supply to an inductor, which feeds a capacitor
+    and resistive load in parallel. The inductor stores magnetic energy and
+    prevents abrupt current changes; the capacitor stores electrical energy
+    and smooths the output voltage. A freewheel diode provides a current path
+    when the switch opens. Nonsynchronous means this diode, rather than a
+    second controlled switch, carries the freewheeling current.
 
-    The defaults are component parameters corresponding, within the rounding
-    in its published coefficients, to the BuckConverter example in FaMoS-DT:
-    https://github.com/TUHH-IES/FaMoS-DT/blob/master/ExampleSystems/BuckConverter/createTrace.m
-    This model is derived from the component equations below; it does not
-    claim exact equivalence to any XML artifact. For a nonzero initial current,
-    the latch starts on below ``voltage_high`` and off at or above it. At zero
-    current, it starts in ``zero_current`` above ``voltage_low`` and otherwise
-    starts on. A useful nominal simulation horizon is 0.02 seconds.
+    The state is ``[inductor_current, capacitor_voltage]`` in amperes and
+    volts. The capacitor voltage is also the load voltage. Three locations
+    describe the circuit's conduction states:
+
+    - ``switch_on``: The source supplies energy through the closed switch.
+      Inductor current typically rises, feeding the load and capacitor.
+    - ``switch_off``: The source is disconnected, but inductor current
+      continues through the diode. Stored magnetic energy feeds the output
+      while current falls; the capacitor can still charge during this phase.
+    - ``zero_current``: Once inductor current reaches zero, the diode blocks
+      reverse current. Only the capacitor supplies the load, so its voltage
+      decays exponentially with time constant ``load_resistance * capacitance``.
+
+    Hysteretic control opens the switch when voltage rises to ``voltage_high``
+    and closes it when voltage falls to ``voltage_low``. Between thresholds,
+    the switch retains its state. Switching is state-triggered, not driven by
+    a fixed-frequency clock. The switch may close before current reaches zero,
+    skipping ``zero_current``. The thresholds are switching commands, not hard
+    output-voltage bounds: stored inductor energy can produce overshoot.
+
+    The flows follow Kirchhoff's laws and the relations ``v_L = L * di/dt``
+    and ``i_C = C * dv/dt``. With current ``i``, output voltage ``v``, supply
+    ``V_s``, inductance ``L``, capacitance ``C``, load resistance ``R``, inductor
+    resistance ``r_L``, and closed-switch resistance ``r_S``:
+
+    - Switch on: ``di/dt = (V_s - (r_L + r_S) * i - v) / L``.
+    - Switch off: ``di/dt = (-r_L * i - v) / L``.
+    - In either conducting state: ``dv/dt = (i - v / R) / C``.
+    - Zero current: ``di/dt = 0`` and ``dv/dt = -v / (R * C)``.
+
+    Each location has affine continuous dynamics; voltage and current events
+    select the active circuit configuration. The diode is ideal, with no
+    forward voltage drop or reverse current. Switching delays and diode
+    recovery are not modeled; resistive losses are included in ``r_L``,
+    ``r_S``, and the load.
+
+    On entry to ``zero_current``, current is reset exactly to zero to remove
+    numerical event-localization residuals, not to model a physical impulse.
+    Lower-threshold voltage residuals within event-time localization precision
+    are also snapped to the threshold, allowing coincident events to settle
+    without an artificial integration step.
+
+    For a nonzero initial current, the latch starts on below ``voltage_high``
+    and off at or above it. At zero current, it starts in ``zero_current``
+    above ``voltage_low`` and otherwise starts on. A useful nominal simulation
+    horizon is 0.02 seconds.
 
     Args:
         source_voltage: Constant input supply voltage in volts.
