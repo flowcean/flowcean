@@ -103,21 +103,23 @@ icon.repo = "fontawesome/brands/github"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
-toggle.icon = "material/link"
+toggle.icon = "lucide/sun"
 toggle.name = "Switch to light mode"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme: light)"
 scheme = "default"
 primary = "custom"
-toggle.icon = "material/weather-sunny"
+accent = "custom"
+toggle.icon = "lucide/moon"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme: dark)"
 scheme = "slate"
 primary = "custom"
-toggle.icon = "material/weather-night"
+accent = "custom"
+toggle.icon = "lucide/monitor-cog"
 toggle.name = "Switch to system preference"
 
 [project.markdown_extensions]
