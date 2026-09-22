@@ -1,32 +1,54 @@
-# Coffee Machine Example
+# Coffee Machine with AALpy
 
-This example shows how to train a model to predict the behavior of an automaton.
-Inspired by the work of Steffen et al.[^1], we consider a simple coffee machine.
-LearnLib[^2], a framework for automata learning written in Java, is used for the inference of the automaton.
-Please find the documentation of the Java project [here](./java-automata/index.html).
+This example learns a Mealy machine from Coffee Machine traces using
+[AALpy's passive RPNI algorithm](https://github.com/DES-Lab/AALpy/wiki/RPNI---Passive-Deterministic-Automata-Learning).
+Training and prediction run locally in Python.
 
-## Run this example
+## Run the example
 
-### Docker Container
+From the repository root, retrieve the DVC-managed CSV traces, then run:
 
-The external learner written in Java is containerized for this example.
-Thus, Docker must be installed to run it.
-Follow the instructions on the [official Docker page](https://docs.docker.com/get-docker/) to install it.
-The image for this example is stored in the GitHub container registry.
-Authentication is required for this.
-Log in to the registry by following [these instructions](https://docs.github.com/de/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authentifizieren-bei-der-container-registry).
-Afterwards run the `run.py` for this example.
+```sh
+uv run dvc pull --recursive examples/coffee_machine
+just examples-coffee_machine
+```
 
-The required images will be automatically retrieved, and a container will be started.
+Access to the configured DVC remote is required. The example keeps each CSV as
+one trace, uses 80% of the traces for training, and reports the fraction of test
+traces whose entire output word is predicted correctly.
 
-## Local Execution
+## Trace contract
 
-It is also possible to directly run the Java server locally.
-**Before** running the example in Flowcean, the server-side has to be started manually by running the Java-project in *java/AutomataLearner*.
-A JDK and the Maven build automaton tool are required.
-More information on Maven projects using the LearnLib library can be found on [their website](https://learnlib.de/).
-It has to be assured that the *ip* and *port* match those of the server configuration in Java.
+`flowcean.aalpy.RPNIMealyLearner` works with `learn_offline` and returns a separate
+`RPNIMealyModel`. Select exactly one input column and one output column. Each row
+contains a full trace, represented as either:
 
+- a list of scalar symbols (strings, booleans, integers, or finite floats); or
+- a Flowcean time series: a list of structs with exactly numeric `time` and
+  scalar `value` fields, as produced by `ToTimeSeries("t")` in this example.
 
-[^1]: Bernhard Steffen, Falk Howar, and Maik Merten. Introduction to Active Automata Learning from a Practical Perspective, pages 256–296. Springer Berlin Heidelberg, Berlin, Heidelberg, 2011. [doi:10.1007/978-3-642-21455-4_8](https://doi.org/10.1007/978-3-642-21455-4_8).
-[^2]: Malte Isberner, Falk Howar, and Bernhard Steffen. The open-source learnlib - A framework for active automata learning. In Computer Aided Verification (CAV), volume 9206 of Lecture Notes in Computer Science, 487–495. Springer, 2015. [doi:10.1007/978-3-319-21690-4\_32](https://doi.org/10.1007/978-3-319-21690-4\_32).
+Timestamped sequences are sorted independently by time before pairing inputs
+and outputs by position. Equal timestamps retain their original order. Timing
+is not learned. Null traces, timestamps, and symbols are rejected.
+
+Mealy traces require equal-length input and output words. For Moore machines,
+use `RPNIMooreLearner`: the output word must have one additional symbol at the
+start, representing the initial state's output. Contradictory labels for the
+same input prefix are rejected.
+
+Both model types return one list of output symbols per input trace, retaining
+the training output column's name and symbol dtype. Moore predictions include
+the initial output, even for an empty input. Predictions do not fabricate
+output timestamps; the example's metric compares symbol words directly, without
+a model post-transform.
+
+Undefined transitions raise `ValueError`. The learners leave AALpy's automata
+input-incomplete rather than adding synthetic completion symbols that could
+change the output dtype. Predictions beyond the observed traces may generalize
+differently from other passive learners.
+
+The read-only `model.automaton` property exposes the underlying AALpy automaton
+for inspection. Treat its graph as read-only while predicting. Prediction starts
+at the initial state for each trace and does not change AALpy's `current_state`.
+Models support Flowcean's `model.save(...)` and `Model.load(...)` persistence;
+only load trusted pickle files.

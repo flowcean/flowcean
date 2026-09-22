@@ -65,7 +65,6 @@ instance/
 
 # Documentation
 site
-docs/examples/java-automata/
 
 # PyBuilder
 target/

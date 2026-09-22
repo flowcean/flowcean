@@ -33,8 +33,7 @@ On the implementation side, abstract base classes of the _Model_, _Metric_, _Lea
 Furthermore, the core includes the three main environments.
 
 Concrete implementations of [models](https://flowcean.me/reference/flowcean/models/), [metrics](https://flowcean.me/reference/flowcean/metrics/), [learners](https://flowcean.me/reference/flowcean/learners/), and [transforms](https://flowcean.me/reference/flowcean/transforms/) form individual Python modules.
-A special case is the learner module which has an additional sub-module for a gRPC-learner.
-This learner implements a universal interface to external, e.g., non-Python learners via a gRPC connection.
+Backend packages implement concrete learners and models, including `flowcean.aalpy` for passive automata learning in Python.
 Learning strategies form a further Python module.
 As strategies are Python-functions, no abstract base class exists.
 Three main strategies based on the three types of environments are explained in the section [Learning Strategies](https://flowcean.me/user_guide/learning_strategies/).

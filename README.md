@@ -19,7 +19,7 @@ Flowcean builds on research into automatic model generation for CPS. Its establi
 - Identify hybrid dynamics and mode selectors with HyDRA.
 - Learn models from offline datasets, incremental streams, and active environments.
 - Compose reusable environments, transforms, learners, models, metrics, and evaluation strategies.
-- Integrate established Python ML libraries and external learners through backend packages, adapters, and gRPC.
+- Integrate established Python ML libraries and native automata learning through backend packages and adapters.
 
 ## Installation
 

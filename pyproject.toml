@@ -18,15 +18,13 @@ keywords = []
 authors = [{ name = "The AGenC Team", email = "agenc.team@tuhh.de" }]
 
 dependencies = [
+  "aalpy>=1.6.2,<2",
   "cloudpickle>=3.1.1",
-  "docker>=7.1.0",
-  "grpcio>=1.72.1",
   "matplotlib>=3.10.8",
   "numpy>=1.26.4",
   "omegaconf>=2.3.0",
   "opcua>=0.98.13",
   "polars[style,xlsxwriter]>=1.33.0",
-  "protobuf>=6.30.0",
   "rich>=14.1.0",
   "rosbags>=0.10.4",
   "ruamel-yaml>=0.18.6",
@@ -62,11 +60,6 @@ Source = "https://github.com/flowcean/flowcean"
 requires = ["uv_build>=0.11.7,<0.12"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-source-exclude = [
-  "/src/flowcean/grpc/proto/protoc-gen-grpc-java",
-]
-
 [dependency-groups]
 dev = [
   "asyncssh>=2.18.0",
@@ -75,7 +68,6 @@ dev = [
   "dvc-ssh>=4.1.1",
   "dvc-webdav>=3.0.0",
   "dvc>=3.59.0",
-  "grpcio-tools>=1.67.0",
   "ipykernel>=6.30.1",
   "mkdocs-gen-files>=0.5.0",
   "mkdocs-literate-nav>=0.6.1",
@@ -83,7 +75,6 @@ dev = [
   "mkdocs-section-index>=0.3.9",
   "mkdocs>=1.6.1",
   "mkdocstrings[python]>=0.27.0",
-  "mypy-protobuf>=3.0.0",
   "pre-commit>=4.6.0",
   "pysr>=1.5.9",
   "pytest-cov>=7.1.0",
@@ -121,14 +112,12 @@ testpaths = ["tests"]
 addopts = ["--import-mode=importlib"]
 
 [tool.pyright]
-ignore = ["src/flowcean/grpc/_generated/*"]
 pythonVersion = "3.12"
 strict = ["src/flowcean/core"]
 typeCheckingMode = "standard"
 
 [tool.coverage.run]
 source_pkgs = ["flowcean"]
-omit = ["*/flowcean/grpc/_generated/*"]
 branch = true
 
 [tool.coverage.report]

@@ -1,5 +1,5 @@
 line-length = 79
-extend-exclude = ["*/_generated/*_pb2*", "*.ipynb"]
+extend-exclude = ["*.ipynb"]
 target-version = "py312"
 
 [format]
