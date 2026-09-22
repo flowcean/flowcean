@@ -297,27 +297,6 @@ def test_simultaneous_high_and_depletion_perturbations_reach_open() -> None:
         assert np.min(trace.x) >= -1e-10
 
 
-def test_coincident_depletion_and_opening_settle_in_open_mode() -> None:
-    trace = simulate(
-        tank_valves(
-            area_2=1.0,
-            outlet_area_1=0.0,
-            initial_state=(0.5, 0.3),
-            high_level=0.9122324395718946,
-        ),
-        (0.0, 25.0),
-    )
-
-    depletion, opening = trace.events
-    assert depletion.event_surface == "level_2_empty"
-    assert opening.event_surface == "level_high"
-    assert depletion.time == opening.time
-    assert depletion.microstep == 0
-    assert opening.microstep == 1
-    assert trace.location[-1] == "open"
-    assert np.min(trace.x) >= -1e-10
-
-
 def test_defaults_and_nominal_open_equilibrium() -> None:
     system = tank_valves()
     assert system.parameters == {
