@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added `flowcean.aalpy` learners and models for passive RPNI learning of Mealy and Moore machines ([#419](https://github.com/flowcean/flowcean/pull/419)).
 - Added the "Flowcean - Model Learning for Cyber-Physical Systems" paper to the website's citation list ([#404](https://github.com/flowcean/flowcean/pull/404)).
 - Added reusable hybrid-system benchmarks under `flowcean.hybrid.benchmarks` ([#407](https://github.com/flowcean/flowcean/pull/407)).
 
@@ -23,6 +24,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Removed
 
+- Removed `flowcean.grpc.GrpcPassiveAutomataLearner` and its Java LearnLib, gRPC, protobuf, and Docker integration; use `flowcean.aalpy` for local passive automata learning ([#419](https://github.com/flowcean/flowcean/pull/419)).
 - Removed the external Polyfill.io script from the documentation site ([#403](https://github.com/flowcean/flowcean/pull/403)).
 - Removed the `flowcean.ode` and top-level `flowcean.hydra` namespaces ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - Removed the legacy `OdeEnvironment`, `OdeState`, and `OdeSystem` abstractions ([#407](https://github.com/flowcean/flowcean/pull/407)).

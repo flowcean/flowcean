@@ -69,7 +69,9 @@ def test_learn_offline(trained):
 
 def test_empty_words_and_empty_batch(trained):
     model, inputs, outputs, moore = trained
-    assert model.predict(frame("commands", [[]])).collect().to_dicts() == [
+    empty_word = pl.DataFrame({"commands": [[]]})
+    assert empty_word.schema["commands"] == pl.List(pl.Null)
+    assert model.predict(empty_word).collect().to_dicts() == [
         {"responses": [0] if moore else []},
     ]
     assert_frame_equal(
@@ -176,7 +178,7 @@ def test_prediction_rejects_different_symbol_dtype(learner, outputs):
         (pl.DataFrame({"a": [[[1]]]}), "Symbols must"),
         (pl.DataFrame({"a": [[{"time": 0, "value": 1}]]}), "Symbols must"),
         (frame("a", [None]), "null traces"),
-        (frame("a", [[None]]), "symbols must"),
+        (pl.DataFrame({"a": [[None]]}), "symbols must"),
         (frame("a", [[float("nan")]], pl.Float64), "symbols must"),
         (frame("a", [[float("inf")]], pl.Float64), "symbols must"),
     ],
@@ -216,10 +218,11 @@ def test_mealy_training_requires_observations():
 
 
 def test_moore_can_learn_only_initial_output():
-    model = RPNIMooreLearner().learn(frame("a", [[]]), frame("b", [["ready"]]))
-    assert model.predict(frame("a", [[]])).collect().to_dicts() == [
-        {"b": ["ready"]}
-    ]
+    inputs = pl.DataFrame({"a": [[]]})
+    outputs = pl.DataFrame({"b": [["ready"]]})
+    assert inputs.schema["a"] == pl.List(pl.Null)
+    model = RPNIMooreLearner().learn(inputs, outputs)
+    assert model.predict(inputs).collect().to_dicts() == [{"b": ["ready"]}]
 
 
 @pytest.mark.parametrize(

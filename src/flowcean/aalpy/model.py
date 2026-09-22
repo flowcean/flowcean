@@ -45,7 +45,11 @@ class _RPNIModel[Automaton: MealyMachine | MooreMachine](Model):
         if inputs.name != self._input_name:
             msg = f"Expected input column {self._input_name!r}, got {inputs.name!r}."
             raise ValueError(msg)
-        if inputs.symbol_type != self._input_type:
+        if (
+            inputs.symbol_type != self._input_type
+            and inputs.symbol_type != pl.Null
+            and self._input_type != pl.Null
+        ):
             msg = (
                 f"Expected input symbols with dtype {self._input_type}, "
                 f"got {inputs.symbol_type}."

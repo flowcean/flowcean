@@ -33,7 +33,7 @@ def read_traces(data: pl.DataFrame | pl.LazyFrame) -> TraceColumn:
     if not (
         symbol_type.is_integer()
         or symbol_type.is_float()
-        or symbol_type in (pl.String, pl.Boolean)
+        or symbol_type in (pl.String, pl.Boolean, pl.Null)
     ):
         msg = "Symbols must be strings, booleans, integers, or finite floats."
         raise ValueError(msg)
