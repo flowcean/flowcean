@@ -14,35 +14,25 @@ from flowcean.core import (
     evaluate_offline,
     learn_offline,
 )
-from flowcean.polars import (
-    DataFrame,
-    ToTimeSeries,
-    TrainTestSplit,
-    collect,
-)
+from flowcean.polars import DataFrame, Lambda, TrainTestSplit, collect
 
 
 class TraceAccuracy(Metric):
-    """Fraction of completely correct output words, ignoring timestamps."""
+    """Fraction of completely correct output words."""
 
     @override
     def _compute(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> float:
-        expected = (
-            true.select(
-                pl.col("output").list.eval(
-                    pl.element()
-                    .struct.field("value")
-                    .sort_by(
-                        pl.element().struct.field("time"),
-                        maintain_order=True,
-                    ),
-                ),
-            )
-            .collect()
-            .to_series()
-        )
+        expected = true.collect().to_series()
         actual = predicted.collect().to_series()
         return sum((expected == actual).to_list()) / len(expected)
+
+
+def _to_words(data: pl.LazyFrame) -> pl.LazyFrame:
+    """Sort one synchronized trace and collect its input/output words."""
+    return data.sort("t", maintain_order=True).select(
+        pl.col("input").implode(),
+        pl.col("output").implode(),
+    )
 
 
 def main() -> None:
@@ -55,7 +45,7 @@ def main() -> None:
 
     data = ChainedOfflineEnvironments(
         [
-            DataFrame.from_uri("file:" + path.as_posix()) | ToTimeSeries("t")
+            DataFrame.from_uri("file:" + path.as_posix()) | Lambda(_to_words)
             for path in tqdm(
                 paths,
                 desc="Loading environments",

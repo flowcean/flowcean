@@ -19,7 +19,7 @@ class TraceColumn:
 
 
 def read_traces(data: pl.DataFrame | pl.LazyFrame) -> TraceColumn:
-    """Read exactly one list column, stably ordering timestamped samples."""
+    """Read exactly one column containing ordered scalar-symbol words."""
     frame = data.collect() if isinstance(data, pl.LazyFrame) else data
     if frame.width != 1:
         msg = "Expected exactly one sequence column."
@@ -27,16 +27,9 @@ def read_traces(data: pl.DataFrame | pl.LazyFrame) -> TraceColumn:
     column = frame.to_series()
     dtype = column.dtype
     if not isinstance(dtype, pl.List):
-        msg = f"Column {column.name!r} must contain lists of symbols or time/value structs."
+        msg = f"Column {column.name!r} must contain lists of symbols."
         raise ValueError(msg)
     symbol_type = dtype.inner
-    timestamped = isinstance(symbol_type, pl.Struct)
-    if isinstance(symbol_type, pl.Struct):
-        fields = {field.name: field.dtype for field in symbol_type.fields}
-        if set(fields) != {"time", "value"} or not fields["time"].is_numeric():
-            msg = "Timestamped sequences require exactly numeric 'time' and scalar 'value' fields."
-            raise ValueError(msg)
-        symbol_type = fields["value"]
     if not (
         symbol_type.is_integer()
         or symbol_type.is_float()
@@ -46,24 +39,10 @@ def read_traces(data: pl.DataFrame | pl.LazyFrame) -> TraceColumn:
         raise ValueError(msg)
 
     traces = []
-    for index, trace in enumerate(column.to_list()):
-        if trace is None:
+    for index, symbols in enumerate(column.to_list()):
+        if symbols is None:
             msg = f"Column {column.name!r}, row {index}: null traces are not supported."
             raise ValueError(msg)
-        symbols = trace
-        if timestamped:
-            if any(
-                sample is None
-                or sample["time"] is None
-                or not math.isfinite(sample["time"])
-                for sample in trace
-            ):
-                msg = f"Column {column.name!r}, row {index}: timestamps must be finite and non-null."
-                raise ValueError(msg)
-            symbols = [
-                sample["value"]
-                for sample in sorted(trace, key=lambda sample: sample["time"])
-            ]
         if any(
             symbol is None
             or (isinstance(symbol, float) and not math.isfinite(symbol))

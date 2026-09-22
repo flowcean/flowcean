@@ -68,8 +68,8 @@ class RPNIMealyModel(_RPNIModel[MealyMachine]):
 
     Predictions require the training input column's name and scalar dtype. They
     have the training output column's name and scalar dtype, with one list of
-    output symbols per input trace. Timestamps order the inputs but are not
-    predicted. An empty input word produces an empty output word.
+    output symbols per input trace. An empty input word produces an empty output
+    word.
     Undefined transitions raise ``ValueError``; no completion is invented.
     """
 
@@ -91,9 +91,9 @@ class RPNIMooreModel(_RPNIModel[MooreMachine]):
 
     Predictions require the training input column's name and scalar dtype. They
     have the training output column's name and scalar dtype, with one list of
-    output symbols per input trace. Every output word starts with
-    the initial-state output, even for empty input words. Timestamps order the
-    inputs but are not predicted. Undefined transitions raise ``ValueError``.
+    output symbols per input trace. Every output word starts with the
+    initial-state output, even for empty input words. Undefined transitions
+    raise ``ValueError``.
     """
 
     @override

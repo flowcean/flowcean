@@ -174,45 +174,11 @@ def test_prediction_rejects_different_symbol_dtype(learner, outputs):
         (pl.DataFrame({"a": [[1]], "b": [[1]]}), "exactly one"),
         (pl.DataFrame({"a": [1]}), "lists"),
         (pl.DataFrame({"a": [[[1]]]}), "Symbols must"),
-        (pl.DataFrame({"a": [[{"value": 1}]]}), "exactly numeric"),
-        (
-            pl.DataFrame({"a": [[{"time": "now", "value": 1}]]}),
-            "exactly numeric",
-        ),
-        (
-            pl.DataFrame({"a": [[{"time": 0, "value": 1, "extra": 2}]]}),
-            "exactly numeric",
-        ),
+        (pl.DataFrame({"a": [[{"time": 0, "value": 1}]]}), "Symbols must"),
         (frame("a", [None]), "null traces"),
         (frame("a", [[None]]), "symbols must"),
         (frame("a", [[float("nan")]], pl.Float64), "symbols must"),
         (frame("a", [[float("inf")]], pl.Float64), "symbols must"),
-        (
-            pl.DataFrame({"a": [[{"time": float("nan"), "value": 1}]]}),
-            "timestamps must",
-        ),
-        (
-            pl.DataFrame(
-                {"a": [[{"time": None, "value": 1}]]},
-                schema={
-                    "a": pl.List(
-                        pl.Struct({"time": pl.Float64, "value": pl.Int64})
-                    )
-                },
-            ),
-            "timestamps must",
-        ),
-        (
-            pl.DataFrame(
-                {"a": [[None]]},
-                schema={
-                    "a": pl.List(
-                        pl.Struct({"time": pl.Float64, "value": pl.Int64})
-                    )
-                },
-            ),
-            "timestamps must",
-        ),
     ],
 )
 def test_malformed_shapes(learner, side, invalid, message):
@@ -269,61 +235,27 @@ def test_conflicting_prefixes(learner, words, outputs, capsys):
     assert capsys.readouterr().out == ""
 
 
-def test_timestamp_ordering_is_stable_and_independent():
-    inputs = pl.DataFrame(
+def test_coffee_machine_rows_are_sorted_and_collected_atomically():
+    example = (
+        Path(__file__).resolve().parents[2] / "examples/coffee_machine/run.py"
+    )
+    to_words = run_path(str(example))["_to_words"]
+    trace = pl.LazyFrame(
         {
-            "commands": [
-                [
-                    {"time": 2, "value": "a"},
-                    {"time": 0, "value": "a"},
-                    {"time": 1, "value": "b"},
-                    {"time": 1, "value": "a"},
-                ]
-            ]
+            "t": [2, 0, 1, 1],
+            "input": [20, 0, 10, 11],
+            "output": [21, 1, 11, 12],
         }
     )
-    outputs = pl.DataFrame(
-        {
-            "responses": [
-                [
-                    {"time": 40, "value": 1},
-                    {"time": 10, "value": 1},
-                    {"time": 30, "value": 0},
-                    {"time": 20, "value": 1},
-                ]
-            ]
-        }
-    )
-    model = RPNIMealyLearner().learn(inputs, outputs)
-    expected = frame("responses", [[1, 1, 0, 1]], pl.Int64)
-    assert_frame_equal(model.predict(inputs).collect(), expected)
     assert_frame_equal(
-        model.predict(frame("commands", [["a", "b", "a", "a"]])).collect(),
-        expected,
-    )
-    assert model.predict(
-        frame("commands", [["a", "b"]])
-    ).collect().to_dicts() == [{"responses": [1, 1]}]
-
-
-def test_moore_timestamped_initial_output():
-    inputs = pl.DataFrame({"a": [[{"time": 10, "value": "toggle"}]]})
-    outputs = pl.DataFrame(
-        {
-            "b": [
-                [
-                    {"time": 10, "value": "on"},
-                    {"time": 0, "value": "off"},
-                ]
-            ]
-        }
-    )
-    model = RPNIMooreLearner().learn(inputs, outputs)
-    assert_frame_equal(
-        model.predict(inputs).collect(), frame("b", [["off", "on"]])
-    )
-    assert_frame_equal(
-        model.predict(frame("a", [[]])).collect(), frame("b", [["off"]])
+        to_words(trace).collect(),
+        frame("input", [[0, 10, 11, 20]], pl.Int64).with_columns(
+            pl.Series(
+                "output",
+                [[1, 11, 12, 21]],
+                dtype=pl.List(pl.Int64),
+            )
+        ),
     )
 
 

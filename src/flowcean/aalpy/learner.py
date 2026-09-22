@@ -18,11 +18,9 @@ class RPNIMealyLearner(SupervisedLearner):
     """Learn a Mealy machine from full input/output traces using AALpy RPNI.
 
     Inputs and outputs must each select exactly one list column, with one trace
-    per row. Lists contain scalar symbols (strings, booleans, integers, finite
-    floats), or structs with exactly numeric ``time`` and scalar ``value``
-    fields. Timestamped traces are stably sorted by time independently before
-    pairing symbols by position; timing itself is not learned. Nulls are not
-    supported. Input and output words must have equal lengths.
+    per row. Lists contain ordered scalar symbols (strings, booleans, integers,
+    or finite floats). Nulls are not supported. Input and output words must have
+    equal lengths.
 
     Prefix expansion is handled internally. Contradictory traces are rejected.
     AALpy's default input-incomplete learning is retained: prediction raises
@@ -58,7 +56,7 @@ class RPNIMealyLearner(SupervisedLearner):
 class RPNIMooreLearner(SupervisedLearner):
     """Learn a Moore machine, including its initial-state output.
 
-    Accepts the same single-column trace representations as
+    Accepts the same ordered scalar-word representation as
     ``RPNIMealyLearner``, but every output word must contain exactly one more
     symbol than its input word. The first output labels the initial state;
     subsequent outputs label states reached after each input. In particular,
