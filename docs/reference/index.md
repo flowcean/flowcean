@@ -18,13 +18,13 @@ For concepts and workflows, start with the [user guide](../user_guide/overview.m
 - [PySR](pysr.md): symbolic regression.
 - [XGBoost](xgboost.md): boosted classifiers and regressors.
 - [PalaestrAI](palaestrai.md): Soft Actor-Critic learning for active environments.
+- [AALpy](aalpy.md): passive Mealy and Moore automata learning with RPNI.
 - [Ensemble](ensemble.md): combined and cluster-based learners and models.
 
 See [installation](../getting_started/installation.md) for optional backend dependencies.
 
 ## Integrations and tools
 
-- [gRPC](grpc.md): external automata learners.
 - [Adapters](adapters.md): dataframe and OPC interfaces for model deployment.
 - [ROS](ros.md): loading ROS bag data.
 - [Mosaik](mosaik.md): active energy-system environments.
