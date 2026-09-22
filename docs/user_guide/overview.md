@@ -22,7 +22,7 @@ Evaluate models with task-appropriate metrics or trajectory comparisons. Environ
 
 ## Main Interfaces
 
-- [`flowcean.hybrid`](hybrid_systems.md) provides hybrid-system definitions, simulation, trace conversion, plotting, benchmarks, and HyDRA identification.
+- [`flowcean.hybrid`](hybrid_systems.md) provides hybrid-system definitions, simulation, trace conversion, and plotting; use `flowcean.hybrid.benchmarks` for reusable systems and `flowcean.hybrid.hydra` for identification.
 - [`flowcean.core`](../reference/core.md) provides environments, learners, models, metrics, transforms, callbacks, and learning strategies.
 - [`flowcean.polars`](../reference/polars.md) provides dataframe environments, datasets, time-series support, and reusable transforms.
 - Backend packages such as `flowcean.sklearn`, `flowcean.river`, `flowcean.torch`, and `flowcean.pysr` connect concrete learning algorithms.

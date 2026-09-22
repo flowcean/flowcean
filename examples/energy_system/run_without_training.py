@@ -10,7 +10,7 @@ from flowcean.core.strategies.active import (
 from flowcean.mosaik.energy_system import (
     EnergySystemActive,
 )
-from flowcean.palaestrai.sac_model import SACModel
+from flowcean.palaestrai import SACModel
 
 logger = logging.getLogger("energy_example_sac")
 

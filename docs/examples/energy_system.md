@@ -76,7 +76,7 @@ But first, at least one metric for the evaluation is required.
 For this example, a metric will be created that calculates the RMSE between each buses' voltage magnitude p.u. and 1.0.
 
 ```python
-from flowcean.core.metrics import ActiveMetric
+from flowcean.core import ActiveMetric
 
 class VoltageDeviation(ActiveMetric):
     @override

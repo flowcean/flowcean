@@ -1,18 +1,16 @@
 from .adaboost_classifier import AdaBoost
 from .linear_regression import LinearRegression
-from .metrics.classification import (
+from .metrics import (
     Accuracy,
     ClassificationReport,
     FBetaScore,
-    PrecisionScore,
-    Recall,
-)
-from .metrics.regression import (
     MaxError,
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanSquaredError,
+    PrecisionScore,
     R2Score,
+    Recall,
 )
 from .model import SciKitClassifierModel, SciKitModel
 from .random_forest import RandomForestRegressorLearner

@@ -6,7 +6,8 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
-- Exposed benchmark factories and selector inspection and evaluation APIs from `flowcean.hybrid`, DDTIG support types from `flowcean.testing.generator`, and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
+- Exposed DDTIG support types from `flowcean.testing.generator` and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
+- Added `ActiveMetric` to `flowcean.core`, `SACLearner` and `SACModel` to `flowcean.palaestrai`, and the explicit `flowcean.sklearn.metrics` facade.
 - Added `flowcean.aalpy` learners and models for passive RPNI learning of Mealy and Moore machines ([#419](https://github.com/flowcean/flowcean/pull/419)).
 - Added the "Flowcean - Model Learning for Cyber-Physical Systems" paper to the website's citation list ([#404](https://github.com/flowcean/flowcean/pull/404)).
 - Added reusable hybrid-system benchmarks under `flowcean.hybrid.benchmarks` ([#407](https://github.com/flowcean/flowcean/pull/407)).
@@ -16,7 +17,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 - Updated dependencies in response to security audit findings and adapted the PalaestrAI SAC learner to the current sensor and actuator API ([#405](https://github.com/flowcean/flowcean/pull/405)).
 - Hybrid-system definitions, simulation, trace conversion, and plotting now use the `flowcean.hybrid` namespace ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - Reworked the tank benchmark to use gravity-drained outlet dynamics. The `outflow_1` and `outflow` parameters are replaced by keyword-only `outlet_area_1` and `outlet_area_2`, closed operation now has wet and dry modes, and the defaults and simulation horizon have changed ([#418](https://github.com/flowcean/flowcean/pull/418)).
-- HyDRA is now available from `flowcean.hybrid.hydra` and through the `flowcean.hybrid` public API ([#407](https://github.com/flowcean/flowcean/pull/407)).
+- Hybrid benchmark and identification APIs are kept under `flowcean.hybrid.benchmarks` and `flowcean.hybrid.hydra` rather than duplicated in `flowcean.hybrid`; selector-specific APIs are also available from `flowcean.hybrid.hydra.selector` ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - Hybrid trace events now expose independent `state_before` and `state_after` snapshots plus a zero-based `microstep`; these replace the ambiguous `Event.state` field.
 - Hybrid transitions now expose explicit exact-zero entry policies, and simulation restarts from post-jump states at the exact event time.
 

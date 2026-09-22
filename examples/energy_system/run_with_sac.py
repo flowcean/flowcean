@@ -10,8 +10,7 @@ import pandas as pd
 from midas_palaestrai import ArlDefenderObjective
 
 import flowcean.cli
-from flowcean.core import Action, ActiveInterface, Observation
-from flowcean.core.metric import ActiveMetric
+from flowcean.core import Action, ActiveInterface, ActiveMetric, Observation
 from flowcean.core.report import Report
 from flowcean.core.strategies.active import (
     evaluate_active,
@@ -20,7 +19,7 @@ from flowcean.core.strategies.active import (
 from flowcean.mosaik.energy_system import (
     EnergySystemActive,
 )
-from flowcean.palaestrai.sac_learner import SACLearner, SACModel
+from flowcean.palaestrai import SACLearner, SACModel
 
 logger = logging.getLogger("energy_example_sac")
 END = 5 * 24 * 60 * 60

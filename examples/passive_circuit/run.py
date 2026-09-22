@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
 import flowcean.cli
-from flowcean.hybrid import (
+from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HyDRALearner,
     LogCallback,

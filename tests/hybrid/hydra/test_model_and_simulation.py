@@ -8,12 +8,12 @@ import polars as pl
 import pytest
 
 from flowcean.core import Model
-from flowcean.hybrid import (
+from flowcean.hybrid import Trace
+from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HyDRAModel,
     HyDRATraceSchema,
     SelectorFeatureConfig,
-    Trace,
     compare_state_traces,
 )
 

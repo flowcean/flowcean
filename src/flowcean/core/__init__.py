@@ -21,7 +21,7 @@ from .learner import (
     SupervisedIncrementalLearner,
     SupervisedLearner,
 )
-from .metric import Metric
+from .metric import ActiveMetric, Metric
 from .model import ClassifierModel, Model
 from .report import Report, Reportable
 from .strategies.active import (
@@ -49,6 +49,7 @@ __all__ = [
     "ActiveEnvironment",
     "ActiveInterface",
     "ActiveLearner",
+    "ActiveMetric",
     "Adapter",
     "CallbackManager",
     "CallbackMixin",

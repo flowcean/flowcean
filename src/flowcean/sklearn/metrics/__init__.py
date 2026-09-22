@@ -1,33 +1,31 @@
-from __future__ import annotations
+"""Classification and regression metrics backed by scikit-learn."""
 
-from typing import TYPE_CHECKING, Any, Literal
+from ._multioutput import MultiOutputMixin
+from .classification import (
+    Accuracy,
+    ClassificationReport,
+    FBetaScore,
+    PrecisionScore,
+    Recall,
+)
+from .regression import (
+    MaxError,
+    MeanAbsoluteError,
+    MeanAbsolutePercentageError,
+    MeanSquaredError,
+    R2Score,
+)
 
-import numpy as np
-
-if TYPE_CHECKING:
-    from flowcean.core import Data, Reportable
-
-
-class MultiOutputMixin:
-    """Mixin to handle sklearn-style multioutput regression metrics."""
-
-    def __init__(
-        self,
-        multioutput: Literal[
-            "raw_values",
-            "uniform_average",
-            "variance_weighted",
-        ] = "raw_values",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(**kwargs)
-        self.multioutput = multioutput
-
-    def _finalize_result(
-        self,
-        error: Any,
-        true: Data,
-    ) -> Reportable | dict[str, Reportable]:
-        if isinstance(error, np.ndarray):
-            return dict(zip(true.columns, error, strict=True))
-        return error
+__all__ = (
+    "Accuracy",
+    "ClassificationReport",
+    "FBetaScore",
+    "MaxError",
+    "MeanAbsoluteError",
+    "MeanAbsolutePercentageError",
+    "MeanSquaredError",
+    "MultiOutputMixin",
+    "PrecisionScore",
+    "R2Score",
+    "Recall",
+)

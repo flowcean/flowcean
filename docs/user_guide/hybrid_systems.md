@@ -2,7 +2,7 @@
 
 Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete mode as a location, evolves a continuous state according to that location's dynamics, and changes locations when event surfaces trigger transitions.
 
-Use `flowcean.hybrid` for hybrid-system definition, simulation, traces, plotting, benchmarks, and identification:
+Use `flowcean.hybrid` for hybrid-system definition, simulation, traces, and plotting. Reusable systems are in `flowcean.hybrid.benchmarks`; HyDRA identification is in `flowcean.hybrid.hydra`:
 
 ```python
 from flowcean.hybrid import (
@@ -122,7 +122,7 @@ trace = simulate(
 
 The simulator also accepts input streams, initial-state and initial-location overrides, solver tolerances, and an event limit. Use `trace_to_polars` when identification or evaluation needs tabular state, input, and derivative columns.
 
-See the [`flowcean.hybrid` API](../reference/hybrid.md) for model and trace types and the [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) for complete function signatures.
+See the [`flowcean.hybrid` API](../reference/hybrid.md) for model and trace types, the [benchmark API](../reference/hybrid_benchmarks.md) for reusable systems, and the [HyDRA API](../reference/hybrid_hydra.md) for identification. The [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) has complete function signatures.
 
 ## Benchmarks and Identification
 
@@ -140,6 +140,6 @@ trace = simulate(
 )
 ```
 
-HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` are exported from `flowcean.hybrid` for identifying mode dynamics and selectors from sampled traces.
+Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
 Start with the [minimal hybrid system](../examples/hs_simple.md), browse the [hybrid systems gallery](../examples/hybrid_systems.md), and then run the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow.

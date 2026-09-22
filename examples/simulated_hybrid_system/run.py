@@ -7,7 +7,9 @@ from pysr import PySRRegressor
 
 import flowcean.cli
 import flowcean.utils
-from flowcean.hybrid import (
+from flowcean.hybrid import Trace, plot_trace, simulate, trace_to_polars
+from flowcean.hybrid.benchmarks import thermostat, thermostat_target_stream
+from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HybridDecisionTreeModel,
     HyDRALearner,
@@ -16,15 +18,7 @@ from flowcean.hybrid import (
     PlotCallback,
     SelectorFeatureConfig,
     StateTraceComparison,
-    Trace,
     compare_state_traces,
-    plot_trace,
-    simulate,
-    trace_to_polars,
-)
-from flowcean.hybrid.benchmarks.thermostat import (
-    thermostat,
-    thermostat_target_stream,
 )
 from flowcean.pysr import PySRLearner
 
