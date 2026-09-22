@@ -3,7 +3,9 @@
 import importlib.util
 
 from flowcean import hybrid
+from flowcean.hybrid import benchmarks, hydra
 from flowcean.hybrid.hybrid_system import HybridSystem, Location, Trace
+from flowcean.hybrid.hydra import selector
 from flowcean.hybrid.hydra.learner import HyDRALearner
 from flowcean.hybrid.hydra.model import HyDRAModel
 from flowcean.hybrid.hydra.schema import HyDRATraceSchema
@@ -24,6 +26,20 @@ def test_hybrid_facade_exports_identification_api() -> None:
     assert hybrid.HyDRALearner is HyDRALearner
     assert hybrid.HyDRAModel is HyDRAModel
     assert hybrid.HyDRATraceSchema is HyDRATraceSchema
+
+
+def test_hybrid_facade_exports_benchmark_api() -> None:
+    """Benchmark factories are available from the canonical facade."""
+    for name in benchmarks.__all__:
+        assert getattr(hybrid, name) is getattr(benchmarks, name)
+
+
+def test_hybrid_facades_export_selector_api() -> None:
+    """Selector types and helpers are available from both hybrid facades."""
+    for name in selector.__all__:
+        implementation = getattr(selector, name)
+        assert getattr(hydra, name) is implementation
+        assert getattr(hybrid, name) is implementation
 
 
 def test_removed_namespaces_have_no_module_specs() -> None:

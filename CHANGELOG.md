@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Exposed benchmark factories and selector inspection and evaluation APIs from `flowcean.hybrid`, DDTIG support types from `flowcean.testing.generator`, and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
 - Added `flowcean.aalpy` learners and models for passive RPNI learning of Mealy and Moore machines ([#419](https://github.com/flowcean/flowcean/pull/419)).
 - Added the "Flowcean - Model Learning for Cyber-Physical Systems" paper to the website's citation list ([#404](https://github.com/flowcean/flowcean/pull/404)).
 - Added reusable hybrid-system benchmarks under `flowcean.hybrid.benchmarks` ([#407](https://github.com/flowcean/flowcean/pull/407)).
