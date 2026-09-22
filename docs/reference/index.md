@@ -7,7 +7,9 @@ For concepts and workflows, start with the [user guide](../user_guide/overview.m
 ## Foundations
 
 - [Core](core.md): environments, learners, models, metrics, transforms, callbacks, and learning strategies.
-- [Hybrid systems](hybrid.md): system definitions, simulation, benchmarks, and HyDRA identification.
+- [Hybrid systems](hybrid/index.md): system definitions, simulation, trace I/O, and plotting.
+  - [Hybrid benchmarks](hybrid/benchmarks.md): reusable systems and registry metadata.
+  - [HyDRA identification](hybrid/hydra.md): identification and mode-selector APIs.
 - [Polars](polars.md): dataframe environments, time-series processing, and transforms.
 
 ## Learners and models

@@ -9,7 +9,7 @@ import polars as pl
 import pytest
 
 from flowcean.core import Model, SupervisedIncrementalLearner
-from flowcean.hybrid import HyDRALearner, HyDRATraceSchema
+from flowcean.hybrid.hydra import HyDRALearner, HyDRATraceSchema
 
 
 class LinearFeatureModel(Model):

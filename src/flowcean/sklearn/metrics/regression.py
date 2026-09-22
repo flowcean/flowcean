@@ -6,7 +6,8 @@ from sklearn import metrics
 
 from flowcean.core import Data, Metric, Reportable
 from flowcean.polars import LazyMixin, SelectMixin
-from flowcean.sklearn.metrics import MultiOutputMixin
+
+from ._multioutput import MultiOutputMixin
 
 
 class MaxError(SelectMixin, LazyMixin, Metric):

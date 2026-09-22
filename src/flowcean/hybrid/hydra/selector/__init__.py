@@ -1,3 +1,5 @@
+"""HyDRA mode-selector learning, inspection, and evaluation API."""
+
 from .config import SelectorFeatureConfig
 from .evaluation import (
     SelectorEvaluationReport,

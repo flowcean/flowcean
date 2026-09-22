@@ -1,3 +1,6 @@
+"""Curated HyDRA hybrid-system identification API."""
+
+from . import selector
 from .callbacks import LogCallback, PlotCallback
 from .learner import HyDRALearner
 from .model import HyDRAModel
@@ -38,4 +41,5 @@ __all__ = (
     "compare_state_traces",
     "evaluate_selector_autoregressive",
     "evaluate_selector_oracle",
+    "selector",
 )

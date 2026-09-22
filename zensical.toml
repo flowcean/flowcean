@@ -60,7 +60,11 @@ nav = [
   { "API Reference" = [
     "reference/index.md",
     { "Core" = "reference/core.md" },
-    { "Hybrid Systems" = "reference/hybrid.md" },
+    { "Hybrid Systems" = [
+      "reference/hybrid/index.md",
+      { "Benchmarks" = "reference/hybrid/benchmarks.md" },
+      { "HyDRA Identification" = "reference/hybrid/hydra.md" },
+    ] },
     { "Polars" = "reference/polars.md" },
     { "scikit-learn" = "reference/sklearn.md" },
     { "River" = "reference/river.md" },
