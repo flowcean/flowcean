@@ -1,0 +1,169 @@
+[project]
+site_name = "Flowcean"
+site_url = "https://flowcean.me/"
+repo_url = "https://github.com/flowcean/flowcean"
+repo_name = "flowcean/flowcean"
+site_dir = "site"
+extra_css = ["stylesheets/extra.css"]
+extra_javascript = [
+  "javascripts/mathjax.js",
+  "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js",
+]
+watch = ["src"]
+nav = [
+  { "Flowcean" = "index.md" },
+  { "Research Project" = [
+    "agenc/index.md",
+    { "Use Cases" = "agenc/use_cases.md" },
+    { "CML" = "agenc/cml.md" },
+    { "KALP" = "agenc/kalp.md" },
+    { "OFFIS" = "agenc/offis.md" },
+    { "TUHH" = "agenc/tuhh.md" },
+    { "VIVAVIS" = "agenc/vivavis.md" },
+  ] },
+  { "Getting Started" = [
+    { "Prerequisites" = "getting_started/prerequisites.md" },
+    { "Installation" = "getting_started/installation.md" },
+    { "New Project" = "getting_started/new_project.md" },
+    { "Documentation" = "getting_started/documentation.md" },
+    { "DVC" = "getting_started/dvc.md" },
+  ] },
+  { "User Guide" = [
+    { "Overview" = "user_guide/overview.md" },
+    { "Modules" = "user_guide/modules.md" },
+    { "Environment" = "user_guide/environment.md" },
+    { "Transform" = "user_guide/transform.md" },
+    { "Learning Strategies" = "user_guide/learning_strategies.md" },
+    { "Hybrid Systems" = "user_guide/hybrid_systems.md" },
+    { "Model" = "user_guide/model.md" },
+    { "Evaluation" = "user_guide/evaluation.md" },
+    { "Experiment" = "user_guide/experiment.md" },
+    { "Tools" = "user_guide/tools.md" },
+    { "Adapter" = "user_guide/adapter.md" },
+    { "Glossary" = "user_guide/glossary.md" },
+  ] },
+  { "Examples" = [
+    { "Minimal Hybrid System" = "examples/hs_simple.md" },
+    { "Hybrid Systems Gallery" = "examples/hybrid_systems.md" },
+    { "Simulated Hybrid System Identification" = "examples/simulated_hybrid_system.md" },
+    { "One Tank Offline" = "examples/one_tank.md" },
+    { "One Tank Incremental" = "examples/one_tank_incremental.md" },
+    { "Automatic Lashing Platform" = "examples/automatic_lashing_platform.md" },
+    { "Coffee Machine" = "examples/coffee_machine.md" },
+    { "Robot Localization Failure" = "examples/robot_localization_failure.md" },
+    { "Trace Prediction" = "examples/trace_prediction.md" },
+    { "XOR Function" = "examples/xor.md" },
+    { "Jupyter Notebook Turtlesim" = "examples/jupyter_notebook_turtlesim.md" },
+    { "Energy System" = "examples/energy_system.md" },
+    { "DDTIG" = "examples/ddtig.md" },
+  ] },
+  { "API Reference" = [
+    "reference/index.md",
+    { "Core" = "reference/core.md" },
+    { "Hybrid Systems" = "reference/hybrid.md" },
+    { "Polars" = "reference/polars.md" },
+    { "scikit-learn" = "reference/sklearn.md" },
+    { "River" = "reference/river.md" },
+    { "PyTorch" = "reference/torch.md" },
+    { "PySR" = "reference/pysr.md" },
+    { "XGBoost" = "reference/xgboost.md" },
+    { "PalaestrAI" = "reference/palaestrai.md" },
+    { "AALpy" = "reference/aalpy.md" },
+    { "Adapters" = "reference/adapters.md" },
+    { "Ensemble" = "reference/ensemble.md" },
+    { "ROS" = "reference/ros.md" },
+    { "Mosaik" = "reference/mosaik.md" },
+    { "Testing" = "reference/testing.md" },
+    { "Utilities" = "reference/utilities.md" },
+  ] },
+]
+
+[project.theme]
+variant = "modern"
+language = "en"
+logo = "assets/logo_blue.svg"
+favicon = "assets/favicon.png"
+features = [
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.tracking",
+  "navigation.tabs",
+  "navigation.tabs.sticky",
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.path",
+  "navigation.top",
+  "navigation.footer",
+  "search.highlight",
+  "content.code.copy",
+  "content.tabs.link",
+  "content.tooltips",
+]
+icon.repo = "fontawesome/brands/github"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/monitor-cog"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+footnotes = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.arithmatex.generic = true
+pymdownx.caret = {}
+pymdownx.critic = {}
+pymdownx.details = {}
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.mark = {}
+pymdownx.snippets = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tilde = {}
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["src"]
+options.allow_inspection = false
+options.docstring_style = "google"
+options.docstring_section_style = "table"
+options.filters = ["!^_"]
+options.heading_level = 2
+options.members_order = "source"
+options.merge_init_into_class = true
+options.show_category_heading = true
+options.show_if_no_docstring = true
+options.show_root_heading = true
+options.show_root_full_path = false
+options.show_source = false
+options.show_submodules = false
+options.show_signature_annotations = true
+options.show_symbol_type_heading = true
+options.show_symbol_type_toc = true
+options.separate_signature = true
+options.signature_crossrefs = true

@@ -4,14 +4,21 @@ import polars as pl
 
 from flowcean.sklearn import (
     Accuracy,
+    AdaBoost,
     ClassificationReport,
     FBetaScore,
     PrecisionScore,
     Recall,
 )
+from flowcean.sklearn.adaboost_classifier import (
+    AdaBoost as AdaBoostImplementation,
+)
 
 
 class TestMetrics(unittest.TestCase):
+    def test_adaboost_is_exported(self) -> None:
+        assert AdaBoost is AdaBoostImplementation
+
     def setUp(self) -> None:
         self.true = pl.DataFrame({"a": [0, 1, 0, 1]}).lazy()
         self.predicted = pl.DataFrame({"a": [1, 1, 0, 0]}).lazy()

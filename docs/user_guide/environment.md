@@ -62,4 +62,4 @@ As can be seen in the class diagram, the parent class `Environment` has a method
 Depending on the environment class, different [Learning Strategies](https://flowcean.me/user_guide/learning_strategies/) can be applied.
 An active learning strategy, for example, can only be applied to an `ActiveEnvironment`.
 
-For more information on the available classes and how environments are implemented in Flowcean, check out the [API](https://flowcean.me/reference/flowcean/).
+For more information on the available classes and how environments are implemented in Flowcean, check out the [API](../reference/core.md).

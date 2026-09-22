@@ -29,13 +29,12 @@ package:
   @uv build --no-sources
 
 docs:
-  @echo "🚀 Building documentation..."
-  @echo "   - Running mkdocs"
-  @uv run mkdocs build --strict
+  @echo "Building documentation with Zensical"
+  @uv run --only-group docs zensical build --strict
 
 docs-serve:
-  @echo "Serving documentation: Running mkdocs"
-  @uv run mkdocs serve
+  @echo "Serving documentation with Zensical"
+  @uv run --only-group docs zensical serve
 
 examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor examples-trace_prediction examples-hs-simple examples-hybrid_systems examples-simulated_hybrid_system examples-system_behavior_learning
 

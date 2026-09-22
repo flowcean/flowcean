@@ -23,11 +23,11 @@ Evaluate models with task-appropriate metrics or trajectory comparisons. Environ
 ## Main Interfaces
 
 - [`flowcean.hybrid`](hybrid_systems.md) provides hybrid-system definitions, simulation, trace conversion, plotting, benchmarks, and HyDRA identification.
-- [`flowcean.core`](../reference/flowcean/core/index.md) provides environments, learners, models, metrics, transforms, callbacks, and learning strategies.
-- [`flowcean.polars`](../reference/flowcean/polars/index.md) provides dataframe environments, datasets, time-series support, and reusable transforms.
+- [`flowcean.core`](../reference/core.md) provides environments, learners, models, metrics, transforms, callbacks, and learning strategies.
+- [`flowcean.polars`](../reference/polars.md) provides dataframe environments, datasets, time-series support, and reusable transforms.
 - Backend packages such as `flowcean.sklearn`, `flowcean.river`, `flowcean.torch`, and `flowcean.pysr` connect concrete learning algorithms.
 - Adapters connect Flowcean studies to CPS data sources; `flowcean.aalpy` learns automata locally from traces.
 
-See the [modules](modules.md) for the established conceptual architecture, the [API reference](../reference/flowcean/index.md) for implementation details, and the [examples](../examples/hs_simple.md) for runnable studies. The initial Flowcean concepts and research context are presented by Knitt et al. [^1].
+See the [modules](modules.md) for the established conceptual architecture, the [API reference](../reference/index.md) for implementation details, and the [examples](../examples/hs_simple.md) for runnable studies. The initial Flowcean concepts and research context are presented by Knitt et al. [^1].
 
 [^1]: Knitt, Markus, Swantje Plambeck, Jan Christian Wieck, Julian Kohlisch, Stephan Balduin, Eric MSP Veith, Jakob Schyga, Johannes Hinckeldeyn, Goerschwin Fey, and Jochen Kreutzfeldt. "Towards the Automatic Generation of Models for Prediction, Monitoring, and Testing of Cyber-Physical Systems." In 2023 IEEE 28th International Conference on Emerging Technologies and Factory Automation (ETFA), 1-4, 2023. [doi:10.1109/ETFA54631.2023.10275706](https://doi.org/10.1109/ETFA54631.2023.10275706).
