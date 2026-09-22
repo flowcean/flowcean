@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from ..hybrid_system import HybridSystem, InputStream
 from .bouncing_ball import bouncing_ball
+from .buck_converter import buck_converter
 from .hybrid_oscillator import hybrid_oscillator
 from .impact_oscillator import impact_input_stream, impact_oscillator
 from .mode_cycle import mode_cycle
@@ -127,6 +128,15 @@ def registry() -> dict[str, BenchmarkSpec]:
             ),
             t_span=(0.0, 10.0),
         ),
+        BenchmarkSpec(
+            name="Buck Converter",
+            factory=buck_converter,
+            tags=("power-electronics", "hysteresis", "affine", "diode"),
+            description=(
+                "Hysteretic buck converter with ideal-diode current blocking."
+            ),
+            t_span=(0.0, 0.02),
+        ),
     ]
 
     return {spec.name: spec for spec in specs}
@@ -141,6 +151,7 @@ __all__ = [
     "BenchmarkSpec",
     "all_specs",
     "bouncing_ball",
+    "buck_converter",
     "hybrid_oscillator",
     "impact_input_stream",
     "impact_oscillator",
