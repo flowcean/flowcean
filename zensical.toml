@@ -61,9 +61,9 @@ nav = [
     "reference/index.md",
     { "Core" = "reference/core.md" },
     { "Hybrid Systems" = [
-      { "Overview" = "reference/hybrid.md" },
-      { "Benchmarks" = "reference/hybrid_benchmarks.md" },
-      { "HyDRA Identification" = "reference/hybrid_hydra.md" },
+      "reference/hybrid/index.md",
+      { "Benchmarks" = "reference/hybrid/benchmarks.md" },
+      { "HyDRA Identification" = "reference/hybrid/hydra.md" },
     ] },
     { "Polars" = "reference/polars.md" },
     { "scikit-learn" = "reference/sklearn.md" },

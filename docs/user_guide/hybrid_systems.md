@@ -122,7 +122,7 @@ trace = simulate(
 
 The simulator also accepts input streams, initial-state and initial-location overrides, solver tolerances, and an event limit. Use `trace_to_polars` when identification or evaluation needs tabular state, input, and derivative columns.
 
-See the [`flowcean.hybrid` API](../reference/hybrid.md) for model and trace types, the [benchmark API](../reference/hybrid_benchmarks.md) for reusable systems, and the [HyDRA API](../reference/hybrid_hydra.md) for identification. The [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) has complete function signatures.
+See the [`flowcean.hybrid` API](../reference/hybrid/index.md) for model and trace types, the [benchmark API](../reference/hybrid/benchmarks.md) for reusable systems, and the [HyDRA API](../reference/hybrid/hydra.md) for identification. The [simulator API](../reference/hybrid/index.md#flowcean.hybrid.simulate) has complete function signatures.
 
 ## Benchmarks and Identification
 
