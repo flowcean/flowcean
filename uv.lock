@@ -2073,6 +2073,9 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "threadpoolctl" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -2081,6 +2084,9 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=1.26.4" },
     { name = "scikit-learn", specifier = ">=1.5.2" },
+    { name = "scipy", specifier = ">=1.15.0" },
+    { name = "threadpoolctl", specifier = ">=3.6" },
+    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [[package]]
