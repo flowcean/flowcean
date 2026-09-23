@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping, Sequence
 from itertools import cycle
+from math import isfinite
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,8 +53,11 @@ def plot_trace(
     for dim in dims:
         ax.plot(plot_times, plot_states[:, dim], label=f"x{dim}")
 
+    # Location patches have labels for callers building shared legends, but the
+    # standard trace legend continues to show only the preexisting/state artists.
+    legend_handles, legend_labels = ax.get_legend_handles_labels()
     if show_locations:
-        _plot_location_spans(
+        plot_locations(
             trace,
             ax=ax,
             location_colors=location_colors,
@@ -65,7 +69,7 @@ def plot_trace(
 
     ax.set_xlabel("t")
     ax.set_ylabel("state")
-    ax.legend(loc="best")
+    ax.legend(legend_handles, legend_labels, loc="best")
 
     if show:
         plt.show()
@@ -224,42 +228,110 @@ def _location_color_map(
     return colors
 
 
-def _plot_location_spans(
+def plot_locations(
     trace: Trace,
-    ax: Axes,
-    location_colors: Mapping[str, str] | None,
     *,
-    show_labels: bool,
-) -> None:
-    segments, locations = _location_segments(trace)
-    if not segments:
-        return
+    location_colors: Mapping[str, str] | None = None,
+    show_labels: bool = False,
+    alpha: float = 0.08,
+    ax: Axes | None = None,
+) -> Axes:
+    """Shade the locations of a trace on an existing or new time axis.
 
-    colors = _location_color_map(locations, location_colors)
-    y_max = float(trace.x.max()) if trace.x.size else 1.0
-    y_min = float(trace.x.min()) if trace.x.size else 0.0
-    label_y = y_max + 0.02 * (y_max - y_min + 1.0)
+    Shade from the trace's first to last sample using recorded event times.
+    If that range contains no events, approximate each change at the first
+    sample in the next location. Only the first patch for each location has
+    a legend label. This function does not draw a legend.
 
-    for start, end, location in segments:
-        t_start = trace.t[start]
-        t_end = trace.t[end - 1]
+    Args:
+        trace: Trace whose sampled time range and locations to shade.
+        location_colors: Optional color mapping for locations.
+        show_labels: Whether to place location names at the top of each span.
+        alpha: Shading opacity in the range [0, 1].
+        ax: Optional axis using the same time coordinates as ``trace.t``.
+
+    Returns:
+        Matplotlib axes containing the location spans.
+    """
+    if not isfinite(alpha) or not 0 <= alpha <= 1:
+        message = "alpha must be finite and between 0 and 1."
+        raise ValueError(message)
+
+    if ax is None:
+        _, ax = plt.subplots()
+    if ax is None:
+        message = "Failed to create matplotlib axes."
+        raise RuntimeError(message)
+
+    spans = _location_time_spans(trace)
+    colors = _location_color_map(
+        [location for _, _, location in spans], location_colors
+    )
+    labeled: set[str] = set()
+    for start, end, location in spans:
+        label = location if location not in labeled else "_nolegend_"
         ax.axvspan(
-            t_start,
-            t_end,
+            start,
+            end,
             color=colors[location],
-            alpha=0.08,
+            alpha=alpha,
             linewidth=0,
+            zorder=0,
+            label=label,
         )
+        labeled.add(location)
         if show_labels:
-            t_mid = 0.5 * (t_start + t_end)
             ax.text(
-                t_mid,
-                label_y,
+                0.5 * (start + end),
+                0.98,
                 location,
+                transform=ax.get_xaxis_transform(),
                 ha="center",
-                va="bottom",
+                va="top",
                 fontsize=9,
             )
+
+    return ax
+
+
+def _location_time_spans(trace: Trace) -> list[tuple[float, float, str]]:
+    """Return positive-duration spans, merging consecutive matching modes."""
+    if len(trace.t) < 2:
+        return []
+
+    spans: list[tuple[float, float, str]] = []
+
+    def add_span(start: float, end: float, location: str) -> None:
+        if end <= start:
+            return
+        if spans and spans[-1][1] == start and spans[-1][2] == location:
+            previous_start, _, _ = spans[-1]
+            spans[-1] = (previous_start, end, location)
+        else:
+            spans.append((start, end, location))
+
+    start = float(trace.t[0])
+    end = float(trace.t[-1])
+    in_window_events = [
+        event for event in trace.events if start <= event.time <= end
+    ]
+    if in_window_events:
+        current = str(trace.location[0])
+        previous_time = start
+        for event in in_window_events:
+            add_span(previous_time, event.time, current)
+            previous_time = event.time
+            current = str(event.target_location)
+        add_span(previous_time, end, current)
+    else:
+        for idx in range(len(trace.t) - 1):
+            add_span(
+                float(trace.t[idx]),
+                float(trace.t[idx + 1]),
+                str(trace.location[idx]),
+            )
+
+    return spans
 
 
 def _plot_events(trace: Trace, ax: Axes, *, show_labels: bool) -> None:

@@ -153,6 +153,26 @@ The simulator also accepts input streams, initial-state and initial-location ove
 
 See the [`flowcean.hybrid` API](../reference/hybrid/index.md) for model and trace types, the [benchmark API](../reference/hybrid/benchmarks.md) for reusable systems, and the [HyDRA API](../reference/hybrid/hydra.md) for identification. The [simulator API](../reference/hybrid/index.md#flowcean.hybrid.simulate) has complete function signatures.
 
+## Plotting Locations
+
+Use `plot_trace` for state trajectories, or add location shading to your own time-series plots with `plot_locations`:
+
+```python
+import matplotlib.pyplot as plt
+
+from flowcean.hybrid import plot_locations
+
+fig, ax = plt.subplots()
+ax.plot(trace.t, trace.x[:, 0], color="black", label="x0")
+plot_locations(trace, ax=ax)
+ax.set_xlabel("Time (s)")
+ax.legend()
+```
+
+`plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass the same `location_colors` mapping when comparing plots whose traces visit locations in different orders.
+
+Shading spans the trace's first to last sample and follows recorded transition times, including locations visited between samples. If that range contains no events, a change is approximated at the first sample with the new location label. Instantaneous intermediate locations have no shaded area.
+
 ## Benchmarks and Identification
 
 Reusable systems are available from `flowcean.hybrid.benchmarks`:

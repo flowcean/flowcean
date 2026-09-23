@@ -24,6 +24,8 @@ trace = simulate(
 )
 ```
 
+For a standalone turbine simulation, see the [wind-turbine example](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/README.md#wind-turbine).
+
 ## Export Automaton Diagrams
 
 Export every registered benchmark's automaton without simulating the systems:

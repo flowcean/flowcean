@@ -20,6 +20,11 @@ from .time_varying_event_surface import (
     time_varying_event_surface,
     time_varying_input_stream,
 )
+from .wind_turbine import (
+    wind_turbine,
+    wind_turbine_power,
+    wind_turbine_wind,
+)
 
 
 @dataclass(frozen=True)
@@ -137,6 +142,16 @@ def registry() -> dict[str, BenchmarkSpec]:
             ),
             t_span=(0.0, 0.02),
         ),
+        BenchmarkSpec(
+            name="Wind Turbine",
+            factory=wind_turbine,
+            tags=("wind", "nonlinear", "control", "hysteresis", "input"),
+            description=(
+                "Running turbine with five torque-control regimes and pitch control."
+            ),
+            t_span=(0.0, 120.0),
+            input_stream=wind_turbine_wind,
+        ),
     ]
 
     return {spec.name: spec for spec in specs}
@@ -167,4 +182,7 @@ __all__ = [
     "time_forced_switch",
     "time_varying_event_surface",
     "time_varying_input_stream",
+    "wind_turbine",
+    "wind_turbine_power",
+    "wind_turbine_wind",
 ]
