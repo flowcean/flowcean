@@ -238,13 +238,13 @@ def plot_locations(
 ) -> Axes:
     """Shade the locations of a trace on an existing or new time axis.
 
-    Events determine exact transition times when present in the visible window.
-    Without in-window events, changes are approximated at the first sample in
-    the next location. The first patch for each location has its name as its
-    legend label; subsequent patches have no legend entry. No legend is drawn.
+    Shade from the trace's first to last sample using recorded event times.
+    If that range contains no events, approximate each change at the first
+    sample in the next location. Only the first patch for each location has
+    a legend label. This function does not draw a legend.
 
     Args:
-        trace: Trace whose time window and locations to shade.
+        trace: Trace whose sampled time range and locations to shade.
         location_colors: Optional color mapping for locations.
         show_labels: Whether to place location names at the top of each span.
         alpha: Shading opacity in the range [0, 1].

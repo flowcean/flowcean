@@ -1,17 +1,12 @@
-"""Bounded approximate NREL 5-MW rotor aerodynamic coefficients.
-
-Total-degree-five Chebyshev least-squares fit to 575 grid nodes in the
-Cp_Ct_Cq.NREL5MW.txt table from ROSCO, pinned at
-https://github.com/NatLabRockies/ROSCO/blob/974290ec39f7322a9ae83ffa989444bfbea8728b/Examples/Test_Cases/NREL-5MW/Cp_Ct_Cq.NREL5MW.txt
-(source SHA256 a8d9c2d88bd1d9073287256b042d7752d2202a01e611c08e283b9109504caf5b).
-The table is not bundled; its license and attribution are in _data/wind_turbine.
-This smooth approximation is not a high-fidelity, globally validated model.
-"""
+"""Bounded polynomial approximation of NREL 5-MW rotor aerodynamics."""
 
 import math
 
 import numpy as np
 
+# Total-degree-5 Chebyshev least-squares fit to 575 nodes of ROSCO's
+# NREL-5MW performance table (source data licensed Apache-2.0):
+# https://github.com/NatLabRockies/ROSCO/blob/974290ec39f7322a9ae83ffa989444bfbea8728b/Examples/Test_Cases/NREL-5MW/Cp_Ct_Cq.NREL5MW.txt
 # Order (i, j) is increasing i, then increasing j, for i + j <= 5.
 _TERMS = tuple((i, j) for i in range(6) for j in range(6 - i))
 _CQ = np.array(

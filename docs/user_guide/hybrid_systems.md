@@ -171,7 +171,7 @@ ax.legend()
 
 `plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass the same `location_colors` mapping when comparing plots whose traces visit locations in different orders.
 
-Shading follows recorded transition times, including locations visited between samples. Without events in the displayed time window, a change is approximated at the first sample with the new location label. Instantaneous intermediate locations have no shaded area.
+Shading spans the trace's first to last sample and follows recorded transition times, including locations visited between samples. If that range contains no events, a change is approximated at the first sample with the new location label. Instantaneous intermediate locations have no shaded area.
 
 ## Benchmarks and Identification
 

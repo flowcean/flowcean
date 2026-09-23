@@ -126,71 +126,56 @@ def wind_turbine(
     pitch_ki: float = 0.008068634,
     speed_hysteresis: float = 0.2,
 ) -> HybridSystem:
-    """Construct a bounded running wind turbine with five generator regimes.
+    """Model an already-running 5 MW-class wind turbine.
 
-    This reduced 5 MW-class turbine converts wind energy into generator power.
-    Aerodynamic torque accelerates the rotor, while generator torque resists
-    rotation to extract power. Wind thrust bends the tower, modeled as a
-    damped mass-spring system; tower motion changes the wind speed experienced
-    by the rotor. Turning the blades out of the wind (pitching) reduces their
-    aerodynamic loading. A PI controller adjusts pitch to regulate rotor
-    speed, and a second-order actuator models the blades' finite response.
+    Wind turns the rotor; the generator resists rotation to extract power.
+    Wind thrust bends the tower, modeled as a damped mass-spring system.
+    Turning the blades out of the wind (pitching) reduces their loading.
+    Startup, shutdown, and emergency-braking control are not modeled.
 
-    State ``[omega, x, v, beta, beta_rate, integral]`` consists of rotor speed
-    (rad/s), tower displacement relative to the undeflected/no-thrust position
-    (m), tower velocity (m/s), blade pitch (rad), pitch rate (rad/s), and PI
-    integral contribution (rad). This is a running turbine, initially rotating
-    at 0.65 rad/s; ``no_generation`` is *not* a startup-from-rest model.
-    Shutdown, braking, and full lifecycle behavior are outside its scope.
+    The state vector is ``[omega, x, v, beta, beta_rate, integral]``:
 
-    Supply ``simulate(..., input_stream=...)`` with exactly one positive wind
-    speed component (m/s), for example ``lambda t: np.array([11.0])`` or
-    :func:`wind_turbine_wind`. Relative wind is wind minus tower velocity;
-    both relative wind and rotor speed must stay positive. The approximate
-    polynomial aerodynamics is defined only for tip-speed ratio 2.5..14.5 and
-    pitch -2..20 degrees: simulation fails clearly outside that domain rather
-    than extrapolating. Rotor torque is ``rho*pi*R**3*u**2*Cq/2`` and tower
-    thrust ``rho*pi*R**2*u**2*Ct/2`` with radius R=63 m and u=relative wind.
-    Signed torque and thrust are retained; negative torque brakes the rotor.
-    The tower follows ``x_dot=v`` and ``m*x_ddot = thrust - c*v - k*x``.
-    The effective rotor inertia includes generator inertia multiplied by the
-    squared gearbox ratio, preserving kinetic energy across the gearbox.
-    The polynomial fit is a quasi-steady approximation: aerodynamic loads
-    depend on the current state and wind, with no wake memory, dynamic stall,
-    yaw misalignment, or individual blade flexibility.
+    - ``omega``: rotor speed (rad/s).
+    - ``x``: tower displacement from its undeflected position (m).
+    - ``v``: tower velocity (m/s).
+    - ``beta``: blade pitch (rad).
+    - ``beta_rate``: pitch rate (rad/s).
+    - ``integral``: pitch controller's integral contribution (rad).
 
-    The five locations describe how the generator takes power from the rotor.
-    Taking power requires a resisting torque, which opposes the rotation.
-    "Rated power" means the intended full operating output, here 5.29661 MW
-    of mechanical power delivered to the generator, before electrical losses.
+    By default, the rotor turns at 0.65 rad/s and all other states are zero.
+    The five locations set generator torque according to generator speed:
 
-    - ``no_generation``: the rotor spins, but the generator takes no power;
-      its resisting torque is zero.
-    - ``gradual_generation``: the generator begins taking power gradually,
-      with resisting torque increasing linearly with speed.
-    - ``below_rated_power``: power capture adapts to rotor speed, with
-      resisting torque proportional to speed squared.
-    - ``approaching_rated_power``: a second linear torque ramp provides the
-      transition toward full operating power.
-    - ``rated_power``: the generator takes a constant mechanical power;
-      its resisting torque is power divided by generator speed.
+    - ``no_generation``: zero torque; the rotor spins without generating.
+    - ``gradual_generation``: torque increases linearly with speed.
+    - ``below_rated_power``: torque is proportional to speed squared.
+    - ``approaching_rated_power``: a second linear torque ramp.
+    - ``rated_power``: constant power, with torque equal to power/speed.
 
-    These locations form a bidirectional chain in the order listed above.
-    The generator runs at 97 times rotor
-    speed; the rotor equation subtracts 97 times generator torque. The gearbox
-    is rigid and lossless; generator torque has no actuator dynamics or rate
-    limit. Speed alone determines the regime; adjacent modes switch at each
-    generator-speed boundary +/- ``speed_hysteresis`` (rad/s), preventing
-    immediate reversal. No mode
-    transition resets physical state. Central boundaries are 70.16224,
-    91.21091, 119.013772, and 121.6805 generator rad/s. The PI pitch
-    controller acts continuously in every mode: error = generator speed -
-    122.91 rad/s, raw command = (integral + kp*error)/(1+beta/0.1099965),
-    command = clip(raw, 0, 18 degrees), and integral derivative = ki*error +
-    (command-raw)/(kp/ki). Its actuator is a second-order system at 2*pi rad/s
-    and damping ratio 0.7. Command saturation does not impose hard mechanical
-    stops on the actuator. It is a continuous piecewise law, not another
-    discrete mode.
+    Rated power is about 5.30 MW at the generator shaft; electrical output is
+    not modeled. Locations form a two-way chain in the order above. Upward
+    and downward speed thresholds differ by ``2*speed_hysteresis``; between
+    them, the current mode is retained. Switching leaves physical states unchanged.
+
+    Pitch control runs in every mode, using speed error and its accumulated
+    value (PI control). Blade motion lags the command, limited to 0..18 degrees.
+    The controller corrects accumulated error at those limits; they are not
+    mechanical stops.
+    Hardware and controller constants are recorded in ``system.parameters``.
+
+    Supply ``simulate(..., input_stream=...)`` with one positive wind speed
+    (m/s), such as ``lambda t: np.array([11.0])``. Relative wind is
+    ``u = wind - v``; it and rotor speed must stay positive. With radius R=63 m,
+    the tip-speed ratio ``omega*R/u`` must stay in 2.5..14.5 and pitch in
+    -2..20 degrees. Leaving the polynomial fit's domain raises an error.
+
+    The fit gives torque coefficient Cq and thrust coefficient Ct. Rotor
+    torque is ``rho*pi*R**3*u**2*Cq/2`` and thrust ``rho*pi*R**2*u**2*Ct/2``,
+    where rho is air density. Negative torque brakes the rotor. The rigid,
+    lossless gearbox makes generator speed ``97*omega``. Generator torque and
+    inertia are referred to the rotor by factors of 97 and 97 squared.
+    Generator torque has no delay or rate limit. Aerodynamics assume head-on
+    wind and an instantaneous response
+    to current conditions (a quasi-steady approximation); blades are rigid.
 
     Args:
         initial_state: Optional six-element running state (copied).
@@ -199,7 +184,7 @@ def wind_turbine(
         speed_hysteresis: Positive generator-speed threshold halfwidth (rad/s).
 
     Returns:
-        HybridSystem with five speed-supervised torque locations.
+        HybridSystem with five torque-control locations.
     """
     for name, value in (("pitch_kp", pitch_kp), ("pitch_ki", pitch_ki)):
         if not math.isfinite(value) or value <= 0:
