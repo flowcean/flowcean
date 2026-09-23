@@ -6,29 +6,20 @@ from flowcean.core import Transform
 
 
 class ToTimeSeries(Transform):
-    """Collect rows sharing one time axis into one time series.
+    """Keep synchronized measurements together as one time series.
 
-    The result has one row and one column named ``name``, with dtype
-    ``List(Struct({time: <time dtype>, value: <value dtype>}))``. With exactly
-    one non-time column, each sample's ``value`` is that column's value,
-    retaining its dtype. With two or more non-time columns, ``value`` is a
-    struct retaining their names, order, and dtypes. Scalar-series transforms
-    such as ``Mean`` and ``Resample`` require the single-value-column form.
-    Input row order is preserved; timestamps are not sorted.
+    Collects all rows into a list of ``{time, value}`` samples in one output
+    row and column. A single non-time column supplies ``value`` directly;
+    multiple columns form a struct. Dtypes and input order are preserved.
+    Empty input produces an empty list; time-only input uses empty structs.
 
-    Empty input produces one empty list with the same nested schema. If the
-    input contains only the time column, each sample has an empty value
-    struct. A missing time column raises Polars' ``ColumnNotFoundError``.
-
-    For multiple clocks, select each clock and its associated value columns
-    in separate branches, apply this transform once per branch with distinct
-    output names, then combine the one-row results horizontally. No input
-    columns are retained outside the resulting series.
+    Select the columns that belong together before applying this transform.
+    For separate clocks or signals, transform selected branches independently
+    and combine their outputs horizontally.
 
     Args:
-        time_feature: The single input column containing timestamps.
-            Mappings from value columns to clocks are not supported.
-        name: Name of the resulting time series column.
+        time_feature: Input timestamp column.
+        name: Output column name.
     """
 
     time_feature: str
