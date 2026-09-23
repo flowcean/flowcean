@@ -6,16 +6,15 @@ from flowcean.core import Transform
 
 
 class ToTimeSeries(Transform):
-    """Keep synchronized measurements together as one time series.
+    """Turn a table of timestamped measurements into a single time series.
 
-    Collects all rows into a list of ``{time, value}`` samples in one output
-    row and column. A single non-time column supplies ``value`` directly;
-    multiple columns form a struct. Dtypes and input order are preserved.
-    Empty input produces an empty list; time-only input uses empty structs.
+    Each row becomes a ``{time, value}`` sample, using ``time_feature`` as
+    the timestamp and the remaining columns as measurements. A single
+    measurement becomes the value directly; multiple measurements are grouped
+    in a struct with their column names. Their dtypes stay the same.
 
-    Select the columns that belong together before applying this transform.
-    For separate clocks or signals, transform selected branches independently
-    and combine their outputs horizontally.
+    The result is one row with a column named ``name`` containing the samples
+    as a list, in their original order.
 
     Args:
         time_feature: Input timestamp column.
