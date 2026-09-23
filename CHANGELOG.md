@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added a physical hysteretic buck-converter benchmark with switch-on, diode-conduction, and zero-current modes to `flowcean.hybrid.benchmarks` and the hybrid systems gallery.
 - Exposed DDTIG support types from `flowcean.testing.generator` and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
 - Added `ActiveMetric` to `flowcean.core`, `SACLearner` and `SACModel` to `flowcean.palaestrai`, and the explicit `flowcean.sklearn.metrics` facade.
 - Added `flowcean.aalpy` learners and models for passive RPNI learning of Mealy and Moore machines ([#419](https://github.com/flowcean/flowcean/pull/419)).
