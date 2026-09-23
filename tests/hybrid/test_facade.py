@@ -6,6 +6,7 @@ import importlib.util
 from flowcean import hybrid
 from flowcean.hybrid import benchmarks, hydra
 from flowcean.hybrid.benchmarks import bouncing_ball
+from flowcean.hybrid.graph import build_hybrid_system_dot, render_dot_svg
 from flowcean.hybrid.hybrid_system import HybridSystem, Location, Trace
 from flowcean.hybrid.hydra import HyDRALearner, HyDRAModel, selector
 from flowcean.hybrid.simulator import generate_traces, simulate
@@ -33,10 +34,12 @@ EXPECTED_HYBRID_EXPORTS = (
     "Trace",
     "Transition",
     "benchmarks",
+    "build_hybrid_system_dot",
     "generate_traces",
     "hydra",
     "plot_phase",
     "plot_trace",
+    "render_dot_svg",
     "save_traces_csv",
     "save_traces_parquet",
     "simulate",
@@ -52,6 +55,8 @@ def test_hybrid_facade_exports_modeling_and_simulation_api() -> None:
     assert hybrid.Trace is Trace
     assert hybrid.simulate is simulate
     assert hybrid.generate_traces is generate_traces
+    assert hybrid.build_hybrid_system_dot is build_hybrid_system_dot
+    assert hybrid.render_dot_svg is render_dot_svg
     assert hybrid.__all__ == EXPECTED_HYBRID_EXPORTS
 
 

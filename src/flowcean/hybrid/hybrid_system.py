@@ -328,22 +328,26 @@ class HybridSystem:
         ]
 
 
-def display_label(obj: object) -> str:
-    """Return the human-readable label for a hybrid-system object."""
+def display_label(obj: object, *, fallback: str | None = None) -> str:
+    """Return the human-readable label, using fallback before repr if set."""
+
+    def last_resort() -> str:
+        return fallback if fallback is not None else repr(obj)
+
     if isinstance(obj, Location):
         return (
             obj.label
             or obj.dynamics.label
             or _callback_label(obj.dynamics.flow)
-            or repr(obj)
+            or last_resort()
         )
     if isinstance(obj, ContinuousDynamics):
-        return obj.label or _callback_label(obj.flow) or repr(obj)
+        return obj.label or _callback_label(obj.flow) or last_resort()
     if isinstance(obj, EventSurface):
-        return obj.label or _callback_label(obj.fn) or repr(obj)
+        return obj.label or _callback_label(obj.fn) or last_resort()
     if isinstance(obj, Reset):
-        return obj.label or _callback_label(obj.fn) or repr(obj)
-    return repr(obj)
+        return obj.label or _callback_label(obj.fn) or last_resort()
+    return last_resort()
 
 
 def _validate_transition_locations(

@@ -24,4 +24,14 @@ trace = simulate(
 )
 ```
 
-See the [Hybrid Systems guide](../user_guide/hybrid_systems.md) for the modeling concepts and simulator options.
+## Export Automaton Diagrams
+
+Export every registered benchmark's automaton without simulating the systems:
+
+```bash
+uv run --directory ./examples/hybrid_systems python export_graphs.py
+```
+
+This writes one DOT file per benchmark under `examples/hybrid_systems/outputs/automata/`, using lowercase benchmark names with spaces replaced by underscores. Add `--svg` to also render SVG files; this requires Graphviz's `dot` executable on `PATH`.
+
+See [Automaton Diagrams](../user_guide/hybrid_systems.md#automaton-diagrams) for the export API and label options, and the [Hybrid Systems guide](../user_guide/hybrid_systems.md) for modeling concepts and simulator options.

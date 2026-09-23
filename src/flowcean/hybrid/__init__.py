@@ -1,6 +1,7 @@
-"""Hybrid-system modeling, simulation, trace I/O, and plotting."""
+"""Hybrid-system modeling, automaton diagrams, simulation, and traces."""
 
 from . import benchmarks, hydra
+from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
     ContinuousDynamics,
     CrossingDirection,
@@ -59,10 +60,12 @@ __all__ = (
     "Trace",
     "Transition",
     "benchmarks",
+    "build_hybrid_system_dot",
     "generate_traces",
     "hydra",
     "plot_phase",
     "plot_trace",
+    "render_dot_svg",
     "save_traces_csv",
     "save_traces_parquet",
     "simulate",
