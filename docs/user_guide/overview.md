@@ -1,3 +1,7 @@
+---
+icon: lucide/compass
+---
+
 # Overview
 
 Flowcean is a research-oriented Python toolkit for defining, simulating, identifying, evaluating, and reproducing models of cyber-physical systems.

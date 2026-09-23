@@ -1,3 +1,7 @@
+---
+icon: lucide/scan-search
+---
+
 # Simulated Hybrid System Identification
 
 This example runs a full HyDRA identification loop on simulated one-dimensional hybrid-system traces. The reference system starts in one affine mode and switches to another when the state crosses a threshold. HyDRA learns mode dynamics, trains a selector for mode assignment, simulates the learned model, and compares that learned trajectory with the reference trace.

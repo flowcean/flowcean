@@ -1,3 +1,7 @@
+---
+icon: lucide/flask-conical
+---
+
 # Data-Driven Test Input Generation
 
 This example demonstrates how to use the framework to generate test inputs from a Flowcean model. It performs the following steps:

@@ -1,3 +1,7 @@
+---
+icon: lucide/plug
+---
+
 # Adapter
 
 Adapters allow to connect Flowcean with real CPS.

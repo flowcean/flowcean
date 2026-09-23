@@ -1,3 +1,7 @@
+---
+icon: lucide/flask-conical
+---
+
 # Testing
 
 `flowcean.testing` runs model tests against input domains and predicates.

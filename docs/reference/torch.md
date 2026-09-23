@@ -1,3 +1,7 @@
+---
+icon: lucide/flame
+---
+
 # PyTorch
 
 `flowcean.torch` provides datasets, model wrappers, neural network architectures, and a Lightning learner.

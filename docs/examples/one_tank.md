@@ -1,3 +1,7 @@
+---
+icon: lucide/droplet
+---
+
 # One-Tank Offline Learning
 
 This example identifies a one-step predictor from a simulated water-tank trace. It uses the same system definition and simulation as the [incremental learning variant](one_tank_incremental.md), while training each model from a fixed dataset.

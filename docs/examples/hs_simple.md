@@ -1,3 +1,7 @@
+---
+icon: lucide/workflow
+---
+
 # Minimal Hybrid System
 
 This example builds and simulates a small two-location thermostat with the object-based hybrid-system API. It is intended as the shortest complete example of defining locations, flows, event surfaces, and transitions directly in Python.

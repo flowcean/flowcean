@@ -1,3 +1,7 @@
+---
+icon: lucide/wrench
+---
+
 # Utilities
 
 These packages provide experiment setup and deployment helpers.

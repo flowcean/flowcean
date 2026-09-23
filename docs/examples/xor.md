@@ -1,3 +1,7 @@
+---
+icon: lucide/binary
+---
+
 # XOR Function
 
 In this example, we demonstrate how to learn the XOR (exclusive OR) function using a regression tree model.

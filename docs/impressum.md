@@ -1,3 +1,7 @@
+---
+icon: lucide/scale
+---
+
 **Institut für Technische Logistik**<br />
 Technische Universität Hamburg<br />
 Theodor-Yorck-Straße 8<br />

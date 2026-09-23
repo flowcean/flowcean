@@ -1,3 +1,7 @@
+---
+icon: lucide/chart-no-axes-combined
+---
+
 # Trace Prediction
 
 This example turns a recorded thermostat trace into a supervised prediction problem. It loads the CSV with `DataFrame.from_csv`, preserves time order with `TrainTestSplit(shuffle=False)`, applies `SlidingWindow(window_size=4)`, trains a `RegressionTree` with `learn_offline`, and evaluates the held-out windows with `evaluate_offline`.

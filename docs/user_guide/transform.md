@@ -1,3 +1,7 @@
+---
+icon: lucide/funnel
+---
+
 # Transforms
 
 Pre-processing of data, feature engineering, or augmentation, are fundamental processes in machine learning.

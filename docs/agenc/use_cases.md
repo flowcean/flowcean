@@ -1,3 +1,7 @@
+---
+icon: lucide/goal
+---
+
 # Use Case
 
 The three main use cases in the AGenC research project will be described in the following sections.

@@ -1,3 +1,7 @@
+---
+icon: lucide/zap
+---
+
 # Energy System Example
 
 Energy systems are highly complex systems with lots of parameters.

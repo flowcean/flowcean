@@ -1,3 +1,7 @@
+---
+icon: lucide/droplet
+---
+
 # One-Tank Incremental Learning
 
 This example identifies a one-step predictor from the same deterministic water-tank simulation as the [offline learning variant](one_tank.md). The difference is the learning strategy: training observations are delivered in order, one row at a time, to an incremental learner.

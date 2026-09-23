@@ -1,3 +1,7 @@
+---
+icon: lucide/network
+---
+
 # Mosaik
 
 `flowcean.mosaik` provides an active environment for energy-system co-simulation.

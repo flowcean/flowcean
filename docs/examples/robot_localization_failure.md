@@ -1,3 +1,7 @@
+---
+icon: lucide/map-pin
+---
+
 # Robot Localization Failure
 
 Highly dynamic environments as the one depicted below still remain a challenge for localization systems of mobile robots.

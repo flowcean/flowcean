@@ -1,3 +1,7 @@
+---
+icon: lucide/download
+---
+
 # Installation
 
 This page covers installing Flowcean for a project and setting up a local development checkout.

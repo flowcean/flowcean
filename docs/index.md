@@ -1,6 +1,7 @@
 ---
 hide:
   - navigation
+icon: lucide/house
 ---
 
 # Flowcean

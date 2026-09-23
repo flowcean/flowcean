@@ -1,3 +1,7 @@
+---
+icon: lucide/building-2
+---
+
 # OFFIS e.V. -- Institute for Information Technology
 
 As an affiliated institute of the Carl von Ossietzky University of Oldenburg, the Oldenburg Research and Development Institute for Information Technology (OFFIS) has been converting scientific know-how from information technology into solutions that can then be further developed into marketable products by business partners since it was founded in 1991. Around 300 employees work on numerous computer science projects, almost always with a direct application focus.

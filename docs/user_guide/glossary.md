@@ -1,3 +1,7 @@
+---
+icon: lucide/book-a
+---
+
 # Glossary
 
 This glossary provides definitions for key terms and concepts used throughout the Flowcean documentation.

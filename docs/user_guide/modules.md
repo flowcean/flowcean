@@ -1,3 +1,7 @@
+---
+icon: lucide/boxes
+---
+
 # Flowcean Modules
 
 One of Flowcean's core features is to allow you to combine preprocessing, learning, evaluation, and postprocessing in whichever way you like.
