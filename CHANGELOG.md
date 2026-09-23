@@ -15,6 +15,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** `ToTimeSeries(time_feature, *, name="time_series")` now collects non-time columns into one named series in a single row, preserving dtypes and source order. One value column stays scalar; multiple value columns form a struct preserving their names and order; no value columns produce empty structs. Clock mappings and automatic per-signal output columns are no longer supported; select per-clock or per-signal branches, transform each separately, and combine the results horizontally.
 - Updated dependencies in response to security audit findings and adapted the PalaestrAI SAC learner to the current sensor and actuator API ([#405](https://github.com/flowcean/flowcean/pull/405)).
 - Hybrid-system definitions, simulation, trace conversion, and plotting now use the `flowcean.hybrid` namespace ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - Reworked the tank benchmark to use gravity-drained outlet dynamics. The `outflow_1` and `outflow` parameters are replaced by keyword-only `outlet_area_1` and `outlet_area_2`, closed operation now has wet and dry modes, and the defaults and simulation horizon have changed ([#418](https://github.com/flowcean/flowcean/pull/418)).

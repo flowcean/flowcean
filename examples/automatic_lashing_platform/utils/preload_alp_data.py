@@ -1,8 +1,9 @@
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
+import polars as pl
 from tqdm import tqdm
 
 import flowcean.cli
@@ -10,13 +11,23 @@ from flowcean.core import ChainedOfflineEnvironments
 from flowcean.polars import (
     DataFrame,
     JoinedOfflineEnvironment,
+    Lambda,
     ToTimeSeries,
 )
 
-if TYPE_CHECKING:
-    import polars as pl
-
 logger = logging.getLogger(__name__)
+
+
+def split_sensor_series(data: pl.LazyFrame) -> pl.LazyFrame:
+    """Preserve the ALP dataset's separate scalar series for each sensor."""
+    return pl.concat(
+        [
+            ToTimeSeries("t", name=feature)(data.select("t", feature))
+            for feature in data.collect_schema().names()
+            if feature != "t"
+        ],
+        how="horizontal_extend",
+    )
 
 
 def main() -> None:
@@ -26,7 +37,7 @@ def main() -> None:
         [
             JoinedOfflineEnvironment(
                 (
-                    DataFrame.from_parquet(path) | ToTimeSeries("t"),
+                    DataFrame.from_parquet(path) | Lambda(split_sensor_series),
                     DataFrame.from_json(path.with_suffix(".json")),
                 ),
             )
