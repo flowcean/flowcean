@@ -8,6 +8,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 - Added `build_hybrid_system_dot` and optional Graphviz SVG rendering via `render_dot_svg` to `flowcean.hybrid` for visualizing complete hybrid automata without simulation.
 - Added `plot_locations` to `flowcean.hybrid` for reusable location shading on custom time-series plots, including shared-legend support.
+- Added a wind-driven, six-state turbine benchmark with polynomial aerodynamics, five hysteretic torque-control regimes, pitch control, and generator-power reporting to `flowcean.hybrid.benchmarks`, the hybrid systems gallery, and a standalone simulation example.
 - Added a physical hysteretic buck-converter benchmark with switch-on, diode-conduction, and zero-current modes to `flowcean.hybrid.benchmarks` and the hybrid systems gallery.
 - Exposed DDTIG support types from `flowcean.testing.generator` and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
 - Added `ActiveMetric` to `flowcean.core`, `SACLearner` and `SACModel` to `flowcean.palaestrai`, and the explicit `flowcean.sklearn.metrics` facade.

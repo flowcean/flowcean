@@ -1,0 +1,8 @@
+The aerodynamic polynomial coefficients are fitted to rotor performance data
+from ROSCO, revision 974290ec39f7322a9ae83ffa989444bfbea8728b:
+https://github.com/NatLabRockies/ROSCO/blob/974290ec39f7322a9ae83ffa989444bfbea8728b/Examples/Test_Cases/NREL-5MW/Cp_Ct_Cq.NREL5MW.txt
+
+The reference data is distributed under the Apache License, Version 2.0,
+reproduced in the accompanying LICENSE file. The numerical representation
+has been changed to a bounded polynomial approximation; the original table
+is not included or required at runtime.

@@ -29,6 +29,7 @@ EXPECTED_NAMES = (
     "Tank Valves",
     "Location Cycle",
     "Buck Converter",
+    "Wind Turbine",
 )
 SPECS = tuple(all_specs())
 
