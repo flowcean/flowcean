@@ -375,8 +375,8 @@ def _callback_label(callback: object) -> str | None:
 class Event:
     """Transition event information for a trace.
 
-    Residence times record the source visit's age before the jump and zero
-    after it. They may be ``None`` in manually constructed legacy events.
+    Required residence times record the source visit's age before the jump
+    and zero after it.
     """
 
     time: float
@@ -387,25 +387,25 @@ class Event:
     state_before: State
     state_after: State
     microstep: int
-    location_time_before: float | None = None
-    location_time_after: float | None = None
+    location_time_before: float
+    location_time_after: float
 
 
 @dataclass(frozen=True)
 class Trace:
     """Simulation trace with time, state, location labels, and residence time.
 
-    ``location_time`` is separate from ``x`` and follows its post-transition
-    boundary semantics. It may be ``None`` in manually constructed traces.
+    Required ``location_time`` is separate from ``x`` and follows its
+    post-transition boundary semantics.
     """
 
     t: np.ndarray
     x: np.ndarray
     location: np.ndarray
+    location_time: np.ndarray
     events: Sequence[Event]
     u: np.ndarray | None = None
     dx: np.ndarray | None = None
-    location_time: np.ndarray | None = None
 
     def as_dict(self) -> dict[str, object]:
         """Return a dictionary view of the trace."""

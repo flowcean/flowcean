@@ -60,11 +60,14 @@ def test_plot_trace_breaks_line_at_jump() -> None:
         state_before=np.array([0.0, -4.0]),
         state_after=np.array([0.0, 3.0]),
         microstep=0,
+        location_time_before=0.5,
+        location_time_after=0.0,
     )
     trace = Trace(
         t=np.array([0.0, 0.5, 1.0]),
         x=np.array([[1.0, 0.0], [0.0, 3.0], [0.5, -2.0]]),
         location=np.array(["flight", "flight", "flight"], dtype=object),
+        location_time=np.array([0.0, 0.0, 0.5]),
         events=(event,),
     )
 

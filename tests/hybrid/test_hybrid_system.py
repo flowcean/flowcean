@@ -128,7 +128,6 @@ def test_self_transition_without_reset_resets_location_time() -> None:
         event.location_time_before for event in trace.events
     ] == pytest.approx([0.5, 0.5])
     assert [event.location_time_after for event in trace.events] == [0.0, 0.0]
-    assert trace.location_time is not None
     assert trace.dx is not None
     np.testing.assert_allclose(
         trace.location_time, [0.0, 0.0, 0.25, 0.0, 0.25]
@@ -159,24 +158,41 @@ def test_self_transition_immediate_loop_obeys_max_jumps() -> None:
         simulate(system, (0.0, 1.0), max_jumps=3)
 
 
-def test_legacy_record_construction_has_unavailable_ages() -> None:
-    """Positional legacy records retain their original fields and defaults."""
+def test_records_require_residence_times_and_expose_trace_ages() -> None:
     event = Event(
-        0.0, "a", "b", "root", None, np.array([0.0]), np.array([1.0]), 0
+        time=0.5,
+        source_location="a",
+        target_location="b",
+        event_surface="root",
+        reset=None,
+        state_before=np.array([0.0]),
+        state_after=np.array([1.0]),
+        microstep=0,
+        location_time_before=0.5,
+        location_time_after=0.0,
     )
+    ages = np.array([0.0, 0.0])
     trace = Trace(
-        np.array([0.0]),
-        np.array([[1.0]]),
-        np.array(["b"]),
+        np.array([0.0, 0.5]),
+        np.array([[0.0], [1.0]]),
+        np.array(["a", "b"]),
+        ages,
         (event,),
-        None,
-        None,
     )
 
-    assert event.location_time_before is None
-    assert event.location_time_after is None
-    assert trace.location_time is None
-    assert trace.as_dict()["location_time"] is None
+    assert event.location_time_before == 0.5
+    assert event.location_time_after == 0.0
+    assert trace.as_dict()["location_time"] is ages
+    assert trace.as_dict()["events"] == (event,)
+
+    with pytest.raises(TypeError, match="location_time_before"):
+        Event(  # pyright: ignore[reportCallIssue]
+            0.5, "a", "b", "root", None, np.array([0.0]), np.array([1.0]), 0
+        )
+    with pytest.raises(TypeError, match="location_time"):
+        Trace(  # pyright: ignore[reportCallIssue]
+            np.array([0.0]), np.array([[0.0]]), np.array(["a"]), events=()
+        )
 
 
 def test_location_parameters_override_globals_for_callbacks() -> None:

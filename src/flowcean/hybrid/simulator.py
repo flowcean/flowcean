@@ -60,9 +60,9 @@ class _EventFn:
         transition: Transition,
         parameters: Parameters,
         input_stream: InputStream,
-        visit: "_Visit",
+        clock: "_ResidenceClock",
     ) -> None:
-        self._visit = visit
+        self._clock = clock
         self._transition = transition
         self._parameters = parameters
         self._input_stream = input_stream
@@ -77,7 +77,7 @@ class _EventFn:
                 y,
                 self._parameters,
                 self._input_stream,
-                self._visit.age(t),
+                self._clock.age(t),
             ),
         )
         if np.isnan(value):
@@ -89,8 +89,8 @@ class _EventFn:
         return value
 
 
-class _Visit(NamedTuple):
-    """Immutable clock anchor for a single location visit."""
+class _ResidenceClock(NamedTuple):
+    """Immutable residence-time reference for one uninterrupted location visit."""
 
     anchor: float
     age_at_anchor: float
@@ -118,7 +118,7 @@ class _Boundary(NamedTuple):
     time: float
     state: np.ndarray
     location: Location
-    visit: _Visit
+    clock: _ResidenceClock
 
 
 class _EntryResult(NamedTuple):
@@ -128,7 +128,7 @@ class _EntryResult(NamedTuple):
     location: Location
     events: tuple[Event, ...]
     jumps: int
-    visit: _Visit
+    clock: _ResidenceClock
 
 
 def simulate(
@@ -203,13 +203,13 @@ def simulate(
     x_segments: list[np.ndarray] = []
     location_segments: list[np.ndarray] = []
     sol_segments: list[Callable[[np.ndarray], np.ndarray] | None] = []
-    visit_segments: list[_Visit] = []
+    clock_segments: list[_ResidenceClock] = []
     events: list[Event] = []
     boundaries: list[_Boundary] = []
 
     t_current = float(t_span[0])
     t_final = float(t_span[1])
-    visit = _Visit(t_current, float(initial_location_time))
+    clock = _ResidenceClock(t_current, float(initial_location_time))
     jumps = 0
 
     sample_grid = _prepare_sample_times(t_span, sample_times, sample_dt)
@@ -222,17 +222,17 @@ def simulate(
         t_current,
         effective_input_stream,
         first_microstep=0,
-        visit=visit,
+        clock=clock,
         jumps=jumps,
         max_jumps=max_jumps,
     )
     state = initial_entry.state
     location = initial_entry.location
     jumps = initial_entry.jumps
-    visit = initial_entry.visit
+    clock = initial_entry.clock
     events.extend(initial_entry.events)
     if initial_entry.events:
-        boundaries.append(_Boundary(t_current, state.copy(), location, visit))
+        boundaries.append(_Boundary(t_current, state.copy(), location, clock))
 
     while t_current < t_final:
         transitions = system.transitions_from(location)
@@ -241,7 +241,7 @@ def simulate(
             system.parameters,
             location.parameters,
             effective_input_stream,
-            visit,
+            clock,
         )
         segment_start = t_current
 
@@ -250,7 +250,7 @@ def simulate(
                 location,
                 system.parameters,
                 effective_input_stream,
-                visit,
+                clock,
             ),
             "t_span": (segment_start, t_final),
             "y0": state,
@@ -273,7 +273,7 @@ def simulate(
             np.full(result.t.shape, location, dtype=object),
         )
         sol_segments.append(result.sol)
-        visit_segments.append(visit)
+        clock_segments.append(clock)
 
         if not result.t_events or all(
             len(event_list) == 0 for event_list in result.t_events
@@ -308,9 +308,9 @@ def simulate(
             system.parameters,
             effective_input_stream,
             microstep=0,
-            location_time=visit.age(event_time),
+            location_time=clock.age(event_time),
         )
-        visit = _Visit(event_time, 0.0)
+        clock = _ResidenceClock(event_time, 0.0)
         events.append(event)
         location = transition.target
 
@@ -321,16 +321,16 @@ def simulate(
             event_time,
             effective_input_stream,
             first_microstep=1,
-            visit=visit,
+            clock=clock,
             jumps=jumps,
             max_jumps=max_jumps,
         )
         state = target_entry.state
         location = target_entry.location
         jumps = target_entry.jumps
-        visit = target_entry.visit
+        clock = target_entry.clock
         events.extend(target_entry.events)
-        boundaries.append(_Boundary(event_time, state.copy(), location, visit))
+        boundaries.append(_Boundary(event_time, state.copy(), location, clock))
         t_current = event_time
 
     if sample_grid is None:
@@ -339,9 +339,9 @@ def simulate(
         location_objects = _concat_segments(location_segments)
         location_time = _concat_segments(
             [
-                visit.ages(times)
-                for visit, times in zip(
-                    visit_segments, t_segments, strict=True
+                clock.ages(times)
+                for clock, times in zip(
+                    clock_segments, t_segments, strict=True
                 )
             ],
         )
@@ -390,7 +390,7 @@ def simulate(
         x_segments,
         location_segments,
         sol_segments,
-        visit_segments,
+        clock_segments,
         boundaries,
     )
     u_all = None
@@ -471,7 +471,7 @@ def _wrap_flow(
     location: Location,
     system_parameters: Parameters,
     input_stream: InputStream,
-    visit: _Visit,
+    clock: _ResidenceClock,
 ) -> Callable[[float, np.ndarray], np.ndarray]:
     """Bind location dynamics and system parameters for SciPy."""
 
@@ -485,7 +485,7 @@ def _wrap_flow(
                 y,
                 parameters,
                 input_stream,
-                visit.age(t),
+                clock.age(t),
             ),
             state_dim=y.shape[0],
         )
@@ -498,7 +498,7 @@ def _build_event_functions(
     system_parameters: Parameters,
     location_parameters: Parameters,
     input_stream: InputStream,
-    visit: _Visit,
+    clock: _ResidenceClock,
 ) -> list[_EventFn]:
     """Create SciPy-compatible event functions for transitions."""
     event_functions: list[_EventFn] = []
@@ -509,7 +509,7 @@ def _build_event_functions(
                 transition,
                 parameters,
                 input_stream,
-                visit,
+                clock,
             ),
         )
     return event_functions
@@ -659,7 +659,7 @@ def _settle_location_entries(
     input_stream: InputStream,
     *,
     first_microstep: int,
-    visit: _Visit,
+    clock: _ResidenceClock,
     jumps: int,
     max_jumps: int,
 ) -> _EntryResult:
@@ -676,7 +676,7 @@ def _settle_location_entries(
             state,
             system.parameters,
             input_stream,
-            visit.age(time),
+            clock.age(time),
         )
         zero_error = [
             transition
@@ -720,7 +720,7 @@ def _settle_location_entries(
                 location=location,
                 events=tuple(entry_events),
                 jumps=jumps,
-                visit=visit,
+                clock=clock,
             )
 
         transition = zero_trigger[0]
@@ -732,9 +732,9 @@ def _settle_location_entries(
             system.parameters,
             input_stream,
             microstep=microstep,
-            location_time=visit.age(time),
+            location_time=clock.age(time),
         )
-        visit = _Visit(time, 0.0)
+        clock = _ResidenceClock(time, 0.0)
         entry_events.append(event)
         location = transition.target
         microstep += 1
@@ -843,7 +843,7 @@ def _apply_boundaries(
         matches = times == boundary.time
         states[matches] = boundary.state
         locations[matches] = boundary.location
-        location_times[matches] = boundary.visit.age(boundary.time)
+        location_times[matches] = boundary.clock.age(boundary.time)
 
 
 def _location_labels(locations: np.ndarray) -> np.ndarray:
@@ -1033,7 +1033,7 @@ def _rollout_segments(
     x_segments: Sequence[np.ndarray],
     location_segments: Sequence[np.ndarray],
     sol_segments: Sequence[Callable[[np.ndarray], np.ndarray] | None],
-    visit_segments: Sequence[_Visit],
+    clock_segments: Sequence[_ResidenceClock],
     boundaries: Sequence[_Boundary],
 ) -> _RolloutResult:
     if sample_times.size == 0:
@@ -1052,13 +1052,13 @@ def _rollout_segments(
     sampled_location_time: list[np.ndarray] = []
 
     last_segment_index = len(t_segments) - 1
-    for index, (t_seg, x_seg, location_seg, sol, visit) in enumerate(
+    for index, (t_seg, x_seg, location_seg, sol, clock) in enumerate(
         zip(
             t_segments,
             x_segments,
             location_segments,
             sol_segments,
-            visit_segments,
+            clock_segments,
             strict=True,
         ),
     ):
@@ -1077,7 +1077,7 @@ def _rollout_segments(
             exact_boundary_mask = times == t_start
         sampled_t.append(times)
         sampled_eval_t.append(eval_times)
-        sampled_location_time.append(visit.ages(eval_times))
+        sampled_location_time.append(clock.ages(eval_times))
         if sol is not None:
             values = sol(eval_times).T
         else:

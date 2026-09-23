@@ -825,7 +825,6 @@ def test_initial_age_uses_stable_anchor_and_reaches_callbacks(
     assert trace.events[0].time == pytest.approx(start + 0.25)
     assert trace.events[0].location_time_before == pytest.approx(0.75)
     assert trace.events[0].location_time_after == 0.0
-    assert trace.location_time is not None
     assert trace.dx is not None
     np.testing.assert_allclose(trace.location_time, [0.5, 0.625, 0.0, 0.25])
     np.testing.assert_allclose(trace.dx[:, 0], [0.5, 0.625, 0.0, 0.0])
@@ -841,8 +840,6 @@ def test_initial_age_is_preserved_without_jump_and_repeated_runs_independent() -
         system, (9.0, 9.5), initial_location_time=2.0, sample_dt=0.25
     )
     second = simulate(system, (9.0, 9.5), sample_times=[9.0, 9.5])
-    assert first.location_time is not None
-    assert second.location_time is not None
     np.testing.assert_allclose(first.location_time, [2.0, 2.25, 2.5])
     np.testing.assert_allclose(second.location_time, [0.0, 0.5])
     assert first.events == second.events == ()
@@ -942,7 +939,6 @@ def test_source_age_and_parameters_reset_before_target_entry_and_chain() -> (
     ]
     assert [event.microstep for event in trace.events] == [0, 1]
     assert [event.location_time_before for event in trace.events] == [2.0, 0.0]
-    assert trace.location_time is not None
     np.testing.assert_allclose(trace.location_time, [0.0, 0.0, 0.25, 0.5])
     assert trace.location.tolist() == ["done"] * 4
 
@@ -987,7 +983,6 @@ def test_exact_zero_initial_timeout_follows_entry_policy(
             sample_times=[2.0, 2.5],
         )
         assert trace.events[0].location_time_before == 0.5
-        assert trace.location_time is not None
         np.testing.assert_allclose(trace.location_time, [0.0, 0.5])
     else:
         with pytest.raises(SimulationProgressError):
@@ -1016,7 +1011,6 @@ def test_overdue_initial_timeout_does_not_fire() -> None:
         system, (2.0, 3.0), initial_location_time=1.0, sample_times=[2.0, 3.0]
     )
     assert trace.events == ()
-    assert trace.location_time is not None
     np.testing.assert_allclose(trace.location_time, [1.0, 2.0])
 
 
@@ -1032,12 +1026,10 @@ def test_batch_forwards_initial_age_and_empty_sampling() -> None:
     )
     assert len(traces) == 2
     for trace in traces:
-        assert trace.location_time is not None
         np.testing.assert_allclose(trace.location_time, [3.0, 4.0])
     empty = simulate(
         system, (5.0, 6.0), sample_times=[], capture_derivatives=True
     )
-    assert empty.location_time is not None
     assert empty.location_time.shape == (0,)
     assert empty.dx is not None
     assert empty.dx.shape == (0, 0)
@@ -1075,7 +1067,6 @@ def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
     elif mode == "final":
         options["sample_times"] = [0.0, 0.5, 1.0]
     trace = simulate(system, (0.0, end), **options)
-    assert trace.location_time is not None
     assert trace.dx is not None
     assert trace.events[0].location_time_before == pytest.approx(1.0)
     assert trace.events[0].location_time_after == 0.0
@@ -1181,7 +1172,6 @@ def test_callback_dispatch_preserves_legacy_forms_and_exposes_age(
         parameters={"rate": 1.0},
     )
     trace = simulate(system, (4.0, 4.25), initial_location_time=2.0)
-    assert trace.location_time is not None
     assert calls
     if form in {"positional", "varargs", "unknown", "uninspectable"}:
         assert len(calls[0]) == 4

@@ -60,15 +60,14 @@ def traces_to_polars(
             input_names,
             arg_name="input_names",
         )
-        if location_time is not None:
-            for names, arg_name in (
-                (state_columns, "state_names"),
-                (derivative_columns, "derivative_names"),
-                (input_columns, "input_names"),
-            ):
-                if "location_time" in names:
-                    message = f"{arg_name} must not contain reserved name 'location_time'."
-                    raise ValueError(message)
+        for names, arg_name in (
+            (state_columns, "state_names"),
+            (derivative_columns, "derivative_names"),
+            (input_columns, "input_names"),
+        ):
+            if "location_time" in names:
+                message = f"{arg_name} must not contain reserved name 'location_time'."
+                raise ValueError(message)
         rows: list[dict[str, object]] = []
         for idx, (time, state, location) in enumerate(
             zip(trace.t, trace.x, trace.location, strict=False),
@@ -77,9 +76,8 @@ def traces_to_polars(
                 "step": idx,
                 "t": float(time),
                 "location": str(location),
+                "location_time": float(location_time[idx]),
             }
-            if location_time is not None:
-                row["location_time"] = float(location_time[idx])
             for dim, column in enumerate(state_columns):
                 row[column] = float(state[dim])
             for dim, column in enumerate(derivative_columns):
@@ -93,9 +91,13 @@ def traces_to_polars(
                     raise ValueError(message)
                 row[column] = float(inputs[idx, dim])
             rows.append(row)
-        if not rows and location_time is not None:
-            schema = {"step": pl.Int64, "t": pl.Float64, "location": pl.String}
-            schema["location_time"] = pl.Float64
+        if not rows:
+            schema = {
+                "step": pl.Int64,
+                "t": pl.Float64,
+                "location": pl.String,
+                "location_time": pl.Float64,
+            }
             schema.update(dict.fromkeys(state_columns, pl.Float64))
             schema.update(dict.fromkeys(derivative_columns, pl.Float64))
             schema.update(dict.fromkeys(input_columns, pl.Float64))
@@ -215,9 +217,7 @@ def _column_names(
     return [str(name) for name in names]
 
 
-def _validated_location_time(trace: Trace) -> np.ndarray | None:
-    if trace.location_time is None:
-        return None
+def _validated_location_time(trace: Trace) -> np.ndarray:
     if trace.location_time.ndim != LOCATION_TIME_RANK:
         message = "Trace location_time must be a 1D array."
         raise ValueError(message)

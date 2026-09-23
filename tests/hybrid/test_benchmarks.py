@@ -123,7 +123,6 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         atol=1e-9,
     )
     assert trace.x.shape[1] == 2
-    assert trace.location_time is not None
     for event in trace.events:
         assert event.location_time_before == pytest.approx(
             dwell_time, abs=1e-9
@@ -150,7 +149,6 @@ def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
     trace = simulate(system, t_span=(0.0, 0.55), sample_dt=0.025)
 
     assert trace.x.shape[1] == 2
-    assert trace.location_time is not None
     assert [
         (event.source_location, event.target_location)
         for event in trace.events
@@ -191,7 +189,6 @@ def test_time_forced_switch_starts_midvisit() -> None:
         initial_location_time=0.15,
         sample_dt=0.025,
     )
-    assert trace.location_time is not None
     assert trace.location_time[0] == pytest.approx(0.15)
     assert trace.events[0].time == pytest.approx(0.05, abs=1e-9)
     assert trace.events[0].location_time_before == pytest.approx(0.2)

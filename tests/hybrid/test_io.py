@@ -23,18 +23,15 @@ def _trace() -> Trace:
         t=np.array([0.0, 0.5, 1.0]),
         x=np.array([[1.0, 2.0], [1.5, 1.0], [2.0, 0.0]]),
         location=np.array(["up", "up", "down"], dtype=object),
+        location_time=np.array([0.0, 0.5, 0.0]),
         events=(),
         u=np.array([[4.0], [5.0], [6.0]]),
         dx=np.array([[1.0, -2.0], [1.0, -2.0], [1.0, -2.0]]),
     )
 
 
-def _trace_with_location_time() -> Trace:
-    return replace(_trace(), location_time=np.array([0.0, 0.5, 0.0]))
-
-
 def test_trace_to_polars_exports_location_time_after_location() -> None:
-    frame = trace_to_polars(_trace_with_location_time())
+    frame = trace_to_polars(_trace())
 
     assert frame.columns == [
         "step",
@@ -62,6 +59,7 @@ def test_trace_to_polars_uses_requested_names() -> None:
         "step",
         "t",
         "location",
+        "location_time",
         "height",
         "speed",
         "dx_height",
@@ -153,12 +151,12 @@ def test_trace_to_polars_rejects_location_time_name_collisions(
     message: str,
 ) -> None:
     with pytest.raises(ValueError, match=message):
-        trace_to_polars(_trace_with_location_time(), **kwargs)
+        trace_to_polars(_trace(), **kwargs)
 
 
 def test_empty_location_time_trace_has_typed_columns() -> None:
     trace = replace(
-        _trace_with_location_time(),
+        _trace(),
         t=np.array([]),
         x=np.empty((0, 2)),
         location=np.array([], dtype=object),
@@ -214,31 +212,10 @@ def test_trace_files_and_metadata_sidecars(
 
     persisted = read(tmp_path / f"trace_0.{suffix}")
     assert_frame_equal(persisted, trace_to_polars(trace))
-    assert "location_time" not in persisted.columns
-    metadata_path = tmp_path / "trace_0.meta.json"
-    assert json.loads(metadata_path.read_text(encoding="utf-8")) == metadata
-
-
-@pytest.mark.parametrize(
-    ("save", "read", "suffix"),
-    [
-        (save_traces_csv, pl.read_csv, "csv"),
-        (save_traces_parquet, pl.read_parquet, "parquet"),
-    ],
-)
-def test_trace_files_preserve_location_time(
-    tmp_path: Path,
-    save: Callable[..., None],
-    read: Callable[[Path], pl.DataFrame],
-    suffix: str,
-) -> None:
-    trace = _trace_with_location_time()
-    save([trace], str(tmp_path))
-
-    persisted = read(tmp_path / f"trace_0.{suffix}")
-    assert_frame_equal(persisted, trace_to_polars(trace))
     assert persisted.columns[3] == "location_time"
     assert persisted["location_time"].to_list() == [0.0, 0.5, 0.0]
+    metadata_path = tmp_path / "trace_0.meta.json"
+    assert json.loads(metadata_path.read_text(encoding="utf-8")) == metadata
 
 
 def test_trace_metadata_count_must_match_trace_count(tmp_path: Path) -> None:

@@ -197,7 +197,7 @@ A `Trace` contains aligned simulation records:
 | `u` | Captured inputs, when requested |
 | `dx` | Captured state derivatives, when requested |
 
-Simulator-created traces and events always contain residence times. Manually constructed records may leave these fields as `None` to indicate unavailable data. Trace conversion and CSV/Parquet exports include a separate `location_time` column when populated; it is not a state feature in `Trace.x`.
+Residence times are required fields on `Trace` and `Event`. Trace conversion and CSV/Parquet exports always include a separate `location_time` column; it is not a state feature in `Trace.x`.
 
 ## Sampling
 
@@ -237,5 +237,7 @@ Shading spans the trace's first to last sample and follows recorded transition t
 The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hysteresis, and resets in reusable models. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
+
+`HyDRAModel.simulate()` selects a mode at every requested grid point, including the final endpoint. Trace labels and residence times reflect that selection: residence time starts at zero and resets whenever the selected mode changes, including re-entry into an earlier mode. Between grid points, the selected mode stays fixed. This grid-based simulation does not locate within-interval switches or produce transition events.
 
 Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trace types.
