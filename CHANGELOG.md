@@ -7,6 +7,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 ### Added
 
 - Added `build_hybrid_system_dot` and optional Graphviz SVG rendering via `render_dot_svg` to `flowcean.hybrid` for visualizing complete hybrid automata without simulation.
+- Added `plot_locations` to `flowcean.hybrid` for reusable location shading on custom time-series plots, including shared-legend support.
 - Added a physical hysteretic buck-converter benchmark with switch-on, diode-conduction, and zero-current modes to `flowcean.hybrid.benchmarks` and the hybrid systems gallery.
 - Exposed DDTIG support types from `flowcean.testing.generator` and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
 - Added `ActiveMetric` to `flowcean.core`, `SACLearner` and `SACModel` to `flowcean.palaestrai`, and the explicit `flowcean.sklearn.metrics` facade.
@@ -26,6 +27,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Fixed
 
+- Hybrid trace shading now follows recorded transition times, including locations visited between samples, instead of leaving gaps at sample boundaries.
 - Adaptive and fixed-grid hybrid traces now consistently report the final post-transition state and location at jump boundaries.
 
 ### Removed

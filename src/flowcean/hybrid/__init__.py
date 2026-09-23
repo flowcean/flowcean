@@ -26,7 +26,7 @@ from .io import (
     trace_to_polars,
     traces_to_polars,
 )
-from .plotting import plot_phase, plot_trace
+from .plotting import plot_locations, plot_phase, plot_trace
 from .simulator import (
     AmbiguousTransitionError,
     HybridSimulationError,
@@ -63,6 +63,7 @@ __all__ = (
     "build_hybrid_system_dot",
     "generate_traces",
     "hydra",
+    "plot_locations",
     "plot_phase",
     "plot_trace",
     "render_dot_svg",
