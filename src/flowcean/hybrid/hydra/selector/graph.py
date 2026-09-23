@@ -1,18 +1,7 @@
-import shutil
-import subprocess
+from flowcean.hybrid._graphviz import _escape_dot_label
+from flowcean.hybrid._graphviz import render_dot_svg as render_dot_svg
 
 from .inspection import SelectorInspection
-
-
-def _escape_dot_label(label: str) -> str:
-    return (
-        label.replace("\\", "\\\\")
-        .replace('"', '\\"')
-        .replace(
-            "\n",
-            "\\n",
-        )
-    )
 
 
 def _compact_flow_summary(flow_summary: str) -> str:
@@ -98,29 +87,3 @@ def build_selector_dot(inspection: SelectorInspection) -> str:
 
     lines.append("}")
     return "\n".join(lines)
-
-
-def render_dot_svg(dot_source: str) -> str:
-    dot_path = shutil.which("dot")
-    if dot_path is None:
-        message = (
-            "Graphviz 'dot' executable not found; install Graphviz "
-            "to render selector SVG output."
-        )
-        raise RuntimeError(message)
-
-    result = subprocess.run(  # noqa: S603
-        [dot_path, "-Tsvg"],
-        input=dot_source,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        stderr = result.stderr.strip()
-        message = "Graphviz failed to render selector SVG"
-        if stderr:
-            message = f"{message}: {stderr}"
-        raise RuntimeError(message)
-
-    return result.stdout

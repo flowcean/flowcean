@@ -2,7 +2,7 @@
 
 Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete mode as a location, evolves a continuous state according to that location's dynamics, and changes locations when event surfaces trigger transitions.
 
-Use `flowcean.hybrid` for hybrid-system definition, simulation, traces, and plotting. Reusable systems are in `flowcean.hybrid.benchmarks`; HyDRA identification is in `flowcean.hybrid.hydra`:
+Use `flowcean.hybrid` for hybrid-system definition, automaton diagrams, simulation, traces, and plotting. Reusable systems are in `flowcean.hybrid.benchmarks`; HyDRA identification is in `flowcean.hybrid.hydra`:
 
 ```python
 from flowcean.hybrid import (
@@ -60,6 +60,35 @@ Without a reset, the continuous state is unchanged by a transition. A transition
 !!! warning "Simultaneous entry transitions"
 
     Multiple exact-zero `TRIGGER` surfaces on one location entry are ambiguous and stop simulation. Design the entry state or policies so that at most one requests an immediate jump.
+
+## Automaton Diagrams
+
+Use `build_hybrid_system_dot` to inspect a system's complete declared structure without simulating it. The graph includes every location and transition, even those a trace never visits, with an incoming arrow marking the initial location.
+
+```python
+from pathlib import Path
+
+from flowcean.hybrid import build_hybrid_system_dot, render_dot_svg
+from flowcean.hybrid.benchmarks import thermostat
+
+dot = build_hybrid_system_dot(
+    thermostat(),
+    show_direction=True,
+    show_entry_policy=True,
+)
+Path("thermostat.dot").write_text(dot, encoding="utf-8")
+```
+
+Event and reset labels are shown by default; disable them with `show_event_labels=False` or `show_reset_labels=False`. Crossing direction and entry policy are opt-in annotations. Labels are literal display text, not formulas inferred from callback bodies. When explicit labels are absent, callback names or positional fallback labels are used. Duplicate labels do not merge locations. Node IDs and DOT ordering follow declaration order, so reordering the model changes the output.
+
+DOT export requires no renderer and evaluates no dynamics, event, reset, or input callbacks. To render an SVG, install [Graphviz](https://graphviz.org/download/) with its `dot` executable on `PATH`, then:
+
+```python
+svg = render_dot_svg(dot)
+Path("thermostat.svg").write_text(svg, encoding="utf-8")
+```
+
+Rendering returns text without writing files or opening a viewer. A missing renderer or failed Graphviz command raises `RuntimeError`. SVG layout may vary between Graphviz versions.
 
 ## Physical Time and Microsteps
 
