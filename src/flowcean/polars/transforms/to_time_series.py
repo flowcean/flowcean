@@ -21,6 +21,7 @@ class ToTimeSeries(Transform):
         name: Output column name.
 
     Example:
+        ```python
         >>> data = pl.LazyFrame(
         ...     {
         ...         "t": [0, 1],
@@ -31,6 +32,8 @@ class ToTimeSeries(Transform):
         >>> result = ToTimeSeries("t", name="sensors")(data).collect()
         >>> result["sensors"][0][0]
         {'time': 0, 'value': {'temperature': 20, 'pressure': 1000}}
+
+        ```
     """
 
     time_feature: str
