@@ -1,4 +1,4 @@
-"""Scalable location-cycle benchmark with clock resets."""
+"""Scalable location-cycle benchmark with timed visits."""
 
 import numpy as np
 
@@ -10,7 +10,6 @@ from ..hybrid_system import (
     InputStream,
     Location,
     Parameters,
-    Reset,
     Transition,
 )
 
@@ -28,51 +27,34 @@ def _make_matrix(dimension: int, index: int) -> np.ndarray:
     return base + coupling
 
 
-def _make_dynamics(dimension: int, matrix: np.ndarray) -> ContinuousDynamics:
+def _make_dynamics(matrix: np.ndarray) -> ContinuousDynamics:
     def flow(
         _t: float,
         state: np.ndarray,
         _params: Parameters,
         _input_stream: InputStream,
     ) -> np.ndarray:
-        x = state[:dimension]
-        clock = state[-1]
-        x_dot = matrix @ x
-        return np.concatenate([x_dot, np.array([1.0 + 0.0 * clock])])
+        return matrix @ state
 
     return ContinuousDynamics(flow)
 
 
-def _event_surface_clock(
-    _t: float,
-    state: np.ndarray,
-    params: Parameters,
-    _input_stream: InputStream,
+def _event_surface_dwell(
+    location_time: float,
+    parameters: Parameters,
 ) -> float:
-    return state[-1] - params["dwell_time"]
-
-
-def _reset_clock(
-    _t: float,
-    state: np.ndarray,
-    _parameters: Parameters,
-    _input_stream: InputStream,
-) -> np.ndarray:
-    updated = state.copy()
-    updated[-1] = 0.0
-    return updated
+    return location_time - parameters["dwell_time"]
 
 
 def _build_locations_and_transitions(
     matrices: list[np.ndarray],
-    reset: Reset,
     event: EventSurface,
 ) -> tuple[list[Location], list[Transition]]:
     locations: list[Location] = []
     transitions: list[Transition] = []
     for idx, matrix in enumerate(matrices):
         name = f"m{idx}"
-        dynamics = _make_dynamics(matrix.shape[0], matrix)
+        dynamics = _make_dynamics(matrix)
         locations.append(
             Location(
                 ContinuousDynamics(dynamics.flow, label=f"{name}_dynamics"),
@@ -86,7 +68,6 @@ def _build_locations_and_transitions(
                 source=location,
                 target=target,
                 event=event,
-                reset=reset,
             ),
         )
     return locations, transitions
@@ -101,15 +82,16 @@ def mode_cycle(
     """Create a scalable hybrid system that cycles through locations.
 
     The system has `modes` locations, each with linear dynamics active for
-    `dwell_time`.
-    A clock state is appended and reset on each transition, making the number
-    of locations and state dimension scalable for benchmarking.
+    `dwell_time` according to its location residence time. Transitions leave
+    the physical state unchanged.
 
     Args:
         modes: Number of locations in the cycle.
-        dimension: Dimension of the continuous state (excluding the clock).
+        dimension: Dimension of the physical continuous state.
         dwell_time: Time to stay in each location.
-        initial_state: Optional initial state (length dimension + 1).
+        initial_state: Optional physical state (length dimension). Remove any
+            former clock coordinate and use simulate(initial_location_time=...)
+            to start partway through a visit.
 
     Returns:
         HybridSystem cycling through multiple linear locations.
@@ -123,20 +105,21 @@ def mode_cycle(
 
     matrices = [_make_matrix(dimension, idx) for idx in range(modes)]
     event = EventSurface(
-        _event_surface_clock,
+        _event_surface_dwell,
         direction=CrossingDirection.RISING,
         label="dwell",
     )
-    reset = Reset(_reset_clock, label="reset_clock")
-    locations, transitions = _build_locations_and_transitions(
-        matrices,
-        reset,
-        event,
-    )
+    locations, transitions = _build_locations_and_transitions(matrices, event)
 
     if initial_state is None:
-        initial_state = np.zeros(dimension + 1, dtype=float)
+        initial_state = np.zeros(dimension, dtype=float)
         initial_state[0] = 1.0
+    elif np.shape(initial_state) != (dimension,):
+        message = (
+            f"initial_state must have shape ({dimension},). Remove the former "
+            "clock coordinate and use simulate(initial_location_time=...) instead."
+        )
+        raise ValueError(message)
 
     return HybridSystem(
         locations=locations,

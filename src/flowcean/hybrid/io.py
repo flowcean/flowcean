@@ -11,6 +11,7 @@ from .hybrid_system import Trace
 
 INPUT_RANK = 2
 DERIVATIVE_RANK = 2
+LOCATION_TIME_RANK = 1
 
 
 def traces_to_polars(
@@ -35,6 +36,7 @@ def traces_to_polars(
     for trace in traces:
         inputs = _validated_inputs(trace)
         derivatives = _validated_derivatives(trace)
+        location_time = _validated_location_time(trace)
         state_columns = _column_names(
             "x",
             trace.x.shape[1],
@@ -58,6 +60,15 @@ def traces_to_polars(
             input_names,
             arg_name="input_names",
         )
+        if location_time is not None:
+            for names, arg_name in (
+                (state_columns, "state_names"),
+                (derivative_columns, "derivative_names"),
+                (input_columns, "input_names"),
+            ):
+                if "location_time" in names:
+                    message = f"{arg_name} must not contain reserved name 'location_time'."
+                    raise ValueError(message)
         rows: list[dict[str, object]] = []
         for idx, (time, state, location) in enumerate(
             zip(trace.t, trace.x, trace.location, strict=False),
@@ -67,6 +78,8 @@ def traces_to_polars(
                 "t": float(time),
                 "location": str(location),
             }
+            if location_time is not None:
+                row["location_time"] = float(location_time[idx])
             for dim, column in enumerate(state_columns):
                 row[column] = float(state[dim])
             for dim, column in enumerate(derivative_columns):
@@ -80,7 +93,15 @@ def traces_to_polars(
                     raise ValueError(message)
                 row[column] = float(inputs[idx, dim])
             rows.append(row)
-        trace_frames.append(pl.DataFrame(rows))
+        if not rows and location_time is not None:
+            schema = {"step": pl.Int64, "t": pl.Float64, "location": pl.String}
+            schema["location_time"] = pl.Float64
+            schema.update(dict.fromkeys(state_columns, pl.Float64))
+            schema.update(dict.fromkeys(derivative_columns, pl.Float64))
+            schema.update(dict.fromkeys(input_columns, pl.Float64))
+            trace_frames.append(pl.DataFrame(schema=schema))
+        else:
+            trace_frames.append(pl.DataFrame(rows))
 
     return trace_frames
 
@@ -192,6 +213,26 @@ def _column_names(
         )
         raise ValueError(message)
     return [str(name) for name in names]
+
+
+def _validated_location_time(trace: Trace) -> np.ndarray | None:
+    if trace.location_time is None:
+        return None
+    if trace.location_time.ndim != LOCATION_TIME_RANK:
+        message = "Trace location_time must be a 1D array."
+        raise ValueError(message)
+    if trace.location_time.shape[0] != trace.t.shape[0]:
+        message = "Trace location_time length must match the number of time steps in the trace."
+        raise ValueError(message)
+    if (
+        not np.isfinite(trace.location_time).all()
+        or (trace.location_time < 0).any()
+    ):
+        message = (
+            "Trace location_time must contain only finite, nonnegative values."
+        )
+        raise ValueError(message)
+    return trace.location_time
 
 
 def _validated_inputs(trace: Trace) -> np.ndarray | None:

@@ -98,7 +98,7 @@ def test_bouncing_ball_matches_ballistic_motion_before_impact() -> None:
     assert not trace.events
 
 
-def test_mode_cycle_resets_clock_and_cycles_locations() -> None:
+def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
     dwell_time = 0.2
     trace = simulate(
         mode_cycle(modes=3, dimension=2, dwell_time=dwell_time),
@@ -122,10 +122,100 @@ def test_mode_cycle_resets_clock_and_cycles_locations() -> None:
         dwell_time * np.arange(1, 6),
         atol=1e-9,
     )
+    assert trace.x.shape[1] == 2
+    assert trace.location_time is not None
+    for event in trace.events:
+        assert event.location_time_before == pytest.approx(
+            dwell_time, abs=1e-9
+        )
+        assert event.location_time_after == pytest.approx(0.0, abs=1e-12)
+        np.testing.assert_allclose(
+            event.state_after, event.state_before, atol=1e-12
+        )
+        at_event = np.isclose(trace.t, event.time, atol=1e-9)
+        assert np.any(at_event)
+        np.testing.assert_allclose(
+            trace.location_time[at_event], 0.0, atol=1e-12
+        )
+        assert np.all(trace.location[at_event] == event.target_location)
+    assert np.all(trace.location_time >= -1e-12)
+    assert np.all(trace.location_time <= dwell_time + 1e-9)
+
+
+def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
+    None
+):
+    system = time_forced_switch(period=0.4)
+    np.testing.assert_array_equal(system.initial_state, [1.0, -1.0])
+    trace = simulate(system, t_span=(0.0, 0.55), sample_dt=0.025)
+
+    assert trace.x.shape[1] == 2
+    assert trace.location_time is not None
+    assert [
+        (event.source_location, event.target_location)
+        for event in trace.events
+    ] == [
+        ("fast", "slow"),
+        ("slow", "fast"),
+    ]
     np.testing.assert_allclose(
-        [event.state_after[-1] for event in trace.events],
-        0.0,
-        atol=1e-12,
+        [event.time for event in trace.events], [0.2, 0.4], atol=1e-9
     )
-    assert np.all(trace.x[:, -1] >= -1e-12)
-    assert np.all(trace.x[:, -1] <= dwell_time + 1e-9)
+    for event in trace.events:
+        assert event.location_time_before == pytest.approx(0.2, abs=1e-9)
+        assert event.location_time_after == pytest.approx(0.0)
+        np.testing.assert_allclose(
+            event.state_after, event.state_before, atol=1e-12
+        )
+        at_event = np.isclose(trace.t, event.time, atol=1e-9)
+        assert np.any(at_event)
+        np.testing.assert_allclose(
+            trace.location_time[at_event], 0.0, atol=1e-12
+        )
+    early = np.isclose(trace.t, 0.1, atol=1e-9)
+    slow = np.isclose(trace.t, 0.3, atol=1e-9)
+    np.testing.assert_allclose(
+        trace.x[early][0], [np.exp(-0.2), -np.exp(-0.1)], atol=1e-4
+    )
+    np.testing.assert_allclose(
+        trace.x[slow][0],
+        [np.exp(-0.4 - 0.05), -np.exp(-0.2 - 0.02)],
+        atol=1e-4,
+    )
+
+
+def test_time_forced_switch_starts_midvisit() -> None:
+    trace = simulate(
+        time_forced_switch(period=0.4),
+        t_span=(0.0, 0.35),
+        initial_location_time=0.15,
+        sample_dt=0.025,
+    )
+    assert trace.location_time is not None
+    assert trace.location_time[0] == pytest.approx(0.15)
+    assert trace.events[0].time == pytest.approx(0.05, abs=1e-9)
+    assert trace.events[0].location_time_before == pytest.approx(0.2)
+    assert trace.events[0].location_time_after == pytest.approx(0.0)
+    assert trace.events[1].time == pytest.approx(0.25, abs=1e-9)
+
+
+@pytest.mark.parametrize(
+    ("factory", "wrong_state"),
+    [
+        (time_forced_switch, np.array([1.0, -1.0, 0.0])),
+        (time_forced_switch, np.array([1.0])),
+        (time_forced_switch, np.array([[1.0, -1.0]])),
+        (mode_cycle, np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
+        (mode_cycle, np.array([1.0, 0.0, 0.0])),
+        (mode_cycle, np.array([[1.0, 0.0, 0.0, 0.0]])),
+    ],
+)
+def test_timed_benchmarks_reject_wrong_state_shapes(
+    factory: Callable[..., HybridSystem],
+    wrong_state: np.ndarray,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"initial_state must have shape .*initial_location_time",
+    ):
+        factory(initial_state=wrong_state)

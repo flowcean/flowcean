@@ -15,7 +15,10 @@ Derivative = State | float
 
 
 class FlowFunction(Protocol):
-    """Continuous dynamics callback."""
+    """Legacy four-positional flow protocol.
+
+    Named callbacks may additionally request ``location_time``.
+    """
 
     def __call__(
         self,
@@ -28,7 +31,10 @@ class FlowFunction(Protocol):
 
 
 class EventSurfaceFunction(Protocol):
-    """Scalar event-surface callback."""
+    """Legacy four-positional event-surface protocol.
+
+    Named callbacks may additionally request ``location_time``.
+    """
 
     def __call__(
         self,
@@ -41,7 +47,10 @@ class EventSurfaceFunction(Protocol):
 
 
 class ResetFunction(Protocol):
-    """State reset callback."""
+    """Legacy four-positional reset protocol.
+
+    Named callbacks may additionally request ``location_time``.
+    """
 
     def __call__(
         self,
@@ -194,7 +203,9 @@ class Reset:
 class Transition:
     """Discrete event-triggered transition between locations.
 
-    ``event`` is a scalar zero-crossing surface.
+    ``event`` is a scalar zero-crossing surface. Every transition resets
+    location residence time to zero, including self-transitions without a
+    state reset.
 
     Args:
         source: Source location.
@@ -243,19 +254,6 @@ class Transition:
         if type(entry_policy) is not SurfaceEntryPolicy:
             message = "entry_policy must be a SurfaceEntryPolicy."
             raise TypeError(message)
-        if source is target and transition_reset is None:
-            message = (
-                "A transition with identical source and target locations "
-                "requires a reset."
-            )
-            error = ValueError(message)
-            error.add_note(
-                "The jump changes neither location nor state, so approximate "
-                "root localization can redetect the crossing. Add a reset "
-                "that defines a post-jump state, use another target, or "
-                "remove the transition.",
-            )
-            raise error
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "event", event_surface)
@@ -375,7 +373,11 @@ def _callback_label(callback: object) -> str | None:
 
 @dataclass(frozen=True)
 class Event:
-    """Transition event information for a trace."""
+    """Transition event information for a trace.
+
+    Residence times record the source visit's age before the jump and zero
+    after it. They may be ``None`` in manually constructed legacy events.
+    """
 
     time: float
     source_location: str
@@ -385,11 +387,17 @@ class Event:
     state_before: State
     state_after: State
     microstep: int
+    location_time_before: float | None = None
+    location_time_after: float | None = None
 
 
 @dataclass(frozen=True)
 class Trace:
-    """Simulation trace with time, state, and location labels."""
+    """Simulation trace with time, state, location labels, and residence time.
+
+    ``location_time`` is separate from ``x`` and follows its post-transition
+    boundary semantics. It may be ``None`` in manually constructed traces.
+    """
 
     t: np.ndarray
     x: np.ndarray
@@ -397,6 +405,7 @@ class Trace:
     events: Sequence[Event]
     u: np.ndarray | None = None
     dx: np.ndarray | None = None
+    location_time: np.ndarray | None = None
 
     def as_dict(self) -> dict[str, object]:
         """Return a dictionary view of the trace."""
@@ -407,4 +416,5 @@ class Trace:
             "events": self.events,
             "u": self.u,
             "dx": self.dx,
+            "location_time": self.location_time,
         }
