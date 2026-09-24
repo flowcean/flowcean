@@ -1,5 +1,9 @@
 """Five-regime, running-only wind turbine hybrid benchmark."""
 
+# Model adapted from Simone Schuler, Fabiano Daher Adegas, and Adolfo Anta,
+# "Hybrid Modelling of a Wind Turbine", ARCH16 (2017).
+# https://doi.org/10.29007/tf1p
+
 from __future__ import annotations
 
 import math
