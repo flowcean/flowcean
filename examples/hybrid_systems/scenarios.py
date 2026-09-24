@@ -153,7 +153,7 @@ SCENARIOS = (
         "Location Cycle",
         lambda: mode_cycle(modes=6, dimension=3, dwell_time=0.4),
         ("scalable", "time", "multimode"),
-        "Scalable cycle of linear locations with clock resets.",
+        "Scalable cycle of linear locations with timed visits.",
         (0.0, 10.0),
     ),
     Scenario(

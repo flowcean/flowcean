@@ -9,7 +9,14 @@ from matplotlib.figure import Figure
 from flowcean.hybrid import Event, Trace, plot_locations, plot_trace
 
 
-def _event(time: float, source: str, target: str, microstep: int = 0) -> Event:
+def _event(
+    time: float,
+    source: str,
+    target: str,
+    microstep: int = 0,
+    *,
+    location_time_before: float,
+) -> Event:
     return Event(
         time=time,
         source_location=source,
@@ -19,18 +26,22 @@ def _event(time: float, source: str, target: str, microstep: int = 0) -> Event:
         state_before=np.array([0.0]),
         state_after=np.array([0.0]),
         microstep=microstep,
+        location_time_before=location_time_before,
+        location_time_after=0.0,
     )
 
 
 def _trace(
     times: list[float],
     locations: list[str],
+    location_times: list[float],
     events: tuple[Event, ...] = (),
 ) -> Trace:
     return Trace(
         t=np.array(times),
         x=np.arange(len(times), dtype=float).reshape(-1, 1),
         location=np.array(locations, dtype=object),
+        location_time=np.array(location_times, dtype=float),
         events=events,
     )
 
@@ -97,7 +108,12 @@ def test_plot_locations_uses_off_grid_events_instead_of_sample_boundaries() -> (
     None
 ):
     """An event at 0.5 supersedes the first B sample at time 1."""
-    trace = _trace([0, 1, 2], ["A", "B", "B"], (_event(0.5, "A", "B"),))
+    trace = _trace(
+        [0, 1, 2],
+        ["A", "B", "B"],
+        [0, 0.5, 1.5],
+        (_event(0.5, "A", "B", location_time_before=0.5),),
+    )
     figure, ax = plt.subplots()
     try:
         assert plot_locations(trace, ax=ax) is ax
@@ -112,7 +128,11 @@ def test_plot_locations_shades_unsampled_positive_dwell_mode() -> None:
     trace = _trace(
         [0, 1, 2],
         ["A", "A", "A"],
-        (_event(0.4, "A", "B"), _event(0.6, "B", "A")),
+        [0, 0.4, 1.4],
+        (
+            _event(0.4, "A", "B", location_time_before=0.4),
+            _event(0.6, "B", "A", location_time_before=0.2),
+        ),
     )
     figure, ax = plt.subplots()
     try:
@@ -137,15 +157,16 @@ def test_plot_locations_merges_self_resets_and_ignores_zero_dwell_chains() -> (
     trace = _trace(
         [0, 1, 2],
         ["C", "E", "G"],
+        [0, 0, 0],
         (
-            _event(0, "A", "B", 0),
-            _event(0, "B", "C", 1),
-            _event(0.5, "C", "C"),
-            _event(1, "C", "D", 0),
-            _event(1, "D", "E", 1),
-            _event(1.5, "E", "E"),
-            _event(2, "E", "F", 0),
-            _event(2, "F", "G", 1),
+            _event(0, "A", "B", 0, location_time_before=0),
+            _event(0, "B", "C", 1, location_time_before=0),
+            _event(0.5, "C", "C", location_time_before=0.5),
+            _event(1, "C", "D", 0, location_time_before=0.5),
+            _event(1, "D", "E", 1, location_time_before=0),
+            _event(1.5, "E", "E", location_time_before=0.5),
+            _event(2, "E", "F", 0, location_time_before=0.5),
+            _event(2, "F", "G", 1, location_time_before=0),
         ),
     )
     figure, ax = plt.subplots()
@@ -162,10 +183,11 @@ def test_plot_locations_clips_events_to_cropped_sample_window() -> None:
     trace = _trace(
         [2, 3, 4],
         ["B", "C", "C"],
+        [1, 0.5, 1.5],
         (
-            _event(1, "A", "B"),
-            _event(2.5, "B", "C"),
-            _event(5, "C", "A"),
+            _event(1, "A", "B", location_time_before=1),
+            _event(2.5, "B", "C", location_time_before=1.5),
+            _event(5, "C", "A", location_time_before=2.5),
         ),
     )
     figure, ax = plt.subplots()
@@ -176,7 +198,9 @@ def test_plot_locations_clips_events_to_cropped_sample_window() -> None:
         plt.close(figure)
 
 
-@pytest.mark.parametrize("events", [(), (_event(4, "A", "B"),)])
+@pytest.mark.parametrize(
+    "events", [(), (_event(4, "A", "B", location_time_before=1),)]
+)
 def test_plot_locations_sample_fallback_is_contiguous_and_skips_zero_width(
     events: tuple[Event, ...],
 ) -> None:
@@ -184,6 +208,7 @@ def test_plot_locations_sample_fallback_is_contiguous_and_skips_zero_width(
     trace = _trace(
         [0, 1, 1, 2, 3],
         ["A", "A", "B", "B", "A"],
+        [0, 1, 0, 1, 0],
         events,
     )
     figure, ax = plt.subplots()
@@ -195,11 +220,14 @@ def test_plot_locations_sample_fallback_is_contiguous_and_skips_zero_width(
         plt.close(figure)
 
 
-@pytest.mark.parametrize(("times", "locations"), [([], []), ([1], ["A"])])
+@pytest.mark.parametrize(
+    ("times", "locations", "location_times"),
+    [([], [], []), ([1], ["A"], [0])],
+)
 def test_plot_locations_handles_no_intervals(
-    times: list[float], locations: list[str]
+    times: list[float], locations: list[str], location_times: list[float]
 ) -> None:
-    trace = _trace(times, locations)
+    trace = _trace(times, locations, location_times)
     ax = plot_locations(trace)
     try:
         assert len(ax.patches) == 0
@@ -215,7 +243,11 @@ def test_plot_locations_preserves_custom_axes_and_supports_shared_legend() -> (
     trace = _trace(
         [0, 1, 2],
         ["A", "B", "A"],
-        (_event(0.5, "A", "B"), _event(1.5, "B", "A")),
+        [0, 0.5, 0.5],
+        (
+            _event(0.5, "A", "B", location_time_before=0.5),
+            _event(1.5, "B", "A", location_time_before=1),
+        ),
     )
     figure, (power_ax, speed_ax) = plt.subplots(2, 1)
     try:
@@ -260,11 +292,16 @@ def test_plot_locations_preserves_custom_axes_and_supports_shared_legend() -> (
 @pytest.mark.parametrize("alpha", [-0.1, 1.1, float("nan"), float("inf")])
 def test_plot_locations_rejects_invalid_alpha(alpha: float) -> None:
     with pytest.raises(ValueError, match="alpha"):
-        plot_locations(_trace([0, 1], ["A", "A"]), alpha=alpha)
+        plot_locations(_trace([0, 1], ["A", "A"], [0, 1]), alpha=alpha)
 
 
 def test_plot_trace_reuses_exact_shading_but_keeps_signal_legend() -> None:
-    trace = _trace([0, 1, 2], ["A", "B", "B"], (_event(0.5, "A", "B"),))
+    trace = _trace(
+        [0, 1, 2],
+        ["A", "B", "B"],
+        [0, 0.5, 1.5],
+        (_event(0.5, "A", "B", location_time_before=0.5),),
+    )
     figure, ax = plt.subplots()
     try:
         ax.plot([0, 2], [1, 1], label="input")
