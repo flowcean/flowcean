@@ -30,7 +30,7 @@ Runs a 120-second wind cycle from 7 to 15 m/s and back, prints mode changes, and
 
 The plot shows wind speed, rotor speed, blade pitch, tower displacement, and generator power. Background colors mark the controller mode. This is mechanical shaft power, not electrical output. The dashed 5.30 MW line is the rated reference, not a hard cap in every mode.
 
-The rotor starts already turning; startup and shutdown are not modeled. See the [wind-turbine API](https://flowcean.me/reference/hybrid/benchmarks/#flowcean.hybrid.benchmarks.wind_turbine.wind_turbine) for equations and operating limits.
+The rotor starts already turning; startup and shutdown are not modeled. See the [wind-turbine API](https://flowcean.me/reference/hybrid/#flowcean.hybrid.benchmarks.wind_turbine.wind_turbine) for equations and operating limits.
 
 ## Reusing individual benchmarks
 
