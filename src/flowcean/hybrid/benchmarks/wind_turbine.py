@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 import numpy as np
 
@@ -22,33 +22,70 @@ from ..hybrid_system import (
 from ._wind_turbine_aerodynamics import aerodynamic_coefficients
 
 _SPEED_BOUNDARIES = (70.16224, 91.21091, 119.013772, 121.6805)
-_LABELS = (
-    "no_generation",
-    "gradual_generation",
-    "below_rated_power",
-    "approaching_rated_power",
-    "rated_power",
-)
 _GENERATOR_RATIO = 97.0
 
 
-def _generator_torque(speed: float, region: int, params: Parameters) -> float:
-    """Generator-side mechanical torque (N m) from generator speed (rad/s)."""
-    a = params["generator_speed_generation_start"]
-    b = params["generator_speed_below_rated"]
-    c = params["generator_speed_rated_transition"]
-    d = params["generator_speed_rated_power"]
-    k = params["torque_quadratic_coefficient"]
-    power = params["rated_mechanical_power"]
-    if region == 0:
-        return 0.0
-    if region == 1:
-        return max(0.0, k * b**2 * (speed - a) / (b - a))
-    if region == 2:
-        return k * speed**2
-    if region == 3:
-        return k * c**2 + (power / d - k * c**2) * (speed - c) / (d - c)
-    return power / speed
+# Generator-side torque laws take speed in rad/s and return torque in N m.
+_TorqueLaw = Callable[[float, Parameters], float]
+
+
+def _no_generation_torque(
+    generator_speed: float, parameters: Parameters
+) -> float:
+    return 0.0
+
+
+def _gradual_generation_torque(
+    generator_speed: float, parameters: Parameters
+) -> float:
+    """Ramp linearly from zero to the below-rated quadratic torque law."""
+    generation_start_speed = parameters["generator_speed_generation_start"]
+    below_rated_speed = parameters["generator_speed_below_rated"]
+    coefficient = parameters["torque_quadratic_coefficient"]
+    return max(
+        0.0,
+        coefficient
+        * below_rated_speed**2
+        * (generator_speed - generation_start_speed)
+        / (below_rated_speed - generation_start_speed),
+    )
+
+
+def _below_rated_power_torque(
+    generator_speed: float, parameters: Parameters
+) -> float:
+    coefficient = parameters["torque_quadratic_coefficient"]
+    return coefficient * generator_speed**2
+
+
+def _approaching_rated_power_torque(
+    generator_speed: float, parameters: Parameters
+) -> float:
+    """Ramp linearly from the quadratic law to the rated-power torque."""
+    transition_speed = parameters["generator_speed_rated_transition"]
+    rated_power_speed = parameters["generator_speed_rated_power"]
+    coefficient = parameters["torque_quadratic_coefficient"]
+    rated_power = parameters["rated_mechanical_power"]
+    transition_torque = coefficient * transition_speed**2
+    rated_torque = rated_power / rated_power_speed
+    return transition_torque + (rated_torque - transition_torque) * (
+        generator_speed - transition_speed
+    ) / (rated_power_speed - transition_speed)
+
+
+def _rated_power_torque(
+    generator_speed: float, parameters: Parameters
+) -> float:
+    return parameters["rated_mechanical_power"] / generator_speed
+
+
+_TORQUE_BY_LABEL: dict[str, _TorqueLaw] = {
+    "no_generation": _no_generation_torque,
+    "gradual_generation": _gradual_generation_torque,
+    "below_rated_power": _below_rated_power_torque,
+    "approaching_rated_power": _approaching_rated_power_torque,
+    "rated_power": _rated_power_torque,
+}
 
 
 def wind_turbine_power(trace: Trace, *, parameters: Parameters) -> np.ndarray:
@@ -69,14 +106,12 @@ def wind_turbine_power(trace: Trace, *, parameters: Parameters) -> np.ndarray:
     powers = []
     for speed, location in zip(speeds, trace.location, strict=True):
         try:
-            region = _LABELS.index(str(location))
-        except ValueError as error:
+            torque_law = _TORQUE_BY_LABEL[str(location)]
+        except KeyError as error:
             raise ValueError(
                 f"unknown wind-turbine location: {location!r}"
             ) from error
-        powers.append(
-            float(speed) * _generator_torque(float(speed), region, parameters)
-        )
+        powers.append(float(speed) * torque_law(float(speed), parameters))
     return np.array(powers, dtype=float)
 
 
@@ -113,6 +148,113 @@ def _wind_speed(t: float, input_stream: InputStream) -> float:
     if wind.shape != (1,) or not np.isfinite(wind[0]) or wind[0] <= 0:
         raise ValueError("wind input must be one finite positive component")
     return float(wind[0])
+
+
+def _turbine_dynamics(
+    torque_law: _TorqueLaw, *, label: str
+) -> ContinuousDynamics:
+    """Build shared six-state dynamics for one generator torque law."""
+
+    def flow(
+        t: float,
+        state: np.ndarray,
+        p: Parameters,
+        input_stream: InputStream,
+    ) -> np.ndarray:
+        if state.shape != (6,) or not np.all(np.isfinite(state)):
+            raise ValueError(
+                "wind turbine state must contain six finite values"
+            )
+        omega, displacement, velocity, pitch, pitch_rate, integral = state
+        if omega <= 0:
+            raise ValueError(
+                "rotor speed must be positive (running operation)"
+            )
+        relative_wind = _wind_speed(t, input_stream) - velocity
+        if relative_wind <= 0 or not math.isfinite(relative_wind):
+            raise ValueError("relative wind must be finite and positive")
+        tip_speed_ratio = omega * p["rotor_radius"] / relative_wind
+        cq, ct = aerodynamic_coefficients(tip_speed_ratio, pitch)
+        rotor_torque = (
+            0.5
+            * p["air_density"]
+            * math.pi
+            * p["rotor_radius"] ** 3
+            * relative_wind**2
+            * cq
+        )
+        thrust = (
+            0.5
+            * p["air_density"]
+            * math.pi
+            * p["rotor_radius"] ** 2
+            * relative_wind**2
+            * ct
+        )
+        generator_speed = p["generator_ratio"] * omega
+        generator_torque = torque_law(generator_speed, p)
+        speed_error = generator_speed - p["rated_generator_speed"]
+        unclipped_pitch_command = (integral + p["pitch_kp"] * speed_error) / (
+            1.0 + pitch / p["pitch_gain_schedule_scale"]
+        )
+        pitch_command = float(
+            np.clip(unclipped_pitch_command, 0.0, math.radians(18.0))
+        )
+        frequency = p["pitch_actuator_frequency"]
+        rotor_acceleration = (
+            rotor_torque - p["generator_ratio"] * generator_torque
+        ) / p["rotor_inertia"]
+        tower_acceleration = (
+            thrust
+            - p["tower_damping"] * velocity
+            - p["tower_stiffness"] * displacement
+        ) / p["tower_mass"]
+        pitch_acceleration = (
+            frequency**2 * (pitch_command - pitch)
+            - 2 * p["pitch_actuator_damping"] * frequency * pitch_rate
+        )
+        integral_rate = p["pitch_ki"] * speed_error + (
+            pitch_command - unclipped_pitch_command
+        ) / (p["pitch_kp"] / p["pitch_ki"])
+        return np.array(
+            [
+                rotor_acceleration,
+                velocity,
+                tower_acceleration,
+                pitch_rate,
+                pitch_acceleration,
+                integral_rate,
+            ],
+            dtype=float,
+        )
+
+    return ContinuousDynamics(flow, label=label)
+
+
+def _speed_transition(
+    *,
+    source: Location,
+    target: Location,
+    threshold: float,
+    direction: CrossingDirection,
+    label: str,
+) -> Transition:
+    """Create a generator-speed crossing with an immediate entry trigger."""
+
+    def surface(
+        _t: float,
+        state: np.ndarray,
+        p: Parameters,
+        _input: InputStream,
+    ) -> float:
+        return float(p["generator_ratio"] * state[0] - threshold)
+
+    return Transition(
+        source=source,
+        target=target,
+        event=EventSurface(surface, direction=direction, label=label),
+        entry_policy=SurfaceEntryPolicy.TRIGGER,
+    )
 
 
 def wind_turbine(
@@ -193,6 +335,12 @@ def wind_turbine(
             "speed_hysteresis must be positive and less than half the smallest boundary gap"
         )
     initial = _initial_state(initial_state)
+    (
+        generation_start_speed,
+        below_rated_speed,
+        rated_transition_speed,
+        rated_power_speed,
+    ) = _SPEED_BOUNDARIES
     params = {
         "air_density": 1.225,
         "rotor_radius": 63.0,
@@ -205,10 +353,10 @@ def wind_turbine(
         "tower_stiffness": 1942359.456866688,
         "torque_quadratic_coefficient": 2.332287,
         "rated_mechanical_power": 5296610.0,
-        "generator_speed_generation_start": _SPEED_BOUNDARIES[0],
-        "generator_speed_below_rated": _SPEED_BOUNDARIES[1],
-        "generator_speed_rated_transition": _SPEED_BOUNDARIES[2],
-        "generator_speed_rated_power": _SPEED_BOUNDARIES[3],
+        "generator_speed_generation_start": generation_start_speed,
+        "generator_speed_below_rated": below_rated_speed,
+        "generator_speed_rated_transition": rated_transition_speed,
+        "generator_speed_rated_power": rated_power_speed,
         "pitch_kp": pitch_kp,
         "pitch_ki": pitch_ki,
         "speed_hysteresis": speed_hysteresis,
@@ -218,126 +366,113 @@ def wind_turbine(
         "pitch_actuator_damping": 0.7,
     }
 
-    def make_flow(region: int) -> ContinuousDynamics:
-        def flow(
-            t: float,
-            state: np.ndarray,
-            p: Parameters,
-            input_stream: InputStream,
-        ) -> np.ndarray:
-            if state.shape != (6,) or not np.all(np.isfinite(state)):
-                raise ValueError(
-                    "wind turbine state must contain six finite values"
-                )
-            omega, displacement, velocity, pitch, pitch_rate, integral = state
-            if omega <= 0:
-                raise ValueError(
-                    "rotor speed must be positive (running operation)"
-                )
-            relative_wind = _wind_speed(t, input_stream) - velocity
-            if relative_wind <= 0 or not math.isfinite(relative_wind):
-                raise ValueError("relative wind must be finite and positive")
-            tip_speed_ratio = omega * p["rotor_radius"] / relative_wind
-            cq, ct = aerodynamic_coefficients(tip_speed_ratio, pitch)
-            rotor_torque = (
-                0.5
-                * p["air_density"]
-                * math.pi
-                * p["rotor_radius"] ** 3
-                * relative_wind**2
-                * cq
-            )
-            thrust = (
-                0.5
-                * p["air_density"]
-                * math.pi
-                * p["rotor_radius"] ** 2
-                * relative_wind**2
-                * ct
-            )
-            speed = p["generator_ratio"] * omega
-            torque = _generator_torque(speed, region, p)
-            error = speed - p["rated_generator_speed"]
-            raw = (integral + p["pitch_kp"] * error) / (
-                1.0 + pitch / p["pitch_gain_schedule_scale"]
-            )
-            command = float(np.clip(raw, 0.0, math.radians(18.0)))
-            frequency = p["pitch_actuator_frequency"]
-            return np.array(
-                [
-                    (rotor_torque - p["generator_ratio"] * torque)
-                    / p["rotor_inertia"],
-                    velocity,
-                    (
-                        thrust
-                        - p["tower_damping"] * velocity
-                        - p["tower_stiffness"] * displacement
-                    )
-                    / p["tower_mass"],
-                    pitch_rate,
-                    frequency**2 * (command - pitch)
-                    - 2 * p["pitch_actuator_damping"] * frequency * pitch_rate,
-                    p["pitch_ki"] * error
-                    + (command - raw) / (p["pitch_kp"] / p["pitch_ki"]),
-                ],
-                dtype=float,
-            )
-
-        return ContinuousDynamics(flow, label=_LABELS[region])
-
-    locations = [
-        Location(make_flow(index), label=label)
-        for index, label in enumerate(_LABELS)
-    ]
-    transitions = []
-    for index, boundary in enumerate(_SPEED_BOUNDARIES):
-        for direction, source, target, threshold, suffix in (
-            (
-                CrossingDirection.RISING,
-                index,
-                index + 1,
-                boundary + speed_hysteresis,
-                "up",
-            ),
-            (
-                CrossingDirection.FALLING,
-                index + 1,
-                index,
-                boundary - speed_hysteresis,
-                "down",
-            ),
-        ):
-
-            def surface(
-                _t: float,
-                state: np.ndarray,
-                p: Parameters,
-                _input: InputStream,
-                *,
-                threshold: float = threshold,
-            ) -> float:
-                return float(p["generator_ratio"] * state[0] - threshold)
-
-            transitions.append(
-                Transition(
-                    source=locations[source],
-                    target=locations[target],
-                    event=EventSurface(
-                        surface,
-                        direction=direction,
-                        label=f"speed_{index + 1}_{suffix}",
-                    ),
-                    entry_policy=SurfaceEntryPolicy.TRIGGER,
-                )
-            )
-    initial_speed = _GENERATOR_RATIO * initial[0]
-    initial_index = sum(
-        initial_speed >= boundary for boundary in _SPEED_BOUNDARIES
+    no_generation = Location(
+        _turbine_dynamics(_no_generation_torque, label="no_generation"),
+        label="no_generation",
     )
+    gradual_generation = Location(
+        _turbine_dynamics(
+            _gradual_generation_torque, label="gradual_generation"
+        ),
+        label="gradual_generation",
+    )
+    below_rated_power = Location(
+        _turbine_dynamics(
+            _below_rated_power_torque, label="below_rated_power"
+        ),
+        label="below_rated_power",
+    )
+    approaching_rated_power = Location(
+        _turbine_dynamics(
+            _approaching_rated_power_torque, label="approaching_rated_power"
+        ),
+        label="approaching_rated_power",
+    )
+    rated_power = Location(
+        _turbine_dynamics(_rated_power_torque, label="rated_power"),
+        label="rated_power",
+    )
+    locations = [
+        no_generation,
+        gradual_generation,
+        below_rated_power,
+        approaching_rated_power,
+        rated_power,
+    ]
+    transitions = [
+        _speed_transition(
+            source=no_generation,
+            target=gradual_generation,
+            threshold=generation_start_speed + speed_hysteresis,
+            direction=CrossingDirection.RISING,
+            label="speed_1_up",
+        ),
+        _speed_transition(
+            source=gradual_generation,
+            target=no_generation,
+            threshold=generation_start_speed - speed_hysteresis,
+            direction=CrossingDirection.FALLING,
+            label="speed_1_down",
+        ),
+        _speed_transition(
+            source=gradual_generation,
+            target=below_rated_power,
+            threshold=below_rated_speed + speed_hysteresis,
+            direction=CrossingDirection.RISING,
+            label="speed_2_up",
+        ),
+        _speed_transition(
+            source=below_rated_power,
+            target=gradual_generation,
+            threshold=below_rated_speed - speed_hysteresis,
+            direction=CrossingDirection.FALLING,
+            label="speed_2_down",
+        ),
+        _speed_transition(
+            source=below_rated_power,
+            target=approaching_rated_power,
+            threshold=rated_transition_speed + speed_hysteresis,
+            direction=CrossingDirection.RISING,
+            label="speed_3_up",
+        ),
+        _speed_transition(
+            source=approaching_rated_power,
+            target=below_rated_power,
+            threshold=rated_transition_speed - speed_hysteresis,
+            direction=CrossingDirection.FALLING,
+            label="speed_3_down",
+        ),
+        _speed_transition(
+            source=approaching_rated_power,
+            target=rated_power,
+            threshold=rated_power_speed + speed_hysteresis,
+            direction=CrossingDirection.RISING,
+            label="speed_4_up",
+        ),
+        _speed_transition(
+            source=rated_power,
+            target=approaching_rated_power,
+            threshold=rated_power_speed - speed_hysteresis,
+            direction=CrossingDirection.FALLING,
+            label="speed_4_down",
+        ),
+    ]
+    # Choose from central thresholds; hysteresis applies only when switching.
+    initial_speed = _GENERATOR_RATIO * initial[0]
+    if initial_speed >= rated_power_speed:
+        initial_location = rated_power
+    elif initial_speed >= rated_transition_speed:
+        initial_location = approaching_rated_power
+    elif initial_speed >= below_rated_speed:
+        initial_location = below_rated_power
+    elif initial_speed >= generation_start_speed:
+        initial_location = gradual_generation
+    else:
+        initial_location = no_generation
     return HybridSystem(
         locations=locations,
         transitions=transitions,
-        initial_location=locations[initial_index],
+        initial_location=initial_location,
         initial_state=initial,
         parameters=params,
     )

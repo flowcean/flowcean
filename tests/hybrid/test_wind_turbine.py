@@ -5,7 +5,12 @@ import math
 import numpy as np
 import pytest
 
-from flowcean.hybrid import Trace, simulate
+from flowcean.hybrid import (
+    CrossingDirection,
+    SurfaceEntryPolicy,
+    Trace,
+    simulate,
+)
 from flowcean.hybrid.benchmarks import (
     wind_turbine,
     wind_turbine_power,
@@ -13,7 +18,6 @@ from flowcean.hybrid.benchmarks import (
 from flowcean.hybrid.benchmarks._wind_turbine_aerodynamics import (
     aerodynamic_coefficients,
 )
-from flowcean.hybrid.benchmarks.wind_turbine import _generator_torque
 
 BOUNDARIES = (70.16224, 91.21091, 119.013772, 121.6805)
 LABELS = (
@@ -81,14 +85,15 @@ def test_generator_torque_is_continuous_at_all_four_central_boundaries() -> (
 ):
     system = wind_turbine()
     for index, speed in enumerate(BOUNDARIES):
-        assert _generator_torque(
-            speed, index, system.parameters
-        ) == pytest.approx(
-            _generator_torque(speed, index + 1, system.parameters), abs=1e-8
+        power = wind_turbine_power(
+            _power_trace([speed, speed], [LABELS[index], LABELS[index + 1]]),
+            parameters=system.parameters,
         )
-    assert _generator_torque(
-        130.0, 4, system.parameters
-    ) * 130.0 == pytest.approx(5296610.0)
+        assert power[0] / speed == pytest.approx(power[1] / speed, abs=1e-8)
+    assert wind_turbine_power(
+        _power_trace([130.0], [LABELS[4]]),
+        parameters=system.parameters,
+    )[0] == pytest.approx(5296610.0)
 
 
 def _power_trace(speeds: list[float], locations: list[str]) -> Trace:
@@ -162,21 +167,41 @@ def test_generator_power_rejects_unknown_location() -> None:
         )
 
 
-def test_rotor_tower_pitch_and_integral_equations_and_generator_energy() -> (
-    None
-):
+@pytest.mark.parametrize("mode", range(5))
+@pytest.mark.parametrize("integral", [-0.2, 0.12, 0.7])
+def test_rotor_tower_pitch_and_integral_equations_and_generator_energy(
+    mode: int, integral: float
+) -> None:
     system = wind_turbine()
     p = system.parameters
-    state = np.array([1.27, 0.2, -0.03, 0.06, 0.01, 0.12])
+    state = np.array([1.27, 0.2, -0.03, 0.06, 0.01, integral])
     wind = 13.0
     u = wind - state[2]
     cq, ct = aerodynamic_coefficients(state[0] * 63.0 / u, state[3])
     speed = 97.0 * state[0]
-    torque = _generator_torque(speed, 4, p)
+    a, b, c, d = BOUNDARIES
+    k = 2.332287
+    rated = 5296610.0
+    if mode == 0:
+        torque = 0.0
+    elif mode == 1:
+        torque = max(0.0, k * b**2 * (speed - a) / (b - a))
+    elif mode == 2:
+        torque = k * speed**2
+    elif mode == 3:
+        torque = k * c**2 + (rated / d - k * c**2) * (speed - c) / (d - c)
+    else:
+        torque = rated / speed
     raw = (state[5] + p["pitch_kp"] * (speed - 122.91)) / (
         1 + state[3] / 0.1099965
     )
     command = np.clip(raw, 0, math.radians(18))
+    if integral == -0.2:
+        assert raw < 0
+    elif integral == 0.7:
+        assert raw > math.radians(18)
+    else:
+        assert 0 < raw < math.radians(18)
     expected = np.array(
         [
             (0.5 * 1.225 * math.pi * 63**3 * u**2 * cq - 97 * torque)
@@ -195,13 +220,73 @@ def test_rotor_tower_pitch_and_integral_equations_and_generator_energy() -> (
             + (command - raw) / (p["pitch_kp"] / p["pitch_ki"]),
         ]
     )
-    actual = system.locations[4].dynamics.flow(
+    actual = system.locations[mode].dynamics.flow(
         0.0, state, p, constant_wind(wind)
     )
     np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
     # Rotor-side extraction from the generator is 97*T*omega = T*speed.
     assert 97 * torque * state[0] == pytest.approx(torque * speed)
     assert p["rotor_inertia"] == pytest.approx(40469564.444)
+
+
+def test_explicit_graph_and_custom_hysteresis_thresholds() -> None:
+    system = wind_turbine(speed_hysteresis=0.37)
+    assert [location.label for location in system.locations] == list(LABELS)
+    assert [location.dynamics.label for location in system.locations] == list(
+        LABELS
+    )
+    expected = [
+        ("speed_1_up", 0, 1, BOUNDARIES[0] + 0.37, CrossingDirection.RISING),
+        (
+            "speed_1_down",
+            1,
+            0,
+            BOUNDARIES[0] - 0.37,
+            CrossingDirection.FALLING,
+        ),
+        ("speed_2_up", 1, 2, BOUNDARIES[1] + 0.37, CrossingDirection.RISING),
+        (
+            "speed_2_down",
+            2,
+            1,
+            BOUNDARIES[1] - 0.37,
+            CrossingDirection.FALLING,
+        ),
+        ("speed_3_up", 2, 3, BOUNDARIES[2] + 0.37, CrossingDirection.RISING),
+        (
+            "speed_3_down",
+            3,
+            2,
+            BOUNDARIES[2] - 0.37,
+            CrossingDirection.FALLING,
+        ),
+        ("speed_4_up", 3, 4, BOUNDARIES[3] + 0.37, CrossingDirection.RISING),
+        (
+            "speed_4_down",
+            4,
+            3,
+            BOUNDARIES[3] - 0.37,
+            CrossingDirection.FALLING,
+        ),
+    ]
+    assert len(system.transitions) == len(expected)
+    for transition, (label, source, target, threshold, direction) in zip(
+        system.transitions, expected, strict=True
+    ):
+        assert transition.event.label == label
+        assert transition.source is system.locations[source]
+        assert transition.target is system.locations[target]
+        assert transition.event.direction is direction
+        assert transition.entry_policy is SurfaceEntryPolicy.TRIGGER
+        assert transition.reset is None
+        state = np.array([threshold / 97.0, 0, 0, 0, 0, 0])
+        assert transition.event.fn(
+            0.0, state, system.parameters, constant_wind(11)
+        ) == pytest.approx(0.0, abs=1e-12)
+        state[0] += 0.01 / 97.0
+        assert transition.event.fn(
+            0.0, state, system.parameters, constant_wind(11)
+        ) == pytest.approx(0.01, abs=1e-12)
 
 
 @pytest.mark.parametrize("index", range(5))
