@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="554" viewBox="0 0 740 554" role="img" aria-labelledby="title description">
+<title id="title">Buck converter</title>
+<desc id="description">The default initial mode is Switch on. Output voltage crossing the high threshold upward switches to Switch off; crossing the low threshold downward switches back. Switch off also transitions to Zero current as inductor current falls to zero, removing numerical boundary residue. Zero current returns to Switch on when output voltage crosses the low threshold downward. In Zero current the diode blocks reverse current and the capacitor alone supplies the load. Numerical reset may also snap a coincident lower-voltage boundary. Switching thresholds are not hard output-voltage bounds.</desc>
+<style>
+ :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+ @media (prefers-color-scheme: dark) {
+  :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+ }
+ svg { background: var(--background); fill: var(--foreground); }
+ text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+ .heading { font-size: 23px; font-weight: 700; }
+ .subtitle, .note, .law { font-size: 15px; }
+ .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+ .mode-name { font-size: 21px; font-weight: 700; }
+ .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+</style>
+<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/></marker></defs>
+<rect width="740" height="554" fill="var(--background)"/>
+<text x="28" y="36" text-anchor="start" class="heading">Buck converter</text>
+<text x="28" y="61" text-anchor="start" class="subtitle">Voltage hysteresis controls the switch; the diode blocks reverse current.</text>
+<text x="370" y="96" text-anchor="middle" class="">Output voltage crosses high threshold upward</text>
+<path class="arrow" d="M 191 160 V 115 H 551 V 160"/>
+<path class="arrow" d="M 24 212 H 76"/>
+<text x="24" y="195" text-anchor="start" class="note">Start</text>
+<g style="color: #b75c12"><rect class="mode" x="76" y="160" width="230" height="102" rx="12"/>
+<text x="191.0" y="191" text-anchor="middle" class="mode-name">Switch on</text>
+<text x="191.0" y="217" text-anchor="middle" class="law">Source supplies energy</text>
+<text x="191.0" y="239" text-anchor="middle" class="law">through the switch</text></g>
+<g style="color: #167f92"><rect class="mode" x="436" y="160" width="230" height="102" rx="12"/>
+<text x="551.0" y="191" text-anchor="middle" class="mode-name">Switch off</text>
+<text x="551.0" y="217" text-anchor="middle" class="law">Inductor freewheels</text>
+<text x="551.0" y="239" text-anchor="middle" class="law">through the diode</text></g>
+<path class="arrow" d="M 500 262 V 287 H 267 V 262"/>
+<text x="370" y="312" text-anchor="middle" class="">Output voltage crosses low threshold downward</text>
+<path class="arrow" d="M 260 452 H 190 V 262"/>
+<text x="206" y="345" text-anchor="start" class="">Output voltage crosses</text>
+<text x="206" y="366" text-anchor="start" class="">low threshold</text>
+<text x="206" y="387" text-anchor="start" class="">downward</text>
+<path class="arrow" d="M 620 262 V 452 H 480"/>
+<text x="607" y="345" text-anchor="end" class="">Current falls to zero</text>
+<text x="607" y="366" text-anchor="end" class="">Diode blocks</text>
+<g style="color: #7253ad"><rect class="mode" x="260" y="410" width="220" height="84" rx="12"/>
+<text x="370.0" y="441" text-anchor="middle" class="mode-name">Zero current</text>
+<text x="370.0" y="467" text-anchor="middle" class="law">Capacitor supplies load</text></g>
+<text x="370" y="522" text-anchor="middle" class="note">Zero-current entry removes numerical residue, not stored energy by impulse.</text>
+<text x="370" y="544" text-anchor="middle" class="note">Voltage may overshoot the switching thresholds. No fixed-frequency clock.</text>
+</svg>

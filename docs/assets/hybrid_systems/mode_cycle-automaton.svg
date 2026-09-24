@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="397" viewBox="0 0 740 397" role="img" aria-labelledby="title description">
+  <title id="title">Location cycle: six linear modes</title>
+  <desc id="description">Starting in m0, the example cycles through m1, m2, m3, m4, m5 and back to m0. In each location the three coordinates follow that location's linear dynamics. Every arrow fires on a rising clock crossing of the dwell time and resets only the clock to zero.</desc>
+  <style>
+    :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+    }
+    svg { background: var(--background); fill: var(--foreground); }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subtitle, .note { font-size: 15px; }
+    .mode { fill: currentColor; fill-opacity: .11; stroke: currentColor; stroke-width: 2; }
+    .mode-name { font-size: 21px; font-weight: 700; }
+    .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <rect width="740" height="397" fill="var(--background)"/>
+  <text class="heading" x="28" y="36">Location cycle</text>
+  <text class="subtitle" x="28" y="61">Clock-driven switching between different linear flows.</text>
+  <path class="arrow" d="M 160 83 V 128"/>
+  <text class="note" x="175" y="97">Start</text>
+  <path class="arrow" d="M 230 160 H 300"/>
+  <path class="arrow" d="M 440 160 H 510"/>
+  <path class="arrow" d="M 650 160 H 689 V 288 H 650"/>
+  <path class="arrow" d="M 510 288 H 440"/>
+  <path class="arrow" d="M 300 288 H 230"/>
+  <path class="arrow" d="M 90 288 H 58 V 216 H 72 V 160 H 90"/>
+  <g style="color: #b75c12"><rect class="mode" x="90" y="128" width="140" height="64" rx="12"/><text class="mode-name" x="160" y="168" text-anchor="middle">m0</text></g>
+  <g style="color: #167f92"><rect class="mode" x="300" y="128" width="140" height="64" rx="12"/><text class="mode-name" x="370" y="168" text-anchor="middle">m1</text></g>
+  <g style="color: #7253ad"><rect class="mode" x="510" y="128" width="140" height="64" rx="12"/><text class="mode-name" x="580" y="168" text-anchor="middle">m2</text></g>
+  <g style="color: #237d72"><rect class="mode" x="510" y="256" width="140" height="64" rx="12"/><text class="mode-name" x="580" y="296" text-anchor="middle">m3</text></g>
+  <g style="color: #b03860"><rect class="mode" x="300" y="256" width="140" height="64" rx="12"/><text class="mode-name" x="370" y="296" text-anchor="middle">m4</text></g>
+  <g style="color: #4763c7"><rect class="mode" x="90" y="256" width="140" height="64" rx="12"/><text class="mode-name" x="160" y="296" text-anchor="middle">m5</text></g>
+  <text x="371" y="221" text-anchor="middle">Every arrow: clock reaches dwell time &#8593;</text>
+  <text class="note" x="371" y="244" text-anchor="middle">Reset clock to 0; x0, x1 and x2 remain continuous.</text>
+  <text class="note" x="370" y="367" text-anchor="middle">Each location evolves x0, x1 and x2 by its own linear dynamics.</text>
+</svg>

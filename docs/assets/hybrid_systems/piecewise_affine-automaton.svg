@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="346" viewBox="0 0 740 346" role="img" aria-labelledby="title description">
+  <title id="title">Piecewise affine: switching diagram</title>
+  <desc id="description">Starting in Left, an upward threshold crossing by the first state coordinate selects the Right affine flow. A downward crossing selects Left again. Both transitions preserve the state.</desc>
+  <style>
+    :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+    }
+    svg { background: var(--background); fill: var(--foreground); }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subtitle, .note { font-size: 15px; }
+    .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+    .mode-name { font-size: 21px; font-weight: 700; }
+    .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <rect width="740" height="346" fill="var(--background)"/>
+  <text class="heading" x="28" y="36">Piecewise affine</text>
+  <text class="subtitle" x="28" y="61">Affine flows on either side of one event surface.</text>
+  <text x="370" y="96" text-anchor="middle">x₀ crosses threshold upward</text>
+  <path class="arrow" d="M 196 139 V 111 H 544 V 139"/>
+  <path class="arrow" d="M 24 189 H 76"/>
+  <text class="note" x="24" y="174">Start</text>
+  <g style="color: #b75c12">
+    <rect class="mode" x="76" y="139" width="240" height="100" rx="12"/>
+    <text class="mode-name" x="196" y="173" text-anchor="middle">Left</text>
+    <text x="196" y="199" text-anchor="middle">Affine flow</text>
+    <text x="196" y="222" text-anchor="middle">A<tspan baseline-shift="sub" font-size="12">L</tspan> x + b<tspan baseline-shift="sub" font-size="12">L</tspan></text>
+  </g>
+  <g style="color: #167f92">
+    <rect class="mode" x="424" y="139" width="240" height="100" rx="12"/>
+    <text class="mode-name" x="544" y="173" text-anchor="middle">Right</text>
+    <text x="544" y="199" text-anchor="middle">Affine flow</text>
+    <text x="544" y="222" text-anchor="middle">A<tspan baseline-shift="sub" font-size="12">R</tspan> x + b<tspan baseline-shift="sub" font-size="12">R</tspan></text>
+  </g>
+  <path class="arrow" d="M 544 239 V 271 H 196 V 239"/>
+  <text x="370" y="296" text-anchor="middle">x₀ crosses threshold downward</text>
+  <text class="note" x="370" y="327" text-anchor="middle">Switching selects a different flow without resetting the state.</text>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="554" viewBox="0 0 740 554" role="img" aria-labelledby="title description">
+<title id="title">Tank valves</title>
+<desc id="description">The default initial mode is Closed wet, with tank 2 draining. Closed wet and Closed dry each switch to Open when tank 1 crosses the high level upward. Open switches to Closed wet when tank 1 crosses the low level downward. Closed wet switches to Closed dry when tank 2 reaches zero while falling, resetting only level 2 to exactly zero. Open permits one-way head-driven transfer from tank 1 to tank 2 while tank 2 drains. Closed dry holds tank 2 at zero.</desc>
+<style>
+ :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+ @media (prefers-color-scheme: dark) {
+  :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+ }
+ svg { background: var(--background); fill: var(--foreground); }
+ text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+ .heading { font-size: 23px; font-weight: 700; }
+ .subtitle, .note, .law { font-size: 15px; }
+ .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+ .mode-name { font-size: 21px; font-weight: 700; }
+ .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+</style>
+<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/></marker></defs>
+<rect width="740" height="554" fill="var(--background)"/>
+<text x="28" y="36" text-anchor="start" class="heading">Tank valves</text>
+<text x="28" y="61" text-anchor="start" class="subtitle">A pump feeds tank 1; the valve controls one-way transfer.</text>
+<text x="370" y="96" text-anchor="middle" class="">Tank 1 crosses high level upward</text>
+<path class="arrow" d="M 191 160 V 115 H 551 V 160"/>
+<path class="arrow" d="M 24 212 H 76"/>
+<text x="24" y="195" text-anchor="start" class="note">Start</text>
+<g style="color: #b75c12"><rect class="mode" x="76" y="160" width="230" height="102" rx="12"/>
+<text x="191.0" y="191" text-anchor="middle" class="mode-name">Closed wet</text>
+<text x="191.0" y="217" text-anchor="middle" class="law">No transfer</text>
+<text x="191.0" y="239" text-anchor="middle" class="law">Tank 2 drains</text></g>
+<g style="color: #167f92"><rect class="mode" x="436" y="160" width="230" height="102" rx="12"/>
+<text x="551.0" y="191" text-anchor="middle" class="mode-name">Open</text>
+<text x="551.0" y="217" text-anchor="middle" class="law">Transfer allowed</text>
+<text x="551.0" y="239" text-anchor="middle" class="law">Outlet drainage</text></g>
+<path class="arrow" d="M 500 262 V 287 H 267 V 262"/>
+<text x="370" y="312" text-anchor="middle" class="">Tank 1 crosses low level downward</text>
+<path class="arrow" d="M 190 262 V 452 H 260"/>
+<text x="206" y="345" text-anchor="start" class="">Tank 2 reaches zero</text>
+<text x="206" y="366" text-anchor="start" class="">while draining</text>
+<text x="206" y="387" text-anchor="start" class="note">Set level 2 to zero</text>
+<path class="arrow" d="M 480 452 H 620 V 262"/>
+<text x="607" y="345" text-anchor="end" class="">Tank 1 crosses</text>
+<text x="607" y="366" text-anchor="end" class="">high level upward</text>
+<g style="color: #7253ad"><rect class="mode" x="260" y="410" width="220" height="84" rx="12"/>
+<text x="370.0" y="441" text-anchor="middle" class="mode-name">Closed dry</text>
+<text x="370.0" y="467" text-anchor="middle" class="law">Tank 2 held empty</text></g>
+<text x="370" y="522" text-anchor="middle" class="note">Open transfer is head-driven, from tank 1 to tank 2 only.</text>
+<text x="370" y="544" text-anchor="middle" class="note">Transfer and drainage compete: tank 2 need not keep rising.</text>
+</svg>
