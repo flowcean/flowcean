@@ -9,7 +9,6 @@ from flowcean.hybrid import Trace, simulate
 from flowcean.hybrid.benchmarks import (
     wind_turbine,
     wind_turbine_power,
-    wind_turbine_wind,
 )
 from flowcean.hybrid.benchmarks._wind_turbine_aerodynamics import (
     aerodynamic_coefficients,
@@ -24,6 +23,10 @@ LABELS = (
     "approaching_rated_power",
     "rated_power",
 )
+
+
+def wind_cycle(t: float) -> np.ndarray:
+    return np.array([11.0 - 4.0 * np.cos(2.0 * np.pi * t / 120.0)])
 
 
 def constant_wind(value: float):
@@ -370,7 +373,7 @@ def test_input_and_flow_domains_are_checked_not_clipped() -> None:
             system.parameters,
             constant_wind(11),
         )
-    with pytest.raises(ValueError, match="wind input"):
+    with pytest.raises(ValueError, match="input_stream is required"):
         simulate(system, (0, 0.01))
     original = np.array([0.65, 0, 0, 0, 0, 0])
     other = wind_turbine(initial_state=original)
@@ -378,7 +381,7 @@ def test_input_and_flow_domains_are_checked_not_clipped() -> None:
     assert other.initial_state[0] == 0.65
 
 
-@pytest.mark.parametrize("stream", [constant_wind(11), wind_turbine_wind])
+@pytest.mark.parametrize("stream", [constant_wind(11), wind_cycle])
 def test_nominal_trace_finite_and_physically_bounded(stream) -> None:
     system = wind_turbine()
     trace = simulate(system, (0, 120), input_stream=stream, sample_dt=0.5)
@@ -393,23 +396,23 @@ def test_nominal_trace_finite_and_physically_bounded(stream) -> None:
     assert np.all(power >= 0)
     np.testing.assert_allclose(power[trace.location == "rated_power"], 5296610)
     np.testing.assert_allclose(power[trace.location == "no_generation"], 0)
-    if stream is wind_turbine_wind:
+    if stream is wind_cycle:
         assert set(trace.location) == set(LABELS)
         assert len(trace.events) >= 7
-        assert np.min([wind_turbine_wind(t)[0] for t in trace.t]) >= 7
-        assert np.max([wind_turbine_wind(t)[0] for t in trace.t]) <= 15
+        assert np.min([wind_cycle(t)[0] for t in trace.t]) >= 7
+        assert np.max([wind_cycle(t)[0] for t in trace.t]) <= 15
 
 
 def test_tighter_solver_tolerance_converges_to_nominal_result() -> None:
     system = wind_turbine()
     times = np.linspace(0, 120, 61)
     standard = simulate(
-        system, (0, 120), input_stream=wind_turbine_wind, sample_times=times
+        system, (0, 120), input_stream=wind_cycle, sample_times=times
     )
     tight = simulate(
         system,
         (0, 120),
-        input_stream=wind_turbine_wind,
+        input_stream=wind_cycle,
         sample_times=times,
         rtol=1e-9,
         atol=1e-11,

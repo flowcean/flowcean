@@ -18,6 +18,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** Hybrid benchmark scenario configuration and driving waveforms now belong to the examples, not the reusable model package. Supply explicit finite input vectors for the thermostat `[target]`, impact oscillator `[force]`, time-varying event surface `[threshold]`, PID plant `[reference, reference_rate]`, and wind turbine `[wind]`. Removed the impact forcing, event-surface amplitude/frequency, and PID setpoint amplitude/frequency arguments; remaining impact, event-surface, and PID options after their retained positional arguments are keyword-only. Gallery scenario horizons and signals now live in the example.
 - Redesigned the documentation landing page with a thermostat simulation replay, grouped navigation, and page icons.
 - Combined the hybrid-system API, benchmarks, and HyDRA reference into `reference/hybrid/`, with entries for all public benchmark factories. The former `reference/hybrid/benchmarks/` and `reference/hybrid/hydra/` URLs are no longer available.
 - **Breaking:** `ToTimeSeries(time_feature, *, name="time_series")` now collects non-time columns into one named series in a single row, preserving dtypes and source order. One value column stays scalar; multiple value columns form a struct preserving their names and order; no value columns produce empty structs. Clock mappings and automatic per-signal output columns are no longer supported; select per-clock or per-signal branches, transform each separately, and combine the results horizontally.
@@ -35,6 +36,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Removed
 
+- Removed `BenchmarkSpec`, `registry()`, `all_specs()`, `thermostat_target_stream`, `impact_input_stream`, `time_varying_input_stream`, and `wind_turbine_wind` from `flowcean.hybrid.benchmarks`.
 - Removed `flowcean.grpc.GrpcPassiveAutomataLearner` and its Java LearnLib, gRPC, protobuf, and Docker integration; use `flowcean.aalpy` for local passive automata learning ([#419](https://github.com/flowcean/flowcean/pull/419)).
 - Removed the external Polyfill.io script from the documentation site ([#403](https://github.com/flowcean/flowcean/pull/403)).
 - Removed the `flowcean.ode` and top-level `flowcean.hydra` namespaces ([#407](https://github.com/flowcean/flowcean/pull/407)).

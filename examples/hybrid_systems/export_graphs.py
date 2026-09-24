@@ -4,7 +4,11 @@ import argparse
 from pathlib import Path
 
 from flowcean.hybrid import build_hybrid_system_dot, render_dot_svg
-from flowcean.hybrid.benchmarks import all_specs
+
+if __package__:
+    from .scenarios import SCENARIOS
+else:
+    from scenarios import SCENARIOS
 
 
 def main() -> None:
@@ -17,7 +21,7 @@ def main() -> None:
     args = parser.parse_args()
     output_dir = Path("outputs") / "automata"
     output_dir.mkdir(parents=True, exist_ok=True)
-    for spec in all_specs():
+    for spec in SCENARIOS:
         system = spec.factory()
         dot = build_hybrid_system_dot(system)
         stem = spec.name.lower().replace(" ", "_")

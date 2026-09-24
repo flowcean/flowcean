@@ -12,42 +12,22 @@ from ..hybrid_system import (
     Parameters,
     Transition,
 )
-
-
-def time_varying_input_stream(t: float) -> np.ndarray:
-    value = 0.5 * np.sin(t) + 0.15 * np.sin(2.3 * t)
-    return np.array([value], dtype=float)
-
-
-def _threshold(
-    t: float,
-    params: Parameters,
-    input_stream: InputStream,
-) -> float:
-    try:
-        values = input_stream(t)
-    except ValueError as error:
-        if "input_stream is required" not in str(error):
-            raise
-        values = np.array([], dtype=float)
-    if values.size > 0:
-        return float(values[0])
-    return float(params["amplitude"] * np.sin(params["frequency"] * t))
+from ._inputs import _input_vector
 
 
 def time_varying_event_surface(
-    frequency: float = 1.0,
-    amplitude: float = 0.5,
+    *,
     hysteresis: float = 0.2,
     drift: float = 0.6,
     damping: float = 0.4,
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
-    """Create a system with time-varying event-surface thresholds.
+    """Create a system with externally driven event-surface thresholds.
+
+    Simulate with an explicit finite one-element input vector ``[threshold]``.
+    Both switching surfaces use the supplied threshold at the queried time.
 
     Args:
-        frequency: Frequency of the event-surface oscillation.
-        amplitude: Amplitude of the event-surface oscillation.
         hysteresis: Event-surface hysteresis width.
         drift: Drift magnitude per location.
         damping: Damping on the second state.
@@ -91,7 +71,9 @@ def time_varying_event_surface(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        threshold = _threshold(t, params, input_stream)
+        threshold = _input_vector(t, input_stream, size=1, label="threshold")[
+            0
+        ]
         return state[0] - (threshold + 0.5 * params["hysteresis"])
 
     def event_surface_left(
@@ -100,7 +82,9 @@ def time_varying_event_surface(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        threshold = _threshold(t, params, input_stream)
+        threshold = _input_vector(t, input_stream, size=1, label="threshold")[
+            0
+        ]
         return state[0] - (threshold - 0.5 * params["hysteresis"])
 
     left_dynamics = ContinuousDynamics(flow_left, label="left")
@@ -136,8 +120,6 @@ def time_varying_event_surface(
         initial_location=left,
         initial_state=initial_state,
         parameters={
-            "frequency": frequency,
-            "amplitude": amplitude,
             "hysteresis": hysteresis,
             "drift": drift,
             "damping": damping,

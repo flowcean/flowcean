@@ -19,6 +19,7 @@ from ..hybrid_system import (
     Trace,
     Transition,
 )
+from ._inputs import _input_vector
 from ._wind_turbine_aerodynamics import aerodynamic_coefficients
 
 _SPEED_BOUNDARIES = (70.16224, 91.21091, 119.013772, 121.6805)
@@ -30,11 +31,6 @@ _LABELS = (
     "rated_power",
 )
 _GENERATOR_RATIO = 97.0
-
-
-def wind_turbine_wind(t: float) -> np.ndarray:
-    """Deterministic smooth 120-second wind cycle, 7..15 m/s."""
-    return np.array([11.0 - 4.0 * np.cos(2.0 * np.pi * t / 120.0)])
 
 
 def _generator_torque(speed: float, region: int, params: Parameters) -> float:
@@ -108,15 +104,10 @@ def _initial_state(state: Sequence[float] | np.ndarray | None) -> np.ndarray:
 
 
 def _wind_speed(t: float, input_stream: InputStream) -> float:
-    try:
-        wind = np.asarray(input_stream(t), dtype=float)
-    except (TypeError, ValueError) as error:
-        raise ValueError(
-            "wind input must be one finite positive component"
-        ) from error
-    if wind.shape != (1,) or not np.isfinite(wind[0]) or wind[0] <= 0:
+    wind = float(_input_vector(t, input_stream, size=1, label="wind")[0])
+    if wind <= 0:
         raise ValueError("wind input must be one finite positive component")
-    return float(wind[0])
+    return wind
 
 
 def wind_turbine(
@@ -162,8 +153,9 @@ def wind_turbine(
     mechanical stops.
     Hardware and controller constants are recorded in ``system.parameters``.
 
-    Supply ``simulate(..., input_stream=...)`` with one positive wind speed
-    (m/s), such as ``lambda t: np.array([11.0])``. Relative wind is
+    Supply ``simulate(..., input_stream=...)`` with a finite one-element
+    vector ``[wind]`` containing a positive wind speed (m/s), such as
+    ``lambda t: np.array([11.0])``. Relative wind is
     ``u = wind - v``; it and rotor speed must stay positive. With radius R=63 m,
     the tip-speed ratio ``omega*R/u`` must stay in 2.5..14.5 and pitch in
     -2..20 degrees. Leaving the polynomial fit's domain raises an error.

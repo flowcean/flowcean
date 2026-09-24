@@ -12,10 +12,8 @@ from flowcean.hybrid import HybridSystem, InputStream, simulate
 from flowcean.hybrid.benchmarks import (
     bouncing_ball,
     hybrid_oscillator,
-    registry,
     tank_valves,
     thermostat,
-    thermostat_target_stream,
 )
 
 FloatArray = NDArray[np.float64]
@@ -111,6 +109,10 @@ def _complete_state(
     return states.reshape(-1)
 
 
+def _thermostat_target(t: float) -> FloatArray:
+    return np.array([22.0 + 0.8 * np.sin(0.7 * t)], dtype=np.float64)
+
+
 def _thermostat(scenario: FloatArray, times: FloatArray) -> FloatArray:
     system = thermostat(
         ambient=float(scenario[0]),
@@ -124,7 +126,7 @@ def _thermostat(scenario: FloatArray, times: FloatArray) -> FloatArray:
         times,
         scenario,
         1,
-        thermostat_target_stream,
+        _thermostat_target,
     )
 
 
@@ -163,10 +165,6 @@ def _tank_valves(scenario: FloatArray, times: FloatArray) -> FloatArray:
     return _complete_state(system, times, scenario, 2)
 
 
-def _horizon(name: str) -> tuple[float, float]:
-    return registry()[name].t_span
-
-
 THERMOSTAT = SystemSpec(
     "Thermostat",
     (
@@ -183,7 +181,7 @@ THERMOSTAT = SystemSpec(
         (1.0, 3.0),
         (18.0, 22.0),
     ),
-    _horizon("Thermostat"),
+    (0.0, 10.0),
     128,
     ("temperature",),
     _thermostat,
@@ -192,7 +190,7 @@ BOUNCING_BALL = SystemSpec(
     "Bouncing Ball",
     ("gravity", "restitution", "initial_height", "initial_velocity"),
     ((8.0, 12.0), (0.85, 0.95), (0.5, 2.0), (-1.0, 1.0)),
-    _horizon("Bouncing Ball"),
+    (0.0, 3.0),
     128,
     ("height", "velocity"),
     _bouncing_ball,
@@ -213,7 +211,7 @@ HYBRID_OSCILLATOR = SystemSpec(
         (-1.5, -0.5),
         (-0.5, 0.5),
     ),
-    _horizon("Hybrid Oscillator"),
+    (0.0, 15.0),
     128,
     ("position", "velocity"),
     _hybrid_oscillator,
@@ -236,7 +234,7 @@ TANK_VALVES = SystemSpec(
         (0.4, 0.8),
         (0.1, 0.4),
     ),
-    _horizon("Tank Valves"),
+    (0.0, 300.0),
     128,
     ("level_1", "level_2"),
     _tank_valves,
@@ -702,7 +700,7 @@ def _system_report(evaluation: SystemEvaluation) -> dict[str, Any]:
         "horizon": {
             "start": spec.horizon[0],
             "end": spec.horizon[1],
-            "source": "flowcean.hybrid.benchmarks.registry",
+            "source": "examples.system_behavior_learning.experiment.SYSTEMS",
         },
         "sample_count": spec.sample_count,
         "state_mapping": [

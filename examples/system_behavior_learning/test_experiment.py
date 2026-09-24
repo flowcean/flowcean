@@ -333,6 +333,9 @@ def test_report_is_complete_serializable_and_names_excluded_coordinate() -> (
     evaluation = evaluate_prepared_system(_synthetic_prepared())
     report = build_report((evaluation,))
     system = report["systems"][0]
+    assert system["horizon"]["source"] == (
+        "examples.system_behavior_learning.experiment.SYSTEMS"
+    )
     metadata = system["target_metadata"]
 
     assert report["config"]["capacity_grid"] == [*range(2, 17), None]

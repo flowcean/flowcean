@@ -1,6 +1,6 @@
 # Hybrid Systems Gallery
 
-This example simulates the registered hybrid-system benchmarks, prints a concise summary for each system, and renders the results as a gallery.
+This example simulates 14 reusable benchmark models with the horizons and driving signals defined in `scenarios.py`, prints a concise summary, and renders a gallery. These scenario settings belong to the example, not the reusable model package.
 
 Run it from the repository root:
 
@@ -10,7 +10,7 @@ uv run --directory ./examples/hybrid_systems python run.py
 
 The command writes `examples/hybrid_systems/outputs/benchmarks.png`.
 
-To export every registered benchmark's automaton without simulation:
+To export every gallery scenario's automaton without simulation:
 
 ```bash
 uv run --directory ./examples/hybrid_systems python export_graphs.py
@@ -34,16 +34,19 @@ The rotor starts already turning; startup and shutdown are not modeled. See the 
 
 ## Reusing individual benchmarks
 
-The canonical benchmark registry is available from `flowcean.hybrid.benchmarks`:
+Import a model factory from `flowcean.hybrid.benchmarks` and choose the time span and inputs for your own simulation. For example, the thermostat requires a finite input vector `[target]`:
 
 ```python
-from flowcean.hybrid import simulate
-from flowcean.hybrid.benchmarks import registry
+import numpy as np
 
-spec = registry()["Thermostat"]
+from flowcean.hybrid import simulate
+from flowcean.hybrid.benchmarks import thermostat
+
 trace = simulate(
-    spec.factory(),
-    t_span=spec.t_span,
-    input_stream=spec.input_stream,
+    thermostat(),
+    t_span=(0.0, 10.0),
+    input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
 )
 ```
+
+The other driven models require `[force]` for the impact oscillator, `[threshold]` for the time-varying event surface, `[reference, reference_rate]` for the PID plant, and positive `[wind]` in m/s for the wind turbine.

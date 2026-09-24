@@ -3,12 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 from pysr import PySRRegressor
 
 import flowcean.cli
 import flowcean.utils
 from flowcean.hybrid import Trace, plot_trace, simulate, trace_to_polars
-from flowcean.hybrid.benchmarks import thermostat, thermostat_target_stream
+from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HybridDecisionTreeModel,
@@ -25,6 +26,11 @@ from flowcean.pysr import PySRLearner
 EXAMPLE_SEED = 42
 HYDRA_LOGGER = "flowcean.hybrid.hydra.learner"
 OUTPUT_DIR = Path("outputs")
+
+
+def thermostat_target_stream(t: float) -> np.ndarray:
+    """Target temperature for this example's reference trajectory."""
+    return np.array([22.0 + 0.8 * np.sin(0.7 * t)], dtype=float)
 
 
 def print_selector_outputs(

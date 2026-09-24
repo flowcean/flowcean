@@ -182,16 +182,24 @@ Shading spans the trace's first to last sample and follows recorded transition t
 Reusable systems are available from `flowcean.hybrid.benchmarks`:
 
 ```python
-from flowcean.hybrid import simulate
-from flowcean.hybrid.benchmarks import registry
+import numpy as np
 
-spec = registry()["Thermostat"]
+from flowcean.hybrid import simulate
+from flowcean.hybrid.benchmarks import thermostat
+
 trace = simulate(
-    spec.factory(),
-    t_span=spec.t_span,
-    input_stream=spec.input_stream,
+    thermostat(),
+    t_span=(0.0, 10.0),
+    input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
 )
 ```
+
+The thermostat's input vector is `[target]`. Other driven factories require
+`[force]` (impact oscillator), `[threshold]` (time-varying event surface),
+`[reference, reference_rate]` (PID plant, with the reference's time derivative),
+or `[wind]` (wind turbine, positive m/s). These inputs must be finite vectors
+of exactly the documented size. The gallery keeps its own example signals
+and time spans; reusable factories do not choose either.
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 

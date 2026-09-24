@@ -1,6 +1,6 @@
 """Render the reusable hybrid system benchmark gallery.
 
-This runner only renders the gallery defined in ``benchmarks``. It creates the
+This runner renders the scenarios defined in this example. It creates the
 ``outputs`` directory when needed and writes the figure to
 ``outputs/benchmarks.png``.
 """
@@ -15,7 +15,11 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 from flowcean.hybrid import Trace, plot_trace, simulate
-from flowcean.hybrid.benchmarks import BenchmarkSpec, all_specs
+
+if __package__:
+    from .scenarios import SCENARIOS, Scenario
+else:
+    from scenarios import SCENARIOS, Scenario
 
 
 @dataclass(frozen=True)
@@ -30,7 +34,7 @@ class BenchmarkRunSummary:
 
 
 def summarize_benchmark(
-    spec: BenchmarkSpec,
+    spec: Scenario,
     trace: Trace,
 ) -> BenchmarkRunSummary:
     return BenchmarkRunSummary(
@@ -54,7 +58,7 @@ def format_benchmark_summary(summary: BenchmarkRunSummary) -> str:
 
 
 def main() -> None:
-    specs = list(all_specs())
+    specs = SCENARIOS
     output_path = Path("outputs") / "benchmarks.png"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     print("Hybrid systems benchmark gallery")

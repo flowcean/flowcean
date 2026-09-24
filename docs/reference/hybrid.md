@@ -7,7 +7,7 @@ icon: lucide/workflow
 This page covers the public API of `flowcean.hybrid` and its subpackages:
 
 - [Modeling and simulation](#flowcean.hybrid): system definitions, automaton diagrams, simulation, trace I/O, and plotting.
-- [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories, input streams, and registry metadata. Import a factory or use `registry()` to discover the available systems.
+- [Benchmarks](#flowcean.hybrid.benchmarks): reusable model factories, their input contracts, and physical observation helpers.
 - [HyDRA identification](#flowcean.hybrid.hydra): identification, callbacks, trace schemas, simulations, and mode-selector APIs. Selector-specific types and helpers are also available from `flowcean.hybrid.hydra.selector`.
 
 See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.
@@ -21,6 +21,8 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading: Benchmarks
       toc_label: Benchmarks
+
+Benchmark factories do not prescribe a simulation horizon or driving waveform. For externally driven models, supply an input stream to `simulate`; each factory documents the expected finite input vector. The [hybrid systems gallery](../examples/hybrid_systems.md) provides example scenarios with horizons and signals. Use `wind_turbine_power` to calculate generator mechanical power from a turbine trace.
 
 ### System factories
 

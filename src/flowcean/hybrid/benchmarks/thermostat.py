@@ -12,11 +12,7 @@ from ..hybrid_system import (
     Parameters,
     Transition,
 )
-
-
-def thermostat_target_stream(t: float) -> np.ndarray:
-    target = 22.0 + 0.8 * np.sin(0.7 * t)
-    return np.array([target], dtype=float)
+from ._inputs import _input_vector
 
 
 def thermostat(
@@ -27,6 +23,10 @@ def thermostat(
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
     """Create a thermostat benchmark system.
+
+    Simulate with an explicit one-element finite input vector ``[target]``
+    giving the target temperature at each requested time. The target sets
+    the high and low switching thresholds; flows depend only on state.
 
     Args:
         ambient: Ambient temperature.
@@ -72,7 +72,9 @@ def thermostat(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        target = float(input_stream(t)[0])
+        target = float(
+            _input_vector(t, input_stream, size=1, label="target")[0]
+        )
         return state[0] - (target + 0.5 * params["hysteresis"])
 
     def event_surface_low(
@@ -81,7 +83,9 @@ def thermostat(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        target = float(input_stream(t)[0])
+        target = float(
+            _input_vector(t, input_stream, size=1, label="target")[0]
+        )
         return state[0] - (target - 0.5 * params["hysteresis"])
 
     heating_dynamics = ContinuousDynamics(heating, label="heating")
