@@ -88,10 +88,6 @@
     padding: 0.7rem;
 }
 
-.hybrid-automaton-tall img {
-    max-height: 44rem;
-}
-
 .md-typeset .hybrid-figure figcaption {
     max-width: none;
     margin: 0;
@@ -101,9 +97,4 @@
     font-size: 0.75rem;
     line-height: 1.55;
     text-align: left;
-}
-
-[data-md-color-scheme="default"] .hybrid-figure a:has(img[src$="#only-dark"]),
-[data-md-color-scheme="slate"] .hybrid-figure a:has(img[src$="#only-light"]) {
-    display: none;
 }

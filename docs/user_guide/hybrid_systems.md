@@ -6,18 +6,17 @@ icon: lucide/workflow
 
 Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete mode as a location, evolves a continuous state according to that location's dynamics, and changes locations when event surfaces trigger transitions.
 
-Use `flowcean.hybrid` to define and simulate models, and `flowcean.hybrid.benchmarks` for reusable systems. Start with a simulation below, follow the [minimal example](../examples/hs_simple.md) to construct a model from locations and transitions, or compare systems in the [benchmark gallery](../examples/hybrid_systems.md).
+Use `flowcean.hybrid` to define and simulate models, and [`flowcean.hybrid.benchmarks`](../reference/hybrid.md#flowcean.hybrid.benchmarks) for reusable systems. Start with a simulation below, follow the [minimal example](../examples/hs_simple.md) to construct a model from locations and transitions, or compare systems in the [benchmark gallery](../examples/hybrid_systems.md).
 
 ## Read a Hybrid Model
 
-The benchmark thermostat has one continuous state, temperature, and two discrete locations, `heating` and `cooling`. Each location defines a different rate of temperature change. The target-temperature input sets a pair of switching thresholds: crossing one changes the active location without resetting the temperature.
+The [thermostat benchmark](../examples/hybrid_systems.md#thermostat) has one continuous state, temperature, and two discrete locations, `heating` and `cooling`. Each location defines a different rate of temperature change. The target-temperature input sets a pair of switching thresholds: crossing one changes the active location without resetting the temperature.
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Thermostat automaton with heating and cooling locations and too_hot and too_cold transitions.](../assets/hybrid_systems/thermostat-automaton-light.svg#only-light)](../assets/hybrid_systems/thermostat-automaton-light.svg){ target="_blank" rel="noopener" }
-[![Thermostat automaton with heating and cooling locations and too_hot and too_cold transitions.](../assets/hybrid_systems/thermostat-automaton-dark.svg#only-dark)](../assets/hybrid_systems/thermostat-automaton-dark.svg){ target="_blank" rel="noopener" }
+[![Thermostat with heating and cooling locations, switching at the upper and lower target-band boundaries.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="_blank" rel="noopener" }
 
-<figcaption>The incoming arrow marks the initial location. Edges identify event surfaces and crossing directions. This is the built-in benchmark thermostat, not the constant-rate thermostat in the minimal example. Open a figure to inspect it at full size.</figcaption>
+<figcaption>Boxes represent locations; arrows represent transitions. The incoming arrow marks the initial location. Open a figure to inspect it at full size.</figcaption>
 
 </figure>
 
@@ -25,7 +24,7 @@ Other systems also change the continuous state at a transition. For example, a [
 
 ## Simulation
 
-Create a system and supply the scenario's time span and input signal. This complete example runs the benchmark thermostat with a slowly varying target temperature:
+Create a system and supply a time span and input signal. This example runs the [thermostat](../examples/hybrid_systems.md#thermostat) with a slowly varying target temperature:
 
 ```python
 import numpy as np
@@ -39,19 +38,16 @@ trace = simulate(
     t_span=(0.0, 10.0),
     input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
     sample_dt=0.02,
-    rtol=1e-7,
-    atol=1e-9,
 )
 ```
 
-The returned `Trace` contains sample times, continuous states, active location labels, and transition events. The figure uses the same scenario and sampling grid as this example; the target and switching thresholds are plotted alongside the simulated temperature.
+The returned `Trace` contains sample times, continuous states, active location labels, and transition events.
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace-light.svg#only-light)](../assets/hybrid_systems/thermostat-trace-light.svg){ target="_blank" rel="noopener" }
-[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace-dark.svg#only-dark)](../assets/hybrid_systems/thermostat-trace-dark.svg){ target="_blank" rel="noopener" }
+[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="_blank" rel="noopener" }
 
-<figcaption>Temperature remains continuous when the mode changes, but its derivative changes. Shading uses the automaton's mode colors. The thermostat model does not prescribe temperature or time units.</figcaption>
+<figcaption>Temperature remains continuous when the mode changes, but its derivative changes. Shading identifies the active location.</figcaption>
 
 </figure>
 
@@ -214,7 +210,7 @@ Shading spans the trace's first to last sample and follows recorded transition t
 
 ## Benchmarks and Identification
 
-The [benchmark gallery](../examples/hybrid_systems.md) compares reusable models and separates each model definition from its simulation scenario. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
+The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hysteresis, and resets in reusable models. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
