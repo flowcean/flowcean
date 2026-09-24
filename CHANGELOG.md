@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added a "Why Flowcean?" guide explaining its modeling perspective and relationship to other tools.
 - Added `build_hybrid_system_dot` and optional Graphviz SVG rendering via `render_dot_svg` to `flowcean.hybrid` for visualizing complete hybrid automata without simulation.
 - Added `plot_locations` to `flowcean.hybrid` for reusable location shading on custom time-series plots, including shared-legend support.
 - Added a wind-driven, six-state turbine benchmark with polynomial aerodynamics, five hysteretic torque-control regimes, pitch control, and generator-power reporting to `flowcean.hybrid.benchmarks`, the hybrid systems gallery, and a standalone simulation example.
