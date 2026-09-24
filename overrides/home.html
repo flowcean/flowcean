@@ -75,10 +75,10 @@
 
     <section class="home-code-section" aria-labelledby="home-code-title">
       <div class="home-code-copy">
-        <p class="home-eyebrow">Python API</p>
+        <p class="home-eyebrow">Python example</p>
         <h2 id="home-code-title">Simulate a built-in system.</h2>
         <p class="home-section-intro"><code>thermostat()</code> creates a benchmark system. <code>simulate()</code> runs it with an input signal and returns a <code>Trace</code> containing the state history, active modes, and transition events.</p>
-        <a class="home-text-link" href="{{ 'reference/hybrid/#flowcean.hybrid.simulate' | url }}">Simulation API {{ icon('arrow-right') }}</a>
+        <a class="home-text-link" href="{{ 'user_guide/hybrid_systems/#simulation' | url }}">Simulation guide {{ icon('arrow-right') }}</a>
       </div>
       <div class="home-code-window"><div class="home-code-header"><span>thermostat.py</span><span>Python</span></div><pre><code><span class="home-code-keyword">import</span> numpy <span class="home-code-keyword">as</span> np
 <span class="home-code-keyword">from</span> flowcean.hybrid <span class="home-code-keyword">import</span> simulate
@@ -102,9 +102,9 @@ trace = simulate(
         <a href="{{ 'user_guide/environment/' | url }}"><span class="home-module-icon">{{ icon('database') }}</span><h3>Environments &amp; transforms {{ icon('arrow-right') }}</h3><p>Load datasets or streams and apply reusable preprocessing steps.</p></a>
         <a href="{{ 'user_guide/learning_strategies/' | url }}"><span class="home-module-icon">{{ icon('route') }}</span><h3>Learning strategies {{ icon('arrow-right') }}</h3><p>Train models with offline, incremental, or active learning strategies.</p></a>
         <a href="{{ 'user_guide/hybrid_systems/' | url }}"><span class="home-module-icon">{{ icon('workflow') }}</span><h3>Hybrid simulation {{ icon('arrow-right') }}</h3><p>Integrate continuous dynamics and resolve discrete transitions and resets.</p></a>
-        <a href="{{ 'user_guide/overview/#evaluation-and-integration' | url }}"><span class="home-module-icon">{{ icon('chart-no-axes-combined') }}</span><h3>Evaluation &amp; testing {{ icon('arrow-right') }}</h3><p>Compare predictions with metrics and check model behavior against predicates.</p></a>
+        <a href="{{ 'user_guide/evaluation/' | url }}"><span class="home-module-icon">{{ icon('chart-no-axes-combined') }}</span><h3>Model evaluation {{ icon('arrow-right') }}</h3><p>Compare model predictions against reference data.</p></a>
       </div>
-      <a class="home-text-link" href="{{ 'user_guide/modules/' | url }}">Framework overview {{ icon('arrow-right') }}</a>
+      <a class="home-text-link" href="{{ 'user_guide/modules/' | url }}">Learning components {{ icon('arrow-right') }}</a>
     </section>
 
     <section class="home-research" aria-labelledby="home-research-title">
