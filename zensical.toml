@@ -4,14 +4,15 @@ site_url = "https://flowcean.me/"
 repo_url = "https://github.com/flowcean/flowcean"
 repo_name = "flowcean/flowcean"
 site_dir = "site"
-extra_css = ["stylesheets/extra.css"]
+extra_css = ["stylesheets/extra.css", "stylesheets/home.css"]
 extra_javascript = [
   "javascripts/mathjax.js",
+  "javascripts/home.js",
   "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js",
 ]
 watch = ["src"]
 nav = [
-  { "Flowcean" = "index.md" },
+  { "Home" = "index.md" },
   { "Research Project" = [
     "agenc/index.md",
     { "Use Cases" = "agenc/use_cases.md" },
@@ -99,6 +100,7 @@ nav = [
 ]
 
 [project.theme]
+custom_dir = "overrides"
 variant = "modern"
 language = "en"
 logo = "assets/logo_blue.svg"

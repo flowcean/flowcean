@@ -1,0 +1,122 @@
+{% extends "main.html" %}
+{% macro icon(name) -%}<span class="home-icon" aria-hidden="true">{% include ".icons/lucide/" ~ name ~ ".svg" %}</span>{%- endmacro %}
+
+{% block container %}
+<div class="md-content" data-md-component="content">
+  <div class="flowcean-home" id="__skip" tabindex="-1">
+    <section class="home-hero" aria-labelledby="home-title">
+      <div class="home-intro">
+        <p class="home-eyebrow"><span></span> Open-source research framework</p>
+        <h1 id="home-title">Model how <br>systems behave.</h1>
+        <p class="home-lead">A Python framework for learning, simulating, and evaluating models of cyber-physical systems.</p>
+        <div class="home-actions">
+          <a class="home-button home-button-primary" href="{{ 'getting_started/installation/' | url }}">Installation {{ icon('arrow-right') }}</a>
+          <a class="home-button home-button-secondary" href="{{ 'user_guide/overview/' | url }}">User guide {{ icon('arrow-right') }}</a>
+        </div>
+        <div class="home-install">
+          <span class="home-install-caption">Install from PyPI</span>
+          <div class="home-install-command"><span class="home-prompt" aria-hidden="true">$</span><code>pip install flowcean</code>
+            <button type="button" class="home-copy" aria-label="Copy installation command" disabled>{{ icon('copy') }}</button>
+          </div>
+          <span class="home-copy-status" role="status"></span>
+        </div>
+      </div>
+
+      <figure class="home-experiment" data-source="{{ 'assets/landing/thermostat.json' | url }}" data-mode="heating" aria-labelledby="experiment-title">
+        <div class="home-instrument-header">
+          <div><span class="home-figure-number">Hybrid system example</span><h2 id="experiment-title">Thermostat <span>/ simulation</span></h2></div>
+          <button class="home-play" type="button" aria-label="Play simulation replay" disabled><span class="home-play-icon home-play-when-paused">{{ icon('play') }}</span><span class="home-play-icon home-play-when-playing">{{ icon('pause') }}</span><span class="home-play-label">Play</span></button>
+        </div>
+        <div class="home-instrument-body">
+          <div class="home-reading">
+            <div class="home-temperature-label">System temperature</div>
+            <div class="home-temperature"><span data-temperature>20.00</span><span class="home-unit">°C</span></div>
+            <div class="home-current-mode"><span class="home-mode-dot"></span><span data-mode-label>Heating</span><span class="home-mode-detail"> / active mode</span></div>
+            <svg class="home-gauge" viewBox="0 0 230 56" aria-hidden="true">
+              <path class="home-gauge-track" d="M8 15H222"/><path class="home-gauge-range" d="M79.33 15H222"/>
+              <path class="home-gauge-ticks" d="M8 10V20 M79.33 10V20 M150.67 10V20 M222 10V20"/>
+              <circle data-gauge cx="8" cy="15" r="5"/>
+              <text x="8" y="44" text-anchor="middle">20</text><text x="79.33" y="44" text-anchor="middle">21</text><text x="150.67" y="44" text-anchor="middle">22</text><text x="222" y="44" text-anchor="middle">23</text>
+            </svg>
+          </div>
+          <svg class="home-modes" viewBox="0 0 250 180" role="img" aria-label="Thermostat modes: heating switches to cooling at 23 degrees Celsius; cooling switches to heating at 21 degrees Celsius.">
+            <defs><marker id="home-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1 1L7 4L1 7" fill="none" stroke="currentColor" stroke-width="1.2"/></marker></defs>
+            <path class="home-mode-arrow" d="M62 70V42Q62 30 74 30H179Q191 30 191 42V70" marker-end="url(#home-arrow)"/>
+            <path class="home-mode-arrow" d="M191 110V138Q191 150 179 150H74Q62 150 62 138V110" marker-end="url(#home-arrow)"/>
+            <rect class="home-threshold-bg" x="90" y="17" width="72" height="25"/><text x="126" y="34" text-anchor="middle">T ≥ 23°C</text>
+            <rect class="home-threshold-bg" x="90" y="137" width="72" height="25"/><text x="126" y="154" text-anchor="middle">T ≤ 21°C</text>
+            <g class="home-node home-node-heating"><rect x="11" y="70" width="102" height="40" rx="20"/><text x="62" y="94" text-anchor="middle">HEATING</text></g>
+            <g class="home-node home-node-cooling"><rect x="140" y="70" width="102" height="40" rx="20"/><text x="191" y="94" text-anchor="middle">COOLING</text></g>
+          </svg>
+        </div>
+        <div class="home-plot-heading"><span><i></i> Simulated temperature</span><span class="home-target-legend"><i></i> Target 22°C</span></div>
+        <svg class="home-plot" viewBox="0 0 560 215" role="img" aria-labelledby="home-plot-title home-plot-description">
+          <title id="home-plot-title">Thermostat simulation trace</title>
+          <desc id="home-plot-description">Temperature begins at 20 degrees Celsius and cycles between heating at 21 and cooling at 23 around a 22-degree target. Five mode transitions occur over 12 model-time units.</desc>
+          <g class="home-plot-grid"><path d="M38 30H540 M38 76.67H540 M38 123.33H540 M38 170H540 M38 30V170 M163.5 30V170 M289 30V170 M414.5 30V170 M540 30V170"/></g>
+          <path class="home-target-line" d="M38 76.67H540"/>
+          <g class="home-plot-labels"><text x="25" y="34" text-anchor="end">23°</text><text x="25" y="80.67" text-anchor="end">22°</text><text x="25" y="127.33" text-anchor="end">21°</text><text x="25" y="174" text-anchor="end">20°</text><text x="38" y="194" text-anchor="middle">0</text><text x="163.5" y="194" text-anchor="middle">3</text><text x="289" y="194" text-anchor="middle">6</text><text x="414.5" y="194" text-anchor="middle">9</text><text x="540" y="194" text-anchor="middle">12</text></g>
+          {# Coordinates are derived from assets/landing/thermostat.json, including event extrema. #}
+          <polyline class="home-trace" points="38.00,170.00 40.09,158.42 42.18,147.01 44.27,135.78 46.37,124.71 48.46,113.80 50.55,103.06 52.64,92.47 54.73,82.05 56.83,71.78 58.92,61.66 61.01,51.70 63.10,41.88 65.19,32.20 65.67,30.00 67.28,31.61 69.38,33.67 71.47,35.70 73.56,37.70 75.65,39.67 77.74,41.61 79.83,43.52 81.93,45.40 84.02,47.26 86.11,49.08 88.20,50.88 90.29,52.66 92.38,54.40 94.47,56.13 96.57,57.82 98.66,59.49 100.75,61.14 102.84,62.76 104.93,64.35 107.02,65.93 109.12,67.48 111.21,69.00 113.30,70.51 115.39,71.99 117.48,73.45 119.58,74.88 121.67,76.30 123.76,77.70 125.85,79.07 127.94,80.42 130.03,81.76 132.12,83.07 134.22,84.37 136.31,85.64 138.40,86.90 140.49,88.13 142.58,89.35 144.68,90.55 146.77,91.74 148.86,92.90 150.95,94.05 153.04,95.18 155.13,96.29 157.23,97.39 159.32,98.47 161.41,99.54 163.50,100.59 165.59,101.62 167.68,102.64 169.78,103.64 171.87,104.63 173.96,105.60 176.05,106.56 178.14,107.50 180.23,108.43 182.33,109.35 184.42,110.25 186.51,111.14 188.60,112.02 190.69,112.88 192.78,113.73 194.88,114.57 196.97,115.40 199.06,116.21 201.15,117.01 203.24,117.80 205.33,118.58 207.42,119.34 209.52,120.10 211.61,120.84 213.70,121.57 215.79,122.29 217.88,123.00 218.87,123.33 219.97,117.55 222.07,106.75 224.16,96.12 226.25,85.64 228.34,75.31 230.43,65.14 232.53,55.13 234.62,45.26 236.71,35.53 237.91,30.00 238.80,30.89 240.89,32.96 242.98,35.00 245.08,37.01 247.17,38.99 249.26,40.94 251.35,42.86 253.44,44.75 255.53,46.62 257.62,48.46 259.72,50.26 261.81,52.05 263.90,53.80 265.99,55.53 268.08,57.24 270.17,58.92 272.27,60.57 274.36,62.20 276.45,63.80 278.54,65.39 280.63,66.94 282.73,68.48 284.82,69.99 286.91,71.48 289.00,72.94 291.09,74.39 293.18,75.81 295.28,77.22 297.37,78.60 299.46,79.96 301.55,81.30 303.64,82.62 305.73,83.92 307.82,85.20 309.92,86.46 312.01,87.71 314.10,88.93 316.19,90.14 318.28,91.33 320.38,92.50 322.47,93.65 324.56,94.79 326.65,95.91 328.74,97.01 330.83,98.10 332.93,99.17 335.02,100.22 337.11,101.26 339.20,102.29 341.29,103.29 343.38,104.29 345.47,105.27 347.57,106.23 349.66,107.18 351.75,108.11 353.84,109.04 355.93,109.94 358.03,110.84 360.12,111.72 362.21,112.59 364.30,113.44 366.39,114.28 368.48,115.11 370.57,115.93 372.67,116.73 374.76,117.53 376.85,118.31 378.94,119.08 381.03,119.84 383.12,120.58 385.22,121.32 387.31,122.04 389.40,122.76 391.11,123.33 391.49,121.33 393.58,110.47 395.68,99.78 397.77,89.24 399.86,78.87 401.95,68.64 404.04,58.57 406.13,48.65 408.22,38.88 410.15,30.00 410.32,30.16 412.41,32.25 414.50,34.30 416.59,36.32 418.68,38.31 420.78,40.27 422.87,42.20 424.96,44.10 427.05,45.98 429.14,47.82 431.23,49.64 433.32,51.43 435.42,53.20 437.51,54.94 439.60,56.65 441.69,58.34 443.78,60.00 445.88,61.64 447.97,63.25 450.06,64.84 452.15,66.41 454.24,67.95 456.33,69.47 458.43,70.97 460.52,72.44 462.61,73.89 464.70,75.32 466.79,76.73 468.88,78.12 470.97,79.49 473.07,80.84 475.16,82.16 477.25,83.47 479.34,84.76 481.43,86.03 483.53,87.28 485.62,88.51 487.71,89.72 489.80,90.92 491.89,92.10 493.98,93.26 496.07,94.40 498.17,95.52 500.26,96.63 502.35,97.73 504.44,98.80 506.53,99.86 508.62,100.91 510.72,101.93 512.81,102.95 514.90,103.95 516.99,104.93 519.08,105.90 521.17,106.85 523.27,107.79 525.36,108.72 527.45,109.63 529.54,110.53 531.63,111.42 533.72,112.29 535.82,113.15 537.91,113.99 540.00,114.83"/>
+          <path class="home-cursor" data-cursor d="M38 24V174"/>
+          <circle class="home-current-point" data-point cx="38" cy="170" r="4.5"/>
+        </svg>
+        <div class="home-time-row"><span>t = <span data-time>0.00</span> <span class="home-muted">/ 12.00</span></span><span>model time</span></div>
+        <figcaption><span class="home-replay-status">Precomputed Flowcean simulation</span><a href="{{ 'examples/hybrid_systems/' | url }}">Benchmark gallery {{ icon('arrow-right') }}</a></figcaption>
+        <noscript><p class="home-static-note">Static trace shown. Enable JavaScript to replay.</p></noscript>
+      </figure>
+    </section>
+
+    <section class="home-paths" aria-labelledby="home-paths-title">
+      <div class="home-section-heading"><p class="home-eyebrow">Modeling approaches</p><h2 id="home-paths-title">Data-driven and<br>explicit models.</h2></div>
+      <a class="home-path" href="{{ 'user_guide/learning_strategies/' | url }}"><h3>Data-driven learning {{ icon('arrow-right') }}</h3><p>Train models from recorded datasets, incremental streams, or interactions with an active environment.</p><span class="home-text-link">Learning strategies</span></a>
+      <a class="home-path" href="{{ 'user_guide/hybrid_systems/' | url }}"><h3>Hybrid-system modeling {{ icon('arrow-right') }}</h3><p>Specify continuous dynamics, event surfaces, and resets, then simulate the resulting hybrid system.</p><span class="home-text-link">Hybrid systems guide</span></a>
+    </section>
+
+    <section class="home-code-section" aria-labelledby="home-code-title">
+      <div class="home-code-copy">
+        <p class="home-eyebrow">Python API</p>
+        <h2 id="home-code-title">Simulate a built-in system.</h2>
+        <p class="home-section-intro"><code>thermostat()</code> creates a benchmark system. <code>simulate()</code> runs it with an input signal and returns a <code>Trace</code> containing the state history, active modes, and transition events.</p>
+        <a class="home-text-link" href="{{ 'reference/hybrid/#flowcean.hybrid.simulate' | url }}">Simulation API {{ icon('arrow-right') }}</a>
+      </div>
+      <div class="home-code-window"><div class="home-code-header"><span>thermostat.py</span><span>Python</span></div><pre><code><span class="home-code-keyword">import</span> numpy <span class="home-code-keyword">as</span> np
+<span class="home-code-keyword">from</span> flowcean.hybrid <span class="home-code-keyword">import</span> simulate
+<span class="home-code-keyword">from</span> flowcean.hybrid.benchmarks <span class="home-code-keyword">import</span> thermostat
+
+trace = simulate(
+    thermostat(),
+    t_span=(<span class="home-code-number">0.0</span>, <span class="home-code-number">12.0</span>),
+    input_stream=<span class="home-code-keyword">lambda</span> _t: np.array([<span class="home-code-number">22.0</span>]),
+    sample_dt=<span class="home-code-number">0.05</span>,
+)</code></pre></div>
+    </section>
+
+    <section class="home-toolkit" aria-labelledby="home-toolkit-title">
+      <div class="home-toolkit-heading">
+        <p class="home-eyebrow">Framework components</p>
+        <h2 id="home-toolkit-title">Modeling and evaluation.</h2>
+        <p class="home-section-intro">Environments supply data, transforms prepare it, learning strategies train models, and metrics evaluate their behavior.</p>
+      </div>
+      <div class="home-module-grid">
+        <a href="{{ 'user_guide/environment/' | url }}"><span class="home-module-icon">{{ icon('database') }}</span><h3>Environments &amp; transforms {{ icon('arrow-right') }}</h3><p>Load datasets or streams and apply reusable preprocessing steps.</p></a>
+        <a href="{{ 'user_guide/learning_strategies/' | url }}"><span class="home-module-icon">{{ icon('route') }}</span><h3>Learning strategies {{ icon('arrow-right') }}</h3><p>Train models with offline, incremental, or active learning strategies.</p></a>
+        <a href="{{ 'user_guide/hybrid_systems/' | url }}"><span class="home-module-icon">{{ icon('workflow') }}</span><h3>Hybrid simulation {{ icon('arrow-right') }}</h3><p>Integrate continuous dynamics and resolve discrete transitions and resets.</p></a>
+        <a href="{{ 'user_guide/overview/#evaluation-and-integration' | url }}"><span class="home-module-icon">{{ icon('chart-no-axes-combined') }}</span><h3>Evaluation &amp; testing {{ icon('arrow-right') }}</h3><p>Compare predictions with metrics and check model behavior against predicates.</p></a>
+      </div>
+      <a class="home-text-link" href="{{ 'user_guide/modules/' | url }}">Framework overview {{ icon('arrow-right') }}</a>
+    </section>
+
+    <section class="home-research" aria-labelledby="home-research-title">
+      <div>
+        <p class="home-eyebrow">Research</p>
+        <h2 id="home-research-title">Project and publications.</h2>
+        <p class="home-section-intro">Flowcean was developed as part of the AGenC research project on automatic model generation for cyber-physical systems.</p>
+        <a class="home-text-link" href="{{ 'agenc/' | url }}">AGenC research project {{ icon('arrow-right') }}</a>
+      </div>
+      <ol class="home-citations"><li><span>ETFA / 2023</span><p><a href="https://doi.org/10.1109/ETFA54631.2023.10275706">Towards the Automatic Generation of Models for Prediction, Monitoring, and Testing of Cyber-Physical Systems {{ icon('arrow-up-right') }}</a></p><small>IEEE International Conference on Emerging Technologies and Factory Automation</small></li><li><span>AIABI at AIxIA / 2024</span><p><a href="https://arxiv.org/abs/2603.12015">Flowcean - Model Learning for Cyber-Physical Systems {{ icon('arrow-up-right') }}</a></p><small>Italian Workshop on Artificial Intelligence and Applications for Business and Industries · ArXiv abs/2603.12015</small></li></ol>
+    </section>
+    <div class="home-funding"><div><img src="{{ 'assets/BMBF-light.svg' | url }}#only-light" alt="BMBF" loading="lazy"><img src="{{ 'assets/BMBF-dark.svg' | url }}#only-dark" alt="BMBF" loading="lazy"></div><p>This work has been funded by<br>BMBF project AGenC no. 16IS22047A.</p><a href="{{ 'impressum/' | url }}">Impressum {{ icon('arrow-right') }}</a></div>
+  </div>
+</div>
+{% endblock %}
