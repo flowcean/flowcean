@@ -53,3 +53,48 @@
     height: 2.4rem;
     width: 2.4rem;
 }
+
+.md-typeset .hybrid-figure {
+    margin: 1.5em 0;
+    overflow: hidden;
+    border: 1px solid var(--md-typeset-table-color);
+    border-radius: 0.45rem;
+    background: var(--md-default-bg-color);
+    text-align: center;
+}
+
+.hybrid-figure > a {
+    display: block;
+    line-height: 0;
+}
+
+.hybrid-figure a:focus-visible {
+    outline: 2px solid var(--md-accent-fg-color);
+    outline-offset: -3px;
+}
+
+.hybrid-figure img {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.hybrid-automaton img {
+    box-sizing: border-box;
+    width: auto;
+    max-width: 100%;
+    max-height: 24rem;
+    padding: 0.7rem;
+}
+
+.md-typeset .hybrid-figure figcaption {
+    max-width: none;
+    margin: 0;
+    padding: 0.8rem 1rem;
+    border-top: 1px solid var(--md-typeset-table-color);
+    color: var(--md-default-fg-color--light);
+    font-size: 0.75rem;
+    line-height: 1.55;
+    text-align: left;
+}

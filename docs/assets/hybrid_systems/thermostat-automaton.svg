@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="346" viewBox="0 0 740 346" role="img" aria-labelledby="title description">
+  <title id="title">Thermostat: heating and cooling</title>
+  <desc id="description">The system starts in heating. Crossing the upper target-band boundary switches to cooling; crossing the lower boundary switches back to heating. Both modes lose heat to the surroundings. Temperature is continuous at each switch, with no reset.</desc>
+  <style>
+    :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+    }
+    svg { background: var(--background); fill: var(--foreground); }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subtitle, .note { font-size: 15px; }
+    .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+    .mode-name { font-size: 21px; font-weight: 700; }
+    .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <rect width="740" height="346" fill="var(--background)"/>
+  <text class="heading" x="28" y="36">Thermostat</text>
+  <text class="subtitle" x="28" y="61">A target band separates the two switching boundaries.</text>
+  <text x="370" y="96" text-anchor="middle">Upper boundary crossed upward</text>
+  <path class="arrow" d="M 196 139 V 111 H 544 V 139"/>
+  <path class="arrow" d="M 24 189 H 76"/>
+  <text class="note" x="24" y="174">Start</text>
+  <g style="color: #b75c12">
+    <rect class="mode" x="76" y="139" width="240" height="100" rx="12"/>
+    <text class="mode-name" x="196" y="173" text-anchor="middle">Heating</text>
+    <text x="196" y="199" text-anchor="middle">Heater on</text>
+    <text x="196" y="222" text-anchor="middle">Heat loss to surroundings</text>
+  </g>
+  <g style="color: #167f92">
+    <rect class="mode" x="424" y="139" width="240" height="100" rx="12"/>
+    <text class="mode-name" x="544" y="173" text-anchor="middle">Cooling</text>
+    <text x="544" y="199" text-anchor="middle">Heater off</text>
+    <text x="544" y="222" text-anchor="middle">Heat loss to surroundings</text>
+  </g>
+  <path class="arrow" d="M 544 239 V 271 H 196 V 239"/>
+  <text x="370" y="296" text-anchor="middle">Lower boundary crossed downward</text>
+  <text class="note" x="370" y="327" text-anchor="middle">No temperature reset: only the heating rule changes.</text>
+</svg>

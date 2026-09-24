@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="496" viewBox="0 0 740 496" role="img" aria-labelledby="title description">
+  <title id="title">Wind turbine: five speed-dependent operating modes</title>
+  <desc id="description">The initial mode is No generation. A bidirectional chain connects No generation, Gradual generation, Below rated power, Approaching rated power, and Rated power, in that order. The chain folds from the top row down to the bottom right and then left; it is not a cycle. Solid arrows follow rising generator speed across an upper switching boundary. Dashed arrows return on falling generator speed across a lower boundary. Each adjacent pair has separate boundaries, giving hysteresis. The modes select zero torque, a linear torque ramp, torque quadratic in generator speed, a linear torque ramp, and constant mechanical shaft power, respectively.</desc>
+  <style>
+    :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+    }
+    svg { background: var(--background); fill: var(--foreground); }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subtitle, .note, .law { font-size: 15px; }
+    .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+    .mode-name { font-size: 18px; font-weight: 700; }
+    .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+    .falling { stroke-dasharray: 5 4; }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <rect width="740" height="496" fill="var(--background)"/>
+  <text class="heading" x="28" y="36">Wind turbine operating modes</text>
+  <text class="subtitle" x="28" y="61">Generator-speed switching selects the torque law.</text>
+  <path class="arrow" d="M 30 88 H 78"/>
+  <text class="note" x="92" y="93">Rising generator speed: cross the upper boundary</text>
+  <path class="arrow falling" d="M 78 113 H 30"/>
+  <text class="note" x="92" y="118">Falling generator speed: cross the lower boundary</text>
+  <path class="arrow" d="M 140 132 V 158"/>
+  <text class="note" x="154" y="147">Start</text>
+  <g style="color: #9a4b21">
+    <rect class="mode" x="48" y="158" width="184" height="106" rx="12"/>
+    <text class="mode-name" x="140" y="199" text-anchor="middle">No generation</text>
+    <text class="law" x="140" y="240" text-anchor="middle">Zero torque</text>
+  </g>
+  <path class="arrow" d="M 232 195 H 280"/>
+  <path class="arrow falling" d="M 280 231 H 232"/>
+  <g style="color: #9a6c04">
+    <rect class="mode" x="280" y="158" width="184" height="106" rx="12"/>
+    <text class="mode-name" x="372" y="188" text-anchor="middle">Gradual</text>
+    <text class="mode-name" x="372" y="210" text-anchor="middle">generation</text>
+    <text class="law" x="372" y="240" text-anchor="middle">Linear torque ramp</text>
+  </g>
+  <path class="arrow" d="M 464 195 H 512"/>
+  <path class="arrow falling" d="M 512 231 H 464"/>
+  <g style="color: #237d72">
+    <rect class="mode" x="512" y="158" width="184" height="106" rx="12"/>
+    <text class="mode-name" x="604" y="186" text-anchor="middle">Below rated power</text>
+    <text class="law" x="604" y="221" text-anchor="middle">Torque quadratic</text>
+    <text class="law" x="604" y="242" text-anchor="middle">in generator speed</text>
+  </g>
+  <path class="arrow" d="M 564 264 V 346"/>
+  <path class="arrow falling" d="M 644 346 V 264"/>
+  <g style="color: #7253ad">
+    <rect class="mode" x="512" y="346" width="184" height="106" rx="12"/>
+    <text class="mode-name" x="604" y="376" text-anchor="middle">Approaching</text>
+    <text class="mode-name" x="604" y="398" text-anchor="middle">rated power</text>
+    <text class="law" x="604" y="428" text-anchor="middle">Linear torque ramp</text>
+  </g>
+  <path class="arrow" d="M 512 383 H 464"/>
+  <path class="arrow falling" d="M 464 419 H 512"/>
+  <g style="color: #b03860">
+    <rect class="mode" x="280" y="346" width="184" height="106" rx="12"/>
+    <text class="mode-name" x="372" y="379" text-anchor="middle">Rated power</text>
+    <text class="law" x="372" y="407" text-anchor="middle">Constant mechanical</text>
+    <text class="law" x="372" y="428" text-anchor="middle">shaft power</text>
+  </g>
+  <text class="note" x="370" y="478" text-anchor="middle">Each adjacent pair has separate switching boundaries: hysteresis.</text>
+</svg>

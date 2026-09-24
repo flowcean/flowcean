@@ -6,7 +6,58 @@ icon: lucide/workflow
 
 Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete mode as a location, evolves a continuous state according to that location's dynamics, and changes locations when event surfaces trigger transitions.
 
-Use `flowcean.hybrid` for hybrid-system definition, automaton diagrams, simulation, traces, and plotting. Reusable systems are in `flowcean.hybrid.benchmarks`; HyDRA identification is in `flowcean.hybrid.hydra`:
+Use `flowcean.hybrid` to define and simulate models, and [`flowcean.hybrid.benchmarks`](../reference/hybrid.md#flowcean.hybrid.benchmarks) for reusable systems. Start with a simulation below, follow the [minimal example](../examples/hs_simple.md) to construct a model from locations and transitions, or compare systems in the [benchmark gallery](../examples/hybrid_systems.md).
+
+## Read a Hybrid Model
+
+The [thermostat benchmark](../examples/hybrid_systems.md#thermostat) has one continuous state, temperature, and two discrete locations, `heating` and `cooling`. Each location defines a different rate of temperature change. The target-temperature input sets a pair of switching thresholds: crossing one changes the active location without resetting the temperature.
+
+<figure class="hybrid-figure hybrid-automaton" markdown="span">
+
+[![Thermostat with heating and cooling locations, switching at the upper and lower target-band boundaries.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="_blank" rel="noopener" }
+
+<figcaption>Boxes represent locations; arrows represent transitions. The incoming arrow marks the initial location. Open a figure to inspect it at full size.</figcaption>
+
+</figure>
+
+Other systems also change the continuous state at a transition. For example, a [bouncing ball](../examples/hybrid_systems.md#bouncing-ball) reverses and reduces its velocity at impact through a reset, while remaining in the same flight location.
+
+## Simulation
+
+Create a system and supply a time span and input signal. This example runs the [thermostat](../examples/hybrid_systems.md#thermostat) with a slowly varying target temperature:
+
+```python
+import numpy as np
+
+from flowcean.hybrid import simulate
+from flowcean.hybrid.benchmarks import thermostat
+
+system = thermostat()
+trace = simulate(
+    system,
+    t_span=(0.0, 10.0),
+    input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
+    sample_dt=0.02,
+)
+```
+
+The returned `Trace` contains sample times, continuous states, active location labels, and transition events.
+
+<figure class="hybrid-figure" markdown="span">
+
+[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="_blank" rel="noopener" }
+
+<figcaption>Temperature remains continuous when the mode changes, but its derivative changes. Shading identifies the active location.</figcaption>
+
+</figure>
+
+The simulator also accepts initial-state and initial-location overrides, solver tolerances, and an event limit. Set `capture_derivatives=True` when a workflow needs state derivatives, and use `trace_to_polars` to prepare tabular state, input, and derivative columns for identification or evaluation.
+
+See the [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) for the complete signature. The sections below explain model construction and the precise meaning of events, samples, and transition boundaries.
+
+## Model and Continuous Evolution
+
+The objects used to construct a model are available from `flowcean.hybrid`:
 
 ```python
 from flowcean.hybrid import (
@@ -18,11 +69,8 @@ from flowcean.hybrid import (
     Reset,
     SurfaceEntryPolicy,
     Transition,
-    simulate,
 )
 ```
-
-## Model and Continuous Evolution
 
 A `HybridSystem` contains locations, transitions, an initial location, an initial continuous state, and global parameters. Exactly one location is active at each point in the simulation. A same-time transition chain may visit several locations at one physical time, ordered by microsteps. Between transitions, the active location's `ContinuousDynamics` callback returns the derivative of the continuous state.
 
@@ -140,23 +188,6 @@ A fixed sampling grid is not expanded with off-grid transition times. Those tran
 
 When an input stream is supplied, inputs are captured by default unless `capture_inputs=False` is selected. Setting `capture_derivatives=True` reevaluates the active location's dynamics at each returned sample. At a transition boundary, the derivative therefore uses the final target location and post-transition state. Derivative capture assumes that flow callbacks are pure under repeated evaluation.
 
-## Simulation
-
-Construct a `HybridSystem`, then call `simulate` with a physical time span and optional sampling configuration:
-
-```python
-trace = simulate(
-    system,
-    t_span=(0.0, 10.0),
-    sample_dt=0.05,
-    capture_derivatives=True,
-)
-```
-
-The simulator also accepts input streams, initial-state and initial-location overrides, solver tolerances, and an event limit. Use `trace_to_polars` when identification or evaluation needs tabular state, input, and derivative columns.
-
-See the [`flowcean.hybrid` API](../reference/hybrid.md) for model and trace types, the [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) for reusable systems, and the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification. The [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) has complete function signatures.
-
 ## Plotting Locations
 
 Use `plot_trace` for state trajectories, or add location shading to your own time-series plots with `plot_locations`:
@@ -169,7 +200,7 @@ from flowcean.hybrid import plot_locations
 fig, ax = plt.subplots()
 ax.plot(trace.t, trace.x[:, 0], color="black", label="x0")
 plot_locations(trace, ax=ax)
-ax.set_xlabel("Time (s)")
+ax.set_xlabel("Time")
 ax.legend()
 ```
 
@@ -179,21 +210,8 @@ Shading spans the trace's first to last sample and follows recorded transition t
 
 ## Benchmarks and Identification
 
-Reusable systems are available from `flowcean.hybrid.benchmarks`:
-
-```python
-import numpy as np
-
-from flowcean.hybrid import simulate
-from flowcean.hybrid.benchmarks import thermostat
-
-trace = simulate(
-    thermostat(),
-    t_span=(0.0, 10.0),
-    input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
-)
-```
+The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hysteresis, and resets in reusable models. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
-Start with the [minimal hybrid system](../examples/hs_simple.md), browse the [hybrid systems gallery](../examples/hybrid_systems.md), and then run the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow.
+Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trace types.
