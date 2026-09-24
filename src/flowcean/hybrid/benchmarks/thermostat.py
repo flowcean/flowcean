@@ -12,7 +12,6 @@ from ..hybrid_system import (
     Parameters,
     Transition,
 )
-from ._inputs import _input_vector
 
 
 def thermostat(
@@ -72,9 +71,7 @@ def thermostat(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        target = float(
-            _input_vector(t, input_stream, size=1, label="target")[0]
-        )
+        (target,) = input_stream(t)
         return state[0] - (target + 0.5 * params["hysteresis"])
 
     def event_surface_low(
@@ -83,9 +80,7 @@ def thermostat(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        target = float(
-            _input_vector(t, input_stream, size=1, label="target")[0]
-        )
+        (target,) = input_stream(t)
         return state[0] - (target - 0.5 * params["hysteresis"])
 
     heating_dynamics = ContinuousDynamics(heating, label="heating")

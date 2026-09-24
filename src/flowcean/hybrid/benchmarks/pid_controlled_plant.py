@@ -13,7 +13,6 @@ from ..hybrid_system import (
     SurfaceEntryPolicy,
     Transition,
 )
-from ._inputs import _input_vector
 
 
 def _control_unclamped(
@@ -40,9 +39,7 @@ def _plant_flow(
     *,
     clamp: float | None,
 ) -> np.ndarray:
-    reference, reference_rate = _input_vector(
-        t, input_stream, size=2, label="PID reference"
-    )
+    reference, reference_rate = input_stream(t)
     position, velocity, _integral = state
     u_raw = _control_unclamped(state, params, reference, reference_rate)
     u = u_raw if clamp is None else clamp
@@ -84,9 +81,7 @@ def _event_surface_high(
     params: Parameters,
     input_stream: InputStream,
 ) -> float:
-    reference, reference_rate = _input_vector(
-        t, input_stream, size=2, label="PID reference"
-    )
+    reference, reference_rate = input_stream(t)
     return (
         _control_unclamped(state, params, reference, reference_rate)
         - params["u_max"]
@@ -99,9 +94,7 @@ def _event_surface_low(
     params: Parameters,
     input_stream: InputStream,
 ) -> float:
-    reference, reference_rate = _input_vector(
-        t, input_stream, size=2, label="PID reference"
-    )
+    reference, reference_rate = input_stream(t)
     return (
         _control_unclamped(state, params, reference, reference_rate)
         - params["u_min"]

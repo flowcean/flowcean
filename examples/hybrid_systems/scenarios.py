@@ -36,23 +36,23 @@ class Scenario:
     input_stream: InputStream | None = None
 
 
-def _target(t: float) -> np.ndarray:
+def thermostat_target_temperature(t: float) -> np.ndarray:
     return np.array([22.0 + 0.8 * np.sin(0.7 * t)])
 
 
-def _impact_force(t: float) -> np.ndarray:
+def impact_force(t: float) -> np.ndarray:
     return np.array([0.5 * np.sin(1.5 * t) + 0.2 * np.sin(0.2 * t)])
 
 
-def _threshold(t: float) -> np.ndarray:
+def event_surface_threshold(t: float) -> np.ndarray:
     return np.array([0.5 * np.sin(t) + 0.15 * np.sin(2.3 * t)])
 
 
-def _pid_reference(t: float) -> np.ndarray:
+def pid_reference_and_rate(t: float) -> np.ndarray:
     return np.array([2.0 * np.sin(t), 2.0 * np.cos(t)])
 
 
-def _wind(t: float) -> np.ndarray:
+def wind_speed(t: float) -> np.ndarray:
     return np.array([11.0 - 4.0 * np.cos(2.0 * np.pi * t / 120.0)])
 
 
@@ -64,7 +64,7 @@ WIND_TURBINE = Scenario(
         "Running turbine with five torque-control regimes and pitch control."
     ),
     t_span=(0.0, 120.0),
-    input_stream=_wind,
+    input_stream=wind_speed,
 )
 
 SCENARIOS = (
@@ -81,7 +81,7 @@ SCENARIOS = (
         ("hysteresis", "threshold", "switching"),
         "Two-location thermostat with temperature thresholds.",
         (0.0, 10.0),
-        _target,
+        thermostat_target_temperature,
     ),
     Scenario(
         "Hybrid Oscillator",
@@ -110,7 +110,7 @@ SCENARIOS = (
         ("time", "event-surface", "switching"),
         "Time-varying event surface induces switching.",
         (0.0, 20.0),
-        _threshold,
+        event_surface_threshold,
     ),
     Scenario(
         "Time-Forced Switch",
@@ -132,7 +132,7 @@ SCENARIOS = (
         ("impact", "time", "reset"),
         "Oscillator with periodic forcing and impacts.",
         (0.0, 20.0),
-        _impact_force,
+        impact_force,
     ),
     Scenario(
         "PID-Controlled Plant",
@@ -140,7 +140,7 @@ SCENARIOS = (
         ("control", "pid", "saturation"),
         "PID-controlled plant with actuator saturation.",
         (0.0, 20.0),
-        _pid_reference,
+        pid_reference_and_rate,
     ),
     Scenario(
         "Tank Valves",

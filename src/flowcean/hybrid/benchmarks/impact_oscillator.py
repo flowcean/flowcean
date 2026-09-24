@@ -14,7 +14,6 @@ from ..hybrid_system import (
     SurfaceEntryPolicy,
     Transition,
 )
-from ._inputs import _input_vector
 
 
 def impact_oscillator(
@@ -45,7 +44,7 @@ def impact_oscillator(
         input_stream: InputStream,
     ) -> np.ndarray:
         position, velocity = state
-        force = _input_vector(t, input_stream, size=1, label="force")[0]
+        (force,) = input_stream(t)
         accel = (
             -params["stiffness"] * position
             - params["damping"] * velocity

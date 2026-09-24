@@ -19,7 +19,6 @@ from ..hybrid_system import (
     Trace,
     Transition,
 )
-from ._inputs import _input_vector
 from ._wind_turbine_aerodynamics import aerodynamic_coefficients
 
 _SPEED_BOUNDARIES = (70.16224, 91.21091, 119.013772, 121.6805)
@@ -104,10 +103,16 @@ def _initial_state(state: Sequence[float] | np.ndarray | None) -> np.ndarray:
 
 
 def _wind_speed(t: float, input_stream: InputStream) -> float:
-    wind = float(_input_vector(t, input_stream, size=1, label="wind")[0])
-    if wind <= 0:
+    raw = input_stream(t)
+    try:
+        wind = np.asarray(raw, dtype=float)
+    except (TypeError, ValueError) as error:
+        raise ValueError(
+            "wind input must be one finite positive component"
+        ) from error
+    if wind.shape != (1,) or not np.isfinite(wind[0]) or wind[0] <= 0:
         raise ValueError("wind input must be one finite positive component")
-    return wind
+    return float(wind[0])
 
 
 def wind_turbine(

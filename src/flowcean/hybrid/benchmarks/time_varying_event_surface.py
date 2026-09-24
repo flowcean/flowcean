@@ -12,7 +12,6 @@ from ..hybrid_system import (
     Parameters,
     Transition,
 )
-from ._inputs import _input_vector
 
 
 def time_varying_event_surface(
@@ -71,9 +70,7 @@ def time_varying_event_surface(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        threshold = _input_vector(t, input_stream, size=1, label="threshold")[
-            0
-        ]
+        (threshold,) = input_stream(t)
         return state[0] - (threshold + 0.5 * params["hysteresis"])
 
     def event_surface_left(
@@ -82,9 +79,7 @@ def time_varying_event_surface(
         params: Parameters,
         input_stream: InputStream,
     ) -> float:
-        threshold = _input_vector(t, input_stream, size=1, label="threshold")[
-            0
-        ]
+        (threshold,) = input_stream(t)
         return state[0] - (threshold - 0.5 * params["hysteresis"])
 
     left_dynamics = ContinuousDynamics(flow_left, label="left")
