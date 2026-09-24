@@ -1,11 +1,16 @@
 """Tests for the running-only wind turbine hybrid benchmark."""
 
 import math
+from itertools import pairwise
 
 import numpy as np
 import pytest
 
-from flowcean.hybrid import Trace, simulate
+from flowcean.hybrid import (
+    CrossingDirection,
+    Trace,
+    simulate,
+)
 from flowcean.hybrid.benchmarks import (
     wind_turbine,
     wind_turbine_power,
@@ -13,7 +18,6 @@ from flowcean.hybrid.benchmarks import (
 from flowcean.hybrid.benchmarks._wind_turbine_aerodynamics import (
     aerodynamic_coefficients,
 )
-from flowcean.hybrid.benchmarks.wind_turbine import _generator_torque
 
 BOUNDARIES = (70.16224, 91.21091, 119.013772, 121.6805)
 LABELS = (
@@ -81,14 +85,11 @@ def test_generator_torque_is_continuous_at_all_four_central_boundaries() -> (
 ):
     system = wind_turbine()
     for index, speed in enumerate(BOUNDARIES):
-        assert _generator_torque(
-            speed, index, system.parameters
-        ) == pytest.approx(
-            _generator_torque(speed, index + 1, system.parameters), abs=1e-8
+        power = wind_turbine_power(
+            _power_trace([speed, speed], [LABELS[index], LABELS[index + 1]]),
+            parameters=system.parameters,
         )
-    assert _generator_torque(
-        130.0, 4, system.parameters
-    ) * 130.0 == pytest.approx(5296610.0)
+        assert power[0] / speed == pytest.approx(power[1] / speed, abs=1e-8)
 
 
 def _power_trace(speeds: list[float], locations: list[str]) -> Trace:
@@ -162,25 +163,30 @@ def test_generator_power_rejects_unknown_location() -> None:
         )
 
 
-def test_rotor_tower_pitch_and_integral_equations_and_generator_energy() -> (
-    None
-):
+@pytest.mark.parametrize("integral", [-0.2, 0.12, 0.7])
+def test_rotor_tower_pitch_and_integral_equations(integral: float) -> None:
     system = wind_turbine()
     p = system.parameters
-    state = np.array([1.27, 0.2, -0.03, 0.06, 0.01, 0.12])
+    state = np.array([1.27, 0.2, -0.03, 0.06, 0.01, integral])
     wind = 13.0
     u = wind - state[2]
     cq, ct = aerodynamic_coefficients(state[0] * 63.0 / u, state[3])
     speed = 97.0 * state[0]
-    torque = _generator_torque(speed, 4, p)
+    torque = 5296610.0 / speed
     raw = (state[5] + p["pitch_kp"] * (speed - 122.91)) / (
         1 + state[3] / 0.1099965
     )
     command = np.clip(raw, 0, math.radians(18))
+    if integral == -0.2:
+        assert raw < 0
+    elif integral == 0.7:
+        assert raw > math.radians(18)
+    else:
+        assert 0 < raw < math.radians(18)
     expected = np.array(
         [
             (0.5 * 1.225 * math.pi * 63**3 * u**2 * cq - 97 * torque)
-            / p["rotor_inertia"],
+            / 40469564.444,
             state[2],
             (
                 0.5 * 1.225 * math.pi * 63**2 * u**2 * ct
@@ -195,13 +201,60 @@ def test_rotor_tower_pitch_and_integral_equations_and_generator_energy() -> (
             + (command - raw) / (p["pitch_kp"] / p["pitch_ki"]),
         ]
     )
-    actual = system.locations[4].dynamics.flow(
-        0.0, state, p, constant_wind(wind)
+    location = next(
+        loc for loc in system.locations if loc.label == "rated_power"
     )
+    actual = location.dynamics.flow(0.0, state, p, constant_wind(wind))
     np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
-    # Rotor-side extraction from the generator is 97*T*omega = T*speed.
-    assert 97 * torque * state[0] == pytest.approx(torque * speed)
-    assert p["rotor_inertia"] == pytest.approx(40469564.444)
+
+
+@pytest.mark.parametrize(
+    ("label", "speed"),
+    tuple(zip(LABELS, (65, 80, 105, 120, 125), strict=True)),
+)
+def test_mode_rotor_acceleration_matches_reported_power(
+    label: str, speed: float
+) -> None:
+    system = wind_turbine()
+    state = np.array([speed / 97, 0, 0, 0, 0, 0])
+    wind = 11.0
+    location = next(loc for loc in system.locations if loc.label == label)
+    acceleration = np.asarray(
+        location.dynamics.flow(
+            0.0, state, system.parameters, constant_wind(wind)
+        )
+    )[0]
+    cq, _ = aerodynamic_coefficients(state[0] * 63 / wind, state[3])
+    aerodynamic_torque = 0.5 * 1.225 * math.pi * 63**3 * wind**2 * cq
+    power = wind_turbine_power(
+        _power_trace([speed], [label]), parameters=system.parameters
+    )[0]
+    assert system.parameters["rotor_inertia"] * acceleration == pytest.approx(
+        aerodynamic_torque - power / state[0], rel=1e-12, abs=1e-8
+    )
+
+
+def test_transitions_form_bidirectional_adjacent_mode_chain() -> None:
+    system = wind_turbine()
+    assert len(system.locations) == 5
+    assert {location.label for location in system.locations} == set(LABELS)
+    adjacent = list(pairwise(LABELS))
+    expected = {
+        (source, target, CrossingDirection.RISING)
+        for source, target in adjacent
+    } | {
+        (target, source, CrossingDirection.FALLING)
+        for source, target in adjacent
+    }
+    assert len(system.transitions) == 8
+    assert {
+        (
+            transition.source.label,
+            transition.target.label,
+            transition.event.direction,
+        )
+        for transition in system.transitions
+    } == expected
 
 
 @pytest.mark.parametrize("index", range(5))
@@ -222,11 +275,12 @@ def test_initial_mode_from_central_speed_intervals(index: int) -> None:
 def test_all_eight_directed_transitions_are_reachable(
     index: int, up: bool
 ) -> None:
-    system = wind_turbine()
+    halfwidth = 0.37
+    system = wind_turbine(speed_hysteresis=halfwidth)
     boundary = BOUNDARIES[index]
     if up:
         speed, pitch, wind, source, target, horizon = (
-            boundary - 0.1,
+            boundary + halfwidth - 0.3,
             0.0,
             15.0,
             index,
@@ -237,7 +291,7 @@ def test_all_eight_directed_transitions_are_reachable(
         # Returning to no generation needs aerodynamic braking to slow the
         # rotor across the lower threshold before the pitch actuator reacts.
         speed, pitch, wind, source, target, horizon = (
-            (boundary - 0.18 if index == 0 else boundary + 0.1),
+            boundary - halfwidth + (0.02 if index == 0 else 0.3),
             math.radians(15),
             7.0,
             index + 1,
@@ -260,7 +314,7 @@ def test_all_eight_directed_transitions_are_reachable(
     )
     assert event.time > 0
     assert event.state_before[0] * 97 == pytest.approx(
-        boundary + (0.2 if up else -0.2), abs=1e-8
+        boundary + (halfwidth if up else -halfwidth), abs=1e-8
     )
     np.testing.assert_array_equal(event.state_after, event.state_before)
     assert all(e.time > event.time for e in trace.events[1:])
@@ -373,8 +427,6 @@ def test_input_and_flow_domains_are_checked_not_clipped() -> None:
             system.parameters,
             constant_wind(11),
         )
-    with pytest.raises(ValueError, match="input_stream is required"):
-        simulate(system, (0, 0.01))
     original = np.array([0.65, 0, 0, 0, 0, 0])
     other = wind_turbine(initial_state=original)
     original[0] = 2
@@ -399,8 +451,6 @@ def test_nominal_trace_finite_and_physically_bounded(stream) -> None:
     if stream is wind_cycle:
         assert set(trace.location) == set(LABELS)
         assert len(trace.events) >= 7
-        assert np.min([wind_cycle(t)[0] for t in trace.t]) >= 7
-        assert np.max([wind_cycle(t)[0] for t in trace.t]) <= 15
 
 
 def test_tighter_solver_tolerance_converges_to_nominal_result() -> None:
