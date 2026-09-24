@@ -1,3 +1,7 @@
+---
+icon: lucide/flask-conical
+---
+
 # Experiment
 
 An **Experiment** is a structure definition.

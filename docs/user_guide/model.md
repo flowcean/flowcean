@@ -1,3 +1,7 @@
+---
+icon: lucide/brain-circuit
+---
+
 # Model
 
 Models and learners are separated in Flowcean.

@@ -1,3 +1,7 @@
+---
+icon: lucide/database
+---
+
 # Environment
 
 Generally, there are three possible ways to retrieve data from a Cyber-Physical System:

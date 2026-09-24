@@ -1,3 +1,7 @@
+---
+icon: lucide/waves
+---
+
 # River
 
 `flowcean.river` wraps River estimators for incremental learning.

@@ -1,3 +1,7 @@
+---
+icon: lucide/boxes
+---
+
 # Core
 
 `flowcean.core` provides the shared interfaces and learning strategies used across Flowcean.

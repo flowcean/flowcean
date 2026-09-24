@@ -1,3 +1,7 @@
+---
+icon: lucide/sigma
+---
+
 # PySR
 
 `flowcean.pysr` provides symbolic regression through PySR.

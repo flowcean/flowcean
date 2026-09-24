@@ -1,3 +1,7 @@
+---
+icon: lucide/plug
+---
+
 # Adapters
 
 Adapters connect deployed models to data sources and sinks.

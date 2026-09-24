@@ -1,3 +1,7 @@
+---
+icon: lucide/database
+---
+
 # DVC — Data Version Control
 
 DVC is an open-source git-based version control tool to manage data.

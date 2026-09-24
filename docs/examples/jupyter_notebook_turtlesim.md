@@ -1,3 +1,7 @@
+---
+icon: lucide/notebook-pen
+---
+
 # Using Jupyter Notebooks with Flowcean
 
 This example demonstrates how to use Jupyter Notebooks to work with the Flowcean framework.

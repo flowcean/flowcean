@@ -1,3 +1,7 @@
+---
+icon: lucide/wrench
+---
+
 # Tools
 
 After a model has been learned, it should do something useful.

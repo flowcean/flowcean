@@ -1,3 +1,7 @@
+---
+icon: lucide/building-2
+---
+
 # VIVAVIS AG
 
 VIVAVIS AG was merged from the previously affiliated companies EP Systemtechnik, Görlitz AG, IDS GmbH and VIVAVS GmbH on September 9, 2020. Together with other subsidiaries, VIVAVIS develops solutions for the energy industry. The product portfolio includes energy management systems (Berg), geo-information systems (CAIGOS), automation/process control technology (VIVAVIS), smart metering and meter data management (VIVAVIS) as well as grid control/telecontrol technology (VIVAVIS).

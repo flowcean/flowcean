@@ -1,3 +1,7 @@
+---
+icon: lucide/building-2
+---
+
 # Fraunhofer CML
 
 The Fraunhofer-Gesellschaft, based in Germany, is the world's leading organization for applied research.

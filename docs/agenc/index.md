@@ -1,3 +1,7 @@
+---
+icon: lucide/microscope
+---
+
 # Research Project: AGenC
 
 The AGenC project aims to shorten development cycles in the design of cyber-physical systems (CPS) and make their operation safer and more efficient.

@@ -1,0 +1,223 @@
+/* Landing-page styles. Ancestor overrides are deliberately page-scoped. */
+body:has(.flowcean-home) .md-main__inner { max-width: 1320px; margin-top: 0; }
+body:has(.flowcean-home) .md-content { min-width: 0; }
+body:has(.flowcean-home) .md-footer__inner { display: none; }
+.flowcean-home {
+  --home-ink: #18323d;
+  --home-muted: #58717c;
+  --home-line: #d8e4e8;
+  --home-panel: #ffffff;
+  --home-soft: #eef5f7;
+  --home-blue: #00698f;
+  --home-warm: #a85f32;
+  --home-warm-bg: #faf0e7;
+  --home-cool-bg: #e4f3f8;
+  --home-hover: #f2f8fa;
+  color: var(--home-ink);
+  padding: 0 32px;
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+[data-md-color-scheme="slate"] .flowcean-home {
+  --home-ink: #edf7fa;
+  --home-muted: #aec5cf;
+  --home-line: #31505d;
+  --home-panel: #142f3a;
+  --home-soft: #193944;
+  --home-blue: #83cce5;
+  --home-warm: #e8b18c;
+  --home-warm-bg: #40382f;
+  --home-cool-bg: #234957;
+  --home-hover: #1c414e;
+}
+.flowcean-home *, .flowcean-home *::before, .flowcean-home *::after { box-sizing: border-box; }
+.flowcean-home h1, .flowcean-home h2, .flowcean-home h3, .flowcean-home p, .flowcean-home figure { margin: 0; }
+.flowcean-home a { color: var(--home-blue); }
+.flowcean-home a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.flowcean-home :is(a, button):focus-visible { outline: 3px solid var(--home-blue); outline-offset: 5px; border-radius: 3px; }
+.flowcean-home button { font: inherit; cursor: pointer; }
+.flowcean-home button:disabled { cursor: default; opacity: .6; }
+.flowcean-home h2 { font-size: 32px; font-weight: 550; letter-spacing: -.035em; line-height: 1.22; }
+.flowcean-home h3 { font-size: 18px; font-weight: 600; line-height: 1.4; letter-spacing: -.02em; }
+.flowcean-home .home-eyebrow { color: var(--home-muted); font-size: 10px; font-weight: 650; letter-spacing: .15em; text-transform: uppercase; line-height: 1.6; margin-bottom: 22px; }
+.flowcean-home .home-hero { display: grid; grid-template-columns: .92fr 1.08fr; gap: 44px; align-items: center; padding: 78px 0 76px; }
+.flowcean-home .home-intro { padding-bottom: 8px; min-width: 0; }
+.flowcean-home .home-intro .home-eyebrow { display: flex; gap: 10px; align-items: center; }
+.flowcean-home .home-eyebrow > span { width: 7px; height: 7px; border-radius: 50%; background: var(--home-blue); }
+.flowcean-home h1 { font-size: clamp(44px, 4.7vw, 64px); font-weight: 570; letter-spacing: -.055em; line-height: 1.07; margin: 0 0 26px; }
+.flowcean-home .home-lead { font-size: 21px; line-height: 1.5; max-width: 440px; letter-spacing: -.015em; }
+.flowcean-home .home-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; vertical-align: middle; }
+.flowcean-home .home-icon svg { width: 19px; height: 19px; stroke-width: 2.25; }
+.flowcean-home .home-actions { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+.flowcean-home .home-button { display: inline-flex; align-items: center; justify-content: center; gap: 20px; padding: 12px 18px; border-radius: 5px; font-size: 13px; font-weight: 600; border: 1px solid var(--home-line); min-height: 46px; }
+.flowcean-home .home-button:hover { text-decoration: none; box-shadow: 0 3px 12px #01547812; }
+.flowcean-home .home-button-primary { color: #fff; background: #015478; border-color: #015478; }
+[data-md-color-scheme="slate"] .flowcean-home .home-button-primary { color: #102832; background: #83cce5; border-color: #83cce5; }
+.flowcean-home .home-button-secondary { color: var(--home-ink); background: transparent; }
+.flowcean-home .home-install { width: min(100%, 360px); margin-top: 26px; color: var(--home-muted); }
+.flowcean-home .home-install-caption { display: block; margin-bottom: 7px; font-size: 11px; font-weight: 600; }
+.flowcean-home .home-install-command { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 3px 4px 3px 14px; border: 1px solid var(--home-line); border-radius: 7px; background: var(--home-soft); }
+.flowcean-home .home-install code { flex: 1; min-width: 0; color: var(--home-ink); font-size: 13px; font-family: var(--md-code-font-family); background: none; white-space: nowrap; user-select: text; }
+.flowcean-home .home-prompt { font-family: var(--md-code-font-family); font-size: 13px; }
+.flowcean-home .home-copy { display: grid; flex: none; place-items: center; width: 44px; height: 44px; color: var(--home-ink); border: 0; border-radius: 5px; background: var(--home-panel); }
+.flowcean-home .home-copy:hover:not(:disabled) { color: var(--home-blue); background: var(--home-hover); }
+.flowcean-home .home-copy-status { display: block; min-height: 20px; font-size: 11px; color: var(--home-muted); }
+.flowcean-home .home-experiment { background: var(--home-panel); border: 1px solid var(--home-line); border-radius: 12px; box-shadow: 0 22px 65px -38px #01425b55; overflow: hidden; min-width: 0; }
+.flowcean-home .home-instrument-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 22px 26px; border-bottom: 1px solid var(--home-line); }
+.flowcean-home .home-figure-number { font-size: 9px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--home-muted); }
+.flowcean-home .home-instrument-header h2 { font-size: 17px; letter-spacing: -.02em; font-weight: 600; margin-top: 3px; }
+.flowcean-home .home-instrument-header h2 span { font-weight: 400; color: var(--home-muted); }
+.flowcean-home .home-play { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 82px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--home-line); border-radius: 5px; color: var(--home-ink); font-size: 12px; background: var(--home-panel); }
+.flowcean-home .home-play:hover:not(:disabled) { background: var(--home-soft); }
+.flowcean-home .home-play-icon { display: inline-flex; }
+.flowcean-home .home-play-icon .home-icon svg { width: 18px; height: 18px; }
+.flowcean-home .home-play-when-playing, .flowcean-home .home-play[data-playing="true"] .home-play-when-paused { display: none; }
+.flowcean-home .home-play[data-playing="true"] .home-play-when-playing { display: inline-flex; }
+.flowcean-home .home-instrument-body { display: grid; grid-template-columns: .95fr 1.05fr; gap: 20px; align-items: center; padding: 20px 26px 6px; }
+.flowcean-home .home-temperature-label { font-size: 11px; color: var(--home-muted); }
+.flowcean-home .home-temperature { font-size: 47px; font-weight: 450; letter-spacing: -.05em; line-height: 1.5; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.flowcean-home .home-unit { font-size: 23px; color: var(--home-muted); margin-left: 7px; font-weight: 400; }
+.flowcean-home .home-current-mode { display: flex; align-items: center; gap: 6px; color: var(--home-warm); font-size: 11px; }
+.flowcean-home .home-mode-detail { color: var(--home-muted); }
+.flowcean-home .home-mode-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.flowcean-home [data-mode="cooling"] .home-current-mode { color: var(--home-blue); }
+.flowcean-home .home-gauge { display: block; width: 100%; max-width: 230px; margin-top: 14px; overflow: visible; }
+.flowcean-home .home-gauge text { font-size: 11px; fill: var(--home-muted); }
+.flowcean-home .home-gauge-track { stroke: var(--home-line); stroke-width: 4; }
+.flowcean-home .home-gauge-range { stroke: var(--home-blue); stroke-opacity: .2; stroke-width: 4; }
+.flowcean-home .home-gauge-ticks { stroke: var(--home-muted); stroke-width: 1; }
+.flowcean-home .home-gauge circle { fill: var(--home-warm); stroke: var(--home-panel); stroke-width: 2; }
+.flowcean-home [data-mode="cooling"] .home-gauge circle { fill: var(--home-blue); }
+.flowcean-home .home-modes { width: 100%; overflow: visible; color: var(--home-muted); }
+.flowcean-home .home-modes text { fill: var(--home-muted); font-size: 11px; font-family: var(--md-code-font-family); }
+.flowcean-home .home-mode-arrow { stroke: var(--home-muted); stroke-width: 1; fill: none; }
+.flowcean-home .home-threshold-bg { fill: var(--home-panel); }
+.flowcean-home .home-node rect { fill: var(--home-panel); stroke: var(--home-line); }
+.flowcean-home .home-node text { font-size: 10px; letter-spacing: .04em; }
+.flowcean-home [data-mode="heating"] .home-node-heating rect { fill: var(--home-warm-bg); stroke: var(--home-warm); }
+.flowcean-home [data-mode="heating"] .home-node-heating text { fill: var(--home-warm); font-weight: 700; }
+.flowcean-home [data-mode="cooling"] .home-node-cooling rect { fill: var(--home-cool-bg); stroke: var(--home-blue); }
+.flowcean-home [data-mode="cooling"] .home-node-cooling text { fill: var(--home-blue); font-weight: 700; }
+.flowcean-home .home-plot-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 26px 0; font-size: 10px; color: var(--home-muted); }
+.flowcean-home .home-plot-heading span { display: flex; align-items: center; gap: 7px; }
+.flowcean-home .home-plot-heading i { width: 13px; height: 0; border-top: 2px solid var(--home-blue); }
+.flowcean-home .home-target-legend i { border-top: 1px dashed var(--home-muted); }
+.flowcean-home .home-plot { width: calc(100% - 34px); margin: 2px 17px 0; display: block; overflow: visible; }
+.flowcean-home .home-plot-grid { fill: none; stroke: var(--home-line); stroke-width: .7; }
+.flowcean-home .home-target-line { stroke: var(--home-muted); stroke-dasharray: 4 5; stroke-width: 1; fill: none; }
+.flowcean-home .home-plot-labels { fill: var(--home-muted); font-size: 10px; }
+.flowcean-home .home-trace { fill: none; stroke: var(--home-blue); stroke-width: 2.3; stroke-linejoin: round; stroke-linecap: round; }
+.flowcean-home .home-cursor { stroke: var(--home-warm); stroke-width: 1; stroke-dasharray: 3 3; }
+.flowcean-home .home-current-point { fill: var(--home-blue); stroke: var(--home-panel); stroke-width: 2; }
+.flowcean-home .home-time-row { display: flex; justify-content: space-between; margin: -4px 26px 19px; font-size: 10px; color: var(--home-muted); }
+.flowcean-home .home-time-row > span:first-child { font-family: var(--md-code-font-family); color: var(--home-ink); font-variant-numeric: tabular-nums; }
+.flowcean-home .home-muted { color: var(--home-muted); }
+.flowcean-home figcaption { display: flex; justify-content: space-between; gap: 14px; background: var(--home-soft); border-top: 1px solid var(--home-line); padding: 14px 24px; font-size: 10px; color: var(--home-muted); }
+.flowcean-home figcaption a { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; min-height: 44px; margin: -12px 0; }
+.flowcean-home figcaption .home-icon svg { width: 17px; height: 17px; }
+.flowcean-home .home-static-note { padding: 8px 24px; font-size: 11px; color: var(--home-muted); }
+.flowcean-home .home-paths { border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); padding: 42px 0 45px; display: grid; grid-template-columns: 1.05fr 1fr 1fr; gap: 45px; }
+.flowcean-home .home-paths .home-eyebrow { margin-bottom: 15px; font-size: 9px; }
+.flowcean-home .home-paths h2 { font-size: 27px; }
+.flowcean-home .home-path { color: var(--home-ink); display: flex; flex-direction: column; min-width: 0; padding: 21px 22px; border: 1px solid var(--home-line); border-radius: 9px; background: var(--home-panel); }
+.flowcean-home :is(.home-path, .home-module-grid a):is(:hover, :focus-visible) { color: var(--home-ink); text-decoration: none; border-color: var(--home-blue); background: var(--home-hover); box-shadow: 0 6px 20px -15px #01425b88; }
+.flowcean-home .home-path h3 { display: flex; align-items: start; justify-content: space-between; gap: 8px; margin: 0 0 12px; }
+.flowcean-home .home-path h3 .home-icon { color: var(--home-blue); }
+.flowcean-home .home-path p { font-size: 13px; color: var(--home-muted); margin-bottom: 16px; }
+.flowcean-home .home-text-link { font-size: 12px; color: var(--home-blue); font-weight: 600; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 5px 0; }
+.flowcean-home .home-path .home-text-link { margin-top: auto; }
+.flowcean-home .home-path:hover .home-text-link { text-decoration: underline; text-underline-offset: 4px; }
+.flowcean-home .home-code-section { padding: 90px 0; display: grid; grid-template-columns: .8fr 1.2fr; align-items: center; gap: 90px; }
+.flowcean-home .home-section-intro { font-size: 14px; color: var(--home-muted); margin-top: 18px; max-width: 64ch; }
+.flowcean-home .home-section-intro code { padding: .12em .3em; border-radius: 3px; background: var(--home-soft); color: var(--home-ink); font-size: .92em; }
+.flowcean-home .home-code-copy .home-section-intro { max-width: 360px; }
+.flowcean-home .home-code-copy .home-text-link, .flowcean-home .home-research .home-text-link { margin-top: 14px; }
+.flowcean-home .home-code-window { border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-panel); overflow: hidden; min-width: 0; }
+.flowcean-home .home-code-header { padding: 13px 22px; border-bottom: 1px solid var(--home-line); display: flex; justify-content: space-between; font-family: var(--md-code-font-family); font-size: 10px; color: var(--home-muted); }
+.flowcean-home pre { margin: 0; padding: 23px; overflow-x: auto; line-height: 1.85; font-size: 12px; color: var(--home-ink); }
+.flowcean-home .home-code-keyword { color: var(--home-blue); }
+.flowcean-home .home-code-number { color: var(--home-warm); }
+.flowcean-home .home-toolkit { border-top: 1px solid var(--home-line); padding: 58px 0 68px; }
+.flowcean-home .home-toolkit-heading { max-width: 720px; }
+.flowcean-home .home-module-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 32px 0 24px; }
+.flowcean-home .home-module-grid a { color: var(--home-ink); display: flex; flex-direction: column; min-width: 0; padding: 22px 20px; border: 1px solid var(--home-line); border-radius: 9px; background: var(--home-panel); }
+.flowcean-home .home-module-grid h3 { display: flex; justify-content: space-between; gap: 5px; font-size: 15px; }
+.flowcean-home .home-module-grid h3 .home-icon { color: var(--home-blue); }
+.flowcean-home .home-module-grid p { font-size: 13px; color: var(--home-muted); margin-top: 12px; }
+.flowcean-home .home-module-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 20px; border-radius: 8px; background: var(--home-soft); color: var(--home-blue); }
+.flowcean-home .home-module-icon svg { width: 24px; height: 24px; stroke-width: 2; }
+.flowcean-home .home-research { border-top: 1px solid var(--home-line); display: grid; grid-template-columns: .8fr 1.2fr; gap: 90px; padding: 65px 0; }
+.flowcean-home .home-citations { padding: 0; margin: 0; list-style: none; }
+.flowcean-home .home-citations li + li { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--home-line); }
+.flowcean-home .home-citations li > span { color: var(--home-muted); font-size: 9px; letter-spacing: .07em; font-weight: 600; }
+.flowcean-home .home-citations p { font-size: 15px; line-height: 1.55; margin: 8px 0; }
+.flowcean-home .home-citations a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--home-ink); }
+.flowcean-home .home-citations small { color: var(--home-muted); font-size: 11px; display: block; }
+.flowcean-home .home-funding { display: flex; align-items: center; gap: 30px; border-top: 1px solid var(--home-line); padding: 32px 0 42px; color: var(--home-muted); font-size: 11px; }
+.flowcean-home .home-funding img { width: 112px; max-height: 90px; object-fit: contain; }
+.flowcean-home .home-funding > a { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; min-height: 44px; }
+@media (max-width: 1100px) {
+  .flowcean-home { padding: 0 28px; }
+  .flowcean-home .home-hero { gap: 25px; padding-top: 56px; }
+  .flowcean-home h1 { font-size: 50px; }
+  .flowcean-home .home-lead { font-size: 19px; }
+  .flowcean-home .home-instrument-body { gap: 10px; padding: 18px 20px 6px; }
+  .flowcean-home .home-temperature { font-size: 40px; }
+  .flowcean-home .home-mode-detail { display: none; }
+  .flowcean-home .home-paths { gap: 26px; }
+  .flowcean-home .home-code-section, .flowcean-home .home-research { gap: 45px; }
+}
+@media (max-width: 850px) {
+  .flowcean-home .home-hero { grid-template-columns: 1fr; max-width: 640px; margin: auto; gap: 30px; padding: 55px 0; }
+  .flowcean-home h1 { font-size: 62px; }
+  .flowcean-home .home-intro { max-width: 530px; }
+  .flowcean-home .home-experiment { width: 100%; }
+  .flowcean-home .home-temperature { font-size: 49px; }
+  .flowcean-home .home-mode-detail { display: inline; }
+  .flowcean-home .home-paths { grid-template-columns: 1fr 1fr; gap: 30px; }
+  .flowcean-home .home-section-heading { grid-column: 1 / -1; }
+  .flowcean-home .home-section-heading h2 br { display: none; }
+  .flowcean-home .home-code-section, .flowcean-home .home-research { grid-template-columns: 1fr; gap: 32px; padding: 55px 0; }
+  .flowcean-home .home-code-copy .home-section-intro { max-width: 540px; }
+  .flowcean-home .home-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+}
+@media (max-width: 480px) {
+  .flowcean-home { padding: 0 20px; }
+  .flowcean-home .home-hero { padding: 36px 0 40px; gap: 18px; }
+  .flowcean-home h1 { font-size: 43px; margin-bottom: 22px; }
+  .flowcean-home .home-eyebrow { font-size: 9px; margin-bottom: 19px; }
+  .flowcean-home .home-lead { font-size: 19px; }
+  .flowcean-home .home-actions { gap: 8px; margin-top: 25px; }
+  .flowcean-home .home-button { padding: 11px 13px; gap: 12px; font-size: 12px; }
+  .flowcean-home .home-install { margin-top: 16px; }
+  .flowcean-home .home-instrument-header { padding: 16px; }
+  .flowcean-home .home-instrument-header h2 { font-size: 14px; }
+  .flowcean-home .home-figure-number { font-size: 8px; }
+  .flowcean-home .home-play { min-width: 66px; padding: 7px 9px; font-size: 11px; }
+  .flowcean-home .home-instrument-body { padding: 18px 16px 4px; gap: 4px; grid-template-columns: 1fr; }
+  .flowcean-home .home-reading { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
+  .flowcean-home .home-reading > :not(.home-gauge) { grid-column: 1; }
+  .flowcean-home .home-gauge { grid-column: 2; grid-row: 1 / 4; align-self: center; margin-top: 0; }
+  .flowcean-home .home-modes { max-width: 280px; margin: 0 auto; }
+  .flowcean-home .home-temperature { font-size: 36px; }
+  .flowcean-home .home-unit { font-size: 18px; margin-left: 4px; }
+  .flowcean-home .home-temperature-label, .flowcean-home .home-current-mode { font-size: 9px; }
+  .flowcean-home .home-mode-detail { display: none; }
+  .flowcean-home .home-plot-heading { padding: 8px 16px 0; font-size: 9px; }
+  .flowcean-home .home-plot { width: calc(100% - 16px); margin: 6px 8px 0; }
+  .flowcean-home .home-time-row { margin: 0 16px 14px; font-size: 9px; }
+  .flowcean-home figcaption { padding: 12px 16px; flex-wrap: wrap; gap: 4px; font-size: 9px; }
+  .flowcean-home .home-paths { grid-template-columns: 1fr; padding: 32px 0; gap: 28px; }
+  .flowcean-home .home-paths h2, .flowcean-home h2 { font-size: 28px; }
+  .flowcean-home .home-section-heading h2 br { display: block; }
+  .flowcean-home .home-toolkit { padding: 40px 0; }
+  .flowcean-home .home-module-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 28px; }
+  .flowcean-home .home-module-grid h3 { font-size: 16px; }
+  .flowcean-home .home-module-grid p { font-size: 13px; }
+  .flowcean-home pre { font-size: 11px; padding: 18px; }
+  .flowcean-home .home-funding { gap: 18px; flex-wrap: wrap; }
+  .flowcean-home .home-funding img { width: 95px; }
+  .flowcean-home .home-funding p { font-size: 10px; }
+  .flowcean-home .home-funding > a { margin-left: 0; }
+}

@@ -1,3 +1,7 @@
+---
+icon: lucide/book-open
+---
+
 # Building the Documentation
 
 The documentation is built with [Zensical](https://zensical.org/) using its modern theme.

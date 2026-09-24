@@ -1,3 +1,7 @@
+---
+icon: lucide/container
+---
+
 # Automatic Lashing Platform - Container Weight Estimation Example
 
 The automatic lashing platform (ALP) is a harbour system which automates the handling of twist locks on the land side.

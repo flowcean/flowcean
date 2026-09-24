@@ -1,3 +1,7 @@
+---
+icon: lucide/list-checks
+---
+
 # Prerequisites
 
 Before using and developing `flowcean`, ensure you have the necessary tools and environments set up.

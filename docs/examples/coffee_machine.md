@@ -1,3 +1,7 @@
+---
+icon: lucide/coffee
+---
+
 # Coffee Machine with AALpy
 
 This example learns a Mealy machine from recorded Coffee Machine traces using

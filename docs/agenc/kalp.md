@@ -1,3 +1,7 @@
+---
+icon: lucide/building-2
+---
+
 # KALP GmbH
 
 KALP GmbH is an innovative company based in Böel, Schleswig-Holstein, specializing in container terminal equipment.

@@ -1,3 +1,7 @@
+---
+icon: lucide/chart-no-axes-combined
+---
+
 # Evaluation
 
 ![Evaluation](../assets/evaluation.svg)

@@ -1,3 +1,7 @@
+---
+icon: lucide/building-2
+---
+
 # TUHH
 
 ## Institute of Logistics Engineering (ITL)

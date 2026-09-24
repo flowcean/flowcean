@@ -1,3 +1,7 @@
+---
+icon: lucide/bot
+---
+
 # PalaestrAI
 
 `flowcean.palaestrai` is the facade for Soft Actor-Critic learning through PalaestrAI. It exports `SACLearner` and `SACModel`.

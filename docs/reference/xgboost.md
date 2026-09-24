@@ -1,3 +1,7 @@
+---
+icon: lucide/trees
+---
+
 # XGBoost
 
 `flowcean.xgboost` provides boosted classification and regression learners and models.

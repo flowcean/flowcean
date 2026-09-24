@@ -1,3 +1,7 @@
+---
+icon: lucide/route
+---
+
 # Learning Strategies
 
 Within Flowcean there are different learning strategies that can be used to train a model.

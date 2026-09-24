@@ -1,3 +1,7 @@
+---
+icon: lucide/folder-plus
+---
+
 # Your First Project with Flowcean
 
 ### Analyze your current problem

@@ -1,3 +1,7 @@
+---
+icon: lucide/git-branch
+---
+
 # AALpy
 
 `flowcean.aalpy` provides native passive automata learning with AALpy's RPNI implementations.

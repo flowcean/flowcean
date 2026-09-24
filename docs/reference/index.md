@@ -1,3 +1,7 @@
+---
+icon: lucide/book-open
+---
+
 # API Reference
 
 Flowcean's public API is imported from its packages, not from the top-level `flowcean` module.
@@ -7,9 +11,7 @@ For concepts and workflows, start with the [user guide](../user_guide/overview.m
 ## Foundations
 
 - [Core](core.md): environments, learners, models, metrics, transforms, callbacks, and learning strategies.
-- [Hybrid systems](hybrid/index.md): system definitions, simulation, trace I/O, and plotting.
-  - [Hybrid benchmarks](hybrid/benchmarks.md): reusable systems and registry metadata.
-  - [HyDRA identification](hybrid/hydra.md): identification and mode-selector APIs.
+- [Hybrid systems](hybrid.md): system definitions, simulation, trace I/O, plotting, benchmarks, and HyDRA identification.
 - [Polars](polars.md): dataframe environments, time-series processing, and transforms.
 
 ## Learners and models

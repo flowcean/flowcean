@@ -1,3 +1,7 @@
+---
+icon: lucide/gallery-horizontal-end
+---
+
 # Hybrid Systems Gallery
 
 This example simulates the registered hybrid-system benchmarks, prints a concise summary for each system, and renders the results as a gallery.
