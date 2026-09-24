@@ -15,26 +15,15 @@ from ..hybrid_system import (
 )
 
 
-def _setpoint(t: float, params: Parameters) -> float:
-    return params["setpoint_amp"] * np.sin(params["setpoint_freq"] * t)
-
-
-def _setpoint_dot(t: float, params: Parameters) -> float:
-    return (
-        params["setpoint_amp"]
-        * params["setpoint_freq"]
-        * np.cos(params["setpoint_freq"] * t)
-    )
-
-
 def _control_unclamped(
-    t: float,
     state: np.ndarray,
     params: Parameters,
+    reference: float,
+    reference_rate: float,
 ) -> float:
     position, velocity, integral = state
-    error = _setpoint(t, params) - position
-    error_dot = _setpoint_dot(t, params) - velocity
+    error = reference - position
+    error_dot = reference_rate - velocity
     return (
         params["kp"] * error
         + params["ki"] * integral
@@ -46,14 +35,16 @@ def _plant_flow(
     t: float,
     state: np.ndarray,
     params: Parameters,
+    input_stream: InputStream,
     *,
     clamp: float | None,
 ) -> np.ndarray:
+    reference, reference_rate = input_stream(t)
     position, velocity, _integral = state
-    u_raw = _control_unclamped(t, state, params)
+    u_raw = _control_unclamped(state, params, reference, reference_rate)
     u = u_raw if clamp is None else clamp
     accel = -params["stiffness"] * position - params["damping"] * velocity + u
-    error = _setpoint(t, params) - position
+    error = reference - position
     return np.array([velocity, accel, error], dtype=float)
 
 
@@ -61,45 +52,53 @@ def _flow_linear(
     t: float,
     state: np.ndarray,
     params: Parameters,
-    _input_stream: InputStream,
+    input_stream: InputStream,
 ) -> np.ndarray:
-    return _plant_flow(t, state, params, clamp=None)
+    return _plant_flow(t, state, params, input_stream, clamp=None)
 
 
 def _flow_sat_high(
     t: float,
     state: np.ndarray,
     params: Parameters,
-    _input_stream: InputStream,
+    input_stream: InputStream,
 ) -> np.ndarray:
-    return _plant_flow(t, state, params, clamp=params["u_max"])
+    return _plant_flow(t, state, params, input_stream, clamp=params["u_max"])
 
 
 def _flow_sat_low(
     t: float,
     state: np.ndarray,
     params: Parameters,
-    _input_stream: InputStream,
+    input_stream: InputStream,
 ) -> np.ndarray:
-    return _plant_flow(t, state, params, clamp=params["u_min"])
+    return _plant_flow(t, state, params, input_stream, clamp=params["u_min"])
 
 
 def _event_surface_high(
     t: float,
     state: np.ndarray,
     params: Parameters,
-    _input_stream: InputStream,
+    input_stream: InputStream,
 ) -> float:
-    return _control_unclamped(t, state, params) - params["u_max"]
+    reference, reference_rate = input_stream(t)
+    return (
+        _control_unclamped(state, params, reference, reference_rate)
+        - params["u_max"]
+    )
 
 
 def _event_surface_low(
     t: float,
     state: np.ndarray,
     params: Parameters,
-    _input_stream: InputStream,
+    input_stream: InputStream,
 ) -> float:
-    return _control_unclamped(t, state, params) - params["u_min"]
+    reference, reference_rate = input_stream(t)
+    return (
+        _control_unclamped(state, params, reference, reference_rate)
+        - params["u_min"]
+    )
 
 
 def pid_controlled_plant(
@@ -108,16 +107,17 @@ def pid_controlled_plant(
     kd: float = 1.0,
     stiffness: float = 3.0,
     damping: float = 0.6,
-    setpoint_amp: float = 2.0,
-    setpoint_freq: float = 1.0,
+    *,
     u_min: float = -1.0,
     u_max: float = 1.0,
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
     """Create a PID-controlled second-order plant with saturation.
 
-    The state is [position, velocity, integral_error]. The controller tracks a
-    sinusoidal setpoint and saturates the control input, yielding hybrid
+    The state is [position, velocity, integral_error]. Simulate with an
+    explicit finite two-element input vector ``[reference, reference_rate]``;
+    the second component is the reference's time derivative. The controller
+    tracks this reference and saturates the control input, yielding hybrid
     locations.
 
     Args:
@@ -126,8 +126,6 @@ def pid_controlled_plant(
         kd: Derivative gain.
         stiffness: Plant stiffness.
         damping: Plant damping.
-        setpoint_amp: Setpoint amplitude.
-        setpoint_freq: Setpoint frequency.
         u_min: Minimum control input.
         u_max: Maximum control input.
         initial_state: Optional initial state.
@@ -205,8 +203,6 @@ def pid_controlled_plant(
             "kd": kd,
             "stiffness": stiffness,
             "damping": damping,
-            "setpoint_amp": setpoint_amp,
-            "setpoint_freq": setpoint_freq,
             "u_min": u_min,
             "u_max": u_max,
         },

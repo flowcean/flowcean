@@ -7,7 +7,7 @@ icon: lucide/workflow
 This page covers the public API of `flowcean.hybrid` and its subpackages:
 
 - [Modeling and simulation](#flowcean.hybrid): system definitions, automaton diagrams, simulation, trace I/O, and plotting.
-- [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories, input streams, and registry metadata. Import a factory or use `registry()` to discover the available systems.
+- [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories.
 - [HyDRA identification](#flowcean.hybrid.hydra): identification, callbacks, trace schemas, simulations, and mode-selector APIs. Selector-specific types and helpers are also available from `flowcean.hybrid.hydra.selector`.
 
 See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.

@@ -8,7 +8,7 @@ Tank Valves.
 For each system, the experiment draws 256 fitting scenarios and 256 independent
 assessment scenarios from the documented parameter domains. A master
 `numpy.random.SeedSequence(1)` supplies one ordered child seed per system and
-split. Every simulation uses 128 times over the benchmark registry horizon.
+split. Every simulation uses 128 times over the horizon defined in `experiment.py`.
 Each split is simulated once and then reused while
 `sklearn.tree.DecisionTreeRegressor` varies `max_leaf_nodes` from 2 through 16,
 plus an unbounded tree.

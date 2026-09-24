@@ -1,4 +1,4 @@
-"""Impact oscillator benchmark with periodic forcing."""
+"""Impact oscillator benchmark with externally supplied force."""
 
 import numpy as np
 
@@ -16,42 +16,20 @@ from ..hybrid_system import (
 )
 
 
-def impact_input_stream(t: float) -> np.ndarray:
-    value = 0.5 * np.sin(1.5 * t) + 0.2 * np.sin(0.2 * t)
-    return np.array([value], dtype=float)
-
-
-def _forcing(
-    t: float,
-    params: Parameters,
-    input_stream: InputStream,
-) -> float:
-    try:
-        values = input_stream(t)
-    except ValueError as error:
-        if "input_stream is required" not in str(error):
-            raise
-        values = np.array([], dtype=float)
-    if values.size > 0:
-        return float(values[0])
-    return float(params["forcing"] * np.sin(params["forcing_freq"] * t))
-
-
 def impact_oscillator(
     damping: float = 0.1,
     stiffness: float = 4.0,
-    forcing: float = 0.5,
-    forcing_freq: float = 1.5,
+    *,
     restitution: float = 0.7,
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
-    """Create an impact oscillator with time-dependent forcing.
+    """Create an impact oscillator driven by an external force.
+
+    Simulate with an explicit finite one-element input vector ``[force]``.
 
     Args:
         damping: Linear damping coefficient.
         stiffness: Spring stiffness.
-        forcing: Forcing amplitude.
-        forcing_freq: Forcing frequency.
         restitution: Velocity multiplier on impact.
         initial_state: Optional initial [position, velocity].
 
@@ -66,11 +44,11 @@ def impact_oscillator(
         input_stream: InputStream,
     ) -> np.ndarray:
         position, velocity = state
-        periodic_forcing = _forcing(t, params, input_stream)
+        (force,) = input_stream(t)
         accel = (
             -params["stiffness"] * position
             - params["damping"] * velocity
-            + periodic_forcing
+            + force
         )
         return np.array([velocity, accel], dtype=float)
 
@@ -126,7 +104,5 @@ def impact_oscillator(
         parameters={
             "damping": damping,
             "stiffness": stiffness,
-            "forcing": forcing,
-            "forcing_freq": forcing_freq,
         },
     )

@@ -2,15 +2,16 @@
 
 from pathlib import Path
 
+from scenarios import SCENARIOS
+
 from flowcean.hybrid import save_traces_parquet, simulate
-from flowcean.hybrid.benchmarks import all_specs
 
 
 def main() -> None:
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
 
-    for spec in all_specs():
+    for spec in SCENARIOS:
         trace = simulate(
             spec.factory(),
             t_span=spec.t_span,

@@ -182,14 +182,15 @@ Shading spans the trace's first to last sample and follows recorded transition t
 Reusable systems are available from `flowcean.hybrid.benchmarks`:
 
 ```python
-from flowcean.hybrid import simulate
-from flowcean.hybrid.benchmarks import registry
+import numpy as np
 
-spec = registry()["Thermostat"]
+from flowcean.hybrid import simulate
+from flowcean.hybrid.benchmarks import thermostat
+
 trace = simulate(
-    spec.factory(),
-    t_span=spec.t_span,
-    input_stream=spec.input_stream,
+    thermostat(),
+    t_span=(0.0, 10.0),
+    input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
 )
 ```
 

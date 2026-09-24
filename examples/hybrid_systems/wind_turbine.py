@@ -8,22 +8,19 @@ import numpy as np
 mpl.use("Agg")
 
 import matplotlib.pyplot as plt
+from scenarios import WIND_TURBINE
 
 from flowcean.hybrid import plot_locations, simulate
-from flowcean.hybrid.benchmarks import (
-    wind_turbine,
-    wind_turbine_power,
-    wind_turbine_wind,
-)
+from flowcean.hybrid.benchmarks import wind_turbine_power
 
 
 def main() -> None:
     # The default rotor is already turning; this is not startup from rest.
-    system = wind_turbine()
+    system = WIND_TURBINE.factory()
     trace = simulate(
         system,
-        t_span=(0.0, 120.0),
-        input_stream=wind_turbine_wind,
+        t_span=WIND_TURBINE.t_span,
+        input_stream=WIND_TURBINE.input_stream,
         sample_dt=0.1,
     )
 

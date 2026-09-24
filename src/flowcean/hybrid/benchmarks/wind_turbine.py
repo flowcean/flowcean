@@ -32,11 +32,6 @@ _LABELS = (
 _GENERATOR_RATIO = 97.0
 
 
-def wind_turbine_wind(t: float) -> np.ndarray:
-    """Deterministic smooth 120-second wind cycle, 7..15 m/s."""
-    return np.array([11.0 - 4.0 * np.cos(2.0 * np.pi * t / 120.0)])
-
-
 def _generator_torque(speed: float, region: int, params: Parameters) -> float:
     """Generator-side mechanical torque (N m) from generator speed (rad/s)."""
     a = params["generator_speed_generation_start"]
@@ -108,8 +103,9 @@ def _initial_state(state: Sequence[float] | np.ndarray | None) -> np.ndarray:
 
 
 def _wind_speed(t: float, input_stream: InputStream) -> float:
+    raw = input_stream(t)
     try:
-        wind = np.asarray(input_stream(t), dtype=float)
+        wind = np.asarray(raw, dtype=float)
     except (TypeError, ValueError) as error:
         raise ValueError(
             "wind input must be one finite positive component"
@@ -162,8 +158,9 @@ def wind_turbine(
     mechanical stops.
     Hardware and controller constants are recorded in ``system.parameters``.
 
-    Supply ``simulate(..., input_stream=...)`` with one positive wind speed
-    (m/s), such as ``lambda t: np.array([11.0])``. Relative wind is
+    Supply ``simulate(..., input_stream=...)`` with a finite one-element
+    vector ``[wind]`` containing a positive wind speed (m/s), such as
+    ``lambda t: np.array([11.0])``. Relative wind is
     ``u = wind - v``; it and rotor speed must stay positive. With radius R=63 m,
     the tip-speed ratio ``omega*R/u`` must stay in 2.5..14.5 and pitch in
     -2..20 degrees. Leaving the polynomial fit's domain raises an error.

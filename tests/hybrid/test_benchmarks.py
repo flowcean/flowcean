@@ -1,61 +1,82 @@
-"""Tests for the reusable hybrid benchmark suite."""
+"""Tests for reusable hybrid benchmark factories."""
+
+from collections.abc import Callable
 
 import numpy as np
 import pytest
 
-from flowcean.hybrid import (
-    HybridSystem,
-    simulate,
-)
+from flowcean.hybrid import HybridSystem, InputStream, simulate
 from flowcean.hybrid.benchmarks import (
-    BenchmarkSpec,
-    all_specs,
     bouncing_ball,
+    buck_converter,
+    hybrid_oscillator,
+    impact_oscillator,
     mode_cycle,
-    registry,
+    pid_controlled_plant,
+    piecewise_affine,
+    relay_integrator,
+    switched_linear,
+    tank_valves,
+    thermostat,
+    time_forced_switch,
+    time_varying_event_surface,
+    wind_turbine,
 )
 
-EXPECTED_NAMES = (
-    "Bouncing Ball",
-    "Thermostat",
-    "Hybrid Oscillator",
-    "Switched Linear",
-    "Relay Integrator",
-    "Time-Varying Event Surface",
-    "Time-Forced Switch",
-    "Piecewise Affine",
-    "Impact Oscillator",
-    "PID-Controlled Plant",
-    "Tank Valves",
-    "Location Cycle",
-    "Buck Converter",
-    "Wind Turbine",
+
+def _input(*values: float) -> InputStream:
+    return lambda _t: np.array(values)
+
+
+SMOKE_CASES: tuple[
+    tuple[
+        str,
+        Callable[[], HybridSystem],
+        tuple[float, float],
+        InputStream | None,
+    ],
+    ...,
+] = (
+    ("ball", bouncing_ball, (0, 3), None),
+    ("thermostat", thermostat, (0, 10), _input(22)),
+    ("oscillator", hybrid_oscillator, (0, 15), None),
+    ("switched", switched_linear, (0, 10), None),
+    ("relay", relay_integrator, (0, 20), None),
+    ("threshold", time_varying_event_surface, (0, 20), _input(0)),
+    ("forced switch", time_forced_switch, (0, 5), None),
+    ("affine", piecewise_affine, (0, 20), None),
+    ("impact", impact_oscillator, (0, 20), _input(0)),
+    ("PID", pid_controlled_plant, (0, 20), _input(0, 0)),
+    ("tanks", tank_valves, (0, 300), None),
+    (
+        "cycle",
+        lambda: mode_cycle(modes=6, dimension=3, dwell_time=0.4),
+        (0, 10),
+        None,
+    ),
+    ("converter", buck_converter, (0, 0.02), None),
+    ("turbine", wind_turbine, (0, 120), _input(11)),
 )
-SPECS = tuple(all_specs())
 
 
-def test_registry_has_deterministic_order_and_unique_names() -> None:
-    first_registry = registry()
-    second_registry = registry()
+@pytest.mark.parametrize(
+    ("name", "factory", "t_span", "input_stream"),
+    SMOKE_CASES,
+    ids=[case[0] for case in SMOKE_CASES],
+)
+def test_benchmark_factory_smoke_simulation(
+    name: str,
+    factory: Callable[[], HybridSystem],
+    t_span: tuple[float, float],
+    input_stream: InputStream | None,
+) -> None:
+    system = factory()
+    trace = simulate(system, t_span=t_span, input_stream=input_stream)
 
-    assert tuple(first_registry) == EXPECTED_NAMES
-    assert tuple(second_registry) == EXPECTED_NAMES
-    assert tuple(spec.name for spec in all_specs()) == EXPECTED_NAMES
-    assert len(first_registry) == len(set(first_registry))
-
-
-@pytest.mark.parametrize("spec", SPECS, ids=[spec.name for spec in SPECS])
-def test_benchmark_factory_smoke_simulation(spec: BenchmarkSpec) -> None:
-    system = spec.factory()
-    trace = simulate(
-        system,
-        t_span=spec.t_span,
-        input_stream=spec.input_stream,
-    )
-
+    assert name
     assert isinstance(system, HybridSystem)
-    assert trace.t[0] == pytest.approx(spec.t_span[0])
-    assert trace.t[-1] == pytest.approx(spec.t_span[1])
+    assert trace.t[0] == pytest.approx(t_span[0])
+    assert trace.t[-1] == pytest.approx(t_span[1])
     assert trace.x.shape == (trace.t.size, system.initial_state.size)
     assert trace.location.shape == trace.t.shape
     assert np.isfinite(trace.x).all()
