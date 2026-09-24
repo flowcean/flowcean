@@ -13,13 +13,9 @@ import matplotlib as mpl
 mpl.use("Agg")
 
 import matplotlib.pyplot as plt
+from scenarios import SCENARIOS, Scenario
 
 from flowcean.hybrid import Trace, plot_trace, simulate
-
-if __package__:
-    from .scenarios import SCENARIOS, Scenario
-else:
-    from scenarios import SCENARIOS, Scenario
 
 
 @dataclass(frozen=True)

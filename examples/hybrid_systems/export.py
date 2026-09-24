@@ -2,12 +2,9 @@
 
 from pathlib import Path
 
-from flowcean.hybrid import save_traces_parquet, simulate
+from scenarios import SCENARIOS
 
-if __package__:
-    from .scenarios import SCENARIOS
-else:
-    from scenarios import SCENARIOS
+from flowcean.hybrid import save_traces_parquet, simulate
 
 
 def main() -> None:

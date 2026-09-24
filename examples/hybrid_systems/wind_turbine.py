@@ -8,14 +8,10 @@ import numpy as np
 mpl.use("Agg")
 
 import matplotlib.pyplot as plt
+from scenarios import WIND_TURBINE
 
 from flowcean.hybrid import plot_locations, simulate
 from flowcean.hybrid.benchmarks import wind_turbine_power
-
-if __package__:
-    from .scenarios import WIND_TURBINE
-else:
-    from scenarios import WIND_TURBINE
 
 
 def main() -> None:

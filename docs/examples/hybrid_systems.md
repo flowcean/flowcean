@@ -4,7 +4,7 @@ icon: lucide/gallery-horizontal-end
 
 # Hybrid Systems Gallery
 
-This example simulates 14 reusable hybrid-system models with the horizons and driving signals in `examples/hybrid_systems/scenarios.py`, prints a concise summary for each, and renders a gallery. Those settings belong to the example, not the `flowcean.hybrid.benchmarks` API.
+This example simulates hybrid-system benchmarks, prints a concise summary for each system, and renders the results as a gallery.
 
 Run it from the repository root:
 
@@ -12,7 +12,9 @@ Run it from the repository root:
 uv run --directory ./examples/hybrid_systems python run.py
 ```
 
-The command writes `examples/hybrid_systems/outputs/benchmarks.png`. Its terminal summary reports each scenario's tags, observed locations, state dimension, sample count, event count, and description. To reuse a factory independently, choose your own time span and input stream:
+The command writes `examples/hybrid_systems/outputs/benchmarks.png`. Its terminal summary reports each benchmark's tags, observed locations, state dimension, sample count, event count, and description.
+
+Import a benchmark factory and supply a time span and input stream:
 
 ```python
 import numpy as np
@@ -27,16 +29,26 @@ trace = simulate(
 )
 ```
 
-For a standalone turbine simulation, see the [wind-turbine example](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/README.md#wind-turbine).
+## Wind Turbine
+
+Run the standalone turbine example:
+
+```bash
+uv run --directory ./examples/hybrid_systems python wind_turbine.py
+```
+
+The command prints mode changes and saves `examples/hybrid_systems/outputs/wind_turbine.png`. The plot shows wind speed, rotor speed, blade pitch, tower displacement, and generator mechanical power. Background colors show the controller mode; the dashed power line marks rated power.
+
+See the [wind-turbine API](../reference/hybrid.md#flowcean.hybrid.benchmarks.wind_turbine.wind_turbine) for equations and operating limits.
 
 ## Export Automaton Diagrams
 
-Export every gallery scenario's automaton without simulating the systems:
+Export every benchmark's automaton without simulating the systems:
 
 ```bash
 uv run --directory ./examples/hybrid_systems python export_graphs.py
 ```
 
-This writes one DOT file per scenario under `examples/hybrid_systems/outputs/automata/`, using lowercase names with spaces replaced by underscores. Add `--svg` to also render SVG files; this requires Graphviz's `dot` executable on `PATH`.
+This writes one DOT file per benchmark under `examples/hybrid_systems/outputs/automata/`, using lowercase benchmark names with spaces replaced by underscores. Add `--svg` to also render SVG files; this requires Graphviz's `dot` executable on `PATH`.
 
 See [Automaton Diagrams](../user_guide/hybrid_systems.md#automaton-diagrams) for the export API and label options, and the [Hybrid Systems guide](../user_guide/hybrid_systems.md) for modeling concepts and simulator options.

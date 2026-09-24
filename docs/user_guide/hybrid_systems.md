@@ -194,13 +194,6 @@ trace = simulate(
 )
 ```
 
-The thermostat's input vector is `[target]`. Other driven factories require
-`[force]` (impact oscillator), `[threshold]` (time-varying event surface),
-`[reference, reference_rate]` (PID plant, with the reference's time derivative),
-or `[wind]` (wind turbine, positive m/s). These inputs must be finite vectors
-of exactly the documented size. The gallery keeps its own example signals
-and time spans; reusable factories do not choose either.
-
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
 Start with the [minimal hybrid system](../examples/hs_simple.md), browse the [hybrid systems gallery](../examples/hybrid_systems.md), and then run the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow.

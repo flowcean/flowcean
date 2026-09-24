@@ -3,12 +3,9 @@
 import argparse
 from pathlib import Path
 
-from flowcean.hybrid import build_hybrid_system_dot, render_dot_svg
+from scenarios import SCENARIOS
 
-if __package__:
-    from .scenarios import SCENARIOS
-else:
-    from scenarios import SCENARIOS
+from flowcean.hybrid import build_hybrid_system_dot, render_dot_svg
 
 
 def main() -> None:
