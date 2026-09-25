@@ -15,10 +15,7 @@ Derivative = State | float
 
 
 class FlowFunction(Protocol):
-    """Flow callback accepting all five canonical named inputs.
-
-    ``ContinuousDynamics`` also accepts callbacks requesting named subsets.
-    """
+    """Continuous dynamics callback."""
 
     def __call__(
         self,
@@ -32,10 +29,7 @@ class FlowFunction(Protocol):
 
 
 class EventSurfaceFunction(Protocol):
-    """Event-surface callback accepting all five canonical named inputs.
-
-    ``EventSurface`` also accepts callbacks requesting named subsets.
-    """
+    """Scalar event-surface callback."""
 
     def __call__(
         self,
@@ -49,10 +43,7 @@ class EventSurfaceFunction(Protocol):
 
 
 class ResetFunction(Protocol):
-    """Reset callback accepting all five canonical named inputs.
-
-    ``Reset`` also accepts callbacks requesting named subsets.
-    """
+    """State reset callback."""
 
     def __call__(
         self,
@@ -206,9 +197,7 @@ class Reset:
 class Transition:
     """Discrete event-triggered transition between locations.
 
-    ``event`` is a scalar zero-crossing surface. Every transition resets
-    location residence time to zero, including self-transitions without a
-    state reset.
+    ``event`` is a scalar zero-crossing surface.
 
     Args:
         source: Source location.
@@ -376,11 +365,7 @@ def _callback_label(callback: object) -> str | None:
 
 @dataclass(frozen=True)
 class Event:
-    """Transition event information for a trace.
-
-    ``location_time_before`` records the departing source visit's age.
-    Every transition starts a target visit at age zero.
-    """
+    """Recorded transition with pre- and post-reset states."""
 
     time: float
     source_location: str
@@ -395,11 +380,7 @@ class Event:
 
 @dataclass(frozen=True)
 class Trace:
-    """Simulation trace with time, state, location labels, and residence time.
-
-    Required ``location_time`` is separate from ``x`` and follows its
-    post-transition boundary semantics.
-    """
+    """Sampled hybrid trajectory and its transition events."""
 
     t: np.ndarray
     x: np.ndarray

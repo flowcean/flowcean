@@ -183,10 +183,10 @@ class HyDRAModel(Model):
         atol: float = 1e-9,
         max_step: float | None = None,
     ) -> Trace:
-        """Select modes at every grid point, including the final endpoint.
+        """Simulate a learned model on the requested time grid.
 
-        Labels and residence times are right-continuous at grid boundaries;
-        mode changes within an integration interval are not detected.
+        Modes are selected at each grid point, including the final endpoint;
+        changes within an integration interval are not detected.
         """
         schema = self._require_trace_schema()
         times = _prepare_simulation_times(t_span, sample_times, sample_dt)

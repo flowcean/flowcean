@@ -20,16 +20,14 @@ def time_forced_switch(
     period: float = 1.0,
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
-    """Create a system with periodic location-residence-time switches.
+    """Create a system that alternates between fast and slow decay.
 
     The two physical state coordinates are unchanged at switches. Each
     location is active for half the period.
 
     Args:
         period: Full period of the two-location cycle.
-        initial_state: Optional initial [x1, x2] physical state. Remove any
-            former clock coordinate and use simulate(initial_location_time=...)
-            to start partway through a visit.
+        initial_state: Optional initial [x1, x2] state.
 
     Returns:
         HybridSystem with time-triggered switches.

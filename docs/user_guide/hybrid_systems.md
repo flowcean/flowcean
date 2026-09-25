@@ -111,7 +111,7 @@ For each settled continuous segment, the simulator:
 3. Applies the optional reset using the source location's effective parameters.
 4. Enters the target location and resolves its entry policy before integrating again.
 
-Without a reset, the continuous state is unchanged by a transition. Every transition starts a new location visit and resets `location_time` to zero, including self-transitions; a separate state reset is optional. Reset callbacks receive the source location's residence time, while target-entry surfaces receive zero. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
+Without a reset, the continuous state is unchanged by a transition, including a self-transition. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
 
 !!! warning "Simultaneous entry transitions"
 
@@ -148,7 +148,7 @@ Rendering returns text without writing files or opening a viewer. A missing rend
 
 ## Location Residence Time
 
-`location_time` measures elapsed physical time in the current location visit. The simulator maintains it separately from the continuous state, so models need neither an extra clock coordinate nor a clock derivative or reset.
+`location_time` measures elapsed physical time in the current location visit, while `t` is global simulation time. The simulator maintains it separately from the continuous state, so models need neither an extra clock coordinate nor a clock derivative or reset.
 
 A timeout is an ordinary rising event surface:
 
@@ -159,9 +159,11 @@ timeout = EventSurface(
 )
 ```
 
-Use this surface on a transition to leave its source after five time units. Flows and resets can also request `location_time`, while `t` always remains global simulation time.
+Use this surface on a transition to leave its source after five time units.
 
-By default, the initial visit starts at residence time zero even when `t_span` begins at a nonzero time. To start partway through a visit, pass `initial_location_time` to `simulate` or `generate_traces`. It must be finite and nonnegative; batch generation applies the same initial age to every trace. Subsequent transitions always reset residence time to zero, including each jump in an immediate transition chain.
+By default, the initial visit starts at age zero even when `t_span` begins at a nonzero time. To start partway through a visit, pass `initial_location_time` to `simulate` or `generate_traces`.
+
+Every transition starts a new visit at age zero, including self-transitions and each jump in an immediate chain. Reset callbacks receive the departing source visit's age; target-entry surfaces receive zero.
 
 Residence-time surfaces retain zero-crossing semantics. For the timeout above, starting at age five follows the transition's exact-zero entry policy; starting after age five does not trigger an overdue timeout automatically. `CONTINUE` does not suppress a root detected at the integration start and can still lead to `SimulationProgressError`. Combining a minimum dwell time with a Boolean condition is not an additional guard mechanism provided by this clock.
 
@@ -185,7 +187,7 @@ After a continuous crossing, integration restarts at the exact event time with t
 
 Flat traces are right-continuous at transitions. A trace row at an event time contains the final state and active location after the complete immediate transition chain. This rule also applies to transitions at the initial or final time.
 
-Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. Its `location_time_before` records the departing visit's age. The target visit always starts at age zero. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
+Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. Its `location_time_before` records the departing visit's age. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
 
 A `Trace` contains aligned simulation records:
 
@@ -194,12 +196,12 @@ A `Trace` contains aligned simulation records:
 | `t` | Physical sample times |
 | `x` | Continuous state at each sample time |
 | `location` | Active location label at each sample time |
-| `location_time` | Residence time in the active visit, zero at post-transition boundaries |
+| `location_time` | Residence time in the active visit |
 | `events` | Ordered transition events with pre-reset and post-reset states |
 | `u` | Captured inputs, when requested |
 | `dx` | Captured state derivatives, when requested |
 
-Residence times are required fields on `Trace` and `Event`. Trace conversion and CSV/Parquet exports always include a separate `location_time` column; it is not a state feature in `Trace.x`.
+Trace conversion and CSV/Parquet exports include a separate `location_time` column.
 
 ## Sampling
 
@@ -240,6 +242,6 @@ The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hy
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
-`HyDRAModel.simulate()` selects a mode at every requested grid point, including the final endpoint. Trace labels and residence times reflect that selection: residence time starts at zero and resets whenever the selected mode changes, including re-entry into an earlier mode. Between grid points, the selected mode stays fixed. This grid-based simulation does not locate within-interval switches or produce transition events.
+`HyDRAModel.simulate()` selects a mode at every requested grid point, including the final endpoint. Trace labels and residence times reflect that selection. Between grid points, the selected mode stays fixed. This grid-based simulation does not locate within-interval switches or produce transition events.
 
 Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trace types.

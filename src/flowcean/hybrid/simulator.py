@@ -165,7 +165,6 @@ def simulate(
             evaluation. Scalar derivative returns are accepted only for
             single-state systems.
         initial_location_time: Finite, nonnegative age of the initial visit.
-            Resets to zero on every transition, including self-transitions.
         max_jumps: Maximum number of transitions allowed.
         rtol: Relative tolerance for the solver.
         atol: Absolute tolerance for the solver.
@@ -438,13 +437,9 @@ def generate_traces(
     sample_times: Iterable[float] | None = None,
     sample_dt: float | None = None,
 ) -> list[Trace]:
-    """Simulate a batch of traces for a set of initial states.
+    """Simulate one trace per initial state.
 
-    The initial location age and input stream/capture semantics match
-    :func:`simulate`, including the requirement that
-    ``capture_derivatives=True`` assumes pure flow
-    callbacks under repeated evaluation on the returned trace grid. Scalar
-    derivative returns are accepted only for single-state systems.
+    Other arguments follow :func:`simulate`.
     """
     return [
         simulate(

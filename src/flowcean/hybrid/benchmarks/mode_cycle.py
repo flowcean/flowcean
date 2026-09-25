@@ -82,16 +82,13 @@ def mode_cycle(
     """Create a scalable hybrid system that cycles through locations.
 
     The system has `modes` locations, each with linear dynamics active for
-    `dwell_time` according to its location residence time. Transitions leave
-    the physical state unchanged.
+    `dwell_time`. Transitions leave the continuous state unchanged.
 
     Args:
         modes: Number of locations in the cycle.
-        dimension: Dimension of the physical continuous state.
+        dimension: Dimension of the continuous state.
         dwell_time: Time to stay in each location.
-        initial_state: Optional physical state (length dimension). Remove any
-            former clock coordinate and use simulate(initial_location_time=...)
-            to start partway through a visit.
+        initial_state: Optional initial state (length dimension).
 
     Returns:
         HybridSystem cycling through multiple linear locations.
