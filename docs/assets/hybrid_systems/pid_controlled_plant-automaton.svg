@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="450" viewBox="0 0 740 450" role="img" aria-labelledby="title description">
+<title id="title">PID-controlled plant</title>
+<desc id="description">The default initial mode is Linear. The unclamped command crossing the lower limit downward switches Linear to Saturated low; crossing the same limit upward returns to Linear. Crossing the upper limit upward switches Linear to Saturated high; crossing it downward returns to Linear. There is no direct edge between saturated modes. No state resets occur, and integral error keeps accumulating in all modes.</desc>
+<style>
+ :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+ @media (prefers-color-scheme: dark) {
+  :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+ }
+ svg { background: var(--background); fill: var(--foreground); }
+ text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+ .heading { font-size: 23px; font-weight: 700; }
+ .subtitle, .note, .law { font-size: 15px; }
+ .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+ .mode-name { font-size: 21px; font-weight: 700; }
+ .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+</style>
+<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/></marker></defs>
+<rect width="740" height="450" fill="var(--background)"/>
+<text x="28" y="36" text-anchor="start" class="heading">PID-controlled plant</text>
+<text x="28" y="61" text-anchor="start" class="subtitle">The raw PID command selects linear or saturated actuation.</text>
+<text x="208" y="104" text-anchor="middle" class="">Raw command crosses</text>
+<text x="208" y="125" text-anchor="middle" class="">lower limit downward</text>
+<text x="534" y="104" text-anchor="middle" class="">Raw command crosses</text>
+<text x="534" y="125" text-anchor="middle" class="">upper limit upward</text>
+<path class="arrow" d="M 315 180 V 144 H 125 V 180"/>
+<path class="arrow" d="M 425 180 V 144 H 615 V 180"/>
+<path class="arrow" d="M 370 119 V 180"/>
+<text x="383" y="162" text-anchor="start" class="note">Start</text>
+<g style="color: #7253ad"><rect class="mode" x="30" y="180" width="190" height="94" rx="12"/>
+<text x="125.0" y="211" text-anchor="middle" class="mode-name">Saturated low</text>
+<text x="125.0" y="237" text-anchor="middle" class="law">Actuation at lower limit</text></g>
+<g style="color: #167f92"><rect class="mode" x="275" y="180" width="190" height="94" rx="12"/>
+<text x="370.0" y="211" text-anchor="middle" class="mode-name">Linear</text>
+<text x="370.0" y="237" text-anchor="middle" class="law">Unclamped actuation</text></g>
+<g style="color: #b75c12"><rect class="mode" x="520" y="180" width="190" height="94" rx="12"/>
+<text x="615.0" y="211" text-anchor="middle" class="mode-name">Saturated high</text>
+<text x="615.0" y="237" text-anchor="middle" class="law">Actuation at upper limit</text></g>
+<path class="arrow" d="M 125 274 V 310 H 315 V 274"/>
+<path class="arrow" d="M 615 274 V 310 H 425 V 274"/>
+<text x="208" y="340" text-anchor="middle" class="">Raw command crosses</text>
+<text x="208" y="361" text-anchor="middle" class="">lower limit upward</text>
+<text x="534" y="340" text-anchor="middle" class="">Raw command crosses</text>
+<text x="534" y="361" text-anchor="middle" class="">upper limit downward</text>
+<text x="370" y="406" text-anchor="middle" class="note">Integral error continues to accumulate in every mode.</text>
+<text x="370" y="429" text-anchor="middle" class="note">No state resets; saturation does not freeze the integrator.</text>
+</svg>

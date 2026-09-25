@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="313" viewBox="0 0 740 313" role="img" aria-labelledby="title description">
+  <title id="title">Impact oscillator: a reset within one mode</title>
+  <desc id="description">The oscillator starts in its only location. External force, damping and a restoring effect govern the motion between impacts. When position crosses zero downward, a self-loop leaves position unchanged and reverses and reduces velocity. Motion continues in the same mode.</desc>
+  <style>
+    :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+    }
+    svg { background: var(--background); fill: var(--foreground); }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subtitle, .note { font-size: 15px; }
+    .mode { fill: #4763c7; fill-opacity: .1; stroke: #4763c7; stroke-width: 2; }
+    .mode-name { font-size: 21px; font-weight: 700; }
+    .event { font-weight: 700; }
+    .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <rect width="740" height="313" fill="var(--background)"/>
+  <text class="heading" x="28" y="36">Impact oscillator</text>
+  <text class="subtitle" x="28" y="61">One mode: the stop changes velocity, not the governing location.</text>
+  <path class="arrow" d="M 30 182 H 98"/>
+  <text class="note" x="30" y="166">Start</text>
+  <rect class="mode" x="98" y="123" width="280" height="122" rx="12"/>
+  <text class="mode-name" x="238" y="158" text-anchor="middle">Oscillation</text>
+  <text x="238" y="187" text-anchor="middle">Force drives acceleration</text>
+  <text class="note" x="238" y="211" text-anchor="middle">Restoring motion and damping</text>
+  <path class="arrow" d="M 378 149 H 643 Q 658 149 658 164 V 218 Q 658 233 643 233 H 378"/>
+  <text class="event" x="512" y="130" text-anchor="middle">Impact at the stop</text>
+  <text x="512" y="181" text-anchor="middle">Position crosses zero &#8595;</text>
+  <text x="512" y="206" text-anchor="middle">v<tspan baseline-shift="super" font-size="11">+</tspan> = -e v<tspan baseline-shift="super" font-size="11">-</tspan></text>
+  <text class="note" x="370" y="287" text-anchor="middle">Position stays unchanged; velocity reverses and shrinks at impact.</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="324" viewBox="0 0 740 324" role="img" aria-labelledby="title description">
+  <title id="title">Time-forced switch: alternating decay modes</title>
+  <desc id="description">The system starts in Fast. Fast and Slow alternate whenever their clock reaches the dwell time from below. Every transition resets only the clock to zero; the two decaying coordinates remain continuous.</desc>
+  <style>
+    :root { --background: #f8fbfc; --foreground: #18323d; --line: #164b65; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #102832; --foreground: #edf7fa; --line: #a9e1f2; }
+    }
+    svg { background: var(--background); fill: var(--foreground); }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 16px; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .subtitle, .note { font-size: 15px; }
+    .mode { fill: currentColor; fill-opacity: .1; stroke: currentColor; stroke-width: 2; }
+    .mode-name { font-size: 21px; font-weight: 700; }
+    .arrow { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <rect width="740" height="324" fill="var(--background)"/>
+  <text class="heading" x="28" y="36">Time-forced switch</text>
+  <text class="subtitle" x="28" y="61">A clock state, not absolute time, determines each switch.</text>
+  <path class="arrow" d="M 28 171 H 78"/>
+  <text class="note" x="28" y="155">Start</text>
+  <path class="arrow" d="M 201 126 V 104 H 541 V 126"/>
+  <text x="371" y="96" text-anchor="middle">Clock reaches dwell time &#8593;</text>
+  <g style="color: #b75c12">
+    <rect class="mode" x="78" y="126" width="246" height="104" rx="12"/>
+    <text class="mode-name" x="201" y="163" text-anchor="middle">Fast</text>
+    <text x="201" y="192" text-anchor="middle">Faster decay</text>
+    <text class="note" x="201" y="213" text-anchor="middle">x1 and x2</text>
+  </g>
+  <g style="color: #167f92">
+    <rect class="mode" x="418" y="126" width="246" height="104" rx="12"/>
+    <text class="mode-name" x="541" y="163" text-anchor="middle">Slow</text>
+    <text x="541" y="192" text-anchor="middle">Slower decay</text>
+    <text class="note" x="541" y="213" text-anchor="middle">x1 and x2</text>
+  </g>
+  <path class="arrow" d="M 541 230 V 252 H 201 V 230"/>
+  <text class="note" x="371" y="278" text-anchor="middle">Clock reaches dwell time &#8593;</text>
+  <text class="note" x="371" y="307" text-anchor="middle">On either arrow: clock &#8594; 0; x1 and x2 stay continuous.</text>
+</svg>
