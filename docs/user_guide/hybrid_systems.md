@@ -41,7 +41,7 @@ trace = simulate(
 )
 ```
 
-The returned `Trace` contains sample times, continuous states, active location labels, and transition events.
+The returned `Trace` contains sample times, continuous states, active location labels, residence times, and transition events.
 
 <figure class="hybrid-figure" markdown="span">
 
@@ -51,7 +51,7 @@ The returned `Trace` contains sample times, continuous states, active location l
 
 </figure>
 
-The simulator also accepts initial-state and initial-location overrides, solver tolerances, and an event limit. Set `capture_derivatives=True` when a workflow needs state derivatives, and use `trace_to_polars` to prepare tabular state, input, and derivative columns for identification or evaluation.
+The simulator also accepts initial-state, initial-location, and initial-residence-time overrides, solver tolerances, and an event limit. Set `capture_derivatives=True` when a workflow needs state derivatives, and use `trace_to_polars` to prepare tabular state, input, and derivative columns for identification or evaluation.
 
 See the [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) for the complete signature. The sections below explain model construction and the precise meaning of events, samples, and transition boundaries.
 
@@ -165,7 +165,7 @@ Residence-time surfaces retain zero-crossing semantics. For the timeout above, s
 
 ## Physical Time and Microsteps
 
-`Event.time` is physical simulation time. Immediate transitions caused by a reset do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain. An initial-entry trigger has microstep 0. A continuously detected crossing also has microstep 0, and triggers on successive target entries use microsteps 1, 2, and so on.
+`Event.time` is physical simulation time. Immediate transitions on location entry do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain. An initial-entry trigger has microstep 0. A continuously detected crossing also has microstep 0, and triggers on successive target entries use microsteps 1, 2, and so on.
 
 Suppose a transition from A to B resets the state onto an event surface in B, which immediately causes a transition from B to C:
 
