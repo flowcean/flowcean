@@ -801,7 +801,7 @@ def test_initial_age_uses_stable_anchor_and_reaches_callbacks(
 
     def surface(*, location_time: float) -> float:
         seen.append(location_time)
-        return location_time - 0.75
+        return location_time - 0.35
 
     source = Location(
         lambda *, location_time: np.array([location_time]), label="source"
@@ -816,17 +816,17 @@ def test_initial_age_uses_stable_anchor_and_reaches_callbacks(
     trace = simulate(
         system,
         (start, start + 0.5),
-        initial_location_time=0.5,
+        initial_location_time=0.1,
         sample_times=[start, start + 0.125, start + 0.25, start + 0.5],
         capture_derivatives=True,
     )
 
-    assert seen[0] == 0.5
+    assert seen[0] == 0.1
     assert trace.events[0].time == pytest.approx(start + 0.25)
-    assert trace.events[0].location_time_before == pytest.approx(0.75)
+    assert trace.events[0].location_time_before == pytest.approx(0.35)
     assert trace.dx is not None
-    np.testing.assert_allclose(trace.location_time, [0.5, 0.625, 0.0, 0.25])
-    np.testing.assert_allclose(trace.dx[:, 0], [0.5, 0.625, 0.0, 0.0])
+    np.testing.assert_allclose(trace.location_time, [0.1, 0.225, 0.0, 0.25])
+    np.testing.assert_allclose(trace.dx[:, 0], [0.1, 0.225, 0.0, 0.0])
     assert trace.as_dict()["location_time"] is trace.location_time
 
 
