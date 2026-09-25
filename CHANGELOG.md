@@ -43,6 +43,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Removed
 
+- **Breaking:** Removed the unused `num_workers` argument and attribute from `flowcean.torch.PyTorchModel`. Omit this argument when constructing models; `LightningLearner.num_workers` still controls training data loading.
 - Removed `BenchmarkSpec`, `registry()`, `all_specs()`, `thermostat_target_stream`, `impact_input_stream`, `time_varying_input_stream`, and `wind_turbine_wind` from `flowcean.hybrid.benchmarks`.
 - Removed `flowcean.grpc.GrpcPassiveAutomataLearner` and its Java LearnLib, gRPC, protobuf, and Docker integration; use `flowcean.aalpy` for local passive automata learning ([#419](https://github.com/flowcean/flowcean/pull/419)).
 - Removed the external Polyfill.io script from the documentation site ([#403](https://github.com/flowcean/flowcean/pull/403)).

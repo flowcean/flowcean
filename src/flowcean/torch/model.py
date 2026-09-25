@@ -31,7 +31,6 @@ class PyTorchModel(Model):
         module: Module,
         output_names: list[str],
         batch_size: int = 32,
-        num_workers: int = 1,
     ) -> None:
         """Initialize the model.
 
@@ -39,12 +38,10 @@ class PyTorchModel(Model):
             module: The PyTorch module.
             output_names: The names of the output columns.
             batch_size: The batch size to use for predictions.
-            num_workers: Retained for backward compatibility.
         """
         self.module = module
         self.output_names = output_names
         self.batch_size = batch_size
-        self.num_workers = num_workers
 
     @override
     def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
