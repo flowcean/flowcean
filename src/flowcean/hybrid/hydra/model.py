@@ -183,6 +183,11 @@ class HyDRAModel(Model):
         atol: float = 1e-9,
         max_step: float | None = None,
     ) -> Trace:
+        """Simulate a learned model on the requested time grid.
+
+        Modes are selected at each grid point, including the final endpoint;
+        changes within an integration interval are not detected.
+        """
         schema = self._require_trace_schema()
         times = _prepare_simulation_times(t_span, sample_times, sample_dt)
         should_capture_inputs = _should_capture_inputs(
@@ -191,20 +196,20 @@ class HyDRAModel(Model):
         )
 
         state = self._coerce_state(x0, schema)
-        states = [state]
-        locations: list[str] = []
-
-        for t_start, t_end in pairwise(times):
-            frame = self._build_simulation_frame(
-                float(t_start),
+        mode_id = self._select_mode_id(
+            self._build_simulation_frame(
+                float(times[0]),
                 state,
                 input_stream,
                 schema,
-            )
-            mode_id = self._select_mode_id(frame)
-            location = f"mode_{mode_id}"
-            if not locations:
-                locations.append(location)
+            ),
+        )
+        mode_entry_time = float(times[0])
+        states = [state]
+        locations = [f"mode_{mode_id}"]
+        residence_times = [0.0]
+
+        for t_start, t_end in pairwise(times):
             state = self._integrate_next_state(
                 self.modes[mode_id],
                 state,
@@ -216,7 +221,19 @@ class HyDRAModel(Model):
                 max_step=max_step,
             )
             states.append(state)
-            locations.append(location)
+            next_mode_id = self._select_mode_id(
+                self._build_simulation_frame(
+                    float(t_end),
+                    state,
+                    input_stream,
+                    schema,
+                ),
+            )
+            if next_mode_id != mode_id:
+                mode_entry_time = float(t_end)
+            mode_id = next_mode_id
+            locations.append(f"mode_{mode_id}")
+            residence_times.append(float(t_end) - mode_entry_time)
 
         inputs = None
         if should_capture_inputs:
@@ -233,6 +250,7 @@ class HyDRAModel(Model):
             t=times,
             x=np.vstack(states),
             location=np.asarray(locations, dtype=object),
+            location_time=np.asarray(residence_times, dtype=float),
             events=(),
             u=inputs,
             dx=None,

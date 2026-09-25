@@ -19,11 +19,12 @@ class FlowFunction(Protocol):
 
     def __call__(
         self,
+        *,
         t: float,
         state: State,
         parameters: Parameters,
         input_stream: InputStream,
-        /,
+        location_time: float,
     ) -> Derivative: ...
 
 
@@ -32,11 +33,12 @@ class EventSurfaceFunction(Protocol):
 
     def __call__(
         self,
+        *,
         t: float,
         state: State,
         parameters: Parameters,
         input_stream: InputStream,
-        /,
+        location_time: float,
     ) -> float: ...
 
 
@@ -45,11 +47,12 @@ class ResetFunction(Protocol):
 
     def __call__(
         self,
+        *,
         t: float,
         state: State,
         parameters: Parameters,
         input_stream: InputStream,
-        /,
+        location_time: float,
     ) -> State: ...
 
 
@@ -243,19 +246,6 @@ class Transition:
         if type(entry_policy) is not SurfaceEntryPolicy:
             message = "entry_policy must be a SurfaceEntryPolicy."
             raise TypeError(message)
-        if source is target and transition_reset is None:
-            message = (
-                "A transition with identical source and target locations "
-                "requires a reset."
-            )
-            error = ValueError(message)
-            error.add_note(
-                "The jump changes neither location nor state, so approximate "
-                "root localization can redetect the crossing. Add a reset "
-                "that defines a post-jump state, use another target, or "
-                "remove the transition.",
-            )
-            raise error
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "event", event_surface)
@@ -375,7 +365,7 @@ def _callback_label(callback: object) -> str | None:
 
 @dataclass(frozen=True)
 class Event:
-    """Transition event information for a trace."""
+    """Recorded transition with pre- and post-reset states."""
 
     time: float
     source_location: str
@@ -385,15 +375,17 @@ class Event:
     state_before: State
     state_after: State
     microstep: int
+    location_time_before: float
 
 
 @dataclass(frozen=True)
 class Trace:
-    """Simulation trace with time, state, and location labels."""
+    """Sampled hybrid trajectory and its transition events."""
 
     t: np.ndarray
     x: np.ndarray
     location: np.ndarray
+    location_time: np.ndarray
     events: Sequence[Event]
     u: np.ndarray | None = None
     dx: np.ndarray | None = None
@@ -407,4 +399,5 @@ class Trace:
             "events": self.events,
             "u": self.u,
             "dx": self.dx,
+            "location_time": self.location_time,
         }

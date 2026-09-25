@@ -41,7 +41,7 @@ trace = simulate(
 )
 ```
 
-The returned `Trace` contains sample times, continuous states, active location labels, and transition events.
+The returned `Trace` contains sample times, continuous states, active location labels, residence times, and transition events.
 
 <figure class="hybrid-figure" markdown="span">
 
@@ -51,7 +51,7 @@ The returned `Trace` contains sample times, continuous states, active location l
 
 </figure>
 
-The simulator also accepts initial-state and initial-location overrides, solver tolerances, and an event limit. Set `capture_derivatives=True` when a workflow needs state derivatives, and use `trace_to_polars` to prepare tabular state, input, and derivative columns for identification or evaluation.
+The simulator also accepts initial-state, initial-location, and initial-residence-time overrides, solver tolerances, and an event limit. Set `capture_derivatives=True` when a workflow needs state derivatives, and use `trace_to_polars` to prepare tabular state, input, and derivative columns for identification or evaluation.
 
 See the [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) for the complete signature. The sections below explain model construction and the precise meaning of events, samples, and transition boundaries.
 
@@ -76,7 +76,7 @@ A `HybridSystem` contains locations, transitions, an initial location, an initia
 
 The continuous state is a one-dimensional NumPy array. A system with continuous dynamics but no discrete switching is represented by one location and no transitions.
 
-Callbacks can use the physical time, continuous state, effective parameters, and input stream:
+Callbacks can use the physical time, location residence time, continuous state, effective parameters, and input stream:
 
 ```python
 def flow(t, state, parameters, input_stream):
@@ -84,7 +84,11 @@ def flow(t, state, parameters, input_stream):
     return parameters["gain"] * state + control
 ```
 
-Callbacks may declare only the arguments they need when they retain the canonical names `t`, `state`, `parameters`, and `input_stream`. For example, a flow that depends only on state and parameters can use `def flow(state, parameters): ...`. System parameters apply globally, while parameters declared on the active location override global values with the same name. An input stream is a callable that returns a one-dimensional input array for a requested physical time.
+Callbacks may declare only the arguments they need when they retain the canonical names `t`, `location_time`, `state`, `parameters`, and `input_stream`. For example, a flow that depends only on state and parameters can use `def flow(state, parameters): ...`. Keyword-only arguments are supported, and callbacks using named dispatch with `**kwargs` receive all five values.
+
+The `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` protocols describe the complete five-argument, keyword-only interface. Callback wrappers also accept the subset forms above and four-positional callbacks. Callbacks using positional-only arguments, `*args`, or noncanonical required names receive `(t, state, parameters, input_stream)`; request `location_time` through named dispatch instead.
+
+System parameters apply globally, while parameters declared on the active location override global values with the same name. An input stream is a callable that returns a one-dimensional input array for a requested physical time.
 
 ## Transitions and Resets
 
@@ -107,7 +111,7 @@ For each settled continuous segment, the simulator:
 3. Applies the optional reset using the source location's effective parameters.
 4. Enters the target location and resolves its entry policy before integrating again.
 
-Without a reset, the continuous state is unchanged by a transition. A transition whose source and target are the same location therefore requires a reset. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
+Without a reset, the continuous state is unchanged by a transition, including a self-transition. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
 
 !!! warning "Simultaneous entry transitions"
 
@@ -142,9 +146,30 @@ Path("thermostat.svg").write_text(svg, encoding="utf-8")
 
 Rendering returns text without writing files or opening a viewer. A missing renderer or failed Graphviz command raises `RuntimeError`. SVG layout may vary between Graphviz versions.
 
+## Location Residence Time
+
+`location_time` measures elapsed physical time in the current location visit, while `t` is global simulation time. The simulator maintains it separately from the continuous state, so models need neither an extra clock coordinate nor a clock derivative or reset.
+
+A timeout is an ordinary rising event surface:
+
+```python
+timeout = EventSurface(
+    lambda location_time: location_time - 5.0,
+    direction=CrossingDirection.RISING,
+)
+```
+
+Use this surface on a transition to leave its source after five time units.
+
+By default, the initial visit starts at age zero even when `t_span` begins at a nonzero time. To start partway through a visit, pass `initial_location_time` to `simulate` or `generate_traces`.
+
+Every transition starts a new visit at age zero, including self-transitions and each jump in an immediate chain. Reset callbacks receive the departing source visit's age; target-entry surfaces receive zero.
+
+Residence-time surfaces retain zero-crossing semantics. For the timeout above, starting at age five follows the transition's exact-zero entry policy; starting after age five does not trigger an overdue timeout automatically. `CONTINUE` does not suppress a root detected at the integration start and can still lead to `SimulationProgressError`. Combining a minimum dwell time with a Boolean condition is not an additional guard mechanism provided by this clock.
+
 ## Physical Time and Microsteps
 
-`Event.time` is physical simulation time. Immediate transitions caused by a reset do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain. An initial-entry trigger has microstep 0. A continuously detected crossing also has microstep 0, and triggers on successive target entries use microsteps 1, 2, and so on.
+`Event.time` is physical simulation time. Immediate transitions on location entry do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain. An initial-entry trigger has microstep 0. A continuously detected crossing also has microstep 0, and triggers on successive target entries use microsteps 1, 2, and so on.
 
 Suppose a transition from A to B resets the state onto an event surface in B, which immediately causes a transition from B to C:
 
@@ -162,7 +187,7 @@ After a continuous crossing, integration restarts at the exact event time with t
 
 Flat traces are right-continuous at transitions. A trace row at an event time contains the final state and active location after the complete immediate transition chain. This rule also applies to transitions at the initial or final time.
 
-Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
+Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. Its `location_time_before` records the departing visit's age. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
 
 A `Trace` contains aligned simulation records:
 
@@ -171,9 +196,12 @@ A `Trace` contains aligned simulation records:
 | `t` | Physical sample times |
 | `x` | Continuous state at each sample time |
 | `location` | Active location label at each sample time |
+| `location_time` | Residence time in the active visit |
 | `events` | Ordered transition events with pre-reset and post-reset states |
 | `u` | Captured inputs, when requested |
 | `dx` | Captured state derivatives, when requested |
+
+Trace conversion and CSV/Parquet exports include a separate `location_time` column.
 
 ## Sampling
 
@@ -213,5 +241,7 @@ Shading spans the trace's first to last sample and follows recorded transition t
 The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hysteresis, and resets in reusable models. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
+
+`HyDRAModel.simulate()` selects a mode at every requested grid point, including the final endpoint. Trace labels and residence times reflect that selection. Between grid points, the selected mode stays fixed. This grid-based simulation does not locate within-interval switches or produce transition events.
 
 Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trace types.

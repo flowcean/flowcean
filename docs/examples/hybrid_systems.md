@@ -16,12 +16,12 @@ These examples illustrate switching, hysteresis, and resets in hybrid systems, f
 | [Switched linear](#switched-linear) | State-triggered switching of linear dynamics |
 | [Relay integrator](#relay-integrator) | Relay control with hysteresis |
 | [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary |
-| [Time-forced switch](#time-forced-switch) | Periodic switching with a clock state |
+| [Time-forced switch](#time-forced-switch) | Periodic switching after a fixed dwell time |
 | [Piecewise affine](#piecewise-affine) | Affine dynamics and a linear event surface |
 | [Impact oscillator](#impact-oscillator) | Forced oscillation with impact resets |
 | [PID-controlled plant](#pid-controlled-plant) | Actuator saturation and integral control |
 | [Tank valves](#tank-valves) | Valve switching and gravity-driven drainage |
-| [Location cycle](#location-cycle) | Clock-driven switching with resets |
+| [Location cycle](#location-cycle) | Repeated timed visits to linear modes |
 | [Buck converter](#buck-converter) | Hysteretic switching and diode blocking |
 | [Wind turbine](#wind-turbine) | Torque regimes and pitch control |
 
@@ -183,21 +183,21 @@ See the [`time_varying_event_surface` factory](../reference/hybrid.md#flowcean.h
 
 ## Time-Forced Switch
 
-A clock is part of the continuous state. It advances uniformly and resets when it reaches the dwell time, alternating between `fast` and `slow`. The other coordinates approach zero more quickly in `fast` than in `slow`. The factory's `period` spans a complete fast-slow cycle.
+Each visit lasts for a fixed dwell time, measured by [location residence time](../user_guide/hybrid_systems.md#location-residence-time). A rising crossing of `location_time - dwell_time` alternates between `fast` and `slow`. The two continuous-state coordinates approach zero more quickly in `fast` than in `slow`; neither resets at a transition. The factory's `period` spans a complete fast-slow cycle.
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Time-forced switch: fast and slow alternate at the same dwell-clock boundary, resetting only the clock.](../assets/hybrid_systems/time_forced_switch-automaton.svg)](../assets/hybrid_systems/time_forced_switch-automaton.svg){ target="_blank" rel="noopener" }
+[![Time-forced switch: fast and slow alternate when residence time reaches the dwell time, without resetting the continuous state.](../assets/hybrid_systems/time_forced_switch-automaton.svg)](../assets/hybrid_systems/time_forced_switch-automaton.svg){ target="_blank" rel="noopener" }
 
-<figcaption>Both transitions use the same clock condition. The decaying coordinates are not reset.</figcaption>
+<figcaption>Both transitions use the same residence-time condition. Each new visit starts at age zero while the decaying coordinates remain continuous.</figcaption>
 
 </figure>
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Continuously decaying state coordinates above a clock that ramps and resets at every fast-slow switch.](../assets/hybrid_systems/time_forced_switch-trace.svg)](../assets/hybrid_systems/time_forced_switch-trace.svg){ target="_blank" rel="noopener" }
+[![Two continuously decaying state coordinates above residence time, which ramps and restarts at every fast-slow switch.](../assets/hybrid_systems/time_forced_switch-trace.svg)](../assets/hybrid_systems/time_forced_switch-trace.svg){ target="_blank" rel="noopener" }
 
-<figcaption>Dashed vertical segments indicate clock resets. Physical simulation time continues forward along the horizontal axis.</figcaption>
+<figcaption>Dashed vertical segments show residence time restarting at zero, not a jump in the continuous state. Physical simulation time continues forward along the horizontal axis.</figcaption>
 
 </figure>
 
@@ -303,21 +303,21 @@ See the [`tank_valves` factory](../reference/hybrid.md#flowcean.hybrid.benchmark
 
 ## Location Cycle
 
-Locations form a cyclic sequence, each applying a different linear flow to the non-clock coordinates. A dwell clock triggers the next location and resets after each handoff. The factory can vary both the number of locations and the non-clock state dimension.
+Locations form a cyclic sequence, each applying a different linear flow to the continuous state. When location residence time reaches the dwell time, the system enters the next location at age zero without resetting the state. The factory can vary both the number of locations and the state dimension; the illustrated `dimension=3` run has three continuous-state coordinates and no clock coordinate.
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Location cycle: m0 through m5 form a closed loop, with a dwell-clock event and clock reset on every edge.](../assets/hybrid_systems/mode_cycle-automaton.svg)](../assets/hybrid_systems/mode_cycle-automaton.svg){ target="_blank" rel="noopener" }
+[![Location cycle: m0 through m5 form a closed loop, with a residence-time event on every edge and no continuous-state resets.](../assets/hybrid_systems/mode_cycle-automaton.svg)](../assets/hybrid_systems/mode_cycle-automaton.svg){ target="_blank" rel="noopener" }
 
-<figcaption>The final location returns to the first. The other state coordinates are carried through every transition unchanged.</figcaption>
+<figcaption>The final location returns to the first. All continuous-state coordinates are carried through every transition unchanged.</figcaption>
 
 </figure>
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Three state-coordinate traces and a resetting dwell clock, with the repeating location sequence shown by shading.](../assets/hybrid_systems/mode_cycle-trace.svg)](../assets/hybrid_systems/mode_cycle-trace.svg){ target="_blank" rel="noopener" }
+[![Three continuous-state coordinates and location residence time, with the repeating location sequence shown by shading.](../assets/hybrid_systems/mode_cycle-trace.svg)](../assets/hybrid_systems/mode_cycle-trace.svg){ target="_blank" rel="noopener" }
 
-<figcaption>Separate scales reveal the smaller coordinate excursions. Only the clock jumps at a location change; its reset does not restart the other trajectories.</figcaption>
+<figcaption>Separate scales reveal the smaller coordinate excursions. Residence time restarts at each location change, independently of the continuous-state trajectories.</figcaption>
 
 </figure>
 

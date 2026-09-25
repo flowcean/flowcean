@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added simulator-managed `location_time` to hybrid flow, event-surface, and reset callbacks, with `initial_location_time` for starting mid-visit and separate residence-time values in traces, events, and tabular exports. Every transition, including a self-transition without a state reset, starts a new visit at age zero.
 - Added an illustrated gallery covering all hybrid-system benchmarks and an example-first hybrid systems guide.
 - Added a "Why Flowcean?" guide explaining its modeling perspective and relationship to other tools.
 - Added `build_hybrid_system_dot` and optional Graphviz SVG rendering via `render_dot_svg` to `flowcean.hybrid` for visualizing complete hybrid automata without simulation.
@@ -20,6 +21,9 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` now describe the complete five-input, keyword-only callback interface, including `location_time`. Callback wrappers still accept canonical argument subsets and four-argument positional callbacks.
+- **Breaking:** Hybrid `Trace` construction requires a `location_time` array, and `Event` construction requires `location_time_before`. Tabular trace exports always include the separate `location_time` column. HyDRA simulation also supplies residence times, starting at zero and resetting when the selected mode changes.
+- **Breaking:** Hybrid benchmarks `time_forced_switch` and `mode_cycle` no longer append a clock coordinate to their continuous state. Initial states must contain only physical coordinates (two for `time_forced_switch`, `dimension` for `mode_cycle`); pass the former clock value as `simulate(..., initial_location_time=...)`. Named hybrid callbacks using `**kwargs` now receive `location_time` in addition to the existing arguments.
 - **Breaking:** `impact_oscillator` replaces `forcing`/`forcing_freq`, `time_varying_event_surface` replaces `amplitude`/`frequency`, and `pid_controlled_plant` replaces `setpoint_amp`/`setpoint_freq` with caller-supplied input streams. The PID input is `[reference, reference_rate]`. Parameters following the removed positional arguments are now keyword-only. Gallery scenarios are defined in `examples/hybrid_systems/scenarios.py`.
 - Redesigned the documentation landing page with a thermostat simulation replay, grouped navigation, and page icons.
 - Combined the hybrid-system API, benchmarks, and HyDRA reference into `reference/hybrid/`, with entries for all public benchmark factories. The former `reference/hybrid/benchmarks/` and `reference/hybrid/hydra/` URLs are no longer available.
@@ -33,6 +37,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Fixed
 
+- HyDRA simulation now reports the selected mode at each sample, including the final endpoint, rather than the preceding interval's mode. Residence times follow these right-continuous labels without changing the integrated state trajectory.
 - Hybrid trace shading now follows recorded transition times, including locations visited between samples, instead of leaving gaps at sample boundaries.
 - Adaptive and fixed-grid hybrid traces now consistently report the final post-transition state and location at jump boundaries.
 

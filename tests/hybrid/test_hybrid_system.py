@@ -5,9 +5,11 @@ import pytest
 
 from flowcean.hybrid import (
     CrossingDirection,
+    Event,
     HybridSystem,
     Location,
     SurfaceEntryPolicy,
+    Trace,
     Transition,
     simulate,
 )
@@ -104,20 +106,90 @@ def test_transition_entry_policy_defaults_and_requires_exact_enum() -> None:
         )
 
 
-def test_self_transition_without_reset_has_explanatory_note() -> None:
-    """A no-op self-transition is rejected with modeling alternatives."""
+def test_self_transition_without_reset_resets_location_time() -> None:
+    """Re-entry resets the clock without altering the continuous state."""
+    location = Location(lambda location_time: np.array([location_time]))
+    transition = Transition(
+        location,
+        location,
+        lambda location_time: location_time - 0.5,
+    )
+    system = HybridSystem([location], [transition], location, np.array([0.0]))
+
+    trace = simulate(
+        system,
+        (0.0, 1.25),
+        sample_times=[0.0, 0.5, 0.75, 1.0, 1.25],
+        capture_derivatives=True,
+    )
+
+    assert [event.time for event in trace.events] == pytest.approx([0.5, 1.0])
+    assert [
+        event.location_time_before for event in trace.events
+    ] == pytest.approx([0.5, 0.5])
+    assert trace.dx is not None
+    np.testing.assert_allclose(
+        trace.location_time, [0.0, 0.0, 0.25, 0.0, 0.25]
+    )
+    np.testing.assert_allclose(trace.dx[:, 0], [0.0, 0.0, 0.25, 0.0, 0.25])
+    np.testing.assert_allclose(
+        trace.x[:, 0], [0.0, 0.125, 0.15625, 0.25, 0.28125], atol=1e-6
+    )
+
+
+def test_self_transition_immediate_loop_obeys_max_jumps() -> None:
     location = Location(_zero_flow)
+    system = HybridSystem(
+        [location],
+        [
+            Transition(
+                location,
+                location,
+                lambda location_time: location_time,
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            )
+        ],
+        location,
+        np.array([0.0]),
+    )
 
-    with pytest.raises(ValueError, match="requires a reset") as caught:
-        Transition(location, location, lambda: 1.0)
+    with pytest.raises(RuntimeError, match="Maximum number of transitions"):
+        simulate(system, (0.0, 1.0), max_jumps=3)
 
-    notes = " ".join(caught.value.__notes__)
-    assert "neither location nor state" in notes
-    assert "root localization" in notes
-    assert "reset" in notes
-    assert "another target" in notes
-    assert "remove the transition" in notes
-    assert "Flowcean" not in f"{caught.value} {notes}"
+
+def test_records_require_residence_times_and_expose_trace_ages() -> None:
+    event = Event(
+        time=0.5,
+        source_location="a",
+        target_location="b",
+        event_surface="root",
+        reset=None,
+        state_before=np.array([0.0]),
+        state_after=np.array([1.0]),
+        microstep=0,
+        location_time_before=0.5,
+    )
+    ages = np.array([0.0, 0.0])
+    trace = Trace(
+        np.array([0.0, 0.5]),
+        np.array([[0.0], [1.0]]),
+        np.array(["a", "b"]),
+        ages,
+        (event,),
+    )
+
+    assert event.location_time_before == 0.5
+    assert trace.as_dict()["location_time"] is ages
+    assert trace.as_dict()["events"] == (event,)
+
+    with pytest.raises(TypeError, match="location_time_before"):
+        Event(  # pyright: ignore[reportCallIssue]
+            0.5, "a", "b", "root", None, np.array([0.0]), np.array([1.0]), 0
+        )
+    with pytest.raises(TypeError, match="location_time"):
+        Trace(  # pyright: ignore[reportCallIssue]
+            np.array([0.0]), np.array([[0.0]]), np.array(["a"]), events=()
+        )
 
 
 def test_location_parameters_override_globals_for_callbacks() -> None:

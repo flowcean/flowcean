@@ -93,12 +93,14 @@ def test_generator_torque_is_continuous_at_all_four_central_boundaries() -> (
 
 
 def _power_trace(speeds: list[float], locations: list[str]) -> Trace:
+    """Build power fixtures whose samples each record a mode on entry."""
     states = np.zeros((len(speeds), 6))
     states[:, 0] = np.array(speeds) / 97.0
     return Trace(
         t=np.arange(len(speeds), dtype=float),
         x=states,
         location=np.array(locations, dtype=object),
+        location_time=np.zeros(len(speeds), dtype=float),
         events=(),
     )
 

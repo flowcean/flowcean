@@ -1,5 +1,7 @@
 """Behavioral tests for continuous and hybrid simulation."""
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -15,6 +17,7 @@ from flowcean.hybrid import (
     SurfaceEntryError,
     SurfaceEntryPolicy,
     Transition,
+    generate_traces,
     simulate,
 )
 
@@ -787,3 +790,402 @@ def test_inputs_and_derivatives_are_captured_on_sample_grid() -> None:
     np.testing.assert_allclose(trace.u, expected_inputs)
     np.testing.assert_allclose(trace.dx, expected_derivatives)
     np.testing.assert_allclose(trace.x, expected_states, rtol=2e-6, atol=1e-8)
+
+
+@pytest.mark.parametrize("start", [13.0, 1e8])
+def test_initial_age_uses_stable_anchor_and_reaches_callbacks(
+    start: float,
+) -> None:
+    """Nonzero initial ages survive large physical starts without subtraction loss."""
+    seen: list[float] = []
+
+    def surface(*, location_time: float) -> float:
+        seen.append(location_time)
+        return location_time - 0.35
+
+    source = Location(
+        lambda *, location_time: np.array([location_time]), label="source"
+    )
+    target = Location(lambda: np.array([0.0]), label="target")
+    system = HybridSystem(
+        [source, target],
+        [Transition(source, target, surface)],
+        source,
+        np.array([0.0]),
+    )
+    trace = simulate(
+        system,
+        (start, start + 0.5),
+        initial_location_time=0.1,
+        sample_times=[start, start + 0.125, start + 0.25, start + 0.5],
+        capture_derivatives=True,
+    )
+
+    assert seen[0] == 0.1
+    assert trace.events[0].time == pytest.approx(start + 0.25)
+    assert trace.events[0].location_time_before == pytest.approx(0.35)
+    assert trace.dx is not None
+    np.testing.assert_allclose(trace.location_time, [0.1, 0.225, 0.0, 0.25])
+    np.testing.assert_allclose(trace.dx[:, 0], [0.1, 0.225, 0.0, 0.0])
+    assert trace.as_dict()["location_time"] is trace.location_time
+
+
+def test_initial_age_is_preserved_without_jump_and_repeated_runs_independent() -> (
+    None
+):
+    location = Location(lambda *, location_time: np.array([location_time]))
+    system = HybridSystem([location], [], location, np.array([0.0]))
+    first = simulate(
+        system, (9.0, 9.5), initial_location_time=2.0, sample_dt=0.25
+    )
+    second = simulate(system, (9.0, 9.5), sample_times=[9.0, 9.5])
+    np.testing.assert_allclose(first.location_time, [2.0, 2.25, 2.5])
+    np.testing.assert_allclose(second.location_time, [0.0, 0.5])
+    assert first.events == second.events == ()
+
+
+@pytest.mark.parametrize("age", [-1.0, np.nan, np.inf, -np.inf])
+def test_invalid_initial_age_is_rejected_before_callbacks(age: float) -> None:
+    calls: list[float] = []
+    location = Location(lambda: calls.append(1.0) or np.array([0.0]))
+    system = HybridSystem([location], [], location, np.array([0.0]))
+    with pytest.raises(ValueError, match="initial_location_time"):
+        simulate(system, (0.0, 1.0), initial_location_time=age)
+    assert calls == []
+
+
+def test_source_age_and_parameters_reset_before_target_entry_and_chain() -> (
+    None
+):
+    """Each same-time jump produces a fresh visit, including a repeated label."""
+    seen: list[tuple[str, float, float]] = []
+
+    def observe(role: str, age: float, rate: float) -> None:
+        seen.append((role, age, rate))
+
+    first = Location(
+        lambda: np.array([0.0]), label="same", parameters={"rate": 1.0}
+    )
+    second = Location(
+        lambda: np.array([0.0]), label="same", parameters={"rate": 2.0}
+    )
+    third = Location(
+        lambda: np.array([0.0]), label="done", parameters={"rate": 3.0}
+    )
+
+    def first_surface(
+        *, location_time: float, parameters: dict[str, float]
+    ) -> float:
+        observe("first surface", location_time, parameters["rate"])
+        return location_time - 2.0
+
+    def first_reset(
+        *,
+        location_time: float,
+        parameters: dict[str, float],
+        state: np.ndarray,
+    ) -> np.ndarray:
+        observe("first reset", location_time, parameters["rate"])
+        return state
+
+    def second_surface(
+        *, location_time: float, parameters: dict[str, float]
+    ) -> float:
+        observe("second surface", location_time, parameters["rate"])
+        return location_time
+
+    def second_reset(
+        *,
+        location_time: float,
+        parameters: dict[str, float],
+        state: np.ndarray,
+    ) -> np.ndarray:
+        observe("second reset", location_time, parameters["rate"])
+        return state
+
+    system = HybridSystem(
+        [first, second, third],
+        [
+            Transition(
+                first,
+                second,
+                first_surface,
+                first_reset,
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+            Transition(
+                second,
+                third,
+                second_surface,
+                second_reset,
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            ),
+        ],
+        first,
+        np.array([0.0]),
+    )
+    trace = simulate(
+        system,
+        (5.0, 5.5),
+        initial_location_time=2.0,
+        sample_times=[5.0, 5.0, 5.25, 5.5],
+    )
+    assert seen == [
+        ("first surface", 2.0, 1.0),
+        ("first reset", 2.0, 1.0),
+        ("second surface", 0.0, 2.0),
+        ("second reset", 0.0, 2.0),
+    ]
+    assert [event.microstep for event in trace.events] == [0, 1]
+    assert [event.location_time_before for event in trace.events] == [2.0, 0.0]
+    np.testing.assert_allclose(trace.location_time, [0.0, 0.0, 0.25, 0.5])
+    assert trace.location.tolist() == ["done"] * 4
+
+
+@pytest.mark.parametrize(
+    "policy",
+    [
+        SurfaceEntryPolicy.ERROR,
+        SurfaceEntryPolicy.TRIGGER,
+        SurfaceEntryPolicy.CONTINUE,
+    ],
+)
+def test_exact_zero_initial_timeout_follows_entry_policy(
+    policy: SurfaceEntryPolicy,
+) -> None:
+    source = Location(lambda: np.array([0.0]))
+    target = Location(lambda: np.array([0.0]))
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(
+                    lambda location_time: location_time - 0.5,
+                    direction=CrossingDirection.RISING,
+                ),
+                entry_policy=policy,
+            )
+        ],
+        source,
+        np.array([0.0]),
+    )
+    if policy is SurfaceEntryPolicy.ERROR:
+        with pytest.raises(SurfaceEntryError):
+            simulate(system, (2.0, 2.5), initial_location_time=0.5)
+    elif policy is SurfaceEntryPolicy.TRIGGER:
+        trace = simulate(
+            system,
+            (2.0, 2.5),
+            initial_location_time=0.5,
+            sample_times=[2.0, 2.5],
+        )
+        assert trace.events[0].location_time_before == 0.5
+        np.testing.assert_allclose(trace.location_time, [0.0, 0.5])
+    else:
+        with pytest.raises(SimulationProgressError):
+            simulate(system, (2.0, 2.5), initial_location_time=0.5)
+
+
+def test_overdue_initial_timeout_does_not_fire() -> None:
+    source = Location(lambda: np.array([0.0]))
+    target = Location(lambda: np.array([0.0]))
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                EventSurface(
+                    lambda location_time: location_time - 0.5,
+                    direction=CrossingDirection.RISING,
+                ),
+            )
+        ],
+        source,
+        np.array([0.0]),
+    )
+    trace = simulate(
+        system, (2.0, 3.0), initial_location_time=1.0, sample_times=[2.0, 3.0]
+    )
+    assert trace.events == ()
+    np.testing.assert_allclose(trace.location_time, [1.0, 2.0])
+
+
+def test_batch_forwards_initial_age_and_empty_sampling() -> None:
+    location = Location(lambda: np.array([0.0]))
+    system = HybridSystem([location], [], location, np.array([0.0]))
+    traces = generate_traces(
+        system,
+        (5.0, 6.0),
+        [[1.0], [2.0]],
+        initial_location_time=3.0,
+        sample_times=[5.0, 6.0],
+    )
+    assert len(traces) == 2
+    for trace in traces:
+        np.testing.assert_allclose(trace.location_time, [3.0, 4.0])
+    empty = simulate(
+        system, (5.0, 6.0), sample_times=[], capture_derivatives=True
+    )
+    assert empty.location_time.shape == (0,)
+    assert empty.dx is not None
+    assert empty.dx.shape == (0, 0)
+
+
+@pytest.mark.parametrize(
+    "mode", ["adaptive", "dense", "fixed", "duplicates", "off_grid", "final"]
+)
+def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
+    mode: str,
+) -> None:
+    """Right-continuous visit ages and derivative capture follow the final visit."""
+    source = Location(
+        lambda *, location_time: np.array([location_time]), label="same"
+    )
+    target = Location(
+        lambda *, location_time: np.array([location_time + 10.0]), label="same"
+    )
+    system = HybridSystem(
+        [source, target],
+        [Transition(source, target, lambda *, t: t - 1.0)],
+        source,
+        np.array([0.0]),
+    )
+    end = 1.0 if mode == "final" else 1.5
+    options: dict[str, Any] = {"capture_derivatives": True}
+    if mode == "dense":
+        options["dense_output"] = True
+    elif mode == "fixed":
+        options["sample_dt"] = 0.5
+    elif mode == "duplicates":
+        options["sample_times"] = [0.0, 0.5, 1.0, 1.0, 1.25, 1.5]
+    elif mode == "off_grid":
+        options["sample_times"] = [0.0, 0.75, 1.25, 1.5]
+    elif mode == "final":
+        options["sample_times"] = [0.0, 0.5, 1.0]
+    trace = simulate(system, (0.0, end), **options)
+    assert trace.dx is not None
+    assert trace.events[0].location_time_before == pytest.approx(1.0)
+    post_jump = trace.t >= 1.0
+    np.testing.assert_allclose(
+        trace.location_time[post_jump], trace.t[post_jump] - 1.0
+    )
+    np.testing.assert_allclose(
+        trace.dx[post_jump, 0], 10.0 + trace.location_time[post_jump]
+    )
+    np.testing.assert_allclose(
+        trace.location_time[~post_jump], trace.t[~post_jump]
+    )
+    assert trace.location.tolist() == ["same"] * len(trace.t)
+    if mode == "off_grid":
+        assert not np.any(trace.t == trace.events[0].time)
+    elif mode in {"adaptive", "dense", "fixed", "duplicates", "final"}:
+        assert np.count_nonzero(trace.t == trace.events[0].time) == (
+            2 if mode == "duplicates" else 1
+        )
+        np.testing.assert_allclose(trace.location_time[trace.t == 1.0], 0.0)
+
+
+@pytest.mark.parametrize("role", ["flow", "surface", "reset"])
+@pytest.mark.parametrize(
+    "form",
+    [
+        "positional",
+        "varargs",
+        "unknown",
+        "uninspectable",
+        "named",
+        "keyword",
+        "kwargs",
+    ],
+)
+def test_callback_dispatch_preserves_legacy_forms_and_exposes_age(
+    role: str, form: str
+) -> None:
+    """Every role supports canonical subsets without changing four-arg fallback."""
+    calls: list[tuple[object, ...]] = []
+
+    def positional(a: float, b: np.ndarray, c: object, d: object, /) -> float:
+        calls.append((a, b, c, d))
+        return 0.0
+
+    def varargs(*args: object) -> float:
+        calls.append(args)
+        return 0.0
+
+    def unknown(a: float, b: np.ndarray, c: object, d: object) -> float:
+        calls.append((a, b, c, d))
+        return 0.0
+
+    class Uninspectable:
+        @property
+        def __signature__(self) -> object:
+            raise ValueError("signature unavailable")
+
+        def __call__(self, *args: object) -> float:
+            calls.append(args)
+            return 0.0
+
+    def named(location_time: float) -> float:
+        calls.append((location_time,))
+        return 0.0
+
+    def keyword(*, location_time: float, state: np.ndarray) -> float:
+        calls.append((location_time, state))
+        return 0.0
+
+    def kwargs(**values: object) -> float:
+        calls.append(tuple(values.keys()))
+        return 0.0
+
+    callbacks = {
+        "positional": positional,
+        "varargs": varargs,
+        "unknown": unknown,
+        "uninspectable": Uninspectable(),
+        "named": named,
+        "keyword": keyword,
+        "kwargs": kwargs,
+    }
+    callback = callbacks[form]
+    source = Location(callback if role == "flow" else lambda: np.array([0.0]))
+    target = Location(lambda: np.array([0.0]))
+    system = HybridSystem(
+        [source, target],
+        [
+            Transition(
+                source,
+                target,
+                callback if role == "surface" else lambda: 0.0,
+                callback if role == "reset" else lambda state: state,
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            )
+        ]
+        if role != "flow"
+        else [],
+        source,
+        np.array([0.0]),
+        parameters={"rate": 1.0},
+    )
+    trace = simulate(system, (4.0, 4.25), initial_location_time=2.0)
+    assert calls
+    if form in {"positional", "varargs", "unknown", "uninspectable"}:
+        assert len(calls[0]) == 4
+        assert calls[0][0] == 4.0
+        np.testing.assert_array_equal(calls[0][1], [0.0])
+        assert calls[0][2] == {"rate": 1.0}
+        assert callable(calls[0][3])
+    elif form == "kwargs":
+        assert set(calls[0]) == {
+            "t",
+            "state",
+            "parameters",
+            "input_stream",
+            "location_time",
+        }
+    else:
+        assert calls[0][0] == 2.0
+    if role != "flow":
+        assert trace.events[0].location_time_before == 2.0

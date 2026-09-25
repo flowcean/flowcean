@@ -110,8 +110,105 @@ def test_predict_next_state_and_simulate_match_exponential_solution() -> None:
         atol=1e-9,
     )
     assert trace.location.tolist() == ["mode_0"] * times.size
+    np.testing.assert_allclose(trace.location_time, times - times[0])
     assert trace.events == ()
     assert trace.u is None
+
+
+def test_simulation_labels_modes_at_grid_boundaries_and_resets_residence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    evaluated_at: list[float] = []
+
+    def rising_derivative(frame: pl.DataFrame) -> np.ndarray:
+        evaluated_at.extend(frame["time"].to_list())
+        return np.ones(frame.height)
+
+    def falling_derivative(frame: pl.DataFrame) -> np.ndarray:
+        evaluated_at.extend(frame["time"].to_list())
+        return -2.0 * np.ones(frame.height)
+
+    rising_flow = DerivativeModel(rising_derivative)
+    falling_flow = DerivativeModel(falling_derivative)
+    times = np.array([1.25, 1.5, 2.25, 2.8, 4.0])
+    selector = HybridDecisionTreeLearner(
+        SelectorFeatureConfig(state_features=("time",)),
+        max_depth=2,
+        random_state=0,
+    ).learn_from_traces(
+        [pl.DataFrame({"time": times, "mode": [0, 0, 1, 1, 0]})],
+    )
+    model = HyDRAModel(
+        [rising_flow, falling_flow],
+        input_features=["time", "x"],
+        output_features=["dx"],
+        selector=selector,
+        trace_schema=_schema(),
+    )
+    selected_at: list[float] = []
+    predict_details = selector.predict_details
+
+    def record_selection(frame: pl.DataFrame) -> object:
+        selected_at.extend(frame["time"].to_list())
+        return predict_details(frame)
+
+    monkeypatch.setattr(selector, "predict_details", record_selection)
+    trace = model.simulate((1.25, 4.0), [1.0], sample_times=times)
+
+    np.testing.assert_array_equal(trace.t, times)
+    np.testing.assert_allclose(trace.x[:, 0], [1.0, 1.25, 2.0, 0.9, -1.5])
+    assert trace.location.tolist() == [
+        "mode_0",
+        "mode_0",
+        "mode_1",
+        "mode_1",
+        "mode_0",
+    ]
+    np.testing.assert_allclose(
+        trace.location_time, [0.0, 0.25, 0.0, 0.55, 0.0]
+    )
+    np.testing.assert_array_equal(selected_at, times)
+    assert max(evaluated_at) <= times[-1]
+    assert (
+        len(trace.t)
+        == len(trace.x)
+        == len(trace.location)
+        == len(trace.location_time)
+    )
+    assert trace.events == ()
+
+
+def test_simulation_selects_from_post_interval_state() -> None:
+    rising_flow = DerivativeModel(lambda frame: np.ones(frame.height))
+    falling_flow = DerivativeModel(lambda frame: -np.ones(frame.height))
+    selector = HybridDecisionTreeLearner(
+        SelectorFeatureConfig(state_features=("x",)),
+        max_depth=1,
+        random_state=0,
+    ).learn_from_traces(
+        [pl.DataFrame({"x": [-1.0, 0.0, 1.0, 2.0], "mode": [0, 0, 1, 1]})],
+    )
+    model = HyDRAModel(
+        [rising_flow, falling_flow],
+        input_features=["time", "x"],
+        output_features=["dx"],
+        selector=selector,
+        trace_schema=_schema(),
+    )
+    times = [0.0, 0.4, 1.0, 1.6, 2.2]
+
+    trace = model.simulate((0.0, 2.2), [0.0], sample_times=times)
+
+    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.4, 1.0, 0.4, 1.0])
+    assert trace.location.tolist() == [
+        "mode_0",
+        "mode_0",
+        "mode_1",
+        "mode_0",
+        "mode_1",
+    ]
+    np.testing.assert_allclose(trace.location_time, [0.0, 0.4, 0.0, 0.0, 0.0])
+    assert trace.events == ()
 
 
 def test_simulation_uses_and_captures_external_inputs() -> None:
@@ -219,10 +316,12 @@ def test_multi_mode_batch_prediction_routes_rows_with_decision_tree() -> None:
 
 
 def _trace(times: list[float], states: list[list[float]]) -> Trace:
+    start_time = times[0] if times else 0.0
     return Trace(
         t=np.asarray(times),
         x=np.asarray(states),
         location=np.asarray(["mode"] * len(times), dtype=object),
+        location_time=np.asarray(times, dtype=float) - start_time,
         events=(),
     )
 

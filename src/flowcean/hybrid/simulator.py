@@ -60,7 +60,9 @@ class _EventFn:
         transition: Transition,
         parameters: Parameters,
         input_stream: InputStream,
+        clock: "_ResidenceClock",
     ) -> None:
+        self._clock = clock
         self._transition = transition
         self._parameters = parameters
         self._input_stream = input_stream
@@ -75,6 +77,7 @@ class _EventFn:
                 y,
                 self._parameters,
                 self._input_stream,
+                self._clock.age(t),
             ),
         )
         if np.isnan(value):
@@ -86,6 +89,19 @@ class _EventFn:
         return value
 
 
+class _ResidenceClock(NamedTuple):
+    """Immutable residence-time reference for one uninterrupted location visit."""
+
+    anchor: float
+    age_at_anchor: float
+
+    def age(self, time: float) -> float:
+        return self.age_at_anchor + (time - self.anchor)
+
+    def ages(self, times: np.ndarray) -> np.ndarray:
+        return self.age_at_anchor + (times - self.anchor)
+
+
 class _RolloutResult(NamedTuple):
     """Sampled result for dense rollout."""
 
@@ -93,6 +109,7 @@ class _RolloutResult(NamedTuple):
     eval_t: np.ndarray
     x: np.ndarray
     location: np.ndarray
+    location_time: np.ndarray
 
 
 class _Boundary(NamedTuple):
@@ -101,6 +118,7 @@ class _Boundary(NamedTuple):
     time: float
     state: np.ndarray
     location: Location
+    clock: _ResidenceClock
 
 
 class _EntryResult(NamedTuple):
@@ -110,6 +128,7 @@ class _EntryResult(NamedTuple):
     location: Location
     events: tuple[Event, ...]
     jumps: int
+    clock: _ResidenceClock
 
 
 def simulate(
@@ -121,6 +140,7 @@ def simulate(
     input_stream: InputStream | None = None,
     capture_inputs: bool | None = None,
     capture_derivatives: bool = False,
+    initial_location_time: float = 0.0,
     max_jumps: int = 256,
     rtol: float = 1e-7,
     atol: float = 1e-9,
@@ -144,6 +164,7 @@ def simulate(
             ``Trace.dx``. This assumes pure flow callbacks under repeated
             evaluation. Scalar derivative returns are accepted only for
             single-state systems.
+        initial_location_time: Finite, nonnegative age of the initial visit.
         max_jumps: Maximum number of transitions allowed.
         rtol: Relative tolerance for the solver.
         atol: Absolute tolerance for the solver.
@@ -155,6 +176,9 @@ def simulate(
     Returns:
         Trace: The simulation trace with location labels and events.
     """
+    if not np.isfinite(initial_location_time) or initial_location_time < 0:
+        message = "initial_location_time must be finite and nonnegative."
+        raise ValueError(message)
     start_location = (
         system.initial_location if location0 is None else location0
     )
@@ -178,11 +202,13 @@ def simulate(
     x_segments: list[np.ndarray] = []
     location_segments: list[np.ndarray] = []
     sol_segments: list[Callable[[np.ndarray], np.ndarray] | None] = []
+    clock_segments: list[_ResidenceClock] = []
     events: list[Event] = []
     boundaries: list[_Boundary] = []
 
     t_current = float(t_span[0])
     t_final = float(t_span[1])
+    clock = _ResidenceClock(t_current, float(initial_location_time))
     jumps = 0
 
     sample_grid = _prepare_sample_times(t_span, sample_times, sample_dt)
@@ -195,15 +221,17 @@ def simulate(
         t_current,
         effective_input_stream,
         first_microstep=0,
+        clock=clock,
         jumps=jumps,
         max_jumps=max_jumps,
     )
     state = initial_entry.state
     location = initial_entry.location
     jumps = initial_entry.jumps
+    clock = initial_entry.clock
     events.extend(initial_entry.events)
     if initial_entry.events:
-        boundaries.append(_Boundary(t_current, state.copy(), location))
+        boundaries.append(_Boundary(t_current, state.copy(), location, clock))
 
     while t_current < t_final:
         transitions = system.transitions_from(location)
@@ -212,6 +240,7 @@ def simulate(
             system.parameters,
             location.parameters,
             effective_input_stream,
+            clock,
         )
         segment_start = t_current
 
@@ -220,6 +249,7 @@ def simulate(
                 location,
                 system.parameters,
                 effective_input_stream,
+                clock,
             ),
             "t_span": (segment_start, t_final),
             "y0": state,
@@ -242,6 +272,7 @@ def simulate(
             np.full(result.t.shape, location, dtype=object),
         )
         sol_segments.append(result.sol)
+        clock_segments.append(clock)
 
         if not result.t_events or all(
             len(event_list) == 0 for event_list in result.t_events
@@ -276,7 +307,9 @@ def simulate(
             system.parameters,
             effective_input_stream,
             microstep=0,
+            location_time=clock.age(event_time),
         )
+        clock = _ResidenceClock(event_time, 0.0)
         events.append(event)
         location = transition.target
 
@@ -287,30 +320,42 @@ def simulate(
             event_time,
             effective_input_stream,
             first_microstep=1,
+            clock=clock,
             jumps=jumps,
             max_jumps=max_jumps,
         )
         state = target_entry.state
         location = target_entry.location
         jumps = target_entry.jumps
+        clock = target_entry.clock
         events.extend(target_entry.events)
-        boundaries.append(_Boundary(event_time, state.copy(), location))
+        boundaries.append(_Boundary(event_time, state.copy(), location, clock))
         t_current = event_time
 
     if sample_grid is None:
         t_all = _concat_segments(t_segments)
         x_all = _concat_segments(x_segments)
         location_objects = _concat_segments(location_segments)
+        location_time = _concat_segments(
+            [
+                clock.ages(times)
+                for clock, times in zip(
+                    clock_segments, t_segments, strict=True
+                )
+            ],
+        )
         _apply_boundaries(
             t_all,
             x_all,
             location_objects,
+            location_time,
             boundaries,
         )
         unique_times = _unique_time_mask(t_all)
         t_all = t_all[unique_times]
         x_all = x_all[unique_times]
         location_objects = location_objects[unique_times]
+        location_time = location_time[unique_times]
         location_all = _location_labels(location_objects)
         u_all = None
         dx_all = None
@@ -325,6 +370,7 @@ def simulate(
                 times=t_all,
                 states=x_all,
                 locations=location_objects,
+                location_times=location_time,
                 input_stream=effective_input_stream,
             )
         return Trace(
@@ -334,6 +380,7 @@ def simulate(
             events=tuple(events),
             u=u_all,
             dx=dx_all,
+            location_time=location_time,
         )
 
     rolled = _rollout_segments(
@@ -342,6 +389,7 @@ def simulate(
         x_segments,
         location_segments,
         sol_segments,
+        clock_segments,
         boundaries,
     )
     u_all = None
@@ -357,6 +405,7 @@ def simulate(
             times=rolled.eval_t,
             states=rolled.x,
             locations=rolled.location,
+            location_times=rolled.location_time,
             input_stream=effective_input_stream,
         )
     location_all = _location_labels(rolled.location)
@@ -367,6 +416,7 @@ def simulate(
         events=tuple(events),
         u=u_all,
         dx=dx_all,
+        location_time=rolled.location_time,
     )
 
 
@@ -378,6 +428,7 @@ def generate_traces(
     input_stream: InputStream | None = None,
     capture_inputs: bool | None = None,
     capture_derivatives: bool = False,
+    initial_location_time: float = 0.0,
     max_jumps: int = 256,
     rtol: float = 1e-7,
     atol: float = 1e-9,
@@ -386,12 +437,9 @@ def generate_traces(
     sample_times: Iterable[float] | None = None,
     sample_dt: float | None = None,
 ) -> list[Trace]:
-    """Simulate a batch of traces for a set of initial states.
+    """Simulate one trace per initial state.
 
-    The input stream and capture semantics match :func:`simulate`, including
-    the requirement that ``capture_derivatives=True`` assumes pure flow
-    callbacks under repeated evaluation on the returned trace grid. Scalar
-    derivative returns are accepted only for single-state systems.
+    Other arguments follow :func:`simulate`.
     """
     return [
         simulate(
@@ -401,6 +449,7 @@ def generate_traces(
             input_stream=input_stream,
             capture_inputs=capture_inputs,
             capture_derivatives=capture_derivatives,
+            initial_location_time=initial_location_time,
             max_jumps=max_jumps,
             rtol=rtol,
             atol=atol,
@@ -417,6 +466,7 @@ def _wrap_flow(
     location: Location,
     system_parameters: Parameters,
     input_stream: InputStream,
+    clock: _ResidenceClock,
 ) -> Callable[[float, np.ndarray], np.ndarray]:
     """Bind location dynamics and system parameters for SciPy."""
 
@@ -430,6 +480,7 @@ def _wrap_flow(
                 y,
                 parameters,
                 input_stream,
+                clock.age(t),
             ),
             state_dim=y.shape[0],
         )
@@ -442,6 +493,7 @@ def _build_event_functions(
     system_parameters: Parameters,
     location_parameters: Parameters,
     input_stream: InputStream,
+    clock: _ResidenceClock,
 ) -> list[_EventFn]:
     """Create SciPy-compatible event functions for transitions."""
     event_functions: list[_EventFn] = []
@@ -452,6 +504,7 @@ def _build_event_functions(
                 transition,
                 parameters,
                 input_stream,
+                clock,
             ),
         )
     return event_functions
@@ -463,12 +516,14 @@ def _call_hybrid_callback(
     state: np.ndarray,
     parameters: Parameters,
     input_stream: InputStream,
+    location_time: float,
 ) -> Any:
     canonical_arguments = {
         "t": t,
         "state": state,
         "parameters": parameters,
         "input_stream": input_stream,
+        "location_time": location_time,
     }
     callback_parameters = _callback_parameters(callback)
     if callback_parameters is None:
@@ -556,6 +611,7 @@ def _apply_transition(
     input_stream: InputStream,
     *,
     microstep: int,
+    location_time: float,
 ) -> tuple[np.ndarray, Event]:
     state_before = ensure_state(event_state).copy()
     parameters = {**system_parameters, **transition.source.parameters}
@@ -570,6 +626,7 @@ def _apply_transition(
                 state_before.copy(),
                 parameters,
                 input_stream,
+                location_time,
             ),
             state_dim=state_before.shape[0],
         )
@@ -584,6 +641,7 @@ def _apply_transition(
         state_before=state_before.copy(),
         state_after=new_state.copy(),
         microstep=microstep,
+        location_time_before=location_time,
     )
 
 
@@ -595,6 +653,7 @@ def _settle_location_entries(
     input_stream: InputStream,
     *,
     first_microstep: int,
+    clock: _ResidenceClock,
     jumps: int,
     max_jumps: int,
 ) -> _EntryResult:
@@ -611,6 +670,7 @@ def _settle_location_entries(
             state,
             system.parameters,
             input_stream,
+            clock.age(time),
         )
         zero_error = [
             transition
@@ -654,6 +714,7 @@ def _settle_location_entries(
                 location=location,
                 events=tuple(entry_events),
                 jumps=jumps,
+                clock=clock,
             )
 
         transition = zero_trigger[0]
@@ -665,7 +726,9 @@ def _settle_location_entries(
             system.parameters,
             input_stream,
             microstep=microstep,
+            location_time=clock.age(time),
         )
+        clock = _ResidenceClock(time, 0.0)
         entry_events.append(event)
         location = transition.target
         microstep += 1
@@ -678,6 +741,7 @@ def _evaluate_entry_surfaces(
     state: np.ndarray,
     system_parameters: Parameters,
     input_stream: InputStream,
+    location_time: float,
 ) -> list[float]:
     """Evaluate every outgoing event surface once before making a decision."""
     parameters = {**system_parameters, **location.parameters}
@@ -689,6 +753,7 @@ def _evaluate_entry_surfaces(
                 state,
                 parameters,
                 input_stream,
+                location_time,
             ),
         )
         for transition in transitions
@@ -764,6 +829,7 @@ def _apply_boundaries(
     times: np.ndarray,
     states: np.ndarray,
     locations: np.ndarray,
+    location_times: np.ndarray,
     boundaries: Sequence[_Boundary],
 ) -> None:
     """Replace event-time rows with their final quiescent values."""
@@ -771,6 +837,7 @@ def _apply_boundaries(
         matches = times == boundary.time
         states[matches] = boundary.state
         locations[matches] = boundary.location
+        location_times[matches] = boundary.clock.age(boundary.time)
 
 
 def _location_labels(locations: np.ndarray) -> np.ndarray:
@@ -853,15 +920,17 @@ def _capture_derivatives(
     times: np.ndarray,
     states: np.ndarray,
     locations: np.ndarray,
+    location_times: np.ndarray,
     input_stream: InputStream,
 ) -> np.ndarray:
     derivatives: list[np.ndarray] = []
     matrix_ndim = 2
     state_dim = states.shape[1] if states.ndim == matrix_ndim else 0
-    for time, state, location in zip(
+    for time, state, location, location_time in zip(
         times,
         states,
         locations,
+        location_times,
         strict=True,
     ):
         if not isinstance(location, Location):
@@ -875,6 +944,7 @@ def _capture_derivatives(
                 state,
                 {**system.parameters, **location.parameters},
                 input_stream,
+                float(location_time),
             ),
             state_dim=state_dim,
         )
@@ -957,6 +1027,7 @@ def _rollout_segments(
     x_segments: Sequence[np.ndarray],
     location_segments: Sequence[np.ndarray],
     sol_segments: Sequence[Callable[[np.ndarray], np.ndarray] | None],
+    clock_segments: Sequence[_ResidenceClock],
     boundaries: Sequence[_Boundary],
 ) -> _RolloutResult:
     if sample_times.size == 0:
@@ -965,21 +1036,24 @@ def _rollout_segments(
             eval_t=sample_times,
             x=np.empty((0, 0), dtype=float),
             location=np.empty((0,), dtype=object),
+            location_time=np.empty((0,), dtype=float),
         )
 
     sampled_t: list[np.ndarray] = []
     sampled_eval_t: list[np.ndarray] = []
     sampled_x: list[np.ndarray] = []
     sampled_location: list[np.ndarray] = []
+    sampled_location_time: list[np.ndarray] = []
 
     last_segment_index = len(t_segments) - 1
-    for index, (t_seg, x_seg, location_seg, sol) in enumerate(
+    for index, (t_seg, x_seg, location_seg, sol, clock) in enumerate(
         zip(
             t_segments,
             x_segments,
             location_segments,
             sol_segments,
-            strict=False,
+            clock_segments,
+            strict=True,
         ),
     ):
         t_start = float(t_seg[0])
@@ -997,6 +1071,7 @@ def _rollout_segments(
             exact_boundary_mask = times == t_start
         sampled_t.append(times)
         sampled_eval_t.append(eval_times)
+        sampled_location_time.append(clock.ages(eval_times))
         if sol is not None:
             values = sol(eval_times).T
         else:
@@ -1014,6 +1089,7 @@ def _rollout_segments(
             eval_t=np.array([], dtype=float),
             x=np.empty((0, 0), dtype=float),
             location=np.empty((0,), dtype=object),
+            location_time=np.empty((0,), dtype=float),
         )
 
     result = _RolloutResult(
@@ -1021,11 +1097,13 @@ def _rollout_segments(
         eval_t=np.concatenate(sampled_eval_t),
         x=np.concatenate(sampled_x),
         location=np.concatenate(sampled_location),
+        location_time=np.concatenate(sampled_location_time),
     )
     _apply_boundaries(
         result.t,
         result.x,
         result.location,
+        result.location_time,
         boundaries,
     )
     return result
