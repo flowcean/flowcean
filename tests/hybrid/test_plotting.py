@@ -27,7 +27,6 @@ def _event(
         state_after=np.array([0.0]),
         microstep=microstep,
         location_time_before=location_time_before,
-        location_time_after=0.0,
     )
 
 
@@ -72,7 +71,6 @@ def test_plot_trace_breaks_line_at_jump() -> None:
         state_after=np.array([0.0, 3.0]),
         microstep=0,
         location_time_before=0.5,
-        location_time_after=0.0,
     )
     trace = Trace(
         t=np.array([0.0, 0.5, 1.0]),

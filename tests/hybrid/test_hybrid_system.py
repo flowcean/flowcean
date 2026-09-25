@@ -127,7 +127,6 @@ def test_self_transition_without_reset_resets_location_time() -> None:
     assert [
         event.location_time_before for event in trace.events
     ] == pytest.approx([0.5, 0.5])
-    assert [event.location_time_after for event in trace.events] == [0.0, 0.0]
     assert trace.dx is not None
     np.testing.assert_allclose(
         trace.location_time, [0.0, 0.0, 0.25, 0.0, 0.25]
@@ -169,7 +168,6 @@ def test_records_require_residence_times_and_expose_trace_ages() -> None:
         state_after=np.array([1.0]),
         microstep=0,
         location_time_before=0.5,
-        location_time_after=0.0,
     )
     ages = np.array([0.0, 0.0])
     trace = Trace(
@@ -181,7 +179,6 @@ def test_records_require_residence_times_and_expose_trace_ages() -> None:
     )
 
     assert event.location_time_before == 0.5
-    assert event.location_time_after == 0.0
     assert trace.as_dict()["location_time"] is ages
     assert trace.as_dict()["events"] == (event,)
 

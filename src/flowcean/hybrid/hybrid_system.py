@@ -15,50 +15,53 @@ Derivative = State | float
 
 
 class FlowFunction(Protocol):
-    """Legacy four-positional flow protocol.
+    """Flow callback accepting all five canonical named inputs.
 
-    Named callbacks may additionally request ``location_time``.
+    ``ContinuousDynamics`` also accepts callbacks requesting named subsets.
     """
 
     def __call__(
         self,
+        *,
         t: float,
         state: State,
         parameters: Parameters,
         input_stream: InputStream,
-        /,
+        location_time: float,
     ) -> Derivative: ...
 
 
 class EventSurfaceFunction(Protocol):
-    """Legacy four-positional event-surface protocol.
+    """Event-surface callback accepting all five canonical named inputs.
 
-    Named callbacks may additionally request ``location_time``.
+    ``EventSurface`` also accepts callbacks requesting named subsets.
     """
 
     def __call__(
         self,
+        *,
         t: float,
         state: State,
         parameters: Parameters,
         input_stream: InputStream,
-        /,
+        location_time: float,
     ) -> float: ...
 
 
 class ResetFunction(Protocol):
-    """Legacy four-positional reset protocol.
+    """Reset callback accepting all five canonical named inputs.
 
-    Named callbacks may additionally request ``location_time``.
+    ``Reset`` also accepts callbacks requesting named subsets.
     """
 
     def __call__(
         self,
+        *,
         t: float,
         state: State,
         parameters: Parameters,
         input_stream: InputStream,
-        /,
+        location_time: float,
     ) -> State: ...
 
 
@@ -375,8 +378,8 @@ def _callback_label(callback: object) -> str | None:
 class Event:
     """Transition event information for a trace.
 
-    Required residence times record the source visit's age before the jump
-    and zero after it.
+    ``location_time_before`` records the departing source visit's age.
+    Every transition starts a target visit at age zero.
     """
 
     time: float
@@ -388,7 +391,6 @@ class Event:
     state_after: State
     microstep: int
     location_time_before: float
-    location_time_after: float
 
 
 @dataclass(frozen=True)

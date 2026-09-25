@@ -824,7 +824,6 @@ def test_initial_age_uses_stable_anchor_and_reaches_callbacks(
     assert seen[0] == 0.5
     assert trace.events[0].time == pytest.approx(start + 0.25)
     assert trace.events[0].location_time_before == pytest.approx(0.75)
-    assert trace.events[0].location_time_after == 0.0
     assert trace.dx is not None
     np.testing.assert_allclose(trace.location_time, [0.5, 0.625, 0.0, 0.25])
     np.testing.assert_allclose(trace.dx[:, 0], [0.5, 0.625, 0.0, 0.0])
@@ -1069,7 +1068,6 @@ def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
     trace = simulate(system, (0.0, end), **options)
     assert trace.dx is not None
     assert trace.events[0].location_time_before == pytest.approx(1.0)
-    assert trace.events[0].location_time_after == 0.0
     post_jump = trace.t >= 1.0
     np.testing.assert_allclose(
         trace.location_time[post_jump], trace.t[post_jump] - 1.0

@@ -127,7 +127,6 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         assert event.location_time_before == pytest.approx(
             dwell_time, abs=1e-9
         )
-        assert event.location_time_after == pytest.approx(0.0, abs=1e-12)
         np.testing.assert_allclose(
             event.state_after, event.state_before, atol=1e-12
         )
@@ -161,7 +160,6 @@ def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
     )
     for event in trace.events:
         assert event.location_time_before == pytest.approx(0.2, abs=1e-9)
-        assert event.location_time_after == pytest.approx(0.0)
         np.testing.assert_allclose(
             event.state_after, event.state_before, atol=1e-12
         )
@@ -192,7 +190,11 @@ def test_time_forced_switch_starts_midvisit() -> None:
     assert trace.location_time[0] == pytest.approx(0.15)
     assert trace.events[0].time == pytest.approx(0.05, abs=1e-9)
     assert trace.events[0].location_time_before == pytest.approx(0.2)
-    assert trace.events[0].location_time_after == pytest.approx(0.0)
+    after_event = np.isclose(trace.t, 0.075, atol=1e-9)
+    assert trace.location[after_event].tolist() == ["slow"]
+    np.testing.assert_allclose(
+        trace.location_time[after_event], 0.025, atol=1e-12
+    )
     assert trace.events[1].time == pytest.approx(0.25, abs=1e-9)
 
 

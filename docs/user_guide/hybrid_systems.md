@@ -84,7 +84,9 @@ def flow(t, state, parameters, input_stream):
     return parameters["gain"] * state + control
 ```
 
-Callbacks may declare only the arguments they need when they retain the canonical names `t`, `location_time`, `state`, `parameters`, and `input_stream`. For example, a flow that depends only on state and parameters can use `def flow(state, parameters): ...`. Keyword-only arguments are supported, and callbacks using named dispatch with `**kwargs` receive all five values. Legacy callbacks using positional-only arguments, `*args`, or noncanonical required names still receive the original four positional arguments `(t, state, parameters, input_stream)`; request `location_time` through named dispatch instead.
+Callbacks may declare only the arguments they need when they retain the canonical names `t`, `location_time`, `state`, `parameters`, and `input_stream`. For example, a flow that depends only on state and parameters can use `def flow(state, parameters): ...`. Keyword-only arguments are supported, and callbacks using named dispatch with `**kwargs` receive all five values.
+
+The `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` protocols describe the complete five-argument, keyword-only interface. Callback wrappers also accept the subset forms above and four-positional callbacks. Callbacks using positional-only arguments, `*args`, or noncanonical required names receive `(t, state, parameters, input_stream)`; request `location_time` through named dispatch instead.
 
 System parameters apply globally, while parameters declared on the active location override global values with the same name. An input stream is a callable that returns a one-dimensional input array for a requested physical time.
 
@@ -183,7 +185,7 @@ After a continuous crossing, integration restarts at the exact event time with t
 
 Flat traces are right-continuous at transitions. A trace row at an event time contains the final state and active location after the complete immediate transition chain. This rule also applies to transitions at the initial or final time.
 
-Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. Its `location_time_before` records the source visit's age, and `location_time_after` is zero. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
+Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. Its `location_time_before` records the departing visit's age. The target visit always starts at age zero. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
 
 A `Trace` contains aligned simulation records:
 

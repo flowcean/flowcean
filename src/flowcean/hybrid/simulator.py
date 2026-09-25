@@ -647,7 +647,6 @@ def _apply_transition(
         state_after=new_state.copy(),
         microstep=microstep,
         location_time_before=location_time,
-        location_time_after=0.0,
     )
 
 
