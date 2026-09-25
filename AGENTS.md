@@ -1,27 +1,26 @@
 # AGENTS.md
 
-## Workflow
-- Use `uv` and `just` as the source of truth. CI runs `just check`, `just test`, `just package`, `just docs`, and selected `just examples-<name>` targets.
-- `just check` = `uv lock --locked`, `uv run pre-commit run --all-files`, `uv run --all-packages --all-extras basedpyright`, `uv run deptry src`.
-- `just test` = `uv run python -m pytest tests --cov --cov-config=pyproject.toml`.
-- Focused test: `uv run pytest tests/path/test_file.py -v` or `uv run pytest tests/path/test_file.py::test_name -v`.
-- Focused example: `uv run --directory ./examples/<name>/ run.py`. Do not assume every workspace example also has a `just examples-<name>` target; `passive_circuit` does not.
-- Before opening a PR, update `CHANGELOG.md` under `Unreleased` for notable user-facing changes, especially changes to public APIs, behavior, defaults, or compatibility. Internal-only changes do not normally require an entry.
+## Development Policy
 
-## CI And Generated Outputs
-- PR CI has five jobs in `.github/workflows/ci.yml`: checks, tests, package, docs, and an examples matrix.
-- `just docs` runs `uv run --only-group docs zensical build --strict` using `zensical.toml` and writes `site/`. `just docs-serve` starts the preview server. Documentation dependencies are defined in the `docs` dependency group.
-- API reference pages in `docs/reference/` document public package exports with mkdocstrings. Keep their links and the explicit navigation in `zensical.toml` in sync when adding public packages.
-- Examples with DVC-tracked data need `uv run dvc pull --recursive examples/<name>` before running locally. The Coffee Machine example is not in the CI examples matrix because it requires this external data.
+- Flowcean is in 0.x development and currently has no downstream consumers. Breaking API changes are expected and permitted. Prefer a clean, coherent design over preserving existing names, signatures, import paths, or behavior.
+- Do not add or retain compatibility shims, deprecated aliases, legacy wrappers, or fallback paths solely for backwards compatibility unless explicitly requested. Do not seek additional approval solely because a change breaks an API.
+- Keep changes scoped to the task. Update affected in-repository callers, tests, examples, and documentation together; tests should validate the new contract rather than preserve obsolete behavior.
+- Revisit the compatibility policy when downstream consumers exist or the project adopts a stable API commitment.
 
-## Repo Shape
-- `src/flowcean/__init__.py` is empty; the usable public API is exposed from subpackages like `flowcean.core`, `flowcean.polars`, and backend packages.
-- `src/flowcean/core/` is the main wiring layer: shared abstractions, callbacks, and `learn_offline` / `learn_incremental` / `learn_active`.
-- `src/flowcean/core/strategies/offline.py` is the clearest end-to-end reference for the offline learn/evaluate flow.
-- `src/flowcean/polars/` owns dataframe environments and most transforms. Backend-specific learners/models live in sibling packages such as `sklearn/`, `torch/`, `river/`, `xgboost/`, `pysr/`, `hydra/`, and `aalpy/`.
-- Callback helpers are intentionally importable from both `flowcean.core.callbacks` and `flowcean.core`. `get_default_callbacks()` returns `[]`, so learners stay silent unless callbacks are passed explicitly.
+## Working Tree
 
-## Gotchas
-- Do not assume every `examples/*` directory is wired the same way. If an example uses `flowcean = { workspace = true }`, keep `[tool.uv.workspace].members` in sync, and update `justfile` plus the CI examples matrix if it should be runnable there.
-- Pytest stability for real PySR tests depends on `tests/conftest.py` setting `PYTHON_JULIACALL_THREADS=1`; keep that in place unless you have a verified replacement.
-- Keep the central worktree on `main` and free of implementation changes. Create or reuse a task worktree under `.worktrees/`, which is already ignored in `.gitignore`, for every repository modification.
+- Keep the central worktree on `main` and free of implementation changes. Before modifying the repository, create or reuse a task worktree under `.worktrees/` (already ignored by Git).
+
+## Commands and Validation
+
+- Use `uv` for Python commands and `just` for repository workflows. [justfile](justfile) defines the recipes; [.github/workflows/ci.yml](.github/workflows/ci.yml) defines CI coverage.
+- Start with focused checks, such as `uv run pytest tests/path/test_file.py -v`, then run the broader checks applicable to the change.
+- Available checks are `just check` (style, types, and dependencies), `just test` (test suite), `just package` (package build), and `just docs` (strict documentation build).
+- Run affected examples separately where relevant; `just test` does not cover all example behavior. Use the example's `just examples-<name>` recipe when available. Otherwise inspect its own configuration and entry points rather than assuming every example uses `run.py`.
+
+## Cross-File Changes
+
+- Before opening a PR, record notable user-facing changes under `Unreleased` in [CHANGELOG.md](CHANGELOG.md), including breaking changes. Internal-only changes do not normally need an entry.
+- Keep public API reference pages in `docs/reference/` and navigation in `zensical.toml` aligned. See [Building the Documentation](docs/getting_started/documentation.md) for the documentation workflow.
+- When adding an example that uses `flowcean = { workspace = true }`, register it in `[tool.uv.workspace].members` in `pyproject.toml`. Add or update its `justfile` recipe and CI matrix entry if it should run there; these lists are not necessarily identical.
+- Data-backed examples may require a DVC pull and institutional VPN access. See [DVC](docs/getting_started/dvc.md) before running them.
