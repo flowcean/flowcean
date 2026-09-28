@@ -155,9 +155,9 @@ class _RunContext:
         self.effective_input_stream = (
             _missing_input_stream if input_stream is None else input_stream
         )
-        callbacks = [location.dynamics.flow for location in system.locations]
+        callbacks = [location.flow.fn for location in system.locations]
         callbacks.extend(
-            transition.event.fn for transition in system.transitions
+            transition.event_surface.fn for transition in system.transitions
         )
         callbacks.extend(
             transition.reset.fn
@@ -195,7 +195,7 @@ class _RunContext:
         age: float,
     ) -> np.ndarray:
         return _coerce_vector(
-            self.call(location.dynamics.flow, location, time, state, age),
+            self.call(location.flow.fn, location, time, state, age),
             state_dim=state.size,
             name="Flow",
         )

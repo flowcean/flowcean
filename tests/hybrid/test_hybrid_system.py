@@ -6,8 +6,11 @@ import pytest
 from flowcean.hybrid import (
     CrossingDirection,
     Event,
+    EventSurface,
+    Flow,
     HybridSystem,
     Location,
+    Reset,
     SurfaceEntryPolicy,
     Transition,
     simulate,
@@ -159,12 +162,10 @@ def test_event_requires_age_and_has_read_only_detached_snapshots() -> None:
     second = Location(_zero_flow)
     before = np.array([0.0])
     after = np.array([1.0])
+    transition = Transition(first, second, lambda: 0.0)
     event = Event(
         time=0.5,
-        source_location=first,
-        target_location=second,
-        event_surface="root",
-        reset=None,
+        transition=transition,
         state_before=before,
         state_after=after,
         microstep=0,
@@ -172,8 +173,8 @@ def test_event_requires_age_and_has_read_only_detached_snapshots() -> None:
     )
     before[0] = 10.0
     after[0] = 20.0
-    assert event.source_location is first
-    assert event.target_location is second
+    assert event.transition.source is first
+    assert event.transition.target is second
     assert event.location_time_before == 0.5
     np.testing.assert_allclose(event.state_before, [0.0])
     np.testing.assert_allclose(event.state_after, [1.0])
@@ -183,14 +184,89 @@ def test_event_requires_age_and_has_read_only_detached_snapshots() -> None:
     with pytest.raises(TypeError, match="location_time_before"):
         Event(  # pyright: ignore[reportCallIssue]
             0.5,
-            first,
-            second,
-            "root",
-            None,
+            transition,
             np.array([0.0]),
             np.array([1.0]),
             0,
         )
+
+
+def test_event_retains_selected_transition_identity_with_duplicate_labels() -> (
+    None
+):
+    source = Location(lambda: np.array([1.0]), label="same")
+    target = Location(_zero_flow, label="same")
+    later_surface = EventSurface(lambda t: t - 1.0, label="same")
+    selected_surface = EventSurface(lambda t: t - 0.5, label="same")
+    later_reset = Reset(lambda state: state + 100.0, label="same")
+    selected_reset = Reset(lambda state: state + 2.0, label="same")
+    later = Transition(source, target, later_surface, later_reset)
+    selected = Transition(source, target, selected_surface, selected_reset)
+    system = HybridSystem(
+        [source, target], [later, selected], source, np.array([0.0])
+    )
+
+    trajectory = simulate(system, (0.0, 1.25))
+
+    assert len(trajectory.events) == 1
+    event = trajectory.events[0]
+    assert event.transition is system.transitions[1] is selected
+    assert event.transition.event_surface is selected_surface
+    assert event.transition.reset is selected_reset
+    assert event.transition.source is source
+    assert event.transition.target is target
+    np.testing.assert_allclose(event.state_before, [0.5])
+    np.testing.assert_allclose(event.state_after, [2.5])
+    assert not np.shares_memory(event.state_before, event.state_after)
+    assert not event.state_before.flags["W"]
+    assert not event.state_after.flags["W"]
+
+
+def test_locations_sharing_flow_have_distinct_visits_and_residence_clocks() -> (
+    None
+):
+    flow = Flow(fn=lambda location_time: np.array([location_time]))
+    first = Location(flow=flow, label="same")
+    second = Location(flow=flow, label="same")
+    surface = EventSurface(lambda location_time: location_time - 0.5)
+    system = HybridSystem(
+        [first, second],
+        [
+            Transition(first, second, surface),
+            Transition(second, first, surface),
+        ],
+        first,
+        np.array([0.0]),
+    )
+
+    trajectory = simulate(system, (2.0, 3.25))
+    frame = trajectory.sample(
+        [2.0, 2.25, 2.5, 2.75, 3.0, 3.25], include_derivatives=True
+    )
+
+    assert first.flow is second.flow is flow
+    assert [segment.location for segment in trajectory.segments] == [
+        first,
+        second,
+        first,
+    ]
+    assert frame["location_id"].to_list() == [0, 0, 1, 1, 0, 0]
+    assert frame["location_time"].to_list() == [
+        0.0,
+        0.25,
+        0.0,
+        0.25,
+        0.0,
+        0.25,
+    ]
+    np.testing.assert_allclose(frame["dx0"], frame["location_time"])
+    np.testing.assert_allclose(
+        frame["x0"], [0, 0.03125, 0.125, 0.15625, 0.25, 0.28125]
+    )
+    assert [event.location_time_before for event in trajectory.events] == [
+        0.5,
+        0.5,
+    ]
 
 
 def test_location_parameters_override_globals_for_callbacks() -> None:
@@ -222,8 +298,8 @@ def test_location_parameters_override_globals_for_callbacks() -> None:
     assert len(trace.events) == 1
     assert trace.events[0].time == pytest.approx(0.5, abs=1e-7)
     assert trace.events[0].state_after == pytest.approx(np.array([4.0]))
-    assert trace.events[0].source_location is source
-    assert trace.events[0].target_location is target
+    assert trace.events[0].transition.source is source
+    assert trace.events[0].transition.target is target
     frame = trace.sample([0.0, trace.events[0].time, 1.0])
     assert frame["x0"][1] == pytest.approx(4.0)
     assert frame["location_id"].to_list() == [0, 1, 1]

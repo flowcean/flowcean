@@ -20,14 +20,16 @@ def evaluate_selector_oracle(
     traces: list[pl.DataFrame],
 ) -> SelectorEvaluationReport:
     dataset = build_selector_dataset(traces, model.feature_config)
-    predictions = model.predict(dataset.features).collect()["mode"].to_list()
+    predictions = (
+        model.predict(dataset.features).collect()["flow_id"].to_list()
+    )
     return _report(dataset.labels.to_list(), predictions)
 
 
 def evaluate_selector_autoregressive(
     model: HybridDecisionTreeModel,
     traces: list[pl.DataFrame],
-    seed_modes: tuple[int, ...] | list[int] = (),
+    seed_flows: tuple[int, ...] | list[int] = (),
 ) -> SelectorEvaluationReport:
     _validate_autoregressive_traces(
         traces,
@@ -36,27 +38,27 @@ def evaluate_selector_autoregressive(
 
     y_true: list[int] = []
     y_pred: list[int] = []
-    required_mode_history = model.feature_config.mode_history
+    required_flow_history = model.feature_config.flow_history
 
     for trace in traces:
-        resolved_seed_modes = tuple(int(mode_id) for mode_id in seed_modes)
+        resolved_seed_flows = tuple(int(flow_id) for flow_id in seed_flows)
         bootstrapped_prefix = 0
-        if len(resolved_seed_modes) < required_mode_history:
-            if resolved_seed_modes:
+        if len(resolved_seed_flows) < required_flow_history:
+            if resolved_seed_flows:
                 message = (
                     "explicit seed history is shorter than configured "
-                    "mode_history"
+                    "flow_history"
                 )
                 raise ValueError(message)
-            resolved_seed_modes = _bootstrap_seed_modes(
+            resolved_seed_flows = _bootstrap_seed_flows(
                 trace,
-                required_mode_history,
+                required_flow_history,
             )
-            bootstrapped_prefix = len(resolved_seed_modes)
+            bootstrapped_prefix = len(resolved_seed_flows)
 
         runtime = StatefulHybridDecisionTreeSelector(
             model,
-            seed_modes=resolved_seed_modes,
+            seed_flows=resolved_seed_flows,
         )
         raw_columns = model.feature_config.required_columns()
         for row_index, row in enumerate(trace.iter_rows(named=True)):
@@ -65,11 +67,11 @@ def evaluate_selector_autoregressive(
             if (
                 row_index < bootstrapped_prefix
                 or not result.ready
-                or result.mode_id is None
+                or result.flow_id is None
             ):
                 continue
-            y_true.append(int(row["mode"]))
-            y_pred.append(result.mode_id)
+            y_true.append(int(row["flow_id"]))
+            y_pred.append(result.flow_id)
 
     return _report(y_true, y_pred)
 
@@ -83,36 +85,36 @@ def _validate_autoregressive_traces(
         raise ValueError(message)
 
     for trace in traces:
-        missing_columns = {"mode", *required_columns} - set(trace.columns)
-        if "mode" in missing_columns:
-            message = "selector traces must include a mode column"
+        missing_columns = {"flow_id", *required_columns} - set(trace.columns)
+        if "flow_id" in missing_columns:
+            message = "selector traces must include a flow_id column"
             raise ValueError(message)
         if missing_columns:
             message = "missing required selector columns"
             msg = f"{message}: {sorted(missing_columns)}"
             raise ValueError(msg)
-        if trace["mode"].null_count() > 0:
-            message = "selector mode labels must not contain nulls"
+        if trace["flow_id"].null_count() > 0:
+            message = "selector flow IDs must not contain nulls"
             raise ValueError(message)
 
 
-def _bootstrap_seed_modes(
+def _bootstrap_seed_flows(
     trace: pl.DataFrame,
-    mode_history: int,
+    flow_history: int,
 ) -> tuple[int, ...]:
-    if mode_history == 0:
+    if flow_history == 0:
         return ()
 
-    bootstrap_modes = tuple(
-        int(mode_id) for mode_id in trace["mode"].head(mode_history).to_list()
+    bootstrap_flows = tuple(
+        int(flow_id)
+        for flow_id in trace["flow_id"].head(flow_history).to_list()
     )
-    if len(bootstrap_modes) < mode_history:
+    if len(bootstrap_flows) < flow_history:
         message = (
-            "selector traces must contain enough mode labels to bootstrap "
-            "history"
+            "selector traces must contain enough flow IDs to bootstrap history"
         )
         raise ValueError(message)
-    return bootstrap_modes
+    return bootstrap_flows
 
 
 def _report(y_true: list[int], y_pred: list[int]) -> SelectorEvaluationReport:
@@ -133,7 +135,7 @@ def _report(y_true: list[int], y_pred: list[int]) -> SelectorEvaluationReport:
         samples=scored,
         confusion_matrix=pl.DataFrame(
             {
-                "actual_mode": labels,
+                "actual_flow_id": labels,
                 **{
                     f"predicted_{label}": matrix[:, index].tolist()
                     for index, label in enumerate(labels)

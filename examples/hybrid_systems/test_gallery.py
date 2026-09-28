@@ -23,6 +23,11 @@ def test_summary_counts_locations_between_sampled_rows() -> None:
     assert trajectory.sample(dt=0.01)["location_id"].n_unique() < 3
     summary = benchmark_run.summarize_benchmark(spec, trajectory)
     assert summary.location_count == 3
+    assert summary.sample_count == trajectory.sample(dt=0.01).height
+    assert (
+        f"samples={summary.sample_count}"
+        in benchmark_run.format_benchmark_summary(summary)
+    )
 
 
 @pytest.mark.parametrize("has_input", [False, True])

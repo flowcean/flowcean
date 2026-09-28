@@ -55,13 +55,13 @@ class _EventFn:
         self.transition = transition
         self.context = context
         self.clock = clock
-        self.direction = int(transition.event.direction)
+        self.direction = int(transition.event_surface.direction)
         self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
         value = float(
             self.context.call(
-                self.transition.event.fn,
+                self.transition.event_surface.fn,
                 self.transition.source,
                 t,
                 y,
@@ -274,7 +274,6 @@ def _apply_transition(
     before = ensure_state(state)
     if transition.reset is None:
         after = before.copy()
-        label = None
     else:
         after = _coerce_vector(
             context.call(
@@ -287,13 +286,9 @@ def _apply_transition(
             state_dim=before.size,
             name="Reset",
         )
-        label = display_label(transition.reset)
     return after, Event(
         time,
-        transition.source,
-        transition.target,
-        display_label(transition.event),
-        label,
+        transition,
         before,
         after,
         microstep,
@@ -321,7 +316,7 @@ def _settle_location_entries(
         values = [
             float(
                 context.call(
-                    transition.event.fn,
+                    transition.event_surface.fn,
                     location,
                     time,
                     state,
@@ -406,7 +401,7 @@ def _invalid_surface_value_error(
 
 def _transition_descriptions(transitions: Sequence[Transition]) -> str:
     return ", ".join(
-        f"{display_label(transition.source)} -> {display_label(transition.target)} [{display_label(transition.event)}]"
+        f"{display_label(transition.source)} -> {display_label(transition.target)} [{display_label(transition.event_surface)}]"
         for transition in transitions
     )
 

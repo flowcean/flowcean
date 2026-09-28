@@ -52,7 +52,7 @@ def test_find_next_pending_segment_scans_contiguous_runs_and_traces() -> None:
     assert (
         find_next_pending_segment(
             [
-                trace.with_mode_labels(np.zeros(trace.height, dtype=np.int64))
+                trace.with_flow_ids(np.zeros(trace.height, dtype=np.int64))
                 for trace in traces
             ],
         )
@@ -73,19 +73,19 @@ def test_label_matching_rows_labels_only_accurate_unlabeled_rows() -> None:
         input_columns=["time", "x"],
         output_columns=["dx"],
         threshold=0.2,
-        mode_id=5,
+        flow_id=5,
         triggering_segment=triggering_segment,
     )
 
     # Accuracy is strict: the row with error exactly equal to the threshold
     # remains pending, and an existing label is never overwritten.
-    assert result.traces[0].mode_labels.tolist() == [5, 5, 4, 5]
-    assert result.traces[1].mode_labels.tolist() == [-1, 5]
-    assert result.accepted_rows["mode"].to_list() == [5, 5, 5, 5]
+    assert result.traces[0].flow_ids.tolist() == [5, 5, 4, 5]
+    assert result.traces[1].flow_ids.tolist() == [-1, 5]
+    assert result.accepted_rows["flow_id"].to_list() == [5, 5, 5, 5]
     assert result.accepted_rows["dx"].to_list() == [0.0, 0.1, 0.0, 0.19]
 
     grouping = result.grouping
-    assert grouping.mode_id == 5
+    assert grouping.flow_id == 5
     assert grouping.triggering_segment == triggering_segment
     assert grouping.traces[0].row_indices == [0, 1, 3]
     assert grouping.traces[0].accepted_mask == [True, True, True]

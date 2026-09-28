@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -83,24 +83,24 @@ def thermostat(
         (target,) = input_stream(t)
         return state[0] - (target - 0.5 * params["hysteresis"])
 
-    heating_dynamics = ContinuousDynamics(heating, label="heating")
-    cooling_dynamics = ContinuousDynamics(cooling, label="cooling")
-    heating_mode = Location(heating_dynamics, label="heating")
-    cooling_mode = Location(cooling_dynamics, label="cooling")
+    heating_dynamics = Flow(heating, label="heating")
+    cooling_dynamics = Flow(cooling, label="cooling")
+    heating_location = Location(heating_dynamics, label="heating")
+    cooling_location = Location(cooling_dynamics, label="cooling")
 
     to_cooling = Transition(
-        source=heating_mode,
-        target=cooling_mode,
-        event=EventSurface(
+        source=heating_location,
+        target=cooling_location,
+        event_surface=EventSurface(
             event_surface_high,
             direction=CrossingDirection.RISING,
             label="too_hot",
         ),
     )
     to_heating = Transition(
-        source=cooling_mode,
-        target=heating_mode,
-        event=EventSurface(
+        source=cooling_location,
+        target=heating_location,
+        event_surface=EventSurface(
             event_surface_low,
             direction=CrossingDirection.FALLING,
             label="too_cold",
@@ -111,9 +111,9 @@ def thermostat(
         initial_state = np.array([ambient], dtype=float)
 
     return HybridSystem(
-        locations=[heating_mode, cooling_mode],
+        locations=[heating_location, cooling_location],
         transitions=[to_cooling, to_heating],
-        initial_location=heating_mode,
+        initial_location=heating_location,
         initial_state=initial_state,
         parameters={
             "ambient": ambient,

@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -61,7 +61,7 @@ def bouncing_ball(
             dtype=float,
         )
 
-    dynamics = ContinuousDynamics(flow, label="flight")
+    dynamics = Flow(flow, label="flight")
     location = Location(
         dynamics,
         label="flight",
@@ -79,7 +79,7 @@ def bouncing_ball(
     transition = Transition(
         source=location,
         target=location,
-        event=event,
+        event_surface=event,
         reset=reset_map,
         entry_policy=SurfaceEntryPolicy.CONTINUE,
     )

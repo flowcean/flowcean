@@ -29,7 +29,7 @@ def _flow(
 ) -> np.ndarray:
     params = system.parameters if parameters is None else parameters
     return np.asarray(
-        _location(system, label).dynamics.flow(
+        _location(system, label).flow.fn(
             0.0,
             state,
             params,
@@ -158,9 +158,9 @@ def test_each_physical_transition_is_reached_from_a_targeted_state(
     )
 
     event = trace.events[0]
-    assert event.source_location is _location(system, location)
-    assert event.target_location is _location(system, target)
-    assert event.event_surface == event_surface
+    assert event.transition.source is _location(system, location)
+    assert event.transition.target is _location(system, target)
+    assert event.transition.event_surface.label == event_surface
     if event_surface == "current_zero":
         assert event.state_before[0] == pytest.approx(0.0, abs=1e-10)
         assert event.state_after[0] == 0.0
@@ -220,8 +220,8 @@ def test_zero_current_switch_time_matches_analytical_discharge() -> None:
 
     assert len(trace.events) == 1
     event = trace.events[0]
-    assert event.source_location.label == "zero_current"
-    assert event.target_location.label == "switch_on"
+    assert event.transition.source.label == "zero_current"
+    assert event.transition.target.label == "switch_on"
     assert event.time == pytest.approx(expected_time, rel=1e-8, abs=1e-12)
     np.testing.assert_allclose(
         event.state_after, (0.0, voltage_low), atol=ATOL
@@ -261,9 +261,9 @@ def test_initial_location_selection_copies_state_and_handles_boundaries() -> (
     )
     event = trace.events[0]
     assert event.time == 0.0
-    assert event.source_location.label == "zero_current"
-    assert event.target_location.label == "switch_on"
-    assert event.event_surface == "voltage_low"
+    assert event.transition.source.label == "zero_current"
+    assert event.transition.target.label == "switch_on"
+    assert event.transition.event_surface.label == "voltage_low"
 
 
 def test_numerically_coincident_boundaries_settle_at_one_time() -> None:
@@ -289,8 +289,8 @@ def test_numerically_coincident_boundaries_settle_at_one_time() -> None:
     # boundary; both transitions must settle without advancing time.
     assert len(trace.events) == 2
     current_zero, switch_on = trace.events
-    assert current_zero.target_location.label == "zero_current"
-    assert switch_on.target_location.label == "switch_on"
+    assert current_zero.transition.target.label == "zero_current"
+    assert switch_on.transition.target.label == "switch_on"
     assert current_zero.time == switch_on.time
     assert (current_zero.microstep, switch_on.microstep) == (0, 1)
     np.testing.assert_array_equal(current_zero.state_after, (0.0, 11.9))
@@ -367,7 +367,9 @@ def test_default_trace_is_finite_nonnegative_and_visits_all_modes() -> None:
     assert {"switch_on", "switch_off", "zero_current"} <= set(
         frame["location_label"]
     )
-    assert {event.event_surface for event in trace.events} >= {
+    assert {
+        event.transition.event_surface.label for event in trace.events
+    } >= {
         "voltage_high",
         "voltage_low",
         "current_zero",

@@ -43,7 +43,7 @@ class HyDRAGroupingTrace:
 
 @dataclass(frozen=True)
 class HyDRAGroupingEvaluation:
-    mode_id: int
+    flow_id: int
     threshold: float
     triggering_segment: TraceSegment
     traces: tuple[HyDRAGroupingTrace, ...]
@@ -76,10 +76,10 @@ class HyDRACallback(Protocol):
         grouping: HyDRAGroupingEvaluation,
     ) -> None: ...
 
-    def mode_finalized(
+    def flow_finalized(
         self,
         *,
-        mode_id: int,
+        flow_id: int,
         triggering_segment: TraceSegment,
         accepted_segments: Sequence[TraceSegment],
     ) -> None: ...
@@ -91,7 +91,7 @@ class HyDRACallback(Protocol):
         reason: str,
     ) -> None: ...
 
-    def finish(self, *, final_mode_count: int) -> None: ...
+    def finish(self, *, final_flow_count: int) -> None: ...
 
 
 class LogCallback(HyDRACallback):
@@ -146,21 +146,21 @@ class LogCallback(HyDRACallback):
             len(trace.row_indices) for trace in grouping.traces
         )
         print(
-            f"HyDRA grouping: mode={grouping.mode_id}, "
+            f"HyDRA grouping: flow_id={grouping.flow_id}, "
             f"accepted_rows={accepted_count}/{considered_count}",
         )
 
     @override
-    def mode_finalized(
+    def flow_finalized(
         self,
         *,
-        mode_id: int,
+        flow_id: int,
         triggering_segment: TraceSegment,
         accepted_segments: Sequence[TraceSegment],
     ) -> None:
         _ = triggering_segment
         print(
-            f"HyDRA mode finalized: mode={mode_id}, "
+            f"HyDRA flow finalized: flow_id={flow_id}, "
             f"segments={len(accepted_segments)}",
         )
 
@@ -177,8 +177,8 @@ class LogCallback(HyDRACallback):
             f"reason={reason}",
         )
 
-    def finish(self, *, final_mode_count: int) -> None:
-        print(f"HyDRA finished: modes={final_mode_count}")
+    def finish(self, *, final_flow_count: int) -> None:
+        print(f"HyDRA finished: flows={final_flow_count}")
 
 
 class PlotCallback(HyDRACallback):
@@ -186,7 +186,7 @@ class PlotCallback(HyDRACallback):
 
     def __init__(
         self,
-        trace: pl.DataFrame,
+        frame: pl.DataFrame,
         *,
         trace_index: int = 0,
         state_columns: Sequence[str] | None = None,
@@ -195,15 +195,15 @@ class PlotCallback(HyDRACallback):
         show: bool = True,
         pause: float = 0.001,
     ) -> None:
-        self.trace = trace
-        self.state_columns = _state_columns(trace, state_columns)
-        if time_column not in trace.columns:
+        self.frame = frame
+        self.state_columns = _state_columns(frame, state_columns)
+        if time_column not in frame.columns:
             raise ValueError(
                 f"PlotCallback requires time column {time_column!r}."
             )
         self.time_column = time_column
-        self._times = trace[time_column].to_numpy()
-        self._states = trace.select(self.state_columns).to_numpy()
+        self._times = frame[time_column].to_numpy()
+        self._states = frame.select(self.state_columns).to_numpy()
         self.trace_index = trace_index
         self.ax = ax
         self.show = show
@@ -213,7 +213,7 @@ class PlotCallback(HyDRACallback):
         self._active_segment: TraceSegment | None = None
         self._overlay_artists: list[Artist] = []
         self._base_plotted = False
-        self._mode_colors: dict[int, str] = {}
+        self._flow_colors: dict[int, str] = {}
 
     def start(
         self,
@@ -257,7 +257,7 @@ class PlotCallback(HyDRACallback):
         grouping: HyDRAGroupingEvaluation,
     ) -> None:
         self._grouping_segments = [
-            (segment, grouping.mode_id)
+            (segment, grouping.flow_id)
             for trace in grouping.traces
             if trace.trace_index == self.trace_index
             for segment in _segments_from_grouping_trace(trace)
@@ -267,28 +267,28 @@ class PlotCallback(HyDRACallback):
             for segment, _ in self._grouping_segments
         )
         self._render(
-            "Grouping mode "
-            f"{grouping.mode_id}: accepted {accepted_count} rows",
+            "Grouping flow "
+            f"{grouping.flow_id}: accepted {accepted_count} rows",
         )
 
     @override
-    def mode_finalized(
+    def flow_finalized(
         self,
         *,
-        mode_id: int,
+        flow_id: int,
         triggering_segment: TraceSegment,
         accepted_segments: Sequence[TraceSegment],
     ) -> None:
         _ = triggering_segment
         self._finalized_segments.extend(
-            (segment, mode_id)
+            (segment, flow_id)
             for segment in accepted_segments
             if segment.trace_index == self.trace_index
         )
         self._grouping_segments = []
         self._active_segment = None
         self._render(
-            f"Finalized mode {mode_id}: {len(accepted_segments)} segments",
+            f"Finalized flow {flow_id}: {len(accepted_segments)} segments",
         )
 
     def learning_stopped(
@@ -300,10 +300,10 @@ class PlotCallback(HyDRACallback):
         self._active_segment = self._matching_segment(segment)
         self._render(f"HyDRA stopped: {reason}")
 
-    def finish(self, *, final_mode_count: int) -> None:
+    def finish(self, *, final_flow_count: int) -> None:
         self._active_segment = None
         self._grouping_segments = []
-        self._render(f"HyDRA finished: modes={final_mode_count}")
+        self._render(f"HyDRA finished: flows={final_flow_count}")
 
     def _render(self, status: str) -> None:
         ax = self._axes()
@@ -341,24 +341,24 @@ class PlotCallback(HyDRACallback):
         self._overlay_artists = []
 
     def _plot_finalized_segments(self, ax: Axes) -> None:
-        for segment, mode_id in self._finalized_segments:
+        for segment, flow_id in self._finalized_segments:
             self._shade_segment(
                 ax,
                 segment,
-                color=self._mode_color(mode_id),
+                color=self._flow_color(flow_id),
                 alpha=0.16,
-                label=f"mode {mode_id}",
+                label=f"flow {flow_id}",
             )
 
     def _plot_grouping_segments(self, ax: Axes) -> None:
-        for segment, mode_id in self._grouping_segments:
+        for segment, flow_id in self._grouping_segments:
             self._shade_segment(
                 ax,
                 segment,
-                color=self._mode_color(mode_id),
+                color=self._flow_color(flow_id),
                 alpha=0.28,
                 hatch="//",
-                label=f"grouping mode {mode_id}",
+                label=f"grouping flow {flow_id}",
             )
 
     def _plot_active_segment(self, ax: Axes) -> None:
@@ -397,8 +397,8 @@ class PlotCallback(HyDRACallback):
         )
         self._overlay_artists.append(artist)
 
-    def _mode_color(self, mode_id: int) -> str:
-        color = self._mode_colors.get(mode_id)
+    def _flow_color(self, flow_id: int) -> str:
+        color = self._flow_colors.get(flow_id)
         if color is not None:
             return color
 
@@ -409,13 +409,13 @@ class PlotCallback(HyDRACallback):
         if not colors:
             colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
         for index, color in zip(
-            range(mode_id + 1),
+            range(flow_id + 1),
             cycle(colors),
             strict=False,
         ):
-            if index not in self._mode_colors:
-                self._mode_colors[index] = color
-        return self._mode_colors[mode_id]
+            if index not in self._flow_colors:
+                self._flow_colors[index] = color
+        return self._flow_colors[flow_id]
 
     def _legend_handles(self) -> list[Artist]:
         handles: list[Artist] = []
@@ -423,24 +423,24 @@ class PlotCallback(HyDRACallback):
             handles.append(
                 Patch(color="0.2", alpha=0.16, label="active window"),
             )
-        grouped_modes = {mode_id for _, mode_id in self._grouping_segments}
+        grouped_flows = {flow_id for _, flow_id in self._grouping_segments}
         handles.extend(
             Patch(
-                facecolor=self._mode_color(mode_id),
+                facecolor=self._flow_color(flow_id),
                 alpha=0.28,
                 hatch="//",
-                label=f"grouping mode {mode_id}",
+                label=f"grouping flow {flow_id}",
             )
-            for mode_id in sorted(grouped_modes)
+            for flow_id in sorted(grouped_flows)
         )
-        finalized_modes = {mode_id for _, mode_id in self._finalized_segments}
+        finalized_flows = {flow_id for _, flow_id in self._finalized_segments}
         handles.extend(
             Patch(
-                color=self._mode_color(mode_id),
+                color=self._flow_color(flow_id),
                 alpha=0.16,
-                label=f"mode {mode_id}",
+                label=f"flow {flow_id}",
             )
-            for mode_id in sorted(finalized_modes)
+            for flow_id in sorted(finalized_flows)
         )
         line_handles, line_labels = self._axes().get_legend_handles_labels()
         seen = {handle.get_label() for handle in handles}
@@ -495,10 +495,10 @@ class NoOpCallback(HyDRACallback):
     ) -> None:
         pass
 
-    def mode_finalized(
+    def flow_finalized(
         self,
         *,
-        mode_id: int,
+        flow_id: int,
         triggering_segment: TraceSegment,
         accepted_segments: Sequence[TraceSegment],
     ) -> None:
@@ -512,7 +512,7 @@ class NoOpCallback(HyDRACallback):
     ) -> None:
         pass
 
-    def finish(self, *, final_mode_count: int) -> None:
+    def finish(self, *, final_flow_count: int) -> None:
         pass
 
 

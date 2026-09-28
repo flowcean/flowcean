@@ -6,14 +6,14 @@ from .learner import HyDRALearner
 from .model import HyDRAModel
 from .schema import HyDRATraceSchema
 from .selector import (
+    FlowPredictionResult,
     HybridDecisionTreeLearner,
     HybridDecisionTreeModel,
-    ModePredictionResult,
     SelectorEvaluationReport,
     SelectorFeatureConfig,
+    SelectorFlowInspection,
     SelectorInspection,
     SelectorLeafInspection,
-    SelectorModeInspection,
     SelectorNodeInspection,
     StatefulHybridDecisionTreeSelector,
     evaluate_selector_autoregressive,
@@ -22,19 +22,19 @@ from .selector import (
 from .simulation import StateTraceComparison, compare_state_traces
 
 __all__ = (
+    "FlowPredictionResult",
     "HyDRALearner",
     "HyDRAModel",
     "HyDRATraceSchema",
     "HybridDecisionTreeLearner",
     "HybridDecisionTreeModel",
     "LogCallback",
-    "ModePredictionResult",
     "PlotCallback",
     "SelectorEvaluationReport",
     "SelectorFeatureConfig",
+    "SelectorFlowInspection",
     "SelectorInspection",
     "SelectorLeafInspection",
-    "SelectorModeInspection",
     "SelectorNodeInspection",
     "StateTraceComparison",
     "StatefulHybridDecisionTreeSelector",

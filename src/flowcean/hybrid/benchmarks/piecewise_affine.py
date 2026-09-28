@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -76,15 +76,15 @@ def piecewise_affine(
     ) -> float:
         return state[0] - params["threshold"]
 
-    left_dynamics = ContinuousDynamics(flow_left, label="left")
-    right_dynamics = ContinuousDynamics(flow_right, label="right")
+    left_dynamics = Flow(flow_left, label="left")
+    right_dynamics = Flow(flow_right, label="right")
     left = Location(left_dynamics, label="left")
     right = Location(right_dynamics, label="right")
 
     to_right = Transition(
         source=left,
         target=right,
-        event=EventSurface(
+        event_surface=EventSurface(
             event_surface_right,
             direction=CrossingDirection.RISING,
             label="x_above",
@@ -93,7 +93,7 @@ def piecewise_affine(
     to_left = Transition(
         source=right,
         target=left,
-        event=EventSurface(
+        event_surface=EventSurface(
             event_surface_left,
             direction=CrossingDirection.FALLING,
             label="x_below",

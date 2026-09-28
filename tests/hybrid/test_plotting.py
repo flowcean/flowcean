@@ -12,7 +12,7 @@ from flowcean.hybrid import (
     Transition,
     plot_locations,
     plot_phase,
-    plot_trace,
+    plot_trajectory,
     simulate,
 )
 
@@ -49,12 +49,12 @@ def _system():
     return system, first, third, second
 
 
-def test_plot_trace_breaks_reset_and_shades_actual_segments() -> None:
+def test_plot_trajectory_breaks_reset_and_shades_actual_segments() -> None:
     system, first, _, second = _system()
     trajectory = simulate(system, (0.0, 1.0))
     fig, ax = plt.subplots()
     try:
-        plot_trace(trajectory, dims=[0], show_events=True, ax=ax)
+        plot_trajectory(trajectory, dims=[0], show_events=True, ax=ax)
         lines = [
             line
             for line in ax.lines

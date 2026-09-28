@@ -3,10 +3,10 @@
 from . import benchmarks, hydra
 from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
     EventSurfaceFunction,
+    Flow,
     FlowFunction,
     HybridSystem,
     Input,
@@ -18,7 +18,7 @@ from .hybrid_system import (
     SurfaceEntryPolicy,
     Transition,
 )
-from .plotting import plot_locations, plot_phase, plot_trace
+from .plotting import plot_locations, plot_phase, plot_trajectory
 from .simulator import (
     AmbiguousTransitionError,
     HybridSimulationError,
@@ -31,12 +31,12 @@ from .trajectory import ContinuousSegment, Event, HybridTrajectory
 
 __all__ = (
     "AmbiguousTransitionError",
-    "ContinuousDynamics",
     "ContinuousSegment",
     "CrossingDirection",
     "Event",
     "EventSurface",
     "EventSurfaceFunction",
+    "Flow",
     "FlowFunction",
     "HybridSimulationError",
     "HybridSystem",
@@ -57,7 +57,7 @@ __all__ = (
     "hydra",
     "plot_locations",
     "plot_phase",
-    "plot_trace",
+    "plot_trajectory",
     "render_dot_svg",
     "simulate",
 )

@@ -39,8 +39,8 @@ def _location_color_map(
     return colors
 
 
-def plot_trace(
-    trace: HybridTrajectory,
+def plot_trajectory(
+    trajectory: HybridTrajectory,
     dims: Sequence[int] | None = None,
     *,
     location_colors: Mapping[Location, str] | None = None,
@@ -54,11 +54,13 @@ def plot_trace(
     """Draw continuous pieces separately, with explicit reset snapshots."""
     ax = _axes(ax)
     dims = (
-        list(range(trace.initial_state.size)) if dims is None else list(dims)
+        list(range(trajectory.initial_state.size))
+        if dims is None
+        else list(dims)
     )
     for dim in dims:
         color = None
-        for i, segment in enumerate(trace.segments):
+        for i, segment in enumerate(trajectory.segments):
             times, states = _segment_data(segment)
             (line,) = ax.plot(
                 times,
@@ -67,14 +69,14 @@ def plot_trace(
                 label=f"x{dim}" if i == 0 else "_nolegend_",
             )
             color = line.get_color()
-        if not trace.segments:
-            frame = trace.sample([trace.t_span[0]])
+        if not trajectory.segments:
+            frame = trajectory.sample([trajectory.t_span[0]])
             (line,) = ax.plot(
                 frame["t"], frame[f"x{dim}"], marker="o", label=f"x{dim}"
             )
             color = line.get_color()
         if show_events:
-            for event in trace.events:
+            for event in trajectory.events:
                 ax.plot(
                     [event.time, event.time],
                     [event.state_before[dim], event.state_after[dim]],
@@ -86,19 +88,19 @@ def plot_trace(
     handles, labels = ax.get_legend_handles_labels()
     if show_locations:
         plot_locations(
-            trace,
+            trajectory,
             ax=ax,
             location_colors=location_colors,
             show_labels=show_location_labels,
         )
     if show_events:
-        for event in trace.events:
+        for event in trajectory.events:
             ax.axvline(event.time, color="black", alpha=0.2, linewidth=1)
             if show_event_labels:
                 ax.text(
                     event.time,
                     1.01,
-                    f"{event.event_surface}: {display_label(event.source_location)}->{display_label(event.target_location)}",
+                    f"{display_label(event.transition.event_surface)}: {display_label(event.transition.source)}->{display_label(event.transition.target)}",
                     transform=ax.get_xaxis_transform(),
                     rotation=90,
                     va="bottom",
@@ -115,7 +117,7 @@ def plot_trace(
 
 
 def plot_phase(
-    trace: HybridTrajectory,
+    trajectory: HybridTrajectory,
     x_dim: int = 0,
     y_dim: int = 1,
     *,
@@ -126,9 +128,9 @@ def plot_phase(
 ) -> Axes:
     """Draw each continuous phase segment without connecting reset jumps."""
     ax = _axes(ax)
-    colors = _location_color_map(trace.system.locations, location_colors)
+    colors = _location_color_map(trajectory.system.locations, location_colors)
     labeled: set[Location] = set()
-    for segment in trace.segments:
+    for segment in trajectory.segments:
         _, states = _segment_data(segment)
         location = segment.location
         ax.plot(
@@ -140,10 +142,10 @@ def plot_phase(
             else "_nolegend_",
         )
         labeled.add(location)
-    for event in trace.events:
+    for event in trajectory.events:
         for state, location in (
-            (event.state_before, event.source_location),
-            (event.state_after, event.target_location),
+            (event.state_before, event.transition.source),
+            (event.state_after, event.transition.target),
         ):
             ax.plot(
                 [state[x_dim]],
@@ -156,11 +158,11 @@ def plot_phase(
                 else "_nolegend_",
             )
             labeled.add(location)
-    if not trace.execution:
-        location = trace.initial_location
+    if not trajectory.execution:
+        location = trajectory.initial_location
         ax.plot(
-            [trace.initial_state[x_dim]],
-            [trace.initial_state[y_dim]],
+            [trajectory.initial_state[x_dim]],
+            [trajectory.initial_state[y_dim]],
             marker="o",
             color=colors[location],
             label=display_label(location),
@@ -175,7 +177,7 @@ def plot_phase(
 
 
 def plot_locations(
-    trace: HybridTrajectory,
+    trajectory: HybridTrajectory,
     *,
     location_colors: Mapping[Location, str] | None = None,
     show_labels: bool = False,
@@ -186,9 +188,9 @@ def plot_locations(
     if not isfinite(alpha) or not 0 <= alpha <= 1:
         raise ValueError("alpha must be finite and between 0 and 1.")
     ax = _axes(ax)
-    colors = _location_color_map(trace.system.locations, location_colors)
+    colors = _location_color_map(trajectory.system.locations, location_colors)
     labeled: set[Location] = set()
-    for segment in trace.segments:
+    for segment in trajectory.segments:
         start, end = segment.t_span
         location = segment.location
         label = display_label(location)

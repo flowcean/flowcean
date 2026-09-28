@@ -10,15 +10,15 @@ from flowcean.core import Model
 from .config import SelectorFeatureConfig
 from .graph import build_selector_dot, render_dot_svg
 from .inspection import (
+    SelectorFlowInspection,
     SelectorInspection,
     SelectorLeafInspection,
-    SelectorModeInspection,
     SelectorNodeInspection,
     summarize_flow_model,
 )
 from .text import (
+    render_flow_summary_text,
     render_leaf_summary_text,
-    render_mode_summary_text,
     render_prediction_debug_text,
     render_summary_text,
 )
@@ -30,8 +30,8 @@ def _reconstruct_class_support(
     classes: tuple[int, ...],
 ) -> dict[int, float]:
     return {
-        mode_id: round(probability * weighted_sample_count, 12)
-        for mode_id, probability in zip(
+        flow_id: round(probability * weighted_sample_count, 12)
+        for flow_id, probability in zip(
             classes,
             class_probabilities,
             strict=True,
@@ -40,9 +40,9 @@ def _reconstruct_class_support(
 
 
 @dataclass(frozen=True)
-class ModePredictionResult:
+class FlowPredictionResult:
     ready: bool
-    mode_id: int | None
+    flow_id: int | None
     probabilities: dict[int, float] = field(default_factory=dict)
     leaf_id: int | None = None
     flow_model: Model | None = None
@@ -54,12 +54,12 @@ class HybridDecisionTreeModel(Model):
         classifier: DecisionTreeClassifier,
         feature_columns: tuple[str, ...],
         feature_config: SelectorFeatureConfig,
-        mode_to_flow: dict[int, Model] | None = None,
+        flow_models_by_id: dict[int, Model] | None = None,
     ) -> None:
         self.classifier = classifier
         self.feature_columns = feature_columns
         self.feature_config = feature_config
-        self.mode_to_flow = mode_to_flow or {}
+        self.flow_models_by_id = flow_models_by_id or {}
 
     @override
     def _predict(
@@ -68,38 +68,38 @@ class HybridDecisionTreeModel(Model):
     ) -> pl.LazyFrame:
         features = self._collect_features(input_features)
         if features.height == 0:
-            return pl.DataFrame(schema={"mode": pl.Int64}).lazy()
+            return pl.DataFrame(schema={"flow_id": pl.Int64}).lazy()
 
         predictions = self.classifier.predict(features)
         return pl.DataFrame(
-            {"mode": [int(mode_id) for mode_id in predictions]},
+            {"flow_id": [int(flow_id) for flow_id in predictions]},
         ).lazy()
 
     def predict_details(
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
-    ) -> list[ModePredictionResult]:
+    ) -> list[FlowPredictionResult]:
         features = self._collect_features(input_features)
         if features.height == 0:
             return []
 
-        predicted_modes = self.classifier.predict(features)
+        predicted_flows = self.classifier.predict(features)
         probabilities = self.classifier.predict_proba(features)
         leaf_ids = self.classifier.apply(features)
-        classes = [int(mode_id) for mode_id in self.classifier.classes_]
+        classes = [int(flow_id) for flow_id in self.classifier.classes_]
 
-        results: list[ModePredictionResult] = []
-        for mode_id, row_probabilities, leaf_id in zip(
-            predicted_modes,
+        results: list[FlowPredictionResult] = []
+        for flow_id, row_probabilities, leaf_id in zip(
+            predicted_flows,
             probabilities,
             leaf_ids,
             strict=True,
         ):
-            resolved_mode = int(mode_id)
+            resolved_flow = int(flow_id)
             results.append(
-                ModePredictionResult(
+                FlowPredictionResult(
                     ready=True,
-                    mode_id=resolved_mode,
+                    flow_id=resolved_flow,
                     probabilities={
                         class_id: float(probability)
                         for class_id, probability in zip(
@@ -109,14 +109,14 @@ class HybridDecisionTreeModel(Model):
                         )
                     },
                     leaf_id=int(leaf_id),
-                    flow_model=self.resolve_flow(resolved_mode),
+                    flow_model=self.resolve_flow(resolved_flow),
                 ),
             )
 
         return results
 
-    def resolve_flow(self, mode_id: int) -> Model | None:
-        return self.mode_to_flow.get(mode_id)
+    def resolve_flow(self, flow_id: int) -> Model | None:
+        return self.flow_models_by_id.get(flow_id)
 
     def feature_importances(self) -> dict[str, float]:
         return {
@@ -140,8 +140,8 @@ class HybridDecisionTreeModel(Model):
     def leaf_summary_text(self) -> str:
         return render_leaf_summary_text(self.inspect())
 
-    def mode_summary_text(self) -> str:
-        return render_mode_summary_text(self.inspect())
+    def flow_summary_text(self) -> str:
+        return render_flow_summary_text(self.inspect())
 
     def to_dot(self) -> str:
         return build_selector_dot(self.inspect())
@@ -166,10 +166,10 @@ class HybridDecisionTreeModel(Model):
 
     def inspect(self) -> SelectorInspection:
         tree = self.classifier.tree_
-        classes = tuple(int(mode_id) for mode_id in self.classifier.classes_)
+        classes = tuple(int(flow_id) for flow_id in self.classifier.classes_)
         nodes: list[SelectorNodeInspection] = []
         leaves: list[SelectorLeafInspection] = []
-        mode_sample_counts = dict.fromkeys(classes, 0.0)
+        flow_sample_counts = dict.fromkeys(classes, 0.0)
 
         for node_id in range(tree.node_count):
             left_child_id = int(tree.children_left[node_id])
@@ -183,7 +183,7 @@ class HybridDecisionTreeModel(Model):
                 ),
                 classes=classes,
             )
-            predicted_mode_id = max(
+            predicted_flow_id = max(
                 weighted_class_support,
                 key=weighted_class_support.__getitem__,
             )
@@ -193,7 +193,7 @@ class HybridDecisionTreeModel(Model):
                 sample_count=sample_count,
                 impurity=float(tree.impurity[node_id]),
                 is_leaf=is_leaf,
-                predicted_mode_id=predicted_mode_id,
+                predicted_flow_id=predicted_flow_id,
                 weighted_class_support=weighted_class_support,
                 feature_index=None if is_leaf else int(tree.feature[node_id]),
                 feature_name=None
@@ -206,29 +206,29 @@ class HybridDecisionTreeModel(Model):
             nodes.append(node)
 
             if is_leaf:
-                for mode_id, support in weighted_class_support.items():
-                    mode_sample_counts[mode_id] += support
+                for flow_id, support in weighted_class_support.items():
+                    flow_sample_counts[flow_id] += support
                 leaves.append(
                     SelectorLeafInspection(
                         node_id=node_id,
-                        mode_id=predicted_mode_id,
+                        flow_id=predicted_flow_id,
                         sample_count=node.sample_count,
                         weighted_class_support=weighted_class_support,
                         flow_summary=summarize_flow_model(
-                            self.resolve_flow(predicted_mode_id),
+                            self.resolve_flow(predicted_flow_id),
                         ),
                     ),
                 )
 
-        modes = tuple(
-            SelectorModeInspection(
-                mode_id=mode_id,
-                weighted_support=mode_sample_counts[mode_id],
+        flows = tuple(
+            SelectorFlowInspection(
+                flow_id=flow_id,
+                weighted_support=flow_sample_counts[flow_id],
                 flow_summary=summarize_flow_model(
-                    self.resolve_flow(mode_id),
+                    self.resolve_flow(flow_id),
                 ),
             )
-            for mode_id in classes
+            for flow_id in classes
         )
 
         return SelectorInspection(
@@ -238,7 +238,7 @@ class HybridDecisionTreeModel(Model):
             n_leaves=int(tree.n_leaves),
             nodes=tuple(nodes),
             leaves=tuple(leaves),
-            modes=modes,
+            flows=flows,
         )
 
     def _collect_features(

@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     import polars as pl
 
     from .inspection import SelectorInspection
-    from .model import ModePredictionResult
+    from .model import FlowPredictionResult
 
 
 def _format_value(value: object) -> str:
@@ -15,8 +15,8 @@ def _format_value(value: object) -> str:
 
 def _format_class_support(class_support: dict[int, float]) -> str:
     return ", ".join(
-        f"{mode_id}={_format_value(support)}"
-        for mode_id, support in class_support.items()
+        f"{flow_id}={_format_value(support)}"
+        for flow_id, support in class_support.items()
     )
 
 
@@ -33,7 +33,7 @@ def _format_flow_summary(flow_summary: str) -> str:
 def render_leaf_summary_text(inspection: SelectorInspection) -> str:
     return "\n".join(
         (
-            f"leaf_id={leaf.node_id} mode={leaf.mode_id} "
+            f"leaf_id={leaf.node_id} flow_id={leaf.flow_id} "
             f"raw_samples={leaf.sample_count} "
             "weighted_class_support="
             f"[{_format_class_support(leaf.weighted_class_support)}] "
@@ -43,14 +43,14 @@ def render_leaf_summary_text(inspection: SelectorInspection) -> str:
     )
 
 
-def render_mode_summary_text(inspection: SelectorInspection) -> str:
+def render_flow_summary_text(inspection: SelectorInspection) -> str:
     return "\n".join(
         (
-            f"mode={mode.mode_id} "
-            f"weighted_support={_format_value(mode.weighted_support)} "
-            f"{_format_flow_summary(mode.flow_summary)}"
+            f"flow_id={flow.flow_id} "
+            f"weighted_support={_format_value(flow.weighted_support)} "
+            f"{_format_flow_summary(flow.flow_summary)}"
         )
-        for mode in inspection.modes
+        for flow in inspection.flows
     )
 
 
@@ -59,7 +59,7 @@ def render_summary_text(inspection: SelectorInspection) -> str:
     return "\n".join(
         [
             f"feature columns: {feature_columns}",
-            f"modes: {len(inspection.modes)}",
+            f"flows: {len(inspection.flows)}",
             f"leaves: {inspection.n_leaves}",
             f"max depth: {inspection.max_depth}",
         ],
@@ -68,7 +68,7 @@ def render_summary_text(inspection: SelectorInspection) -> str:
 
 def render_prediction_debug_text(
     input_rows: pl.DataFrame,
-    predictions: list[ModePredictionResult],
+    predictions: list[FlowPredictionResult],
     feature_columns: tuple[str, ...],
 ) -> str:
     rows = input_rows.select(feature_columns).to_dicts()
@@ -77,7 +77,7 @@ def render_prediction_debug_text(
             f"row {row_index}: "
             "inputs: "
             f"{_format_input_values(row, feature_columns)}; "
-            f"mode={prediction.mode_id}; "
+            f"flow_id={prediction.flow_id}; "
             f"leaf_id={prediction.leaf_id}; "
             "probabilities: "
             f"[{_format_class_support(prediction.probabilities)}]"

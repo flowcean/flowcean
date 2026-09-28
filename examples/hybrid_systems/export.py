@@ -13,14 +13,14 @@ def main() -> None:
     output_dir.mkdir(exist_ok=True)
 
     for spec in SCENARIOS:
-        trace = simulate(
+        trajectory = simulate(
             spec.factory(),
             t_span=spec.t_span,
             input_stream=spec.input_stream,
         )
         path = output_dir / spec.name
         path.mkdir(parents=True, exist_ok=True)
-        trace.sample(
+        trajectory.sample(
             dt=0.01, include_inputs=spec.input_stream is not None
         ).write_parquet(path / "trace_0.parquet")
         (path / "trace_0.meta.json").write_text(

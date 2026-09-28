@@ -89,12 +89,12 @@ def _complete_state(
     state_count: int,
     input_stream: InputStream | None = None,
 ) -> FloatArray:
-    trace = simulate(
+    trajectory = simulate(
         system,
         t_span=(float(sample_times[0]), float(sample_times[-1])),
         input_stream=input_stream,
     )
-    frame = trace.sample(sample_times)
+    frame = trajectory.sample(sample_times)
     if not np.array_equal(frame["t"].to_numpy(), sample_times):
         msg = f"unexpected sample times for scenario {scenario.tolist()}"
         raise ValueError(msg)
@@ -102,7 +102,7 @@ def _complete_state(
     expected_shape = (sample_times.size, state_count)
     if states.shape != expected_shape or not np.all(np.isfinite(states)):
         msg = (
-            f"invalid complete-state trace {states.shape} for scenario "
+            f"invalid sampled state array {states.shape} for scenario "
             f"{scenario.tolist()}"
         )
         raise ValueError(msg)
@@ -792,7 +792,7 @@ def build_report(
             ),
         },
         "target_weighting": {
-            "target": "complete trace.x state trajectory",
+            "target": "sampled state coordinates across the full horizon",
             "flattening_order": "time-major, state-minor",
             "standardization": (
                 "Per-coordinate fitting mean and population standard "

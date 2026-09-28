@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -133,12 +133,12 @@ def pid_controlled_plant(
     Returns:
         HybridSystem configured for PID control with saturation.
     """
-    linear_dynamics = ContinuousDynamics(_flow_linear, label="linear")
-    sat_high_dynamics = ContinuousDynamics(
+    linear_dynamics = Flow(_flow_linear, label="linear")
+    sat_high_dynamics = Flow(
         _flow_sat_high,
         label="sat_high",
     )
-    sat_low_dynamics = ContinuousDynamics(
+    sat_low_dynamics = Flow(
         _flow_sat_low,
         label="sat_low",
     )
@@ -150,7 +150,7 @@ def pid_controlled_plant(
         Transition(
             source=linear,
             target=sat_high,
-            event=EventSurface(
+            event_surface=EventSurface(
                 _event_surface_high,
                 direction=CrossingDirection.RISING,
                 label="hit_high",
@@ -160,7 +160,7 @@ def pid_controlled_plant(
         Transition(
             source=linear,
             target=sat_low,
-            event=EventSurface(
+            event_surface=EventSurface(
                 _event_surface_low,
                 direction=CrossingDirection.FALLING,
                 label="hit_low",
@@ -170,7 +170,7 @@ def pid_controlled_plant(
         Transition(
             source=sat_high,
             target=linear,
-            event=EventSurface(
+            event_surface=EventSurface(
                 _event_surface_high,
                 direction=CrossingDirection.FALLING,
                 label="leave_high",
@@ -180,7 +180,7 @@ def pid_controlled_plant(
         Transition(
             source=sat_low,
             target=linear,
-            event=EventSurface(
+            event_surface=EventSurface(
                 _event_surface_low,
                 direction=CrossingDirection.RISING,
                 label="leave_low",

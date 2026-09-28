@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .selector.model import HybridDecisionTreeModel
 
 logger = logging.getLogger(__name__)
-UNLABELED_MODE = -1
+UNLABELED_FLOW = -1
 
 
 class SelectorTrainingIncompleteError(ValueError):
@@ -49,24 +49,24 @@ class TraceSegment:
 @dataclass(frozen=True)
 class HyDRATrace:
     frame: pl.DataFrame
-    mode_labels: np.ndarray
+    flow_ids: np.ndarray
 
     def __post_init__(self) -> None:
-        if self.mode_labels.ndim != 1:
-            message = "HyDRA trace mode labels must be a 1D array."
+        if self.flow_ids.ndim != 1:
+            message = "HyDRA trace flow IDs must be a 1D array."
             raise ValueError(message)
-        if self.mode_labels.size != self.frame.height:
-            message = "HyDRA trace mode labels must match frame height."
+        if self.flow_ids.size != self.frame.height:
+            message = "HyDRA trace flow IDs must match frame height."
             raise ValueError(message)
-        if "mode" in self.frame.columns:
-            message = "HyDRA trace frames must not store mode labels."
+        if "flow_id" in self.frame.columns:
+            message = "HyDRA trace frames must not store flow IDs."
             raise ValueError(message)
 
     @classmethod
     def unlabeled(cls, frame: pl.DataFrame) -> HyDRATrace:
         return cls(
             frame=frame,
-            mode_labels=np.full(frame.height, UNLABELED_MODE, dtype=np.int64),
+            flow_ids=np.full(frame.height, UNLABELED_FLOW, dtype=np.int64),
         )
 
     @property
@@ -75,31 +75,31 @@ class HyDRATrace:
 
     @property
     def unlabeled_mask(self) -> np.ndarray:
-        return self.mode_labels == UNLABELED_MODE
+        return self.flow_ids == UNLABELED_FLOW
 
     def unlabeled_indices(self) -> list[int]:
         return np.flatnonzero(self.unlabeled_mask).tolist()
 
-    def with_mode_labels(self, mode_labels: np.ndarray) -> HyDRATrace:
-        return HyDRATrace(self.frame, mode_labels.copy())
+    def with_flow_ids(self, flow_ids: np.ndarray) -> HyDRATrace:
+        return HyDRATrace(self.frame, flow_ids.copy())
 
     def with_labeled_segment(
         self,
         *,
         start_index: int,
         end_index: int,
-        mode_id: int,
+        flow_id: int,
     ) -> HyDRATrace:
-        mode_labels = self.mode_labels.copy()
-        mode_labels[start_index : end_index + 1] = mode_id
-        return self.with_mode_labels(mode_labels)
+        flow_ids = self.flow_ids.copy()
+        flow_ids[start_index : end_index + 1] = flow_id
+        return self.with_flow_ids(flow_ids)
 
     def to_labeled_frame(self) -> pl.DataFrame:
-        mode_values = [
-            None if label == UNLABELED_MODE else int(label)
-            for label in self.mode_labels
+        flow_values = [
+            None if label == UNLABELED_FLOW else int(label)
+            for label in self.flow_ids
         ]
-        return self.frame.with_columns(pl.Series("mode", mode_values))
+        return self.frame.with_columns(pl.Series("flow_id", flow_values))
 
     def segment_frame(self, segment: TraceSegment) -> pl.DataFrame:
         return self.frame.slice(
@@ -109,25 +109,25 @@ class HyDRATrace:
 
 
 @dataclass(frozen=True)
-class ModeLabelingResult:
+class FlowLabelingResult:
     traces: list[HyDRATrace]
     accepted_rows: pl.DataFrame
     grouping: HyDRAGroupingEvaluation
 
 
 @dataclass(frozen=True)
-class LearnedModes:
+class LearnedFlows:
     traces: list[HyDRATrace]
-    models: list[Model]
+    flow_models: list[Model]
 
 
 class HyDRALearner(SupervisedLearner):
-    """Identify hybrid-system modes from trace inputs and derivatives.
+    """Identify hybrid-system flows from trace inputs and derivatives.
 
     ``regressor_factory`` must create fresh incremental supervised learners.
     The current learner supports single-output derivative training. When a
     selector learner is provided, HyDRA labels accurate trace segments and
-    trains a selector to route future rows to learned modes.
+    trains a selector to route future rows to learned flows.
     """
 
     regressor_factory: Callable[[], SupervisedIncrementalLearner]
@@ -178,27 +178,27 @@ class HyDRALearner(SupervisedLearner):
             step_width=self.step_width,
         )
 
-        learned_modes = self._discover_modes(
+        learned_flows = self._discover_flows(
             traces=traces,
             input_columns=input_columns,
             output_columns=output_columns,
         )
-        if not learned_modes.models:
-            message = "No modes were identified during HyDRA learning."
+        if not learned_flows.flow_models:
+            message = "No flows were identified during HyDRA learning."
             raise ValueError(message)
 
         selector = self._learn_selector(
-            learned_modes.traces,
-            learned_modes.models,
+            learned_flows.traces,
+            learned_flows.flow_models,
         )
         model = HyDRAModel(
-            learned_modes.models,
+            learned_flows.flow_models,
             input_features=input_columns,
             output_features=output_columns,
             selector=selector,
             trace_schema=self.trace_schema,
         )
-        self.callback.finish(final_mode_count=len(learned_modes.models))
+        self.callback.finish(final_flow_count=len(learned_flows.flow_models))
         return model
 
     def _validate_trace_schema_for_learning(
@@ -237,12 +237,12 @@ class HyDRALearner(SupervisedLearner):
             raise ValueError(message)
         return [HyDRATrace.unlabeled(frame)]
 
-    def _discover_modes(
+    def _discover_flows(
         self,
         traces: Sequence[HyDRATrace],
         input_columns: list[str],
         output_columns: list[str],
-    ) -> LearnedModes:
+    ) -> LearnedFlows:
         labeled_traces = list(traces)
         learned_models: list[Model] = []
 
@@ -251,12 +251,12 @@ class HyDRALearner(SupervisedLearner):
             logger.info("Current pending segment: %s", pending_segment)
             self.callback.pending_segment_found(pending_segment)
 
-            mode_learner = self.regressor_factory()
-            mode_id = len(learned_models)
+            flow_learner = self.regressor_factory()
+            flow_id = len(learned_models)
             triggering_trace = labeled_traces[pending_segment.trace_index]
-            candidate_model = self._fit_candidate_mode(
+            candidate_model = self._fit_candidate_flow(
                 trace_frame=triggering_trace.segment_frame(pending_segment),
-                learner=mode_learner,
+                learner=flow_learner,
                 input_columns=input_columns,
                 output_columns=output_columns,
                 trace_index=pending_segment.trace_index,
@@ -276,7 +276,7 @@ class HyDRALearner(SupervisedLearner):
                 input_columns=input_columns,
                 output_columns=output_columns,
                 threshold=self.threshold,
-                mode_id=mode_id,
+                flow_id=flow_id,
                 triggering_segment=pending_segment,
             )
             labeled_traces = labeling.traces
@@ -289,30 +289,30 @@ class HyDRALearner(SupervisedLearner):
                 )
                 break
 
-            finalized_model = mode_learner.learn_incremental(
+            finalized_model = flow_learner.learn_incremental(
                 pl.LazyFrame(labeling.accepted_rows[input_columns]),
                 pl.LazyFrame(labeling.accepted_rows[output_columns]),
             )
             learned_models.append(finalized_model)
-            self.callback.mode_finalized(
-                mode_id=mode_id,
+            self.callback.flow_finalized(
+                flow_id=flow_id,
                 triggering_segment=pending_segment,
-                accepted_segments=_new_mode_segments(
+                accepted_segments=_new_flow_segments(
                     before=before_labeling,
                     after=labeled_traces,
-                    mode_id=mode_id,
+                    flow_id=flow_id,
                 ),
             )
             logger.info(
-                "Learned mode %d with model %s",
-                mode_id,
+                "Learned flow %d with model %s",
+                flow_id,
                 finalized_model,
             )
             pending_segment = find_next_pending_segment(labeled_traces)
 
-        return LearnedModes(traces=labeled_traces, models=learned_models)
+        return LearnedFlows(traces=labeled_traces, flow_models=learned_models)
 
-    def _fit_candidate_mode(
+    def _fit_candidate_flow(
         self,
         trace_frame: pl.DataFrame,
         learner: SupervisedIncrementalLearner,
@@ -385,18 +385,18 @@ class HyDRALearner(SupervisedLearner):
     def _learn_selector(
         self,
         traces: Sequence[HyDRATrace],
-        modes: list[Model],
+        flow_models: list[Model],
     ) -> HybridDecisionTreeModel | None:
         if self.selector_learner is None:
             return None
 
         selector_traces = [trace.to_labeled_frame() for trace in traces]
-        if any(trace["mode"].null_count() > 0 for trace in selector_traces):
+        if any(trace["flow_id"].null_count() > 0 for trace in selector_traces):
             message = "selector training requires fully labeled HyDRA traces"
             raise SelectorTrainingIncompleteError(message)
         return self.selector_learner.learn_from_traces(
             selector_traces,
-            mode_to_flow=dict(enumerate(modes)),
+            flow_models_by_id=dict(enumerate(flow_models)),
         )
 
     def _stop_learning(self, segment: TraceSegment, reason: str) -> None:
@@ -485,9 +485,9 @@ def label_matching_rows(
     input_columns: list[str],
     output_columns: list[str],
     threshold: float,
-    mode_id: int,
+    flow_id: int,
     triggering_segment: TraceSegment,
-) -> ModeLabelingResult:
+) -> FlowLabelingResult:
     updated_traces: list[HyDRATrace] = []
     accepted_frames: list[pl.DataFrame] = []
     grouping_traces: list[HyDRAGroupingTrace] = []
@@ -518,12 +518,12 @@ def label_matching_rows(
             ),
         )
 
-        updated_trace = trace.with_mode_labels(trace.mode_labels)
+        updated_trace = trace.with_flow_ids(trace.flow_ids)
         for segment in _segments_from_mask(accepted_unlabeled_mask):
             updated_trace = updated_trace.with_labeled_segment(
                 start_index=segment.start_index,
                 end_index=segment.end_index,
-                mode_id=mode_id,
+                flow_id=flow_id,
             )
             accepted_frames.append(
                 updated_trace.to_labeled_frame()[
@@ -539,12 +539,12 @@ def label_matching_rows(
         updated_traces.append(updated_trace)
 
     grouping = HyDRAGroupingEvaluation(
-        mode_id=mode_id,
+        flow_id=flow_id,
         threshold=threshold,
         triggering_segment=triggering_segment,
         traces=tuple(grouping_traces),
     )
-    return ModeLabelingResult(
+    return FlowLabelingResult(
         traces=updated_traces,
         accepted_rows=(
             pl.concat(accepted_frames, how="vertical")
@@ -592,17 +592,17 @@ def _empty_labeled_frame(traces: Sequence[HyDRATrace]) -> pl.DataFrame:
     return traces[0].to_labeled_frame().head(0)
 
 
-def _new_mode_segments(
+def _new_flow_segments(
     before: Sequence[HyDRATrace],
     after: Sequence[HyDRATrace],
-    mode_id: int,
+    flow_id: int,
 ) -> list[TraceSegment]:
     segments: list[TraceSegment] = []
     for trace_index, (before_trace, after_trace) in enumerate(
         zip(before, after, strict=True),
     ):
-        new_mode_mask = (before_trace.mode_labels == UNLABELED_MODE) & (
-            after_trace.mode_labels == mode_id
+        new_flow_mask = (before_trace.flow_ids == UNLABELED_FLOW) & (
+            after_trace.flow_ids == flow_id
         )
         segments.extend(
             TraceSegment(
@@ -610,7 +610,7 @@ def _new_mode_segments(
                 start_index=segment.start_index,
                 end_index=segment.end_index,
             )
-            for segment in _segments_from_mask(new_mode_mask)
+            for segment in _segments_from_mask(new_flow_mask)
         )
     return segments
 

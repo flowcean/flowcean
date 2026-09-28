@@ -205,7 +205,7 @@ def test_rotor_tower_pitch_and_integral_equations(integral: float) -> None:
     location = next(
         loc for loc in system.locations if loc.label == "rated_power"
     )
-    actual = location.dynamics.flow(0.0, state, p, constant_wind(wind))
+    actual = location.flow.fn(0.0, state, p, constant_wind(wind))
     np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
 
 
@@ -221,9 +221,7 @@ def test_mode_rotor_acceleration_matches_reported_power(
     wind = 11.0
     location = next(loc for loc in system.locations if loc.label == label)
     acceleration = np.asarray(
-        location.dynamics.flow(
-            0.0, state, system.parameters, constant_wind(wind)
-        )
+        location.flow.fn(0.0, state, system.parameters, constant_wind(wind))
     )[0]
     cq, _ = aerodynamic_coefficients(state[0] * 63 / wind, state[3])
     aerodynamic_torque = 0.5 * 1.225 * math.pi * 63**3 * wind**2 * cq
@@ -252,7 +250,7 @@ def test_transitions_form_bidirectional_adjacent_mode_chain() -> None:
         (
             transition.source.label,
             transition.target.label,
-            transition.event.direction,
+            transition.event_surface.direction,
         )
         for transition in system.transitions
     } == expected
@@ -309,7 +307,7 @@ def test_all_eight_directed_transitions_are_reachable(
     )
     assert trace.events
     event = trace.events[0]
-    assert (event.source_location, event.target_location) == (
+    assert (event.transition.source, event.transition.target) == (
         system.locations[source],
         system.locations[target],
     )
@@ -320,7 +318,7 @@ def test_all_eight_directed_transitions_are_reachable(
     np.testing.assert_array_equal(event.state_after, event.state_before)
     assert all(e.time > event.time for e in trace.events[1:])
     assert all(
-        e.target_location is not system.locations[source]
+        e.transition.target is not system.locations[source]
         for e in trace.events[1:]
     )
 
@@ -341,7 +339,7 @@ def test_start_at_shifted_upward_boundary_advances_without_chatter(
     assert trace.t_span[1] == pytest.approx(0.1)
     assert len(trace.events) == 1
     assert trace.events[0].time == 0.0
-    assert trace.events[0].target_location is system.locations[index + 1]
+    assert trace.events[0].transition.target is system.locations[index + 1]
 
 
 @pytest.mark.parametrize("index", range(4))
@@ -367,7 +365,7 @@ def test_start_at_shifted_downward_boundary_advances_without_chatter(
     assert trace.t_span[1] == pytest.approx(0.03)
     assert len(trace.events) == 1
     assert trace.events[0].time == 0.0
-    assert trace.events[0].target_location is system.locations[index]
+    assert trace.events[0].transition.target is system.locations[index]
 
 
 @pytest.mark.parametrize(
@@ -393,7 +391,7 @@ def test_invalid_factory_arguments(kwargs: dict[str, object]) -> None:
 
 def test_input_and_flow_domains_are_checked_not_clipped() -> None:
     system = wind_turbine()
-    flow = system.locations[0].dynamics.flow
+    flow = system.locations[0].flow.fn
     state = system.initial_state.copy()
     for stream in (
         constant_wind(0),
@@ -471,8 +469,8 @@ def test_tighter_solver_tolerance_converges_to_nominal_result() -> None:
         rtol=1e-9,
         atol=1e-11,
     )
-    assert [e.target_location for e in standard.events] == [
-        e.target_location for e in tight.events
+    assert [e.transition.target for e in standard.events] == [
+        e.transition.target for e in tight.events
     ]
     state_columns = [f"x{i}" for i in range(6)]
     np.testing.assert_allclose(

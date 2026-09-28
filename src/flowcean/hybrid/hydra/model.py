@@ -13,8 +13,8 @@ from ..hybrid_system import InputStream
 from .schema import HyDRATraceSchema
 from .selector.features import build_selector_inference_frame
 from .selector.model import (
+    FlowPredictionResult,
     HybridDecisionTreeModel,
-    ModePredictionResult,
 )
 
 
@@ -22,20 +22,20 @@ from .selector.model import (
 class HyDRABatchPrediction:
     outputs: pl.DataFrame
     row_indices: list[int]
-    selector_results: list[ModePredictionResult]
+    selector_results: list[FlowPredictionResult]
 
 
 class HyDRAModel(Model):
-    """Model composed of learned continuous modes and an optional selector.
+    """Model composed of learned flow models and an optional selector.
 
-    A single-mode model predicts directly with that mode. A multi-mode model
+    A single-flow model predicts directly with that flow model. A multi-flow model
     needs a selector for batch prediction. Model persistence uses Flowcean's
     trusted-only pickle-based model serialization.
     """
 
     def __init__(
         self,
-        modes: list[Model],
+        flow_models: list[Model],
         *,
         input_features: list[str],
         output_features: list[str],
@@ -43,7 +43,7 @@ class HyDRAModel(Model):
         trace_schema: HyDRATraceSchema | None = None,
     ) -> None:
         super().__init__()
-        self.modes = modes
+        self.flow_models = flow_models
         self.input_features = input_features
         self.output_features = output_features
         self.selector = selector
@@ -80,34 +80,34 @@ class HyDRAModel(Model):
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
     ) -> HyDRABatchPrediction:
-        if not self.modes:
-            message = "HyDRAModel contains no learned modes."
+        if not self.flow_models:
+            message = "HyDRAModel contains no learned flows."
             raise ValueError(message)
         frame = (
             input_features.collect()
             if isinstance(input_features, pl.LazyFrame)
             else input_features
         )
-        if len(self.modes) == 1:
+        if len(self.flow_models) == 1:
             return HyDRABatchPrediction(
-                outputs=self.modes[0]
+                outputs=self.flow_models[0]
                 .predict(frame.select(self.input_features))
                 .collect()
                 .select(self.output_features),
                 row_indices=list(range(frame.height)),
                 selector_results=[
-                    ModePredictionResult(
+                    FlowPredictionResult(
                         ready=True,
-                        mode_id=0,
-                        flow_model=self.modes[0],
+                        flow_id=0,
+                        flow_model=self.flow_models[0],
                     )
                     for _ in range(frame.height)
                 ],
             )
         if self.selector is None:
             message = (
-                "HyDRAModel prediction requires a mode selector when multiple "
-                "modes were learned."
+                "HyDRAModel prediction requires a flow selector when multiple "
+                "flows were learned."
             )
             raise NotImplementedError(message)
 
@@ -121,16 +121,16 @@ class HyDRAModel(Model):
         row_indices = selector_frame.row_metadata["row_index"].to_list()
 
         routed_outputs: list[pl.DataFrame] = []
-        predicted_mode_ids = list(
+        predicted_flow_ids = list(
             dict.fromkeys(
-                result.mode_id
+                result.flow_id
                 for result in selector_results
-                if result.mode_id is not None
+                if result.flow_id is not None
             ),
         )
-        for mode_id in predicted_mode_ids:
-            if mode_id < 0 or mode_id >= len(self.modes):
-                message = f"selector predicted unknown mode ID {mode_id}"
+        for flow_id in predicted_flow_ids:
+            if flow_id < 0 or flow_id >= len(self.flow_models):
+                message = f"selector predicted unknown flow ID {flow_id}"
                 raise ValueError(message)
 
             routed_row_indices = [
@@ -140,20 +140,20 @@ class HyDRAModel(Model):
                     selector_results,
                     strict=True,
                 )
-                if result.mode_id == mode_id
+                if result.flow_id == flow_id
             ]
             if not routed_row_indices:
                 continue
 
-            mode_inputs = frame[routed_row_indices].select(self.input_features)
-            mode_outputs = (
-                self.modes[mode_id]
-                .predict(mode_inputs)
+            flow_inputs = frame[routed_row_indices].select(self.input_features)
+            flow_outputs = (
+                self.flow_models[flow_id]
+                .predict(flow_inputs)
                 .collect()
                 .select(self.output_features)
                 .with_columns(pl.Series("__row_index", routed_row_indices))
             )
-            routed_outputs.append(mode_outputs)
+            routed_outputs.append(flow_outputs)
 
         outputs = (
             pl.concat(routed_outputs, how="vertical")
@@ -185,8 +185,11 @@ class HyDRAModel(Model):
     ) -> pl.DataFrame:
         """Simulate a learned model on the requested time grid.
 
-        Modes are selected at each grid point, including the final endpoint;
-        changes within an integration interval are not detected.
+        Flow models are selected at each grid point, including the final
+        endpoint; changes within an integration interval are not detected.
+        ``flow_id`` identifies the selected model and ``flow_time`` measures
+        elapsed physical time since it became active at a grid point. This
+        rollout has no native locations, transitions, or events.
         """
         schema = self._require_trace_schema()
         times = _prepare_simulation_times(t_span, sample_times, sample_dt)
@@ -194,7 +197,7 @@ class HyDRAModel(Model):
             raise ValueError("include_inputs=True requires an input_stream.")
 
         state = self._coerce_state(x0, schema)
-        mode_id = self._select_mode_id(
+        flow_id = self._select_flow_id(
             self._build_simulation_frame(
                 float(times[0]),
                 state,
@@ -202,14 +205,14 @@ class HyDRAModel(Model):
                 schema,
             ),
         )
-        mode_entry_time = float(times[0])
+        flow_entry_time = float(times[0])
         states = [state]
-        locations = [mode_id]
-        residence_times = [0.0]
+        flow_ids = [flow_id]
+        flow_times = [0.0]
 
         for t_start, t_end in pairwise(times):
             state = self._integrate_next_state(
-                self.modes[mode_id],
+                self.flow_models[flow_id],
                 state,
                 t=float(t_start),
                 dt=float(t_end - t_start),
@@ -219,7 +222,7 @@ class HyDRAModel(Model):
                 max_step=max_step,
             )
             states.append(state)
-            next_mode_id = self._select_mode_id(
+            next_flow_id = self._select_flow_id(
                 self._build_simulation_frame(
                     float(t_end),
                     state,
@@ -227,11 +230,11 @@ class HyDRAModel(Model):
                     schema,
                 ),
             )
-            if next_mode_id != mode_id:
-                mode_entry_time = float(t_end)
-            mode_id = next_mode_id
-            locations.append(mode_id)
-            residence_times.append(float(t_end) - mode_entry_time)
+            if next_flow_id != flow_id:
+                flow_entry_time = float(t_end)
+            flow_id = next_flow_id
+            flow_ids.append(flow_id)
+            flow_times.append(float(t_end) - flow_entry_time)
 
         inputs = None
         if include_inputs:
@@ -252,10 +255,8 @@ class HyDRAModel(Model):
                 for i in range(state_matrix.shape[1])
             }
         )
-        data["location_id"] = pl.Series(
-            "location_id", locations, dtype=pl.Int64
-        )
-        data["location_time"] = pl.Series("location_time", residence_times)
+        data["flow_id"] = pl.Series("flow_id", flow_ids, dtype=pl.Int64)
+        data["flow_time"] = pl.Series("flow_time", flow_times)
         if inputs is not None:
             data.update(
                 {
@@ -291,8 +292,8 @@ class HyDRAModel(Model):
             input_stream,
             schema,
         )
-        mode_id = self._select_mode_id(initial_frame)
-        flow_model = self.modes[mode_id]
+        flow_id = self._select_flow_id(initial_frame)
+        flow_model = self.flow_models[flow_id]
 
         return self._integrate_next_state(
             flow_model,
@@ -373,16 +374,16 @@ class HyDRAModel(Model):
             raise ValueError(message)
         return state_array
 
-    def _select_mode_id(self, frame: pl.DataFrame) -> int:
-        if not self.modes:
-            message = "HyDRAModel contains no learned modes."
+    def _select_flow_id(self, frame: pl.DataFrame) -> int:
+        if not self.flow_models:
+            message = "HyDRAModel contains no learned flows."
             raise ValueError(message)
-        if len(self.modes) == 1:
+        if len(self.flow_models) == 1:
             return 0
         if self.selector is None:
             message = (
-                "HyDRAModel simulation requires a mode selector when multiple "
-                "modes were learned."
+                "HyDRAModel simulation requires a flow selector when multiple "
+                "flows were learned."
             )
             raise NotImplementedError(message)
         if self.selector.feature_config.max_history > 0:
@@ -396,14 +397,14 @@ class HyDRAModel(Model):
         selector_results = self.selector.predict_details(
             selector_frame.features,
         )
-        if not selector_results or selector_results[0].mode_id is None:
-            message = "selector did not produce a mode for simulation."
+        if not selector_results or selector_results[0].flow_id is None:
+            message = "selector did not produce a flow for simulation."
             raise ValueError(message)
-        mode_id = selector_results[0].mode_id
-        if mode_id < 0 or mode_id >= len(self.modes):
-            message = f"selector predicted unknown mode ID {mode_id}"
+        flow_id = selector_results[0].flow_id
+        if flow_id < 0 or flow_id >= len(self.flow_models):
+            message = f"selector predicted unknown flow ID {flow_id}"
             raise ValueError(message)
-        return mode_id
+        return flow_id
 
     def _predict_derivative(
         self,

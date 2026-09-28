@@ -1,4 +1,4 @@
-"""HyDRA mode-selector learning, inspection, and evaluation API."""
+"""HyDRA flow-selector learning, inspection, and evaluation API."""
 
 from .config import SelectorFeatureConfig
 from .evaluation import (
@@ -7,24 +7,24 @@ from .evaluation import (
     evaluate_selector_oracle,
 )
 from .inspection import (
+    SelectorFlowInspection,
     SelectorInspection,
     SelectorLeafInspection,
-    SelectorModeInspection,
     SelectorNodeInspection,
 )
 from .learner import HybridDecisionTreeLearner
-from .model import HybridDecisionTreeModel, ModePredictionResult
+from .model import FlowPredictionResult, HybridDecisionTreeModel
 from .runtime import StatefulHybridDecisionTreeSelector
 
 __all__ = [
+    "FlowPredictionResult",
     "HybridDecisionTreeLearner",
     "HybridDecisionTreeModel",
-    "ModePredictionResult",
     "SelectorEvaluationReport",
     "SelectorFeatureConfig",
+    "SelectorFlowInspection",
     "SelectorInspection",
     "SelectorLeafInspection",
-    "SelectorModeInspection",
     "SelectorNodeInspection",
     "StatefulHybridDecisionTreeSelector",
     "evaluate_selector_autoregressive",

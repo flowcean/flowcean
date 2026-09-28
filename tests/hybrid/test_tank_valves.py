@@ -33,7 +33,7 @@ def _flow(
 ) -> np.ndarray:
     params = system.parameters if parameters is None else parameters
     return np.asarray(
-        _location(system, label).dynamics.flow(
+        _location(system, label).flow.fn(
             0.0,
             state,
             params,
@@ -143,7 +143,7 @@ def test_closed_drainage_is_analytic_then_resets_to_exactly_dry() -> None:
     (empty_event,) = [
         event
         for event in trace.events
-        if event.event_surface == "level_2_empty"
+        if event.transition.event_surface.label == "level_2_empty"
     ]
     assert empty_event.time == pytest.approx(depletion, abs=2e-4)
     assert empty_event.state_after[1] == 0.0
@@ -174,9 +174,11 @@ def test_initial_zero_level_rises_and_dry_tank_rewets() -> None:
     )
     rewet_frame = rewet.sample(dt=0.1)
     high = next(
-        event for event in rewet.events if event.event_surface == "level_high"
+        event
+        for event in rewet.events
+        if event.transition.event_surface.label == "level_high"
     )
-    assert high.target_location.label == "open"
+    assert high.transition.target.label == "open"
     assert np.any(
         rewet_frame["x1"].to_numpy()[rewet_frame["t"].to_numpy() > high.time]
         > 0.0
@@ -252,8 +254,12 @@ def test_repeated_simulation_has_no_hidden_state() -> None:
     from polars.testing import assert_frame_equal
 
     assert_frame_equal(first.sample(dt=0.2), second.sample(dt=0.2))
-    assert [(event.time, event.event_surface) for event in first.events] == [
-        (event.time, event.event_surface) for event in second.events
+    assert [
+        (event.time, event.transition.event_surface.label)
+        for event in first.events
+    ] == [
+        (event.time, event.transition.event_surface.label)
+        for event in second.events
     ]
 
 
@@ -297,7 +303,8 @@ def test_simultaneous_high_and_depletion_perturbations_reach_open() -> None:
             == "open"
         )
         assert any(
-            event.event_surface == "level_high" for event in trace.events
+            event.transition.event_surface.label == "level_high"
+            for event in trace.events
         )
         assert (
             np.min(trace.sample(dt=0.02).select("x0", "x1").to_numpy())

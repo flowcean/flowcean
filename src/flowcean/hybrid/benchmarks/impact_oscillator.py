@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -72,7 +72,7 @@ def impact_oscillator(
             dtype=float,
         )
 
-    dynamics = ContinuousDynamics(flow, label="oscillate")
+    dynamics = Flow(flow, label="oscillate")
     location = Location(
         dynamics,
         label="oscillate",
@@ -81,7 +81,7 @@ def impact_oscillator(
     transition = Transition(
         source=location,
         target=location,
-        event=EventSurface(
+        event_surface=EventSurface(
             event_surface,
             direction=CrossingDirection.FALLING,
             label="impact",

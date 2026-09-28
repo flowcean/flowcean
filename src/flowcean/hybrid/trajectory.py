@@ -1,4 +1,4 @@
-"""Continuous hybrid executions and explicit tabular sampling."""
+"""Hybrid executions and explicit tabular sampling."""
 
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -12,19 +12,20 @@ from .hybrid_system import (
     Location,
     Parameters,
     State,
+    Transition,
     display_label,
 )
 
 
 @dataclass(frozen=True, eq=False)
 class Event:
-    """One microstep with detached, read-only pre- and post-reset snapshots."""
+    """One transition occurrence retaining its original model definition.
+
+    Pre- and post-reset state snapshots are detached and read-only.
+    """
 
     time: float
-    source_location: Location
-    target_location: Location
-    event_surface: str
-    reset: str | None
+    transition: Transition
     state_before: State
     state_after: State
     microstep: int
@@ -199,7 +200,7 @@ class HybridTrajectory:
             event = last_events.get(float(time))
             if event is not None:
                 states[i] = event.state_after
-                locations.append(event.target_location)
+                locations.append(event.transition.target)
                 ages[i] = 0.0
             elif segments:
                 segment = segments[

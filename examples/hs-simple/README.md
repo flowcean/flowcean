@@ -2,7 +2,7 @@
 
 This example builds a minimal two-location thermostat hybrid system with the
 object-based simulation API. The reusable `build_thermostat()` function returns
-a plain `HybridSystem` assembled from `ContinuousDynamics`, `Location`,
+a plain `HybridSystem` assembled from `Flow`, `Location`,
 `EventSurface`, and `Transition` objects.
 
 - `heating` increases the scalar temperature.

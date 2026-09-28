@@ -15,12 +15,12 @@ from flowcean.hybrid.trajectory import HybridTrajectory
 
 EXPECTED_HYBRID_EXPORTS = (
     "AmbiguousTransitionError",
-    "ContinuousDynamics",
     "ContinuousSegment",
     "CrossingDirection",
     "Event",
     "EventSurface",
     "EventSurfaceFunction",
+    "Flow",
     "FlowFunction",
     "HybridSimulationError",
     "HybridSystem",
@@ -41,7 +41,7 @@ EXPECTED_HYBRID_EXPORTS = (
     "hydra",
     "plot_locations",
     "plot_phase",
-    "plot_trace",
+    "plot_trajectory",
     "render_dot_svg",
     "simulate",
 )

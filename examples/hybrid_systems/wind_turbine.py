@@ -18,19 +18,19 @@ from flowcean.hybrid.hybrid_system import display_label
 def main() -> None:
     # The default rotor is already turning; this is not startup from rest.
     system = WIND_TURBINE.factory()
-    trace = simulate(
+    trajectory = simulate(
         system,
         t_span=WIND_TURBINE.t_span,
         input_stream=WIND_TURBINE.input_stream,
     )
 
-    frame = trace.sample(
+    frame = trajectory.sample(
         dt=0.1, include_inputs=True, include_location_label=True
     )
     print(f"Initial mode: {frame['location_label'][0].replace('_', ' ')}")
-    for event in trace.events:
-        source = display_label(event.source_location).replace("_", " ")
-        target = display_label(event.target_location).replace("_", " ")
+    for event in trajectory.events:
+        source = display_label(event.transition.source).replace("_", " ")
+        target = display_label(event.transition.target).replace("_", " ")
         print(f"t = {event.time:6.2f} s: {source} -> {target}")
 
     # State columns: rotor speed, tower displacement/velocity, pitch/rate,
@@ -50,7 +50,7 @@ def main() -> None:
     )
     for ax, (label, values) in zip(axes, signals, strict=True):
         ax.plot(frame["t"], values, color="#263238")
-        plot_locations(trace, ax=ax, alpha=0.16)
+        plot_locations(trajectory, ax=ax, alpha=0.16)
         ax.set_ylabel(label)
         ax.grid(alpha=0.25)
     rated_power_mw = system.parameters["rated_mechanical_power"] / 1e6
@@ -63,7 +63,7 @@ def main() -> None:
     )
     axes[-1].legend(handles=[rated_line], loc="lower center")
     axes[-1].set_xlabel("Time (s)")
-    axes[-1].set_xlim(trace.t_span)
+    axes[-1].set_xlim(trajectory.t_span)
     fig.suptitle("Running wind turbine")
 
     # Every panel uses the same mode colors, so one legend is enough.

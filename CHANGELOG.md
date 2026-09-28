@@ -21,8 +21,10 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** Hybrid vocabulary now distinguishes locations, flows, and sampled traces. `ContinuousDynamics(flow=...)` becomes `Flow(fn=...)`, `Location.dynamics` becomes `Location.flow`, and `Transition.event` becomes `Transition.event_surface`. `Event.transition` retains the exact transition definition instead of redundant endpoints and label strings. Rename `plot_trace` to `plot_trajectory`, and `mode_cycle(modes=...)` to `location_cycle(location_count=...)`.
+- **Breaking:** HyDRA's learned-mode APIs now use flow terminology: `HyDRAModel.flow_models`, `FlowPredictionResult`, `LearnedFlows`, `FlowLabelingResult`, `HyDRATrace.flow_ids`, selector `flow_models_by_id`, `flow_history`, `seed_flows`, and `flow_t_minus_N` features. Assignment columns are `flow_id`; learned rollouts emit `flow_id` and `flow_time`, distinct from native `location_id` and `location_time`. Discovery callbacks and inspection summaries use flow names as well.
 - **Breaking:** `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` now describe the complete five-input, keyword-only callback interface, including `location_time`. Callback wrappers still accept canonical argument subsets and four-argument positional callbacks.
-- **Breaking:** Native `simulate` now returns a `HybridTrajectory` with ordered positive-duration segments and read-only event snapshots, rather than a sampled `Trace`. Sampling is explicit with `trajectory.sample(times)` or `trajectory.sample(dt=...)` and returns a Polars frame with `t`, `xN`, `location_id`, and `location_time`; labels, inputs, and derivatives are opt-in. Event endpoints identify `Location` objects instead of label strings. HyDRA simulation remains a grid-scheduled frame rollout with residence times, starting at zero and resetting when the selected mode changes.
+- **Breaking:** Native `simulate` now returns a `HybridTrajectory` with ordered positive-duration segments and read-only event snapshots, rather than a sampled `Trace`. Sampling is explicit with `trajectory.sample(times)` or `trajectory.sample(dt=...)` and returns a Polars frame with `t`, `xN`, `location_id`, and `location_time`; labels, inputs, and derivatives are opt-in. Event endpoints identify `Location` objects instead of label strings. HyDRA simulation remains a grid-scheduled frame rollout with `flow_time` measuring elapsed time under the selected flow model, starting at zero and resetting when the selected flow changes.
 - **Breaking:** Hybrid benchmarks `time_forced_switch` and `mode_cycle` no longer append a clock coordinate to their continuous state. Initial states must contain only physical coordinates (two for `time_forced_switch`, `dimension` for `mode_cycle`); pass the former clock value as `simulate(..., initial_location_time=...)`. Named hybrid callbacks using `**kwargs` now receive `location_time` in addition to the existing arguments.
 - **Breaking:** `impact_oscillator` replaces `forcing`/`forcing_freq`, `time_varying_event_surface` replaces `amplitude`/`frequency`, and `pid_controlled_plant` replaces `setpoint_amp`/`setpoint_freq` with caller-supplied input streams. The PID input is `[reference, reference_rate]`. Parameters following the removed positional arguments are now keyword-only. Gallery scenarios are defined in `examples/hybrid_systems/scenarios.py`.
 - Redesigned the documentation landing page with a thermostat simulation replay, grouped navigation, and page icons.
@@ -37,8 +39,8 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Fixed
 
-- HyDRA simulation now reports the selected mode at each sample, including the final endpoint, rather than the preceding interval's mode. Residence times follow these right-continuous labels without changing the integrated state trajectory.
-- Hybrid plots use continuous segments and explicit reset endpoints, including modes missed by sampled grids. Samples at event boundaries report the final post-transition state and location.
+- HyDRA simulation now reports the selected flow ID at each sample, including the final endpoint, rather than the preceding interval's ID. Elapsed flow times follow these right-continuous assignments without changing the integrated state trajectory.
+- Hybrid plots use continuous segments and explicit reset endpoints, including location visits missed by sampled grids. Samples at event boundaries report the final post-transition state and location.
 
 ### Removed
 

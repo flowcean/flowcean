@@ -365,10 +365,11 @@ def test_transition_reset_is_reflected_in_event_record() -> None:
 
     event = trace.events[0]
     assert event.time == pytest.approx(1.0, abs=1e-7)
-    assert event.source_location is source
-    assert event.target_location is target
-    assert event.event_surface == "full"
-    assert event.reset == "drain"
+    assert event.transition.source is source
+    assert event.transition.target is target
+    assert event.transition.event_surface.label == "full"
+    assert event.transition.reset is not None
+    assert event.transition.reset.label == "drain"
     np.testing.assert_allclose(event.state_before, [1.0], atol=1e-7)
     np.testing.assert_allclose(event.state_after, [0.25], atol=1e-7)
     assert event.microstep == 0
@@ -411,7 +412,7 @@ def test_immediate_transition_chain_occurs_at_one_time() -> None:
 
     assert len(trace.events) == 2
     assert [event.time for event in trace.events] == pytest.approx([0.5, 0.5])
-    assert [event.target_location.label for event in trace.events] == [
+    assert [event.transition.target.label for event in trace.events] == [
         "second",
         "third",
     ]
@@ -464,7 +465,7 @@ def test_exact_restart_detects_a_root_less_than_epsilon_after_event() -> None:
     assert len(trace.events) == 2
     separation = trace.events[1].time - trace.events[0].time
     assert 0.0 < separation < 1e-12
-    assert trace.events[1].event_surface == "nearby-event"
+    assert trace.events[1].transition.event_surface.label == "nearby-event"
 
 
 def test_event_states_are_independent_snapshots() -> None:

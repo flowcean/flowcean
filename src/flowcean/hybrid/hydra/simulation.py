@@ -42,20 +42,23 @@ def _state_columns(
 
 
 def compare_state_traces(
-    reference: pl.DataFrame,
-    predicted: pl.DataFrame,
+    reference_frame: pl.DataFrame,
+    predicted_frame: pl.DataFrame,
     *,
     state_columns: Sequence[str] | None = None,
 ) -> StateTraceComparison:
     """Compare matching grids and ordered states; select renamed states explicitly."""
-    reference_columns = _state_columns(reference, state_columns)
-    predicted_columns = _state_columns(predicted, state_columns)
+    reference_columns = _state_columns(reference_frame, state_columns)
+    predicted_columns = _state_columns(predicted_frame, state_columns)
     if reference_columns != predicted_columns:
         raise ValueError("State columns must match in order.")
-    if "t" not in reference.columns or "t" not in predicted.columns:
+    if (
+        "t" not in reference_frame.columns
+        or "t" not in predicted_frame.columns
+    ):
         raise ValueError("Time grids require a t column.")
-    reference_t = reference["t"].to_numpy()
-    predicted_t = predicted["t"].to_numpy()
+    reference_t = reference_frame["t"].to_numpy()
+    predicted_t = predicted_frame["t"].to_numpy()
     for times in (reference_t, predicted_t):
         if not np.all(np.isfinite(times)) or np.any(np.diff(times) < 0):
             raise ValueError("Time grids must be finite and non-descending.")
@@ -64,8 +67,8 @@ def compare_state_traces(
     ):
         raise ValueError("Time grids must match.")
     difference = (
-        reference.select(reference_columns).to_numpy()
-        - predicted.select(predicted_columns).to_numpy()
+        reference_frame.select(reference_columns).to_numpy()
+        - predicted_frame.select(predicted_columns).to_numpy()
     )
     absolute_error = np.abs(difference)
     return StateTraceComparison(

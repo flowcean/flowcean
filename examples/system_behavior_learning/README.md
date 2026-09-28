@@ -13,8 +13,8 @@ Each split is simulated once and then reused while
 `sklearn.tree.DecisionTreeRegressor` varies `max_leaf_nodes` from 2 through 16,
 plus an unbounded tree.
 
-The target is the complete `trace.x`, flattened in time-major, state-minor
-order. Each time-state coordinate is standardized with its fitting-split mean
+The target is the sampled state coordinates across the full horizon, flattened
+in time-major, state-minor order. Each time-state coordinate is standardized with its fitting-split mean
 and population standard deviation. Coordinates whose fitting scale is at most
 `1e-12` are excluded. Aggregate RMSE therefore gives equal weight to every
 retained time-state coordinate and assessment scenario. Per-state RMSE values

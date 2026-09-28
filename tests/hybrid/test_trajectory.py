@@ -66,8 +66,8 @@ def test_execution_has_positive_segments_and_individual_events():
         ContinuousSegment,
     ]
     assert [event.microstep for event in trajectory.events] == [0, 1]
-    assert trajectory.events[0].source_location is system.locations[1]
-    assert trajectory.events[-1].target_location is system.locations[3]
+    assert trajectory.events[0].transition.source is system.locations[1]
+    assert trajectory.events[-1].transition.target is system.locations[3]
     assert [segment.t_span for segment in trajectory.segments] == [
         (0, 0.5),
         (0.5, 1),
@@ -507,13 +507,13 @@ def test_context_freezes_unvisited_parameters_before_first_callback():
 def test_plotting_preserves_location_identity_and_never_connects_jumps():
     import matplotlib.pyplot as plt
 
-    from flowcean.hybrid import plot_locations, plot_phase, plot_trace
+    from flowcean.hybrid import plot_locations, plot_phase, plot_trajectory
 
     system = chain_system()
     trajectory = simulate(system, (0, 1))
     fig, axes = plt.subplots(1, 3)
     try:
-        plot_trace(
+        plot_trajectory(
             trajectory, ax=axes[0], show_locations=False, show_events=False
         )
         assert len(axes[0].lines) == 2
@@ -582,14 +582,14 @@ def test_dataframe_source_consumers(monkeypatch):
         selection_times.append(time)
         return int(time >= 0.5)
 
-    monkeypatch.setattr(model, "_select_mode_id", select)
+    monkeypatch.setattr(model, "_select_flow_id", select)
     frame = model.simulate(
         (0, 1),
         [0],
         sample_times=[0, 0.5, 1],
         input_stream=lambda t: np.array([2.0]),
     )
-    assert frame.columns == ["t", "x0", "location_id", "location_time"]
+    assert frame.columns == ["t", "x0", "flow_id", "flow_time"]
     assert selection_times == [0, 0.5, 1]
     with_inputs = model.simulate(
         (0, 1),
@@ -600,8 +600,8 @@ def test_dataframe_source_consumers(monkeypatch):
     )
     assert with_inputs["u0"].to_list() == [2, 2, 2]
     np.testing.assert_allclose(frame["x0"], [0, 1, 0], atol=1e-14)
-    assert frame["location_id"].to_list() == [0, 1, 1]
-    assert frame["location_time"].to_list() == [0, 0, 0.5]
+    assert frame["flow_id"].to_list() == [0, 1, 1]
+    assert frame["flow_time"].to_list() == [0, 0, 0.5]
     assert compare_state_traces(frame, frame).max_error == 0
     renamed = frame.rename({"x0": "position"})
     assert (

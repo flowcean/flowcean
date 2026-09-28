@@ -15,7 +15,7 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 from scenarios import SCENARIOS, Scenario
 
-from flowcean.hybrid import HybridTrajectory, plot_trace, simulate
+from flowcean.hybrid import HybridTrajectory, plot_trajectory, simulate
 
 
 @dataclass(frozen=True)
@@ -24,25 +24,27 @@ class BenchmarkRunSummary:
     tags: tuple[str, ...]
     location_count: int
     state_dimension: int
-    step_count: int
+    sample_count: int
     event_count: int
     description: str
 
 
 def summarize_benchmark(
     spec: Scenario,
-    trace: HybridTrajectory,
+    trajectory: HybridTrajectory,
 ) -> BenchmarkRunSummary:
-    frame = trace.sample(dt=0.01)
-    visited_locations = {trace.initial_location}
-    visited_locations.update(event.target_location for event in trace.events)
+    frame = trajectory.sample(dt=0.01)
+    visited_locations = {trajectory.initial_location}
+    visited_locations.update(
+        event.transition.target for event in trajectory.events
+    )
     return BenchmarkRunSummary(
         name=spec.name,
         tags=spec.tags,
         location_count=len(visited_locations),
-        state_dimension=trace.initial_state.size,
-        step_count=frame.height,
-        event_count=len(trace.events),
+        state_dimension=trajectory.initial_state.size,
+        sample_count=frame.height,
+        event_count=len(trajectory.events),
         description=spec.description,
     )
 
@@ -51,7 +53,7 @@ def format_benchmark_summary(summary: BenchmarkRunSummary) -> str:
     tags = ", ".join(summary.tags)
     return (
         f"{summary.name}: tags={tags}; locations={summary.location_count}; "
-        f"state_dim={summary.state_dimension}; steps={summary.step_count}; "
+        f"state_dim={summary.state_dimension}; samples={summary.sample_count}; "
         f"events={summary.event_count}; {summary.description}"
     )
 
@@ -73,13 +75,13 @@ def main() -> None:
     axes_list = axes.flatten()
 
     for ax, spec in zip(axes_list, specs, strict=False):
-        trace = simulate(
+        trajectory = simulate(
             spec.factory(),
             t_span=spec.t_span,
             input_stream=spec.input_stream,
         )
-        plot_trace(
-            trace,
+        plot_trajectory(
+            trajectory,
             show_locations=True,
             show_location_labels=False,
             show_events=True,
@@ -87,7 +89,7 @@ def main() -> None:
             ax=ax,
         )
         ax.set_title(spec.name)
-        summary = summarize_benchmark(spec, trace)
+        summary = summarize_benchmark(spec, trajectory)
         print(format_benchmark_summary(summary))
 
     # Turn off any unused axes

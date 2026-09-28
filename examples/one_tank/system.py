@@ -4,7 +4,7 @@ import numpy as np
 import polars as pl
 
 from flowcean.hybrid import (
-    ContinuousDynamics,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -30,7 +30,7 @@ def one_tank_system() -> HybridSystem:
         return np.array([level_rate], dtype=float)
 
     tank = Location(
-        ContinuousDynamics(tank_flow, label="tank_flow"),
+        Flow(tank_flow, label="tank_flow"),
         label="tank",
     )
     return HybridSystem(
@@ -47,9 +47,9 @@ def one_tank_system() -> HybridSystem:
 
 
 def simulate_one_tank() -> pl.DataFrame:
-    """Simulate a fixed one-tank trace and return its time and level data."""
-    trace = simulate(
+    """Simulate a fixed one-tank trajectory and return its time and level data."""
+    trajectory = simulate(
         one_tank_system(),
         t_span=(0.0, 25.0),
     )
-    return trace.sample(dt=0.1).rename({"x0": "h"}).select("t", "h")
+    return trajectory.sample(dt=0.1).rename({"x0": "h"}).select("t", "h")

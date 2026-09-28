@@ -10,7 +10,7 @@ from flowcean.utils import get_seed
 from .config import SelectorFeatureConfig
 from .features import (
     build_selector_dataset,
-    validate_global_mode_labels,
+    validate_global_flow_ids,
 )
 from .model import HybridDecisionTreeModel
 
@@ -50,7 +50,7 @@ class HybridDecisionTreeLearner(SupervisedLearner):
             labels = labels.cast(pl.Int64, strict=True)
         except pl.exceptions.InvalidOperationError as error:
             message = (
-                "HybridDecisionTreeLearner requires integer-like mode IDs"
+                "HybridDecisionTreeLearner requires integer-like flow IDs"
             )
             raise ValueError(message) from error
 
@@ -70,17 +70,17 @@ class HybridDecisionTreeLearner(SupervisedLearner):
     def learn_from_traces(
         self,
         traces: list[pl.DataFrame],
-        mode_to_flow: dict[int, Model] | None = None,
+        flow_models_by_id: dict[int, Model] | None = None,
     ) -> HybridDecisionTreeModel:
-        validate_global_mode_labels(traces)
+        validate_global_flow_ids(traces)
         dataset = build_selector_dataset(traces, self.feature_config)
         model = self.learn(
             dataset.features,
-            pl.DataFrame({"mode": dataset.labels}),
+            pl.DataFrame({"flow_id": dataset.labels}),
         )
         return HybridDecisionTreeModel(
             classifier=model.classifier,
             feature_columns=model.feature_columns,
             feature_config=self.feature_config,
-            mode_to_flow=mode_to_flow,
+            flow_models_by_id=flow_models_by_id,
         )

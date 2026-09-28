@@ -4,9 +4,17 @@ icon: lucide/workflow
 
 # Hybrid Systems
 
-Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete mode as a location, evolves a continuous state according to that location's dynamics, and changes locations when event surfaces trigger transitions.
+Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete state as a location, evolves a continuous state according to that location's flow, and changes locations when event surfaces trigger transitions.
 
 Use `flowcean.hybrid` to define and simulate models, and [`flowcean.hybrid.benchmarks`](../reference/hybrid.md#flowcean.hybrid.benchmarks) for reusable systems. Start with a simulation below, follow the [minimal example](../examples/hs_simple.md) to construct a model from locations and transitions, or compare systems in the [benchmark gallery](../examples/hybrid_systems.md).
+
+## Terminology
+
+- A `Location` is a node in a hybrid automaton. Its `flow` is a `Flow` defining the continuous derivative law through `fn`. Distinct locations can share a flow while keeping separate identities, outgoing transitions, parameters, and visits.
+- A `Transition` defines a source, target, `event_surface`, and optional `reset`. An `Event` records one occurrence and retains that exact definition as `event.transition`, plus physical time, microstep, and read-only state snapshots. Labels are display text, not identity.
+- A native hybrid execution is returned as a `HybridTrajectory`, with continuous segments and discrete events. Sampling it produces a trace represented by a Polars frame; sampled rows are not the execution itself.
+- HyDRA learns flow models and a selector, not native locations or transitions. `HyDRAModel.flow_models` contains these models; numeric `flow_id` assignments are distinct from display labels. Its simulation returns a grid-scheduled learned rollout frame rather than a native trajectory.
+- Native `location_time` measures the current location visit and resets on every transition, even between locations sharing a flow. Learned `flow_time` measures time since the selected flow model became active at a grid point and resets only when `flow_id` changes.
 
 ## Read a Hybrid Model
 
@@ -41,13 +49,13 @@ trajectory = simulate(
 frame = trajectory.sample(dt=0.02, include_location_label=True)
 ```
 
-`simulate` returns a `HybridTrajectory`: a continuous execution independent of any sampling grid. Its ordered `execution` contains positive-duration `segments` and individual `events`, including every zero-duration microstep. `sample` produces a Polars frame at explicitly requested times.
+`simulate` returns a `HybridTrajectory`: a hybrid execution independent of any sampling grid. Its ordered `execution` contains positive-duration `segments` and individual `events`, including every zero-duration microstep. `sample` produces a Polars frame at explicitly requested times.
 
 <figure class="hybrid-figure" markdown="span">
 
 [![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="_blank" rel="noopener" }
 
-<figcaption>Temperature remains continuous when the mode changes, but its derivative changes. Shading identifies the active location.</figcaption>
+<figcaption>Temperature remains continuous when the location changes, but its derivative changes. Shading identifies the active location.</figcaption>
 
 </figure>
 
@@ -61,7 +69,7 @@ The objects used to construct a model are available from `flowcean.hybrid`:
 
 ```python
 from flowcean.hybrid import (
-    ContinuousDynamics,
+    Flow,
     CrossingDirection,
     EventSurface,
     HybridSystem,
@@ -72,7 +80,7 @@ from flowcean.hybrid import (
 )
 ```
 
-A `HybridSystem` contains locations, transitions, an initial location, an initial continuous state, and global parameters. Exactly one location is active at each point in the simulation. A same-time transition chain may visit several locations at one physical time, ordered by microsteps. Between transitions, the active location's `ContinuousDynamics` callback returns the derivative of the continuous state.
+A `HybridSystem` contains locations, transitions, an initial location, an initial continuous state, and global parameters. Exactly one location is active at each point in the simulation. A same-time transition chain may visit several locations at one physical time, ordered by microsteps. Between transitions, the active location's `flow.fn` callback returns the derivative of the continuous state.
 
 The continuous state is a one-dimensional NumPy array. A system with continuous dynamics but no discrete switching is represented by one location and no transitions.
 
@@ -121,7 +129,7 @@ Without a reset, the continuous state is unchanged by a transition, including a 
 
 ## Automaton Diagrams
 
-Use `build_hybrid_system_dot` to inspect a system's complete declared structure without simulating it. The graph includes every location and transition, even those a trace never visits, with an incoming arrow marking the initial location.
+Use `build_hybrid_system_dot` to inspect a system's complete declared structure without simulating it. The graph includes every location and transition, even those a trajectory never visits, with an incoming arrow marking the initial location.
 
 ```python
 from pathlib import Path
@@ -187,7 +195,7 @@ After a continuous crossing, integration restarts at the exact event time with t
 
 ## Execution Boundaries and Sampling
 
-A `HybridTrajectory` retains its original `initial_state`, `initial_location`, `initial_location_time`, and `t_span`. `execution` interleaves continuous segments and events in order; `segments` and `events` provide filtered views. Every positive-duration segment has its own `location`, `t_span`, and `location_time(time)` residence clock. Event source and target locations are `Location` objects, not strings. Their `state_before` and `state_after` snapshots, like the initial state, are detached and read-only. Display labels can repeat; object identity distinguishes locations and integer `location_id` values follow system declaration order.
+A `HybridTrajectory` retains its original `initial_state`, `initial_location`, `initial_location_time`, and `t_span`. `execution` interleaves continuous segments and events in order; `segments` and `events` provide filtered views. Every positive-duration segment has its own `location`, `t_span`, and `location_time(time)` residence clock. Each event retains its exact `Transition` object; access its locations through `event.transition.source` and `event.transition.target`, and its surface and reset through `event.transition.event_surface` and `event.transition.reset`. The event's `state_before` and `state_after` snapshots, like the initial state, are detached and read-only. Display labels can repeat; object identity distinguishes locations and integer `location_id` values follow system declaration order.
 
 Sampled rows are right-continuous: at a jump they report the final target location and post-reset state after the complete immediate chain, even at the start or end of `t_span`. Intermediate zero-duration visits remain in `events` but produce no continuous segment or shaded interval. Each event's `location_time_before` records its source visit's age.
 
@@ -199,7 +207,7 @@ Default sampling reevaluates no callbacks. Input sampling requires an input stre
 
 ## Plotting Locations
 
-Use `plot_trace` for state trajectories, or add location shading to your own time-series plots with `plot_locations`:
+Use `plot_trajectory` for state trajectories, or add location shading to your own time-series plots with `plot_locations`:
 
 ```python
 import matplotlib.pyplot as plt
@@ -213,7 +221,7 @@ ax.set_xlabel("Time")
 ax.legend()
 ```
 
-`plot_trace`, `plot_phase`, and `plot_locations` accept the trajectory, not a sampled frame. `plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass a `location_colors` mapping keyed by `Location` objects when comparing plots; labels alone need not be unique.
+`plot_trajectory`, `plot_phase`, and `plot_locations` accept the trajectory, not a sampled frame. `plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass a `location_colors` mapping keyed by `Location` objects when comparing plots; labels alone need not be unique.
 
 Shading follows the actual positive-duration segments and their event times, independently of the sample grid. Reset endpoints are drawn explicitly rather than connected through a continuous line. Instantaneous intermediate locations have no shaded area.
 
@@ -221,8 +229,8 @@ Shading follows the actual positive-duration segments and their event times, ind
 
 The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hysteresis, and resets in reusable models. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
 
-Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
+Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify flow models and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
-Unlike native `simulate`, `HyDRAModel.simulate()` returns a sampled Polars frame, not a `HybridTrajectory`. Its `sample_times` or `sample_dt` grid schedules mode selection at every grid point, including the final endpoint. The frame has `t`, `x0`, ..., `location_id`, and `location_time` columns; `include_inputs=True` optionally adds `u0`, ... . Between grid points, the selected mode stays fixed. This grid-scheduled rollout does not locate within-interval switches or produce transition events.
+Unlike native `simulate`, `HyDRAModel.simulate()` returns a sampled Polars frame, not a `HybridTrajectory`. Its `sample_times` or `sample_dt` grid schedules flow selection at every grid point, including the final endpoint. The frame has `t`, `x0`, ..., `flow_id`, and `flow_time` columns, not native location columns; `include_inputs=True` optionally adds `u0`, ... . `flow_time` starts at zero and resets when the selected flow ID changes. Between grid points, the selected flow model stays fixed. This grid-scheduled rollout does not locate within-interval switches or produce transition events.
 
 Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trajectory types.

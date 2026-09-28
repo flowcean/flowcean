@@ -13,9 +13,9 @@ import numpy as np
 import polars as pl
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -93,15 +93,15 @@ _TORQUE_BY_LABEL: dict[str, _TorqueLaw] = {
 
 
 def wind_turbine_power(
-    trace: pl.DataFrame, *, parameters: Parameters
+    frame: pl.DataFrame, *, parameters: Parameters
 ) -> np.ndarray:
     """Return generator mechanical power in watts for each sampled state.
 
-    ``trace`` must contain rotor speed ``x0`` and ``location_label``.
+    ``frame`` must contain rotor speed ``x0`` and ``location_label``.
     For example, use
     ``trajectory.sample(dt=0.1, include_location_label=True)``.
 
-    Pass the parameters of the turbine used to produce ``trace``. Power is
+    Pass the parameters of the turbine used to produce ``frame``. Power is
     generator torque times generator speed, using the same torque law as the
     dynamics. The recorded location selects that law: speed alone cannot
     determine it inside the controller's hysteresis bands.
@@ -110,11 +110,11 @@ def wind_turbine_power(
     It equals ``rated_mechanical_power`` in ``rated_power``; that reference is
     not a hard instantaneous cap on the other torque-control modes.
     """
-    speeds = parameters["generator_ratio"] * trace["x0"].to_numpy()
+    speeds = parameters["generator_ratio"] * frame["x0"].to_numpy()
     if not np.all(np.isfinite(speeds)) or np.any(speeds <= 0):
         raise ValueError("generator speeds must be finite and positive")
     powers = []
-    for speed, location in zip(speeds, trace["location_label"], strict=True):
+    for speed, location in zip(speeds, frame["location_label"], strict=True):
         try:
             torque_law = _TORQUE_BY_LABEL[str(location)]
         except KeyError as error:
@@ -160,9 +160,7 @@ def _wind_speed(t: float, input_stream: InputStream) -> float:
     return float(wind[0])
 
 
-def _turbine_dynamics(
-    torque_law: _TorqueLaw, *, label: str
-) -> ContinuousDynamics:
+def _turbine_dynamics(torque_law: _TorqueLaw, *, label: str) -> Flow:
     """Build shared six-state dynamics for one generator torque law."""
 
     def flow(
@@ -238,7 +236,7 @@ def _turbine_dynamics(
             dtype=float,
         )
 
-    return ContinuousDynamics(flow, label=label)
+    return Flow(flow, label=label)
 
 
 def _speed_transition(
@@ -262,7 +260,7 @@ def _speed_transition(
     return Transition(
         source=source,
         target=target,
-        event=EventSurface(surface, direction=direction, label=label),
+        event_surface=EventSurface(surface, direction=direction, label=label),
         entry_policy=SurfaceEntryPolicy.TRIGGER,
     )
 

@@ -50,10 +50,10 @@ def test_switching_thresholds_follow_the_supplied_signal(
 
     upper, lower = system.transitions
     for t in (0.0, 3.0):
-        assert upper.event.fn(
+        assert upper.event_surface.fn(
             t, state, system.parameters, target
         ) == pytest.approx(state[0] - (10.0 + t + 1.0))
-        assert lower.event.fn(
+        assert lower.event_surface.fn(
             t, state, system.parameters, target
         ) == pytest.approx(state[0] - (10.0 + t - 1.0))
 
@@ -62,7 +62,7 @@ def test_impact_force_changes_acceleration_not_the_bounce() -> None:
     system = impact_oscillator(damping=0.2, stiffness=5.0, restitution=0.4)
     state = np.array([0.3, -2.0])
     params = {**system.parameters, **system.initial_location.parameters}
-    flow = system.initial_location.dynamics.flow
+    flow = system.initial_location.flow.fn
     reset = system.transitions[0].reset
     assert reset is not None
 
@@ -101,15 +101,13 @@ def test_pid_flows_and_guards_use_the_same_control_law(
         system.locations, (control, 2.0, -2.0), strict=True
     ):
         np.testing.assert_allclose(
-            location.dynamics.flow(
-                0.7, state, system.parameters, input_stream
-            ),
+            location.flow.fn(0.7, state, system.parameters, input_stream),
             [state[1], -6 * state[0] - 0.7 * state[1] + applied, error],
         )
     for transition, bound in zip(
         system.transitions, (2, -2, 2, -2), strict=True
     ):
-        assert transition.event.fn(
+        assert transition.event_surface.fn(
             0.7, state, system.parameters, input_stream
         ) == pytest.approx(control - bound)
 
@@ -123,7 +121,7 @@ def test_pid_enters_and_leaves_both_saturation_regimes() -> None:
     trace = simulate(system, (0, 6), input_stream=reference)
     frame = trace.sample(dt=0.1, include_location_label=True)
     assert [
-        (e.source_location.label, e.target_location.label)
+        (e.transition.source.label, e.transition.target.label)
         for e in trace.events
     ] == [
         ("linear", "sat_high"),

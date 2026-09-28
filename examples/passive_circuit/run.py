@@ -34,7 +34,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 class SelectorDiagnostics(Protocol):
     def summary_text(self) -> str: ...
 
-    def mode_summary_text(self) -> str: ...
+    def flow_summary_text(self) -> str: ...
 
     def leaf_summary_text(self) -> str: ...
 
@@ -49,8 +49,8 @@ def print_selector_outputs(
 ) -> None:
     print("selector_summary")
     print(selector.summary_text())
-    print("selector_mode_summary")
-    print(selector.mode_summary_text())
+    print("selector_flow_summary")
+    print(selector.flow_summary_text())
     print("selector_leaf_summary")
     print(selector.leaf_summary_text())
     print("selector_tree")
@@ -111,7 +111,7 @@ def main() -> None:
 
     print(
         {
-            "modes": len(model.modes),
+            "flow_count": len(model.flow_models),
             "input_features": model.input_features,
             "output_features": model.output_features,
         },

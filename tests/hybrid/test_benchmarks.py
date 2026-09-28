@@ -11,7 +11,7 @@ from flowcean.hybrid.benchmarks import (
     buck_converter,
     hybrid_oscillator,
     impact_oscillator,
-    mode_cycle,
+    location_cycle,
     pid_controlled_plant,
     piecewise_affine,
     relay_integrator,
@@ -50,7 +50,7 @@ SMOKE_CASES: tuple[
     ("tanks", tank_valves, (0, 300), None),
     (
         "cycle",
-        lambda: mode_cycle(modes=6, dimension=3, dwell_time=0.4),
+        lambda: location_cycle(location_count=6, dimension=3, dwell_time=0.4),
         (0, 10),
         None,
     ),
@@ -106,10 +106,12 @@ def test_bouncing_ball_matches_ballistic_motion_before_impact() -> None:
     assert not trace.events
 
 
-def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
+def test_location_cycle_resets_location_time_and_cycles_locations() -> None:
     dwell_time = 0.2
     trace = simulate(
-        system := mode_cycle(modes=3, dimension=2, dwell_time=dwell_time),
+        system := location_cycle(
+            location_count=3, dimension=2, dwell_time=dwell_time
+        ),
         t_span=(0.0, 1.05),
     )
     frame = trace.sample(dt=0.025)
@@ -122,7 +124,7 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         ("m1", "m2"),
     ]
     assert [
-        (event.source_location.label, event.target_location.label)
+        (event.transition.source.label, event.transition.target.label)
         for event in trace.events
     ] == expected_locations
     np.testing.assert_allclose(
@@ -141,7 +143,7 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         at_event = trace.sample([event.time])
         np.testing.assert_allclose(at_event["location_time"], 0.0, atol=1e-12)
         assert at_event["location_id"][0] == system.locations.index(
-            event.target_location
+            event.transition.target
         )
     assert np.all(frame["location_time"].to_numpy() >= -1e-12)
     assert np.all(frame["location_time"].to_numpy() <= dwell_time + 1e-9)
@@ -157,7 +159,7 @@ def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
 
     assert trace.initial_state.size == 2
     assert [
-        (event.source_location.label, event.target_location.label)
+        (event.transition.source.label, event.transition.target.label)
         for event in trace.events
     ] == [
         ("fast", "slow"),
@@ -209,9 +211,9 @@ def test_time_forced_switch_starts_midvisit() -> None:
         (time_forced_switch, np.array([1.0, -1.0, 0.0])),
         (time_forced_switch, np.array([1.0])),
         (time_forced_switch, np.array([[1.0, -1.0]])),
-        (mode_cycle, np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
-        (mode_cycle, np.array([1.0, 0.0, 0.0])),
-        (mode_cycle, np.array([[1.0, 0.0, 0.0, 0.0]])),
+        (location_cycle, np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
+        (location_cycle, np.array([1.0, 0.0, 0.0])),
+        (location_cycle, np.array([[1.0, 0.0, 0.0, 0.0]])),
     ],
 )
 def test_timed_benchmarks_reject_wrong_state_shapes(

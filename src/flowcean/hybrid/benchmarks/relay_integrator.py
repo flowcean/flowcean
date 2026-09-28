@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -64,15 +64,15 @@ def relay_integrator(
     ) -> float:
         return state[0] - params["lower"]
 
-    up_dynamics = ContinuousDynamics(flow_up, label="up")
-    down_dynamics = ContinuousDynamics(flow_down, label="down")
+    up_dynamics = Flow(flow_up, label="up")
+    down_dynamics = Flow(flow_down, label="down")
     up = Location(up_dynamics, label="up")
     down = Location(down_dynamics, label="down")
 
     to_down = Transition(
         source=up,
         target=down,
-        event=EventSurface(
+        event_surface=EventSurface(
             event_surface_upper,
             direction=CrossingDirection.RISING,
             label="hit_upper",
@@ -81,7 +81,7 @@ def relay_integrator(
     to_up = Transition(
         source=down,
         target=up,
-        event=EventSurface(
+        event_surface=EventSurface(
             event_surface_lower,
             direction=CrossingDirection.FALLING,
             label="hit_lower",

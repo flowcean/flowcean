@@ -45,7 +45,7 @@ def build_selector_dataset(
             continue
 
         feature_frames.append(usable.select(feature_columns))
-        label_series.append(usable["mode"])
+        label_series.append(usable["flow_id"])
         metadata_frames.append(
             pl.DataFrame(
                 {
@@ -68,19 +68,19 @@ def build_selector_dataset(
     )
 
 
-def validate_global_mode_labels(traces: list[pl.DataFrame]) -> None:
-    mode_ids: set[int] = set()
+def validate_global_flow_ids(traces: list[pl.DataFrame]) -> None:
+    flow_ids: set[int] = set()
     for trace in traces:
-        if "mode" not in trace.columns:
-            message = "selector traces must include a mode column"
+        if "flow_id" not in trace.columns:
+            message = "selector traces must include a flow_id column"
             raise ValueError(message)
-        if trace["mode"].null_count() > 0:
-            message = "selector mode labels must not contain nulls"
+        if trace["flow_id"].null_count() > 0:
+            message = "selector flow IDs must not contain nulls"
             raise ValueError(message)
-        mode_ids.update(trace["mode"].to_list())
+        flow_ids.update(trace["flow_id"].to_list())
 
-    if not mode_ids:
-        message = "selector mode labels must contain at least one mode ID"
+    if not flow_ids:
+        message = "selector flow IDs must contain at least one flow ID"
         raise ValueError(message)
 
 
@@ -89,9 +89,9 @@ def build_selector_inference_frame(
     config: SelectorFeatureConfig,
 ) -> SelectorInferenceFrame:
     config.validate()
-    if config.mode_history:
+    if config.flow_history:
         msg = (
-            "batch selector inference does not support previous-mode "
+            "batch selector inference does not support previous-flow "
             "features; use the stateful selector runtime."
         )
         raise NotImplementedError(
@@ -107,8 +107,8 @@ def build_selector_inference_frame(
     projected = _project_trace(
         frame,
         config,
-        include_mode_history=False,
-        include_mode=False,
+        include_flow_history=False,
+        include_flow_id=False,
     )
     dropped_rows = min(config.max_history, projected.height)
     usable = projected.slice(dropped_rows)
@@ -138,7 +138,7 @@ def _feature_columns(config: SelectorFeatureConfig) -> tuple[str, ...]:
         ),
     )
     columns.extend(
-        f"mode_t_minus_{step}" for step in range(1, config.mode_history + 1)
+        f"flow_t_minus_{step}" for step in range(1, config.flow_history + 1)
     )
     return tuple(columns)
 
@@ -147,13 +147,15 @@ def _validate_trace(
     trace: pl.DataFrame,
     config: SelectorFeatureConfig,
 ) -> None:
-    missing_columns = {"mode", *config.required_columns()} - set(trace.columns)
+    missing_columns = {"flow_id", *config.required_columns()} - set(
+        trace.columns
+    )
     if missing_columns:
         message = "missing required selector columns"
         msg = f"{message}: {sorted(missing_columns)}"
         raise ValueError(msg)
-    if trace["mode"].null_count() > 0:
-        message = "selector mode labels must not contain nulls"
+    if trace["flow_id"].null_count() > 0:
+        message = "selector flow IDs must not contain nulls"
         raise ValueError(message)
 
 
@@ -169,8 +171,8 @@ def _project_trace(
     trace: pl.DataFrame,
     config: SelectorFeatureConfig,
     *,
-    include_mode_history: bool = True,
-    include_mode: bool = True,
+    include_flow_history: bool = True,
+    include_flow_id: bool = True,
 ) -> pl.DataFrame:
     expressions: list[pl.Expr] = [
         *[pl.col(column) for column in config.state_features],
@@ -191,14 +193,14 @@ def _project_trace(
         ),
     )
 
-    if include_mode_history:
+    if include_flow_history:
         expressions.extend(
-            pl.col("mode").shift(step).alias(f"mode_t_minus_{step}")
-            for step in range(1, config.mode_history + 1)
+            pl.col("flow_id").shift(step).alias(f"flow_t_minus_{step}")
+            for step in range(1, config.flow_history + 1)
         )
 
-    if include_mode:
-        expressions.append(pl.col("mode"))
+    if include_flow_id:
+        expressions.append(pl.col("flow_id"))
 
     expressions.append(
         pl.int_range(0, trace.height, eager=False).alias("row_index"),
