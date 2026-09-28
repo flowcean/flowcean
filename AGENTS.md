@@ -7,6 +7,12 @@
 - Keep changes scoped to the task. Update affected in-repository callers, tests, examples, and documentation together; tests should validate the new contract rather than preserve obsolete behavior.
 - Revisit the compatibility policy when downstream consumers exist or the project adopts a stable API commitment.
 
+## Vocabulary
+
+- Reuse established repository vocabulary consistently across code, tests, documentation, and discussion. Preserve the meaning of existing terms rather than introducing synonyms for the same concept.
+- Introduce new vocabulary only when existing terms cannot adequately express a necessary distinction. Explain that distinction and why a new term is needed.
+- Actively flag inconsistent usage and ambiguous meanings. Raise them for discussion with concrete examples; do not independently choose a canonical term, redefine a concept, or resolve the ambiguity. Continue unrelated work where possible.
+
 ## Working Tree
 
 - Keep the central worktree on `main` and free of implementation changes. Before modifying the repository, create or reuse a task worktree under `.worktrees/` (already ignored by Git).
