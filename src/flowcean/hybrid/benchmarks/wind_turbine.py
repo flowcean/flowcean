@@ -10,6 +10,7 @@ import math
 from collections.abc import Callable, Sequence
 
 import numpy as np
+import polars as pl
 
 from ..hybrid_system import (
     ContinuousDynamics,
@@ -20,7 +21,6 @@ from ..hybrid_system import (
     Location,
     Parameters,
     SurfaceEntryPolicy,
-    Trace,
     Transition,
 )
 from ._wind_turbine_aerodynamics import aerodynamic_coefficients
@@ -92,8 +92,14 @@ _TORQUE_BY_LABEL: dict[str, _TorqueLaw] = {
 }
 
 
-def wind_turbine_power(trace: Trace, *, parameters: Parameters) -> np.ndarray:
+def wind_turbine_power(
+    trace: pl.DataFrame, *, parameters: Parameters
+) -> np.ndarray:
     """Return generator mechanical power in watts for each sampled state.
+
+    ``trace`` must contain rotor speed ``x0`` and ``location_label``.
+    For example, use
+    ``trajectory.sample(dt=0.1, include_location_label=True)``.
 
     Pass the parameters of the turbine used to produce ``trace``. Power is
     generator torque times generator speed, using the same torque law as the
@@ -104,11 +110,11 @@ def wind_turbine_power(trace: Trace, *, parameters: Parameters) -> np.ndarray:
     It equals ``rated_mechanical_power`` in ``rated_power``; that reference is
     not a hard instantaneous cap on the other torque-control modes.
     """
-    speeds = parameters["generator_ratio"] * trace.x[:, 0]
+    speeds = parameters["generator_ratio"] * trace["x0"].to_numpy()
     if not np.all(np.isfinite(speeds)) or np.any(speeds <= 0):
         raise ValueError("generator speeds must be finite and positive")
     powers = []
-    for speed, location in zip(speeds, trace.location, strict=True):
+    for speed, location in zip(speeds, trace["location_label"], strict=True):
         try:
             torque_law = _TORQUE_BY_LABEL[str(location)]
         except KeyError as error:

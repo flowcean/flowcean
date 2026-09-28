@@ -15,7 +15,7 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 from scenarios import SCENARIOS, Scenario
 
-from flowcean.hybrid import Trace, plot_trace, simulate
+from flowcean.hybrid import HybridTrajectory, plot_trace, simulate
 
 
 @dataclass(frozen=True)
@@ -31,14 +31,17 @@ class BenchmarkRunSummary:
 
 def summarize_benchmark(
     spec: Scenario,
-    trace: Trace,
+    trace: HybridTrajectory,
 ) -> BenchmarkRunSummary:
+    frame = trace.sample(dt=0.01)
+    visited_locations = {trace.initial_location}
+    visited_locations.update(event.target_location for event in trace.events)
     return BenchmarkRunSummary(
         name=spec.name,
         tags=spec.tags,
-        location_count=len(set(trace.location.tolist())),
-        state_dimension=trace.x.shape[1] if trace.x.ndim > 1 else 1,
-        step_count=trace.t.size,
+        location_count=len(visited_locations),
+        state_dimension=trace.initial_state.size,
+        step_count=frame.height,
         event_count=len(trace.events),
         description=spec.description,
     )

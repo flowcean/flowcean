@@ -80,7 +80,7 @@ class ContinuousDynamics:
         flow: Dynamics function returning the state derivative.
             Scalar derivative returns are accepted only for single-state
             systems, both during solver evaluation and when derivatives are
-            captured on the returned trace grid.
+            explicitly sampled from a trajectory.
         label: Optional display label.
     """
 
@@ -361,43 +361,3 @@ def _callback_label(callback: object) -> str | None:
     if isinstance(name, str) and name:
         return name
     return None
-
-
-@dataclass(frozen=True)
-class Event:
-    """Recorded transition with pre- and post-reset states."""
-
-    time: float
-    source_location: str
-    target_location: str
-    event_surface: str
-    reset: str | None
-    state_before: State
-    state_after: State
-    microstep: int
-    location_time_before: float
-
-
-@dataclass(frozen=True)
-class Trace:
-    """Sampled hybrid trajectory and its transition events."""
-
-    t: np.ndarray
-    x: np.ndarray
-    location: np.ndarray
-    location_time: np.ndarray
-    events: Sequence[Event]
-    u: np.ndarray | None = None
-    dx: np.ndarray | None = None
-
-    def as_dict(self) -> dict[str, object]:
-        """Return a dictionary view of the trace."""
-        return {
-            "t": self.t,
-            "x": self.x,
-            "location": self.location,
-            "events": self.events,
-            "u": self.u,
-            "dx": self.dx,
-            "location_time": self.location_time,
-        }

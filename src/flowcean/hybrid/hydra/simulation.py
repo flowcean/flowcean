@@ -1,8 +1,10 @@
+"""Comparisons of explicitly sampled state frames."""
+
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
-
-from ..hybrid_system import Trace
+import polars as pl
 
 
 @dataclass(frozen=True)
@@ -13,28 +15,66 @@ class StateTraceComparison:
     max_error: float
 
 
-def compare_state_traces(
-    reference: Trace,
-    predicted: Trace,
-) -> StateTraceComparison:
-    if reference.t.shape != predicted.t.shape or not np.allclose(
-        reference.t,
-        predicted.t,
-        rtol=0.0,
-        atol=1e-12,
+def _state_columns(
+    frame: pl.DataFrame, columns: Sequence[str] | None
+) -> list[str]:
+    names = (
+        list(columns)
+        if columns is not None
+        else sorted(
+            (
+                name
+                for name in frame.columns
+                if name.startswith("x") and name[1:].isdigit()
+            ),
+            key=lambda name: int(name[1:]),
+        )
+    )
+    if (
+        not names
+        or len(names) != len(set(names))
+        or any(name not in frame.columns for name in names)
     ):
-        message = "Trace time grids must match."
-        raise ValueError(message)
-    if reference.x.shape != predicted.x.shape:
-        message = "Trace state shapes must match."
-        raise ValueError(message)
+        raise ValueError(
+            "Provide nonempty, distinct state columns present in the frame."
+        )
+    return names
 
-    absolute_error = np.abs(reference.x - predicted.x)
+
+def compare_state_traces(
+    reference: pl.DataFrame,
+    predicted: pl.DataFrame,
+    *,
+    state_columns: Sequence[str] | None = None,
+) -> StateTraceComparison:
+    """Compare matching grids and ordered states; select renamed states explicitly."""
+    reference_columns = _state_columns(reference, state_columns)
+    predicted_columns = _state_columns(predicted, state_columns)
+    if reference_columns != predicted_columns:
+        raise ValueError("State columns must match in order.")
+    if "t" not in reference.columns or "t" not in predicted.columns:
+        raise ValueError("Time grids require a t column.")
+    reference_t = reference["t"].to_numpy()
+    predicted_t = predicted["t"].to_numpy()
+    for times in (reference_t, predicted_t):
+        if not np.all(np.isfinite(times)) or np.any(np.diff(times) < 0):
+            raise ValueError("Time grids must be finite and non-descending.")
+    if reference_t.shape != predicted_t.shape or not np.allclose(
+        reference_t, predicted_t, rtol=0.0, atol=1e-12
+    ):
+        raise ValueError("Time grids must match.")
+    difference = (
+        reference.select(reference_columns).to_numpy()
+        - predicted.select(predicted_columns).to_numpy()
+    )
+    absolute_error = np.abs(difference)
     return StateTraceComparison(
         absolute_error=absolute_error,
-        mae=float(np.mean(absolute_error)),
-        rmse=float(np.sqrt(np.mean(np.square(reference.x - predicted.x)))),
-        max_error=(
-            float(np.max(absolute_error)) if absolute_error.size else 0.0
-        ),
+        mae=float(np.mean(absolute_error)) if absolute_error.size else 0.0,
+        rmse=float(np.sqrt(np.mean(np.square(difference))))
+        if difference.size
+        else 0.0,
+        max_error=float(np.max(absolute_error))
+        if absolute_error.size
+        else 0.0,
     )

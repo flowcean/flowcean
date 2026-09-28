@@ -4,11 +4,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import polars as pl
 from pysr import PySRRegressor
 
 import flowcean.cli
 import flowcean.utils
-from flowcean.hybrid import Trace, plot_trace, simulate, trace_to_polars
+from flowcean.hybrid import plot_trace, simulate
 from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
@@ -59,25 +60,27 @@ def print_selector_outputs(
 
 def compare_learned_model_to_reference(
     model: HyDRAModel,
-    reference: Trace,
-) -> tuple[Trace, StateTraceComparison]:
+    reference: pl.DataFrame,
+) -> tuple[pl.DataFrame, StateTraceComparison]:
     learned_trace = model.simulate(
-        (float(reference.t[0]), float(reference.t[-1])),
-        reference.x[0],
-        sample_times=reference.t,
+        (float(reference["t"][0]), float(reference["t"][-1])),
+        reference.select("x").row(0),
+        sample_times=reference["t"].to_numpy(),
+    ).rename({"x0": "x"})
+    return learned_trace, compare_state_traces(
+        reference, learned_trace, state_columns=["x"]
     )
-    return learned_trace, compare_state_traces(reference, learned_trace)
 
 
 def save_trace_comparison_plot(
-    reference: Trace,
-    learned: Trace,
+    reference: pl.DataFrame,
+    learned: pl.DataFrame,
     path: Path,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots()
-    ax.plot(reference.t, reference.x[:, 0], label="reference x")
-    ax.plot(learned.t, learned.x[:, 0], label="learned x", linestyle="--")
+    ax.plot(reference["t"], reference["x"], label="reference x")
+    ax.plot(learned["t"], learned["x"], label="learned x", linestyle="--")
     ax.set_xlabel("t")
     ax.set_ylabel("x")
     ax.legend(loc="best")
@@ -106,8 +109,6 @@ def main() -> None:
         system,
         t_span=(0.0, 20.0),
         input_stream=thermostat_target_stream,
-        capture_derivatives=True,
-        sample_dt=0.02,
     )
 
     print(
@@ -121,13 +122,11 @@ def main() -> None:
         show_event_labels=False,
         show=True,
     )
-    trace_frame = trace_to_polars(
-        reference_trace,
-        state_names=("x",),
-        derivative_names=("dx",),
-    )
+    trace_frame = reference_trace.sample(
+        dt=0.02, include_derivatives=True
+    ).rename({"x0": "x", "dx0": "dx"})
     schema = HyDRATraceSchema(time="t", state=("x",), derivative=("dx",))
-    callback = PlotCallback(reference_trace, dims=[0])
+    callback = PlotCallback(trace_frame, state_columns=["x"])
     learner = HyDRALearner(
         regressor_factory=lambda: PySRLearner(
             model=PySRRegressor(
@@ -152,7 +151,7 @@ def main() -> None:
     print(
         {
             "rows": trace_frame.height,
-            "locations": trace_frame["location"].unique().sort().to_list(),
+            "locations": trace_frame["location_id"].unique().sort().to_list(),
             "modes": len(model.modes),
             "input_features": model.input_features,
             "output_features": model.output_features,
@@ -163,11 +162,11 @@ def main() -> None:
 
     learned_trace, comparison = compare_learned_model_to_reference(
         model,
-        reference_trace,
+        trace_frame,
     )
     print(format_comparison_summary(comparison))
     comparison_path = OUTPUT_DIR / "learned_vs_reference.png"
-    save_trace_comparison_plot(reference_trace, learned_trace, comparison_path)
+    save_trace_comparison_plot(trace_frame, learned_trace, comparison_path)
     print("trace_comparison_plot", comparison_path)
 
 

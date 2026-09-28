@@ -72,7 +72,6 @@ def main() -> None:
     trace = simulate(
         build_thermostat(),
         t_span=(0.0, 20.0),
-        sample_dt=0.05,
     )
 
     _fig, ax = plt.subplots(figsize=(8.0, 3.5), layout="constrained")

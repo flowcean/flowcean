@@ -8,17 +8,16 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib.patches import Patch
 
+from .simulation import _state_columns
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    import polars as pl
     from matplotlib.artist import Artist
     from matplotlib.axes import Axes
 
-    from ..hybrid_system import Trace
     from .learner import TraceSegment
-
-
-TRACE_STATE_NDIM = 2
 
 
 @dataclass(frozen=True)
@@ -187,16 +186,24 @@ class PlotCallback(HyDRACallback):
 
     def __init__(
         self,
-        trace: Trace,
-        dims: Sequence[int] | None = None,
+        trace: pl.DataFrame,
         *,
         trace_index: int = 0,
+        state_columns: Sequence[str] | None = None,
+        time_column: str = "t",
         ax: Axes | None = None,
         show: bool = True,
         pause: float = 0.001,
     ) -> None:
         self.trace = trace
-        self.dims = list(dims) if dims is not None else [0]
+        self.state_columns = _state_columns(trace, state_columns)
+        if time_column not in trace.columns:
+            raise ValueError(
+                f"PlotCallback requires time column {time_column!r}."
+            )
+        self.time_column = time_column
+        self._times = trace[time_column].to_numpy()
+        self._states = trace.select(self.state_columns).to_numpy()
         self.trace_index = trace_index
         self.ax = ax
         self.show = show
@@ -207,8 +214,6 @@ class PlotCallback(HyDRACallback):
         self._overlay_artists: list[Artist] = []
         self._base_plotted = False
         self._mode_colors: dict[int, str] = {}
-
-        self._validate_trace()
 
     def start(
         self,
@@ -300,23 +305,6 @@ class PlotCallback(HyDRACallback):
         self._grouping_segments = []
         self._render(f"HyDRA finished: modes={final_mode_count}")
 
-    def _validate_trace(self) -> None:
-        if self.trace.t.ndim != 1:
-            message = "trace.t must be one-dimensional."
-            raise ValueError(message)
-        if self.trace.x.ndim != TRACE_STATE_NDIM:
-            message = "trace.x must be two-dimensional."
-            raise ValueError(message)
-        if len(self.trace.t) != self.trace.x.shape[0]:
-            message = "trace.t length must match trace.x row count."
-            raise ValueError(message)
-        invalid_dims = [
-            dim for dim in self.dims if dim < 0 or dim >= self.trace.x.shape[1]
-        ]
-        if invalid_dims:
-            message = f"trace dimensions out of range: {invalid_dims}."
-            raise ValueError(message)
-
     def _render(self, status: str) -> None:
         ax = self._axes()
         self._plot_base_trace(ax)
@@ -337,9 +325,13 @@ class PlotCallback(HyDRACallback):
     def _plot_base_trace(self, ax: Axes) -> None:
         if self._base_plotted:
             return
-        for dim in self.dims:
-            ax.plot(self.trace.t, self.trace.x[:, dim], label=f"x{dim}")
-        ax.set_xlabel("t")
+        for dim, name in enumerate(self.state_columns):
+            ax.plot(
+                self._times,
+                self._states[:, dim],
+                label=name,
+            )
+        ax.set_xlabel(self.time_column)
         ax.set_ylabel("state")
         self._base_plotted = True
 
@@ -391,12 +383,12 @@ class PlotCallback(HyDRACallback):
         hatch: str | None = None,
     ) -> None:
         start_index = max(segment.start_index, 0)
-        end_index = min(segment.end_index, len(self.trace.t) - 1)
+        end_index = min(segment.end_index, len(self._times) - 1)
         if start_index > end_index:
             return
         artist = ax.axvspan(
-            self.trace.t[start_index],
-            self.trace.t[end_index],
+            self._times[start_index],
+            self._times[end_index],
             color=color,
             alpha=alpha,
             linewidth=0,

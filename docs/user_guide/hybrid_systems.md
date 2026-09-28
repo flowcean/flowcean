@@ -33,15 +33,15 @@ from flowcean.hybrid import simulate
 from flowcean.hybrid.benchmarks import thermostat
 
 system = thermostat()
-trace = simulate(
+trajectory = simulate(
     system,
     t_span=(0.0, 10.0),
     input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
-    sample_dt=0.02,
 )
+frame = trajectory.sample(dt=0.02, include_location_label=True)
 ```
 
-The returned `Trace` contains sample times, continuous states, active location labels, residence times, and transition events.
+`simulate` returns a `HybridTrajectory`: a continuous execution independent of any sampling grid. Its ordered `execution` contains positive-duration `segments` and individual `events`, including every zero-duration microstep. `sample` produces a Polars frame at explicitly requested times.
 
 <figure class="hybrid-figure" markdown="span">
 
@@ -51,7 +51,7 @@ The returned `Trace` contains sample times, continuous states, active location l
 
 </figure>
 
-The simulator also accepts initial-state, initial-location, and initial-residence-time overrides, solver tolerances, and an event limit. Set `capture_derivatives=True` when a workflow needs state derivatives, and use `trace_to_polars` to prepare tabular state, input, and derivative columns for identification or evaluation.
+The simulator also accepts initial-state, initial-location, and initial-residence-time overrides, solver tolerances, and an event limit. Request `include_derivatives=True` from `trajectory.sample` only when a workflow needs state derivatives. Sampled frames are ready for identification or evaluation; rename columns with Polars for domain-specific schemas.
 
 See the [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) for the complete signature. The sections below explain model construction and the precise meaning of events, samples, and transition boundaries.
 
@@ -88,7 +88,7 @@ Callbacks may declare only the arguments they need when they retain the canonica
 
 The `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` protocols describe the complete five-argument, keyword-only interface. Callback wrappers also accept the subset forms above and four-positional callbacks. Callbacks using positional-only arguments, `*args`, or noncanonical required names receive `(t, state, parameters, input_stream)`; request `location_time` through named dispatch instead.
 
-System parameters apply globally, while parameters declared on the active location override global values with the same name. An input stream is a callable that returns a one-dimensional input array for a requested physical time.
+System parameters apply globally, while parameters declared on the active location override global values with the same name. Effective parameter mappings are frozen per run; later model parameter edits do not alter that trajectory. The trajectory retains its original `system` object, not a deep copy of the model. Callbacks and input streams must be pure and deterministic for repeated solver and optional sampling evaluations. An input stream is a callable that returns a one-dimensional input array for a requested physical time.
 
 ## Transitions and Resets
 
@@ -103,6 +103,8 @@ Each transition's `entry_policy` determines what exact zero means on entry:
 - `SurfaceEntryPolicy.CONTINUE` leaves the transition inactive for entry handling and passes the zero-valued surface unchanged to continuous integration. Use this when a trajectory naturally enters a boundary and departs in the direction opposite to the transition.
 
 Entry decisions are atomic. NaN takes precedence over every policy. Any zero `ERROR` surface is reported before trigger selection. More than one zero `TRIGGER` surface raises `AmbiguousTransitionError`; exactly one performs a jump, applies its reset, enters the target, and repeats entry evaluation there. A `CONTINUE` surface does nothing during entry handling.
+
+During continuous integration, crossing detection follows SciPy's event solver. Unlike exact-zero entry checks, it does not guarantee rejection of ambiguous simultaneous crossings or a user-facing declaration-order priority among them.
 
 For each settled continuous segment, the simulator:
 
@@ -161,7 +163,7 @@ timeout = EventSurface(
 
 Use this surface on a transition to leave its source after five time units.
 
-By default, the initial visit starts at age zero even when `t_span` begins at a nonzero time. To start partway through a visit, pass `initial_location_time` to `simulate` or `generate_traces`.
+By default, the initial visit starts at age zero even when `t_span` begins at a nonzero time. To start partway through a visit, pass `initial_location_time` to `simulate`.
 
 Every transition starts a new visit at age zero, including self-transitions and each jump in an immediate chain. Reset callbacks receive the departing source visit's age; target-entry surfaces receive zero.
 
@@ -177,44 +179,23 @@ Suppose a transition from A to B resets the state onto an event surface in B, wh
 | --- | ---: | ---: | --- | --- |
 | First event | 1.0 | 0 | A -> B | `state_before` in A and `state_after` in B |
 | Second event | 1.0 | 1 | B -> C | `state_before` in B and `state_after` in C |
-| Trace row | 1.0 | - | C | Final state after the complete chain |
+| Sampled row | 1.0 | - | C | Final state after the complete chain |
 
 Every transition in the chain counts toward `max_jumps`. Simulation raises an error if that limit is exceeded.
 
 After a continuous crossing, integration restarts at the exact event time with the post-jump state; the simulator does not offset time to move away from the root. A location must be settled before this restart. If the ODE solver nevertheless returns an event at or before the segment start, simulation raises `SimulationProgressError` rather than applying the transition. This usually indicates stateful callbacks, a discontinuous event surface, or insufficient floating-point time resolution; use deterministic callbacks and continuous surfaces.
 
-## Trace Boundary Semantics
+## Execution Boundaries and Sampling
 
-Flat traces are right-continuous at transitions. A trace row at an event time contains the final state and active location after the complete immediate transition chain. This rule also applies to transitions at the initial or final time.
+A `HybridTrajectory` retains its original `initial_state`, `initial_location`, `initial_location_time`, and `t_span`. `execution` interleaves continuous segments and events in order; `segments` and `events` provide filtered views. Every positive-duration segment has its own `location`, `t_span`, and `location_time(time)` residence clock. Event source and target locations are `Location` objects, not strings. Their `state_before` and `state_after` snapshots, like the initial state, are detached and read-only. Display labels can repeat; object identity distinguishes locations and integer `location_id` values follow system declaration order.
 
-Each `Event` preserves the individual jump through independent `state_before` and `state_after` snapshots. Its `location_time_before` records the departing visit's age. The event sequence therefore retains intermediate states even though the flat trace contains only the final post-chain value at that physical time.
+Sampled rows are right-continuous: at a jump they report the final target location and post-reset state after the complete immediate chain, even at the start or end of `t_span`. Intermediate zero-duration visits remain in `events` but produce no continuous segment or shaded interval. Each event's `location_time_before` records its source visit's age.
 
-A `Trace` contains aligned simulation records:
+Call `trajectory.sample(times)` or `trajectory.sample(dt=0.02)`; exactly one grid is required. Explicit `times` must be finite, non-descending, and inside `t_span`. Duplicates and empty grids are retained, and generators work. A positive finite `dt` produces a grid including the final endpoint, even when it is not a multiple of `dt`. Sampling does not change event detection; off-grid transitions remain in `trajectory.events`. Equal `t_span` endpoints are valid for entry-only executions.
 
-| Field | Contents |
-| --- | --- |
-| `t` | Physical sample times |
-| `x` | Continuous state at each sample time |
-| `location` | Active location label at each sample time |
-| `location_time` | Residence time in the active visit |
-| `events` | Ordered transition events with pre-reset and post-reset states |
-| `u` | Captured inputs, when requested |
-| `dx` | Captured state derivatives, when requested |
+Default frame columns are `t`, `x0`, `x1`, ... (one per state dimension), `location_id`, and `location_time`. Optional `include_location_label=True` adds `location_label`; `include_inputs=True` adds `u0`, ...; `include_derivatives=True` adds `dx0`, ... . Set `include_state=False`, `include_location_id=False`, or `include_location_time=False` to omit those default columns. There is no implicit `step` column: add one with Polars if needed. Rename or select columns with Polars rather than passing naming options to `sample`.
 
-Trace conversion and CSV/Parquet exports include a separate `location_time` column.
-
-## Sampling
-
-The sampling options determine which physical times appear in the flat trace:
-
-- Without `sample_times` or `sample_dt`, the trace uses the adaptive time points returned by the ODE solver. Detected event times are included.
-- `sample_times` returns exactly the requested, non-descending times within `t_span`.
-- `sample_dt` creates a fixed grid from the start of `t_span` and includes the final endpoint, even when the interval is not an exact multiple of the step.
-- `sample_times` and `sample_dt` cannot be used together.
-
-A fixed sampling grid is not expanded with off-grid transition times. Those transitions remain available through `Trace.events`. If a requested sample coincides with a transition, the sample follows the right-continuous boundary rule.
-
-When an input stream is supplied, inputs are captured by default unless `capture_inputs=False` is selected. Setting `capture_derivatives=True` reevaluates the active location's dynamics at each returned sample. At a transition boundary, the derivative therefore uses the final target location and post-transition state. Derivative capture assumes that flow callbacks are pure under repeated evaluation.
+Default sampling reevaluates no callbacks. Input sampling requires an input stream and a nonempty grid (input width cannot be inferred from zero rows). Derivative sampling explicitly reevaluates dynamics at every requested time using the active post-chain state and frozen effective parameters; callables must remain pure and deterministic. Write frames directly with `frame.write_csv(...)` or `frame.write_parquet(...)` when persistence is needed.
 
 ## Plotting Locations
 
@@ -226,15 +207,15 @@ import matplotlib.pyplot as plt
 from flowcean.hybrid import plot_locations
 
 fig, ax = plt.subplots()
-ax.plot(trace.t, trace.x[:, 0], color="black", label="x0")
-plot_locations(trace, ax=ax)
+ax.plot(frame["t"], frame["x0"], color="black", label="x0")
+plot_locations(trajectory, ax=ax)
 ax.set_xlabel("Time")
 ax.legend()
 ```
 
-`plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass the same `location_colors` mapping when comparing plots whose traces visit locations in different orders.
+`plot_trace`, `plot_phase`, and `plot_locations` accept the trajectory, not a sampled frame. `plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass a `location_colors` mapping keyed by `Location` objects when comparing plots; labels alone need not be unique.
 
-Shading spans the trace's first to last sample and follows recorded transition times, including locations visited between samples. If that range contains no events, a change is approximated at the first sample with the new location label. Instantaneous intermediate locations have no shaded area.
+Shading follows the actual positive-duration segments and their event times, independently of the sample grid. Reset endpoints are drawn explicitly rather than connected through a continuous line. Instantaneous intermediate locations have no shaded area.
 
 ## Benchmarks and Identification
 
@@ -242,6 +223,6 @@ The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hy
 
 Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify mode dynamics and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
 
-`HyDRAModel.simulate()` selects a mode at every requested grid point, including the final endpoint. Trace labels and residence times reflect that selection. Between grid points, the selected mode stays fixed. This grid-based simulation does not locate within-interval switches or produce transition events.
+Unlike native `simulate`, `HyDRAModel.simulate()` returns a sampled Polars frame, not a `HybridTrajectory`. Its `sample_times` or `sample_dt` grid schedules mode selection at every grid point, including the final endpoint. The frame has `t`, `x0`, ..., `location_id`, and `location_time` columns; `include_inputs=True` optionally adds `u0`, ... . Between grid points, the selected mode stays fixed. This grid-scheduled rollout does not locate within-interval switches or produce transition events.
 
-Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trace types.
+Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trajectory types.

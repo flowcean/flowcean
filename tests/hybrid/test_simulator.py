@@ -1,7 +1,5 @@
 """Behavioral tests for continuous and hybrid simulation."""
 
-from typing import Any
-
 import numpy as np
 import pytest
 
@@ -17,7 +15,6 @@ from flowcean.hybrid import (
     SurfaceEntryError,
     SurfaceEntryPolicy,
     Transition,
-    generate_traces,
     simulate,
 )
 
@@ -37,12 +34,13 @@ def test_continuous_flow_matches_exponential_solution() -> None:
     )
     times = np.linspace(0.0, 2.0, 9)
 
-    trace = simulate(system, (0.0, 2.0), sample_times=times)
+    trace = simulate(system, (0.0, 2.0))
+    frame = trace.sample(times, include_location_label=True)
 
     expected = 1.5 * np.exp(-0.7 * times)
-    np.testing.assert_allclose(trace.t, times)
-    np.testing.assert_allclose(trace.x[:, 0], expected, rtol=2e-6, atol=1e-8)
-    assert trace.location.tolist() == ["growth"] * len(times)
+    np.testing.assert_allclose(frame["t"], times)
+    np.testing.assert_allclose(frame["x0"], expected, rtol=2e-6, atol=1e-8)
+    assert frame["location_label"].to_list() == ["growth"] * len(times)
     assert trace.events == ()
 
 
@@ -77,11 +75,13 @@ def test_event_crossing_direction(
         np.array([initial_state]),
     )
 
-    trace = simulate(system, (0.0, 1.0), sample_times=[0.0, 0.5, 1.0])
+    trace = simulate(system, (0.0, 1.0))
 
     assert len(trace.events) == 1
     assert trace.events[0].time == pytest.approx(0.5, abs=1e-7)
-    assert trace.location.tolist() == ["source", "target", "target"]
+    assert trace.sample(
+        [0.0, trace.events[0].time, 1.0], include_location_label=True
+    )["location_label"].to_list() == ["source", "target", "target"]
 
 
 def test_opposite_crossing_direction_does_not_trigger() -> None:
@@ -103,11 +103,12 @@ def test_opposite_crossing_direction_does_not_trigger() -> None:
         np.array([-0.5]),
     )
 
-    trace = simulate(system, (0.0, 1.0), sample_times=[0.0, 0.5, 1.0])
+    trace = simulate(system, (0.0, 1.0))
+    frame = trace.sample([0.0, 0.5, 1.0], include_location_label=True)
 
     assert trace.events == ()
-    assert trace.location.tolist() == ["source", "source", "source"]
-    np.testing.assert_allclose(trace.x[:, 0], [-0.5, 0.0, 0.5], atol=1e-7)
+    assert frame["location_label"].to_list() == ["source", "source", "source"]
+    np.testing.assert_allclose(frame["x0"], [-0.5, 0.0, 0.5], atol=1e-7)
 
 
 def test_entry_evaluation_is_atomic_and_error_precedes_ambiguity() -> None:
@@ -278,10 +279,10 @@ def test_continue_allows_departure_in_opposite_direction() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 0.25), sample_times=[0.0, 0.25])
+    trace = simulate(system, (0.0, 0.25))
 
     assert trace.events == ()
-    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.25])
+    np.testing.assert_allclose(trace.sample([0.0, 0.25])["x0"], [0.0, 0.25])
 
 
 def test_continue_same_direction_reports_no_progress() -> None:
@@ -360,18 +361,22 @@ def test_transition_reset_is_reflected_in_event_record() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 1.5), sample_times=[0.0, 1.0, 1.5])
+    trace = simulate(system, (0.0, 1.5))
 
     event = trace.events[0]
     assert event.time == pytest.approx(1.0, abs=1e-7)
-    assert event.source_location == "charging"
-    assert event.target_location == "idle"
+    assert event.source_location is source
+    assert event.target_location is target
     assert event.event_surface == "full"
     assert event.reset == "drain"
     np.testing.assert_allclose(event.state_before, [1.0], atol=1e-7)
     np.testing.assert_allclose(event.state_after, [0.25], atol=1e-7)
     assert event.microstep == 0
-    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.25, 0.25], atol=1e-7)
+    np.testing.assert_allclose(
+        trace.sample([0.0, event.time, 1.5])["x0"],
+        [0.0, 0.25, 0.25],
+        atol=1e-7,
+    )
 
 
 def _immediate_chain_system() -> HybridSystem:
@@ -402,15 +407,11 @@ def _immediate_chain_system() -> HybridSystem:
 
 def test_immediate_transition_chain_occurs_at_one_time() -> None:
     """A reset onto another surface applies the next transition immediately."""
-    trace = simulate(
-        _immediate_chain_system(),
-        (0.0, 1.0),
-        sample_times=[0.0, 0.5, 1.0],
-    )
+    trace = simulate(_immediate_chain_system(), (0.0, 1.0))
 
     assert len(trace.events) == 2
     assert [event.time for event in trace.events] == pytest.approx([0.5, 0.5])
-    assert [event.target_location for event in trace.events] == [
+    assert [event.target_location.label for event in trace.events] == [
         "second",
         "third",
     ]
@@ -423,8 +424,11 @@ def test_immediate_transition_chain_occurs_at_one_time() -> None:
     np.testing.assert_allclose(trace.events[0].state_after, [2.0])
     np.testing.assert_allclose(trace.events[1].state_before, [2.0])
     np.testing.assert_allclose(trace.events[1].state_after, [3.0])
-    assert trace.location.tolist() == ["first", "third", "third"]
-    np.testing.assert_allclose(trace.x[:, 0], [-0.5, 3.0, 3.0], atol=1e-7)
+    frame = trace.sample(
+        [0.0, trace.events[0].time, 1.0], include_location_label=True
+    )
+    assert frame["location_label"].to_list() == ["first", "third", "third"]
+    np.testing.assert_allclose(frame["x0"], [-0.5, 3.0, 3.0], atol=1e-7)
 
 
 def test_exact_restart_detects_a_root_less_than_epsilon_after_event() -> None:
@@ -484,23 +488,23 @@ def test_event_states_are_independent_snapshots() -> None:
 
     trace = simulate(system, (0.0, 2.0))
     event = trace.events[0]
-    boundary = trace.t == event.time
     reset_result[0] = 99.0
 
     np.testing.assert_allclose(event.state_before, [1.0])
     np.testing.assert_allclose(event.state_after, [4.0])
+    assert not event.state_before.flags["W"]
+    assert not event.state_after.flags["W"]
+    with pytest.raises(ValueError, match="read-only"):
+        event.state_before[0] = 2.0
+    with pytest.raises(ValueError, match="read-only"):
+        event.state_after[0] = 5.0
+    np.testing.assert_allclose(trace.sample([event.time])["x0"], [4.0])
+    assert trace.initial_state[0] == 0.0
+    assert not trace.initial_state.flags["W"]
 
-    event.state_before[0] = 2.0
-    event.state_after[0] = 5.0
-    np.testing.assert_allclose(trace.x[boundary], [[4.0]])
 
-    trace.x[boundary] = -1.0
-    np.testing.assert_allclose(event.state_before, [2.0])
-    np.testing.assert_allclose(event.state_after, [5.0])
-
-
-def test_adaptive_trace_is_right_continuous_at_event_boundary() -> None:
-    """Adaptive output has one final target-location row at a jump."""
+def test_explicit_sampling_is_right_continuous_at_event_boundary() -> None:
+    """Sampling an exact event time selects the post-reset target."""
     source = Location(lambda: np.array([1.0]), label="source")
     target = Location(lambda: np.array([2.0]), label="target")
     system = HybridSystem(
@@ -517,16 +521,13 @@ def test_adaptive_trace_is_right_continuous_at_event_boundary() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 1.0), capture_derivatives=True)
+    trace = simulate(system, (0.0, 1.0))
     event_time = trace.events[0].time
-    boundary_indices = np.flatnonzero(trace.t == event_time)
+    frame = trace.sample([event_time], include_derivatives=True)
 
-    assert boundary_indices.size == 1
-    boundary_index = int(boundary_indices[0])
-    np.testing.assert_allclose(trace.x[boundary_index], [10.0])
-    assert trace.location[boundary_index] == "target"
-    assert trace.dx is not None
-    np.testing.assert_allclose(trace.dx[boundary_index], [2.0])
+    np.testing.assert_allclose(frame["x0"], [10.0])
+    assert frame["location_id"].to_list() == [1]
+    np.testing.assert_allclose(frame["dx0"], [2.0])
 
 
 def test_max_jumps_limits_immediate_transition_chains() -> None:
@@ -556,15 +557,16 @@ def test_fixed_sample_grid_uses_post_reset_state_at_event() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 1.0), sample_dt=0.25)
+    trace = simulate(system, (0.0, 1.0))
+    frame = trace.sample(dt=0.25, include_location_label=True)
 
-    np.testing.assert_allclose(trace.t, [0.0, 0.25, 0.5, 0.75, 1.0])
+    np.testing.assert_allclose(frame["t"], [0.0, 0.25, 0.5, 0.75, 1.0])
     np.testing.assert_allclose(
-        trace.x[:, 0],
+        frame["x0"],
         [0.0, 0.25, 10.0, 10.5, 11.0],
         atol=1e-7,
     )
-    assert trace.location.tolist() == [
+    assert frame["location_label"].to_list() == [
         "before",
         "before",
         "after",
@@ -592,13 +594,14 @@ def test_fixed_grid_preserves_off_grid_event_and_requested_times() -> None:
     )
     requested = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 
-    trace = simulate(system, (0.0, 1.0), sample_times=requested)
+    trace = simulate(system, (0.0, 1.0))
+    frame = trace.sample(requested, include_location_label=True)
 
-    np.testing.assert_array_equal(trace.t, requested)
+    np.testing.assert_array_equal(frame["t"], requested)
     assert trace.events[0].time == pytest.approx(0.5)
-    assert not np.any(trace.t == trace.events[0].time)
-    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.2, 0.4, 3.0, 3.0, 3.0])
-    assert trace.location.tolist() == [
+    assert not np.any(frame["t"].to_numpy() == trace.events[0].time)
+    np.testing.assert_allclose(frame["x0"], [0.0, 0.2, 0.4, 3.0, 3.0, 3.0])
+    assert frame["location_label"].to_list() == [
         "source",
         "source",
         "source",
@@ -627,14 +630,14 @@ def test_initial_time_transition_is_right_continuous() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 1.0), capture_derivatives=True)
+    trace = simulate(system, (0.0, 1.0))
+    frame = trace.sample([0, 0.5, 1.0], include_derivatives=True)
 
-    np.testing.assert_allclose(trace.t[0], 0.0)
-    assert np.count_nonzero(trace.t == 0.0) == 1
-    np.testing.assert_allclose(trace.x[0], [4.0])
-    assert trace.location[0] == "target"
-    assert trace.dx is not None
-    np.testing.assert_allclose(trace.dx[0], [1.0])
+    np.testing.assert_allclose(frame["t"][0], 0.0)
+    assert frame["t"].to_list().count(0.0) == 1
+    np.testing.assert_allclose(frame["x0"][0], 4.0)
+    assert frame["location_id"][0] == 1
+    np.testing.assert_allclose(frame["dx0"][0], 1.0)
     event = trace.events[0]
     assert event.time == 0.0
     assert event.microstep == 0
@@ -669,12 +672,13 @@ def test_initial_trigger_chain_uses_zero_based_microsteps() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 1.0), sample_times=[0.0, 0.5, 1.0])
+    trace = simulate(system, (0.0, 1.0))
+    frame = trace.sample([0.0, 0.5, 1.0], include_location_label=True)
 
     assert [event.time for event in trace.events] == [0.0, 0.0]
     assert [event.microstep for event in trace.events] == [0, 1]
-    assert trace.location.tolist() == ["third", "third", "third"]
-    np.testing.assert_allclose(trace.x[:, 0], [2.0, 2.0, 2.0])
+    assert frame["location_label"].to_list() == ["third", "third", "third"]
+    np.testing.assert_allclose(frame["x0"], [2.0, 2.0, 2.0])
 
 
 def test_final_time_transition_is_included_and_right_continuous() -> None:
@@ -695,24 +699,16 @@ def test_final_time_transition_is_included_and_right_continuous() -> None:
         np.array([0.0]),
     )
 
-    adaptive = simulate(system, (0.0, 1.0), capture_derivatives=True)
-    fixed = simulate(
-        system,
-        (0.0, 1.0),
-        sample_times=[0.0, 0.5, 1.0],
-        capture_derivatives=True,
-    )
+    trace = simulate(system, (0.0, 1.0))
+    fixed = trace.sample([0.0, 0.5, 1.0], include_derivatives=True)
 
-    assert len(adaptive.events) == len(fixed.events) == 1
-    assert adaptive.events[0].time == pytest.approx(1.0)
-    np.testing.assert_allclose(adaptive.x[-1], [5.0])
-    np.testing.assert_allclose(fixed.x[-1], adaptive.x[-1])
-    assert adaptive.location[-1] == fixed.location[-1] == "target"
-    assert adaptive.dx is not None
-    assert fixed.dx is not None
-    np.testing.assert_allclose(adaptive.dx[-1], [-2.0])
-    np.testing.assert_allclose(fixed.dx[-1], adaptive.dx[-1])
-    np.testing.assert_array_equal(fixed.t, [0.0, 0.5, 1.0])
+    assert len(trace.events) == 1
+    assert trace.events[0].time == pytest.approx(1.0)
+    np.testing.assert_allclose(fixed["x0"][-1], 5.0)
+    assert fixed["location_id"][-1] == 1
+    np.testing.assert_allclose(fixed["dx0"][-1], -2.0)
+    np.testing.assert_array_equal(fixed["t"], [0.0, 0.5, 1.0])
+    assert trace.segments[-1].t_span[1] == 1.0
 
 
 def test_final_time_target_entry_trigger_uses_next_microstep() -> None:
@@ -741,13 +737,14 @@ def test_final_time_target_entry_trigger_uses_next_microstep() -> None:
         np.array([0.0]),
     )
 
-    trace = simulate(system, (0.0, 1.0), sample_dt=0.25)
+    trace = simulate(system, (0.0, 1.0))
+    frame = trace.sample(dt=0.25, include_location_label=True)
 
     assert [event.time for event in trace.events] == pytest.approx([1.0, 1.0])
     assert [event.microstep for event in trace.events] == [0, 1]
-    np.testing.assert_array_equal(trace.t, [0.0, 0.25, 0.5, 0.75, 1.0])
-    np.testing.assert_allclose(trace.x[-1], [4.0])
-    assert trace.location[-1] == "third"
+    np.testing.assert_array_equal(frame["t"], [0.0, 0.25, 0.5, 0.75, 1.0])
+    np.testing.assert_allclose(frame["x0"][-1], 4.0)
+    assert frame["location_label"][-1] == "third"
 
 
 def test_inputs_and_derivatives_are_captured_on_sample_grid() -> None:
@@ -774,9 +771,8 @@ def test_inputs_and_derivatives_are_captured_on_sample_grid() -> None:
         system,
         (0.0, 1.0),
         input_stream=lambda time: np.array([1.0 + time, 2.0 - time]),
-        capture_derivatives=True,
-        sample_times=times,
     )
+    frame = trace.sample(times, include_inputs=True, include_derivatives=True)
 
     expected_inputs = np.column_stack((1.0 + times, 2.0 - times))
     expected_derivatives = np.column_stack(
@@ -785,11 +781,18 @@ def test_inputs_and_derivatives_are_captured_on_sample_grid() -> None:
     expected_states = np.column_stack(
         (3.0 * (times + times**2 / 2.0), 2.0 * times - times**2 / 2.0),
     )
-    assert trace.u is not None
-    assert trace.dx is not None
-    np.testing.assert_allclose(trace.u, expected_inputs)
-    np.testing.assert_allclose(trace.dx, expected_derivatives)
-    np.testing.assert_allclose(trace.x, expected_states, rtol=2e-6, atol=1e-8)
+    np.testing.assert_allclose(
+        frame.select("u0", "u1").to_numpy(), expected_inputs
+    )
+    np.testing.assert_allclose(
+        frame.select("dx0", "dx1").to_numpy(), expected_derivatives
+    )
+    np.testing.assert_allclose(
+        frame.select("x0", "x1").to_numpy(),
+        expected_states,
+        rtol=2e-6,
+        atol=1e-8,
+    )
 
 
 @pytest.mark.parametrize("start", [13.0, 1e8])
@@ -817,17 +820,18 @@ def test_initial_age_uses_stable_anchor_and_reaches_callbacks(
         system,
         (start, start + 0.5),
         initial_location_time=0.1,
-        sample_times=[start, start + 0.125, start + 0.25, start + 0.5],
-        capture_derivatives=True,
+    )
+    frame = trace.sample(
+        [start, start + 0.125, start + 0.25, start + 0.5],
+        include_derivatives=True,
     )
 
     assert seen[0] == 0.1
     assert trace.events[0].time == pytest.approx(start + 0.25)
     assert trace.events[0].location_time_before == pytest.approx(0.35)
-    assert trace.dx is not None
-    np.testing.assert_allclose(trace.location_time, [0.1, 0.225, 0.0, 0.25])
-    np.testing.assert_allclose(trace.dx[:, 0], [0.1, 0.225, 0.0, 0.0])
-    assert trace.as_dict()["location_time"] is trace.location_time
+    np.testing.assert_allclose(frame["location_time"], [0.1, 0.225, 0.0, 0.25])
+    np.testing.assert_allclose(frame["dx0"], [0.1, 0.225, 0.0, 0.0])
+    assert trace.initial_location_time == 0.1
 
 
 def test_initial_age_is_preserved_without_jump_and_repeated_runs_independent() -> (
@@ -835,12 +839,14 @@ def test_initial_age_is_preserved_without_jump_and_repeated_runs_independent() -
 ):
     location = Location(lambda *, location_time: np.array([location_time]))
     system = HybridSystem([location], [], location, np.array([0.0]))
-    first = simulate(
-        system, (9.0, 9.5), initial_location_time=2.0, sample_dt=0.25
+    first = simulate(system, (9.0, 9.5), initial_location_time=2.0)
+    second = simulate(system, (9.0, 9.5))
+    np.testing.assert_allclose(
+        first.sample(dt=0.25)["location_time"], [2.0, 2.25, 2.5]
     )
-    second = simulate(system, (9.0, 9.5), sample_times=[9.0, 9.5])
-    np.testing.assert_allclose(first.location_time, [2.0, 2.25, 2.5])
-    np.testing.assert_allclose(second.location_time, [0.0, 0.5])
+    np.testing.assert_allclose(
+        second.sample([9.0, 9.5])["location_time"], [0.0, 0.5]
+    )
     assert first.events == second.events == ()
 
 
@@ -928,8 +934,8 @@ def test_source_age_and_parameters_reset_before_target_entry_and_chain() -> (
         system,
         (5.0, 5.5),
         initial_location_time=2.0,
-        sample_times=[5.0, 5.0, 5.25, 5.5],
     )
+    frame = trace.sample([5.0, 5.0, 5.25, 5.5], include_location_label=True)
     assert seen == [
         ("first surface", 2.0, 1.0),
         ("first reset", 2.0, 1.0),
@@ -938,8 +944,8 @@ def test_source_age_and_parameters_reset_before_target_entry_and_chain() -> (
     ]
     assert [event.microstep for event in trace.events] == [0, 1]
     assert [event.location_time_before for event in trace.events] == [2.0, 0.0]
-    np.testing.assert_allclose(trace.location_time, [0.0, 0.0, 0.25, 0.5])
-    assert trace.location.tolist() == ["done"] * 4
+    np.testing.assert_allclose(frame["location_time"], [0.0, 0.0, 0.25, 0.5])
+    assert frame["location_label"].to_list() == ["done"] * 4
 
 
 @pytest.mark.parametrize(
@@ -979,10 +985,11 @@ def test_exact_zero_initial_timeout_follows_entry_policy(
             system,
             (2.0, 2.5),
             initial_location_time=0.5,
-            sample_times=[2.0, 2.5],
         )
         assert trace.events[0].location_time_before == 0.5
-        np.testing.assert_allclose(trace.location_time, [0.0, 0.5])
+        np.testing.assert_allclose(
+            trace.sample([2.0, 2.5])["location_time"], [0.0, 0.5]
+        )
     else:
         with pytest.raises(SimulationProgressError):
             simulate(system, (2.0, 2.5), initial_location_time=0.5)
@@ -1006,37 +1013,33 @@ def test_overdue_initial_timeout_does_not_fire() -> None:
         source,
         np.array([0.0]),
     )
-    trace = simulate(
-        system, (2.0, 3.0), initial_location_time=1.0, sample_times=[2.0, 3.0]
-    )
+    trace = simulate(system, (2.0, 3.0), initial_location_time=1.0)
     assert trace.events == ()
-    np.testing.assert_allclose(trace.location_time, [1.0, 2.0])
+    np.testing.assert_allclose(
+        trace.sample([2.0, 3.0])["location_time"], [1.0, 2.0]
+    )
 
 
-def test_batch_forwards_initial_age_and_empty_sampling() -> None:
+def test_batch_comprehension_retains_independent_initial_states_and_ages() -> (
+    None
+):
     location = Location(lambda: np.array([0.0]))
     system = HybridSystem([location], [], location, np.array([0.0]))
-    traces = generate_traces(
-        system,
-        (5.0, 6.0),
-        [[1.0], [2.0]],
-        initial_location_time=3.0,
-        sample_times=[5.0, 6.0],
-    )
+    traces = [
+        simulate(system, (5.0, 6.0), x0=state, initial_location_time=3.0)
+        for state in ([1.0], [2.0])
+    ]
     assert len(traces) == 2
-    for trace in traces:
-        np.testing.assert_allclose(trace.location_time, [3.0, 4.0])
-    empty = simulate(
-        system, (5.0, 6.0), sample_times=[], capture_derivatives=True
-    )
-    assert empty.location_time.shape == (0,)
-    assert empty.dx is not None
-    assert empty.dx.shape == (0, 0)
+    for trace, state in zip(traces, [1.0, 2.0], strict=True):
+        frame = trace.sample([5.0, 6.0])
+        np.testing.assert_allclose(frame["location_time"], [3.0, 4.0])
+        np.testing.assert_allclose(frame["x0"], [state, state])
+    empty = traces[0].sample([], include_derivatives=True)
+    assert empty.height == 0
+    assert empty.schema["dx0"].is_numeric()
 
 
-@pytest.mark.parametrize(
-    "mode", ["adaptive", "dense", "fixed", "duplicates", "off_grid", "final"]
-)
+@pytest.mark.parametrize("mode", ["fixed", "duplicates", "off_grid", "final"])
 def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
     mode: str,
 ) -> None:
@@ -1054,38 +1057,41 @@ def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
         np.array([0.0]),
     )
     end = 1.0 if mode == "final" else 1.5
-    options: dict[str, Any] = {"capture_derivatives": True}
-    if mode == "dense":
-        options["dense_output"] = True
-    elif mode == "fixed":
-        options["sample_dt"] = 0.5
-    elif mode == "duplicates":
-        options["sample_times"] = [0.0, 0.5, 1.0, 1.0, 1.25, 1.5]
-    elif mode == "off_grid":
-        options["sample_times"] = [0.0, 0.75, 1.25, 1.5]
-    elif mode == "final":
-        options["sample_times"] = [0.0, 0.5, 1.0]
-    trace = simulate(system, (0.0, end), **options)
-    assert trace.dx is not None
+    trace = simulate(system, (0.0, end))
+    if mode == "fixed":
+        frame = trace.sample(
+            dt=0.5, include_derivatives=True, include_location_label=True
+        )
+    else:
+        times = {
+            "duplicates": [0.0, 0.5, 1.0, 1.0, 1.25, 1.5],
+            "off_grid": [0.0, 0.75, 1.25, 1.5],
+            "final": [0.0, 0.5, 1.0],
+        }[mode]
+        frame = trace.sample(
+            times, include_derivatives=True, include_location_label=True
+        )
     assert trace.events[0].location_time_before == pytest.approx(1.0)
-    post_jump = trace.t >= 1.0
+    sampled_times = frame["t"].to_numpy()
+    sampled_ages = frame["location_time"].to_numpy()
+    post_jump = sampled_times >= 1.0
     np.testing.assert_allclose(
-        trace.location_time[post_jump], trace.t[post_jump] - 1.0
+        sampled_ages[post_jump], sampled_times[post_jump] - 1.0
     )
     np.testing.assert_allclose(
-        trace.dx[post_jump, 0], 10.0 + trace.location_time[post_jump]
+        frame["dx0"].to_numpy()[post_jump], 10.0 + sampled_ages[post_jump]
     )
     np.testing.assert_allclose(
-        trace.location_time[~post_jump], trace.t[~post_jump]
+        sampled_ages[~post_jump], sampled_times[~post_jump]
     )
-    assert trace.location.tolist() == ["same"] * len(trace.t)
+    assert frame["location_label"].to_list() == ["same"] * frame.height
     if mode == "off_grid":
-        assert not np.any(trace.t == trace.events[0].time)
-    elif mode in {"adaptive", "dense", "fixed", "duplicates", "final"}:
-        assert np.count_nonzero(trace.t == trace.events[0].time) == (
+        assert not np.any(sampled_times == trace.events[0].time)
+    else:
+        assert np.count_nonzero(sampled_times == trace.events[0].time) == (
             2 if mode == "duplicates" else 1
         )
-        np.testing.assert_allclose(trace.location_time[trace.t == 1.0], 0.0)
+        np.testing.assert_allclose(sampled_ages[sampled_times == 1.0], 0.0)
 
 
 @pytest.mark.parametrize("role", ["flow", "surface", "reset"])

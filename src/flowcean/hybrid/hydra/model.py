@@ -9,7 +9,7 @@ from scipy.integrate import solve_ivp
 
 from flowcean.core.model import Model
 
-from ..hybrid_system import InputStream, Trace
+from ..hybrid_system import InputStream
 from .schema import HyDRATraceSchema
 from .selector.features import build_selector_inference_frame
 from .selector.model import (
@@ -176,13 +176,13 @@ class HyDRAModel(Model):
         x0: Iterable[float],
         *,
         input_stream: InputStream | None = None,
-        capture_inputs: bool | None = None,
+        include_inputs: bool = False,
         sample_times: Iterable[float] | None = None,
         sample_dt: float | None = None,
         rtol: float = 1e-7,
         atol: float = 1e-9,
         max_step: float | None = None,
-    ) -> Trace:
+    ) -> pl.DataFrame:
         """Simulate a learned model on the requested time grid.
 
         Modes are selected at each grid point, including the final endpoint;
@@ -190,10 +190,8 @@ class HyDRAModel(Model):
         """
         schema = self._require_trace_schema()
         times = _prepare_simulation_times(t_span, sample_times, sample_dt)
-        should_capture_inputs = _should_capture_inputs(
-            capture_inputs=capture_inputs,
-            input_stream=input_stream,
-        )
+        if include_inputs and input_stream is None:
+            raise ValueError("include_inputs=True requires an input_stream.")
 
         state = self._coerce_state(x0, schema)
         mode_id = self._select_mode_id(
@@ -206,7 +204,7 @@ class HyDRAModel(Model):
         )
         mode_entry_time = float(times[0])
         states = [state]
-        locations = [f"mode_{mode_id}"]
+        locations = [mode_id]
         residence_times = [0.0]
 
         for t_start, t_end in pairwise(times):
@@ -232,11 +230,11 @@ class HyDRAModel(Model):
             if next_mode_id != mode_id:
                 mode_entry_time = float(t_end)
             mode_id = next_mode_id
-            locations.append(f"mode_{mode_id}")
+            locations.append(mode_id)
             residence_times.append(float(t_end) - mode_entry_time)
 
         inputs = None
-        if should_capture_inputs:
+        if include_inputs:
             if input_stream is None:
                 message = "Internal error: expected input_stream for capture."
                 raise RuntimeError(message)
@@ -246,15 +244,26 @@ class HyDRAModel(Model):
                 schema,
             )
 
-        return Trace(
-            t=times,
-            x=np.vstack(states),
-            location=np.asarray(locations, dtype=object),
-            location_time=np.asarray(residence_times, dtype=float),
-            events=(),
-            u=inputs,
-            dx=None,
+        state_matrix = np.vstack(states)
+        data = {"t": pl.Series("t", times)}
+        data.update(
+            {
+                f"x{i}": pl.Series(f"x{i}", state_matrix[:, i])
+                for i in range(state_matrix.shape[1])
+            }
         )
+        data["location_id"] = pl.Series(
+            "location_id", locations, dtype=pl.Int64
+        )
+        data["location_time"] = pl.Series("location_time", residence_times)
+        if inputs is not None:
+            data.update(
+                {
+                    f"u{i}": pl.Series(f"u{i}", inputs[:, i])
+                    for i in range(inputs.shape[1])
+                }
+            )
+        return pl.DataFrame(data)
 
     def predict_next_state(
         self,
@@ -521,7 +530,14 @@ def _prepare_simulation_times(
 def _simulation_times_from_samples(
     sample_times: Iterable[float],
 ) -> np.ndarray:
-    times = np.asarray(list(sample_times), dtype=float)
+    times = np.asarray(
+        sample_times
+        if isinstance(sample_times, np.ndarray)
+        else list(sample_times),
+        dtype=float,
+    )
+    if times.ndim != 1:
+        raise ValueError("sample_times must be one-dimensional.")
     if times.size == 0:
         message = "sample_times must be nonempty."
         raise ValueError(message)
@@ -567,18 +583,3 @@ def _validate_simulation_time_grid(
     if float(times[0]) != t_start or float(times[-1]) != t_end:
         message = "sample_times must start at t_span[0] and end at t_span[1]."
         raise ValueError(message)
-
-
-def _should_capture_inputs(
-    *,
-    capture_inputs: bool | None,
-    input_stream: InputStream | None,
-) -> bool:
-    if capture_inputs is None:
-        return input_stream is not None
-    if capture_inputs:
-        if input_stream is None:
-            message = "capture_inputs=True requires an input_stream."
-            raise ValueError(message)
-        return True
-    return False

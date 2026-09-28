@@ -22,7 +22,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 ### Changed
 
 - **Breaking:** `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` now describe the complete five-input, keyword-only callback interface, including `location_time`. Callback wrappers still accept canonical argument subsets and four-argument positional callbacks.
-- **Breaking:** Hybrid `Trace` construction requires a `location_time` array, and `Event` construction requires `location_time_before`. Tabular trace exports always include the separate `location_time` column. HyDRA simulation also supplies residence times, starting at zero and resetting when the selected mode changes.
+- **Breaking:** Native `simulate` now returns a `HybridTrajectory` with ordered positive-duration segments and read-only event snapshots, rather than a sampled `Trace`. Sampling is explicit with `trajectory.sample(times)` or `trajectory.sample(dt=...)` and returns a Polars frame with `t`, `xN`, `location_id`, and `location_time`; labels, inputs, and derivatives are opt-in. Event endpoints identify `Location` objects instead of label strings. HyDRA simulation remains a grid-scheduled frame rollout with residence times, starting at zero and resetting when the selected mode changes.
 - **Breaking:** Hybrid benchmarks `time_forced_switch` and `mode_cycle` no longer append a clock coordinate to their continuous state. Initial states must contain only physical coordinates (two for `time_forced_switch`, `dimension` for `mode_cycle`); pass the former clock value as `simulate(..., initial_location_time=...)`. Named hybrid callbacks using `**kwargs` now receive `location_time` in addition to the existing arguments.
 - **Breaking:** `impact_oscillator` replaces `forcing`/`forcing_freq`, `time_varying_event_surface` replaces `amplitude`/`frequency`, and `pid_controlled_plant` replaces `setpoint_amp`/`setpoint_freq` with caller-supplied input streams. The PID input is `[reference, reference_rate]`. Parameters following the removed positional arguments are now keyword-only. Gallery scenarios are defined in `examples/hybrid_systems/scenarios.py`.
 - Redesigned the documentation landing page with a thermostat simulation replay, grouped navigation, and page icons.
@@ -32,17 +32,17 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 - Hybrid-system definitions, simulation, trace conversion, and plotting now use the `flowcean.hybrid` namespace ([#407](https://github.com/flowcean/flowcean/pull/407)).
 - Reworked the tank benchmark to use gravity-drained outlet dynamics. The `outflow_1` and `outflow` parameters are replaced by keyword-only `outlet_area_1` and `outlet_area_2`, closed operation now has wet and dry modes, and the defaults and simulation horizon have changed ([#418](https://github.com/flowcean/flowcean/pull/418)).
 - Hybrid benchmark and identification APIs are kept under `flowcean.hybrid.benchmarks` and `flowcean.hybrid.hydra` rather than duplicated in `flowcean.hybrid`; selector-specific APIs are also available from `flowcean.hybrid.hydra.selector` ([#407](https://github.com/flowcean/flowcean/pull/407)).
-- Hybrid trace events now expose independent `state_before` and `state_after` snapshots plus a zero-based `microstep`; these replace the ambiguous `Event.state` field.
+- Hybrid events expose independent read-only `state_before` and `state_after` snapshots plus a zero-based `microstep`; these replace the ambiguous `Event.state` field.
 - Hybrid transitions now expose explicit exact-zero entry policies, and simulation restarts from post-jump states at the exact event time.
 
 ### Fixed
 
 - HyDRA simulation now reports the selected mode at each sample, including the final endpoint, rather than the preceding interval's mode. Residence times follow these right-continuous labels without changing the integrated state trajectory.
-- Hybrid trace shading now follows recorded transition times, including locations visited between samples, instead of leaving gaps at sample boundaries.
-- Adaptive and fixed-grid hybrid traces now consistently report the final post-transition state and location at jump boundaries.
+- Hybrid plots use continuous segments and explicit reset endpoints, including modes missed by sampled grids. Samples at event boundaries report the final post-transition state and location.
 
 ### Removed
 
+- **Breaking:** Removed `Trace`, `generate_traces`, the `flowcean.hybrid.io` conversion and file helpers, and implicit native simulation sampling/capture options. Run batch simulations with a comprehension, sample each trajectory explicitly, and write frames using Polars.
 - **Breaking:** Removed the unused `num_workers` argument and attribute from `flowcean.torch.PyTorchModel`. Omit this argument when constructing models; `LightningLearner.num_workers` still controls training data loading.
 - Removed `BenchmarkSpec`, `registry()`, `all_specs()`, `thermostat_target_stream`, `impact_input_stream`, `time_varying_input_stream`, and `wind_turbine_wind` from `flowcean.hybrid.benchmarks`.
 - Removed `flowcean.grpc.GrpcPassiveAutomataLearner` and its Java LearnLib, gRPC, protobuf, and Docker integration; use `flowcean.aalpy` for local passive automata learning ([#419](https://github.com/flowcean/flowcean/pull/419)).

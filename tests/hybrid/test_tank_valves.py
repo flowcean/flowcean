@@ -120,7 +120,6 @@ def test_closed_drainage_is_analytic_then_resets_to_exactly_dry() -> None:
     trace = simulate(
         system,
         (0.0, float(times[-1])),
-        sample_times=times,
         rtol=RTOL,
         atol=ATOL,
     )
@@ -137,9 +136,10 @@ def test_closed_drainage_is_analytic_then_resets_to_exactly_dry() -> None:
         )
         ** 2
     )
-    np.testing.assert_allclose(trace.x[:, 0], expected_1, rtol=0.0, atol=2e-12)
-    np.testing.assert_allclose(trace.x[:, 1], expected_2, rtol=0.0, atol=2e-10)
-    assert np.min(trace.x[:, 1]) >= -1e-10
+    frame = trace.sample(times, include_location_label=True)
+    np.testing.assert_allclose(frame["x0"], expected_1, rtol=0.0, atol=2e-12)
+    np.testing.assert_allclose(frame["x1"], expected_2, rtol=0.0, atol=2e-10)
+    assert np.min(frame["x1"].to_numpy()) >= -1e-10
     (empty_event,) = [
         event
         for event in trace.events
@@ -147,8 +147,8 @@ def test_closed_drainage_is_analytic_then_resets_to_exactly_dry() -> None:
     ]
     assert empty_event.time == pytest.approx(depletion, abs=2e-4)
     assert empty_event.state_after[1] == 0.0
-    assert trace.x[-1, 1] == 0.0
-    assert trace.location[-1] == "closed_dry"
+    assert frame["x1"][-1] == 0.0
+    assert frame["location_label"][-1] == "closed_dry"
     assert system.initial_state is not initial
     initial[0] = 99.0
     assert system.initial_state[0] == 0.6
@@ -158,27 +158,30 @@ def test_initial_zero_level_rises_and_dry_tank_rewets() -> None:
     zero_trace = simulate(
         tank_valves(initial_state=(0.0, 0.0)),
         (0.0, 1.0),
-        sample_dt=0.02,
         rtol=RTOL,
         atol=ATOL,
     )
-    assert zero_trace.location[0] == "closed_dry"
-    assert zero_trace.x[1, 0] > 0.0
-    assert np.all(zero_trace.x[:, 1] == 0.0)
+    zero_frame = zero_trace.sample(dt=0.02, include_location_label=True)
+    assert zero_frame["location_label"][0] == "closed_dry"
+    assert zero_frame["x0"][1] > 0.0
+    assert np.all(zero_frame["x1"].to_numpy() == 0.0)
 
     rewet = simulate(
         tank_valves(initial_state=(0.6, 0.0)),
         (0.0, 80.0),
-        sample_dt=0.1,
         rtol=RTOL,
         atol=ATOL,
     )
+    rewet_frame = rewet.sample(dt=0.1)
     high = next(
         event for event in rewet.events if event.event_surface == "level_high"
     )
-    assert high.target_location == "open"
-    assert np.any(rewet.x[rewet.t > high.time, 1] > 0.0)
-    assert np.min(rewet.x) >= -1e-10
+    assert high.target_location.label == "open"
+    assert np.any(
+        rewet_frame["x1"].to_numpy()[rewet_frame["t"].to_numpy() > high.time]
+        > 0.0
+    )
+    assert np.min(rewet_frame.select("x0", "x1").to_numpy()) >= -1e-10
 
 
 @pytest.mark.parametrize(
@@ -224,12 +227,12 @@ def test_zero_outlet_areas_are_supported(
             outlet_area_2=outlet_area_2,
         ),
         (0.0, 20.0),
-        sample_dt=0.1,
         rtol=RTOL,
         atol=ATOL,
     )
-    assert np.all(np.isfinite(trace.x))
-    assert np.min(trace.x) >= -1e-10
+    states = trace.sample(dt=0.1).select("x0", "x1").to_numpy()
+    assert np.all(np.isfinite(states))
+    assert np.min(states) >= -1e-10
 
 
 def test_repeated_simulation_has_no_hidden_state() -> None:
@@ -237,20 +240,18 @@ def test_repeated_simulation_has_no_hidden_state() -> None:
     first = simulate(
         system,
         (0.0, 100.0),
-        sample_dt=0.2,
         rtol=RTOL,
         atol=ATOL,
     )
     second = simulate(
         system,
         (0.0, 100.0),
-        sample_dt=0.2,
         rtol=RTOL,
         atol=ATOL,
     )
-    np.testing.assert_array_equal(first.t, second.t)
-    np.testing.assert_array_equal(first.x, second.x)
-    np.testing.assert_array_equal(first.location, second.location)
+    from polars.testing import assert_frame_equal
+
+    assert_frame_equal(first.sample(dt=0.2), second.sample(dt=0.2))
     assert [(event.time, event.event_surface) for event in first.events] == [
         (event.time, event.event_surface) for event in second.events
     ]
@@ -286,15 +287,22 @@ def test_simultaneous_high_and_depletion_perturbations_reach_open() -> None:
                 initial_state=(initial_1, initial_2),
             ),
             (0.0, depletion + 1.0),
-            sample_dt=0.02,
             rtol=RTOL,
             atol=ATOL,
         )
-        assert trace.location[-1] == "open"
+        assert (
+            trace.sample([trace.t_span[1]], include_location_label=True)[
+                "location_label"
+            ][0]
+            == "open"
+        )
         assert any(
             event.event_surface == "level_high" for event in trace.events
         )
-        assert np.min(trace.x) >= -1e-10
+        assert (
+            np.min(trace.sample(dt=0.02).select("x0", "x1").to_numpy())
+            >= -1e-10
+        )
 
 
 def test_defaults_and_nominal_open_equilibrium() -> None:
@@ -329,6 +337,7 @@ def test_defaults_and_nominal_open_equilibrium() -> None:
     derivative = _flow(system, "open", equilibrium)
     np.testing.assert_allclose(derivative, 0.0, rtol=0.0, atol=2e-17)
 
-    default_trace = simulate(system, (0.0, 300.0), sample_dt=0.2)
-    assert np.all(np.isfinite(default_trace.x))
-    assert np.min(default_trace.x) >= -1e-10
+    default_trace = simulate(system, (0.0, 300.0))
+    states = default_trace.sample(dt=0.2).select("x0", "x1").to_numpy()
+    assert np.all(np.isfinite(states))
+    assert np.min(states) >= -1e-10

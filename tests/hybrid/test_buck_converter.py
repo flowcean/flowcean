@@ -119,13 +119,17 @@ def test_conducting_modes_follow_affine_linear_flow_segments(
         (0.0, duration),
         x0=initial,
         location0=_location(system, label),
-        sample_times=(0.0, duration),
         rtol=RTOL,
         atol=ATOL,
     )
 
     assert not trace.events
-    np.testing.assert_allclose(trace.x[-1], expected, rtol=2e-10, atol=ATOL)
+    np.testing.assert_allclose(
+        trace.sample([duration]).select("x0", "x1").row(0),
+        expected,
+        rtol=2e-10,
+        atol=ATOL,
+    )
 
 
 @pytest.mark.parametrize(
@@ -154,8 +158,8 @@ def test_each_physical_transition_is_reached_from_a_targeted_state(
     )
 
     event = trace.events[0]
-    assert event.source_location == location
-    assert event.target_location == target
+    assert event.source_location is _location(system, location)
+    assert event.target_location is _location(system, target)
     assert event.event_surface == event_surface
     if event_surface == "current_zero":
         assert event.state_before[0] == pytest.approx(0.0, abs=1e-10)
@@ -179,19 +183,19 @@ def test_zero_current_mode_has_exact_exponential_load_discharge() -> None:
             initial_state=(0.0, 12.0),
         ),
         (0.0, float(times[-1])),
-        sample_times=times,
         rtol=RTOL,
         atol=ATOL,
     )
 
-    np.testing.assert_allclose(trace.x[:, 0], 0.0, rtol=0.0, atol=0.0)
+    frame = trace.sample(times, include_location_label=True)
+    np.testing.assert_allclose(frame["x0"], 0.0, rtol=0.0, atol=0.0)
     np.testing.assert_allclose(
-        trace.x[:, 1],
+        frame["x1"],
         12.0 * np.exp(-times / (load_resistance * capacitance)),
         rtol=2e-10,
         atol=ATOL,
     )
-    assert np.all(trace.location == "zero_current")
+    assert frame["location_label"].to_list() == ["zero_current"] * len(times)
 
 
 def test_zero_current_switch_time_matches_analytical_discharge() -> None:
@@ -216,8 +220,8 @@ def test_zero_current_switch_time_matches_analytical_discharge() -> None:
 
     assert len(trace.events) == 1
     event = trace.events[0]
-    assert event.source_location == "zero_current"
-    assert event.target_location == "switch_on"
+    assert event.source_location.label == "zero_current"
+    assert event.target_location.label == "switch_on"
     assert event.time == pytest.approx(expected_time, rel=1e-8, abs=1e-12)
     np.testing.assert_allclose(
         event.state_after, (0.0, voltage_low), atol=ATOL
@@ -254,12 +258,11 @@ def test_initial_location_selection_copies_state_and_handles_boundaries() -> (
         (0.0, 1e-6),
         x0=(0.0, 11.9),
         location0=_location(zero_start, "zero_current"),
-        sample_times=(0.0, 1e-6),
     )
     event = trace.events[0]
     assert event.time == 0.0
-    assert event.source_location == "zero_current"
-    assert event.target_location == "switch_on"
+    assert event.source_location.label == "zero_current"
+    assert event.target_location.label == "switch_on"
     assert event.event_surface == "voltage_low"
 
 
@@ -286,14 +289,14 @@ def test_numerically_coincident_boundaries_settle_at_one_time() -> None:
     # boundary; both transitions must settle without advancing time.
     assert len(trace.events) == 2
     current_zero, switch_on = trace.events
-    assert current_zero.target_location == "zero_current"
-    assert switch_on.target_location == "switch_on"
+    assert current_zero.target_location.label == "zero_current"
+    assert switch_on.target_location.label == "switch_on"
     assert current_zero.time == switch_on.time
     assert (current_zero.microstep, switch_on.microstep) == (0, 1)
     np.testing.assert_array_equal(current_zero.state_after, (0.0, 11.9))
     assert abs(current_zero.state_before[1] - 11.9) < 1e-10
-    assert trace.t[-1] == nominal_time + 1e-5
-    assert np.min(trace.x) >= 0.0
+    assert trace.t_span[1] == nominal_time + 1e-5
+    assert np.min(trace.sample(dt=1e-6).select("x0", "x1").to_numpy()) >= 0.0
 
 
 @pytest.mark.parametrize("residual", [-3.73e-13, 3.73e-13])
@@ -306,7 +309,9 @@ def test_zero_current_initial_boundary_roundoff_is_coalesced(
     np.testing.assert_array_equal(system.initial_state, (0.0, 11.9))
     trace = simulate(system, (0.0, 1e-7))
     assert not trace.events
-    assert np.all(trace.location == "switch_on")
+    assert trace.sample([0, 1e-7], include_location_label=True)[
+        "location_label"
+    ].to_list() == ["switch_on", "switch_on"]
 
 
 def test_resolvable_zero_current_discharge_is_not_coalesced() -> None:
@@ -355,9 +360,13 @@ def test_invalid_physical_domain_is_rejected(
 def test_default_trace_is_finite_nonnegative_and_visits_all_modes() -> None:
     trace = simulate(buck_converter(), (0.0, 0.02))
 
-    assert np.all(np.isfinite(trace.x))
-    assert np.min(trace.x) >= 0.0
-    assert {"switch_on", "switch_off", "zero_current"} <= set(trace.location)
+    frame = trace.sample(dt=1e-5, include_location_label=True)
+    states = frame.select("x0", "x1").to_numpy()
+    assert np.all(np.isfinite(states))
+    assert np.min(states) >= 0.0
+    assert {"switch_on", "switch_off", "zero_current"} <= set(
+        frame["location_label"]
+    )
     assert {event.event_surface for event in trace.events} >= {
         "voltage_high",
         "voltage_low",

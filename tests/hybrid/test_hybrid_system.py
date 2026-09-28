@@ -9,7 +9,6 @@ from flowcean.hybrid import (
     HybridSystem,
     Location,
     SurfaceEntryPolicy,
-    Trace,
     Transition,
     simulate,
 )
@@ -119,21 +118,19 @@ def test_self_transition_without_reset_resets_location_time() -> None:
     trace = simulate(
         system,
         (0.0, 1.25),
-        sample_times=[0.0, 0.5, 0.75, 1.0, 1.25],
-        capture_derivatives=True,
     )
+    frame = trace.sample([0.0, 0.5, 0.75, 1.0, 1.25], include_derivatives=True)
 
     assert [event.time for event in trace.events] == pytest.approx([0.5, 1.0])
     assert [
         event.location_time_before for event in trace.events
     ] == pytest.approx([0.5, 0.5])
-    assert trace.dx is not None
     np.testing.assert_allclose(
-        trace.location_time, [0.0, 0.0, 0.25, 0.0, 0.25]
+        frame["location_time"], [0.0, 0.0, 0.25, 0.0, 0.25]
     )
-    np.testing.assert_allclose(trace.dx[:, 0], [0.0, 0.0, 0.25, 0.0, 0.25])
+    np.testing.assert_allclose(frame["dx0"], [0.0, 0.0, 0.25, 0.0, 0.25])
     np.testing.assert_allclose(
-        trace.x[:, 0], [0.0, 0.125, 0.15625, 0.25, 0.28125], atol=1e-6
+        frame["x0"], [0.0, 0.125, 0.15625, 0.25, 0.28125], atol=1e-6
     )
 
 
@@ -157,38 +154,42 @@ def test_self_transition_immediate_loop_obeys_max_jumps() -> None:
         simulate(system, (0.0, 1.0), max_jumps=3)
 
 
-def test_records_require_residence_times_and_expose_trace_ages() -> None:
+def test_event_requires_age_and_has_read_only_detached_snapshots() -> None:
+    first = Location(_zero_flow)
+    second = Location(_zero_flow)
+    before = np.array([0.0])
+    after = np.array([1.0])
     event = Event(
         time=0.5,
-        source_location="a",
-        target_location="b",
+        source_location=first,
+        target_location=second,
         event_surface="root",
         reset=None,
-        state_before=np.array([0.0]),
-        state_after=np.array([1.0]),
+        state_before=before,
+        state_after=after,
         microstep=0,
         location_time_before=0.5,
     )
-    ages = np.array([0.0, 0.0])
-    trace = Trace(
-        np.array([0.0, 0.5]),
-        np.array([[0.0], [1.0]]),
-        np.array(["a", "b"]),
-        ages,
-        (event,),
-    )
-
+    before[0] = 10.0
+    after[0] = 20.0
+    assert event.source_location is first
+    assert event.target_location is second
     assert event.location_time_before == 0.5
-    assert trace.as_dict()["location_time"] is ages
-    assert trace.as_dict()["events"] == (event,)
+    np.testing.assert_allclose(event.state_before, [0.0])
+    np.testing.assert_allclose(event.state_after, [1.0])
+    assert not event.state_before.flags["W"]
+    assert not event.state_after.flags["W"]
 
     with pytest.raises(TypeError, match="location_time_before"):
         Event(  # pyright: ignore[reportCallIssue]
-            0.5, "a", "b", "root", None, np.array([0.0]), np.array([1.0]), 0
-        )
-    with pytest.raises(TypeError, match="location_time"):
-        Trace(  # pyright: ignore[reportCallIssue]
-            np.array([0.0]), np.array([[0.0]]), np.array(["a"]), events=()
+            0.5,
+            first,
+            second,
+            "root",
+            None,
+            np.array([0.0]),
+            np.array([1.0]),
+            0,
         )
 
 
@@ -216,10 +217,13 @@ def test_location_parameters_override_globals_for_callbacks() -> None:
         parameters={"rate": 20.0, "threshold": 10.0, "offset": 30.0},
     )
 
-    trace = simulate(system, (0.0, 1.0), sample_times=[0.0, 0.5, 1.0])
+    trace = simulate(system, (0.0, 1.0))
 
     assert len(trace.events) == 1
     assert trace.events[0].time == pytest.approx(0.5, abs=1e-7)
     assert trace.events[0].state_after == pytest.approx(np.array([4.0]))
-    assert trace.x[1] == pytest.approx(np.array([4.0]))
-    assert trace.location.tolist() == ["source", "target", "target"]
+    assert trace.events[0].source_location is source
+    assert trace.events[0].target_location is target
+    frame = trace.sample([0.0, trace.events[0].time, 1.0])
+    assert frame["x0"][1] == pytest.approx(4.0)
+    assert frame["location_id"].to_list() == [0, 1, 1]

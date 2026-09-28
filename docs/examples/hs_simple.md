@@ -22,4 +22,4 @@ The [`build_thermostat()` function](https://github.com/flowcean/flowcean/blob/ma
 
 Temperature rises at a constant rate while heating and falls at a constant rate while cooling. Crossing the upper or lower temperature boundary selects the other location without resetting the temperature. The `HybridSystem` constructor also sets the initial state and location.
 
-The script passes this model to `simulate` and displays its trace with `plot_trace`. It prints the number of recorded events and opens a Matplotlib plot.
+The script passes this model to `simulate` and displays the returned trajectory with `plot_trace`. It prints the number of recorded events and opens a Matplotlib plot.

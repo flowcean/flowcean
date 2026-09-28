@@ -7,14 +7,16 @@ from flowcean import hybrid
 from flowcean.hybrid import benchmarks, hydra
 from flowcean.hybrid.benchmarks import bouncing_ball
 from flowcean.hybrid.graph import build_hybrid_system_dot, render_dot_svg
-from flowcean.hybrid.hybrid_system import HybridSystem, Location, Trace
+from flowcean.hybrid.hybrid_system import HybridSystem, Location
 from flowcean.hybrid.hydra import HyDRALearner, HyDRAModel, selector
 from flowcean.hybrid.plotting import plot_locations
-from flowcean.hybrid.simulator import generate_traces, simulate
+from flowcean.hybrid.simulator import simulate
+from flowcean.hybrid.trajectory import HybridTrajectory
 
 EXPECTED_HYBRID_EXPORTS = (
     "AmbiguousTransitionError",
     "ContinuousDynamics",
+    "ContinuousSegment",
     "CrossingDirection",
     "Event",
     "EventSurface",
@@ -22,6 +24,7 @@ EXPECTED_HYBRID_EXPORTS = (
     "FlowFunction",
     "HybridSimulationError",
     "HybridSystem",
+    "HybridTrajectory",
     "Input",
     "InputStream",
     "InvalidEventSurfaceValueError",
@@ -32,21 +35,15 @@ EXPECTED_HYBRID_EXPORTS = (
     "SimulationProgressError",
     "SurfaceEntryError",
     "SurfaceEntryPolicy",
-    "Trace",
     "Transition",
     "benchmarks",
     "build_hybrid_system_dot",
-    "generate_traces",
     "hydra",
     "plot_locations",
     "plot_phase",
     "plot_trace",
     "render_dot_svg",
-    "save_traces_csv",
-    "save_traces_parquet",
     "simulate",
-    "trace_to_polars",
-    "traces_to_polars",
 )
 
 
@@ -54,13 +51,19 @@ def test_hybrid_facade_exports_modeling_and_simulation_api() -> None:
     """The hybrid facade retains the modeling and simulation API."""
     assert hybrid.HybridSystem is HybridSystem
     assert hybrid.Location is Location
-    assert hybrid.Trace is Trace
+    assert hybrid.HybridTrajectory is HybridTrajectory
     assert hybrid.simulate is simulate
-    assert hybrid.generate_traces is generate_traces
     assert hybrid.build_hybrid_system_dot is build_hybrid_system_dot
     assert hybrid.render_dot_svg is render_dot_svg
     assert hybrid.plot_locations is plot_locations
     assert hybrid.__all__ == EXPECTED_HYBRID_EXPORTS
+    for removed in (
+        "Trace",
+        "generate_traces",
+        "trace_to_polars",
+        "save_traces_parquet",
+    ):
+        assert not hasattr(hybrid, removed)
 
 
 def test_hybrid_facade_exposes_exact_nested_module_handles() -> None:

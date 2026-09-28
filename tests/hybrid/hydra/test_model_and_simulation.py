@@ -8,7 +8,6 @@ import polars as pl
 import pytest
 
 from flowcean.core import Model
-from flowcean.hybrid import Trace
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HyDRAModel,
@@ -102,17 +101,16 @@ def test_predict_next_state_and_simulate_match_exponential_solution() -> None:
 
     times = np.linspace(0.0, 2.0, 9)
     trace = model.simulate((0.0, 2.0), [1.5], sample_times=times)
-    np.testing.assert_allclose(trace.t, times)
+    np.testing.assert_allclose(trace["t"], times)
     np.testing.assert_allclose(
-        trace.x[:, 0],
+        trace["x0"],
         1.5 * np.exp(rate * times),
         rtol=3e-7,
         atol=1e-9,
     )
-    assert trace.location.tolist() == ["mode_0"] * times.size
-    np.testing.assert_allclose(trace.location_time, times - times[0])
-    assert trace.events == ()
-    assert trace.u is None
+    assert trace["location_id"].to_list() == [0] * times.size
+    np.testing.assert_allclose(trace["location_time"], times - times[0])
+    assert trace.columns == ["t", "x0", "location_id", "location_time"]
 
 
 def test_simulation_labels_modes_at_grid_boundaries_and_resets_residence(
@@ -155,27 +153,16 @@ def test_simulation_labels_modes_at_grid_boundaries_and_resets_residence(
     monkeypatch.setattr(selector, "predict_details", record_selection)
     trace = model.simulate((1.25, 4.0), [1.0], sample_times=times)
 
-    np.testing.assert_array_equal(trace.t, times)
-    np.testing.assert_allclose(trace.x[:, 0], [1.0, 1.25, 2.0, 0.9, -1.5])
-    assert trace.location.tolist() == [
-        "mode_0",
-        "mode_0",
-        "mode_1",
-        "mode_1",
-        "mode_0",
-    ]
+    np.testing.assert_array_equal(trace["t"], times)
+    np.testing.assert_allclose(trace["x0"], [1.0, 1.25, 2.0, 0.9, -1.5])
+    assert trace["location_id"].to_list() == [0, 0, 1, 1, 0]
     np.testing.assert_allclose(
-        trace.location_time, [0.0, 0.25, 0.0, 0.55, 0.0]
+        trace["location_time"], [0.0, 0.25, 0.0, 0.55, 0.0]
     )
     np.testing.assert_array_equal(selected_at, times)
     assert max(evaluated_at) <= times[-1]
-    assert (
-        len(trace.t)
-        == len(trace.x)
-        == len(trace.location)
-        == len(trace.location_time)
-    )
-    assert trace.events == ()
+    assert trace.height == len(times)
+    assert trace.columns == ["t", "x0", "location_id", "location_time"]
 
 
 def test_simulation_selects_from_post_interval_state() -> None:
@@ -199,16 +186,11 @@ def test_simulation_selects_from_post_interval_state() -> None:
 
     trace = model.simulate((0.0, 2.2), [0.0], sample_times=times)
 
-    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.4, 1.0, 0.4, 1.0])
-    assert trace.location.tolist() == [
-        "mode_0",
-        "mode_0",
-        "mode_1",
-        "mode_0",
-        "mode_1",
-    ]
-    np.testing.assert_allclose(trace.location_time, [0.0, 0.4, 0.0, 0.0, 0.0])
-    assert trace.events == ()
+    np.testing.assert_allclose(trace["x0"], [0.0, 0.4, 1.0, 0.4, 1.0])
+    assert trace["location_id"].to_list() == [0, 0, 1, 0, 1]
+    np.testing.assert_allclose(
+        trace["location_time"], [0.0, 0.4, 0.0, 0.0, 0.0]
+    )
 
 
 def test_simulation_uses_and_captures_external_inputs() -> None:
@@ -225,11 +207,11 @@ def test_simulation_uses_and_captures_external_inputs() -> None:
         [1.0],
         input_stream=input_stream,
         sample_dt=0.25,
+        include_inputs=True,
     )
 
-    np.testing.assert_allclose(trace.x[:, 0], 1.0 + 2.0 * trace.t, atol=1e-8)
-    assert trace.u is not None
-    np.testing.assert_allclose(trace.u, np.full((5, 1), 2.0))
+    np.testing.assert_allclose(trace["x0"], 1.0 + 2.0 * trace["t"], atol=1e-8)
+    np.testing.assert_allclose(trace["u0"], np.full(5, 2.0))
 
 
 def test_model_reports_relevant_configuration_and_simulation_errors() -> None:
@@ -315,14 +297,10 @@ def test_multi_mode_batch_prediction_routes_rows_with_decision_tree() -> None:
     assert diagnostics.row_indices == [0, 1, 2, 3]
 
 
-def _trace(times: list[float], states: list[list[float]]) -> Trace:
-    start_time = times[0] if times else 0.0
-    return Trace(
-        t=np.asarray(times),
-        x=np.asarray(states),
-        location=np.asarray(["mode"] * len(times), dtype=object),
-        location_time=np.asarray(times, dtype=float) - start_time,
-        events=(),
+def _trace(times: list[float], states: list[list[float]]) -> pl.DataFrame:
+    matrix = np.asarray(states, dtype=float)
+    return pl.DataFrame(
+        {"t": times, **{f"x{i}": matrix[:, i] for i in range(matrix.shape[1])}}
     )
 
 
@@ -346,9 +324,9 @@ def test_compare_state_traces_calculates_elementwise_and_summary_metrics() -> (
 def test_compare_state_traces_validates_grid_and_shape() -> None:
     reference = _trace([0.0, 1.0], [[1.0], [2.0]])
 
-    with pytest.raises(ValueError, match="time grids must match"):
+    with pytest.raises(ValueError, match="Time grids must match"):
         compare_state_traces(reference, _trace([0.0, 1.1], [[1.0], [2.0]]))
-    with pytest.raises(ValueError, match="state shapes must match"):
+    with pytest.raises(ValueError, match="State columns must match"):
         compare_state_traces(
             reference,
             _trace([0.0, 1.0], [[1.0, 2.0], [2.0, 3.0]]),

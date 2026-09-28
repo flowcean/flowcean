@@ -4,11 +4,11 @@ import math
 from itertools import pairwise
 
 import numpy as np
+import polars as pl
 import pytest
 
 from flowcean.hybrid import (
     CrossingDirection,
-    Trace,
     simulate,
 )
 from flowcean.hybrid.benchmarks import (
@@ -92,16 +92,15 @@ def test_generator_torque_is_continuous_at_all_four_central_boundaries() -> (
         assert power[0] / speed == pytest.approx(power[1] / speed, abs=1e-8)
 
 
-def _power_trace(speeds: list[float], locations: list[str]) -> Trace:
+def _power_trace(speeds: list[float], locations: list[str]) -> pl.DataFrame:
     """Build power fixtures whose samples each record a mode on entry."""
-    states = np.zeros((len(speeds), 6))
-    states[:, 0] = np.array(speeds) / 97.0
-    return Trace(
-        t=np.arange(len(speeds), dtype=float),
-        x=states,
-        location=np.array(locations, dtype=object),
-        location_time=np.zeros(len(speeds), dtype=float),
-        events=(),
+    return pl.DataFrame(
+        {
+            "x0": np.asarray(speeds, dtype=float) / 97.0,
+            "location_label": pl.Series(
+                "location_label", locations, dtype=pl.String
+            ),
+        }
     )
 
 
@@ -311,8 +310,8 @@ def test_all_eight_directed_transitions_are_reachable(
     assert trace.events
     event = trace.events[0]
     assert (event.source_location, event.target_location) == (
-        LABELS[source],
-        LABELS[target],
+        system.locations[source],
+        system.locations[target],
     )
     assert event.time > 0
     assert event.state_before[0] * 97 == pytest.approx(
@@ -320,7 +319,10 @@ def test_all_eight_directed_transitions_are_reachable(
     )
     np.testing.assert_array_equal(event.state_after, event.state_before)
     assert all(e.time > event.time for e in trace.events[1:])
-    assert all(e.target_location != LABELS[source] for e in trace.events[1:])
+    assert all(
+        e.target_location is not system.locations[source]
+        for e in trace.events[1:]
+    )
 
 
 @pytest.mark.parametrize("index", range(4))
@@ -336,10 +338,10 @@ def test_start_at_shifted_upward_boundary_advances_without_chatter(
         location0=system.locations[index],
         input_stream=constant_wind(15),
     )
-    assert trace.t[-1] == pytest.approx(0.1)
+    assert trace.t_span[1] == pytest.approx(0.1)
     assert len(trace.events) == 1
     assert trace.events[0].time == 0.0
-    assert trace.events[0].target_location == LABELS[index + 1]
+    assert trace.events[0].target_location is system.locations[index + 1]
 
 
 @pytest.mark.parametrize("index", range(4))
@@ -362,10 +364,10 @@ def test_start_at_shifted_downward_boundary_advances_without_chatter(
         location0=system.locations[index + 1],
         input_stream=constant_wind(7),
     )
-    assert trace.t[-1] == pytest.approx(0.03)
+    assert trace.t_span[1] == pytest.approx(0.03)
     assert len(trace.events) == 1
     assert trace.events[0].time == 0.0
-    assert trace.events[0].target_location == LABELS[index]
+    assert trace.events[0].target_location is system.locations[index]
 
 
 @pytest.mark.parametrize(
@@ -438,38 +440,44 @@ def test_input_and_flow_domains_are_checked_not_clipped() -> None:
 @pytest.mark.parametrize("stream", [constant_wind(11), wind_cycle])
 def test_nominal_trace_finite_and_physically_bounded(stream) -> None:
     system = wind_turbine()
-    trace = simulate(system, (0, 120), input_stream=stream, sample_dt=0.5)
-    assert trace.t[-1] == pytest.approx(120)
-    assert np.isfinite(trace.x).all()
-    assert np.all(trace.x[:, 0] > 0)
-    assert np.max(np.abs(trace.x[:, 1])) < 1.0
-    assert np.max(np.abs(trace.x[:, 3])) < math.radians(20)
+    trace = simulate(system, (0, 120), input_stream=stream)
+    frame = trace.sample(dt=0.5, include_location_label=True)
+    assert frame["t"][-1] == pytest.approx(120)
+    states = frame.select([f"x{i}" for i in range(6)]).to_numpy()
+    assert np.isfinite(states).all()
+    assert np.all(states[:, 0] > 0)
+    assert np.max(np.abs(states[:, 1])) < 1.0
+    assert np.max(np.abs(states[:, 3])) < math.radians(20)
     assert len(trace.events) < 256
-    power = wind_turbine_power(trace, parameters=system.parameters)
+    power = wind_turbine_power(frame, parameters=system.parameters)
     assert np.isfinite(power).all()
     assert np.all(power >= 0)
-    np.testing.assert_allclose(power[trace.location == "rated_power"], 5296610)
-    np.testing.assert_allclose(power[trace.location == "no_generation"], 0)
+    labels = frame["location_label"].to_numpy()
+    np.testing.assert_allclose(power[labels == "rated_power"], 5296610)
+    np.testing.assert_allclose(power[labels == "no_generation"], 0)
     if stream is wind_cycle:
-        assert set(trace.location) == set(LABELS)
+        assert set(labels) == set(LABELS)
         assert len(trace.events) >= 7
 
 
 def test_tighter_solver_tolerance_converges_to_nominal_result() -> None:
     system = wind_turbine()
     times = np.linspace(0, 120, 61)
-    standard = simulate(
-        system, (0, 120), input_stream=wind_cycle, sample_times=times
-    )
+    standard = simulate(system, (0, 120), input_stream=wind_cycle)
     tight = simulate(
         system,
         (0, 120),
         input_stream=wind_cycle,
-        sample_times=times,
         rtol=1e-9,
         atol=1e-11,
     )
     assert [e.target_location for e in standard.events] == [
         e.target_location for e in tight.events
     ]
-    np.testing.assert_allclose(standard.x, tight.x, atol=2e-4, rtol=2e-4)
+    state_columns = [f"x{i}" for i in range(6)]
+    np.testing.assert_allclose(
+        standard.sample(times).select(state_columns).to_numpy(),
+        tight.sample(times).select(state_columns).to_numpy(),
+        atol=2e-4,
+        rtol=2e-4,
+    )

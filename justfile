@@ -89,6 +89,7 @@ examples-hs-simple:
 
 examples-hybrid_systems:
   @echo "🚀 Running example: Hybrid Systems"
+  @uv run pytest examples/hybrid_systems -q
   @uv run --directory ./examples/hybrid_systems/ python run.py
   @uv run --directory ./examples/hybrid_systems/ python export_graphs.py
   @echo "Running example: Wind Turbine"

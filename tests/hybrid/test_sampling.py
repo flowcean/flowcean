@@ -1,0 +1,102 @@
+"""Sampling and table schema behavior of a continuous hybrid execution."""
+
+import numpy as np
+import polars as pl
+import pytest
+from polars.testing import assert_frame_equal
+
+from flowcean.hybrid import HybridSystem, Location, Transition, simulate
+
+
+def _trajectory(*, input_stream=None):
+    first = Location(lambda: np.array([1.0, -2.0]), label="same")
+    second = Location(lambda: np.array([0.0, -2.0]), label="same")
+    system = HybridSystem(
+        [first, second],
+        [Transition(first, second, lambda t: t - 0.5)],
+        first,
+        np.array([1.0, 2.0]),
+    )
+    return simulate(system, (0, 1), input_stream=input_stream)
+
+
+def test_default_schema_and_optional_columns_preserve_location_identity() -> (
+    None
+):
+    trajectory = _trajectory(input_stream=lambda t: np.array([4.0 + t]))
+    frame = trajectory.sample([0, 0.5, 1])
+    assert frame.columns == ["t", "x0", "x1", "location_id", "location_time"]
+    assert frame["location_id"].to_list() == [0, 1, 1]
+    assert frame["location_time"].to_list() == [0, 0, 0.5]
+    frame = trajectory.sample(
+        [0, 0.5, 1],
+        include_location_label=True,
+        include_inputs=True,
+        include_derivatives=True,
+    )
+    assert frame.columns == [
+        "t",
+        "x0",
+        "x1",
+        "location_id",
+        "location_label",
+        "location_time",
+        "u0",
+        "dx0",
+        "dx1",
+    ]
+    assert frame["location_label"].to_list() == ["same"] * 3
+    np.testing.assert_allclose(frame["u0"], [4, 4.5, 5])
+    np.testing.assert_allclose(frame["dx0"], [1, 0, 0])
+    np.testing.assert_allclose(frame["dx1"], [-2, -2, -2])
+    renamed = frame.rename({"x0": "height", "dx0": "dh", "u0": "force"})
+    assert renamed["height"].to_list() == frame["x0"].to_list()
+    assert renamed["dh"].to_list() == frame["dx0"].to_list()
+    assert renamed["force"].to_list() == frame["u0"].to_list()
+
+
+def test_empty_grid_keeps_state_derivative_and_location_dtypes() -> None:
+    frame = _trajectory().sample(
+        [], include_derivatives=True, include_location_label=True
+    )
+    assert frame.height == 0
+    assert frame.schema == {
+        "t": pl.Float64,
+        "x0": pl.Float64,
+        "x1": pl.Float64,
+        "location_id": pl.Int64,
+        "location_label": pl.String,
+        "location_time": pl.Float64,
+        "dx0": pl.Float64,
+        "dx1": pl.Float64,
+    }
+
+
+def test_input_capture_validates_stream_and_requested_rows() -> None:
+    with pytest.raises(ValueError, match="input_stream"):
+        _trajectory().sample([0], include_inputs=True)
+    with pytest.raises(ValueError, match="empty grid"):
+        _trajectory(input_stream=lambda t: np.array([t])).sample(
+            [], include_inputs=True
+        )
+    with pytest.raises(ValueError, match="dimension changed"):
+        _trajectory(
+            input_stream=lambda t: np.array([t] if t == 0 else [t, t])
+        ).sample([0, 1], include_inputs=True)
+
+
+def test_repeated_sampling_is_independent_of_grid_and_preserves_duplicates() -> (
+    None
+):
+    trajectory = _trajectory()
+    frame = trajectory.sample(t for t in [0, 0.5, 0.5, 1])
+    assert frame["t"].to_list() == [0, 0.5, 0.5, 1]
+    assert frame["location_id"].to_list() == [0, 1, 1, 1]
+    assert_frame_equal(trajectory.sample(dt=0.25), trajectory.sample(dt=0.25))
+    assert trajectory.sample(dt=0.3)["t"][-1] == 1
+
+
+@pytest.mark.parametrize("grid", [[1, 0], [-0.1], [1.1], [np.inf], [np.nan]])
+def test_invalid_grids_rejected(grid: list[float]) -> None:
+    with pytest.raises(ValueError, match="times"):
+        _trajectory().sample(grid)

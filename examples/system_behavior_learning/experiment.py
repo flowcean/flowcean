@@ -93,12 +93,12 @@ def _complete_state(
         system,
         t_span=(float(sample_times[0]), float(sample_times[-1])),
         input_stream=input_stream,
-        sample_times=sample_times,
     )
-    if not np.array_equal(trace.t, sample_times):
+    frame = trace.sample(sample_times)
+    if not np.array_equal(frame["t"].to_numpy(), sample_times):
         msg = f"unexpected sample times for scenario {scenario.tolist()}"
         raise ValueError(msg)
-    states = np.asarray(trace.x, dtype=np.float64)
+    states = frame.select([f"x{i}" for i in range(state_count)]).to_numpy()
     expected_shape = (sample_times.size, state_count)
     if states.shape != expected_shape or not np.all(np.isfinite(states)):
         msg = (

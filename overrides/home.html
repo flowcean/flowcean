@@ -77,19 +77,19 @@
       <div class="home-code-copy">
         <p class="home-eyebrow">Python example</p>
         <h2 id="home-code-title">Simulate a built-in system.</h2>
-        <p class="home-section-intro"><code>thermostat()</code> creates a benchmark system. <code>simulate()</code> runs it with an input signal and returns a <code>Trace</code> containing the state history, active modes, and transition events.</p>
+        <p class="home-section-intro"><code>thermostat()</code> creates a benchmark system. <code>simulate()</code> runs it with an input signal and returns a <code>HybridTrajectory</code> with continuous segments and transition events. Sample it explicitly for a table of states and modes.</p>
         <a class="home-text-link" href="{{ 'user_guide/hybrid_systems/#simulation' | url }}">Simulation guide {{ icon('arrow-right') }}</a>
       </div>
       <div class="home-code-window"><div class="home-code-header"><span>thermostat.py</span><span>Python</span></div><pre><code><span class="home-code-keyword">import</span> numpy <span class="home-code-keyword">as</span> np
 <span class="home-code-keyword">from</span> flowcean.hybrid <span class="home-code-keyword">import</span> simulate
 <span class="home-code-keyword">from</span> flowcean.hybrid.benchmarks <span class="home-code-keyword">import</span> thermostat
 
-trace = simulate(
+trajectory = simulate(
     thermostat(),
     t_span=(<span class="home-code-number">0.0</span>, <span class="home-code-number">12.0</span>),
     input_stream=<span class="home-code-keyword">lambda</span> _t: np.array([<span class="home-code-number">22.0</span>]),
-    sample_dt=<span class="home-code-number">0.05</span>,
-)</code></pre></div>
+)
+frame = trajectory.sample(dt=<span class="home-code-number">0.05</span>)</code></pre></div>
     </section>
 
     <section class="home-toolkit" aria-labelledby="home-toolkit-title">

@@ -15,7 +15,6 @@ from flowcean.hybrid import (
     Parameters,
     Transition,
     simulate,
-    trace_to_polars,
 )
 from flowcean.utils import initialize_random
 
@@ -106,16 +105,15 @@ def generate_trace_frame() -> pl.DataFrame:
         thermostat_system(),
         t_span=(0.0, 40.0),
         input_stream=target_input,
-        capture_inputs=True,
-        sample_dt=0.1,
     )
     return (
-        trace_to_polars(
-            trace,
-            state_names=("temperature",),
-            input_names=("target",),
+        trace.sample(dt=0.1, include_inputs=True, include_location_label=True)
+        .rename(
+            {"x0": "temperature", "u0": "target", "location_label": "location"}
         )
+        .with_row_index("step")
         .with_columns(
+            pl.col("step").cast(pl.Int64),
             (pl.col("location") == "heating").cast(pl.Int64).alias("heating"),
         )
         .select(

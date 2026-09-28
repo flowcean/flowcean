@@ -136,10 +136,11 @@ def main() -> None:
         },
     )
 
-    trace = simulate(system, t_span=(times[0], times[-1]), sample_times=times)
+    trace = simulate(system, t_span=(times[0], times[-1]))
+    frame = trace.sample(times)
     data = pl.DataFrame(
         {
-            "temperature": trace.x[:, 0],
+            "temperature": frame["x0"].to_numpy(),
             "target": targets,
         },
     )

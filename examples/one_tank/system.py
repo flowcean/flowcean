@@ -10,7 +10,6 @@ from flowcean.hybrid import (
     Location,
     Parameters,
     simulate,
-    trace_to_polars,
 )
 
 
@@ -52,6 +51,5 @@ def simulate_one_tank() -> pl.DataFrame:
     trace = simulate(
         one_tank_system(),
         t_span=(0.0, 25.0),
-        sample_dt=0.1,
     )
-    return trace_to_polars(trace, state_names=("h",)).select("t", "h")
+    return trace.sample(dt=0.1).rename({"x0": "h"}).select("t", "h")
