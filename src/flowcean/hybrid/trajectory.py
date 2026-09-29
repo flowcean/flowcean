@@ -43,6 +43,10 @@ class Event:
     """A recorded transition with states immediately before and after it.
 
     Pre- and post-reset state snapshots are detached and read-only.
+    ``transition`` references the model's transition, including its source,
+    target, event surface, and reset. ``time`` is physical simulation time;
+    ``microstep`` orders events at that time, starting at zero.
+    ``location_time_before`` is the age of the source visit before the jump.
     """
 
     time: float
@@ -165,7 +169,7 @@ class HybridTrajectory:
 
         At an exact event time, return the final state and location after the
         entire jump chain, with zero residence age. This includes initial and
-        final events. Nearby times are not snapped to event boundaries.
+        final events.
         """
         _validate_time(time, self.t_span)
         event = self._last_events.get(time)
@@ -194,11 +198,41 @@ class HybridTrajectory:
         include_inputs: bool = False,
         include_derivatives: bool = False,
     ) -> pl.DataFrame:
-        """Sample exactly one explicit grid, with right-continuous event values.
+        """Build a frame at requested times, using post-transition event values.
 
-        Default sampling invokes no callbacks. Inputs and flow derivatives are
-        evaluated only when explicitly requested, at the requested times.
-        These callbacks and input streams must remain pure and deterministic.
+        At an event time, the row describes the state after the entire
+        same-time chain, as returned by
+        [evaluate][flowcean.hybrid.HybridTrajectory.evaluate].
+        Default sampling invokes no callbacks. Inputs and flow derivatives
+        are evaluated at the requested times when included; these callbacks
+        and input streams must remain pure and deterministic.
+
+        Args:
+            times: Finite, non-descending times within the trajectory's
+                interval. Accepts generators, duplicates, and an empty grid.
+                Supply exactly one of ``times`` or ``dt``.
+            dt: Positive finite grid spacing. Includes the final endpoint;
+                a zero-duration run produces one row.
+            include_state: Include continuous-state columns ``x0``, ``x1``, ...
+            include_location_id: Include ``location_id``, the index of the
+                active location in the system's declaration order.
+            include_location_label: Include the display ``location_label``.
+            include_location_time: Include elapsed visit time as
+                ``location_time``.
+            include_inputs: Evaluate the input stream and include ``u0``,
+                ``u1``, ... . Requires a stream and a nonempty grid; the input
+                width must be constant across requested times.
+            include_derivatives: Evaluate the active flow with the sampled
+                state and run parameters, including ``dx0``, ``dx1``, ... .
+
+        Returns:
+            A Polars frame with physical time ``t`` and the selected columns.
+            Empty grids retain the known state, derivative, and location
+            schemas. Use Polars to select or rename columns and add row indices.
+
+        Raises:
+            ValueError: Grid arguments, input capture, or callback outputs
+                are invalid.
         """
         grid = _sample_grid(self.t_span, times, dt)
         if include_inputs and self._bindings.input_stream is None:

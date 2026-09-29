@@ -4,35 +4,49 @@ icon: lucide/workflow
 
 # Hybrid Systems
 
-Hybrid systems combine continuous evolution with discrete changes in behavior. Flowcean represents the active discrete state as a location, evolves a continuous state according to that location's flow, and changes locations when event surfaces trigger transitions.
+Hybrid systems combine continuous change with discrete switches. A thermostat is a simple example: temperature varies continuously while the controller switches between heating and cooling.
 
-Use `flowcean.hybrid` to define and simulate models, and [`flowcean.hybrid.benchmarks`](../reference/hybrid.md#flowcean.hybrid.benchmarks) for reusable systems. Start with a simulation below, follow the [minimal example](../examples/hs_simple.md) to construct a model from locations and transitions, or compare systems in the [benchmark gallery](../examples/hybrid_systems.md).
+## Read a Hybrid Automaton
 
-## Terminology
+A **hybrid automaton** describes the possible configurations of a system and the rules for moving between them. This thermostat sketch shows the continuous behavior inside each configuration:
 
-- A `Location` is a node in a hybrid automaton. Its `flow` is a `Flow` defining the continuous derivative law through `fn`. Distinct locations can share a flow while keeping separate identities, outgoing transitions, parameters, and visits.
-- A `Transition` defines a source, target, `event_surface`, and optional `reset`. An `Event` records one occurrence and retains that exact definition as `event.transition`, plus physical time, microstep, and read-only state snapshots. Labels are display text, not identity.
-- A native hybrid execution is returned as a `HybridTrajectory`, with continuous segments and discrete events. Sampling it produces a trace represented by a Polars frame; sampled rows are not the execution itself.
-- HyDRA learns flow models and a selector, not native locations or transitions. `HyDRAModel.flow_models` contains these models; numeric `flow_id` assignments are distinct from display labels. Its simulation returns a grid-scheduled learned rollout frame rather than a native trajectory.
-- Native `location_time` measures the current location visit and resets on every transition, even between locations sharing a flow. Learned `flow_time` measures time since the selected flow model became active at a grid point and resets only when `flow_id` changes.
+```mermaid
+flowchart LR
+    accTitle: Thermostat hybrid automaton
+    accDescr {
+        Heating and cooling are locations. Their flows raise and lower
+        temperature. Crossing the upper threshold switches to cooling;
+        crossing the lower threshold switches to heating.
+    }
+    heating["Heating<br/>Flow: temperature rises"]
+    cooling["Cooling<br/>Flow: temperature falls"]
+    heating -->|Upper threshold| cooling
+    cooling -->|Lower threshold| heating
+```
 
-## Read a Hybrid Model
+Temperature is the **continuous state**. Heating and cooling are **locations**, the discrete configurations in which the system can operate. Each location selects a **flow**, a law for the rate of change of the continuous state. Together, the continuous state and active location describe the system's current situation.
 
-The [thermostat benchmark](../examples/hybrid_systems.md#thermostat) has one continuous state, temperature, and two discrete locations, `heating` and `cooling`. Each location defines a different rate of temperature change. The target-temperature input sets a pair of switching thresholds: crossing one changes the active location without resetting the temperature.
+The arrows are **transitions**, discrete steps from one location to another or back to the same location. Each transition has an **event surface**, a boundary whose crossing can trigger it. Here, the boundaries are temperature thresholds. An **event** is an occurrence of a transition during a particular run.
 
-<figure class="hybrid-figure hybrid-automaton" markdown="span">
+The two thresholds create **hysteresis**: between them, the same temperature can occur during either heating or cooling. Knowing the temperature alone is therefore insufficient to determine its rate of change; the active location matters too.
 
-[![Thermostat with heating and cooling locations, switching at the upper and lower target-band boundaries.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="\_blank" rel="noopener" }
+A transition can also apply a **reset**, an instantaneous change to the continuous state. The thermostat keeps its current temperature when it switches. A [bouncing ball](../examples/hybrid_systems.md#bouncing-ball), by contrast, reverses its velocity at impact through a reset while remaining in the same flight location.
 
-<figcaption>Boxes represent locations; arrows represent transitions. The incoming arrow marks the initial location. Open a figure to inspect it at full size.</figcaption>
+## Describe a Model
 
-</figure>
+In Flowcean, a [`HybridSystem`][flowcean.hybrid.HybridSystem] brings together locations, their flows, and their transitions. You also choose the initial continuous state and active location. The [minimal model example](../examples/hs_simple.md) shows how to construct these pieces; the [benchmark gallery](../examples/hybrid_systems.md) provides ready-made models to explore.
 
-Other systems also change the continuous state at a transition. For example, a [bouncing ball](../examples/hybrid_systems.md#bouncing-ball) reverses and reduces its velocity at impact through a reset, while remaining in the same flight location.
+Separate **inputs**, external signals that vary during a run, from **parameters**, the settings that define the model. For the thermostat, the desired temperature is an input, while heating strength and the width of the hysteresis band are parameters. This separation lets you reuse the same model under different operating conditions.
 
-## Simulation
+Express an event surface as a function that is zero at the switching boundary. For the upper thermostat threshold, subtract that threshold from the current temperature and detect a crossing from negative to positive. If an initial condition or reset puts the state exactly on a boundary, [entry policies][flowcean.hybrid.SurfaceEntryPolicy] determine what happens on entering that location: take the transition immediately, begin continuous evolution, or report an error.
 
-Create a system and supply a time span and input signal. This example runs the [thermostat](../examples/hybrid_systems.md#thermostat) with a slowly varying target temperature:
+### Location Residence Time
+
+Some transitions depend on how long a configuration has been active rather than on temperature or another state quantity. **Location residence time** is the elapsed time in the current visit; every transition starts a new visit, including a transition back to the same location. A [timed-switch model](../examples/hybrid_systems.md#time-forced-switch), for example, can use residence time to alternate configurations after a fixed duration.
+
+## Simulate a Run
+
+Use [`simulate`][flowcean.hybrid.simulate] to follow a model over a chosen time interval, supplying any external inputs. This example uses the predefined [`thermostat`][flowcean.hybrid.benchmarks.thermostat.thermostat] model with a slowly varying target temperature:
 
 ```python
 import numpy as np
@@ -46,191 +60,40 @@ trajectory = simulate(
     t_span=(0.0, 10.0),
     input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
 )
-frame = trajectory.sample(dt=0.02, include_location_label=True)
 ```
 
-`simulate` returns a `HybridTrajectory`: a hybrid execution independent of any sampling grid. Its ordered `execution` contains continuous `segments` and individual `events`, including every zero-duration microstep. Query a single physical time with `trajectory.evaluate(t)` for a `TrajectoryPoint` holding the state, active location, and residence time. `sample` builds a Polars frame at explicitly requested times.
+The result is a [`HybridTrajectory`][flowcean.hybrid.HybridTrajectory], a record of one execution of the model. It contains **continuous segments**, each governed by one active location's flow, and the events between them. In the thermostat run below, temperature remains continuous at a switch, but its rate of change changes.
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="\_blank" rel="noopener" }
+[![Thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="\_blank" rel="noopener" }
 
-<figcaption>Temperature remains continuous when the location changes, but its derivative changes. Shading identifies the active location.</figcaption>
+<figcaption>The temperature follows a moving target. Shading identifies the active location; the switching thresholds are drawn alongside the temperature.</figcaption>
 
 </figure>
 
-The simulator also accepts initial-state, initial-location, and initial-residence-time overrides, solver tolerances, and an event limit. Request `include_derivatives=True` from `trajectory.sample` only when a workflow needs state derivatives. Sampled frames are ready for identification or evaluation; rename columns with Polars for domain-specific schemas.
+For visual inspection, [`plot_trajectory`][flowcean.hybrid.plot_trajectory] shows continuous states against time. For models with several state quantities, [`plot_state_space`][flowcean.hybrid.plot_state_space] plots one coordinate against another. Both views preserve the separate continuous segments at resets, so a jump is distinguishable from continuous motion.
 
-See the [simulator API](../reference/hybrid.md#flowcean.hybrid.simulate) for the complete signature. The sections below explain model construction and the precise meaning of events, samples, and transition boundaries.
+An execution can contain several events at one physical time. For example, a reset may place the state on a boundary that requests an immediate further transition. The trajectory preserves their order. A point query or sample at that time reports the state after the complete chain.
 
-## Model and Continuous Evolution
+## Sample Data for Analysis
 
-The objects used to construct a model are available from `flowcean.hybrid`:
+A trajectory describes an execution; a sampled trace is a table of observations from it. Choose observation times to suit the analysis or learning method you want to use. A coarse grid may miss a short location visit, whereas the trajectory's event record preserves the transitions that delimit it.
+
+Use [`sample`][flowcean.hybrid.HybridTrajectory.sample] to create the table. Here we include the target-temperature input and the temperature derivative, so the observations capture both the operating conditions and the rate of change described by the active flow:
 
 ```python
-from flowcean.hybrid import (
-    Flow,
-    CrossingDirection,
-    EventSurface,
-    HybridSystem,
-    Location,
-    Reset,
-    SurfaceEntryPolicy,
-    Transition,
+samples = trajectory.sample(
+    dt=0.02,
+    include_inputs=True,
+    include_derivatives=True,
 )
 ```
 
-A `HybridSystem` contains locations, transitions, an initial location, an initial continuous state, and global parameters. Exactly one location is active at each point in the simulation. A same-time transition chain may visit several locations at one physical time, ordered by microsteps. Between transitions, the active location's `flow.fn` callback returns the derivative of the continuous state.
+The resulting Polars frame can be selected, renamed, saved, or passed to a learning workflow. When you only need the system's situation at one instant, [`evaluate`][flowcean.hybrid.HybridTrajectory.evaluate] returns a [`TrajectoryPoint`][flowcean.hybrid.TrajectoryPoint] containing its continuous state, active location, and residence time. Use the trajectory to investigate transitions and continuous evolution, and sampled data when a method expects observations on a grid.
 
-The continuous state is a one-dimensional NumPy array. A system with continuous dynamics but no discrete switching is represented by one location and no transitions.
+## Learn from Samples
 
-Callbacks can use the physical time, location residence time, continuous state, effective parameters, and input stream:
+Simulation starts with a specified model and produces observations. Learning works in the other direction: observations are used to fit a model of the behavior. Flowcean's [HyDRA learner][flowcean.hybrid.hydra.HyDRALearner] learns continuous flow models and a selector that chooses which flow to apply. The resulting model represents behavior through these learned flows and selection decisions, rather than through a manually specified automaton.
 
-```python
-def flow(t, state, parameters, input_stream):
-    control = input_stream(t)
-    return parameters["gain"] * state + control
-```
-
-Callbacks may declare only the arguments they need when they retain the canonical names `t`, `location_time`, `state`, `parameters`, and `input_stream`. For example, a flow that depends only on state and parameters can use `def flow(state, parameters): ...`. Keyword-only arguments are supported, and callbacks using named dispatch with `**kwargs` receive all five values.
-
-The `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` protocols describe the complete five-argument, keyword-only interface. Callback wrappers also accept the subset forms above and four-positional callbacks. Callbacks using positional-only arguments, `*args`, or noncanonical required names receive `(t, state, parameters, input_stream)`; request `location_time` through named dispatch instead.
-
-System parameters apply globally, while parameters declared on the active location override global values with the same name. Effective parameter mappings are frozen per run; later model parameter edits do not alter that trajectory. The trajectory retains its original `system` object, not a deep copy of the model. Callbacks and input streams must be pure and deterministic for repeated solver and optional sampling evaluations. An input stream is a callable that returns a one-dimensional input array for a requested physical time.
-
-## Transitions and Resets
-
-A transition connects one source location to one target location. Its event surface is a scalar function whose zero crossing can trigger the transition. `CrossingDirection.RISING`, `FALLING`, and `EITHER` restrict which crossing directions are accepted during continuous evolution.
-
-An event surface describes a numerical zero crossing, not a Boolean region. For example, a falling surface does not fire merely because its value is already negative. Whenever simulation enters a location—including the initial location—the simulator evaluates every outgoing surface exactly once before deciding what to do. A value equal to `0.0` (including `-0.0`) is on the surface. Arbitrarily small nonzero values and positive or negative infinity retain their sign; NaN is invalid.
-
-Each transition's `entry_policy` determines what exact zero means on entry:
-
-- `SurfaceEntryPolicy.ERROR` (the default) raises `SurfaceEntryError`, requiring the model to make its intent explicit.
-- `SurfaceEntryPolicy.TRIGGER` performs the transition immediately at the same physical time.
-- `SurfaceEntryPolicy.CONTINUE` leaves the transition inactive for entry handling and passes the zero-valued surface unchanged to continuous integration. Use this when a trajectory naturally enters a boundary and departs in the direction opposite to the transition.
-
-Entry decisions are atomic. NaN takes precedence over every policy. Any zero `ERROR` surface is reported before trigger selection. More than one zero `TRIGGER` surface raises `AmbiguousTransitionError`; exactly one performs a jump, applies its reset, enters the target, and repeats entry evaluation there. A `CONTINUE` surface does nothing during entry handling.
-
-During continuous integration, crossing detection follows SciPy's event solver. Unlike exact-zero entry checks, it does not guarantee rejection of ambiguous simultaneous crossings or a user-facing declaration-order priority among them.
-
-For each settled continuous segment, the simulator:
-
-1. Integrates the active location's dynamics until the earliest detected outgoing event or the end of the time span.
-2. Records the state immediately before the transition.
-3. Applies the optional reset using the source location's effective parameters.
-4. Enters the target location and resolves its entry policy before integrating again.
-
-Without a reset, the continuous state is unchanged by a transition, including a self-transition. A reset normally returns a one-dimensional state with the same dimension as the state before the transition. A scalar is also accepted for a single-state system.
-
-!!! warning "Simultaneous entry transitions"
-
-    Multiple exact-zero `TRIGGER` surfaces on one location entry are ambiguous and stop simulation. Design the entry state or policies so that at most one requests an immediate jump.
-
-## Automaton Diagrams
-
-Use `build_hybrid_system_dot` to inspect a system's complete declared structure without simulating it. The graph includes every location and transition, even those a trajectory never visits, with an incoming arrow marking the initial location.
-
-```python
-from pathlib import Path
-
-from flowcean.hybrid import build_hybrid_system_dot, render_dot_svg
-from flowcean.hybrid.benchmarks import thermostat
-
-dot = build_hybrid_system_dot(
-    thermostat(),
-    show_direction=True,
-    show_entry_policy=True,
-)
-Path("thermostat.dot").write_text(dot, encoding="utf-8")
-```
-
-Event and reset labels are shown by default; disable them with `show_event_labels=False` or `show_reset_labels=False`. Crossing direction and entry policy are opt-in annotations. Labels are literal display text, not formulas inferred from callback bodies. When explicit labels are absent, callback names or positional fallback labels are used. Duplicate labels do not merge locations. Node IDs and DOT ordering follow declaration order, so reordering the model changes the output.
-
-DOT export requires no renderer and evaluates no dynamics, event, reset, or input callbacks. To render an SVG, install [Graphviz](https://graphviz.org/download/) with its `dot` executable on `PATH`, then:
-
-```python
-svg = render_dot_svg(dot)
-Path("thermostat.svg").write_text(svg, encoding="utf-8")
-```
-
-Rendering returns text without writing files or opening a viewer. A missing renderer or failed Graphviz command raises `RuntimeError`. SVG layout may vary between Graphviz versions.
-
-## Location Residence Time
-
-`location_time` measures elapsed physical time in the current location visit, while `t` is global simulation time. The simulator maintains it separately from the continuous state, so models need neither an extra clock coordinate nor a clock derivative or reset.
-
-A timeout is an ordinary rising event surface:
-
-```python
-timeout = EventSurface(
-    lambda location_time: location_time - 5.0,
-    direction=CrossingDirection.RISING,
-)
-```
-
-Use this surface on a transition to leave its source after five time units.
-
-By default, the initial visit starts at age zero even when `t_span` begins at a nonzero time. To start partway through a visit, pass `initial_location_time` to `simulate`.
-
-Every transition starts a new visit at age zero, including self-transitions and each jump in an immediate chain. Reset callbacks receive the departing source visit's age; target-entry surfaces receive zero.
-
-Residence-time surfaces retain zero-crossing semantics. For the timeout above, starting at age five follows the transition's exact-zero entry policy; starting after age five does not trigger an overdue timeout automatically. `CONTINUE` does not suppress a root detected at the integration start and can still lead to `SimulationProgressError`. Combining a minimum dwell time with a Boolean condition is not an additional guard mechanism provided by this clock.
-
-## Physical Time and Microsteps
-
-`Event.time` is physical simulation time. Immediate transitions on location entry do not advance physical time. Their zero-based `microstep` values preserve their order within the same-time transition chain. An initial-entry trigger has microstep 0. A continuously detected crossing also has microstep 0, and triggers on successive target entries use microsteps 1, 2, and so on.
-
-Suppose a transition from A to B resets the state onto an event surface in B, which immediately causes a transition from B to C:
-
-| Record       | Physical time | Microstep | Location change | Recorded state                             |
-| ------------ | ------------: | --------: | --------------- | ------------------------------------------ |
-| First event  |           1.0 |         0 | A -> B          | `state_before` in A and `state_after` in B |
-| Second event |           1.0 |         1 | B -> C          | `state_before` in B and `state_after` in C |
-| Sampled row  |           1.0 |         - | C               | Final state after the complete chain       |
-
-Every transition in the chain counts toward `max_jumps`. Simulation raises an error if that limit is exceeded.
-
-After a continuous crossing, integration restarts at the exact event time with the post-jump state; the simulator does not offset time to move away from the root. A location must be settled before this restart. If the ODE solver nevertheless returns an event at or before the segment start, simulation raises `SimulationProgressError` rather than applying the transition. This usually indicates stateful callbacks, a discontinuous event surface, or insufficient floating-point time resolution; use deterministic callbacks and continuous surfaces.
-
-## Execution Boundaries and Sampling
-
-A `HybridTrajectory` retains its original `initial_state`, `initial_location`, `initial_location_time`, and `t_span`. `execution` interleaves continuous segments and events in order; `segments` and `events` provide filtered views. Every positive-duration segment has its own `location`, `t_span`, and `location_time(time)` residence clock. Each event retains its exact `Transition` object; access its locations through `event.transition.source` and `event.transition.target`, and its surface and reset through `event.transition.event_surface` and `event.transition.reset`. The event's `state_before` and `state_after` snapshots, like the initial state, are detached and read-only. Display labels can repeat; object identity distinguishes locations and integer `location_id` values follow system declaration order.
-
-`trajectory.evaluate(t)` returns a `TrajectoryPoint(state, location, location_time)` at any time in `t_span`. At an exact event time it returns the final target and post-reset state after the complete same-time chain, even at the start or end of the run. Query `segment.evaluate(t)` on a segment's own `t_span` for its continuous state instead: its endpoint is the state before a jump. These point queries work without constructing a frame; use `trajectory.sample(...)` when you need a table of values. Intermediate zero-duration visits remain in `events` but produce no continuous segment or shaded interval. Each event's `location_time_before` records its source visit's age.
-
-Call `trajectory.sample(times)` or `trajectory.sample(dt=0.02)`; exactly one grid is required. Explicit `times` must be finite, non-descending, and inside `t_span`. Duplicates and empty grids are retained, and generators work. A positive finite `dt` produces a grid including the final endpoint, even when it is not a multiple of `dt`. Sampling does not change event detection; off-grid transitions remain in `trajectory.events`. Equal `t_span` endpoints are valid for entry-only executions.
-
-Default frame columns are `t`, `x0`, `x1`, ... (one per state dimension), `location_id`, and `location_time`. Optional `include_location_label=True` adds `location_label`; `include_inputs=True` adds `u0`, ...; `include_derivatives=True` adds `dx0`, ... . Set `include_state=False`, `include_location_id=False`, or `include_location_time=False` to omit those default columns. There is no implicit `step` column: add one with Polars if needed. Rename or select columns with Polars rather than passing naming options to `sample`.
-
-Default sampling reevaluates no callbacks. Input sampling requires an input stream and a nonempty grid (input width cannot be inferred from zero rows). Derivative sampling explicitly reevaluates dynamics at every requested time using the active post-chain state and frozen effective parameters; callables must remain pure and deterministic. Write frames directly with `frame.write_csv(...)` or `frame.write_parquet(...)` when persistence is needed.
-
-## Plotting Trajectories and Locations
-
-Use `plot_trajectory` for state trajectories, or add location shading to your own time-series plots with `plot_locations`:
-
-```python
-import matplotlib.pyplot as plt
-
-from flowcean.hybrid import plot_locations
-
-fig, ax = plt.subplots()
-ax.plot(frame["t"], frame["x0"], color="black", label="x0")
-plot_locations(trajectory, ax=ax)
-ax.set_xlabel("Time")
-ax.legend()
-```
-
-`plot_trajectory`, `plot_state_space`, and `plot_locations` accept the trajectory, not a sampled frame. `plot_state_space(trajectory, x_dim=0, y_dim=1)` plots two selected continuous state coordinates against each other; time is implicit. Both plotting functions draw each continuous segment separately so no line connects a reset. Event points are hidden by default, including at switches that do not change the state; set `show_event_points=True` on either plot to mark states before and after transitions. On `plot_trajectory`, `show_events` separately controls vertical event indicators and their labels.
-
-`plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass a `location_colors` mapping keyed by `Location` objects when comparing plots; labels alone need not be unique. Shading follows actual segments and event times independently of the sample grid. Instantaneous intermediate locations have no shaded area.
-
-## Benchmarks and Identification
-
-The [benchmark gallery](../examples/hybrid_systems.md) illustrates switching, hysteresis, and resets in reusable models. The [benchmark API](../reference/hybrid.md#flowcean.hybrid.benchmarks) documents factory parameters.
-
-Import HyDRA interfaces such as `HyDRALearner`, `HyDRATraceSchema`, and `HybridDecisionTreeLearner` from `flowcean.hybrid.hydra` to identify flow models and selectors from sampled traces. Selector-specific APIs are also available from `flowcean.hybrid.hydra.selector`.
-
-Unlike native `simulate`, `HyDRAModel.simulate()` returns a sampled Polars frame, not a `HybridTrajectory`. Its `sample_times` or `sample_dt` grid schedules flow selection at every grid point, including the final endpoint. The frame has `t`, `x0`, ..., `flow_id`, and `flow_time` columns, not native location columns; `include_inputs=True` optionally adds `u0`, ... . `flow_time` starts at zero and resets when the selected flow ID changes. Between grid points, the selected flow model stays fixed. This grid-scheduled rollout does not locate within-interval switches or produce transition events.
-
-Follow the [simulated hybrid system identification](../examples/simulated_hybrid_system.md) workflow to learn a two-location affine system from traces. See the [HyDRA API](../reference/hybrid.md#flowcean.hybrid.hydra) for identification interfaces and the [modeling API](../reference/hybrid.md#flowcean.hybrid) for system and trajectory types.
+Follow the [hybrid identification walkthrough](../examples/simulated_hybrid_system.md) for a complete workflow from sampled states and derivatives to learned flows and predictions.

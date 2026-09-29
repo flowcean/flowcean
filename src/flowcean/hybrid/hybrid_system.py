@@ -15,7 +15,22 @@ Derivative = State | float
 
 
 class FlowFunction(Protocol):
-    """Continuous dynamics callback."""
+    """Continuous-state derivative callback.
+
+    Flow, event-surface, and reset callbacks share these inputs: physical time
+    (``t``), the continuous ``state`` vector, effective ``parameters``, an
+    ``input_stream`` returning a vector for a requested time, and the current
+    visit's elapsed ``location_time``.
+
+    Model callbacks may declare any subset using these names, including
+    keyword-only arguments. Named callbacks with ``**kwargs`` receive all five
+    inputs. Four-positional callbacks receive ``(t, state, parameters,
+    input_stream)``; positional-only arguments, ``*args``, and noncanonical
+    required names select that form.
+
+    Callbacks and input streams must be pure and deterministic: integration
+    and derivative sampling can evaluate the same inputs repeatedly.
+    """
 
     def __call__(
         self,
@@ -29,7 +44,11 @@ class FlowFunction(Protocol):
 
 
 class EventSurfaceFunction(Protocol):
-    """Scalar event-surface callback."""
+    """Scalar event-surface callback.
+
+    See [FlowFunction][flowcean.hybrid.FlowFunction] for shared inputs and
+    supported callback signatures.
+    """
 
     def __call__(
         self,
@@ -43,7 +62,11 @@ class EventSurfaceFunction(Protocol):
 
 
 class ResetFunction(Protocol):
-    """State reset callback."""
+    """State reset callback.
+
+    See [FlowFunction][flowcean.hybrid.FlowFunction] for shared inputs and
+    supported callback signatures.
+    """
 
     def __call__(
         self,
@@ -65,7 +88,21 @@ class CrossingDirection(IntEnum):
 
 
 class SurfaceEntryPolicy(StrEnum):
-    """Behavior when a transition surface is zero on location entry."""
+    """Behavior when a transition surface is exactly zero on location entry.
+
+    Entry includes initialization and arrival after a transition. ``ERROR``
+    raises [SurfaceEntryError][flowcean.hybrid.SurfaceEntryError]; ``TRIGGER``
+    applies the transition immediately at the same physical time; ``CONTINUE``
+    begins continuous integration with the surface at zero. For ``CONTINUE``,
+    choose a flow that departs in the direction opposite to the accepted
+    crossing so integration can advance.
+
+    All outgoing surfaces are evaluated before resolving entry. NaN values
+    are rejected first, then zero ``ERROR`` surfaces. Exactly one zero
+    ``TRIGGER`` surface performs a jump; multiple such surfaces raise
+    [AmbiguousTransitionError][flowcean.hybrid.AmbiguousTransitionError].
+    Entry handling repeats at the target after an immediate transition.
+    """
 
     ERROR = "error"
     TRIGGER = "trigger"
@@ -77,7 +114,8 @@ class Flow:
     """Reusable continuous-state derivative law.
 
     Args:
-        fn: Function returning the state derivative.
+        fn: Function returning the state derivative. See
+            [FlowFunction][flowcean.hybrid.FlowFunction] for callback inputs.
             Scalar derivative returns are accepted only for single-state
             systems, both during solver evaluation and when derivatives are
             explicitly sampled from a trajectory.
@@ -100,7 +138,8 @@ class Location:
     Args:
         flow: Flow definition or bare derivative callback active here.
         label: Optional display label.
-        parameters: Location-local parameter map.
+        parameters: Location-local parameters overriding system parameters
+            with the same names. Effective maps are snapshotted for each run.
     """
 
     flow: Flow
@@ -151,11 +190,18 @@ class Location:
 class EventSurface:
     """Scalar event surface defining a simulated transition event.
 
-    Flowcean transitions fire when ``fn`` reaches zero in ``direction``.
-    This is event-surface semantics, not Boolean guard-region semantics.
+    Supply a continuous scalar function whose zero crossings identify the
+    switching boundary. ``RISING`` accepts negative-to-positive crossings,
+    ``FALLING`` positive-to-negative crossings, and ``EITHER`` both. Exact zero
+    on entry follows the transition's
+    [SurfaceEntryPolicy][flowcean.hybrid.SurfaceEntryPolicy]. NaN values raise
+    [InvalidEventSurfaceValueError][flowcean.hybrid.InvalidEventSurfaceValueError];
+    nonzero values, including infinities, retain their sign in entry checks.
+    Continuous crossing detection uses SciPy's event solver.
 
     Args:
-        fn: Root function; transitions when it crosses zero.
+        fn: Root function. See [FlowFunction][flowcean.hybrid.FlowFunction]
+            for callback inputs.
         direction: Crossing direction. Defaults to either direction.
         label: Optional display label.
     """
@@ -177,8 +223,13 @@ class EventSurface:
 class Reset:
     """State reset applied on a transition.
 
+    The callback receives the source location's effective parameters and
+    residence time. Its result must match the continuous-state dimension;
+    a scalar is accepted for a single-state system.
+
     Args:
-        fn: Reset function applied at the event time.
+        fn: Reset function applied at the event time. See
+            [FlowFunction][flowcean.hybrid.FlowFunction] for callback inputs.
         label: Optional display label.
     """
 

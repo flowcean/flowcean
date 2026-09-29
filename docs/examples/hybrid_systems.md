@@ -45,7 +45,7 @@ For target temperature $r(t)$ and hysteresis half-width $b$, a rising zero cross
 
 [![Thermostat: heating switches to cooling at the upper target-band boundary, and cooling switches back at the lower boundary.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="\_blank" rel="noopener" }
 
-<figcaption>The incoming arrow marks the initial heating location. The separate switching boundaries create hysteresis. Open a figure to inspect it at full size.</figcaption>
+<figcaption>The incoming arrow marks the initial heating location. The separate switching boundaries create hysteresis.</figcaption>
 
 </figure>
 
@@ -59,7 +59,7 @@ The illustrated run uses a varying target temperature:
 
 </figure>
 
-See the [`thermostat` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.thermostat.thermostat) for parameter options and the [simulation guide](../user_guide/hybrid_systems.md#simulation) for a runnable example.
+See the [`thermostat` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.thermostat.thermostat) for parameter options and the [simulation guide](../user_guide/hybrid_systems.md#simulate-a-run) for a runnable example.
 
 ## Bouncing Ball
 
@@ -391,7 +391,7 @@ uv run --directory ./examples/hybrid_systems python run.py
 
 The model configurations and input signals are in [`scenarios.py`](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/scenarios.py).
 
-To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#simulation). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
+To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#simulate-a-run). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
 
 ## Export Automaton Diagrams
 
@@ -403,4 +403,4 @@ uv run --directory ./examples/hybrid_systems python export_graphs.py
 
 This writes one DOT file per example under `examples/hybrid_systems/outputs/automata/`. Add `--svg` to render SVG files; this requires Graphviz's `dot` executable on `PATH`.
 
-See [Automaton Diagrams](../user_guide/hybrid_systems.md#automaton-diagrams) for the export API and label options.
+For programmatic export and label options, see [`build_hybrid_system_dot`][flowcean.hybrid.build_hybrid_system_dot] and [`render_dot_svg`][flowcean.hybrid.render_dot_svg].

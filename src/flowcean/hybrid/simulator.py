@@ -107,6 +107,31 @@ def simulate(
     Sampling is a separate operation on the returned trajectory. Callbacks and
     input streams must be pure and deterministic under repeated evaluation.
     Equal endpoints resolve entry transitions without calling the ODE solver.
+    Parameters are snapshotted for every location at the start of the run.
+
+    Args:
+        system: Model to simulate.
+        t_span: Finite start and end times, with end at or after start.
+        x0: Initial continuous state, overriding the model's initial state.
+        location0: Initial location, overriding the model's initial location.
+        input_stream: Function returning a one-dimensional input vector at a
+            requested physical time.
+        initial_location_time: Finite, nonnegative age of the initial visit.
+            Each subsequent transition begins a new visit at age zero.
+        max_jumps: Maximum number of transitions, including same-time chains.
+        rtol: Relative tolerance for SciPy integration.
+        atol: Absolute tolerance for SciPy integration.
+        max_step: Maximum integration step; None uses SciPy's default.
+
+    Returns:
+        The trajectory, retaining its supplied initial condition and ordered
+        continuous segments and events.
+
+    Raises:
+        HybridSimulationError: The transition limit is exceeded or a subclass
+            reports an invalid surface, ambiguous entry, or progress failure.
+        ValueError: Time bounds, initial conditions, or callback outputs are
+            invalid.
     """
     start, end = (float(value) for value in t_span)
     if not np.isfinite(start) or not np.isfinite(end):
