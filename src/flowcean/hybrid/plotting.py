@@ -20,7 +20,7 @@ def _axes(ax: Axes | None) -> Axes:
 
 def _segment_data(segment: ContinuousSegment) -> tuple[np.ndarray, np.ndarray]:
     times = segment._knots
-    return times, segment._solution(times).T
+    return times, np.array([segment.evaluate(float(t)).state for t in times])
 
 
 def _location_color_map(
@@ -48,10 +48,16 @@ def plot_trajectory(
     show_location_labels: bool = False,
     show_events: bool = True,
     show_event_labels: bool = True,
+    show_event_points: bool = False,
     show: bool = False,
     ax: Axes | None = None,
 ) -> Axes:
-    """Draw continuous pieces separately, with explicit reset snapshots."""
+    """Plot state coordinates against time without lines across resets.
+
+    ``show_events`` controls vertical transition indicators and labels;
+    ``show_event_points`` separately marks the states before and after each
+    transition. Markers are off by default, including at continuous switches.
+    """
     ax = _axes(ax)
     dims = (
         list(range(trajectory.initial_state.size))
@@ -70,12 +76,15 @@ def plot_trajectory(
             )
             color = line.get_color()
         if not trajectory.segments:
-            frame = trajectory.sample([trajectory.t_span[0]])
+            point = trajectory.evaluate(trajectory.t_span[0])
             (line,) = ax.plot(
-                frame["t"], frame[f"x{dim}"], marker="o", label=f"x{dim}"
+                [trajectory.t_span[0]],
+                [point.state[dim]],
+                marker="o",
+                label=f"x{dim}",
             )
             color = line.get_color()
-        if show_events:
+        if show_event_points:
             for event in trajectory.events:
                 ax.plot(
                     [event.time, event.time],
@@ -116,17 +125,23 @@ def plot_trajectory(
     return ax
 
 
-def plot_phase(
+def plot_state_space(
     trajectory: HybridTrajectory,
     x_dim: int = 0,
     y_dim: int = 1,
     *,
     location_colors: Mapping[Location, str] | None = None,
     show_location_legend: bool = True,
+    show_event_points: bool = False,
     show: bool = False,
     ax: Axes | None = None,
 ) -> Axes:
-    """Draw each continuous phase segment without connecting reset jumps."""
+    """Plot two selected continuous state coordinates, with time implicit.
+
+    Each continuous segment is drawn separately so reset jumps are not joined.
+    ``show_event_points`` optionally marks states on both sides of transitions;
+    switches without resets are unmarked by default.
+    """
     ax = _axes(ax)
     colors = _location_color_map(trajectory.system.locations, location_colors)
     labeled: set[Location] = set()
@@ -142,27 +157,31 @@ def plot_phase(
             else "_nolegend_",
         )
         labeled.add(location)
-    for event in trajectory.events:
-        for state, location in (
-            (event.state_before, event.transition.source),
-            (event.state_after, event.transition.target),
-        ):
-            ax.plot(
-                [state[x_dim]],
-                [state[y_dim]],
-                linestyle="none",
-                marker="o",
-                color=colors[location],
-                label=display_label(location)
-                if location not in labeled
-                else "_nolegend_",
-            )
-            labeled.add(location)
-    if not trajectory.execution:
-        location = trajectory.initial_location
+    if show_event_points:
+        for event in trajectory.events:
+            for state, location in (
+                (event.state_before, event.transition.source),
+                (event.state_after, event.transition.target),
+            ):
+                ax.plot(
+                    [state[x_dim]],
+                    [state[y_dim]],
+                    linestyle="none",
+                    marker="o",
+                    color=colors[location],
+                    label=display_label(location)
+                    if location not in labeled
+                    else "_nolegend_",
+                )
+                labeled.add(location)
+    if not trajectory.segments and not (
+        show_event_points and trajectory.events
+    ):
+        point = trajectory.evaluate(trajectory.t_span[0])
+        location = point.location
         ax.plot(
-            [trajectory.initial_state[x_dim]],
-            [trajectory.initial_state[y_dim]],
+            [point.state[x_dim]],
+            [point.state[y_dim]],
             marker="o",
             color=colors[location],
             label=display_label(location),

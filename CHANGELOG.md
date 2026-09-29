@@ -11,6 +11,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 - Added a "Why Flowcean?" guide explaining its modeling perspective and relationship to other tools.
 - Added `build_hybrid_system_dot` and optional Graphviz SVG rendering via `render_dot_svg` to `flowcean.hybrid` for visualizing complete hybrid automata without simulation.
 - Added `plot_locations` to `flowcean.hybrid` for reusable location shading on custom time-series plots, including shared-legend support.
+- Added `TrajectoryPoint` and `evaluate(t)` on hybrid trajectories and continuous segments for direct state, location, and residence-time queries without building a sampled frame.
 - Added a wind-driven, six-state turbine benchmark with polynomial aerodynamics, five hysteretic torque-control regimes, pitch control, and generator-power reporting to `flowcean.hybrid.benchmarks`, the hybrid systems gallery, and a standalone simulation example.
 - Added a physical hysteretic buck-converter benchmark with switch-on, diode-conduction, and zero-current modes to `flowcean.hybrid.benchmarks` and the hybrid systems gallery.
 - Exposed DDTIG support types from `flowcean.testing.generator` and `AdaBoost` from `flowcean.sklearn` ([#424](https://github.com/flowcean/flowcean/pull/424)).
@@ -21,6 +22,8 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** Renamed `plot_phase` to `plot_state_space`. Transition endpoint markers are now opt-in via `show_event_points=True` on `plot_trajectory` and `plot_state_space`; `show_events` still controls vertical event indicators on time-series plots.
+- **Breaking:** `wind_turbine_power` now takes rotor speeds and matching location labels rather than a Polars frame; supply turbine parameters explicitly as before.
 - **Breaking:** Hybrid vocabulary now distinguishes locations, flows, and sampled traces. `ContinuousDynamics(flow=...)` becomes `Flow(fn=...)`, `Location.dynamics` becomes `Location.flow`, and `Transition.event` becomes `Transition.event_surface`. `Event.transition` retains the exact transition definition instead of redundant endpoints and label strings. Rename `plot_trace` to `plot_trajectory`, and `mode_cycle(modes=...)` to `location_cycle(location_count=...)`.
 - **Breaking:** HyDRA's learned-mode APIs now use flow terminology: `HyDRAModel.flow_models`, `FlowPredictionResult`, `LearnedFlows`, `FlowLabelingResult`, `HyDRATrace.flow_ids`, selector `flow_models_by_id`, `flow_history`, `seed_flows`, and `flow_t_minus_N` features. Assignment columns are `flow_id`; learned rollouts emit `flow_id` and `flow_time`, distinct from native `location_id` and `location_time`. Discovery callbacks and inspection summaries use flow names as well.
 - **Breaking:** `FlowFunction`, `EventSurfaceFunction`, and `ResetFunction` now describe the complete five-input, keyword-only callback interface, including `location_time`. Callback wrappers still accept canonical argument subsets and four-argument positional callbacks.
@@ -40,7 +43,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 ### Fixed
 
 - HyDRA simulation now reports the selected flow ID at each sample, including the final endpoint, rather than the preceding interval's ID. Elapsed flow times follow these right-continuous assignments without changing the integrated state trajectory.
-- Hybrid plots use continuous segments and explicit reset endpoints, including location visits missed by sampled grids. Samples at event boundaries report the final post-transition state and location.
+- Hybrid plots keep continuous segments separate across reset jumps, including location visits missed by sampled grids. Samples at event boundaries report the final post-transition state and location.
 
 ### Removed
 

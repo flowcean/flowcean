@@ -18,7 +18,7 @@ from .hybrid_system import (
     SurfaceEntryPolicy,
     Transition,
 )
-from .plotting import plot_locations, plot_phase, plot_trajectory
+from .plotting import plot_locations, plot_state_space, plot_trajectory
 from .simulator import (
     AmbiguousTransitionError,
     HybridSimulationError,
@@ -27,7 +27,12 @@ from .simulator import (
     SurfaceEntryError,
     simulate,
 )
-from .trajectory import ContinuousSegment, Event, HybridTrajectory
+from .trajectory import (
+    ContinuousSegment,
+    Event,
+    HybridTrajectory,
+    TrajectoryPoint,
+)
 
 __all__ = (
     "AmbiguousTransitionError",
@@ -51,12 +56,13 @@ __all__ = (
     "SimulationProgressError",
     "SurfaceEntryError",
     "SurfaceEntryPolicy",
+    "TrajectoryPoint",
     "Transition",
     "benchmarks",
     "build_hybrid_system_dot",
     "hydra",
     "plot_locations",
-    "plot_phase",
+    "plot_state_space",
     "plot_trajectory",
     "render_dot_svg",
     "simulate",

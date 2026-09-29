@@ -7,9 +7,9 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 from ._runtime import (
-    _coerce_vector,
+    _BoundFunction,
     _ResidenceClock,
-    _RunContext,
+    _RunBindings,
     ensure_state,
 )
 from .hybrid_system import (
@@ -30,6 +30,20 @@ class HybridSimulationError(RuntimeError):
 class InvalidEventSurfaceValueError(HybridSimulationError):
     """Raised when an event surface returns NaN."""
 
+    def __init__(
+        self,
+        transitions: Sequence[Transition],
+        time: float,
+        *,
+        context: str,
+    ) -> None:
+        super().__init__(
+            f"Event surfaces returned NaN {context} at t={time!r}: {_transition_descriptions(transitions)}."
+        )
+        self.add_note(
+            "An event surface must return a scalar value other than NaN; exact zero denotes the surface."
+        )
+
 
 class SurfaceEntryError(HybridSimulationError):
     """Raised when an ERROR surface is zero on location entry."""
@@ -49,27 +63,19 @@ class _EventFn:
     def __init__(
         self,
         transition: Transition,
-        context: _RunContext,
+        surface: _BoundFunction[float],
         clock: _ResidenceClock,
     ) -> None:
         self.transition = transition
-        self.context = context
+        self.surface = surface
         self.clock = clock
         self.direction = int(transition.event_surface.direction)
         self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
-        value = float(
-            self.context.call(
-                self.transition.event_surface.fn,
-                self.transition.source,
-                t,
-                y,
-                self.clock.age(t),
-            )
-        )
+        value = self.surface(t, y, self.clock.age(t))
         if np.isnan(value):
-            raise _invalid_surface_value_error(
+            raise InvalidEventSurfaceValueError(
                 [self.transition], t, context="during continuous integration"
             )
         return value
@@ -119,7 +125,7 @@ def simulate(
     if initial_location not in system.locations:
         raise ValueError("location0 must be included in system.locations.")
     initial_state = ensure_state(system.initial_state if x0 is None else x0)
-    context = _RunContext(system, input_stream)
+    bindings = _RunBindings(system, input_stream)
     execution: list[ContinuousSegment | Event] = []
     clock = _ResidenceClock(start, float(initial_location_time))
     entry = _settle_location_entries(
@@ -127,7 +133,7 @@ def simulate(
         initial_location,
         initial_state.copy(),
         start,
-        context,
+        bindings,
         first_microstep=0,
         clock=clock,
         jumps=0,
@@ -139,11 +145,12 @@ def simulate(
     while current < end:
         transitions = system.transitions_from(location)
         event_fns = [
-            _EventFn(transition, context, clock) for transition in transitions
+            _EventFn(transition, bindings.surfaces[transition], clock)
+            for transition in transitions
         ]
 
         result = solve_ivp(
-            _wrap_flow(context, location, clock),
+            _wrap_flow(bindings.flows[location], clock),
             (current, end),
             state.copy(),
             events=event_fns or None,
@@ -196,7 +203,7 @@ def simulate(
             transition,
             event_time,
             event_state,
-            context,
+            bindings,
             microstep=0,
             location_time=clock.age(event_time),
         )
@@ -206,7 +213,7 @@ def simulate(
             transition.target,
             state,
             event_time,
-            context,
+            bindings,
             first_microstep=1,
             clock=_ResidenceClock(event_time, 0.0),
             jumps=jumps,
@@ -222,17 +229,18 @@ def simulate(
         initial_location,
         float(initial_location_time),
         tuple(execution),
-        context,
+        bindings,
     )
 
 
 def _wrap_flow(
-    context: _RunContext,
-    location: Location,
+    bound_flow: _BoundFunction[np.ndarray],
     clock: _ResidenceClock,
 ) -> Callable[[float, np.ndarray], np.ndarray]:
+    """Supply a visit's residence clock to a bound flow for SciPy integration."""
+
     def flow(time: float, state: np.ndarray) -> np.ndarray:
-        return context.derivative(location, time, state, clock.age(time))
+        return bound_flow(time, state, clock.age(time))
 
     return flow
 
@@ -266,7 +274,7 @@ def _apply_transition(
     transition: Transition,
     time: float,
     state: np.ndarray,
-    context: _RunContext,
+    bindings: _RunBindings,
     *,
     microstep: int,
     location_time: float,
@@ -275,17 +283,7 @@ def _apply_transition(
     if transition.reset is None:
         after = before.copy()
     else:
-        after = _coerce_vector(
-            context.call(
-                transition.reset.fn,
-                transition.source,
-                time,
-                before.copy(),
-                location_time,
-            ),
-            state_dim=before.size,
-            name="Reset",
-        )
+        after = bindings.resets[transition](time, before.copy(), location_time)
     return after, Event(
         time,
         transition,
@@ -301,28 +299,24 @@ def _settle_location_entries(
     location: Location,
     state: np.ndarray,
     time: float,
-    context: _RunContext,
+    bindings: _RunBindings,
     *,
     first_microstep: int,
     clock: _ResidenceClock,
     jumps: int,
     max_jumps: int,
 ) -> _EntryResult:
-    """Evaluate each entry atomically: NaN, ERROR, ambiguity, then reset."""
+    """Resolve entry policies and apply immediate jumps until entry settles.
+
+    Evaluate all outgoing surfaces first so NaN, ERROR, and ambiguity checks
+    precede any reset.
+    """
     events: list[Event] = []
     microstep = first_microstep
     while True:
         transitions = system.transitions_from(location)
         values = [
-            float(
-                context.call(
-                    transition.event_surface.fn,
-                    location,
-                    time,
-                    state,
-                    clock.age(time),
-                )
-            )
+            bindings.surfaces[transition](time, state, clock.age(time))
             for transition in transitions
         ]
         invalid = [
@@ -331,7 +325,7 @@ def _settle_location_entries(
             if np.isnan(value)
         ]
         if invalid:
-            raise _invalid_surface_value_error(
+            raise InvalidEventSurfaceValueError(
                 invalid,
                 time,
                 context=f"while entering {display_label(location)!r}",
@@ -374,7 +368,7 @@ def _settle_location_entries(
             transition,
             time,
             state,
-            context,
+            bindings,
             microstep=microstep,
             location_time=clock.age(time),
         )
@@ -382,21 +376,6 @@ def _settle_location_entries(
         location = transition.target
         clock = _ResidenceClock(time, 0.0)
         microstep += 1
-
-
-def _invalid_surface_value_error(
-    transitions: Sequence[Transition],
-    time: float,
-    *,
-    context: str,
-) -> InvalidEventSurfaceValueError:
-    error = InvalidEventSurfaceValueError(
-        f"Event surfaces returned NaN {context} at t={time!r}: {_transition_descriptions(transitions)}.",
-    )
-    error.add_note(
-        "An event surface must return a scalar value other than NaN; exact zero denotes the surface."
-    )
-    return error
 
 
 def _transition_descriptions(transitions: Sequence[Transition]) -> str:

@@ -4,7 +4,6 @@ import math
 from itertools import pairwise
 
 import numpy as np
-import polars as pl
 import pytest
 
 from flowcean.hybrid import (
@@ -86,22 +85,11 @@ def test_generator_torque_is_continuous_at_all_four_central_boundaries() -> (
     system = wind_turbine()
     for index, speed in enumerate(BOUNDARIES):
         power = wind_turbine_power(
-            _power_trace([speed, speed], [LABELS[index], LABELS[index + 1]]),
+            [speed / 97, speed / 97],
+            [LABELS[index], LABELS[index + 1]],
             parameters=system.parameters,
         )
         assert power[0] / speed == pytest.approx(power[1] / speed, abs=1e-8)
-
-
-def _power_trace(speeds: list[float], locations: list[str]) -> pl.DataFrame:
-    """Build power fixtures whose samples each record a mode on entry."""
-    return pl.DataFrame(
-        {
-            "x0": np.asarray(speeds, dtype=float) / 97.0,
-            "location_label": pl.Series(
-                "location_label", locations, dtype=pl.String
-            ),
-        }
-    )
 
 
 def test_generator_power_in_watts_for_every_mode() -> None:
@@ -109,7 +97,6 @@ def test_generator_power_in_watts_for_every_mode() -> None:
     a, b, c, d = BOUNDARIES
     k = 2.332287
     rated = 5296610.0
-    trace = _power_trace([65, 80, 105, 120, 125], list(LABELS))
     expected = [
         0.0,
         80 * k * b**2 * (80 - a) / (b - a),
@@ -118,14 +105,22 @@ def test_generator_power_in_watts_for_every_mode() -> None:
         rated,
     ]
     np.testing.assert_allclose(
-        wind_turbine_power(trace, parameters=system.parameters), expected
+        wind_turbine_power(
+            np.array([65, 80, 105, 120, 125]) / 97,
+            LABELS,
+            parameters=system.parameters,
+        ),
+        expected,
     )
 
 
 def test_generator_power_uses_recorded_mode_inside_hysteresis_band() -> None:
     speed = BOUNDARIES[1] + 0.1
-    trace = _power_trace([speed, speed], [LABELS[1], LABELS[2]])
-    power = wind_turbine_power(trace, parameters=wind_turbine().parameters)
+    power = wind_turbine_power(
+        [speed / 97, speed / 97],
+        [LABELS[1], LABELS[2]],
+        parameters=wind_turbine().parameters,
+    )
     assert power[0] != pytest.approx(power[1])
     assert power[1] == pytest.approx(2.332287 * speed**3)
 
@@ -133,17 +128,18 @@ def test_generator_power_uses_recorded_mode_inside_hysteresis_band() -> None:
 def test_generator_power_uses_supplied_parameters() -> None:
     parameters = dict(wind_turbine().parameters)
     parameters.update(generator_ratio=95.0, rated_mechanical_power=6e6)
-    trace = _power_trace([105, 125], [LABELS[2], LABELS[4]])
     np.testing.assert_allclose(
-        wind_turbine_power(trace, parameters=parameters),
+        wind_turbine_power(
+            [105 / 97, 125 / 97],
+            [LABELS[2], LABELS[4]],
+            parameters=parameters,
+        ),
         [2.332287 * (105 * 95 / 97) ** 3, 6e6],
     )
 
 
 def test_generator_power_handles_empty_trace() -> None:
-    power = wind_turbine_power(
-        _power_trace([], []), parameters=wind_turbine().parameters
-    )
+    power = wind_turbine_power([], [], parameters=wind_turbine().parameters)
     assert power.shape == (0,)
 
 
@@ -151,7 +147,27 @@ def test_generator_power_handles_empty_trace() -> None:
 def test_generator_power_rejects_invalid_speed(speed: float) -> None:
     with pytest.raises(ValueError, match="finite and positive"):
         wind_turbine_power(
-            _power_trace([speed], [LABELS[4]]),
+            [speed / 97],
+            [LABELS[4]],
+            parameters=wind_turbine().parameters,
+        )
+
+
+@pytest.mark.parametrize("rotors", [[1.0, 2.0], np.array([[1.0]])])
+def test_generator_power_rejects_invalid_shape_or_length(
+    rotors: list[float] | np.ndarray,
+) -> None:
+    with pytest.raises(ValueError, match=r"1D|matching lengths"):
+        wind_turbine_power(
+            rotors, [LABELS[0]], parameters=wind_turbine().parameters
+        )
+
+
+def test_generator_power_rejects_non_numeric_speeds() -> None:
+    with pytest.raises(ValueError, match="numeric"):
+        wind_turbine_power(
+            ["bad"],  # pyright: ignore[reportArgumentType]
+            [LABELS[0]],
             parameters=wind_turbine().parameters,
         )
 
@@ -159,7 +175,8 @@ def test_generator_power_rejects_invalid_speed(speed: float) -> None:
 def test_generator_power_rejects_unknown_location() -> None:
     with pytest.raises(ValueError, match="unknown wind-turbine location"):
         wind_turbine_power(
-            _power_trace([125], ["unknown"]),
+            [125 / 97],
+            ["unknown"],
             parameters=wind_turbine().parameters,
         )
 
@@ -226,7 +243,7 @@ def test_mode_rotor_acceleration_matches_reported_power(
     cq, _ = aerodynamic_coefficients(state[0] * 63 / wind, state[3])
     aerodynamic_torque = 0.5 * 1.225 * math.pi * 63**3 * wind**2 * cq
     power = wind_turbine_power(
-        _power_trace([speed], [label]), parameters=system.parameters
+        [speed / 97], [label], parameters=system.parameters
     )[0]
     assert system.parameters["rotor_inertia"] * acceleration == pytest.approx(
         aerodynamic_torque - power / state[0], rel=1e-12, abs=1e-8
@@ -447,7 +464,11 @@ def test_nominal_trace_finite_and_physically_bounded(stream) -> None:
     assert np.max(np.abs(states[:, 1])) < 1.0
     assert np.max(np.abs(states[:, 3])) < math.radians(20)
     assert len(trace.events) < 256
-    power = wind_turbine_power(frame, parameters=system.parameters)
+    power = wind_turbine_power(
+        frame["x0"].to_numpy(),
+        frame["location_label"].to_list(),
+        parameters=system.parameters,
+    )
     assert np.isfinite(power).all()
     assert np.all(power >= 0)
     labels = frame["location_label"].to_numpy()

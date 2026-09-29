@@ -15,6 +15,11 @@ from flowcean.hybrid.benchmarks import wind_turbine_power
 from flowcean.hybrid.hybrid_system import display_label
 
 
+def _caption(label: str) -> str:
+    """Present a model label as words without changing its identity."""
+    return label.replace("_", " ")
+
+
 def main() -> None:
     # The default rotor is already turning; this is not startup from rest.
     system = WIND_TURBINE.factory()
@@ -27,10 +32,10 @@ def main() -> None:
     frame = trajectory.sample(
         dt=0.1, include_inputs=True, include_location_label=True
     )
-    print(f"Initial mode: {frame['location_label'][0].replace('_', ' ')}")
+    print(f"Initial mode: {_caption(frame['location_label'][0])}")
     for event in trajectory.events:
-        source = display_label(event.transition.source).replace("_", " ")
-        target = display_label(event.transition.target).replace("_", " ")
+        source = _caption(display_label(event.transition.source))
+        target = _caption(display_label(event.transition.target))
         print(f"t = {event.time:6.2f} s: {source} -> {target}")
 
     # State columns: rotor speed, tower displacement/velocity, pitch/rate,
@@ -42,7 +47,12 @@ def main() -> None:
         ("Tower displacement (m)", frame["x1"].to_numpy()),
         (
             "Generator mechanical\npower (MW)",
-            wind_turbine_power(frame, parameters=system.parameters) / 1e6,
+            wind_turbine_power(
+                frame["x0"].to_numpy(),
+                frame["location_label"].to_list(),
+                parameters=system.parameters,
+            )
+            / 1e6,
         ),
     )
     fig, axes = plt.subplots(
@@ -70,7 +80,7 @@ def main() -> None:
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(
         handles,
-        [label.replace("_", " ").capitalize() for label in labels],
+        [_caption(label).capitalize() for label in labels],
         loc="outside lower center",
         ncols=2,
         title="Controller mode",

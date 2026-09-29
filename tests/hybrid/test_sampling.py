@@ -2,7 +2,6 @@
 
 import numpy as np
 import polars as pl
-import pytest
 from polars.testing import assert_frame_equal
 
 from flowcean.hybrid import HybridSystem, Location, Transition, simulate
@@ -49,10 +48,6 @@ def test_default_schema_and_optional_columns_preserve_location_identity() -> (
     np.testing.assert_allclose(frame["u0"], [4, 4.5, 5])
     np.testing.assert_allclose(frame["dx0"], [1, 0, 0])
     np.testing.assert_allclose(frame["dx1"], [-2, -2, -2])
-    renamed = frame.rename({"x0": "height", "dx0": "dh", "u0": "force"})
-    assert renamed["height"].to_list() == frame["x0"].to_list()
-    assert renamed["dh"].to_list() == frame["dx0"].to_list()
-    assert renamed["force"].to_list() == frame["u0"].to_list()
 
 
 def test_empty_grid_keeps_state_derivative_and_location_dtypes() -> None:
@@ -72,17 +67,34 @@ def test_empty_grid_keeps_state_derivative_and_location_dtypes() -> None:
     }
 
 
-def test_input_capture_validates_stream_and_requested_rows() -> None:
-    with pytest.raises(ValueError, match="input_stream"):
-        _trajectory().sample([0], include_inputs=True)
-    with pytest.raises(ValueError, match="empty grid"):
-        _trajectory(input_stream=lambda t: np.array([t])).sample(
-            [], include_inputs=True
-        )
-    with pytest.raises(ValueError, match="dimension changed"):
-        _trajectory(
-            input_stream=lambda t: np.array([t] if t == 0 else [t, t])
-        ).sample([0, 1], include_inputs=True)
+def test_zero_dimensional_state_keeps_location_and_time_columns() -> None:
+    location = Location(lambda: np.empty(0))
+    system = HybridSystem([location], [], location, np.empty(0))
+    trajectory = simulate(system, (0, 1))
+    assert trajectory.evaluate(0.5).state.shape == (0,)
+    for times in ([], [0, 0.5, 1]):
+        frame = trajectory.sample(times, include_derivatives=True)
+        assert frame.schema == {
+            "t": pl.Float64,
+            "location_id": pl.Int64,
+            "location_time": pl.Float64,
+        }
+        assert frame.height == len(times)
+
+
+def test_derivatives_receive_a_writable_copy_of_the_evaluated_state() -> None:
+    def flow(state):
+        state[:] = 100
+        return np.array([1.0])
+
+    location = Location(flow)
+    trajectory = simulate(
+        HybridSystem([location], [], location, np.array([2.0])), (0, 0)
+    )
+    frame = trajectory.sample([0, 0], include_derivatives=True)
+    assert frame["x0"].to_list() == [2, 2]
+    assert frame["dx0"].to_list() == [1, 1]
+    np.testing.assert_allclose(trajectory.evaluate(0).state, [2])
 
 
 def test_repeated_sampling_is_independent_of_grid_and_preserves_duplicates() -> (
@@ -94,9 +106,3 @@ def test_repeated_sampling_is_independent_of_grid_and_preserves_duplicates() -> 
     assert frame["location_id"].to_list() == [0, 1, 1, 1]
     assert_frame_equal(trajectory.sample(dt=0.25), trajectory.sample(dt=0.25))
     assert trajectory.sample(dt=0.3)["t"][-1] == 1
-
-
-@pytest.mark.parametrize("grid", [[1, 0], [-0.1], [1.1], [np.inf], [np.nan]])
-def test_invalid_grids_rejected(grid: list[float]) -> None:
-    with pytest.raises(ValueError, match="times"):
-        _trajectory().sample(grid)

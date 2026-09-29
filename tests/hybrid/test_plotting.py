@@ -11,7 +11,7 @@ from flowcean.hybrid import (
     SurfaceEntryPolicy,
     Transition,
     plot_locations,
-    plot_phase,
+    plot_state_space,
     plot_trajectory,
     simulate,
 )
@@ -58,8 +58,9 @@ def test_plot_trajectory_breaks_reset_and_shades_actual_segments() -> None:
         lines = [
             line
             for line in ax.lines
-            if line.get_label() == "x0" or line.get_label() == "_nolegend_"
+            if np.ptp(np.asarray(line.get_xdata(), dtype=float)) > 0
         ]
+        assert not any(line.get_marker() == "o" for line in ax.lines)
         assert len(trajectory.segments) == 2
         np.testing.assert_allclose(_patch_spans(ax), [(0.0, 0.5), (0.5, 1.0)])
         assert np.asarray(lines[0].get_xdata())[-1] == pytest.approx(0.5)
@@ -100,16 +101,94 @@ def test_locations_ignore_zero_duration_modes_and_key_colors_by_identity() -> (
         plt.close(fig)
 
 
-def test_phase_plot_marks_both_sides_of_reset_without_linking() -> None:
+def test_state_space_plot_separates_reset_without_default_markers() -> None:
     trajectory = simulate(_system()[0], (0.0, 1.0))
     fig, ax = plt.subplots()
     try:
-        plot_phase(trajectory, ax=ax)
-        assert len(ax.lines) >= 4
-        continuous = ax.lines[:2]
-        assert all(line.get_linestyle() != "None" for line in continuous)
+        plot_state_space(trajectory, ax=ax)
+        continuous = [
+            line for line in ax.lines if line.get_linestyle() != "None"
+        ]
+        assert len(continuous) == 2
+        assert all(line.get_marker() == "None" for line in ax.lines)
         assert np.asarray(continuous[0].get_xdata())[-1] == pytest.approx(0.5)
         assert np.asarray(continuous[1].get_xdata())[0] == pytest.approx(3)
+        assert ax.get_xlabel() == "x0"
+        assert ax.get_ylabel() == "x1"
+    finally:
+        plt.close(fig)
+
+
+def test_event_points_are_opt_in_independently_of_event_indicators() -> None:
+    trajectory = simulate(_system()[0], (0.0, 1.0))
+    fig, (time_ax, state_ax) = plt.subplots(1, 2)
+    try:
+        plot_trajectory(
+            trajectory,
+            dims=[0],
+            show_events=False,
+            show_event_points=True,
+            ax=time_ax,
+        )
+        assert not time_ax.texts
+        assert not any(
+            line.get_xdata()[0] == line.get_xdata()[-1]
+            and line.get_linestyle() != "None"
+            for line in time_ax.lines
+        )
+        dots = [line for line in time_ax.lines if line.get_marker() == "o"]
+        assert any(np.allclose(line.get_ydata(), [0.5, 3.0]) for line in dots)
+
+        plot_state_space(trajectory, show_event_points=True, ax=state_ax)
+        dots = [line for line in state_ax.lines if line.get_marker() == "o"]
+        assert any(np.isclose(line.get_xdata()[0], 0.5) for line in dots)
+        assert any(np.isclose(line.get_xdata()[0], 3.0) for line in dots)
+    finally:
+        plt.close(fig)
+
+
+def test_zero_span_displays_settled_state_without_sampling() -> None:
+    first = Location(lambda: np.array([0.0, 0.0]), label="first")
+    second = Location(lambda: np.array([0.0, 0.0]), label="second")
+    system = HybridSystem(
+        [first, second],
+        [
+            Transition(
+                first,
+                second,
+                lambda state: state[0],
+                lambda: np.array([2.0, 3.0]),
+                entry_policy=SurfaceEntryPolicy.TRIGGER,
+            )
+        ],
+        first,
+        np.array([0.0, 0.0]),
+    )
+    trajectory = simulate(system, (0.0, 0.0))
+    fig, (time_ax, state_ax) = plt.subplots(1, 2)
+    try:
+        plot_trajectory(trajectory, dims=[0], show_events=False, ax=time_ax)
+        plot_state_space(trajectory, ax=state_ax)
+        assert list(time_ax.lines[0].get_ydata()) == [2.0]
+        assert list(state_ax.lines[0].get_xdata()) == [2.0]
+        assert list(state_ax.lines[0].get_ydata()) == [3.0]
+    finally:
+        plt.close(fig)
+
+
+def test_isolated_zero_span_execution_plots_one_settled_point() -> None:
+    location = Location(lambda: np.array([0.0, 0.0]), label="still")
+    system = HybridSystem([location], [], location, np.array([1.0, 2.0]))
+    trajectory = simulate(system, (0.0, 0.0))
+    fig, (time_ax, state_ax) = plt.subplots(1, 2)
+    try:
+        plot_trajectory(trajectory, dims=[0], ax=time_ax)
+        plot_state_space(trajectory, ax=state_ax)
+        assert len(time_ax.lines) == 1
+        assert list(time_ax.lines[0].get_ydata()) == [1.0]
+        assert len(state_ax.lines) == 1
+        assert list(state_ax.lines[0].get_xdata()) == [1.0]
+        assert list(state_ax.lines[0].get_ydata()) == [2.0]
     finally:
         plt.close(fig)
 

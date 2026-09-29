@@ -12,6 +12,8 @@ This page covers the public API of `flowcean.hybrid` and its subpackages:
 
 See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.
 
+<!-- prettier-ignore-start -->
+<!-- Mkdocstrings option blocks require indentation that Prettier removes. -->
 ::: flowcean.hybrid
     options:
       heading: Modeling and simulation
@@ -86,3 +88,4 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading: HyDRA identification
       toc_label: HyDRA identification
+<!-- prettier-ignore-end -->

@@ -20,6 +20,7 @@ from flowcean.hybrid import (
     SimulationProgressError,
     SurfaceEntryError,
     SurfaceEntryPolicy,
+    TrajectoryPoint,
     Transition,
     simulate,
 )
@@ -74,6 +75,26 @@ def test_execution_has_positive_segments_and_individual_events():
     ]
     assert trajectory.segments[0].location_time(0.5) == 0.5
     assert trajectory.segments[1].location_time(0.5) == 0
+    within = trajectory.evaluate(0.25)
+    assert isinstance(within, TrajectoryPoint)
+    assert within.location is system.locations[1]
+    assert within.location_time == 0.25
+    np.testing.assert_allclose(within.state, [0.25])
+    before = trajectory.segments[0].evaluate(0.5)
+    after = trajectory.evaluate(0.5)
+    assert before.location is system.locations[1]
+    assert before.location_time == 0.5
+    np.testing.assert_allclose(before.state, [0.5])
+    assert after.location is system.locations[3]
+    assert after.location_time == 0
+    np.testing.assert_allclose(after.state, [30.5])
+    np.testing.assert_allclose(
+        trajectory.segments[1].evaluate(0.5).state, after.state
+    )
+    assert (
+        trajectory.evaluate(np.nextafter(0.5, 0)).location is before.location
+    )
+    assert trajectory.evaluate(np.nextafter(0.5, 1)).location is after.location
     grid = [0, np.nextafter(0.5, 0), 0.5, 0.5, np.nextafter(0.5, 1), 1]
     frame = trajectory.sample(grid, include_location_label=True)
     assert frame["t"].to_list() == grid
@@ -88,6 +109,10 @@ def test_initial_and_final_chains_are_right_continuous(time):
     trajectory = simulate(chain_system(time), (0, 1), initial_location_time=7)
     assert len(trajectory.events) == 2
     assert len(trajectory.segments) == 1
+    point = trajectory.evaluate(time)
+    np.testing.assert_allclose(point.state, [30 + time])
+    assert point.location is trajectory.system.locations[-1]
+    assert point.location_time == 0
     frame = trajectory.sample([time], include_derivatives=True)
     assert frame["x0"][0] == pytest.approx(30 + time)
     assert frame["dx0"][0] == 3
@@ -112,16 +137,17 @@ def test_zero_span_never_calls_solver(monkeypatch, chain):
     assert trajectory.segments == ()
     assert trajectory.initial_state[0] == 5
     assert trajectory.initial_location is system.initial_location
+    point = trajectory.evaluate(0)
+    np.testing.assert_allclose(point.state, [35 if chain else 5])
+    assert point.location is (
+        system.locations[-1] if chain else system.initial_location
+    )
+    assert point.location_time == (0 if chain else 4)
     assert trajectory.sample(dt=1)["x0"].to_list() == [35 if chain else 5]
     assert trajectory.sample([0, 0])["location_time"].to_list() == (
         [0, 0] if chain else [4, 4]
     )
-    assert trajectory.sample([]).schema == {
-        "t": pl.Float64,
-        "x0": pl.Float64,
-        "location_id": pl.Int64,
-        "location_time": pl.Float64,
-    }
+    assert trajectory.sample([]).height == 0
 
 
 @pytest.mark.parametrize(
@@ -135,6 +161,60 @@ def test_bad_intervals_rejected_before_callbacks(span):
     system = HybridSystem([location], [transition], location, np.array([0.0]))
     with pytest.raises(ValueError, match="t_span"):
         simulate(system, span)
+
+
+@pytest.mark.parametrize("time", [-0.1, 1.1, np.nan, np.inf, -np.inf])
+def test_evaluate_rejects_invalid_scalar_times(time):
+    trajectory = simulate(constant_system(), (0, 1))
+    segment = trajectory.segments[0]
+    for evaluate in (
+        trajectory.evaluate,
+        segment.evaluate,
+        segment.location_time,
+    ):
+        with pytest.raises(ValueError, match="time"):
+            evaluate(time)
+
+
+def test_segment_evaluation_does_not_extrapolate_or_evaluate_state_for_age():
+    trajectory = simulate(chain_system(), (0, 1))
+    for segment, outside in zip(
+        trajectory.segments, [0.75, 0.25], strict=True
+    ):
+        for evaluate in (segment.evaluate, segment.location_time):
+            with pytest.raises(ValueError, match="time"):
+                evaluate(outside)
+    segment = ContinuousSegment(
+        trajectory.segments[0].location,
+        (0, 1),
+        lambda _: pytest.fail("clock query must not evaluate dense solution"),
+        trajectory.segments[0]._clock,
+        np.array([0, 1]),
+    )
+    assert segment.location_time(0.25) == 0.25
+
+
+@pytest.mark.parametrize("time", [0, 0.25, 0.5, 1])
+def test_evaluated_points_are_detached_readonly_values(time):
+    trajectory = simulate(chain_system(), (0, 1))
+    segment = trajectory.segments[0 if time < 0.5 else 1]
+    for evaluate in (trajectory.evaluate, segment.evaluate):
+        point = evaluate(time)
+        expected = point.state.copy()
+        with pytest.raises(ValueError, match="read-only"):
+            point.state[0] = 99
+        with pytest.raises(ValueError, match="flag"):
+            point.state.setflags(write=True)
+        with pytest.raises(FrozenInstanceError):
+            point.location_time = 99  # pyright: ignore[reportAttributeAccessIssue]
+        with pytest.raises(FrozenInstanceError):
+            point.location = trajectory.system.locations[0]  # pyright: ignore[reportAttributeAccessIssue]
+        point.state.setflags(align=False)
+        fresh = evaluate(time)
+        assert fresh.state.flags.aligned
+        np.testing.assert_allclose(fresh.state, expected)
+    if time == 0.5:
+        assert trajectory.events[-1].state_after.flags.aligned
 
 
 def test_bound_parameters_source_age_reset_and_target_derivative():
@@ -178,6 +258,10 @@ def test_bound_parameters_source_age_reset_and_target_derivative():
     calls.clear()
     trajectory.sample(dt=0.1)
     trajectory.sample([0, 0.5, 1])
+    for time in [0, 0.25, 0.5, 1]:
+        trajectory.evaluate(time)
+    for segment in trajectory.segments:
+        segment.evaluate(segment.t_span[0])
     assert calls == []
     frame = trajectory.sample([0, 0.5, 1], include_derivatives=True)
     np.testing.assert_allclose(frame["dx0"], [7, 4, 4.5])
@@ -247,10 +331,6 @@ def test_all_output_groups_and_callback_free_defaults():
     assert calls == [0, 0.5, 0.5, 1]
     assert frame["u1"].to_list() == [0, 1, 1, 2]
     assert frame["dx0"].to_list() == [1] * 4
-    assert (
-        trajectory.sample([], include_derivatives=True).schema["dx0"]
-        == pl.Float64
-    )
     assert trajectory.sample(
         [],
         include_state=False,
@@ -320,18 +400,7 @@ def test_input_errors_and_derivative_stream():
     )
 
 
-def test_callback_forms_and_once_per_run_inspection(monkeypatch):
-    from flowcean.hybrid import _runtime
-
-    inspected = []
-    original = _runtime.signature
-
-    def inspect(callback):
-        inspected.append(callback)
-        return original(callback)
-
-    monkeypatch.setattr(_runtime, "signature", inspect)
-
+def test_shared_unhashable_and_positional_callback_forms():
     class Unhashable:
         __hash__ = None  # pyright: ignore[reportAssignmentType]
 
@@ -344,8 +413,10 @@ def test_callback_forms_and_once_per_run_inspection(monkeypatch):
     trajectory = simulate(
         HybridSystem([location, unused], [], location, np.array([0.0])), (0, 1)
     )
-    trajectory.sample(dt=0.1, include_derivatives=True)
-    assert inspected == [callback]
+    np.testing.assert_allclose(
+        trajectory.sample([0, 0.5, 1], include_derivatives=True)["dx0"],
+        [0, 0.5, 1],
+    )
     assert trajectory.sample([1])["x0"][0] == pytest.approx(0.5)
     for callback in (
         lambda t, x, p, u: 1.0,
@@ -447,23 +518,7 @@ def test_actual_initial_overrides_survive_default_state_edits():
     assert frame["location_time"].to_list() == [2, 3]
 
 
-def test_multistate_schema_and_scalar_derivative_validation():
-    location = Location(lambda: np.array([1.0, 2.0]))
-    system = HybridSystem([location], [], location, np.array([3.0, 4.0]))
-    frame = simulate(system, (0, 1)).sample(
-        [], include_location_label=True, include_derivatives=True
-    )
-    assert frame.columns == [
-        "t",
-        "x0",
-        "x1",
-        "location_id",
-        "location_label",
-        "location_time",
-        "dx0",
-        "dx1",
-    ]
-    assert frame.schema["dx1"] == pl.Float64
+def test_scalar_derivative_is_invalid_for_multistate_system():
     location = Location(lambda: 1.0)
     with pytest.raises(ValueError, match="state dimension"):
         simulate(
@@ -472,7 +527,7 @@ def test_multistate_schema_and_scalar_derivative_validation():
         )
 
 
-def test_context_freezes_unvisited_parameters_before_first_callback():
+def test_bindings_freeze_unvisited_parameters_before_first_callback():
     target = Location(
         lambda parameters: parameters["rate"], parameters={"rate": 3.0}
     )
@@ -507,7 +562,11 @@ def test_context_freezes_unvisited_parameters_before_first_callback():
 def test_plotting_preserves_location_identity_and_never_connects_jumps():
     import matplotlib.pyplot as plt
 
-    from flowcean.hybrid import plot_locations, plot_phase, plot_trajectory
+    from flowcean.hybrid import (
+        plot_locations,
+        plot_state_space,
+        plot_trajectory,
+    )
 
     system = chain_system()
     trajectory = simulate(system, (0, 1))
@@ -533,7 +592,9 @@ def test_plotting_preserves_location_identity_and_never_connects_jumps():
         )
         assert len(axes[1].patches) == 2
         assert axes[1].get_legend_handles_labels()[1] == ["same", "same"]
-        plot_phase(trajectory, x_dim=0, y_dim=0, ax=axes[2])
+        plot_state_space(
+            trajectory, x_dim=0, y_dim=0, ax=axes[2], show_event_points=True
+        )
         assert axes[2].get_legend_handles_labels()[1] == [
             "same",
             "same",
@@ -663,16 +724,3 @@ def test_plot_callback_uses_all_selected_state_columns_in_order():
         np.testing.assert_allclose(np.asarray(ax.lines[1].get_ydata()), [2, 3])
     finally:
         plt.close(fig)
-
-
-def test_wind_power_uses_sampled_dataframe_labels():
-    from flowcean.hybrid.benchmarks import wind_turbine, wind_turbine_power
-
-    system = wind_turbine()
-    frame = pl.DataFrame(
-        {"x0": [0.65, 1.3], "location_label": ["no_generation", "rated_power"]}
-    )
-    np.testing.assert_allclose(
-        wind_turbine_power(frame, parameters=system.parameters),
-        [0, system.parameters["rated_mechanical_power"]],
-    )

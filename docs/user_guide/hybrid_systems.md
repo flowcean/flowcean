@@ -22,7 +22,7 @@ The [thermostat benchmark](../examples/hybrid_systems.md#thermostat) has one con
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Thermostat with heating and cooling locations, switching at the upper and lower target-band boundaries.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="_blank" rel="noopener" }
+[![Thermostat with heating and cooling locations, switching at the upper and lower target-band boundaries.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Boxes represent locations; arrows represent transitions. The incoming arrow marks the initial location. Open a figure to inspect it at full size.</figcaption>
 
@@ -49,11 +49,11 @@ trajectory = simulate(
 frame = trajectory.sample(dt=0.02, include_location_label=True)
 ```
 
-`simulate` returns a `HybridTrajectory`: a hybrid execution independent of any sampling grid. Its ordered `execution` contains positive-duration `segments` and individual `events`, including every zero-duration microstep. `sample` produces a Polars frame at explicitly requested times.
+`simulate` returns a `HybridTrajectory`: a hybrid execution independent of any sampling grid. Its ordered `execution` contains continuous `segments` and individual `events`, including every zero-duration microstep. Query a single physical time with `trajectory.evaluate(t)` for a `TrajectoryPoint` holding the state, active location, and residence time. `sample` builds a Polars frame at explicitly requested times.
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="_blank" rel="noopener" }
+[![Simulated thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Temperature remains continuous when the location changes, but its derivative changes. Shading identifies the active location.</figcaption>
 
@@ -183,11 +183,11 @@ Residence-time surfaces retain zero-crossing semantics. For the timeout above, s
 
 Suppose a transition from A to B resets the state onto an event surface in B, which immediately causes a transition from B to C:
 
-| Record | Physical time | Microstep | Location change | Recorded state |
-| --- | ---: | ---: | --- | --- |
-| First event | 1.0 | 0 | A -> B | `state_before` in A and `state_after` in B |
-| Second event | 1.0 | 1 | B -> C | `state_before` in B and `state_after` in C |
-| Sampled row | 1.0 | - | C | Final state after the complete chain |
+| Record       | Physical time | Microstep | Location change | Recorded state                             |
+| ------------ | ------------: | --------: | --------------- | ------------------------------------------ |
+| First event  |           1.0 |         0 | A -> B          | `state_before` in A and `state_after` in B |
+| Second event |           1.0 |         1 | B -> C          | `state_before` in B and `state_after` in C |
+| Sampled row  |           1.0 |         - | C               | Final state after the complete chain       |
 
 Every transition in the chain counts toward `max_jumps`. Simulation raises an error if that limit is exceeded.
 
@@ -197,7 +197,7 @@ After a continuous crossing, integration restarts at the exact event time with t
 
 A `HybridTrajectory` retains its original `initial_state`, `initial_location`, `initial_location_time`, and `t_span`. `execution` interleaves continuous segments and events in order; `segments` and `events` provide filtered views. Every positive-duration segment has its own `location`, `t_span`, and `location_time(time)` residence clock. Each event retains its exact `Transition` object; access its locations through `event.transition.source` and `event.transition.target`, and its surface and reset through `event.transition.event_surface` and `event.transition.reset`. The event's `state_before` and `state_after` snapshots, like the initial state, are detached and read-only. Display labels can repeat; object identity distinguishes locations and integer `location_id` values follow system declaration order.
 
-Sampled rows are right-continuous: at a jump they report the final target location and post-reset state after the complete immediate chain, even at the start or end of `t_span`. Intermediate zero-duration visits remain in `events` but produce no continuous segment or shaded interval. Each event's `location_time_before` records its source visit's age.
+`trajectory.evaluate(t)` returns a `TrajectoryPoint(state, location, location_time)` at any time in `t_span`. At an exact event time it returns the final target and post-reset state after the complete same-time chain, even at the start or end of the run. Query `segment.evaluate(t)` on a segment's own `t_span` for its continuous state instead: its endpoint is the state before a jump. These point queries work without constructing a frame; use `trajectory.sample(...)` when you need a table of values. Intermediate zero-duration visits remain in `events` but produce no continuous segment or shaded interval. Each event's `location_time_before` records its source visit's age.
 
 Call `trajectory.sample(times)` or `trajectory.sample(dt=0.02)`; exactly one grid is required. Explicit `times` must be finite, non-descending, and inside `t_span`. Duplicates and empty grids are retained, and generators work. A positive finite `dt` produces a grid including the final endpoint, even when it is not a multiple of `dt`. Sampling does not change event detection; off-grid transitions remain in `trajectory.events`. Equal `t_span` endpoints are valid for entry-only executions.
 
@@ -205,7 +205,7 @@ Default frame columns are `t`, `x0`, `x1`, ... (one per state dimension), `locat
 
 Default sampling reevaluates no callbacks. Input sampling requires an input stream and a nonempty grid (input width cannot be inferred from zero rows). Derivative sampling explicitly reevaluates dynamics at every requested time using the active post-chain state and frozen effective parameters; callables must remain pure and deterministic. Write frames directly with `frame.write_csv(...)` or `frame.write_parquet(...)` when persistence is needed.
 
-## Plotting Locations
+## Plotting Trajectories and Locations
 
 Use `plot_trajectory` for state trajectories, or add location shading to your own time-series plots with `plot_locations`:
 
@@ -221,9 +221,9 @@ ax.set_xlabel("Time")
 ax.legend()
 ```
 
-`plot_trajectory`, `plot_phase`, and `plot_locations` accept the trajectory, not a sampled frame. `plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass a `location_colors` mapping keyed by `Location` objects when comparing plots; labels alone need not be unique.
+`plot_trajectory`, `plot_state_space`, and `plot_locations` accept the trajectory, not a sampled frame. `plot_state_space(trajectory, x_dim=0, y_dim=1)` plots two selected continuous state coordinates against each other; time is implicit. Both plotting functions draw each continuous segment separately so no line connects a reset. Event points are hidden by default, including at switches that do not change the state; set `show_event_points=True` on either plot to mark states before and after transitions. On `plot_trajectory`, `show_events` separately controls vertical event indicators and their labels.
 
-Shading follows the actual positive-duration segments and their event times, independently of the sample grid. Reset endpoints are drawn explicitly rather than connected through a continuous line. Instantaneous intermediate locations have no shaded area.
+`plot_locations` does not change axis labels or create a legend. Its patches carry location labels, so you can use `ax.legend()` or build a shared figure legend from `ax.get_legend_handles_labels()`. Pass a `location_colors` mapping keyed by `Location` objects when comparing plots; labels alone need not be unique. Shading follows actual segments and event times independently of the sample grid. Instantaneous intermediate locations have no shaded area.
 
 ## Benchmarks and Identification
 

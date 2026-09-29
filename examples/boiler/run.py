@@ -136,13 +136,9 @@ def main() -> None:
         },
     )
 
-    trajectory = simulate(system, t_span=(times[0], times[-1]))
-    frame = trajectory.sample(times)
-    data = pl.DataFrame(
-        {
-            "temperature": frame["x0"].to_numpy(),
-            "target": targets,
-        },
+    samples = simulate(system, t_span=(times[0], times[-1])).sample(times)
+    data = samples.select(pl.col("x0").alias("temperature")).with_columns(
+        pl.Series("target", targets)
     )
 
     environment = DataFrame(data)
