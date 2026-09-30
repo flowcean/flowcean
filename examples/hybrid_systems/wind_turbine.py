@@ -12,43 +12,55 @@ from scenarios import WIND_TURBINE
 
 from flowcean.hybrid import plot_locations, simulate
 from flowcean.hybrid.benchmarks import wind_turbine_power
+from flowcean.hybrid.hybrid_system import display_label
+
+
+def _caption(label: str) -> str:
+    """Present a model label as words without changing its identity."""
+    return label.replace("_", " ")
 
 
 def main() -> None:
     # The default rotor is already turning; this is not startup from rest.
     system = WIND_TURBINE.factory()
-    trace = simulate(
+    trajectory = simulate(
         system,
         t_span=WIND_TURBINE.t_span,
         input_stream=WIND_TURBINE.input_stream,
-        sample_dt=0.1,
     )
 
-    print(f"Initial mode: {trace.location[0].replace('_', ' ')}")
-    for event in trace.events:
-        source = event.source_location.replace("_", " ")
-        target = event.target_location.replace("_", " ")
+    frame = trajectory.sample(
+        dt=0.1, include_inputs=True, include_location_label=True
+    )
+    print(f"Initial mode: {_caption(frame['location_label'][0])}")
+    for event in trajectory.events:
+        source = _caption(display_label(event.transition.source))
+        target = _caption(display_label(event.transition.target))
         print(f"t = {event.time:6.2f} s: {source} -> {target}")
 
     # State columns: rotor speed, tower displacement/velocity, pitch/rate,
     # and the pitch controller's integral contribution.
-    assert trace.u is not None  # Inputs are captured by default.
     signals = (
-        ("Wind speed (m/s)", trace.u[:, 0]),
-        ("Rotor speed (rpm)", trace.x[:, 0] * 60 / (2 * np.pi)),
-        ("Blade pitch (degrees)", np.rad2deg(trace.x[:, 3])),
-        ("Tower displacement (m)", trace.x[:, 1]),
+        ("Wind speed (m/s)", frame["u0"].to_numpy()),
+        ("Rotor speed (rpm)", frame["x0"].to_numpy() * 60 / (2 * np.pi)),
+        ("Blade pitch (degrees)", np.rad2deg(frame["x3"].to_numpy())),
+        ("Tower displacement (m)", frame["x1"].to_numpy()),
         (
             "Generator mechanical\npower (MW)",
-            wind_turbine_power(trace, parameters=system.parameters) / 1e6,
+            wind_turbine_power(
+                frame["x0"].to_numpy(),
+                frame["location_label"].to_list(),
+                parameters=system.parameters,
+            )
+            / 1e6,
         ),
     )
     fig, axes = plt.subplots(
         len(signals), 1, sharex=True, figsize=(9, 11), layout="constrained"
     )
     for ax, (label, values) in zip(axes, signals, strict=True):
-        ax.plot(trace.t, values, color="#263238")
-        plot_locations(trace, ax=ax, alpha=0.16)
+        ax.plot(frame["t"], values, color="#263238")
+        plot_locations(trajectory, ax=ax, alpha=0.16)
         ax.set_ylabel(label)
         ax.grid(alpha=0.25)
     rated_power_mw = system.parameters["rated_mechanical_power"] / 1e6
@@ -61,14 +73,14 @@ def main() -> None:
     )
     axes[-1].legend(handles=[rated_line], loc="lower center")
     axes[-1].set_xlabel("Time (s)")
-    axes[-1].set_xlim(trace.t[0], trace.t[-1])
+    axes[-1].set_xlim(trajectory.t_span)
     fig.suptitle("Running wind turbine")
 
     # Every panel uses the same mode colors, so one legend is enough.
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(
         handles,
-        [label.replace("_", " ").capitalize() for label in labels],
+        [_caption(label).capitalize() for label in labels],
         loc="outside lower center",
         ncols=2,
         title="Controller mode",

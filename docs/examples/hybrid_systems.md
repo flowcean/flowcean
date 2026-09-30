@@ -8,22 +8,22 @@ These examples illustrate switching, hysteresis, and resets in hybrid systems, f
 
 ## What the Examples Illustrate
 
-| Example | Behavior |
-| --- | --- |
-| [Thermostat](#thermostat) | Hysteresis around a moving target |
-| [Bouncing ball](#bouncing-ball) | Velocity resets at impact |
-| [Hybrid oscillator](#hybrid-oscillator) | Side-dependent damping |
-| [Switched linear](#switched-linear) | State-triggered switching of linear dynamics |
-| [Relay integrator](#relay-integrator) | Relay control with hysteresis |
-| [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary |
-| [Time-forced switch](#time-forced-switch) | Periodic switching after a fixed dwell time |
-| [Piecewise affine](#piecewise-affine) | Affine dynamics and a linear event surface |
-| [Impact oscillator](#impact-oscillator) | Forced oscillation with impact resets |
-| [PID-controlled plant](#pid-controlled-plant) | Actuator saturation and integral control |
-| [Tank valves](#tank-valves) | Valve switching and gravity-driven drainage |
-| [Location cycle](#location-cycle) | Repeated timed visits to linear modes |
-| [Buck converter](#buck-converter) | Hysteretic switching and diode blocking |
-| [Wind turbine](#wind-turbine) | Torque regimes and pitch control |
+| Example                                                   | Behavior                                     |
+| --------------------------------------------------------- | -------------------------------------------- |
+| [Thermostat](#thermostat)                                 | Hysteresis around a moving target            |
+| [Bouncing ball](#bouncing-ball)                           | Velocity resets at impact                    |
+| [Hybrid oscillator](#hybrid-oscillator)                   | Side-dependent damping                       |
+| [Switched linear](#switched-linear)                       | State-triggered switching of linear dynamics |
+| [Relay integrator](#relay-integrator)                     | Relay control with hysteresis                |
+| [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary   |
+| [Time-forced switch](#time-forced-switch)                 | Periodic switching after a fixed dwell time  |
+| [Piecewise affine](#piecewise-affine)                     | Affine dynamics and a linear event surface   |
+| [Impact oscillator](#impact-oscillator)                   | Forced oscillation with impact resets        |
+| [PID-controlled plant](#pid-controlled-plant)             | Actuator saturation and integral control     |
+| [Tank valves](#tank-valves)                               | Valve switching and gravity-driven drainage  |
+| [Location cycle](#location-cycle)                         | Repeated timed visits to linear locations    |
+| [Buck converter](#buck-converter)                         | Hysteretic switching and diode blocking      |
+| [Wind turbine](#wind-turbine)                             | Torque regimes and pitch control             |
 
 ## Thermostat
 
@@ -43,9 +43,9 @@ For target temperature $r(t)$ and hysteresis half-width $b$, a rising zero cross
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Thermostat: heating switches to cooling at the upper target-band boundary, and cooling switches back at the lower boundary.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="_blank" rel="noopener" }
+[![Thermostat: heating switches to cooling at the upper target-band boundary, and cooling switches back at the lower boundary.](../assets/hybrid_systems/thermostat-automaton.svg)](../assets/hybrid_systems/thermostat-automaton.svg){ target="\_blank" rel="noopener" }
 
-<figcaption>The incoming arrow marks the initial heating location. The separate switching boundaries create hysteresis. Open a figure to inspect it at full size.</figcaption>
+<figcaption>The incoming arrow marks the initial heating location. The separate switching boundaries create hysteresis.</figcaption>
 
 </figure>
 
@@ -53,13 +53,13 @@ The illustrated run uses a varying target temperature:
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Temperature, moving target, and switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="_blank" rel="noopener" }
+[![Temperature, moving target, and switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="\_blank" rel="noopener" }
 
-<figcaption>Temperature remains continuous at each switch. The hysteresis band allows it to move around the target rather than track it exactly. Mode colors match the diagram.</figcaption>
+<figcaption>Temperature remains continuous at each switch. The hysteresis band allows it to move around the target rather than track it exactly. Location colors match the diagram.</figcaption>
 
 </figure>
 
-See the [`thermostat` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.thermostat.thermostat) for parameter options and the [simulation guide](../user_guide/hybrid_systems.md#simulation) for a runnable example.
+See the [`thermostat` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.thermostat.thermostat) for parameter options and the [simulation guide](../user_guide/hybrid_systems.md#construct-and-simulate-a-model) for a runnable example.
 
 ## Bouncing Ball
 
@@ -75,9 +75,9 @@ A falling zero crossing of $h$ detects ground impact. The reset leaves height un
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Bouncing ball: a single flight location with a ground-impact self-loop that resets velocity.](../assets/hybrid_systems/bouncing_ball-automaton.svg)](../assets/hybrid_systems/bouncing_ball-automaton.svg){ target="_blank" rel="noopener" }
+[![Bouncing ball: a single flight location with a ground-impact self-loop that resets velocity.](../assets/hybrid_systems/bouncing_ball-automaton.svg)](../assets/hybrid_systems/bouncing_ball-automaton.svg){ target="\_blank" rel="noopener" }
 
-<figcaption>The self-loop changes the continuous state without introducing another mode.</figcaption>
+<figcaption>The self-loop changes the continuous state without introducing another location.</figcaption>
 
 </figure>
 
@@ -85,7 +85,7 @@ The illustrated ball is dropped from rest and loses energy at each bounce. Heigh
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Bouncing-ball height decreases with successive bounces, while velocity jumps instantaneously at each impact.](../assets/hybrid_systems/bouncing_ball-trace.svg)](../assets/hybrid_systems/bouncing_ball-trace.svg){ target="_blank" rel="noopener" }
+[![Bouncing-ball height decreases with successive bounces, while velocity jumps instantaneously at each impact.](../assets/hybrid_systems/bouncing_ball-trace.svg)](../assets/hybrid_systems/bouncing_ball-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Dashed lines join the velocities immediately before and after each impact at the same physical time. They represent resets, not continuous motion through those values.</figcaption>
 
@@ -99,7 +99,7 @@ An oscillator changes its damping when position crosses the origin. The `left` a
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Hybrid oscillator: a rising position-zero crossing selects right-side damping, and a falling crossing selects left-side damping.](../assets/hybrid_systems/hybrid_oscillator-automaton.svg)](../assets/hybrid_systems/hybrid_oscillator-automaton.svg){ target="_blank" rel="noopener" }
+[![Hybrid oscillator: a rising position-zero crossing selects right-side damping, and a falling crossing selects left-side damping.](../assets/hybrid_systems/hybrid_oscillator-automaton.svg)](../assets/hybrid_systems/hybrid_oscillator-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Crossing the origin changes the damping law; it is not an impact.</figcaption>
 
@@ -107,7 +107,7 @@ An oscillator changes its damping when position crosses the origin. The `left` a
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Oscillator position and velocity decay over time, with left and right locations distinguished by shading.](../assets/hybrid_systems/hybrid_oscillator-trace.svg)](../assets/hybrid_systems/hybrid_oscillator-trace.svg){ target="_blank" rel="noopener" }
+[![Oscillator position and velocity decay over time, with left and right locations distinguished by shading.](../assets/hybrid_systems/hybrid_oscillator-trace.svg)](../assets/hybrid_systems/hybrid_oscillator-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The location changes at each position-zero crossing while both state coordinates remain continuous.</figcaption>
 
@@ -121,7 +121,7 @@ This system selects between two linear flows, $\dot{x}=A_qx$, where $q$ is the a
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Switched linear system: on switches to off at a downward threshold crossing of the first coordinate, and off switches back at an upward crossing.](../assets/hybrid_systems/switched_linear-automaton.svg)](../assets/hybrid_systems/switched_linear-automaton.svg){ target="_blank" rel="noopener" }
+[![Switched linear system: on switches to off at a downward threshold crossing of the first coordinate, and off switches back at an upward crossing.](../assets/hybrid_systems/switched_linear-automaton.svg)](../assets/hybrid_systems/switched_linear-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Both directions use the same threshold, rather than a hysteresis band.</figcaption>
 
@@ -129,7 +129,7 @@ This system selects between two linear flows, $\dot{x}=A_qx$, where $q$ is the a
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Two state coordinates under switching linear dynamics, with the shared threshold marked on the first coordinate.](../assets/hybrid_systems/switched_linear-trace.svg)](../assets/hybrid_systems/switched_linear-trace.svg){ target="_blank" rel="noopener" }
+[![Two state coordinates under switching linear dynamics, with the shared threshold marked on the first coordinate.](../assets/hybrid_systems/switched_linear-trace.svg)](../assets/hybrid_systems/switched_linear-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The threshold crossings select the active matrix. Switching changes the dynamics without resetting the state.</figcaption>
 
@@ -143,7 +143,7 @@ An integrator alternates between positive and negative constant rates. A rising 
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Relay integrator: the upper bound switches increasing motion to decreasing motion, and the lower bound switches it back.](../assets/hybrid_systems/relay_integrator-automaton.svg)](../assets/hybrid_systems/relay_integrator-automaton.svg){ target="_blank" rel="noopener" }
+[![Relay integrator: the upper bound switches increasing motion to decreasing motion, and the lower bound switches it back.](../assets/hybrid_systems/relay_integrator-automaton.svg)](../assets/hybrid_systems/relay_integrator-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Switching reverses the direction of evolution, not the value of the integrated state.</figcaption>
 
@@ -151,7 +151,7 @@ An integrator alternates between positive and negative constant rates. A rising 
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Triangular integrated-state trace between the upper and lower switching bounds.](../assets/hybrid_systems/relay_integrator-trace.svg)](../assets/hybrid_systems/relay_integrator-trace.svg){ target="_blank" rel="noopener" }
+[![Triangular integrated-state trace between the upper and lower switching bounds.](../assets/hybrid_systems/relay_integrator-trace.svg)](../assets/hybrid_systems/relay_integrator-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Constant-rate segments meet at the switching bounds without state jumps.</figcaption>
 
@@ -165,7 +165,7 @@ An input signal moves the switching boundaries around the first state coordinate
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Time-varying event surface: moving upper and lower boundaries switch between locations with opposing drift terms.](../assets/hybrid_systems/time_varying_event_surface-automaton.svg)](../assets/hybrid_systems/time_varying_event_surface-automaton.svg){ target="_blank" rel="noopener" }
+[![Time-varying event surface: moving upper and lower boundaries switch between locations with opposing drift terms.](../assets/hybrid_systems/time_varying_event_surface-automaton.svg)](../assets/hybrid_systems/time_varying_event_surface-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Crossing direction is measured relative to the moving boundary, not from the direction of state motion alone.</figcaption>
 
@@ -173,7 +173,7 @@ An input signal moves the switching boundaries around the first state coordinate
 
 <figure class="hybrid-figure" markdown="span">
 
-[![The first state coordinate and moving input threshold, with the upper and lower switching boundaries and active locations.](../assets/hybrid_systems/time_varying_event_surface-trace.svg)](../assets/hybrid_systems/time_varying_event_surface-trace.svg){ target="_blank" rel="noopener" }
+[![The first state coordinate and moving input threshold, with the upper and lower switching boundaries and active locations.](../assets/hybrid_systems/time_varying_event_surface-trace.svg)](../assets/hybrid_systems/time_varying_event_surface-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The moving band changes when switching occurs. The plotted coordinate remains continuous as the active drift changes.</figcaption>
 
@@ -183,11 +183,11 @@ See the [`time_varying_event_surface` factory](../reference/hybrid.md#flowcean.h
 
 ## Time-Forced Switch
 
-Each visit lasts for a fixed dwell time, measured by [location residence time](../user_guide/hybrid_systems.md#location-residence-time). A rising crossing of `location_time - dwell_time` alternates between `fast` and `slow`. The two continuous-state coordinates approach zero more quickly in `fast` than in `slow`; neither resets at a transition. The factory's `period` spans a complete fast-slow cycle.
+Each visit lasts for a fixed dwell time, measured by [location residence time](../user_guide/hybrid_systems.md#switching-after-some-time). A rising crossing of `location_time - dwell_time` alternates between `fast` and `slow`. The two continuous-state coordinates approach zero more quickly in `fast` than in `slow`; neither resets at a transition. The factory's `period` spans a complete fast-slow cycle.
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Time-forced switch: fast and slow alternate when residence time reaches the dwell time, without resetting the continuous state.](../assets/hybrid_systems/time_forced_switch-automaton.svg)](../assets/hybrid_systems/time_forced_switch-automaton.svg){ target="_blank" rel="noopener" }
+[![Time-forced switch: fast and slow alternate when residence time reaches the dwell time, without resetting the continuous state.](../assets/hybrid_systems/time_forced_switch-automaton.svg)](../assets/hybrid_systems/time_forced_switch-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Both transitions use the same residence-time condition. Each new visit starts at age zero while the decaying coordinates remain continuous.</figcaption>
 
@@ -195,7 +195,7 @@ Each visit lasts for a fixed dwell time, measured by [location residence time](.
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Two continuously decaying state coordinates above residence time, which ramps and restarts at every fast-slow switch.](../assets/hybrid_systems/time_forced_switch-trace.svg)](../assets/hybrid_systems/time_forced_switch-trace.svg){ target="_blank" rel="noopener" }
+[![Two continuously decaying state coordinates above residence time, which ramps and restarts at every fast-slow switch.](../assets/hybrid_systems/time_forced_switch-trace.svg)](../assets/hybrid_systems/time_forced_switch-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Dashed vertical segments show residence time restarting at zero, not a jump in the continuous state. Physical simulation time continues forward along the horizontal axis.</figcaption>
 
@@ -215,7 +215,7 @@ with a matrix $A_q$ and an offset $b_q$. Crossing a threshold with the first coo
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Piecewise affine system: an upward threshold crossing selects the right flow, and a downward crossing selects the left flow.](../assets/hybrid_systems/piecewise_affine-automaton.svg)](../assets/hybrid_systems/piecewise_affine-automaton.svg){ target="_blank" rel="noopener" }
+[![Piecewise affine system: an upward threshold crossing selects the right flow, and a downward crossing selects the left flow.](../assets/hybrid_systems/piecewise_affine-automaton.svg)](../assets/hybrid_systems/piecewise_affine-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Each location can supply both a linear state term and a constant offset.</figcaption>
 
@@ -223,7 +223,7 @@ with a matrix $A_q$ and an offset $b_q$. Crossing a threshold with the first coo
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Two continuous state coordinates under piecewise affine dynamics, with switching at the first coordinate's threshold.](../assets/hybrid_systems/piecewise_affine-trace.svg)](../assets/hybrid_systems/piecewise_affine-trace.svg){ target="_blank" rel="noopener" }
+[![Two continuous state coordinates under piecewise affine dynamics, with switching at the first coordinate's threshold.](../assets/hybrid_systems/piecewise_affine-trace.svg)](../assets/hybrid_systems/piecewise_affine-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The displayed configuration is the linear special case, with both offsets zero. The trajectories remain continuous across switches.</figcaption>
 
@@ -237,7 +237,7 @@ A damped oscillator is driven by a time-varying force and collides with a stop. 
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Impact oscillator: one forced-oscillation location with a stop-impact self-loop that reverses and scales velocity.](../assets/hybrid_systems/impact_oscillator-automaton.svg)](../assets/hybrid_systems/impact_oscillator-automaton.svg){ target="_blank" rel="noopener" }
+[![Impact oscillator: one forced-oscillation location with a stop-impact self-loop that reverses and scales velocity.](../assets/hybrid_systems/impact_oscillator-automaton.svg)](../assets/hybrid_systems/impact_oscillator-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The input force acts between impacts; the reset acts at the stop. Neither introduces another location.</figcaption>
 
@@ -245,7 +245,7 @@ A damped oscillator is driven by a time-varying force and collides with a stop. 
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Applied force, oscillator position, and velocity, with exact-time velocity jumps at impacts.](../assets/hybrid_systems/impact_oscillator-trace.svg)](../assets/hybrid_systems/impact_oscillator-trace.svg){ target="_blank" rel="noopener" }
+[![Applied force, oscillator position, and velocity, with exact-time velocity jumps at impacts.](../assets/hybrid_systems/impact_oscillator-trace.svg)](../assets/hybrid_systems/impact_oscillator-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Dashed segments mark instantaneous velocity resets. Forcing can replenish energy between impacts, so successive excursions need not shrink monotonically.</figcaption>
 
@@ -261,7 +261,7 @@ The active location determines whether actuation follows the raw PID command or 
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![PID-controlled plant: linear operation connects in both directions to upper and lower saturation, according to crossings of the raw command's limits.](../assets/hybrid_systems/pid_controlled_plant-automaton.svg)](../assets/hybrid_systems/pid_controlled_plant-automaton.svg){ target="_blank" rel="noopener" }
+[![PID-controlled plant: linear operation connects in both directions to upper and lower saturation, according to crossings of the raw command's limits.](../assets/hybrid_systems/pid_controlled_plant-automaton.svg)](../assets/hybrid_systems/pid_controlled_plant-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Transition conditions use the unclamped command, even while the applied actuation is limited.</figcaption>
 
@@ -269,7 +269,7 @@ The active location determines whether actuation follows the raw PID command or 
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Plant position with its reference, velocity, and integral error, shaded by linear and saturated controller locations.](../assets/hybrid_systems/pid_controlled_plant-trace.svg)](../assets/hybrid_systems/pid_controlled_plant-trace.svg){ target="_blank" rel="noopener" }
+[![Plant position with its reference, velocity, and integral error, shaded by linear and saturated controller locations.](../assets/hybrid_systems/pid_controlled_plant-trace.svg)](../assets/hybrid_systems/pid_controlled_plant-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The integral continues evolving during saturation. This benchmark does not freeze the integrator or provide an anti-windup correction.</figcaption>
 
@@ -285,7 +285,7 @@ Closed operation distinguishes a wet second tank from an empty one. When that ta
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Tank-valve control: closed wet can open or become closed dry; either closed location opens at the upper tank-1 level, and open closes at the lower level.](../assets/hybrid_systems/tank_valves-automaton.svg)](../assets/hybrid_systems/tank_valves-automaton.svg){ target="_blank" rel="noopener" }
+[![Tank-valve control: closed wet can open or become closed dry; either closed location opens at the upper tank-1 level, and open closes at the lower level.](../assets/hybrid_systems/tank_valves-automaton.svg)](../assets/hybrid_systems/tank_valves-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Either closed location can open the valve. Opening permits transfer but does not guarantee that tank 2 fills faster than it drains.</figcaption>
 
@@ -293,7 +293,7 @@ Closed operation distinguishes a wet second tank from an empty one. When that ta
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Tank levels in metres over time, with tank-1 switching levels and wet, dry, and open intervals.](../assets/hybrid_systems/tank_valves-trace.svg)](../assets/hybrid_systems/tank_valves-trace.svg){ target="_blank" rel="noopener" }
+[![Tank levels in metres over time, with tank-1 switching levels and wet, dry, and open intervals.](../assets/hybrid_systems/tank_valves-trace.svg)](../assets/hybrid_systems/tank_valves-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>In this run, tank 2 empties before every valve opening. Its zero-level plateaus belong to the closed-dry location.</figcaption>
 
@@ -307,7 +307,7 @@ Locations form a cyclic sequence, each applying a different linear flow to the c
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Location cycle: m0 through m5 form a closed loop, with a residence-time event on every edge and no continuous-state resets.](../assets/hybrid_systems/mode_cycle-automaton.svg)](../assets/hybrid_systems/mode_cycle-automaton.svg){ target="_blank" rel="noopener" }
+[![Location cycle: m0 through m5 form a closed loop, with a residence-time event on every edge and no continuous-state resets.](../assets/hybrid_systems/location_cycle-automaton.svg)](../assets/hybrid_systems/location_cycle-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The final location returns to the first. All continuous-state coordinates are carried through every transition unchanged.</figcaption>
 
@@ -315,13 +315,13 @@ Locations form a cyclic sequence, each applying a different linear flow to the c
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Three continuous-state coordinates and location residence time, with the repeating location sequence shown by shading.](../assets/hybrid_systems/mode_cycle-trace.svg)](../assets/hybrid_systems/mode_cycle-trace.svg){ target="_blank" rel="noopener" }
+[![Three continuous-state coordinates and location residence time, with the repeating location sequence shown by shading.](../assets/hybrid_systems/location_cycle-trace.svg)](../assets/hybrid_systems/location_cycle-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Separate scales reveal the smaller coordinate excursions. Residence time restarts at each location change, independently of the continuous-state trajectories.</figcaption>
 
 </figure>
 
-See the [`mode_cycle` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.mode_cycle.mode_cycle) for location count, state dimension, and dwell-time options.
+See the [`location_cycle` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.location_cycle.location_cycle) for location count, state dimension, and dwell-time options.
 
 ## Buck Converter
 
@@ -331,7 +331,7 @@ When the freewheeling current reaches zero, the diode blocks reverse current. Th
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Buck converter: voltage thresholds switch between on and off, while current reaching zero enters diode blocking before the next on interval.](../assets/hybrid_systems/buck_converter-automaton.svg)](../assets/hybrid_systems/buck_converter-automaton.svg){ target="_blank" rel="noopener" }
+[![Buck converter: voltage thresholds switch between on and off, while current reaching zero enters diode blocking before the next on interval.](../assets/hybrid_systems/buck_converter-automaton.svg)](../assets/hybrid_systems/buck_converter-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>The off location can return directly to on or pass through zero-current operation first.</figcaption>
 
@@ -339,7 +339,7 @@ When the freewheeling current reaches zero, the diode blocks reverse current. Th
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Inductor current in amperes and output voltage in volts, showing switching thresholds and zero-current intervals.](../assets/hybrid_systems/buck_converter-trace.svg)](../assets/hybrid_systems/buck_converter-trace.svg){ target="_blank" rel="noopener" }
+[![Inductor current in amperes and output voltage in volts, showing switching thresholds and zero-current intervals.](../assets/hybrid_systems/buck_converter-trace.svg)](../assets/hybrid_systems/buck_converter-trace.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Here, each cycle includes a zero-current interval. Voltage can continue rising after switch-off as stored inductor energy feeds the output: the thresholds are switching commands, not hard voltage bounds.</figcaption>
 
@@ -355,7 +355,7 @@ The state captures rotor speed, tower displacement and velocity, blade pitch and
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
-[![Wind-turbine controller: a bidirectional chain from no generation through gradual, below-rated, and approaching-rated generation to rated power.](../assets/hybrid_systems/wind_turbine-automaton.svg)](../assets/hybrid_systems/wind_turbine-automaton.svg){ target="_blank" rel="noopener" }
+[![Wind-turbine controller: a bidirectional chain from no generation through gradual, below-rated, and approaching-rated generation to rated power.](../assets/hybrid_systems/wind_turbine-automaton.svg)](../assets/hybrid_systems/wind_turbine-automaton.svg){ target="\_blank" rel="noopener" }
 
 <figcaption>Rising generator speed moves the controller toward rated power; falling speed moves it back toward no generation. Separate thresholds in each direction provide hysteresis.</figcaption>
 
@@ -365,15 +365,15 @@ In the illustrated run, wind speed rises and then falls. The plots show how the 
 
 <figure class="hybrid-figure" markdown="span">
 
-[![Wind speed, rotor speed, blade pitch, tower displacement, and generator mechanical power during a wind cycle, with controller modes distinguished by shading.](../assets/hybrid_systems/wind_turbine-trace.svg)](../assets/hybrid_systems/wind_turbine-trace.svg){ target="_blank" rel="noopener" }
+[![Wind speed, rotor speed, blade pitch, tower displacement, and generator mechanical power during a wind cycle, with controller locations distinguished by shading.](../assets/hybrid_systems/wind_turbine-trace.svg)](../assets/hybrid_systems/wind_turbine-trace.svg){ target="\_blank" rel="noopener" }
 
-<figcaption>The dashed line marks rated generator-shaft power. This is mechanical power, not electrical output, and the reference is not a hard instantaneous cap in other modes. Mode colors match the diagram.</figcaption>
+<figcaption>The dashed line marks rated generator-shaft power. This is mechanical power, not electrical output, and the reference is not a hard instantaneous cap in other modes. Location colors match the diagram.</figcaption>
 
 </figure>
 
-The model assumes quasi-steady, head-on aerodynamics and a running rotor. It does not model startup, shutdown, or emergency braking. Aerodynamic-domain violations stop simulation rather than extrapolating the fitted coefficients. See the [wind-turbine reference](../reference/hybrid.md#flowcean.hybrid.benchmarks.wind_turbine.wind_turbine) for equations, controller parameters, and operating limits.
+The model assumes quasi-steady, head-on aerodynamics and a running rotor. It does not model startup, shutdown, or emergency braking. Aerodynamic-domain violations stop simulation rather than extrapolating the fitted coefficients. To compute generator-shaft power, pass rotor angular speeds in rad/s, matching location labels, and the turbine's parameters to `wind_turbine_power(rotor_speeds, location_labels, parameters=system.parameters)`. The location selects the torque law even when hysteresis makes speed ambiguous. See the [wind-turbine reference](../reference/hybrid.md#flowcean.hybrid.benchmarks.wind_turbine.wind_turbine) for equations, controller parameters, and operating limits.
 
-Run the standalone example to print mode changes and save a plot:
+Run the standalone example to print location changes and save a plot:
 
 ```bash
 uv run --directory ./examples/hybrid_systems python wind_turbine.py
@@ -391,7 +391,7 @@ uv run --directory ./examples/hybrid_systems python run.py
 
 The model configurations and input signals are in [`scenarios.py`](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/scenarios.py).
 
-To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#simulation). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
+To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#construct-and-simulate-a-model). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
 
 ## Export Automaton Diagrams
 
@@ -403,4 +403,4 @@ uv run --directory ./examples/hybrid_systems python export_graphs.py
 
 This writes one DOT file per example under `examples/hybrid_systems/outputs/automata/`. Add `--svg` to render SVG files; this requires Graphviz's `dot` executable on `PATH`.
 
-See [Automaton Diagrams](../user_guide/hybrid_systems.md#automaton-diagrams) for the export API and label options.
+For programmatic export and label options, see [`build_hybrid_system_dot`][flowcean.hybrid.build_hybrid_system_dot] and [`render_dot_svg`][flowcean.hybrid.render_dot_svg].

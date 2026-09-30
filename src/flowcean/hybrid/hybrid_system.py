@@ -15,7 +15,22 @@ Derivative = State | float
 
 
 class FlowFunction(Protocol):
-    """Continuous dynamics callback."""
+    """Continuous-state derivative callback.
+
+    Flow, event-surface, and reset callbacks share these inputs: physical time
+    (``t``), the continuous ``state`` vector, effective ``parameters``, an
+    ``input_stream`` returning a vector for a requested time, and the current
+    visit's elapsed ``location_time``.
+
+    Model callbacks may declare any subset using these names, including
+    keyword-only arguments. Named callbacks with ``**kwargs`` receive all five
+    inputs. Four-positional callbacks receive ``(t, state, parameters,
+    input_stream)``; positional-only arguments, ``*args``, and noncanonical
+    required names select that form.
+
+    Callbacks and input streams must be pure and deterministic: integration
+    and derivative sampling can evaluate the same inputs repeatedly.
+    """
 
     def __call__(
         self,
@@ -29,7 +44,11 @@ class FlowFunction(Protocol):
 
 
 class EventSurfaceFunction(Protocol):
-    """Scalar event-surface callback."""
+    """Scalar event-surface callback.
+
+    See [FlowFunction][flowcean.hybrid.FlowFunction] for shared inputs and
+    supported callback signatures.
+    """
 
     def __call__(
         self,
@@ -43,7 +62,11 @@ class EventSurfaceFunction(Protocol):
 
 
 class ResetFunction(Protocol):
-    """State reset callback."""
+    """State reset callback.
+
+    See [FlowFunction][flowcean.hybrid.FlowFunction] for shared inputs and
+    supported callback signatures.
+    """
 
     def __call__(
         self,
@@ -65,7 +88,21 @@ class CrossingDirection(IntEnum):
 
 
 class SurfaceEntryPolicy(StrEnum):
-    """Behavior when a transition surface is zero on location entry."""
+    """Behavior when a transition surface is exactly zero on location entry.
+
+    Entry includes initialization and arrival after a transition. ``ERROR``
+    raises [SurfaceEntryError][flowcean.hybrid.SurfaceEntryError]; ``TRIGGER``
+    applies the transition immediately at the same physical time; ``CONTINUE``
+    begins continuous integration with the surface at zero. For ``CONTINUE``,
+    choose a flow that departs in the direction opposite to the accepted
+    crossing so integration can advance.
+
+    All outgoing surfaces are evaluated before resolving entry. NaN values
+    are rejected first, then zero ``ERROR`` surfaces. Exactly one zero
+    ``TRIGGER`` surface performs a jump; multiple such surfaces raise
+    [AmbiguousTransitionError][flowcean.hybrid.AmbiguousTransitionError].
+    Entry handling repeats at the target after an immediate transition.
+    """
 
     ERROR = "error"
     TRIGGER = "trigger"
@@ -73,23 +110,24 @@ class SurfaceEntryPolicy(StrEnum):
 
 
 @dataclass(frozen=True, eq=False)
-class ContinuousDynamics:
-    """Reusable continuous dynamics definition.
+class Flow:
+    """Reusable continuous-state derivative law.
 
     Args:
-        flow: Dynamics function returning the state derivative.
+        fn: Function returning the state derivative. See
+            [FlowFunction][flowcean.hybrid.FlowFunction] for callback inputs.
             Scalar derivative returns are accepted only for single-state
             systems, both during solver evaluation and when derivatives are
-            captured on the returned trace grid.
+            explicitly sampled from a trajectory.
         label: Optional display label.
     """
 
-    flow: Callable[..., Derivative]
+    fn: Callable[..., Derivative]
     label: str | None = None
 
     def __post_init__(self) -> None:
-        if not callable(self.flow):
-            message = "flow must be callable."
+        if not callable(self.fn):
+            message = "fn must be callable."
             raise TypeError(message)
 
 
@@ -98,19 +136,20 @@ class Location:
     """Discrete hybrid-automaton location.
 
     Args:
-        dynamics: Continuous dynamics or bare flow callback active here.
+        flow: Flow definition or bare derivative callback active here.
         label: Optional display label.
-        parameters: Location-local parameter map.
+        parameters: Location-local parameters overriding system parameters
+            with the same names. Effective maps are snapshotted for each run.
     """
 
-    dynamics: ContinuousDynamics
+    flow: Flow
     label: str | None
     parameters: Parameters
 
     @overload
     def __init__(
         self,
-        dynamics: ContinuousDynamics,
+        flow: Flow,
         *,
         label: str | None = None,
         parameters: Parameters | None = None,
@@ -119,7 +158,7 @@ class Location:
     @overload
     def __init__(
         self,
-        dynamics: Callable[..., Derivative],
+        flow: Callable[..., Derivative],
         *,
         label: str | None = None,
         parameters: Parameters | None = None,
@@ -127,24 +166,22 @@ class Location:
 
     def __init__(
         self,
-        dynamics: ContinuousDynamics | Callable[..., Derivative],
+        flow: Flow | Callable[..., Derivative],
         *,
         label: str | None = None,
         parameters: Parameters | None = None,
     ) -> None:
-        if isinstance(dynamics, ContinuousDynamics):
-            continuous_dynamics = dynamics
-        elif callable(dynamics):
-            continuous_dynamics = ContinuousDynamics(dynamics)
+        if isinstance(flow, Flow):
+            location_flow = flow
+        elif callable(flow):
+            location_flow = Flow(flow)
         else:
-            message = (
-                "Location requires ContinuousDynamics or a flow callback."
-            )
+            message = "Location requires Flow or a flow callback."
             raise TypeError(message)
         if parameters is not None and not isinstance(parameters, Mapping):
             message = "parameters must be a mapping."
             raise TypeError(message)
-        object.__setattr__(self, "dynamics", continuous_dynamics)
+        object.__setattr__(self, "flow", location_flow)
         object.__setattr__(self, "label", label)
         object.__setattr__(self, "parameters", dict(parameters or {}))
 
@@ -153,11 +190,18 @@ class Location:
 class EventSurface:
     """Scalar event surface defining a simulated transition event.
 
-    Flowcean transitions fire when ``fn`` reaches zero in ``direction``.
-    This is event-surface semantics, not Boolean guard-region semantics.
+    Supply a continuous scalar function whose zero crossings identify the
+    switching boundary. ``RISING`` accepts negative-to-positive crossings,
+    ``FALLING`` positive-to-negative crossings, and ``EITHER`` both. Exact zero
+    on entry follows the transition's
+    [SurfaceEntryPolicy][flowcean.hybrid.SurfaceEntryPolicy]. NaN values raise
+    [InvalidEventSurfaceValueError][flowcean.hybrid.InvalidEventSurfaceValueError];
+    nonzero values, including infinities, retain their sign in entry checks.
+    Continuous crossing detection uses SciPy's event solver.
 
     Args:
-        fn: Root function; transitions when it crosses zero.
+        fn: Root function. See [FlowFunction][flowcean.hybrid.FlowFunction]
+            for callback inputs.
         direction: Crossing direction. Defaults to either direction.
         label: Optional display label.
     """
@@ -179,8 +223,13 @@ class EventSurface:
 class Reset:
     """State reset applied on a transition.
 
+    The callback receives the source location's effective parameters and
+    residence time. Its result must match the continuous-state dimension;
+    a scalar is accepted for a single-state system.
+
     Args:
-        fn: Reset function applied at the event time.
+        fn: Reset function applied at the event time. See
+            [FlowFunction][flowcean.hybrid.FlowFunction] for callback inputs.
         label: Optional display label.
     """
 
@@ -197,12 +246,12 @@ class Reset:
 class Transition:
     """Discrete event-triggered transition between locations.
 
-    ``event`` is a scalar zero-crossing surface.
+    ``event_surface`` is a scalar zero-crossing surface.
 
     Args:
         source: Source location.
         target: Target location.
-        event: Event surface that triggers the transition.
+        event_surface: Event surface that triggers the transition.
         reset: Optional reset applied upon transition.
         entry_policy: Behavior when the event surface is exactly zero upon
             entry to the source location.
@@ -210,7 +259,7 @@ class Transition:
 
     source: Location
     target: Location
-    event: EventSurface
+    event_surface: EventSurface
     reset: Reset | None = None
     entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR
 
@@ -218,7 +267,7 @@ class Transition:
         self,
         source: Location,
         target: Location,
-        event: EventSurface | Callable[..., float],
+        event_surface: EventSurface | Callable[..., float],
         reset: Reset | Callable[..., State] | None = None,
         *,
         entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR,
@@ -229,12 +278,12 @@ class Transition:
         if not isinstance(target, Location):
             message = "target must be a Location."
             raise TypeError(message)
-        if isinstance(event, EventSurface):
-            event_surface = event
-        elif callable(event):
-            event_surface = EventSurface(event)
+        if isinstance(event_surface, EventSurface):
+            surface = event_surface
+        elif callable(event_surface):
+            surface = EventSurface(event_surface)
         else:
-            message = "event must be an EventSurface or callable."
+            message = "event_surface must be an EventSurface or callable."
             raise TypeError(message)
         if isinstance(reset, Reset) or reset is None:
             transition_reset = reset
@@ -248,7 +297,7 @@ class Transition:
             raise TypeError(message)
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "target", target)
-        object.__setattr__(self, "event", event_surface)
+        object.__setattr__(self, "event_surface", surface)
         object.__setattr__(self, "reset", transition_reset)
         object.__setattr__(self, "entry_policy", entry_policy)
 
@@ -327,12 +376,12 @@ def display_label(obj: object, *, fallback: str | None = None) -> str:
     if isinstance(obj, Location):
         return (
             obj.label
-            or obj.dynamics.label
-            or _callback_label(obj.dynamics.flow)
+            or obj.flow.label
+            or _callback_label(obj.flow.fn)
             or last_resort()
         )
-    if isinstance(obj, ContinuousDynamics):
-        return obj.label or _callback_label(obj.flow) or last_resort()
+    if isinstance(obj, Flow):
+        return obj.label or _callback_label(obj.fn) or last_resort()
     if isinstance(obj, EventSurface):
         return obj.label or _callback_label(obj.fn) or last_resort()
     if isinstance(obj, Reset):
@@ -361,43 +410,3 @@ def _callback_label(callback: object) -> str | None:
     if isinstance(name, str) and name:
         return name
     return None
-
-
-@dataclass(frozen=True)
-class Event:
-    """Recorded transition with pre- and post-reset states."""
-
-    time: float
-    source_location: str
-    target_location: str
-    event_surface: str
-    reset: str | None
-    state_before: State
-    state_after: State
-    microstep: int
-    location_time_before: float
-
-
-@dataclass(frozen=True)
-class Trace:
-    """Sampled hybrid trajectory and its transition events."""
-
-    t: np.ndarray
-    x: np.ndarray
-    location: np.ndarray
-    location_time: np.ndarray
-    events: Sequence[Event]
-    u: np.ndarray | None = None
-    dx: np.ndarray | None = None
-
-    def as_dict(self) -> dict[str, object]:
-        """Return a dictionary view of the trace."""
-        return {
-            "t": self.t,
-            "x": self.x,
-            "location": self.location,
-            "events": self.events,
-            "u": self.u,
-            "dx": self.dx,
-            "location_time": self.location_time,
-        }

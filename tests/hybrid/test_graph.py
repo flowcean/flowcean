@@ -9,9 +9,9 @@ import pytest
 
 from flowcean.hybrid import _graphviz, build_hybrid_system_dot, render_dot_svg
 from flowcean.hybrid.hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     Location,
     Reset,
@@ -52,7 +52,7 @@ def test_exact_dot_preserves_order_nonfirst_initial_isolated_and_parallel_edges(
     None
 ):
     first = Location(AnonymousCallback(), label="same")
-    second = Location(ContinuousDynamics(AnonymousCallback(), label="flow"))
+    second = Location(Flow(AnonymousCallback(), label="flow"))
     isolated = Location(AnonymousCallback(), label="same")
     event = EventSurface(AnonymousCallback(), label="arrive")
     transitions = [
@@ -104,10 +104,10 @@ def test_callable_names_and_explicit_label_precedence() -> None:
         raise AssertionError("callback executed")
 
     location = Location(
-        ContinuousDynamics(named_callback, label="dynamics"),
+        Flow(named_callback, label="dynamics"),
         label="location",
     )
-    from_dynamics = Location(ContinuousDynamics(named_callback, label="flow"))
+    from_dynamics = Location(Flow(named_callback, label="flow"))
     from_callback = Location(named_callback)
     event = EventSurface(named_callback)
     reset = Reset(named_callback, label="explicit reset")
@@ -320,20 +320,20 @@ def test_selector_shared_helper_regression(
                 is_leaf=True,
                 sample_count=1,
                 impurity=0.0,
-                predicted_mode_id=2,
+                predicted_flow_id=2,
                 weighted_class_support={2: 1.0},
             ),
         ),
         leaves=(
             SelectorLeafInspection(
                 node_id=0,
-                mode_id=2,
+                flow_id=2,
                 sample_count=1,
                 weighted_class_support={2: 1.0},
                 flow_summary="line one\nline two",
             ),
         ),
-        modes=(),
+        flows=(),
         feature_columns=(),
         classes=(2,),
         max_depth=0,
@@ -341,7 +341,7 @@ def test_selector_shared_helper_regression(
     )
     assert selector_graph.build_selector_dot(inspection) == (
         "digraph Selector {\n  node [shape=box];\n"
-        '  node_0 [label="mode=2\\nflow=line one | line two"];\n}'
+        '  node_0 [label="flow_id=2\\nflow=line one | line two"];\n}'
     )
     monkeypatch.setattr(_graphviz.shutil, "which", lambda _: None)
     with pytest.raises(

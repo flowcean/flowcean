@@ -25,7 +25,7 @@ class SelectorNodeInspection:
     sample_count: int
     impurity: float
     is_leaf: bool
-    predicted_mode_id: int
+    predicted_flow_id: int
     weighted_class_support: dict[int, float]
     feature_index: int | None = None
     feature_name: str | None = None
@@ -37,15 +37,15 @@ class SelectorNodeInspection:
 @dataclass(frozen=True)
 class SelectorLeafInspection:
     node_id: int
-    mode_id: int
+    flow_id: int
     sample_count: int
     weighted_class_support: dict[int, float]
     flow_summary: str
 
 
 @dataclass(frozen=True)
-class SelectorModeInspection:
-    mode_id: int
+class SelectorFlowInspection:
+    flow_id: int
     weighted_support: float
     flow_summary: str
 
@@ -58,4 +58,4 @@ class SelectorInspection:
     n_leaves: int
     nodes: tuple[SelectorNodeInspection, ...]
     leaves: tuple[SelectorLeafInspection, ...]
-    modes: tuple[SelectorModeInspection, ...]
+    flows: tuple[SelectorFlowInspection, ...]

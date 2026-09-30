@@ -3,11 +3,10 @@
 from . import benchmarks, hydra
 from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
-    Event,
     EventSurface,
     EventSurfaceFunction,
+    Flow,
     FlowFunction,
     HybridSystem,
     Input,
@@ -17,36 +16,36 @@ from .hybrid_system import (
     Reset,
     ResetFunction,
     SurfaceEntryPolicy,
-    Trace,
     Transition,
 )
-from .io import (
-    save_traces_csv,
-    save_traces_parquet,
-    trace_to_polars,
-    traces_to_polars,
-)
-from .plotting import plot_locations, plot_phase, plot_trace
+from .plotting import plot_locations, plot_state_space, plot_trajectory
 from .simulator import (
     AmbiguousTransitionError,
     HybridSimulationError,
     InvalidEventSurfaceValueError,
     SimulationProgressError,
     SurfaceEntryError,
-    generate_traces,
     simulate,
+)
+from .trajectory import (
+    ContinuousSegment,
+    Event,
+    HybridTrajectory,
+    TrajectoryPoint,
 )
 
 __all__ = (
     "AmbiguousTransitionError",
-    "ContinuousDynamics",
+    "ContinuousSegment",
     "CrossingDirection",
     "Event",
     "EventSurface",
     "EventSurfaceFunction",
+    "Flow",
     "FlowFunction",
     "HybridSimulationError",
     "HybridSystem",
+    "HybridTrajectory",
     "Input",
     "InputStream",
     "InvalidEventSurfaceValueError",
@@ -57,19 +56,14 @@ __all__ = (
     "SimulationProgressError",
     "SurfaceEntryError",
     "SurfaceEntryPolicy",
-    "Trace",
+    "TrajectoryPoint",
     "Transition",
     "benchmarks",
     "build_hybrid_system_dot",
-    "generate_traces",
     "hydra",
     "plot_locations",
-    "plot_phase",
-    "plot_trace",
+    "plot_state_space",
+    "plot_trajectory",
     "render_dot_svg",
-    "save_traces_csv",
-    "save_traces_parquet",
     "simulate",
-    "trace_to_polars",
-    "traces_to_polars",
 )

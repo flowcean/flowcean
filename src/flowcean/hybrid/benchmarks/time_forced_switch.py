@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -57,8 +57,8 @@ def time_forced_switch(
     ) -> float:
         return location_time - parameters["dwell_time"]
 
-    fast_dynamics = ContinuousDynamics(flow_fast, label="fast")
-    slow_dynamics = ContinuousDynamics(flow_slow, label="slow")
+    fast_dynamics = Flow(flow_fast, label="fast")
+    slow_dynamics = Flow(flow_slow, label="slow")
     fast = Location(fast_dynamics, label="fast")
     slow = Location(slow_dynamics, label="slow")
     event = EventSurface(
@@ -67,8 +67,8 @@ def time_forced_switch(
         label="dwell",
     )
 
-    to_slow = Transition(source=fast, target=slow, event=event)
-    to_fast = Transition(source=slow, target=fast, event=event)
+    to_slow = Transition(source=fast, target=slow, event_surface=event)
+    to_fast = Transition(source=slow, target=fast, event_surface=event)
 
     if initial_state is None:
         initial_state = np.array([1.0, -1.0], dtype=float)

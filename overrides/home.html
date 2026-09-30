@@ -31,7 +31,7 @@
           <div class="home-reading">
             <div class="home-temperature-label">System temperature</div>
             <div class="home-temperature"><span data-temperature>20.00</span><span class="home-unit">°C</span></div>
-            <div class="home-current-mode"><span class="home-mode-dot"></span><span data-mode-label>Heating</span><span class="home-mode-detail"> / active mode</span></div>
+            <div class="home-current-mode"><span class="home-mode-dot"></span><span data-mode-label>Heating</span><span class="home-mode-detail"> / active location</span></div>
             <svg class="home-gauge" viewBox="0 0 230 56" aria-hidden="true">
               <path class="home-gauge-track" d="M8 15H222"/><path class="home-gauge-range" d="M79.33 15H222"/>
               <path class="home-gauge-ticks" d="M8 10V20 M79.33 10V20 M150.67 10V20 M222 10V20"/>
@@ -39,7 +39,7 @@
               <text x="8" y="44" text-anchor="middle">20</text><text x="79.33" y="44" text-anchor="middle">21</text><text x="150.67" y="44" text-anchor="middle">22</text><text x="222" y="44" text-anchor="middle">23</text>
             </svg>
           </div>
-          <svg class="home-modes" viewBox="0 0 250 180" role="img" aria-label="Thermostat modes: heating switches to cooling at 23 degrees Celsius; cooling switches to heating at 21 degrees Celsius.">
+          <svg class="home-modes" viewBox="0 0 250 180" role="img" aria-label="Thermostat locations: heating switches to cooling at 23 degrees Celsius; cooling switches to heating at 21 degrees Celsius.">
             <defs><marker id="home-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1 1L7 4L1 7" fill="none" stroke="currentColor" stroke-width="1.2"/></marker></defs>
             <path class="home-mode-arrow" d="M62 70V42Q62 30 74 30H179Q191 30 191 42V70" marker-end="url(#home-arrow)"/>
             <path class="home-mode-arrow" d="M191 110V138Q191 150 179 150H74Q62 150 62 138V110" marker-end="url(#home-arrow)"/>
@@ -52,7 +52,7 @@
         <div class="home-plot-heading"><span><i></i> Simulated temperature</span><span class="home-target-legend"><i></i> Target 22°C</span></div>
         <svg class="home-plot" viewBox="0 0 560 215" role="img" aria-labelledby="home-plot-title home-plot-description">
           <title id="home-plot-title">Thermostat simulation trace</title>
-          <desc id="home-plot-description">Temperature begins at 20 degrees Celsius and cycles between heating at 21 and cooling at 23 around a 22-degree target. Five mode transitions occur over 12 model-time units.</desc>
+          <desc id="home-plot-description">Temperature begins at 20 degrees Celsius and cycles between heating at 21 and cooling at 23 around a 22-degree target. Five location transitions occur over 12 model-time units.</desc>
           <g class="home-plot-grid"><path d="M38 30H540 M38 76.67H540 M38 123.33H540 M38 170H540 M38 30V170 M163.5 30V170 M289 30V170 M414.5 30V170 M540 30V170"/></g>
           <path class="home-target-line" d="M38 76.67H540"/>
           <g class="home-plot-labels"><text x="25" y="34" text-anchor="end">23°</text><text x="25" y="80.67" text-anchor="end">22°</text><text x="25" y="127.33" text-anchor="end">21°</text><text x="25" y="174" text-anchor="end">20°</text><text x="38" y="194" text-anchor="middle">0</text><text x="163.5" y="194" text-anchor="middle">3</text><text x="289" y="194" text-anchor="middle">6</text><text x="414.5" y="194" text-anchor="middle">9</text><text x="540" y="194" text-anchor="middle">12</text></g>
@@ -77,19 +77,19 @@
       <div class="home-code-copy">
         <p class="home-eyebrow">Python example</p>
         <h2 id="home-code-title">Simulate a built-in system.</h2>
-        <p class="home-section-intro"><code>thermostat()</code> creates a benchmark system. <code>simulate()</code> runs it with an input signal and returns a <code>Trace</code> containing the state history, active modes, and transition events.</p>
+        <p class="home-section-intro"><code>thermostat()</code> creates a benchmark system. <code>simulate()</code> runs it with an input signal and returns a <code>HybridTrajectory</code> with continuous segments and transition events. Sample it explicitly for a trace frame of states, location IDs, and residence times.</p>
         <a class="home-text-link" href="{{ 'user_guide/hybrid_systems/#simulation' | url }}">Simulation guide {{ icon('arrow-right') }}</a>
       </div>
       <div class="home-code-window"><div class="home-code-header"><span>thermostat.py</span><span>Python</span></div><pre><code><span class="home-code-keyword">import</span> numpy <span class="home-code-keyword">as</span> np
 <span class="home-code-keyword">from</span> flowcean.hybrid <span class="home-code-keyword">import</span> simulate
 <span class="home-code-keyword">from</span> flowcean.hybrid.benchmarks <span class="home-code-keyword">import</span> thermostat
 
-trace = simulate(
+trajectory = simulate(
     thermostat(),
     t_span=(<span class="home-code-number">0.0</span>, <span class="home-code-number">12.0</span>),
     input_stream=<span class="home-code-keyword">lambda</span> _t: np.array([<span class="home-code-number">22.0</span>]),
-    sample_dt=<span class="home-code-number">0.05</span>,
-)</code></pre></div>
+)
+frame = trajectory.sample(dt=<span class="home-code-number">0.05</span>)</code></pre></div>
     </section>
 
     <section class="home-toolkit" aria-labelledby="home-toolkit-title">

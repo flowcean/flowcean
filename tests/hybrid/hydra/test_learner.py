@@ -1,4 +1,4 @@
-"""Behavioral tests for HyDRA mode discovery."""
+"""Behavioral tests for HyDRA flow discovery."""
 
 from __future__ import annotations
 
@@ -107,7 +107,7 @@ def test_learner_requires_rows_and_a_single_output() -> None:
         )
 
 
-def test_single_mode_is_discovered_and_learned_from_real_rows() -> None:
+def test_single_flow_is_discovered_and_learned_from_real_rows() -> None:
     schema = HyDRATraceSchema(
         time="time",
         state=("x",),
@@ -130,12 +130,34 @@ def test_single_mode_is_discovered_and_learned_from_real_rows() -> None:
     )
     predictions = model.predict(prediction_inputs).collect()["dx"].to_numpy()
 
-    assert len(model.modes) == 1
+    assert len(model.flow_models) == 1
     np.testing.assert_allclose(
         predictions,
         2.5 * prediction_inputs["x"].to_numpy() - 0.75,
         rtol=1e-12,
         atol=1e-12,
+    )
+
+
+def test_generic_regression_without_trace_schema() -> None:
+    inputs = pl.DataFrame({"voltage": [-2.0, -1.0, 0.0, 1.0, 2.0]})
+    outputs = pl.DataFrame({"current": [-3.0, -1.0, 1.0, 3.0, 5.0]})
+    learner = HyDRALearner(
+        lambda: IncrementalLinearLearner(feature="voltage"),
+        threshold=1e-10,
+        start_width=3,
+        step_width=2,
+    )
+
+    model = learner.learn(inputs.lazy(), outputs.lazy())
+
+    assert model.trace_schema is None
+    assert len(model.flow_models) == 1
+    np.testing.assert_allclose(
+        model.predict(pl.DataFrame({"voltage": [-3.0, 0.5]})).collect()[
+            "current"
+        ],
+        [-5.0, 2.0],
     )
 
 

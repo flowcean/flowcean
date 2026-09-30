@@ -12,15 +12,14 @@ from collections.abc import Callable, Sequence
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
     Parameters,
     SurfaceEntryPolicy,
-    Trace,
     Transition,
 )
 from ._wind_turbine_aerodynamics import aerodynamic_coefficients
@@ -92,26 +91,40 @@ _TORQUE_BY_LABEL: dict[str, _TorqueLaw] = {
 }
 
 
-def wind_turbine_power(trace: Trace, *, parameters: Parameters) -> np.ndarray:
-    """Return generator mechanical power in watts for each sampled state.
+def wind_turbine_power(
+    rotor_speeds: Sequence[float] | np.ndarray,
+    location_labels: Sequence[str],
+    *,
+    parameters: Parameters,
+) -> np.ndarray:
+    """Return generator-shaft mechanical power (W) for each rotor speed.
 
-    Pass the parameters of the turbine used to produce ``trace``. Power is
-    generator torque times generator speed, using the same torque law as the
-    dynamics. The recorded location selects that law: speed alone cannot
-    determine it inside the controller's hysteresis bands.
-
-    This is shaft power delivered to the generator, not electrical output.
-    It equals ``rated_mechanical_power`` in ``rated_power``; that reference is
-    not a hard instantaneous cap on the other torque-control modes.
+    ``rotor_speeds`` are positive angular speeds in rad/s; each corresponding
+    ``location_labels`` entry selects the active torque law. The location
+    matters in hysteresis bands, where speed alone does not select a law.
+    ``parameters`` are those of the simulated turbine, including its gearbox
+    ratio. The resulting one-dimensional array contains one power value per
+    input speed, or no values for empty inputs. This is not electrical output;
+    rated shaft power is not an instantaneous cap in other modes.
     """
-    speeds = parameters["generator_ratio"] * trace.x[:, 0]
+    try:
+        rotors = np.asarray(rotor_speeds, dtype=float)
+    except (TypeError, ValueError) as error:
+        raise ValueError("rotor speeds must be a 1D numeric array") from error
+    if rotors.ndim != 1:
+        raise ValueError("rotor speeds must be a 1D numeric array")
+    if len(rotors) != len(location_labels):
+        raise ValueError(
+            "rotor speeds and location labels must have matching lengths"
+        )
+    speeds = parameters["generator_ratio"] * rotors
     if not np.all(np.isfinite(speeds)) or np.any(speeds <= 0):
         raise ValueError("generator speeds must be finite and positive")
     powers = []
-    for speed, location in zip(speeds, trace.location, strict=True):
+    for speed, location in zip(speeds, location_labels, strict=True):
         try:
-            torque_law = _TORQUE_BY_LABEL[str(location)]
-        except KeyError as error:
+            torque_law = _TORQUE_BY_LABEL[location]
+        except (KeyError, TypeError) as error:
             raise ValueError(
                 f"unknown wind-turbine location: {location!r}"
             ) from error
@@ -154,9 +167,7 @@ def _wind_speed(t: float, input_stream: InputStream) -> float:
     return float(wind[0])
 
 
-def _turbine_dynamics(
-    torque_law: _TorqueLaw, *, label: str
-) -> ContinuousDynamics:
+def _turbine_dynamics(torque_law: _TorqueLaw, *, label: str) -> Flow:
     """Build shared six-state dynamics for one generator torque law."""
 
     def flow(
@@ -232,7 +243,7 @@ def _turbine_dynamics(
             dtype=float,
         )
 
-    return ContinuousDynamics(flow, label=label)
+    return Flow(flow, label=label)
 
 
 def _speed_transition(
@@ -256,7 +267,7 @@ def _speed_transition(
     return Transition(
         source=source,
         target=target,
-        event=EventSurface(surface, direction=direction, label=label),
+        event_surface=EventSurface(surface, direction=direction, label=label),
         entry_policy=SurfaceEntryPolicy.TRIGGER,
     )
 

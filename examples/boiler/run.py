@@ -6,9 +6,9 @@ import polars as pl
 from flowcean.cli import initialize
 from flowcean.core import evaluate_offline, learn_offline
 from flowcean.hybrid import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -96,18 +96,18 @@ def main() -> None:
         return state[0] - target
 
     heating = Location(
-        ContinuousDynamics(heating_flow, label="heating"),
+        Flow(heating_flow, label="heating"),
         label="heating",
     )
     cooling = Location(
-        ContinuousDynamics(cooling_flow, label="cooling"),
+        Flow(cooling_flow, label="cooling"),
         label="cooling",
     )
     transitions = [
         Transition(
             source=heating,
             target=cooling,
-            event=EventSurface(
+            event_surface=EventSurface(
                 event_surface_high,
                 direction=CrossingDirection.RISING,
                 label="too_hot",
@@ -116,7 +116,7 @@ def main() -> None:
         Transition(
             source=cooling,
             target=heating,
-            event=EventSurface(
+            event_surface=EventSurface(
                 event_surface_low,
                 direction=CrossingDirection.FALLING,
                 label="too_cold",
@@ -136,12 +136,9 @@ def main() -> None:
         },
     )
 
-    trace = simulate(system, t_span=(times[0], times[-1]), sample_times=times)
-    data = pl.DataFrame(
-        {
-            "temperature": trace.x[:, 0],
-            "target": targets,
-        },
+    samples = simulate(system, t_span=(times[0], times[-1])).sample(times)
+    data = samples.select(pl.col("x0").alias("temperature")).with_columns(
+        pl.Series("target", targets)
     )
 
     environment = DataFrame(data)

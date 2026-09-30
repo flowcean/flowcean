@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from flowcean.hybrid import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     Location,
     Transition,
-    plot_trace,
+    plot_trajectory,
     simulate,
 )
 
@@ -32,11 +32,11 @@ def _too_cold(state: np.ndarray) -> float:
 def build_thermostat() -> HybridSystem:
     """Build a minimal two-location thermostat hybrid system."""
     heating = Location(
-        ContinuousDynamics(_heating_flow, label="heating_flow"),
+        Flow(_heating_flow, label="heating_flow"),
         label="heating",
     )
     cooling = Location(
-        ContinuousDynamics(_cooling_flow, label="cooling_flow"),
+        Flow(_cooling_flow, label="cooling_flow"),
         label="cooling",
     )
 
@@ -46,7 +46,7 @@ def build_thermostat() -> HybridSystem:
             Transition(
                 source=heating,
                 target=cooling,
-                event=EventSurface(
+                event_surface=EventSurface(
                     _too_hot,
                     direction=CrossingDirection.RISING,
                     label="too_hot",
@@ -55,7 +55,7 @@ def build_thermostat() -> HybridSystem:
             Transition(
                 source=cooling,
                 target=heating,
-                event=EventSurface(
+                event_surface=EventSurface(
                     _too_cold,
                     direction=CrossingDirection.FALLING,
                     label="too_cold",
@@ -69,15 +69,14 @@ def build_thermostat() -> HybridSystem:
 
 def main() -> None:
     """Simulate the thermostat and write a plot image."""
-    trace = simulate(
+    trajectory = simulate(
         build_thermostat(),
         t_span=(0.0, 20.0),
-        sample_dt=0.05,
     )
 
     _fig, ax = plt.subplots(figsize=(8.0, 3.5), layout="constrained")
-    plot_trace(
-        trace,
+    plot_trajectory(
+        trajectory,
         show_locations=True,
         show_location_labels=True,
         show_events=True,
@@ -86,7 +85,7 @@ def main() -> None:
     ax.set_title("Minimal thermostat hybrid system")
     ax.set_ylabel("temperature")
 
-    event_count = len(trace.events)
+    event_count = len(trajectory.events)
     print(f"recorded {event_count} events")
 
     plt.show()

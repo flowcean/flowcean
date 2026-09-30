@@ -1,26 +1,26 @@
-"""Hybrid system simulation utilities."""
+"""SciPy event-driven hybrid simulation, independent of sampling grids."""
 
 from collections.abc import Callable, Iterable, Sequence
-from functools import cache
-from inspect import Parameter, signature
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 import numpy as np
 from scipy.integrate import solve_ivp
 
+from ._runtime import (
+    _BoundFunction,
+    _ResidenceClock,
+    _RunBindings,
+    ensure_state,
+)
 from .hybrid_system import (
-    Event,
     HybridSystem,
-    Input,
     InputStream,
     Location,
-    Parameters,
-    State,
     SurfaceEntryPolicy,
-    Trace,
     Transition,
     display_label,
 )
+from .trajectory import ContinuousSegment, Event, HybridTrajectory
 
 
 class HybridSimulationError(RuntimeError):
@@ -29,6 +29,20 @@ class HybridSimulationError(RuntimeError):
 
 class InvalidEventSurfaceValueError(HybridSimulationError):
     """Raised when an event surface returns NaN."""
+
+    def __init__(
+        self,
+        transitions: Sequence[Transition],
+        time: float,
+        *,
+        context: str,
+    ) -> None:
+        super().__init__(
+            f"Event surfaces returned NaN {context} at t={time!r}: {_transition_descriptions(transitions)}."
+        )
+        self.add_note(
+            "An event surface must return a scalar value other than NaN; exact zero denotes the surface."
+        )
 
 
 class SurfaceEntryError(HybridSimulationError):
@@ -43,87 +57,31 @@ class SimulationProgressError(HybridSimulationError):
     """Raised when a solver event does not advance physical time."""
 
 
-def ensure_state(state: Iterable[float]) -> State:
-    """Validate and coerce a state vector into a 1D array."""
-    array = np.asarray(state, dtype=float)
-    if array.ndim != 1:
-        message = "State must be a 1D array."
-        raise ValueError(message)
-    return array
-
-
 class _EventFn:
-    """Wrap an event-surface function with metadata for SciPy."""
+    """Terminal event wrapper retaining SciPy's crossing-direction semantics."""
 
     def __init__(
         self,
         transition: Transition,
-        parameters: Parameters,
-        input_stream: InputStream,
-        clock: "_ResidenceClock",
+        surface: _BoundFunction[float],
+        clock: _ResidenceClock,
     ) -> None:
-        self._clock = clock
-        self._transition = transition
-        self._parameters = parameters
-        self._input_stream = input_stream
-        self.direction = int(transition.event.direction)
+        self.transition = transition
+        self.surface = surface
+        self.clock = clock
+        self.direction = int(transition.event_surface.direction)
         self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
-        value = float(
-            _call_hybrid_callback(
-                self._transition.event.fn,
-                t,
-                y,
-                self._parameters,
-                self._input_stream,
-                self._clock.age(t),
-            ),
-        )
+        value = self.surface(t, y, self.clock.age(t))
         if np.isnan(value):
-            raise _invalid_surface_value_error(
-                [self._transition],
-                t,
-                context="during continuous integration",
+            raise InvalidEventSurfaceValueError(
+                [self.transition], t, context="during continuous integration"
             )
         return value
 
 
-class _ResidenceClock(NamedTuple):
-    """Immutable residence-time reference for one uninterrupted location visit."""
-
-    anchor: float
-    age_at_anchor: float
-
-    def age(self, time: float) -> float:
-        return self.age_at_anchor + (time - self.anchor)
-
-    def ages(self, times: np.ndarray) -> np.ndarray:
-        return self.age_at_anchor + (times - self.anchor)
-
-
-class _RolloutResult(NamedTuple):
-    """Sampled result for dense rollout."""
-
-    t: np.ndarray
-    eval_t: np.ndarray
-    x: np.ndarray
-    location: np.ndarray
-    location_time: np.ndarray
-
-
-class _Boundary(NamedTuple):
-    """Final quiescent state and location at a physical event time."""
-
-    time: float
-    state: np.ndarray
-    location: Location
-    clock: _ResidenceClock
-
-
 class _EntryResult(NamedTuple):
-    """State after resolving a chain of location-entry transitions."""
-
     state: np.ndarray
     location: Location
     events: tuple[Event, ...]
@@ -138,510 +96,226 @@ def simulate(
     location0: Location | None = None,
     *,
     input_stream: InputStream | None = None,
-    capture_inputs: bool | None = None,
-    capture_derivatives: bool = False,
     initial_location_time: float = 0.0,
     max_jumps: int = 256,
     rtol: float = 1e-7,
     atol: float = 1e-9,
     max_step: float | None = None,
-    dense_output: bool = False,
-    sample_times: Iterable[float] | None = None,
-    sample_dt: float | None = None,
-) -> Trace:
-    """Simulate a hybrid system and return a trace.
+) -> HybridTrajectory:
+    """Integrate a hybrid execution with dense continuous segments.
+
+    Sampling is a separate operation on the returned trajectory. Callbacks and
+    input streams must be pure and deterministic under repeated evaluation.
+    Equal endpoints resolve entry transitions without calling the ODE solver.
+    Parameters are snapshotted for every location at the start of the run.
 
     Args:
-        system: Hybrid system to simulate.
-        t_span: Start and end time for integration.
-        x0: Optional initial state override.
-        location0: Optional initial location override.
-        input_stream: Optional input stream accessor for callbacks.
-        capture_inputs: Input capture mode. If ``None``, capture iff an
-            input stream is provided.
-        capture_derivatives: Whether to re-evaluate ``Location.dynamics.flow``
-            on the returned trace grid and store the sampled derivatives in
-            ``Trace.dx``. This assumes pure flow callbacks under repeated
-            evaluation. Scalar derivative returns are accepted only for
-            single-state systems.
+        system: Model to simulate.
+        t_span: Finite start and end times, with end at or after start.
+        x0: Initial continuous state, overriding the model's initial state.
+        location0: Initial location, overriding the model's initial location.
+        input_stream: Function returning a one-dimensional input vector at a
+            requested physical time.
         initial_location_time: Finite, nonnegative age of the initial visit.
-        max_jumps: Maximum number of transitions allowed.
-        rtol: Relative tolerance for the solver.
-        atol: Absolute tolerance for the solver.
-        max_step: Optional maximum step size.
-        dense_output: Whether to build a continuous solution per segment.
-        sample_times: Monotone time grid to sample from the dense solution.
-        sample_dt: Fixed sampling interval to generate a time grid.
+            Each subsequent transition begins a new visit at age zero.
+        max_jumps: Maximum number of transitions, including same-time chains.
+        rtol: Relative tolerance for SciPy integration.
+        atol: Absolute tolerance for SciPy integration.
+        max_step: Maximum integration step; None uses SciPy's default.
 
     Returns:
-        Trace: The simulation trace with location labels and events.
+        The trajectory, retaining its supplied initial condition and ordered
+        continuous segments and events.
+
+    Raises:
+        HybridSimulationError: The transition limit is exceeded or a subclass
+            reports an invalid surface, ambiguous entry, or progress failure.
+        ValueError: Time bounds, initial conditions, or callback outputs are
+            invalid.
     """
+    start, end = (float(value) for value in t_span)
+    if not np.isfinite(start) or not np.isfinite(end):
+        raise ValueError("t_span endpoints must be finite.")
+    if end < start:
+        raise ValueError("t_span must not be reversed.")
     if not np.isfinite(initial_location_time) or initial_location_time < 0:
-        message = "initial_location_time must be finite and nonnegative."
-        raise ValueError(message)
-    start_location = (
+        raise ValueError(
+            "initial_location_time must be finite and nonnegative."
+        )
+    initial_location = (
         system.initial_location if location0 is None else location0
     )
-    if not isinstance(start_location, Location):
-        message = "location0 must be a Location."
-        raise TypeError(message)
-    location_ids = {id(location) for location in system.locations}
-    if id(start_location) not in location_ids:
-        message = "location0 must be included in system.locations."
-        raise ValueError(message)
-
-    state = ensure_state(x0 if x0 is not None else system.initial_state)
-    location = start_location
-    effective_input_stream = input_stream or _missing_input_stream
-    should_capture = _resolve_capture_inputs(
-        capture_inputs=capture_inputs,
-        input_stream=input_stream,
-    )
-
-    t_segments: list[np.ndarray] = []
-    x_segments: list[np.ndarray] = []
-    location_segments: list[np.ndarray] = []
-    sol_segments: list[Callable[[np.ndarray], np.ndarray] | None] = []
-    clock_segments: list[_ResidenceClock] = []
-    events: list[Event] = []
-    boundaries: list[_Boundary] = []
-
-    t_current = float(t_span[0])
-    t_final = float(t_span[1])
-    clock = _ResidenceClock(t_current, float(initial_location_time))
-    jumps = 0
-
-    sample_grid = _prepare_sample_times(t_span, sample_times, sample_dt)
-    needs_dense = dense_output or sample_grid is not None
-
-    initial_entry = _settle_location_entries(
+    if not isinstance(initial_location, Location):
+        raise TypeError("location0 must be a Location.")
+    if initial_location not in system.locations:
+        raise ValueError("location0 must be included in system.locations.")
+    initial_state = ensure_state(system.initial_state if x0 is None else x0)
+    bindings = _RunBindings(system, input_stream)
+    execution: list[ContinuousSegment | Event] = []
+    clock = _ResidenceClock(start, float(initial_location_time))
+    entry = _settle_location_entries(
         system,
-        location,
-        state,
-        t_current,
-        effective_input_stream,
+        initial_location,
+        initial_state.copy(),
+        start,
+        bindings,
         first_microstep=0,
         clock=clock,
-        jumps=jumps,
+        jumps=0,
         max_jumps=max_jumps,
     )
-    state = initial_entry.state
-    location = initial_entry.location
-    jumps = initial_entry.jumps
-    clock = initial_entry.clock
-    events.extend(initial_entry.events)
-    if initial_entry.events:
-        boundaries.append(_Boundary(t_current, state.copy(), location, clock))
-
-    while t_current < t_final:
+    state, location, events, jumps, clock = entry
+    execution.extend(events)
+    current = start
+    while current < end:
         transitions = system.transitions_from(location)
-        event_fns = _build_event_functions(
-            transitions,
-            system.parameters,
-            location.parameters,
-            effective_input_stream,
-            clock,
+        event_fns = [
+            _EventFn(transition, bindings.surfaces[transition], clock)
+            for transition in transitions
+        ]
+
+        result = solve_ivp(
+            _wrap_flow(bindings.flows[location], clock),
+            (current, end),
+            state.copy(),
+            events=event_fns or None,
+            rtol=rtol,
+            atol=atol,
+            dense_output=True,
+            max_step=np.inf if max_step is None else max_step,
         )
-        segment_start = t_current
-
-        solve_kwargs = {
-            "fun": _wrap_flow(
-                location,
-                system.parameters,
-                effective_input_stream,
-                clock,
-            ),
-            "t_span": (segment_start, t_final),
-            "y0": state,
-            "events": event_fns or None,
-            "rtol": rtol,
-            "atol": atol,
-            "dense_output": needs_dense,
-        }
-        if max_step is not None:
-            solve_kwargs["max_step"] = max_step
-
-        result = solve_ivp(**solve_kwargs)
         if not result.success:
-            message = f"ODE integration failed: {result.message}"
-            raise HybridSimulationError(message)
-
-        t_segments.append(result.t)
-        x_segments.append(result.y.T)
-        location_segments.append(
-            np.full(result.t.shape, location, dtype=object),
+            raise HybridSimulationError(
+                f"ODE integration failed: {result.message}"
+            )
+        has_event = result.t_events and any(
+            len(times) for times in result.t_events
         )
-        sol_segments.append(result.sol)
-        clock_segments.append(clock)
-
-        if not result.t_events or all(
-            len(event_list) == 0 for event_list in result.t_events
-        ):
+        selected = (
+            _first_event(result.t_events, result.y_events)
+            if has_event
+            else None
+        )
+        if selected is not None:
+            _, event_time, _ = selected
+            if event_time <= current:
+                error = SimulationProgressError(
+                    f"An event did not advance physical time (segment start={current!r}, event time={event_time!r}).",
+                )
+                error.add_note(
+                    "This can result from stateful callbacks, discontinuous event surfaces, "
+                    "or insufficient floating-point time resolution. Use deterministic "
+                    "callbacks and continuous event surfaces.",
+                )
+                raise error
+        segment_end = float(result.t[-1])
+        if segment_end > current:
+            execution.append(
+                ContinuousSegment(
+                    location,
+                    (current, segment_end),
+                    result.sol,
+                    clock,
+                    result.t,
+                )
+            )
+        if selected is None:
             break
-
-        triggered_index, event_time, event_state = _first_event(
-            result.t_events,
-            result.y_events,
-        )
-        if event_time <= segment_start:
-            progress_context = (
-                f"segment start={segment_start!r}, event time={event_time!r}"
-            )
-            message = (
-                f"An event did not advance physical time ({progress_context})."
-            )
-            error = SimulationProgressError(message)
-            error.add_note(
-                "This can result from stateful callbacks, discontinuous event "
-                "surfaces, or insufficient floating-point time resolution. "
-                "Use deterministic callbacks and continuous event surfaces.",
-            )
-            raise error
-
-        transition = transitions[triggered_index]
+        index, event_time, event_state = selected
+        transition = transitions[index]
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
             event_time,
             event_state,
-            system.parameters,
-            effective_input_stream,
+            bindings,
             microstep=0,
             location_time=clock.age(event_time),
         )
-        clock = _ResidenceClock(event_time, 0.0)
-        events.append(event)
-        location = transition.target
-
-        target_entry = _settle_location_entries(
+        execution.append(event)
+        entry = _settle_location_entries(
             system,
-            location,
+            transition.target,
             state,
             event_time,
-            effective_input_stream,
+            bindings,
             first_microstep=1,
-            clock=clock,
+            clock=_ResidenceClock(event_time, 0.0),
             jumps=jumps,
             max_jumps=max_jumps,
         )
-        state = target_entry.state
-        location = target_entry.location
-        jumps = target_entry.jumps
-        clock = target_entry.clock
-        events.extend(target_entry.events)
-        boundaries.append(_Boundary(event_time, state.copy(), location, clock))
-        t_current = event_time
-
-    if sample_grid is None:
-        t_all = _concat_segments(t_segments)
-        x_all = _concat_segments(x_segments)
-        location_objects = _concat_segments(location_segments)
-        location_time = _concat_segments(
-            [
-                clock.ages(times)
-                for clock, times in zip(
-                    clock_segments, t_segments, strict=True
-                )
-            ],
-        )
-        _apply_boundaries(
-            t_all,
-            x_all,
-            location_objects,
-            location_time,
-            boundaries,
-        )
-        unique_times = _unique_time_mask(t_all)
-        t_all = t_all[unique_times]
-        x_all = x_all[unique_times]
-        location_objects = location_objects[unique_times]
-        location_time = location_time[unique_times]
-        location_all = _location_labels(location_objects)
-        u_all = None
-        dx_all = None
-        if should_capture:
-            if input_stream is None:
-                message = "Internal error: expected input_stream for capture."
-                raise RuntimeError(message)
-            u_all = _capture_inputs(t_all, input_stream)
-        if capture_derivatives:
-            dx_all = _capture_derivatives(
-                system=system,
-                times=t_all,
-                states=x_all,
-                locations=location_objects,
-                location_times=location_time,
-                input_stream=effective_input_stream,
-            )
-        return Trace(
-            t=t_all,
-            x=x_all,
-            location=location_all,
-            events=tuple(events),
-            u=u_all,
-            dx=dx_all,
-            location_time=location_time,
-        )
-
-    rolled = _rollout_segments(
-        sample_grid,
-        t_segments,
-        x_segments,
-        location_segments,
-        sol_segments,
-        clock_segments,
-        boundaries,
+        state, location, events, jumps, clock = entry
+        execution.extend(events)
+        current = event_time
+    return HybridTrajectory(
+        system,
+        (start, end),
+        initial_state,
+        initial_location,
+        float(initial_location_time),
+        tuple(execution),
+        bindings,
     )
-    u_all = None
-    dx_all = None
-    if should_capture:
-        if input_stream is None:
-            message = "Internal error: expected input_stream for capture."
-            raise RuntimeError(message)
-        u_all = _capture_inputs(rolled.t, input_stream)
-    if capture_derivatives:
-        dx_all = _capture_derivatives(
-            system=system,
-            times=rolled.eval_t,
-            states=rolled.x,
-            locations=rolled.location,
-            location_times=rolled.location_time,
-            input_stream=effective_input_stream,
-        )
-    location_all = _location_labels(rolled.location)
-    return Trace(
-        t=rolled.t,
-        x=rolled.x,
-        location=location_all,
-        events=tuple(events),
-        u=u_all,
-        dx=dx_all,
-        location_time=rolled.location_time,
-    )
-
-
-def generate_traces(
-    system: HybridSystem,
-    t_span: tuple[float, float],
-    initial_states: Iterable[Iterable[float]],
-    *,
-    input_stream: InputStream | None = None,
-    capture_inputs: bool | None = None,
-    capture_derivatives: bool = False,
-    initial_location_time: float = 0.0,
-    max_jumps: int = 256,
-    rtol: float = 1e-7,
-    atol: float = 1e-9,
-    max_step: float | None = None,
-    dense_output: bool = False,
-    sample_times: Iterable[float] | None = None,
-    sample_dt: float | None = None,
-) -> list[Trace]:
-    """Simulate one trace per initial state.
-
-    Other arguments follow :func:`simulate`.
-    """
-    return [
-        simulate(
-            system,
-            t_span,
-            x0=state,
-            input_stream=input_stream,
-            capture_inputs=capture_inputs,
-            capture_derivatives=capture_derivatives,
-            initial_location_time=initial_location_time,
-            max_jumps=max_jumps,
-            rtol=rtol,
-            atol=atol,
-            max_step=max_step,
-            dense_output=dense_output,
-            sample_times=sample_times,
-            sample_dt=sample_dt,
-        )
-        for state in initial_states
-    ]
 
 
 def _wrap_flow(
-    location: Location,
-    system_parameters: Parameters,
-    input_stream: InputStream,
+    bound_flow: _BoundFunction[np.ndarray],
     clock: _ResidenceClock,
 ) -> Callable[[float, np.ndarray], np.ndarray]:
-    """Bind location dynamics and system parameters for SciPy."""
+    """Supply a visit's residence clock to a bound flow for SciPy integration."""
 
-    def flow(t: float, y: np.ndarray) -> np.ndarray:
-        dynamics = location.dynamics
-        parameters = {**system_parameters, **location.parameters}
-        return _coerce_derivative(
-            _call_hybrid_callback(
-                dynamics.flow,
-                t,
-                y,
-                parameters,
-                input_stream,
-                clock.age(t),
-            ),
-            state_dim=y.shape[0],
-        )
+    def flow(time: float, state: np.ndarray) -> np.ndarray:
+        return bound_flow(time, state, clock.age(time))
 
     return flow
-
-
-def _build_event_functions(
-    transitions: Sequence[Transition],
-    system_parameters: Parameters,
-    location_parameters: Parameters,
-    input_stream: InputStream,
-    clock: _ResidenceClock,
-) -> list[_EventFn]:
-    """Create SciPy-compatible event functions for transitions."""
-    event_functions: list[_EventFn] = []
-    for transition in transitions:
-        parameters = {**system_parameters, **location_parameters}
-        event_functions.append(
-            _EventFn(
-                transition,
-                parameters,
-                input_stream,
-                clock,
-            ),
-        )
-    return event_functions
-
-
-def _call_hybrid_callback(
-    callback: Callable[..., Any],
-    t: float,
-    state: np.ndarray,
-    parameters: Parameters,
-    input_stream: InputStream,
-    location_time: float,
-) -> Any:
-    canonical_arguments = {
-        "t": t,
-        "state": state,
-        "parameters": parameters,
-        "input_stream": input_stream,
-        "location_time": location_time,
-    }
-    callback_parameters = _callback_parameters(callback)
-    if callback_parameters is None:
-        return callback(t, state, parameters, input_stream)
-
-    selected_arguments: dict[str, object] = {}
-    has_var_keyword = False
-    for parameter in callback_parameters:
-        if parameter.kind in {
-            Parameter.POSITIONAL_ONLY,
-            Parameter.VAR_POSITIONAL,
-        }:
-            return callback(t, state, parameters, input_stream)
-        if parameter.kind == Parameter.VAR_KEYWORD:
-            has_var_keyword = True
-            continue
-        if parameter.name in canonical_arguments:
-            selected_arguments[parameter.name] = canonical_arguments[
-                parameter.name
-            ]
-        elif parameter.default is Parameter.empty:
-            return callback(t, state, parameters, input_stream)
-
-    if has_var_keyword:
-        return callback(**canonical_arguments)
-    return callback(**selected_arguments)
-
-
-def _callback_parameters(
-    callback: Callable[..., Any],
-) -> tuple[Parameter, ...] | None:
-    try:
-        return _cached_callback_parameters(callback)
-    except TypeError:
-        return _inspect_callback_parameters(callback)
-
-
-@cache
-def _cached_callback_parameters(
-    callback: Callable[..., Any],
-) -> tuple[Parameter, ...] | None:
-    return _inspect_callback_parameters(callback)
-
-
-def _inspect_callback_parameters(
-    callback: Callable[..., Any],
-) -> tuple[Parameter, ...] | None:
-    try:
-        return tuple(signature(callback).parameters.values())
-    except (TypeError, ValueError):
-        return None
 
 
 def _first_event(
     t_events: Sequence[np.ndarray],
     y_events: Sequence[np.ndarray],
 ) -> tuple[int, float, np.ndarray]:
-    """Select the earliest triggered event across all event surfaces."""
+    """Select the earliest reported event; ties retain SciPy's ordering."""
     earliest_time = float("inf")
     earliest_index = -1
     earliest_state = np.zeros(0, dtype=float)
     for index, (times, states) in enumerate(
-        zip(t_events, y_events, strict=False),
+        zip(t_events, y_events, strict=False)
     ):
         if len(times) == 0:
             continue
         time = float(times[0])
         if time < earliest_time:
-            earliest_time = time
-            earliest_index = index
-            earliest_state = states[0]
-
+            earliest_index, earliest_time, earliest_state = (
+                index,
+                time,
+                states[0],
+            )
     if earliest_index < 0:
-        message = "Event requested but none were detected."
-        raise RuntimeError(message)
-
+        raise RuntimeError("Event requested but none were detected.")
     return earliest_index, earliest_time, earliest_state
 
 
 def _apply_transition(
     transition: Transition,
-    event_time: float,
-    event_state: np.ndarray,
-    system_parameters: Parameters,
-    input_stream: InputStream,
+    time: float,
+    state: np.ndarray,
+    bindings: _RunBindings,
     *,
     microstep: int,
     location_time: float,
 ) -> tuple[np.ndarray, Event]:
-    state_before = ensure_state(event_state).copy()
-    parameters = {**system_parameters, **transition.source.parameters}
+    before = ensure_state(state)
     if transition.reset is None:
-        new_state = state_before.copy()
-        reset_label = None
+        after = before.copy()
     else:
-        new_state = _coerce_reset(
-            _call_hybrid_callback(
-                transition.reset.fn,
-                event_time,
-                state_before.copy(),
-                parameters,
-                input_stream,
-                location_time,
-            ),
-            state_dim=state_before.shape[0],
-        )
-        reset_label = display_label(transition.reset)
-
-    return new_state, Event(
-        time=event_time,
-        source_location=display_label(transition.source),
-        target_location=display_label(transition.target),
-        event_surface=display_label(transition.event),
-        reset=reset_label,
-        state_before=state_before.copy(),
-        state_after=new_state.copy(),
-        microstep=microstep,
-        location_time_before=location_time,
+        after = bindings.resets[transition](time, before.copy(), location_time)
+    return after, Event(
+        time,
+        transition,
+        before,
+        after,
+        microstep,
+        location_time,
     )
 
 
@@ -650,151 +324,88 @@ def _settle_location_entries(
     location: Location,
     state: np.ndarray,
     time: float,
-    input_stream: InputStream,
+    bindings: _RunBindings,
     *,
     first_microstep: int,
     clock: _ResidenceClock,
     jumps: int,
     max_jumps: int,
 ) -> _EntryResult:
-    """Resolve explicit entry-trigger transitions until a location settles."""
-    entry_events: list[Event] = []
-    microstep = first_microstep
+    """Resolve entry policies and apply immediate jumps until entry settles.
 
+    Evaluate all outgoing surfaces first so NaN, ERROR, and ambiguity checks
+    precede any reset.
+    """
+    events: list[Event] = []
+    microstep = first_microstep
     while True:
         transitions = system.transitions_from(location)
-        values = _evaluate_entry_surfaces(
-            transitions,
-            location,
-            time,
-            state,
-            system.parameters,
-            input_stream,
-            clock.age(time),
-        )
-        zero_error = [
+        values = [
+            bindings.surfaces[transition](time, state, clock.age(time))
+            for transition in transitions
+        ]
+        invalid = [
+            transition
+            for transition, value in zip(transitions, values, strict=True)
+            if np.isnan(value)
+        ]
+        if invalid:
+            raise InvalidEventSurfaceValueError(
+                invalid,
+                time,
+                context=f"while entering {display_label(location)!r}",
+            )
+        errors = [
             transition
             for transition, value in zip(transitions, values, strict=True)
             if value == 0.0
             and transition.entry_policy is SurfaceEntryPolicy.ERROR
         ]
-        if zero_error:
-            descriptions = _transition_descriptions(zero_error)
+        if errors:
             error = SurfaceEntryError(
-                "Event surfaces are zero while entering "
-                f"{display_label(location)!r} at t={time!r}: {descriptions}.",
+                f"Event surfaces are zero while entering {display_label(location)!r} "
+                f"at t={time!r}: {_transition_descriptions(errors)}.",
             )
             error.add_note(
-                "Choose an explicit entry_policy for each implicated "
-                "transition: TRIGGER for an immediate jump or CONTINUE to "
-                "begin continuous integration from the surface.",
+                "Choose TRIGGER for an immediate jump or CONTINUE to begin continuous integration from the surface."
             )
             raise error
-
-        zero_trigger = [
+        triggers = [
             transition
             for transition, value in zip(transitions, values, strict=True)
             if value == 0.0
             and transition.entry_policy is SurfaceEntryPolicy.TRIGGER
         ]
-        if len(zero_trigger) > 1:
-            descriptions = _transition_descriptions(zero_trigger)
+        if len(triggers) > 1:
             error = AmbiguousTransitionError(
-                "Multiple transitions request an entry-time jump from "
-                f"{display_label(location)!r} at t={time!r}: {descriptions}.",
+                f"Multiple transitions request an entry-time jump from {display_label(location)!r} "
+                f"at t={time!r}: {_transition_descriptions(triggers)}.",
             )
             error.add_note(
-                "Make at most one outgoing TRIGGER surface zero on entry, "
-                "or change the model so the entry state selects one target.",
+                "Make at most one outgoing TRIGGER surface zero on entry."
             )
             raise error
-        if not zero_trigger:
-            return _EntryResult(
-                state=state,
-                location=location,
-                events=tuple(entry_events),
-                jumps=jumps,
-                clock=clock,
-            )
-
-        transition = zero_trigger[0]
+        if not triggers:
+            return _EntryResult(state, location, tuple(events), jumps, clock)
+        transition = triggers[0]
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
             time,
             state,
-            system.parameters,
-            input_stream,
+            bindings,
             microstep=microstep,
             location_time=clock.age(time),
         )
-        clock = _ResidenceClock(time, 0.0)
-        entry_events.append(event)
+        events.append(event)
         location = transition.target
+        clock = _ResidenceClock(time, 0.0)
         microstep += 1
-
-
-def _evaluate_entry_surfaces(
-    transitions: Sequence[Transition],
-    location: Location,
-    time: float,
-    state: np.ndarray,
-    system_parameters: Parameters,
-    input_stream: InputStream,
-    location_time: float,
-) -> list[float]:
-    """Evaluate every outgoing event surface once before making a decision."""
-    parameters = {**system_parameters, **location.parameters}
-    values = [
-        float(
-            _call_hybrid_callback(
-                transition.event.fn,
-                time,
-                state,
-                parameters,
-                input_stream,
-                location_time,
-            ),
-        )
-        for transition in transitions
-    ]
-    invalid = [
-        transition
-        for transition, value in zip(transitions, values, strict=True)
-        if np.isnan(value)
-    ]
-    if invalid:
-        raise _invalid_surface_value_error(
-            invalid,
-            time,
-            context=f"while entering {display_label(location)!r}",
-        )
-    return values
-
-
-def _invalid_surface_value_error(
-    transitions: Sequence[Transition],
-    time: float,
-    *,
-    context: str,
-) -> InvalidEventSurfaceValueError:
-    descriptions = _transition_descriptions(transitions)
-    error = InvalidEventSurfaceValueError(
-        f"Event surfaces returned NaN {context} at t={time!r}: "
-        f"{descriptions}.",
-    )
-    error.add_note(
-        "An event surface must return a scalar value other than NaN; exact "
-        "zero denotes the surface and signed nonzero values denote its sides.",
-    )
-    return error
 
 
 def _transition_descriptions(transitions: Sequence[Transition]) -> str:
     return ", ".join(
-        f"{display_label(transition.source)} -> "
-        f"{display_label(transition.target)} "
-        f"[{display_label(transition.event)}]"
+        f"{display_label(transition.source)} -> {display_label(transition.target)} [{display_label(transition.event_surface)}]"
         for transition in transitions
     )
 
@@ -802,323 +413,5 @@ def _transition_descriptions(transitions: Sequence[Transition]) -> str:
 def _increment_jumps(jumps: int, max_jumps: int) -> int:
     jumps += 1
     if jumps > max_jumps:
-        message = "Maximum number of transitions exceeded."
-        raise HybridSimulationError(message)
+        raise HybridSimulationError("Maximum number of transitions exceeded.")
     return jumps
-
-
-def _concat_segments(segments: Sequence[np.ndarray]) -> np.ndarray:
-    """Concatenate solver segments while avoiding duplicate boundary points."""
-    if not segments:
-        return np.array([], dtype=float)
-    if len(segments) == 1:
-        return segments[0]
-    return np.concatenate(
-        [segments[0], *[segment[1:] for segment in segments[1:]]],
-    )
-
-
-def _unique_time_mask(times: np.ndarray) -> np.ndarray:
-    """Select one row for each time from a monotone adaptive trace."""
-    mask = np.ones(times.shape, dtype=bool)
-    mask[1:] = np.diff(times) != 0.0
-    return mask
-
-
-def _apply_boundaries(
-    times: np.ndarray,
-    states: np.ndarray,
-    locations: np.ndarray,
-    location_times: np.ndarray,
-    boundaries: Sequence[_Boundary],
-) -> None:
-    """Replace event-time rows with their final quiescent values."""
-    for boundary in boundaries:
-        matches = times == boundary.time
-        states[matches] = boundary.state
-        locations[matches] = boundary.location
-        location_times[matches] = boundary.clock.age(boundary.time)
-
-
-def _location_labels(locations: np.ndarray) -> np.ndarray:
-    return np.array(
-        [display_label(location) for location in locations],
-        dtype=object,
-    )
-
-
-def _prepare_sample_times(
-    t_span: tuple[float, float],
-    sample_times: Iterable[float] | None,
-    sample_dt: float | None,
-) -> np.ndarray | None:
-    if sample_times is None and sample_dt is None:
-        return None
-    if sample_times is not None and sample_dt is not None:
-        message = "Provide either sample_times or sample_dt, not both."
-        raise ValueError(message)
-    if sample_times is not None:
-        times = np.asarray(list(sample_times), dtype=float)
-        if times.size and not np.all(np.isfinite(times)):
-            message = "sample_times must be finite."
-            raise ValueError(message)
-    else:
-        if sample_dt is None or not np.isfinite(sample_dt):
-            message = "sample_dt must be finite."
-            raise ValueError(message)
-        if sample_dt <= 0:
-            message = "sample_dt must be positive."
-            raise ValueError(message)
-        times = np.arange(t_span[0], t_span[1], sample_dt, dtype=float)
-        endpoint_atol = float(
-            np.finfo(float).eps * max(1.0, abs(float(t_span[1]))),
-        )
-        if times.size and np.isclose(
-            times[-1],
-            t_span[1],
-            rtol=0.0,
-            atol=endpoint_atol,
-        ):
-            times[-1] = float(t_span[1])
-        else:
-            times = np.append(times, float(t_span[1]))
-    if times.size and np.any(np.diff(times) < 0):
-        message = "sample_times must be sorted in ascending order."
-        raise ValueError(message)
-    if times.size and (
-        float(times[0]) < t_span[0] or float(times[-1]) > t_span[1]
-    ):
-        message = "sample_times must lie within t_span."
-        raise ValueError(message)
-    return times
-
-
-def _capture_inputs(
-    times: np.ndarray,
-    input_stream: InputStream,
-) -> np.ndarray:
-    values: list[np.ndarray] = []
-    input_dim: int | None = None
-    for time in times:
-        value = _coerce_input(input_stream(float(time)))
-        if input_dim is None:
-            input_dim = value.shape[0]
-        elif value.shape[0] != input_dim:
-            message = "Input stream dimension changed during simulation."
-            raise ValueError(message)
-        values.append(value)
-
-    if not values:
-        return np.empty((0, 0), dtype=float)
-
-    return np.vstack(values)
-
-
-def _capture_derivatives(
-    *,
-    system: HybridSystem,
-    times: np.ndarray,
-    states: np.ndarray,
-    locations: np.ndarray,
-    location_times: np.ndarray,
-    input_stream: InputStream,
-) -> np.ndarray:
-    derivatives: list[np.ndarray] = []
-    matrix_ndim = 2
-    state_dim = states.shape[1] if states.ndim == matrix_ndim else 0
-    for time, state, location, location_time in zip(
-        times,
-        states,
-        locations,
-        location_times,
-        strict=True,
-    ):
-        if not isinstance(location, Location):
-            message = "Derivative capture requires Location objects."
-            raise TypeError(message)
-        dynamics = location.dynamics
-        derivative = _coerce_derivative(
-            _call_hybrid_callback(
-                dynamics.flow,
-                float(time),
-                state,
-                {**system.parameters, **location.parameters},
-                input_stream,
-                float(location_time),
-            ),
-            state_dim=state_dim,
-        )
-        derivatives.append(derivative)
-
-    if not derivatives:
-        return np.empty((0, state_dim), dtype=float)
-
-    return np.vstack(derivatives)
-
-
-def _coerce_reset(candidate: object, *, state_dim: int) -> np.ndarray:
-    reset_state = np.asarray(candidate, dtype=float)
-    if reset_state.ndim == 0 and state_dim == 1:
-        return reset_state.reshape(1)
-    if reset_state.ndim != 1:
-        message = "Reset must return a 1D state matching the state dimension."
-        raise ValueError(message)
-    if reset_state.shape[0] != state_dim:
-        message = "Reset state must match the state dimension."
-        raise ValueError(message)
-    return reset_state.copy()
-
-
-def _coerce_derivative(candidate: object, *, state_dim: int) -> np.ndarray:
-    derivative = np.asarray(candidate, dtype=float)
-    if derivative.ndim == 0 and state_dim == 1:
-        return derivative.reshape(1)
-    if derivative.ndim != 1:
-        message = (
-            "Flow must return a 1D derivative matching the state dimension."
-        )
-        raise ValueError(message)
-    if derivative.shape[0] != state_dim:
-        message = "Flow derivative must match the state dimension."
-        raise ValueError(message)
-    return derivative
-
-
-def _coerce_input(candidate: object) -> np.ndarray:
-    try:
-        values = np.asarray(candidate, dtype=float)
-    except (TypeError, ValueError) as error:
-        message = "Input stream must return numeric values."
-        raise ValueError(message) from error
-
-    if values.ndim != 1:
-        message = "Input stream must return a 1D array."
-        raise ValueError(message)
-
-    return values
-
-
-def _missing_input_stream(time: float) -> Input:
-    message = (
-        "input_stream is required for this system; callback accessed input "
-        f"at t={time}."
-    )
-    raise ValueError(message)
-
-
-def _resolve_capture_inputs(
-    *,
-    capture_inputs: bool | None,
-    input_stream: InputStream | None,
-) -> bool:
-    if capture_inputs is None:
-        return input_stream is not None
-    if capture_inputs:
-        if input_stream is None:
-            message = "capture_inputs=True requires an input_stream."
-            raise ValueError(message)
-        return True
-    return False
-
-
-def _rollout_segments(
-    sample_times: np.ndarray,
-    t_segments: Sequence[np.ndarray],
-    x_segments: Sequence[np.ndarray],
-    location_segments: Sequence[np.ndarray],
-    sol_segments: Sequence[Callable[[np.ndarray], np.ndarray] | None],
-    clock_segments: Sequence[_ResidenceClock],
-    boundaries: Sequence[_Boundary],
-) -> _RolloutResult:
-    if sample_times.size == 0:
-        return _RolloutResult(
-            t=sample_times,
-            eval_t=sample_times,
-            x=np.empty((0, 0), dtype=float),
-            location=np.empty((0,), dtype=object),
-            location_time=np.empty((0,), dtype=float),
-        )
-
-    sampled_t: list[np.ndarray] = []
-    sampled_eval_t: list[np.ndarray] = []
-    sampled_x: list[np.ndarray] = []
-    sampled_location: list[np.ndarray] = []
-    sampled_location_time: list[np.ndarray] = []
-
-    last_segment_index = len(t_segments) - 1
-    for index, (t_seg, x_seg, location_seg, sol, clock) in enumerate(
-        zip(
-            t_segments,
-            x_segments,
-            location_segments,
-            sol_segments,
-            clock_segments,
-            strict=True,
-        ),
-    ):
-        t_start = float(t_seg[0])
-        t_end = float(t_seg[-1])
-        if index < last_segment_index:
-            mask = (sample_times >= t_start) & (sample_times < t_end)
-        else:
-            mask = (sample_times >= t_start) & (sample_times <= t_end)
-        if not np.any(mask):
-            continue
-        times = sample_times[mask]
-        eval_times = times.copy()
-        exact_boundary_mask = np.zeros(times.shape, dtype=bool)
-        if index > 0:
-            exact_boundary_mask = times == t_start
-        sampled_t.append(times)
-        sampled_eval_t.append(eval_times)
-        sampled_location_time.append(clock.ages(eval_times))
-        if sol is not None:
-            values = sol(eval_times).T
-        else:
-            values = _interpolate_segment(t_seg, x_seg, eval_times)
-        if np.any(exact_boundary_mask):
-            values[exact_boundary_mask] = x_seg[0]
-        sampled_x.append(values)
-        sampled_location.append(
-            np.full(times.shape, location_seg[0], dtype=object),
-        )
-
-    if not sampled_t:
-        return _RolloutResult(
-            t=np.array([], dtype=float),
-            eval_t=np.array([], dtype=float),
-            x=np.empty((0, 0), dtype=float),
-            location=np.empty((0,), dtype=object),
-            location_time=np.empty((0,), dtype=float),
-        )
-
-    result = _RolloutResult(
-        t=np.concatenate(sampled_t),
-        eval_t=np.concatenate(sampled_eval_t),
-        x=np.concatenate(sampled_x),
-        location=np.concatenate(sampled_location),
-        location_time=np.concatenate(sampled_location_time),
-    )
-    _apply_boundaries(
-        result.t,
-        result.x,
-        result.location,
-        result.location_time,
-        boundaries,
-    )
-    return result
-
-
-def _interpolate_segment(
-    t_segment: np.ndarray,
-    x_segment: np.ndarray,
-    sample_times: np.ndarray,
-) -> np.ndarray:
-    if t_segment.size == 0:
-        return np.empty((0, x_segment.shape[1]), dtype=float)
-    return np.vstack(
-        [
-            np.interp(sample_times, t_segment, x_segment[:, dim])
-            for dim in range(x_segment.shape[1])
-        ],
-    ).T

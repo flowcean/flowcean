@@ -8,7 +8,6 @@ import polars as pl
 import pytest
 
 from flowcean.core import Model
-from flowcean.hybrid import Trace
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HyDRAModel,
@@ -51,7 +50,7 @@ def _schema(*, with_input: bool = False) -> HyDRATraceSchema:
     )
 
 
-def _single_mode_model(
+def _single_flow_model(
     flow: DerivativeModel,
     *,
     with_input: bool = False,
@@ -65,8 +64,8 @@ def _single_mode_model(
     )
 
 
-def test_single_mode_batch_prediction_and_diagnostics() -> None:
-    model = _single_mode_model(
+def test_single_flow_batch_prediction_and_diagnostics() -> None:
+    model = _single_flow_model(
         DerivativeModel(lambda frame: -2.0 * frame["x"].to_numpy()),
     )
     inputs = pl.DataFrame({"time": [0.0, 0.5, 1.0], "x": [1.0, -2.0, 3.0]})
@@ -75,7 +74,7 @@ def test_single_mode_batch_prediction_and_diagnostics() -> None:
 
     np.testing.assert_allclose(diagnostics.outputs["dx"], [-2.0, 4.0, -6.0])
     assert diagnostics.row_indices == [0, 1, 2]
-    assert [result.mode_id for result in diagnostics.selector_results] == [
+    assert [result.flow_id for result in diagnostics.selector_results] == [
         0,
         0,
         0,
@@ -88,7 +87,7 @@ def test_single_mode_batch_prediction_and_diagnostics() -> None:
 
 def test_predict_next_state_and_simulate_match_exponential_solution() -> None:
     rate = -0.8
-    model = _single_mode_model(
+    model = _single_flow_model(
         DerivativeModel(lambda frame: rate * frame["x"].to_numpy()),
     )
 
@@ -102,20 +101,19 @@ def test_predict_next_state_and_simulate_match_exponential_solution() -> None:
 
     times = np.linspace(0.0, 2.0, 9)
     trace = model.simulate((0.0, 2.0), [1.5], sample_times=times)
-    np.testing.assert_allclose(trace.t, times)
+    np.testing.assert_allclose(trace["t"], times)
     np.testing.assert_allclose(
-        trace.x[:, 0],
+        trace["x0"],
         1.5 * np.exp(rate * times),
         rtol=3e-7,
         atol=1e-9,
     )
-    assert trace.location.tolist() == ["mode_0"] * times.size
-    np.testing.assert_allclose(trace.location_time, times - times[0])
-    assert trace.events == ()
-    assert trace.u is None
+    assert trace["flow_id"].to_list() == [0] * times.size
+    np.testing.assert_allclose(trace["flow_time"], times - times[0])
+    assert trace.columns == ["t", "x0", "flow_id", "flow_time"]
 
 
-def test_simulation_labels_modes_at_grid_boundaries_and_resets_residence(
+def test_simulation_selects_flows_at_grid_boundaries_and_resets_flow_time(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     evaluated_at: list[float] = []
@@ -136,7 +134,7 @@ def test_simulation_labels_modes_at_grid_boundaries_and_resets_residence(
         max_depth=2,
         random_state=0,
     ).learn_from_traces(
-        [pl.DataFrame({"time": times, "mode": [0, 0, 1, 1, 0]})],
+        [pl.DataFrame({"time": times, "flow_id": [0, 0, 1, 1, 0]})],
     )
     model = HyDRAModel(
         [rising_flow, falling_flow],
@@ -155,27 +153,14 @@ def test_simulation_labels_modes_at_grid_boundaries_and_resets_residence(
     monkeypatch.setattr(selector, "predict_details", record_selection)
     trace = model.simulate((1.25, 4.0), [1.0], sample_times=times)
 
-    np.testing.assert_array_equal(trace.t, times)
-    np.testing.assert_allclose(trace.x[:, 0], [1.0, 1.25, 2.0, 0.9, -1.5])
-    assert trace.location.tolist() == [
-        "mode_0",
-        "mode_0",
-        "mode_1",
-        "mode_1",
-        "mode_0",
-    ]
-    np.testing.assert_allclose(
-        trace.location_time, [0.0, 0.25, 0.0, 0.55, 0.0]
-    )
+    np.testing.assert_array_equal(trace["t"], times)
+    np.testing.assert_allclose(trace["x0"], [1.0, 1.25, 2.0, 0.9, -1.5])
+    assert trace["flow_id"].to_list() == [0, 0, 1, 1, 0]
+    np.testing.assert_allclose(trace["flow_time"], [0.0, 0.25, 0.0, 0.55, 0.0])
     np.testing.assert_array_equal(selected_at, times)
     assert max(evaluated_at) <= times[-1]
-    assert (
-        len(trace.t)
-        == len(trace.x)
-        == len(trace.location)
-        == len(trace.location_time)
-    )
-    assert trace.events == ()
+    assert trace.height == len(times)
+    assert trace.columns == ["t", "x0", "flow_id", "flow_time"]
 
 
 def test_simulation_selects_from_post_interval_state() -> None:
@@ -186,7 +171,7 @@ def test_simulation_selects_from_post_interval_state() -> None:
         max_depth=1,
         random_state=0,
     ).learn_from_traces(
-        [pl.DataFrame({"x": [-1.0, 0.0, 1.0, 2.0], "mode": [0, 0, 1, 1]})],
+        [pl.DataFrame({"x": [-1.0, 0.0, 1.0, 2.0], "flow_id": [0, 0, 1, 1]})],
     )
     model = HyDRAModel(
         [rising_flow, falling_flow],
@@ -199,20 +184,13 @@ def test_simulation_selects_from_post_interval_state() -> None:
 
     trace = model.simulate((0.0, 2.2), [0.0], sample_times=times)
 
-    np.testing.assert_allclose(trace.x[:, 0], [0.0, 0.4, 1.0, 0.4, 1.0])
-    assert trace.location.tolist() == [
-        "mode_0",
-        "mode_0",
-        "mode_1",
-        "mode_0",
-        "mode_1",
-    ]
-    np.testing.assert_allclose(trace.location_time, [0.0, 0.4, 0.0, 0.0, 0.0])
-    assert trace.events == ()
+    np.testing.assert_allclose(trace["x0"], [0.0, 0.4, 1.0, 0.4, 1.0])
+    assert trace["flow_id"].to_list() == [0, 0, 1, 0, 1]
+    np.testing.assert_allclose(trace["flow_time"], [0.0, 0.4, 0.0, 0.0, 0.0])
 
 
 def test_simulation_uses_and_captures_external_inputs() -> None:
-    model = _single_mode_model(
+    model = _single_flow_model(
         DerivativeModel(lambda frame: frame["u"].to_numpy()),
         with_input=True,
     )
@@ -225,11 +203,11 @@ def test_simulation_uses_and_captures_external_inputs() -> None:
         [1.0],
         input_stream=input_stream,
         sample_dt=0.25,
+        include_inputs=True,
     )
 
-    np.testing.assert_allclose(trace.x[:, 0], 1.0 + 2.0 * trace.t, atol=1e-8)
-    assert trace.u is not None
-    np.testing.assert_allclose(trace.u, np.full((5, 1), 2.0))
+    np.testing.assert_allclose(trace["x0"], 1.0 + 2.0 * trace["t"], atol=1e-8)
+    np.testing.assert_allclose(trace["u0"], np.full(5, 2.0))
 
 
 def test_model_reports_relevant_configuration_and_simulation_errors() -> None:
@@ -248,10 +226,10 @@ def test_model_reports_relevant_configuration_and_simulation_errors() -> None:
         output_features=["dx"],
         trace_schema=_schema(),
     )
-    with pytest.raises(ValueError, match="no learned modes"):
+    with pytest.raises(ValueError, match="no learned flows"):
         empty.predict(pl.DataFrame({"time": [0.0], "x": [1.0]})).collect()
 
-    model = _single_mode_model(flow)
+    model = _single_flow_model(flow)
     with pytest.raises(ValueError, match="state dimension"):
         model.predict_next_state([1.0, 2.0], t=0.0, dt=0.1)
     with pytest.raises(ValueError, match="greater than zero"):
@@ -265,12 +243,12 @@ def test_model_reports_relevant_configuration_and_simulation_errors() -> None:
             sample_times=[0.0, 0.5, 0.5, 1.0],
         )
 
-    input_model = _single_mode_model(flow, with_input=True)
+    input_model = _single_flow_model(flow, with_input=True)
     with pytest.raises(ValueError, match="input_stream is required"):
         input_model.predict_next_state([1.0], t=0.0, dt=0.1)
 
 
-def test_multi_mode_batch_prediction_routes_rows_with_decision_tree() -> None:
+def test_multi_flow_batch_prediction_routes_rows_with_decision_tree() -> None:
     negative_flow = DerivativeModel(lambda frame: np.full(frame.height, -1.0))
     positive_flow = DerivativeModel(lambda frame: np.full(frame.height, 2.0))
     selector_learner = HybridDecisionTreeLearner(
@@ -283,11 +261,11 @@ def test_multi_mode_batch_prediction_routes_rows_with_decision_tree() -> None:
             pl.DataFrame(
                 {
                     "x": [-3.0, -2.0, -1.0, 1.0, 2.0, 3.0],
-                    "mode": [0, 0, 0, 1, 1, 1],
+                    "flow_id": [0, 0, 0, 1, 1, 1],
                 },
             ),
         ],
-        mode_to_flow={0: negative_flow, 1: positive_flow},
+        flow_models_by_id={0: negative_flow, 1: positive_flow},
     )
     model = HyDRAModel(
         [negative_flow, positive_flow],
@@ -302,7 +280,7 @@ def test_multi_mode_batch_prediction_routes_rows_with_decision_tree() -> None:
 
     diagnostics = model.predict_with_diagnostics(inputs)
 
-    assert [result.mode_id for result in diagnostics.selector_results] == [
+    assert [result.flow_id for result in diagnostics.selector_results] == [
         1,
         0,
         1,
@@ -315,14 +293,10 @@ def test_multi_mode_batch_prediction_routes_rows_with_decision_tree() -> None:
     assert diagnostics.row_indices == [0, 1, 2, 3]
 
 
-def _trace(times: list[float], states: list[list[float]]) -> Trace:
-    start_time = times[0] if times else 0.0
-    return Trace(
-        t=np.asarray(times),
-        x=np.asarray(states),
-        location=np.asarray(["mode"] * len(times), dtype=object),
-        location_time=np.asarray(times, dtype=float) - start_time,
-        events=(),
+def _trace(times: list[float], states: list[list[float]]) -> pl.DataFrame:
+    matrix = np.asarray(states, dtype=float)
+    return pl.DataFrame(
+        {"t": times, **{f"x{i}": matrix[:, i] for i in range(matrix.shape[1])}}
     )
 
 
@@ -346,9 +320,9 @@ def test_compare_state_traces_calculates_elementwise_and_summary_metrics() -> (
 def test_compare_state_traces_validates_grid_and_shape() -> None:
     reference = _trace([0.0, 1.0], [[1.0], [2.0]])
 
-    with pytest.raises(ValueError, match="time grids must match"):
+    with pytest.raises(ValueError, match="Time grids must match"):
         compare_state_traces(reference, _trace([0.0, 1.1], [[1.0], [2.0]]))
-    with pytest.raises(ValueError, match="state shapes must match"):
+    with pytest.raises(ValueError, match="State columns must match"):
         compare_state_traces(
             reference,
             _trace([0.0, 1.0], [[1.0, 2.0], [2.0, 3.0]]),

@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -13,7 +13,7 @@ from ..hybrid_system import (
     Transition,
 )
 
-MIN_MODES = 2
+MIN_LOCATIONS = 2
 MIN_DIMENSION = 1
 
 
@@ -27,7 +27,7 @@ def _make_matrix(dimension: int, index: int) -> np.ndarray:
     return base + coupling
 
 
-def _make_dynamics(matrix: np.ndarray) -> ContinuousDynamics:
+def _make_dynamics(matrix: np.ndarray) -> Flow:
     def flow(
         _t: float,
         state: np.ndarray,
@@ -36,7 +36,7 @@ def _make_dynamics(matrix: np.ndarray) -> ContinuousDynamics:
     ) -> np.ndarray:
         return matrix @ state
 
-    return ContinuousDynamics(flow)
+    return Flow(flow)
 
 
 def _event_surface_dwell(
@@ -57,7 +57,7 @@ def _build_locations_and_transitions(
         dynamics = _make_dynamics(matrix)
         locations.append(
             Location(
-                ContinuousDynamics(dynamics.flow, label=f"{name}_dynamics"),
+                Flow(dynamics.fn, label=f"{name}_dynamics"),
                 label=name,
             ),
         )
@@ -67,25 +67,25 @@ def _build_locations_and_transitions(
             Transition(
                 source=location,
                 target=target,
-                event=event,
+                event_surface=event,
             ),
         )
     return locations, transitions
 
 
-def mode_cycle(
-    modes: int = 4,
+def location_cycle(
+    location_count: int = 4,
     dimension: int = 4,
     dwell_time: float = 0.5,
     initial_state: np.ndarray | None = None,
 ) -> HybridSystem:
     """Create a scalable hybrid system that cycles through locations.
 
-    The system has `modes` locations, each with linear dynamics active for
+    The system has `location_count` locations, each with linear dynamics active for
     `dwell_time`. Transitions leave the continuous state unchanged.
 
     Args:
-        modes: Number of locations in the cycle.
+        location_count: Number of locations in the cycle.
         dimension: Dimension of the continuous state.
         dwell_time: Time to stay in each location.
         initial_state: Optional initial state (length dimension).
@@ -93,14 +93,14 @@ def mode_cycle(
     Returns:
         HybridSystem cycling through multiple linear locations.
     """
-    if modes < MIN_MODES:
-        message = f"modes must be at least {MIN_MODES}."
+    if location_count < MIN_LOCATIONS:
+        message = f"location_count must be at least {MIN_LOCATIONS}."
         raise ValueError(message)
     if dimension < MIN_DIMENSION:
         message = f"dimension must be at least {MIN_DIMENSION}."
         raise ValueError(message)
 
-    matrices = [_make_matrix(dimension, idx) for idx in range(modes)]
+    matrices = [_make_matrix(dimension, idx) for idx in range(location_count)]
     event = EventSurface(
         _event_surface_dwell,
         direction=CrossingDirection.RISING,

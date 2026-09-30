@@ -3,9 +3,9 @@
 import numpy as np
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -68,24 +68,24 @@ def switched_linear(
     ) -> float:
         return state[0] - params["threshold"]
 
-    on_dynamics = ContinuousDynamics(flow_on, label="on")
-    off_dynamics = ContinuousDynamics(flow_off, label="off")
-    mode_on = Location(on_dynamics, label="on")
-    mode_off = Location(off_dynamics, label="off")
+    on_dynamics = Flow(flow_on, label="on")
+    off_dynamics = Flow(flow_off, label="off")
+    on_location = Location(on_dynamics, label="on")
+    off_location = Location(off_dynamics, label="off")
 
     to_off = Transition(
-        source=mode_on,
-        target=mode_off,
-        event=EventSurface(
+        source=on_location,
+        target=off_location,
+        event_surface=EventSurface(
             event_surface_to_off,
             direction=CrossingDirection.FALLING,
             label="x_below",
         ),
     )
     to_on = Transition(
-        source=mode_off,
-        target=mode_on,
-        event=EventSurface(
+        source=off_location,
+        target=on_location,
+        event_surface=EventSurface(
             event_surface_to_on,
             direction=CrossingDirection.RISING,
             label="x_above",
@@ -96,9 +96,9 @@ def switched_linear(
         initial_state = np.array([1.0, 0.0], dtype=float)
 
     return HybridSystem(
-        locations=[mode_on, mode_off],
+        locations=[on_location, off_location],
         transitions=[to_off, to_on],
-        initial_location=mode_on,
+        initial_location=on_location,
         initial_state=initial_state,
         parameters={"threshold": threshold},
     )

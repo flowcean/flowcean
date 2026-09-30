@@ -6,12 +6,14 @@ icon: lucide/workflow
 
 This page covers the public API of `flowcean.hybrid` and its subpackages:
 
-- [Modeling and simulation](#flowcean.hybrid): system definitions, automaton diagrams, simulation, trace I/O, and plotting.
+- [Modeling and simulation](#flowcean.hybrid): system definitions, automaton diagrams, trajectories, explicit sampling, and plotting.
 - [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories.
-- [HyDRA identification](#flowcean.hybrid.hydra): identification, callbacks, trace schemas, simulations, and mode-selector APIs. Selector-specific types and helpers are also available from `flowcean.hybrid.hydra.selector`.
+- [HyDRA identification](#flowcean.hybrid.hydra): identification, callbacks, trace schemas, grid-scheduled rollouts, and flow-selector APIs. Selector-specific types and helpers are also available from `flowcean.hybrid.hydra.selector`.
 
 See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.
 
+<!-- prettier-ignore-start -->
+<!-- Mkdocstrings option blocks require indentation that Prettier removes. -->
 ::: flowcean.hybrid
     options:
       heading: Modeling and simulation
@@ -42,7 +44,7 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading_level: 4
 
-::: flowcean.hybrid.benchmarks.mode_cycle.mode_cycle
+::: flowcean.hybrid.benchmarks.location_cycle.location_cycle
     options:
       heading_level: 4
 
@@ -86,3 +88,4 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading: HyDRA identification
       toc_label: HyDRA identification
+<!-- prettier-ignore-end -->

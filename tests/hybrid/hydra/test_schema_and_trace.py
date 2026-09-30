@@ -61,13 +61,13 @@ def test_trace_labeling_is_immutable_and_segments_are_inclusive() -> None:
     labeled = trace.with_labeled_segment(
         start_index=1,
         end_index=2,
-        mode_id=7,
+        flow_id=7,
     )
 
-    assert trace.mode_labels.tolist() == [-1, -1, -1]
-    assert labeled.mode_labels.tolist() == [-1, 7, 7]
+    assert trace.flow_ids.tolist() == [-1, -1, -1]
+    assert labeled.flow_ids.tolist() == [-1, 7, 7]
     assert labeled.unlabeled_indices() == [0]
-    assert labeled.to_labeled_frame()["mode"].to_list() == [None, 7, 7]
+    assert labeled.to_labeled_frame()["flow_id"].to_list() == [None, 7, 7]
     assert labeled.segment_frame(TraceSegment(0, 1, 2)).to_dict(
         as_series=False,
     ) == {"time": [1.0, 2.0], "x": [3.0, 4.0]}
@@ -79,8 +79,8 @@ def test_trace_validates_label_shape_and_storage() -> None:
         HyDRATrace(frame, np.array([[0, 1]]))
     with pytest.raises(ValueError, match="match frame height"):
         HyDRATrace(frame, np.array([0]))
-    with pytest.raises(ValueError, match="must not store mode labels"):
+    with pytest.raises(ValueError, match="must not store flow IDs"):
         HyDRATrace(
-            frame.with_columns(pl.Series("mode", [0, 1])),
+            frame.with_columns(pl.Series("flow_id", [0, 1])),
             np.array([0, 1]),
         )

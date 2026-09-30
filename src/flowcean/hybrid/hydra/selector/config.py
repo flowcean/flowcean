@@ -15,7 +15,7 @@ class SelectorFeatureConfig:
             features.
         derivative_history: Number of previous derivative rows used for
             selector features.
-        mode_history: Number of previous mode labels used for selector
+        flow_history: Number of previous flow IDs used for selector
             features.
     """
 
@@ -25,7 +25,7 @@ class SelectorFeatureConfig:
     state_history: int = 0
     input_history: int = 0
     derivative_history: int = 0
-    mode_history: int = 0
+    flow_history: int = 0
 
     def required_columns(self) -> tuple[str, ...]:
         return (
@@ -40,7 +40,7 @@ class SelectorFeatureConfig:
             self.state_history,
             self.input_history,
             self.derivative_history,
-            self.mode_history,
+            self.flow_history,
         )
 
     def validate(self) -> None:
@@ -48,7 +48,7 @@ class SelectorFeatureConfig:
             self.state_history,
             self.input_history,
             self.derivative_history,
-            self.mode_history,
+            self.flow_history,
         )
         if any(value < 0 for value in histories):
             message = "selector history values must be non-negative"
@@ -82,7 +82,7 @@ class SelectorFeatureConfig:
             self.state_features
             or self.input_features
             or self.derivative_features
-            or self.mode_history
+            or self.flow_history
         ):
             message = "selector config must request at least one feature"
             raise ValueError(message)

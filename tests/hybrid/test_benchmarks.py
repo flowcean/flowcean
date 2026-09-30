@@ -11,7 +11,7 @@ from flowcean.hybrid.benchmarks import (
     buck_converter,
     hybrid_oscillator,
     impact_oscillator,
-    mode_cycle,
+    location_cycle,
     pid_controlled_plant,
     piecewise_affine,
     relay_integrator,
@@ -50,7 +50,7 @@ SMOKE_CASES: tuple[
     ("tanks", tank_valves, (0, 300), None),
     (
         "cycle",
-        lambda: mode_cycle(modes=6, dimension=3, dwell_time=0.4),
+        lambda: location_cycle(location_count=6, dimension=3, dwell_time=0.4),
         (0, 10),
         None,
     ),
@@ -75,11 +75,19 @@ def test_benchmark_factory_smoke_simulation(
 
     assert name
     assert isinstance(system, HybridSystem)
-    assert trace.t[0] == pytest.approx(t_span[0])
-    assert trace.t[-1] == pytest.approx(t_span[1])
-    assert trace.x.shape == (trace.t.size, system.initial_state.size)
-    assert trace.location.shape == trace.t.shape
-    assert np.isfinite(trace.x).all()
+    frame = trace.sample([*np.linspace(*t_span, 5)])
+    assert trace.t_span == t_span
+    assert frame["t"][0] == pytest.approx(t_span[0])
+    assert frame["t"][-1] == pytest.approx(t_span[1])
+    assert frame.select(
+        [f"x{i}" for i in range(system.initial_state.size)]
+    ).shape == (5, system.initial_state.size)
+    assert frame["location_id"].len() == 5
+    assert np.isfinite(
+        frame.select(
+            [f"x{i}" for i in range(system.initial_state.size)]
+        ).to_numpy()
+    ).all()
 
 
 def test_bouncing_ball_matches_ballistic_motion_before_impact() -> None:
@@ -88,23 +96,25 @@ def test_bouncing_ball_matches_ballistic_motion_before_impact() -> None:
     trace = simulate(
         bouncing_ball(gravity=gravity),
         t_span=(0.0, 0.2),
-        sample_times=sample_times,
     )
+    frame = trace.sample(sample_times)
 
     expected_height = 1.0 - 0.5 * gravity * sample_times**2
     expected_velocity = -gravity * sample_times
-    np.testing.assert_allclose(trace.x[:, 0], expected_height, atol=1e-8)
-    np.testing.assert_allclose(trace.x[:, 1], expected_velocity, atol=1e-8)
+    np.testing.assert_allclose(frame["x0"], expected_height, atol=1e-8)
+    np.testing.assert_allclose(frame["x1"], expected_velocity, atol=1e-8)
     assert not trace.events
 
 
-def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
+def test_location_cycle_resets_location_time_and_cycles_locations() -> None:
     dwell_time = 0.2
     trace = simulate(
-        mode_cycle(modes=3, dimension=2, dwell_time=dwell_time),
+        system := location_cycle(
+            location_count=3, dimension=2, dwell_time=dwell_time
+        ),
         t_span=(0.0, 1.05),
-        sample_dt=0.025,
     )
+    frame = trace.sample(dt=0.025)
 
     expected_locations = [
         ("m0", "m1"),
@@ -114,7 +124,7 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         ("m1", "m2"),
     ]
     assert [
-        (event.source_location, event.target_location)
+        (event.transition.source.label, event.transition.target.label)
         for event in trace.events
     ] == expected_locations
     np.testing.assert_allclose(
@@ -122,7 +132,7 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         dwell_time * np.arange(1, 6),
         atol=1e-9,
     )
-    assert trace.x.shape[1] == 2
+    assert trace.initial_state.size == 2
     for event in trace.events:
         assert event.location_time_before == pytest.approx(
             dwell_time, abs=1e-9
@@ -130,14 +140,13 @@ def test_mode_cycle_resets_location_time_and_cycles_locations() -> None:
         np.testing.assert_allclose(
             event.state_after, event.state_before, atol=1e-12
         )
-        at_event = np.isclose(trace.t, event.time, atol=1e-9)
-        assert np.any(at_event)
-        np.testing.assert_allclose(
-            trace.location_time[at_event], 0.0, atol=1e-12
+        at_event = trace.sample([event.time])
+        np.testing.assert_allclose(at_event["location_time"], 0.0, atol=1e-12)
+        assert at_event["location_id"][0] == system.locations.index(
+            event.transition.target
         )
-        assert np.all(trace.location[at_event] == event.target_location)
-    assert np.all(trace.location_time >= -1e-12)
-    assert np.all(trace.location_time <= dwell_time + 1e-9)
+    assert np.all(frame["location_time"].to_numpy() >= -1e-12)
+    assert np.all(frame["location_time"].to_numpy() <= dwell_time + 1e-9)
 
 
 def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
@@ -145,11 +154,12 @@ def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
 ):
     system = time_forced_switch(period=0.4)
     np.testing.assert_array_equal(system.initial_state, [1.0, -1.0])
-    trace = simulate(system, t_span=(0.0, 0.55), sample_dt=0.025)
+    trace = simulate(system, t_span=(0.0, 0.55))
+    frame = trace.sample(dt=0.025)
 
-    assert trace.x.shape[1] == 2
+    assert trace.initial_state.size == 2
     assert [
-        (event.source_location, event.target_location)
+        (event.transition.source.label, event.transition.target.label)
         for event in trace.events
     ] == [
         ("fast", "slow"),
@@ -163,18 +173,18 @@ def test_time_forced_switch_has_two_physical_coordinates_and_timed_visits() -> (
         np.testing.assert_allclose(
             event.state_after, event.state_before, atol=1e-12
         )
-        at_event = np.isclose(trace.t, event.time, atol=1e-9)
-        assert np.any(at_event)
         np.testing.assert_allclose(
-            trace.location_time[at_event], 0.0, atol=1e-12
+            trace.sample([event.time])["location_time"], 0.0, atol=1e-12
         )
-    early = np.isclose(trace.t, 0.1, atol=1e-9)
-    slow = np.isclose(trace.t, 0.3, atol=1e-9)
+    early = frame.filter(np.isclose(frame["t"].to_numpy(), 0.1, atol=1e-9))
+    slow = frame.filter(np.isclose(frame["t"].to_numpy(), 0.3, atol=1e-9))
     np.testing.assert_allclose(
-        trace.x[early][0], [np.exp(-0.2), -np.exp(-0.1)], atol=1e-4
+        early.select("x0", "x1").row(0),
+        [np.exp(-0.2), -np.exp(-0.1)],
+        atol=1e-4,
     )
     np.testing.assert_allclose(
-        trace.x[slow][0],
+        slow.select("x0", "x1").row(0),
         [np.exp(-0.4 - 0.05), -np.exp(-0.2 - 0.02)],
         atol=1e-4,
     )
@@ -185,16 +195,13 @@ def test_time_forced_switch_starts_midvisit() -> None:
         time_forced_switch(period=0.4),
         t_span=(0.0, 0.35),
         initial_location_time=0.15,
-        sample_dt=0.025,
     )
-    assert trace.location_time[0] == pytest.approx(0.15)
+    assert trace.sample([0])["location_time"][0] == pytest.approx(0.15)
     assert trace.events[0].time == pytest.approx(0.05, abs=1e-9)
     assert trace.events[0].location_time_before == pytest.approx(0.2)
-    after_event = np.isclose(trace.t, 0.075, atol=1e-9)
-    assert trace.location[after_event].tolist() == ["slow"]
-    np.testing.assert_allclose(
-        trace.location_time[after_event], 0.025, atol=1e-12
-    )
+    after_event = trace.sample([0.075], include_location_label=True)
+    assert after_event["location_label"].to_list() == ["slow"]
+    np.testing.assert_allclose(after_event["location_time"], 0.025, atol=1e-12)
     assert trace.events[1].time == pytest.approx(0.25, abs=1e-9)
 
 
@@ -204,9 +211,9 @@ def test_time_forced_switch_starts_midvisit() -> None:
         (time_forced_switch, np.array([1.0, -1.0, 0.0])),
         (time_forced_switch, np.array([1.0])),
         (time_forced_switch, np.array([[1.0, -1.0]])),
-        (mode_cycle, np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
-        (mode_cycle, np.array([1.0, 0.0, 0.0])),
-        (mode_cycle, np.array([[1.0, 0.0, 0.0, 0.0]])),
+        (location_cycle, np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
+        (location_cycle, np.array([1.0, 0.0, 0.0])),
+        (location_cycle, np.array([[1.0, 0.0, 0.0, 0.0]])),
     ],
 )
 def test_timed_benchmarks_reject_wrong_state_shapes(

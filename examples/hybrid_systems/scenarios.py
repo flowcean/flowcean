@@ -11,7 +11,7 @@ from flowcean.hybrid.benchmarks import (
     buck_converter,
     hybrid_oscillator,
     impact_oscillator,
-    mode_cycle,
+    location_cycle,
     pid_controlled_plant,
     piecewise_affine,
     relay_integrator,
@@ -151,7 +151,7 @@ SCENARIOS = (
     ),
     Scenario(
         "Location Cycle",
-        lambda: mode_cycle(modes=6, dimension=3, dwell_time=0.4),
+        lambda: location_cycle(location_count=6, dimension=3, dwell_time=0.4),
         ("scalable", "time", "multimode"),
         "Scalable cycle of linear locations with timed visits.",
         (0.0, 10.0),

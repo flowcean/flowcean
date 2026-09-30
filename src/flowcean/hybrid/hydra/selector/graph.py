@@ -17,8 +17,8 @@ def _build_split_label(
     return f"{feature_name} <= {threshold:.6g}\nraw_samples={sample_count}"
 
 
-def _build_leaf_label(mode_id: int, flow_summary: str) -> str:
-    return f"mode={mode_id}\nflow={_compact_flow_summary(flow_summary)}"
+def _build_leaf_label(flow_id: int, flow_summary: str) -> str:
+    return f"flow_id={flow_id}\nflow={_compact_flow_summary(flow_summary)}"
 
 
 def _invalid_inspection(message: str) -> ValueError:
@@ -47,7 +47,7 @@ def build_selector_dot(inspection: SelectorInspection) -> str:
             if leaf is None:
                 message = f"leaf node {node.node_id} is missing leaf summary"
                 raise _invalid_inspection(message)
-            label = _build_leaf_label(leaf.mode_id, leaf.flow_summary)
+            label = _build_leaf_label(leaf.flow_id, leaf.flow_summary)
         else:
             if node.feature_name is None or node.threshold is None:
                 message = (

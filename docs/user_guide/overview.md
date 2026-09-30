@@ -14,7 +14,7 @@ Flowcean supports different study designs rather than prescribing a single pipel
 
 ### Hybrid-System Modeling
 
-Use [`flowcean.hybrid`](hybrid_systems.md) to define locations, continuous dynamics, event surfaces, transitions, resets, parameters, and initial conditions. Systems can be simulated to produce traces, while HyDRA can identify hybrid mode dynamics and selectors from observed data.
+Use [`flowcean.hybrid`](hybrid_systems.md) to define locations, flows, event surfaces, transitions, resets, parameters, and initial conditions. Native simulation produces hybrid trajectories that can be sampled into trace frames, while HyDRA identifies flow models and selectors from observed data.
 
 ### Data-Driven Model Learning
 

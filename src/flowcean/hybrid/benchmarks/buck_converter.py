@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -317,15 +317,15 @@ def buck_converter(
         return reset_state
 
     switch_on = Location(
-        ContinuousDynamics(flow_switch_on),
+        Flow(flow_switch_on),
         label="switch_on",
     )
     switch_off = Location(
-        ContinuousDynamics(flow_switch_off),
+        Flow(flow_switch_off),
         label="switch_off",
     )
     zero_current = Location(
-        ContinuousDynamics(flow_zero_current),
+        Flow(flow_zero_current),
         label="zero_current",
     )
 
@@ -333,7 +333,7 @@ def buck_converter(
         Transition(
             source=switch_on,
             target=switch_off,
-            event=EventSurface(
+            event_surface=EventSurface(
                 high_voltage_surface,
                 direction=CrossingDirection.RISING,
                 label="voltage_high",
@@ -342,7 +342,7 @@ def buck_converter(
         Transition(
             source=switch_off,
             target=zero_current,
-            event=EventSurface(
+            event_surface=EventSurface(
                 zero_current_surface,
                 direction=CrossingDirection.FALLING,
                 label="current_zero",
@@ -352,7 +352,7 @@ def buck_converter(
         Transition(
             source=switch_off,
             target=switch_on,
-            event=EventSurface(
+            event_surface=EventSurface(
                 low_voltage_surface,
                 direction=CrossingDirection.FALLING,
                 label="voltage_low",
@@ -361,7 +361,7 @@ def buck_converter(
         Transition(
             source=zero_current,
             target=switch_on,
-            event=EventSurface(
+            event_surface=EventSurface(
                 low_voltage_surface,
                 direction=CrossingDirection.FALLING,
                 label="voltage_low",

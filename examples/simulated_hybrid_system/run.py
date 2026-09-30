@@ -4,11 +4,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import polars as pl
 from pysr import PySRRegressor
 
 import flowcean.cli
 import flowcean.utils
-from flowcean.hybrid import Trace, plot_trace, simulate, trace_to_polars
+from flowcean.hybrid import plot_trajectory, simulate
 from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
@@ -39,8 +40,8 @@ def print_selector_outputs(
 ) -> None:
     print("selector_summary")
     print(selector.summary_text())
-    print("selector_mode_summary")
-    print(selector.mode_summary_text())
+    print("selector_flow_summary")
+    print(selector.flow_summary_text())
     # print("selector_leaf_summary")
     # print(selector.leaf_summary_text())
     print("selector_tree")
@@ -59,25 +60,32 @@ def print_selector_outputs(
 
 def compare_learned_model_to_reference(
     model: HyDRAModel,
-    reference: Trace,
-) -> tuple[Trace, StateTraceComparison]:
-    learned_trace = model.simulate(
-        (float(reference.t[0]), float(reference.t[-1])),
-        reference.x[0],
-        sample_times=reference.t,
+    reference_frame: pl.DataFrame,
+) -> tuple[pl.DataFrame, StateTraceComparison]:
+    learned_frame = model.simulate(
+        (float(reference_frame["t"][0]), float(reference_frame["t"][-1])),
+        reference_frame.select("x").row(0),
+        sample_times=reference_frame["t"].to_numpy(),
+    ).rename({"x0": "x"})
+    return learned_frame, compare_state_traces(
+        reference_frame, learned_frame, state_columns=["x"]
     )
-    return learned_trace, compare_state_traces(reference, learned_trace)
 
 
 def save_trace_comparison_plot(
-    reference: Trace,
-    learned: Trace,
+    reference_frame: pl.DataFrame,
+    learned_frame: pl.DataFrame,
     path: Path,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots()
-    ax.plot(reference.t, reference.x[:, 0], label="reference x")
-    ax.plot(learned.t, learned.x[:, 0], label="learned x", linestyle="--")
+    ax.plot(reference_frame["t"], reference_frame["x"], label="reference x")
+    ax.plot(
+        learned_frame["t"],
+        learned_frame["x"],
+        label="learned x",
+        linestyle="--",
+    )
     ax.set_xlabel("t")
     ax.set_ylabel("x")
     ax.legend(loc="best")
@@ -102,32 +110,28 @@ def main() -> None:
     flowcean.utils.initialize_random(EXAMPLE_SEED)
 
     system = thermostat()
-    reference_trace = simulate(
+    reference_trajectory = simulate(
         system,
         t_span=(0.0, 20.0),
         input_stream=thermostat_target_stream,
-        capture_derivatives=True,
-        sample_dt=0.02,
     )
 
     print(
-        "Plotting reference trace... close plot to continue...",
+        "Plotting reference trajectory... close plot to continue...",
     )
-    plot_trace(
-        reference_trace,
+    plot_trajectory(
+        reference_trajectory,
         show_locations=True,
         show_location_labels=False,
         show_events=True,
         show_event_labels=False,
         show=True,
     )
-    trace_frame = trace_to_polars(
-        reference_trace,
-        state_names=("x",),
-        derivative_names=("dx",),
-    )
+    reference_frame = reference_trajectory.sample(
+        dt=0.02, include_derivatives=True
+    ).rename({"x0": "x", "dx0": "dx"})
     schema = HyDRATraceSchema(time="t", state=("x",), derivative=("dx",))
-    callback = PlotCallback(reference_trace, dims=[0])
+    callback = PlotCallback(reference_frame, state_columns=["x"])
     learner = HyDRALearner(
         regressor_factory=lambda: PySRLearner(
             model=PySRRegressor(
@@ -145,15 +149,18 @@ def main() -> None:
     )
 
     model = learner.learn(
-        trace_frame.select(schema.input_features).lazy(),
-        trace_frame.select(schema.derivative).lazy(),
+        reference_frame.select(schema.input_features).lazy(),
+        reference_frame.select(schema.derivative).lazy(),
     )
 
     print(
         {
-            "rows": trace_frame.height,
-            "locations": trace_frame["location"].unique().sort().to_list(),
-            "modes": len(model.modes),
+            "rows": reference_frame.height,
+            "locations": reference_frame["location_id"]
+            .unique()
+            .sort()
+            .to_list(),
+            "flow_count": len(model.flow_models),
             "input_features": model.input_features,
             "output_features": model.output_features,
         },
@@ -161,13 +168,13 @@ def main() -> None:
     if model.selector is not None:
         print_selector_outputs(model.selector, output_dir=OUTPUT_DIR)
 
-    learned_trace, comparison = compare_learned_model_to_reference(
+    learned_frame, comparison = compare_learned_model_to_reference(
         model,
-        reference_trace,
+        reference_frame,
     )
     print(format_comparison_summary(comparison))
     comparison_path = OUTPUT_DIR / "learned_vs_reference.png"
-    save_trace_comparison_plot(reference_trace, learned_trace, comparison_path)
+    save_trace_comparison_plot(reference_frame, learned_frame, comparison_path)
     print("trace_comparison_plot", comparison_path)
 
 

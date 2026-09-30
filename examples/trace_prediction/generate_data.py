@@ -6,16 +6,15 @@ import numpy as np
 import polars as pl
 
 from flowcean.hybrid import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
     Parameters,
     Transition,
     simulate,
-    trace_to_polars,
 )
 from flowcean.utils import initialize_random
 
@@ -65,11 +64,11 @@ def thermostat_system() -> HybridSystem:
         return state[0] - input_stream(_t)[0] - 0.35
 
     cooling = Location(
-        ContinuousDynamics(cooling_flow, label="cooling_flow"),
+        Flow(cooling_flow, label="cooling_flow"),
         label="cooling",
     )
     heating = Location(
-        ContinuousDynamics(heating_flow, label="heating_flow"),
+        Flow(heating_flow, label="heating_flow"),
         label="heating",
     )
 
@@ -79,7 +78,7 @@ def thermostat_system() -> HybridSystem:
             Transition(
                 source=cooling,
                 target=heating,
-                event=EventSurface(
+                event_surface=EventSurface(
                     too_cold,
                     direction=CrossingDirection.FALLING,
                     label="too_cold",
@@ -88,7 +87,7 @@ def thermostat_system() -> HybridSystem:
             Transition(
                 source=heating,
                 target=cooling,
-                event=EventSurface(
+                event_surface=EventSurface(
                     warm_enough,
                     direction=CrossingDirection.RISING,
                     label="warm_enough",
@@ -102,20 +101,21 @@ def thermostat_system() -> HybridSystem:
 
 def generate_trace_frame() -> pl.DataFrame:
     initialize_random(42)
-    trace = simulate(
+    trajectory = simulate(
         thermostat_system(),
         t_span=(0.0, 40.0),
         input_stream=target_input,
-        capture_inputs=True,
-        sample_dt=0.1,
     )
     return (
-        trace_to_polars(
-            trace,
-            state_names=("temperature",),
-            input_names=("target",),
+        trajectory.sample(
+            dt=0.1, include_inputs=True, include_location_label=True
         )
+        .rename(
+            {"x0": "temperature", "u0": "target", "location_label": "location"}
+        )
+        .with_row_index("step")
         .with_columns(
+            pl.col("step").cast(pl.Int64),
             (pl.col("location") == "heating").cast(pl.Int64).alias("heating"),
         )
         .select(

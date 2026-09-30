@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 from ..hybrid_system import (
-    ContinuousDynamics,
     CrossingDirection,
     EventSurface,
+    Flow,
     HybridSystem,
     InputStream,
     Location,
@@ -81,12 +81,12 @@ def _validate_initial_state(
 def _select_initial_location(
     initial: np.ndarray,
     high_level: float,
-    open_mode: Location,
+    open_location: Location,
     closed_wet: Location,
     closed_dry: Location,
 ) -> Location:
     if initial[0] >= high_level:
-        return open_mode
+        return open_location
     if initial[1] == 0.0:
         return closed_dry
     return closed_wet
@@ -239,13 +239,13 @@ def tank_valves(
         reset_state[1] = 0.0
         return reset_state
 
-    open_mode = Location(ContinuousDynamics(flow_open), label="open")
+    open_location = Location(Flow(flow_open), label="open")
     closed_wet = Location(
-        ContinuousDynamics(flow_closed_wet),
+        Flow(flow_closed_wet),
         label="closed_wet",
     )
     closed_dry = Location(
-        ContinuousDynamics(flow_closed_dry),
+        Flow(flow_closed_dry),
         label="closed_dry",
     )
 
@@ -259,13 +259,13 @@ def tank_valves(
     transitions = [
         Transition(
             source=closed_wet,
-            target=open_mode,
-            event=high_event(),
+            target=open_location,
+            event_surface=high_event(),
         ),
         Transition(
             source=closed_wet,
             target=closed_dry,
-            event=EventSurface(
+            event_surface=EventSurface(
                 empty_surface,
                 direction=CrossingDirection.FALLING,
                 label="level_2_empty",
@@ -274,14 +274,14 @@ def tank_valves(
         ),
         Transition(
             source=closed_dry,
-            target=open_mode,
-            event=high_event(),
+            target=open_location,
+            event_surface=high_event(),
             entry_policy=SurfaceEntryPolicy.TRIGGER,
         ),
         Transition(
-            source=open_mode,
+            source=open_location,
             target=closed_wet,
-            event=EventSurface(
+            event_surface=EventSurface(
                 low_surface,
                 direction=CrossingDirection.FALLING,
                 label="level_low",
@@ -292,13 +292,13 @@ def tank_valves(
     initial_location = _select_initial_location(
         initial,
         high_level,
-        open_mode,
+        open_location,
         closed_wet,
         closed_dry,
     )
 
     return HybridSystem(
-        locations=[open_mode, closed_wet, closed_dry],
+        locations=[open_location, closed_wet, closed_dry],
         transitions=transitions,
         initial_location=initial_location,
         initial_state=initial.copy(),

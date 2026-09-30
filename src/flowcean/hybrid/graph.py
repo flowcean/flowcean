@@ -61,7 +61,9 @@ def build_hybrid_system_dot(
         if show_event_labels:
             annotations.append(
                 "event: "
-                + display_label(transition.event, fallback=f"event_{index}"),
+                + display_label(
+                    transition.event_surface, fallback=f"event_{index}"
+                ),
             )
         if show_reset_labels and transition.reset is not None:
             annotations.append(
@@ -70,7 +72,7 @@ def build_hybrid_system_dot(
             )
         if show_direction:
             annotations.append(
-                f"direction: {transition.event.direction.name.lower()}"
+                f"direction: {transition.event_surface.direction.name.lower()}"
             )
         if show_entry_policy:
             annotations.append(

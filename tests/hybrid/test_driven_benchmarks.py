@@ -50,10 +50,10 @@ def test_switching_thresholds_follow_the_supplied_signal(
 
     upper, lower = system.transitions
     for t in (0.0, 3.0):
-        assert upper.event.fn(
+        assert upper.event_surface.fn(
             t, state, system.parameters, target
         ) == pytest.approx(state[0] - (10.0 + t + 1.0))
-        assert lower.event.fn(
+        assert lower.event_surface.fn(
             t, state, system.parameters, target
         ) == pytest.approx(state[0] - (10.0 + t - 1.0))
 
@@ -62,7 +62,7 @@ def test_impact_force_changes_acceleration_not_the_bounce() -> None:
     system = impact_oscillator(damping=0.2, stiffness=5.0, restitution=0.4)
     state = np.array([0.3, -2.0])
     params = {**system.parameters, **system.initial_location.parameters}
-    flow = system.initial_location.dynamics.flow
+    flow = system.initial_location.flow.fn
     reset = system.transitions[0].reset
     assert reset is not None
 
@@ -101,15 +101,13 @@ def test_pid_flows_and_guards_use_the_same_control_law(
         system.locations, (control, 2.0, -2.0), strict=True
     ):
         np.testing.assert_allclose(
-            location.dynamics.flow(
-                0.7, state, system.parameters, input_stream
-            ),
+            location.flow.fn(0.7, state, system.parameters, input_stream),
             [state[1], -6 * state[0] - 0.7 * state[1] + applied, error],
         )
     for transition, bound in zip(
         system.transitions, (2, -2, 2, -2), strict=True
     ):
-        assert transition.event.fn(
+        assert transition.event_surface.fn(
             0.7, state, system.parameters, input_stream
         ) == pytest.approx(control - bound)
 
@@ -120,28 +118,30 @@ def test_pid_enters_and_leaves_both_saturation_regimes() -> None:
     def reference(t: float) -> np.ndarray:
         return np.array([0.5 * np.sin(t), 0.5 * np.cos(t)])
 
-    trace = simulate(system, (0, 6), input_stream=reference, sample_dt=0.1)
-    assert [(e.source_location, e.target_location) for e in trace.events] == [
+    trace = simulate(system, (0, 6), input_stream=reference)
+    frame = trace.sample(dt=0.1, include_location_label=True)
+    assert [
+        (e.transition.source.label, e.transition.target.label)
+        for e in trace.events
+    ] == [
         ("linear", "sat_high"),
         ("sat_high", "linear"),
         ("linear", "sat_low"),
         ("sat_low", "linear"),
     ]
 
-    position, velocity, integral = trace.x.T
+    position, velocity, integral = frame.select("x0", "x1", "x2").to_numpy().T
+    times = frame["t"].to_numpy()
+    labels = frame["location_label"].to_numpy()
     params = system.parameters
     control = (
-        params["kp"] * (0.5 * np.sin(trace.t) - position)
+        params["kp"] * (0.5 * np.sin(times) - position)
         + params["ki"] * integral
-        + params["kd"] * (0.5 * np.cos(trace.t) - velocity)
+        + params["kd"] * (0.5 * np.cos(times) - velocity)
     )
     tolerance = 1e-6
-    linear = control[trace.location == "linear"]
+    linear = control[labels == "linear"]
     assert np.all(linear >= params["u_min"] - tolerance)
     assert np.all(linear <= params["u_max"] + tolerance)
-    assert np.all(
-        control[trace.location == "sat_high"] >= params["u_max"] - tolerance
-    )
-    assert np.all(
-        control[trace.location == "sat_low"] <= params["u_min"] + tolerance
-    )
+    assert np.all(control[labels == "sat_high"] >= params["u_max"] - tolerance)
+    assert np.all(control[labels == "sat_low"] <= params["u_min"] + tolerance)
