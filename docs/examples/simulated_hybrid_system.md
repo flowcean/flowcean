@@ -4,7 +4,9 @@ icon: lucide/scan-search
 
 # Simulated Hybrid System Identification
 
-This example runs a full HyDRA identification loop on simulated one-dimensional hybrid-system traces. The reference system starts in one location with an affine flow and switches to another location when the state crosses a threshold. HyDRA learns flow models, trains a selector for flow assignment, simulates the learned model, and compares the learned rollout frame with the sampled reference frame.
+This example runs a HyDRA identification loop on simulated room-temperature traces. The reference is the thermostat benchmark, switching between heating and cooling around a time-varying target temperature. HyDRA learns flow models, trains a selector for flow assignment, simulates the learned model, and compares the learned rollout frame with the sampled reference frame.
+
+The selector uses only current temperature, omitting the target signal and history. This limits its ability to reproduce the reference's switching behavior; the comparison measures the resulting approximation.
 
 Run it from the repository root:
 
@@ -16,8 +18,8 @@ The learner uses PySR for symbolic regression. PySR requires Julia, and the firs
 
 The script performs these steps:
 
-1. Build a two-location `HybridSystem` with affine continuous dynamics.
-2. Simulate the native system to retain a hybrid reference trajectory for plotting.
+1. Create the two-location thermostat benchmark with heating and cooling flows.
+2. Simulate it with a varying target temperature to retain a hybrid reference trajectory for plotting.
 3. Sample that trajectory at `dt=0.02` with derivatives and rename `x0` and `dx0` to `x` and `dx` for learning.
 4. Train a `HyDRALearner` with PySR regressors for flow models.
 5. Train a `HybridDecisionTreeLearner` selector over the state feature `x`.

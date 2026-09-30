@@ -4,96 +4,276 @@ icon: lucide/workflow
 
 # Hybrid Systems
 
-Hybrid systems combine continuous change with discrete switches. A thermostat is a simple example: temperature varies continuously while the controller switches between heating and cooling.
+## From Observed Behavior to a Hybrid Model
 
-## Read a Hybrid Automaton
+The plot below shows the temperature in a room. The room warms up, cools down, and warms up again.
 
-A **hybrid automaton** describes the possible configurations of a system and the rules for moving between them. This thermostat sketch shows the continuous behavior inside each configuration:
+<figure class="hybrid-figure">
 
-```mermaid
-flowchart LR
-    accTitle: Thermostat hybrid automaton
-    accDescr {
-        Heating and cooling are locations. Their flows raise and lower
-        temperature. Crossing the upper threshold switches to cooling;
-        crossing the lower threshold switches to heating.
-    }
-    heating["Heating<br/>Flow: temperature rises"]
-    cooling["Cooling<br/>Flow: temperature falls"]
-    heating -->|Upper threshold| cooling
-    cooling -->|Lower threshold| heating
-```
+--8<-- "docs/assets/hybrid_systems/thermostat-time-series.svg"
 
-Temperature is the **continuous state**. Heating and cooling are **locations**, the discrete configurations in which the system can operate. Each location selects a **flow**, a law for the rate of change of the continuous state. Together, the continuous state and active location describe the system's current situation.
+<figcaption>Example temperature data, simulated with the model introduced below.</figcaption>
 
-The arrows are **transitions**, discrete steps from one location to another or back to the same location. Each transition has an **event surface**, a boundary whose crossing can trigger it. Here, the boundaries are temperature thresholds. An **event** is an occurrence of a transition during a particular run.
+</figure>
 
-The two thresholds create **hysteresis**: between them, the same temperature can occur during either heating or cooling. Knowing the temperature alone is therefore insufficient to determine its rate of change; the active location matters too.
+At 22 degrees, the room might be getting warmer or cooler. Temperature alone doesn't tell us which: whether the heating is on or off also matters.
 
-A transition can also apply a **reset**, an instantaneous change to the continuous state. The thermostat keeps its current temperature when it switches. A [bouncing ball](../examples/hybrid_systems.md#bouncing-ball), by contrast, reverses its velocity at impact through a reset while remaining in the same flight location.
+A useful way to model this behavior is to describe the warming and cooling separately, reuse those descriptions whenever they recur, and specify what causes the switches between them.
 
-## Describe a Model
+We represent the temperature as the **continuous state**. A **[location][flowcean.hybrid.Location]** records the situation the system is currently in. Each location selects a **[flow][flowcean.hybrid.Flow]**, an equation describing the continuous state's rate of change. A **[transition][flowcean.hybrid.Transition]** describes a discrete step, such as switching the active location.
 
-In Flowcean, a [`HybridSystem`][flowcean.hybrid.HybridSystem] brings together locations, their flows, and their transitions. You also choose the initial continuous state and active location. The [minimal model example](../examples/hs_simple.md) shows how to construct these pieces; the [benchmark gallery](../examples/hybrid_systems.md) provides ready-made models to explore.
+These components form a **hybrid automaton**: a model combining continuous evolution with discrete changes. In the diagram, $T$ denotes temperature and $\dot T$ its rate of change.
 
-Separate **inputs**, external signals that vary during a run, from **parameters**, the settings that define the model. For the thermostat, the desired temperature is an input, while heating strength and the width of the hysteresis band are parameters. This separation lets you reuse the same model under different operating conditions.
+<figure class="hybrid-figure hybrid-automaton">
 
-Express an event surface as a function that is zero at the switching boundary. For the upper thermostat threshold, subtract that threshold from the current temperature and detect a crossing from negative to positive. If an initial condition or reset puts the state exactly on a boundary, [entry policies][flowcean.hybrid.SurfaceEntryPolicy] determine what happens on entering that location: take the transition immediately, begin continuous evolution, or report an error.
+--8<-- "docs/assets/hybrid_systems/thermostat-schematic.svg"
 
-### Location Residence Time
+<figcaption>Ellipses contain the locations and their flows. The incoming arrow marks the initial heating location.</figcaption>
 
-Some transitions depend on how long a configuration has been active rather than on temperature or another state quantity. **Location residence time** is the elapsed time in the current visit; every transition starts a new visit, including a transition back to the same location. A [timed-switch model](../examples/hybrid_systems.md#time-forced-switch), for example, can use residence time to alternate configurations after a fixed duration.
+</figure>
 
-## Simulate a Run
+The automaton describes the rules of the model. The time series shows one behavior those rules can produce.
 
-Use [`simulate`][flowcean.hybrid.simulate] to follow a model over a chosen time interval, supplying any external inputs. This example uses the predefined [`thermostat`][flowcean.hybrid.benchmarks.thermostat.thermostat] model with a slowly varying target temperature:
+## Describe Continuous Behavior
+
+For the room, we track temperature. A model of a moving object could track both position and velocity. The continuous state collects the values the model needs to describe how things change.
+
+A flow tells us how quickly each state value changes. For temperature, that could be a rate in degrees per minute. These rates are called **derivatives**. The flow supplies the rates; Flowcean uses them to calculate how the state evolves over time.
+
+Each location selects a flow, but several locations can share the same one. For example, a heater in standby and a heater disabled by a fault both leave the room cooling. The cooling equation can be the same, while the conditions for restarting the heater differ. Locations distinguish these situations even when their continuous behavior is identical.
+
+We also distinguish two kinds of information supplied to the model:
+
+- **Parameters** configure it, such as the heater's power.
+- **Inputs** describe externally supplied signals, such as the desired room temperature, which can change during a run.
+
+Inputs and parameters can affect both continuous motion and the conditions for switching locations.
+
+## Describe Discrete Changes
+
+### Switching Between Locations
+
+A transition describes a discrete change. In our example, one transition switches the heating off and another switches it back on.
+
+The conditions beside the arrows are called **guards**. The guard $T\ge23$ marks when to switch from heating to cooling.
+
+For simulation, Flowcean detects the boundary of that condition using a function that becomes zero there:
+
+$$
+g(T)=T-23.
+$$
+
+Below 23, this function is negative; at 23, it is zero; above 23, it is positive. The boundary where the function is zero is the **[event surface][flowcean.hybrid.EventSurface]**.
+
+The **[crossing direction][flowcean.hybrid.CrossingDirection]** distinguishes rising crossings, from negative toward positive, from falling crossings, from positive toward negative. This refers to the motion under the flow before the transition. For heating, choose a rising crossing at 23. For the return transition, use $g(T)=T-21$ with a falling crossing.
+
+### Changing the State Instantly
+
+Switching the heater off changes how quickly the room cools, but its temperature stays continuous.
+
+Other transitions change a state value instantly. When a bouncing ball hits the ground, its velocity changes from downward to upward. A **[reset][flowcean.hybrid.Reset]** describes that change.
+
+A reset can happen without changing location: the ball can remain in a single "flight" location, with each impact represented by a transition back to it. See the [bouncing-ball example](../examples/hybrid_systems.md#bouncing-ball).
+
+### Switching After Some Time
+
+Some changes depend on how long the system has been doing something. For example, a pump might run for five minutes before switching off.
+
+**Location residence time** measures the time since entering the current location. Calling that time $\tau$, the boundary $\tau-5=0$ describes the five-minute timer.
+
+Every transition starts a new visit and resets residence time to zero, including a transition back to the same location. The [timed-switch example](../examples/hybrid_systems.md#time-forced-switch) uses this kind of condition.
+
+## Construct and Simulate a Model
+
+Flowcean stores the continuous state in a NumPy array. Our room has one state value, so `state[0]` is its temperature. Use an array of corresponding rates of change for the flow output.
+
+Start by defining the flows and assigning them to locations:
 
 ```python
 import numpy as np
 
-from flowcean.hybrid import simulate
-from flowcean.hybrid.benchmarks import thermostat
+from flowcean.hybrid import (
+    CrossingDirection,
+    EventSurface,
+    Flow,
+    HybridSystem,
+    Location,
+    Transition,
+    simulate,
+)
 
-system = thermostat()
-trajectory = simulate(
-    system,
-    t_span=(0.0, 10.0),
-    input_stream=lambda t: np.array([22.0 + 0.8 * np.sin(0.7 * t)]),
+heating_flow = Flow(
+    fn=lambda state: np.array([5.0 - 0.3 * (state[0] - 20.0)]),
+)
+cooling_flow = Flow(
+    fn=lambda state: np.array([-0.3 * (state[0] - 20.0)]),
+)
+heating = Location(flow=heating_flow, label="heating")
+cooling = Location(flow=cooling_flow, label="cooling")
+```
+
+Next, define the switching boundaries and connect the locations in a [`HybridSystem`][flowcean.hybrid.HybridSystem]. The initial conditions specify both the temperature and whether heating is active:
+
+```python
+upper_boundary = EventSurface(
+    fn=lambda state: state[0] - 23.0,
+    direction=CrossingDirection.RISING,
+)
+lower_boundary = EventSurface(
+    fn=lambda state: state[0] - 21.0,
+    direction=CrossingDirection.FALLING,
+)
+
+system = HybridSystem(
+    locations=[heating, cooling],
+    transitions=[
+        Transition(heating, cooling, upper_boundary),
+        Transition(cooling, heating, lower_boundary),
+    ],
+    initial_location=heating,
+    initial_state=np.array([20.0]),
 )
 ```
 
-The result is a [`HybridTrajectory`][flowcean.hybrid.HybridTrajectory], a record of one execution of the model. It contains **continuous segments**, each governed by one active location's flow, and the events between them. In the thermostat run below, temperature remains continuous at a switch, but its rate of change changes.
-
-<figure class="hybrid-figure" markdown="span">
-
-[![Thermostat temperature and moving switching thresholds, with heating and cooling intervals shaded.](../assets/hybrid_systems/thermostat-trace.svg)](../assets/hybrid_systems/thermostat-trace.svg){ target="\_blank" rel="noopener" }
-
-<figcaption>The temperature follows a moving target. Shading identifies the active location; the switching thresholds are drawn alongside the temperature.</figcaption>
-
-</figure>
-
-For visual inspection, [`plot_trajectory`][flowcean.hybrid.plot_trajectory] shows continuous states against time. For models with several state quantities, [`plot_state_space`][flowcean.hybrid.plot_state_space] plots one coordinate against another. Both views preserve the separate continuous segments at resets, so a jump is distinguishable from continuous motion.
-
-An execution can contain several events at one physical time. For example, a reset may place the state on a boundary that requests an immediate further transition. The trajectory preserves their order. A point query or sample at that time reports the state after the complete chain.
-
-## Sample Data for Analysis
-
-A trajectory describes an execution; a sampled trace is a table of observations from it. Choose observation times to suit the analysis or learning method you want to use. A coarse grid may miss a short location visit, whereas the trajectory's event record preserves the transitions that delimit it.
-
-Use [`sample`][flowcean.hybrid.HybridTrajectory.sample] to create the table. Here we include the target-temperature input and the temperature derivative, so the observations capture both the operating conditions and the rate of change described by the active flow:
+Now choose the time interval and run [`simulate`][flowcean.hybrid.simulate]:
 
 ```python
-samples = trajectory.sample(
+trajectory = simulate(system, t_span=(0.0, 10.0))
+```
+
+Use the same time unit throughout the model. If the flows describe temperature change per minute, this interval represents ten minutes.
+
+The functions above request only `state`. Flowcean supplies [callback arguments][flowcean.hybrid.FlowFunction] by name; functions can also request `t`, `parameters`, `input_stream`, and `location_time` when they need them.
+
+### Choose the Starting Situation
+
+Choose the initial state and location together. Starting at 24 degrees in the heating location does not automatically select cooling just because $T\ge23$: Flowcean detects boundary crossings, rather than checking whether an inequality is already true.
+
+If the system has already spent time in its initial location, set `initial_location_time` to preserve that elapsed time.
+
+### Decide What Happens on a Boundary
+
+A run can start exactly on an event surface, or arrive there after a transition. Set the transition's `entry_policy`, using [`SurfaceEntryPolicy`][flowcean.hybrid.SurfaceEntryPolicy], to choose what happens:
+
+| Policy            | Behavior                                                 |
+| ----------------- | -------------------------------------------------------- |
+| `ERROR` (default) | Reject the entry.                                        |
+| `TRIGGER`         | Take the transition immediately, without advancing time. |
+| `CONTINUE`        | Begin continuous motion from the boundary.               |
+
+`CONTINUE` leaves the surface active. Choose a crossing direction that allows the initial departure. For a bouncing ball leaving the ground upward, the impact surface should detect **falling** crossings. Otherwise, the solver can rediscover the event at the starting time and report a failure to make progress.
+
+### Let Immediate Transitions Settle
+
+An immediate transition can lead to another at the same time. Such a chain must eventually allow continuous motion to resume.
+
+On entry, at most one outgoing transition may request an immediate jump. Multiple requests are an error. More generally, make competing transitions unambiguous rather than treating numerical detection order as a priority rule.
+
+`max_jumps` limits the total number of transitions, including ordinary switches and immediate chains. Increase it for longer runs with many legitimate switches; increasing it does not resolve a loop of immediate transitions.
+
+### Choose Numerical Accuracy
+
+The solver chooses its own integration steps. `rtol` and `atol` set error tolerances, while `max_step` limits the step size.
+
+An event surface can cross zero and return within one step, so crossings can be missed. For rapidly changing conditions, reduce `max_step` and check whether the results and switching times remain stable as you refine the settings.
+
+Reading more values from the completed trajectory later does not improve its numerical accuracy.
+
+### Keep Model Functions Repeatable
+
+For the same arguments, callbacks must return the same results. The solver can evaluate them repeatedly and revisit earlier times. Look up input values using the requested time, rather than advancing a counter or consuming the next reading on each call.
+
+Parameter values are captured at the start of a run, with location-specific settings overriding system settings. Input sources are not copied: keep them available and unchanged if you want to evaluate inputs or derivatives from that run later.
+
+## Understand and Use the Result
+
+### Inspect the Run
+
+`simulate` returns a **[trajectory][flowcean.hybrid.HybridTrajectory]**, a record of one run. It contains:
+
+- **[Continuous segments][flowcean.hybrid.ContinuousSegment]**, describing motion in one location over a time interval.
+- **[Events][flowcean.hybrid.Event]**, recording when transitions were taken, including the state before and after each change.
+
+A transition belongs to the model; an event records one occurrence of it. The same location can appear in several segments as the run returns to it.
+
+To plot the run, use [`plot_trajectory`][flowcean.hybrid.plot_trajectory]:
+
+```python
+from flowcean.hybrid import plot_trajectory
+
+plot_trajectory(trajectory, show=True)
+```
+
+To read the temperature and active location at a particular time, use [`evaluate`][flowcean.hybrid.HybridTrajectory.evaluate]:
+
+```python
+point = trajectory.evaluate(2.0)
+print(point.state[0], point.location.label)
+```
+
+You can also inspect the switches directly:
+
+```python
+for event in trajectory.events:
+    print(event.time, event.transition.target.label)
+```
+
+### Choose When to Observe
+
+A **sampled trace** is a table of observations from the trajectory. Choose the observation times to suit your analysis with [`sample`][flowcean.hybrid.HybridTrajectory.sample]:
+
+```python
+samples = trajectory.sample(dt=0.1)
+```
+
+This returns a Polars DataFrame with a row every 0.1 time units. Alternatively, supply `times=[0.0, 2.0, 5.0, 10.0]` instead of `dt` to request particular times.
+
+The table includes time, temperature in `x0`, the active location's `location_id`, and its `location_time`. Location IDs follow the order in `system.locations`: here, 0 means heating and 1 means cooling.
+
+### Interpret Values at Switches
+
+At an exact event time, evaluation and sampling return the state **after** the transition. If several transitions happen at that time, they return the result after the whole chain.
+
+To inspect an individual reset, use the event's `state_before` and `state_after`.
+
+A coarse observation grid can miss a short visit to a location. Keep the trajectory when investigating switching behavior: its event records remain available independently of the observation times you choose.
+
+## Move from Simulation to Learning
+
+### Prepare Learning Data
+
+Instead of writing every flow equation yourself, you can use **[HyDRA][flowcean.hybrid.hydra.HyDRALearner]** to learn flow models from data.
+
+For simulated data, request the rates of change alongside the state:
+
+```python
+learning_data = trajectory.sample(
     dt=0.02,
-    include_inputs=True,
     include_derivatives=True,
 )
 ```
 
-The resulting Polars frame can be selected, renamed, saved, or passed to a learning workflow. When you only need the system's situation at one instant, [`evaluate`][flowcean.hybrid.HybridTrajectory.evaluate] returns a [`TrajectoryPoint`][flowcean.hybrid.TrajectoryPoint] containing its continuous state, active location, and residence time. Use the trajectory to investigate transitions and continuous evolution, and sampled data when a method expects observations on a grid.
+Here, `x0` contains temperature and `dx0` contains the rate returned by the active flow. Choose enough observations to capture the brief behaviors you want to learn.
 
-## Learn from Samples
+If the run uses external inputs, include them with `include_inputs=True`. For measured recordings, derivatives must instead be supplied or estimated, taking care not to treat reset jumps as continuous rates of change.
 
-Simulation starts with a specified model and produces observations. Learning works in the other direction: observations are used to fit a model of the behavior. Flowcean's [HyDRA learner][flowcean.hybrid.hydra.HyDRALearner] learns continuous flow models and a selector that chooses which flow to apply. The resulting model represents behavior through these learned flows and selection decisions, rather than through a manually specified automaton.
+### Understand What Is Learned
 
-Follow the [hybrid identification walkthrough](../examples/simulated_hybrid_system.md) for a complete workflow from sampled states and derivatives to learned flows and predictions.
+HyDRA fits continuous flow models. A **[selector][flowcean.hybrid.hydra.HybridDecisionTreeModel]** chooses which fitted model to use from the information supplied to it.
+
+This produces flow models and a selection rule, rather than a reconstruction of the original automaton's locations, transitions, and resets. Different locations can share the same continuous behavior, so learned flow IDs need not correspond to native location IDs.
+
+The selector also needs enough information to distinguish the behaviors. Our room illustrates why: temperature alone cannot tell whether heating is on or off.
+
+### Simulate a Learned Model
+
+[`HyDRAModel.simulate`][flowcean.hybrid.hydra.HyDRAModel.simulate] chooses a flow at each requested grid point and integrates that flow until the next point. Consequently, changing this grid can change the simulated behavior. This differs from sampling an existing native trajectory, where observation times do not affect the run.
+
+Its returned table uses `flow_id` for the selected model and `flow_time` for the time since that model became active.
+
+Two current limits matter when choosing this workflow:
+
+- Trace-based HyDRA learning supports one state/derivative pair.
+- Built-in learned-model simulation does not support selectors that require history.
+
+The [identification walkthrough](../examples/simulated_hybrid_system.md) demonstrates fitting flows, training a selector, and comparing a learned run with its reference.

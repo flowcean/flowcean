@@ -59,7 +59,7 @@ The illustrated run uses a varying target temperature:
 
 </figure>
 
-See the [`thermostat` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.thermostat.thermostat) for parameter options and the [simulation guide](../user_guide/hybrid_systems.md#simulate-a-run) for a runnable example.
+See the [`thermostat` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.thermostat.thermostat) for parameter options and the [simulation guide](../user_guide/hybrid_systems.md#construct-and-simulate-a-model) for a runnable example.
 
 ## Bouncing Ball
 
@@ -183,7 +183,7 @@ See the [`time_varying_event_surface` factory](../reference/hybrid.md#flowcean.h
 
 ## Time-Forced Switch
 
-Each visit lasts for a fixed dwell time, measured by [location residence time](../user_guide/hybrid_systems.md#location-residence-time). A rising crossing of `location_time - dwell_time` alternates between `fast` and `slow`. The two continuous-state coordinates approach zero more quickly in `fast` than in `slow`; neither resets at a transition. The factory's `period` spans a complete fast-slow cycle.
+Each visit lasts for a fixed dwell time, measured by [location residence time](../user_guide/hybrid_systems.md#switching-after-some-time). A rising crossing of `location_time - dwell_time` alternates between `fast` and `slow`. The two continuous-state coordinates approach zero more quickly in `fast` than in `slow`; neither resets at a transition. The factory's `period` spans a complete fast-slow cycle.
 
 <figure class="hybrid-figure hybrid-automaton" markdown="span">
 
@@ -391,7 +391,7 @@ uv run --directory ./examples/hybrid_systems python run.py
 
 The model configurations and input signals are in [`scenarios.py`](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/scenarios.py).
 
-To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#simulate-a-run). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
+To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#construct-and-simulate-a-model). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
 
 ## Export Automaton Diagrams
 
