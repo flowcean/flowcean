@@ -6,6 +6,10 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added the `valve_closure` benchmark demonstrating delayed switching in the hybrid systems gallery.
+
+- Added fixed `Transition.delay` for hybrid simulation: the first detection schedules a switch while source dynamics and residence time continue; leaving the source visit cancels pending occurrences. Executed events expose `detection_time`, and automaton diagrams annotate positive delays.
+
 - Added simulator-managed `location_time` to hybrid flow, event-surface, and reset callbacks, with `initial_location_time` for starting mid-visit and separate residence-time values in traces, events, and tabular exports. Every transition, including a self-transition without a state reset, starts a new visit at age zero.
 - Added an illustrated gallery covering all hybrid-system benchmarks and an example-first hybrid systems guide.
 - Added a "Why Flowcean?" guide explaining its modeling perspective and relationship to other tools.
@@ -21,6 +25,8 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 - Added reusable hybrid-system benchmarks under `flowcean.hybrid.benchmarks` ([#407](https://github.com/flowcean/flowcean/pull/407)).
 
 ### Changed
+
+- **Breaking:** Constructing a hybrid `Event` directly now requires `detection_time`; `time` continues to denote execution.
 
 - **Breaking:** Renamed `plot_phase` to `plot_state_space`. Transition endpoint markers are now opt-in via `show_event_points=True` on `plot_trajectory` and `plot_state_space`; `show_events` still controls vertical event indicators on time-series plots.
 - **Breaking:** `wind_turbine_power` now takes rotor speeds and matching location labels rather than a Polars frame; supply turbine parameters explicitly as before.

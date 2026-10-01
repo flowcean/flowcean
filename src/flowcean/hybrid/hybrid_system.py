@@ -92,15 +92,16 @@ class SurfaceEntryPolicy(StrEnum):
 
     Entry includes initialization and arrival after a transition. ``ERROR``
     raises [SurfaceEntryError][flowcean.hybrid.SurfaceEntryError]; ``TRIGGER``
-    applies the transition immediately at the same physical time; ``CONTINUE``
+    detects the transition immediately (starting its delay); ``CONTINUE``
     begins continuous integration with the surface at zero. For ``CONTINUE``,
     choose a flow that departs in the direction opposite to the accepted
     crossing so integration can advance.
 
     All outgoing surfaces are evaluated before resolving entry. NaN values
-    are rejected first, then zero ``ERROR`` surfaces. Exactly one zero
-    ``TRIGGER`` surface performs a jump; multiple such surfaces raise
+    are rejected first, then zero ``ERROR`` surfaces. Exactly one zero-delay
+    ``TRIGGER`` surface at zero performs a jump; multiple such surfaces raise
     [AmbiguousTransitionError][flowcean.hybrid.AmbiguousTransitionError].
+    Positive-delay ``TRIGGER`` surfaces schedule execution without a jump.
     Entry handling repeats at the target after an immediate transition.
     """
 
@@ -255,6 +256,14 @@ class Transition:
         reset: Optional reset applied upon transition.
         entry_policy: Behavior when the event surface is exactly zero upon
             entry to the source location.
+        delay: Finite, nonnegative time from detection to execution, in the
+            model's time units. The first crossing schedules execution;
+            further crossings neither cancel nor restart it. The source flow
+            and residence clock continue until execution. Leaving the source
+            visit, including a self-transition, cancels its pending occurrences.
+            An earlier outgoing deadline supersedes the pending transition.
+            The reset receives the state and source context at execution.
+            Zero (the default) takes the transition immediately.
     """
 
     source: Location
@@ -262,6 +271,7 @@ class Transition:
     event_surface: EventSurface
     reset: Reset | None = None
     entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR
+    delay: float = 0.0
 
     def __init__(
         self,
@@ -271,6 +281,7 @@ class Transition:
         reset: Reset | Callable[..., State] | None = None,
         *,
         entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR,
+        delay: float = 0.0,
     ) -> None:
         if not isinstance(source, Location):
             message = "source must be a Location."
@@ -295,11 +306,15 @@ class Transition:
         if type(entry_policy) is not SurfaceEntryPolicy:
             message = "entry_policy must be a SurfaceEntryPolicy."
             raise TypeError(message)
+        delay = float(delay)
+        if not np.isfinite(delay) or delay < 0:
+            raise ValueError("delay must be finite and nonnegative.")
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "event_surface", surface)
         object.__setattr__(self, "reset", transition_reset)
         object.__setattr__(self, "entry_policy", entry_policy)
+        object.__setattr__(self, "delay", delay)
 
 
 @dataclass(frozen=True, eq=False)

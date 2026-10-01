@@ -13,6 +13,7 @@ from .tank_valves import tank_valves
 from .thermostat import thermostat
 from .time_forced_switch import time_forced_switch
 from .time_varying_event_surface import time_varying_event_surface
+from .valve_closure import valve_closure
 from .wind_turbine import wind_turbine, wind_turbine_power
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "thermostat",
     "time_forced_switch",
     "time_varying_event_surface",
+    "valve_closure",
     "wind_turbine",
     "wind_turbine_power",
 ]

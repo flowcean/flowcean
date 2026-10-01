@@ -50,7 +50,7 @@ class SurfaceEntryError(HybridSimulationError):
 
 
 class AmbiguousTransitionError(HybridSimulationError):
-    """Raised when multiple TRIGGER surfaces are zero on location entry."""
+    """Raised for competing entry-time jumps or equal scheduled deadlines."""
 
 
 class SimulationProgressError(HybridSimulationError):
@@ -81,12 +81,40 @@ class _EventFn:
         return value
 
 
+class _PendingTransition(NamedTuple):
+    transition: Transition
+    detection_time: float
+    conflicts: tuple[Transition, ...] = ()
+
+    @property
+    def deadline(self) -> float:
+        return self.detection_time + self.transition.delay
+
+
+def _schedule(
+    pending: _PendingTransition | None, transition: Transition, time: float
+) -> _PendingTransition:
+    candidate = _PendingTransition(transition, time)
+    if not np.isfinite(candidate.deadline) or (
+        transition.delay > 0 and candidate.deadline <= time
+    ):
+        raise SimulationProgressError(
+            "Transition delay cannot advance to a finite representable deadline."
+        )
+    if pending is None or candidate.deadline < pending.deadline:
+        return candidate
+    if candidate.deadline == pending.deadline:
+        return pending._replace(conflicts=(*pending.conflicts, transition))
+    return pending
+
+
 class _EntryResult(NamedTuple):
     state: np.ndarray
     location: Location
     events: tuple[Event, ...]
     jumps: int
     clock: _ResidenceClock
+    pending: _PendingTransition | None
 
 
 def simulate(
@@ -108,6 +136,9 @@ def simulate(
     input streams must be pure and deterministic under repeated evaluation.
     Equal endpoints resolve entry transitions without calling the ODE solver.
     Parameters are snapshotted for every location at the start of the run.
+    A positive delay keeps the source flow and residence clock active until
+    execution. Leaving the source visit cancels its pending transition.
+    Deadlines at the final endpoint execute.
 
     Args:
         system: Model to simulate.
@@ -118,6 +149,7 @@ def simulate(
             requested physical time.
         initial_location_time: Finite, nonnegative age of the initial visit.
             Each subsequent transition begins a new visit at age zero.
+            Each run starts with no pending transition.
         max_jumps: Maximum number of transitions, including same-time chains.
         rtol: Relative tolerance for SciPy integration.
         atol: Absolute tolerance for SciPy integration.
@@ -164,11 +196,23 @@ def simulate(
         jumps=0,
         max_jumps=max_jumps,
     )
-    state, location, events, jumps, clock = entry
+    state, location, events, jumps, clock, pending = entry
     execution.extend(events)
     current = start
+    allow_same_time_detection = False
     while current < end:
-        transitions = system.transitions_from(location)
+        # The earliest deadline ends the source visit and cancels later ones.
+        # Skip surfaces whose delay would finish too late even if detected now.
+        transitions = [
+            transition
+            for transition in system.transitions_from(location)
+            if pending is None
+            or (
+                transition is not pending.transition
+                and transition not in pending.conflicts
+                and current + transition.delay <= pending.deadline
+            )
+        ]
         event_fns = [
             _EventFn(transition, bindings.surfaces[transition], clock)
             for transition in transitions
@@ -176,7 +220,7 @@ def simulate(
 
         result = solve_ivp(
             _wrap_flow(bindings.flows[location], clock),
-            (current, end),
+            (current, min(end, pending.deadline) if pending else end),
             state.copy(),
             events=event_fns or None,
             rtol=rtol,
@@ -198,7 +242,7 @@ def simulate(
         )
         if selected is not None:
             _, event_time, _ = selected
-            if event_time <= current:
+            if event_time <= current and not allow_same_time_detection:
                 error = SimulationProgressError(
                     f"An event did not advance physical time (segment start={current!r}, event time={event_time!r}).",
                 )
@@ -219,10 +263,28 @@ def simulate(
                     result.t,
                 )
             )
-        if selected is None:
+
+        if selected is not None:
+            index, event_time, _ = selected
+            pending = _schedule(pending, transitions[index], event_time)
+        if pending is None or (selected is None and pending.deadline > end):
             break
-        index, event_time, event_state = selected
-        transition = transitions[index]
+        current = segment_end
+        state = result.y[:, -1].copy()
+        if pending.deadline > current:
+            # Until execution, allow solver restarts without time progress.
+            # Each detected candidate is excluded as pending/conflicting or
+            # pruned for finishing too late, so it cannot block the restart.
+            allow_same_time_detection = True
+            continue
+
+        if pending.conflicts:
+            raise AmbiguousTransitionError(
+                f"Multiple transitions are scheduled for t={current!r}: "
+                f"{_transition_descriptions((pending.transition, *pending.conflicts))}."
+            )
+        transition = pending.transition
+        event_time, event_state = current, state
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
@@ -231,8 +293,10 @@ def simulate(
             bindings,
             microstep=0,
             location_time=clock.age(event_time),
+            detection_time=pending.detection_time,
         )
         execution.append(event)
+
         entry = _settle_location_entries(
             system,
             transition.target,
@@ -244,9 +308,10 @@ def simulate(
             jumps=jumps,
             max_jumps=max_jumps,
         )
-        state, location, events, jumps, clock = entry
+        state, location, events, jumps, clock, pending = entry
         execution.extend(events)
         current = event_time
+        allow_same_time_detection = False
     return HybridTrajectory(
         system,
         (start, end),
@@ -303,6 +368,7 @@ def _apply_transition(
     *,
     microstep: int,
     location_time: float,
+    detection_time: float,
 ) -> tuple[np.ndarray, Event]:
     before = ensure_state(state)
     if transition.reset is None:
@@ -316,6 +382,7 @@ def _apply_transition(
         after,
         microstep,
         location_time,
+        detection_time,
     )
 
 
@@ -367,7 +434,7 @@ def _settle_location_entries(
                 f"at t={time!r}: {_transition_descriptions(errors)}.",
             )
             error.add_note(
-                "Choose TRIGGER for an immediate jump or CONTINUE to begin continuous integration from the surface."
+                "Choose TRIGGER to detect the transition on entry or CONTINUE to begin continuous integration from the surface."
             )
             raise error
         triggers = [
@@ -376,18 +443,26 @@ def _settle_location_entries(
             if value == 0.0
             and transition.entry_policy is SurfaceEntryPolicy.TRIGGER
         ]
-        if len(triggers) > 1:
+        immediate = [
+            transition for transition in triggers if transition.delay == 0
+        ]
+        if len(immediate) > 1:
             error = AmbiguousTransitionError(
                 f"Multiple transitions request an entry-time jump from {display_label(location)!r} "
-                f"at t={time!r}: {_transition_descriptions(triggers)}.",
+                f"at t={time!r}: {_transition_descriptions(immediate)}.",
             )
             error.add_note(
-                "Make at most one outgoing TRIGGER surface zero on entry."
+                "Make at most one outgoing zero-delay TRIGGER surface zero on entry."
             )
             raise error
-        if not triggers:
-            return _EntryResult(state, location, tuple(events), jumps, clock)
-        transition = triggers[0]
+        if not immediate:
+            pending = None
+            for transition in triggers:
+                pending = _schedule(pending, transition, time)
+            return _EntryResult(
+                state, location, tuple(events), jumps, clock, pending
+            )
+        transition = immediate[0]
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
@@ -396,6 +471,7 @@ def _settle_location_entries(
             bindings,
             microstep=microstep,
             location_time=clock.age(time),
+            detection_time=time,
         )
         events.append(event)
         location = transition.target

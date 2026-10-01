@@ -47,6 +47,9 @@ class Event:
     target, event surface, and reset. ``time`` is physical simulation time;
     ``microstep`` orders events at that time, starting at zero.
     ``location_time_before`` is the age of the source visit before the jump.
+    ``detection_time`` is when the event surface was detected, possibly on
+    location entry. ``time`` is when the transition executed after its delay.
+    They are equal for zero-delay transitions.
     """
 
     time: float
@@ -55,6 +58,7 @@ class Event:
     state_after: State
     microstep: int
     location_time_before: float
+    detection_time: float
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "state_before", _readonly(self.state_before))

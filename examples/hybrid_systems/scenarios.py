@@ -20,6 +20,7 @@ from flowcean.hybrid.benchmarks import (
     thermostat,
     time_forced_switch,
     time_varying_event_surface,
+    valve_closure,
     wind_turbine,
 )
 
@@ -164,4 +165,11 @@ SCENARIOS = (
         (0.0, 0.02),
     ),
     WIND_TURBINE,
+    Scenario(
+        "Delayed Valve Closure",
+        valve_closure,
+        ("flow", "valve", "delay"),
+        "Filling continues for the closing delay after threshold detection.",
+        (0.0, 5.0),
+    ),
 )
