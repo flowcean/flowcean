@@ -199,8 +199,10 @@ def simulate(
     state, location, events, jumps, clock, pending = entry
     execution.extend(events)
     current = start
-    detecting = False
+    allow_same_time_detection = False
     while current < end:
+        # The earliest deadline ends the source visit and cancels later ones.
+        # Skip surfaces whose delay would finish too late even if detected now.
         transitions = [
             transition
             for transition in system.transitions_from(location)
@@ -240,7 +242,7 @@ def simulate(
         )
         if selected is not None:
             _, event_time, _ = selected
-            if event_time <= current and not detecting:
+            if event_time <= current and not allow_same_time_detection:
                 error = SimulationProgressError(
                     f"An event did not advance physical time (segment start={current!r}, event time={event_time!r}).",
                 )
@@ -261,6 +263,7 @@ def simulate(
                     result.t,
                 )
             )
+
         if selected is not None:
             index, event_time, _ = selected
             pending = _schedule(pending, transitions[index], event_time)
@@ -269,10 +272,12 @@ def simulate(
         current = segment_end
         state = result.y[:, -1].copy()
         if pending.deadline > current:
-            # Another surface may have a crossing at this same time. The
-            # scheduled surface is now excluded, so detecting it cannot recur.
-            detecting = True
+            # Until execution, allow solver restarts without time progress.
+            # Each detected candidate is excluded as pending/conflicting or
+            # pruned for finishing too late, so it cannot block the restart.
+            allow_same_time_detection = True
             continue
+
         if pending.conflicts:
             raise AmbiguousTransitionError(
                 f"Multiple transitions are scheduled for t={current!r}: "
@@ -291,6 +296,7 @@ def simulate(
             detection_time=pending.detection_time,
         )
         execution.append(event)
+
         entry = _settle_location_entries(
             system,
             transition.target,
@@ -305,7 +311,7 @@ def simulate(
         state, location, events, jumps, clock, pending = entry
         execution.extend(events)
         current = event_time
-        detecting = False
+        allow_same_time_detection = False
     return HybridTrajectory(
         system,
         (start, end),
