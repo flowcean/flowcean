@@ -1,10 +1,11 @@
 """SciPy event-driven hybrid simulation, independent of sampling grids."""
 
 from collections.abc import Callable, Iterable, Sequence
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 import numpy as np
-from scipy.integrate import solve_ivp
+from scipy.integrate import RK45, DenseOutput, OdeSolution
+from scipy.optimize import brentq
 
 from ._runtime import (
     _BoundFunction,
@@ -50,7 +51,7 @@ class SurfaceEntryError(HybridSimulationError):
 
 
 class AmbiguousTransitionError(HybridSimulationError):
-    """Raised when multiple TRIGGER surfaces are zero on location entry."""
+    """Raised when multiple transitions request execution at the same time."""
 
 
 class SimulationProgressError(HybridSimulationError):
@@ -58,7 +59,7 @@ class SimulationProgressError(HybridSimulationError):
 
 
 class _EventFn:
-    """Terminal event wrapper retaining SciPy's crossing-direction semantics."""
+    """Event wrapper retaining SciPy's crossing-direction semantics."""
 
     def __init__(
         self,
@@ -70,7 +71,6 @@ class _EventFn:
         self.surface = surface
         self.clock = clock
         self.direction = int(transition.event_surface.direction)
-        self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
         value = self.surface(t, y, self.clock.age(t))
@@ -87,6 +87,7 @@ class _EntryResult(NamedTuple):
     events: tuple[Event, ...]
     jumps: int
     clock: _ResidenceClock
+    pending: dict[Transition, float]
 
 
 def simulate(
@@ -108,6 +109,11 @@ def simulate(
     input streams must be pure and deterministic under repeated evaluation.
     Equal endpoints resolve entry transitions without calling the ODE solver.
     Parameters are snapshotted for every location at the start of the run.
+    Positive-delay detections keep the source flow and residence clock active.
+    Leaving the source visit cancels all its pending transitions. Deadlines at
+    the final endpoint execute; later deadlines are discarded from the result.
+    Execution times indistinguishable at root-finding precision are treated as
+    simultaneous; multiple execution requests raise AmbiguousTransitionError.
 
     Args:
         system: Model to simulate.
@@ -117,7 +123,8 @@ def simulate(
         input_stream: Function returning a one-dimensional input vector at a
             requested physical time.
         initial_location_time: Finite, nonnegative age of the initial visit.
-            Each subsequent transition begins a new visit at age zero.
+            Each subsequent transition begins a new visit at age zero. No
+            pending transitions are inferred from the initial residence age.
         max_jumps: Maximum number of transitions, including same-time chains.
         rtol: Relative tolerance for SciPy integration.
         atol: Absolute tolerance for SciPy integration.
@@ -164,65 +171,59 @@ def simulate(
         jumps=0,
         max_jumps=max_jumps,
     )
-    state, location, events, jumps, clock = entry
+    state, location, events, jumps, clock, pending = entry
     execution.extend(events)
     current = start
     while current < end:
-        transitions = system.transitions_from(location)
-        event_fns = [
-            _EventFn(transition, bindings.surfaces[transition], clock)
-            for transition in transitions
+        transitions = [
+            transition
+            for transition in system.transitions_from(location)
+            if transition not in pending
         ]
-
-        result = solve_ivp(
-            _wrap_flow(bindings.flows[location], clock),
-            (current, end),
-            state.copy(),
-            events=event_fns or None,
+        deadline = min(
+            (
+                detected + transition.delay
+                for transition, detected in pending.items()
+            ),
+            default=float("inf"),
+        )
+        segment, detected = _integrate(
+            location,
+            state,
+            current,
+            min(end, deadline),
+            transitions,
+            bindings,
+            clock,
             rtol=rtol,
             atol=atol,
-            dense_output=True,
-            max_step=np.inf if max_step is None else max_step,
+            max_step=max_step,
         )
-        if not result.success:
-            raise HybridSimulationError(
-                f"ODE integration failed: {result.message}"
-            )
-        has_event = result.t_events and any(
-            len(times) for times in result.t_events
-        )
-        selected = (
-            _first_event(result.t_events, result.y_events)
-            if has_event
-            else None
-        )
-        if selected is not None:
-            _, event_time, _ = selected
-            if event_time <= current:
-                error = SimulationProgressError(
-                    f"An event did not advance physical time (segment start={current!r}, event time={event_time!r}).",
-                )
-                error.add_note(
-                    "This can result from stateful callbacks, discontinuous event surfaces, "
-                    "or insufficient floating-point time resolution. Use deterministic "
-                    "callbacks and continuous event surfaces.",
-                )
-                raise error
-        segment_end = float(result.t[-1])
-        if segment_end > current:
-            execution.append(
-                ContinuousSegment(
-                    location,
-                    (current, segment_end),
-                    result.sol,
-                    clock,
-                    result.t,
-                )
-            )
-        if selected is None:
-            break
-        index, event_time, event_state = selected
-        transition = transitions[index]
+        execution.append(segment)
+        current = segment.t_span[1]
+        state = segment.evaluate(current).state.copy()
+        for transition in detected:
+            _schedule(pending, transition, current)
+        due = [
+            transition
+            for transition, detection_time in pending.items()
+            if detection_time + transition.delay <= current
+        ]
+        if not due:
+            continue
+        # Check every scheduled occurrence when execution is due. Tolerance
+        # groups competing deadlines, but never advances a lone deadline.
+        simultaneous = [
+            transition
+            for transition, detection_time in pending.items()
+            if detection_time + transition.delay <= end
+            and _same_time(detection_time + transition.delay, current)
+        ]
+        _check_ambiguity(simultaneous, current)
+        transition = due[0]
+        detection_time = pending[transition]
+        event_time = current
+        event_state = state
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
@@ -231,6 +232,7 @@ def simulate(
             bindings,
             microstep=0,
             location_time=clock.age(event_time),
+            detection_time=detection_time,
         )
         execution.append(event)
         entry = _settle_location_entries(
@@ -244,7 +246,7 @@ def simulate(
             jumps=jumps,
             max_jumps=max_jumps,
         )
-        state, location, events, jumps, clock = entry
+        state, location, events, jumps, clock, pending = entry
         execution.extend(events)
         current = event_time
     return HybridTrajectory(
@@ -270,29 +272,141 @@ def _wrap_flow(
     return flow
 
 
-def _first_event(
-    t_events: Sequence[np.ndarray],
-    y_events: Sequence[np.ndarray],
-) -> tuple[int, float, np.ndarray]:
-    """Select the earliest reported event; ties retain SciPy's ordering."""
-    earliest_time = float("inf")
-    earliest_index = -1
-    earliest_state = np.zeros(0, dtype=float)
-    for index, (times, states) in enumerate(
-        zip(t_events, y_events, strict=False)
+# Match the root solver's absolute/relative time resolution, not ODE state
+# tolerances. Indistinguishable execution times must not acquire list priority.
+_ROOT_TOLERANCE = 4 * np.finfo(float).eps
+
+
+def _same_time(first: float, second: float) -> bool:
+    return abs(first - second) <= _ROOT_TOLERANCE * (
+        1 + max(abs(first), abs(second))
+    )
+
+
+def _schedule(
+    pending: dict[Transition, float], transition: Transition, time: float
+) -> None:
+    deadline = time + transition.delay
+    if not np.isfinite(deadline) or (
+        transition.delay > 0 and deadline <= time
     ):
-        if len(times) == 0:
-            continue
-        time = float(times[0])
-        if time < earliest_time:
-            earliest_index, earliest_time, earliest_state = (
-                index,
-                time,
-                states[0],
+        raise SimulationProgressError(
+            "Transition delay cannot advance to a finite representable deadline."
+        )
+    pending[transition] = time
+
+
+def _check_ambiguity(transitions: Sequence[Transition], time: float) -> None:
+    if len(transitions) > 1:
+        raise AmbiguousTransitionError(
+            f"Multiple transitions request execution at t={time!r}: {_transition_descriptions(transitions)}."
+        )
+
+
+def _step_crossings(
+    functions: Sequence[_EventFn],
+    before: Sequence[float],
+    after: Sequence[float],
+    start: float,
+    end: float,
+    solution: DenseOutput,
+) -> list[tuple[float, Transition]]:
+    roots: list[tuple[float, Transition]] = []
+    for function, left, right in zip(functions, before, after, strict=True):
+        rising = left <= 0 <= right and function.direction >= 0
+        falling = left >= 0 >= right and function.direction <= 0
+        if rising or falling:
+            root = brentq(
+                lambda time, fn=function: fn(time, solution(time)),
+                start,
+                end,
+                xtol=_ROOT_TOLERANCE,
+                rtol=_ROOT_TOLERANCE,
             )
-    if earliest_index < 0:
-        raise RuntimeError("Event requested but none were detected.")
-    return earliest_index, earliest_time, earliest_state
+            roots.append((cast(float, root), function.transition))
+    return roots
+
+
+def _integrate(
+    location: Location,
+    state: np.ndarray,
+    start: float,
+    end: float,
+    transitions: Sequence[Transition],
+    bindings: _RunBindings,
+    clock: _ResidenceClock,
+    *,
+    rtol: float,
+    atol: float,
+    max_step: float | None,
+) -> tuple[ContinuousSegment, list[Transition]]:
+    """Integrate until the first crossing or deadline, retaining tied roots.
+
+    Use SciPy's public RK45 stepping and dense output APIs so every surface
+    in the terminating step is examined. solve_ivp's terminal events truncate
+    the root list and can hide simultaneous execution requests.
+    """
+    solver = RK45(
+        _wrap_flow(bindings.flows[location], clock),
+        start,
+        state,
+        end,
+        rtol=rtol,
+        atol=atol,
+        max_step=np.inf if max_step is None else max_step,
+    )
+    functions = [
+        _EventFn(transition, bindings.surfaces[transition], clock)
+        for transition in transitions
+    ]
+    values = [function(start, state) for function in functions]
+    knots = [start]
+    interpolants: list[DenseOutput] = []
+    detected: list[Transition] = []
+    while solver.status == "running":
+        previous = float(solver.t)
+        message = solver.step()
+        if solver.status == "failed":
+            raise HybridSimulationError(f"ODE integration failed: {message}")
+        solution = solver.dense_output()
+        time = float(solver.t)
+        next_values = [function(time, solver.y) for function in functions]
+        roots = _step_crossings(
+            functions, values, next_values, previous, time, solution
+        )
+        if roots:
+            time = min(root for root, _ in roots)
+            if time <= start:
+                error = SimulationProgressError(
+                    f"An event did not advance physical time (segment start={start!r}, event time={time!r})."
+                )
+                error.add_note(
+                    "This can result from stateful callbacks, discontinuous event surfaces, "
+                    "or insufficient floating-point time resolution. Use deterministic "
+                    "callbacks and continuous event surfaces."
+                )
+                raise error
+            if _same_time(time, end):
+                time = end
+            detected = [
+                transition
+                for root, transition in roots
+                if _same_time(root, time)
+            ]
+        # A root at the previous step boundary needs no additional interpolant.
+        if time > knots[-1]:
+            knots.append(time)
+            interpolants.append(solution)
+        if roots:
+            break
+        values = next_values
+    return ContinuousSegment(
+        location,
+        (start, knots[-1]),
+        OdeSolution(knots, interpolants),
+        clock,
+        np.array(knots),
+    ), detected
 
 
 def _apply_transition(
@@ -303,6 +417,7 @@ def _apply_transition(
     *,
     microstep: int,
     location_time: float,
+    detection_time: float,
 ) -> tuple[np.ndarray, Event]:
     before = ensure_state(state)
     if transition.reset is None:
@@ -316,6 +431,7 @@ def _apply_transition(
         after,
         microstep,
         location_time,
+        detection_time,
     )
 
 
@@ -367,7 +483,7 @@ def _settle_location_entries(
                 f"at t={time!r}: {_transition_descriptions(errors)}.",
             )
             error.add_note(
-                "Choose TRIGGER for an immediate jump or CONTINUE to begin continuous integration from the surface."
+                "Choose TRIGGER to detect the transition on entry or CONTINUE to begin continuous integration from the surface."
             )
             raise error
         triggers = [
@@ -376,18 +492,26 @@ def _settle_location_entries(
             if value == 0.0
             and transition.entry_policy is SurfaceEntryPolicy.TRIGGER
         ]
-        if len(triggers) > 1:
+        immediate = [
+            transition for transition in triggers if transition.delay == 0
+        ]
+        if len(immediate) > 1:
             error = AmbiguousTransitionError(
                 f"Multiple transitions request an entry-time jump from {display_label(location)!r} "
-                f"at t={time!r}: {_transition_descriptions(triggers)}.",
+                f"at t={time!r}: {_transition_descriptions(immediate)}.",
             )
             error.add_note(
-                "Make at most one outgoing TRIGGER surface zero on entry."
+                "Make at most one outgoing zero-delay TRIGGER surface zero on entry."
             )
             raise error
-        if not triggers:
-            return _EntryResult(state, location, tuple(events), jumps, clock)
-        transition = triggers[0]
+        if not immediate:
+            pending: dict[Transition, float] = {}
+            for transition in triggers:
+                _schedule(pending, transition, time)
+            return _EntryResult(
+                state, location, tuple(events), jumps, clock, pending
+            )
+        transition = immediate[0]
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
@@ -396,6 +520,7 @@ def _settle_location_entries(
             bindings,
             microstep=microstep,
             location_time=clock.age(time),
+            detection_time=time,
         )
         events.append(event)
         location = transition.target

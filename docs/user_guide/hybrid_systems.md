@@ -83,6 +83,46 @@ Some changes depend on how long the system has been doing something. For example
 
 Every transition starts a new visit and resets residence time to zero, including a transition back to the same location. The [timed-switch example](../examples/hybrid_systems.md#time-forced-switch) uses this kind of condition.
 
+### Delaying a Transition After Detection
+
+A crossing can schedule a switch for later. For example, an inlet valve may
+remain open for one time unit after the water reaches its threshold:
+
+```python
+close_valve = Transition(
+    source=filling,
+    target=closed,
+    event_surface=upper_boundary,
+    delay=1.0,
+)
+```
+
+`delay` is a fixed, finite, nonnegative duration in the model's time units.
+It defaults to zero, which takes the transition immediately. A positive delay
+keeps the source location, flow, and residence clock active until execution.
+The reset, if present, uses the state, time, inputs, parameters, and source
+residence time at execution.
+
+The first crossing schedules one occurrence per transition. Crossing back or
+crossing again neither cancels nor restarts it. Other outgoing transitions
+remain available, and several different transitions may be pending. Leaving
+the source visit cancels all its remaining pending occurrences, including when
+a self-transition starts a new visit.
+
+Multiple simultaneous detections may schedule different deadlines. Multiple
+requests to **execute** at the same time are an error, including a pending
+deadline coinciding with an immediate transition. Times indistinguishable at
+root-finding precision are treated as simultaneous.
+
+On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and
+starts its delay. Each run starts with no pending occurrences, including when
+an initial residence time is supplied. A deadline at the simulation endpoint
+executes; later deadlines do not. Only executed transitions count toward
+`max_jumps`.
+
+The [delayed valve example](../examples/hybrid_systems.md#delayed-valve-closure)
+compares immediate closure with closure one time unit after detection.
+
 ## Construct and Simulate a Model
 
 Flowcean stores the continuous state in a NumPy array. Our room has one state value, so `state[0]` is its temperature. Use an array of corresponding rates of change for the flow output.
@@ -155,11 +195,11 @@ If the system has already spent time in its initial location, set `initial_locat
 
 A run can start exactly on an event surface, or arrive there after a transition. Set the transition's `entry_policy`, using [`SurfaceEntryPolicy`][flowcean.hybrid.SurfaceEntryPolicy], to choose what happens:
 
-| Policy            | Behavior                                                 |
-| ----------------- | -------------------------------------------------------- |
-| `ERROR` (default) | Reject the entry.                                        |
-| `TRIGGER`         | Take the transition immediately, without advancing time. |
-| `CONTINUE`        | Begin continuous motion from the boundary.               |
+| Policy            | Behavior                                          |
+| ----------------- | ------------------------------------------------- |
+| `ERROR` (default) | Reject the entry.                                 |
+| `TRIGGER`         | Detect immediately; execute now or after `delay`. |
+| `CONTINUE`        | Begin continuous motion from the boundary.        |
 
 `CONTINUE` leaves the surface active. Choose a crossing direction that allows the initial departure. For a bouncing ball leaving the ground upward, the impact surface should detect **falling** crossings. Otherwise, the solver can rediscover the event at the starting time and report a failure to make progress.
 
@@ -167,7 +207,7 @@ A run can start exactly on an event surface, or arrive there after a transition.
 
 An immediate transition can lead to another at the same time. Such a chain must eventually allow continuous motion to resume.
 
-On entry, at most one outgoing transition may request an immediate jump. Multiple requests are an error. More generally, make competing transitions unambiguous rather than treating numerical detection order as a priority rule.
+On entry, at most one outgoing zero-delay transition may request an immediate jump. Multiple requests are an error. More generally, make competing transitions unambiguous rather than treating numerical detection order as a priority rule.
 
 `max_jumps` limits the total number of transitions, including ordinary switches and immediate chains. Increase it for longer runs with many legitimate switches; increasing it does not resolve a loop of immediate transitions.
 
@@ -215,8 +255,16 @@ You can also inspect the switches directly:
 
 ```python
 for event in trajectory.events:
-    print(event.time, event.transition.target.label)
+    print(event.detection_time, event.time, event.transition.target.label)
 ```
+
+For a delayed transition, `event.detection_time` records the earlier crossing
+(or detection on entry), while `event.time` records execution. They are equal
+for zero-delay transitions. The trajectory records executed transitions.
+
+Detection may split continuous segments without starting a new location visit.
+Sampling during the delay still reports the source location and its continuing
+residence time. Event markers in plots mark execution.
 
 ### Choose When to Observe
 

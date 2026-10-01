@@ -8,22 +8,23 @@ These examples illustrate switching, hysteresis, and resets in hybrid systems, f
 
 ## What the Examples Illustrate
 
-| Example                                                   | Behavior                                     |
-| --------------------------------------------------------- | -------------------------------------------- |
-| [Thermostat](#thermostat)                                 | Hysteresis around a moving target            |
-| [Bouncing ball](#bouncing-ball)                           | Velocity resets at impact                    |
-| [Hybrid oscillator](#hybrid-oscillator)                   | Side-dependent damping                       |
-| [Switched linear](#switched-linear)                       | State-triggered switching of linear dynamics |
-| [Relay integrator](#relay-integrator)                     | Relay control with hysteresis                |
-| [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary   |
-| [Time-forced switch](#time-forced-switch)                 | Periodic switching after a fixed dwell time  |
-| [Piecewise affine](#piecewise-affine)                     | Affine dynamics and a linear event surface   |
-| [Impact oscillator](#impact-oscillator)                   | Forced oscillation with impact resets        |
-| [PID-controlled plant](#pid-controlled-plant)             | Actuator saturation and integral control     |
-| [Tank valves](#tank-valves)                               | Valve switching and gravity-driven drainage  |
-| [Location cycle](#location-cycle)                         | Repeated timed visits to linear locations    |
-| [Buck converter](#buck-converter)                         | Hysteretic switching and diode blocking      |
-| [Wind turbine](#wind-turbine)                             | Torque regimes and pitch control             |
+| Example                                                   | Behavior                                      |
+| --------------------------------------------------------- | --------------------------------------------- |
+| [Thermostat](#thermostat)                                 | Hysteresis around a moving target             |
+| [Bouncing ball](#bouncing-ball)                           | Velocity resets at impact                     |
+| [Hybrid oscillator](#hybrid-oscillator)                   | Side-dependent damping                        |
+| [Switched linear](#switched-linear)                       | State-triggered switching of linear dynamics  |
+| [Relay integrator](#relay-integrator)                     | Relay control with hysteresis                 |
+| [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary    |
+| [Time-forced switch](#time-forced-switch)                 | Periodic switching after a fixed dwell time   |
+| [Piecewise affine](#piecewise-affine)                     | Affine dynamics and a linear event surface    |
+| [Impact oscillator](#impact-oscillator)                   | Forced oscillation with impact resets         |
+| [PID-controlled plant](#pid-controlled-plant)             | Actuator saturation and integral control      |
+| [Tank valves](#tank-valves)                               | Valve switching and gravity-driven drainage   |
+| [Location cycle](#location-cycle)                         | Repeated timed visits to linear locations     |
+| [Buck converter](#buck-converter)                         | Hysteretic switching and diode blocking       |
+| [Wind turbine](#wind-turbine)                             | Torque regimes and pitch control              |
+| [Delayed valve closure](#delayed-valve-closure)           | Fixed latency between detection and switching |
 
 ## Thermostat
 
@@ -380,6 +381,21 @@ uv run --directory ./examples/hybrid_systems python wind_turbine.py
 ```
 
 Its output is `examples/hybrid_systems/outputs/wind_turbine.png`.
+
+## Delayed Valve Closure
+
+The [`valve_closure` benchmark](../reference/hybrid.md#flowcean.hybrid.benchmarks.valve_closure.valve_closure)
+fills a tank at one height unit per time unit. When the water reaches height 2,
+the inlet valve closes after the configured `delay`.
+
+The gallery includes immediate and delayed closure as its final two scenarios:
+
+- `valve_closure(delay=0.0)` closes at time 2 and holds the height at 2.
+- `valve_closure(delay=1.0)` continues filling until time 3 and holds the height at 3.
+
+Both runs record `event.detection_time` near 2; their `event.time` values differ
+by one time unit. Run the gallery below to see both trajectories and use the
+standard diagram export to inspect their transitions.
 
 ## Run the Gallery
 

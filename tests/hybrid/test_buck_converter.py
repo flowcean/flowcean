@@ -8,7 +8,13 @@ import numpy as np
 import pytest
 from scipy.linalg import expm
 
-from flowcean.hybrid import HybridSystem, Location, Parameters, simulate
+from flowcean.hybrid import (
+    AmbiguousTransitionError,
+    HybridSystem,
+    Location,
+    Parameters,
+    simulate,
+)
 from flowcean.hybrid.benchmarks import buck_converter
 
 RTOL = 1e-10
@@ -266,7 +272,7 @@ def test_initial_location_selection_copies_state_and_handles_boundaries() -> (
     assert event.transition.event_surface.label == "voltage_low"
 
 
-def test_numerically_coincident_boundaries_settle_at_one_time() -> None:
+def test_numerically_coincident_boundaries_are_ambiguous() -> None:
     nominal_time = 7.257861635220126e-05
     initial = np.array([0.3336622356191309, 12.293610451364888])
     off_matrix = np.array(
@@ -280,23 +286,12 @@ def test_numerically_coincident_boundaries_settle_at_one_time() -> None:
         rtol=0.0,
         atol=1e-14,
     )
-    trace = simulate(
-        buck_converter(load_resistance=1.0, initial_state=initial),
-        (0.0, nominal_time + 1e-5),
-    )
-
-    # Event localization can leave a tiny voltage residual at the shared
-    # boundary; both transitions must settle without advancing time.
-    assert len(trace.events) == 2
-    current_zero, switch_on = trace.events
-    assert current_zero.transition.target.label == "zero_current"
-    assert switch_on.transition.target.label == "switch_on"
-    assert current_zero.time == switch_on.time
-    assert (current_zero.microstep, switch_on.microstep) == (0, 1)
-    np.testing.assert_array_equal(current_zero.state_after, (0.0, 11.9))
-    assert abs(current_zero.state_before[1] - 11.9) < 1e-10
-    assert trace.t_span[1] == nominal_time + 1e-5
-    assert np.min(trace.sample(dt=1e-6).select("x0", "x1").to_numpy()) >= 0.0
+    # Neither current-zero nor low-voltage switching has implicit priority.
+    with pytest.raises(AmbiguousTransitionError, match="Multiple transitions"):
+        simulate(
+            buck_converter(load_resistance=1.0, initial_state=initial),
+            (0.0, nominal_time + 1e-5),
+        )
 
 
 @pytest.mark.parametrize("residual", [-3.73e-13, 3.73e-13])

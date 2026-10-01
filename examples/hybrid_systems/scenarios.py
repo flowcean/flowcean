@@ -20,6 +20,7 @@ from flowcean.hybrid.benchmarks import (
     thermostat,
     time_forced_switch,
     time_varying_event_surface,
+    valve_closure,
     wind_turbine,
 )
 
@@ -164,4 +165,18 @@ SCENARIOS = (
         (0.0, 0.02),
     ),
     WIND_TURBINE,
+    Scenario(
+        "Immediate Valve Closure",
+        lambda: valve_closure(delay=0.0),
+        ("flow", "valve", "threshold"),
+        "The inlet closes when water height reaches the threshold.",
+        (0.0, 5.0),
+    ),
+    Scenario(
+        "Delayed Valve Closure",
+        valve_closure,
+        ("flow", "valve", "delay"),
+        "Filling continues for one time unit after threshold detection.",
+        (0.0, 5.0),
+    ),
 )

@@ -20,6 +20,7 @@ from flowcean.hybrid.benchmarks import (
     thermostat,
     time_forced_switch,
     time_varying_event_surface,
+    valve_closure,
     wind_turbine,
 )
 
@@ -56,6 +57,7 @@ SMOKE_CASES: tuple[
     ),
     ("converter", buck_converter, (0, 0.02), None),
     ("turbine", wind_turbine, (0, 120), _input(11)),
+    ("valve", valve_closure, (0, 5), None),
 )
 
 
@@ -225,3 +227,16 @@ def test_timed_benchmarks_reject_wrong_state_shapes(
         match=r"initial_state must have shape .*initial_location_time",
     ):
         factory(initial_state=wrong_state)
+
+
+@pytest.mark.parametrize("delay", [0.0, 1.0, 2.5])
+def test_valve_closure_preserves_detection_and_delays_filling_stop(delay):
+    trajectory = simulate(valve_closure(delay=delay), (0.0, 6.0))
+    (event,) = trajectory.events
+    assert event.detection_time == pytest.approx(2.0)
+    assert event.time == pytest.approx(2.0 + delay)
+    np.testing.assert_allclose(event.state_before, [2.0 + delay])
+    np.testing.assert_array_equal(event.state_before, event.state_after)
+    times = np.linspace(0, 6, 25)
+    samples = trajectory.sample(times)
+    np.testing.assert_allclose(samples["x0"], np.minimum(times, 2.0 + delay))

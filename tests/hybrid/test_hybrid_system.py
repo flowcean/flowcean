@@ -170,6 +170,7 @@ def test_event_requires_age_and_has_read_only_detached_snapshots() -> None:
         state_after=after,
         microstep=0,
         location_time_before=0.5,
+        detection_time=0.5,
     )
     before[0] = 10.0
     after[0] = 20.0

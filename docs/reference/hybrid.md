@@ -84,6 +84,10 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading_level: 4
 
+::: flowcean.hybrid.benchmarks.valve_closure.valve_closure
+    options:
+      heading_level: 4
+
 ::: flowcean.hybrid.hydra
     options:
       heading: HyDRA identification

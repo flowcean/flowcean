@@ -25,6 +25,7 @@ def build_hybrid_system_dot(
     treated as literal text, not DOT markup or mathematical expressions.
     No simulation or callback evaluation is performed, and Graphviz need not
     be installed.
+    Positive transition delays are always annotated in model time units.
 
     Args:
         system: Constructed hybrid system to visualize.
@@ -78,6 +79,8 @@ def build_hybrid_system_dot(
             annotations.append(
                 f"entry_policy: {transition.entry_policy.value}"
             )
+        if transition.delay > 0:
+            annotations.append(f"delay: {transition.delay:g}")
         edge = f"  location_{source} -> location_{target}"
         if annotations:
             label = _escape_dot_label("\n".join(annotations))
