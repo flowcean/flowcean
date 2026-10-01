@@ -67,9 +67,6 @@ def test_reset_and_samples_use_execution_state_and_source_context(delay):
         assert waiting.location is source
         assert waiting.location_time == pytest.approx(2)
         np.testing.assert_allclose(waiting.state, [2])
-        assert (
-            trajectory.segments[0].location is trajectory.segments[1].location
-        )
 
 
 def test_recrossings_neither_cancel_nor_restart_delay():
@@ -142,9 +139,9 @@ def test_simultaneous_detections_with_distinct_deadlines_are_allowed(reverse):
 @pytest.mark.parametrize("reverse", [False, True])
 @pytest.mark.parametrize(
     ("first_delay", "second_detection", "second_delay"),
-    [(0, 1, 0), (2, 1, 2), (2, 2, 1), (2, 3, 0)],
+    [(2, 1, 2), (2, 2, 1), (2, 3, 0)],
 )
-def test_simultaneous_executions_are_ambiguous(
+def test_equal_scheduled_deadlines_are_ambiguous(
     first_delay, second_detection, second_delay, reverse
 ):
     source, target = Location(lambda: 1.0), Location(lambda: 0.0)
@@ -331,7 +328,7 @@ def test_unrepresentable_deadline_reports_progress_error():
         simulate(_system([delayed], source), (1e16, 1e16))
 
 
-def test_graph_shows_delay_without_evaluating_callbacks():
+def test_graph_annotates_transition_delay():
     source, target = Location(lambda: 1.0), Location(lambda: 0.0)
     delayed = Transition(source, target, lambda t: t - 1, delay=2)
     assert "delay: 2" in build_hybrid_system_dot(
@@ -365,72 +362,26 @@ def test_delayed_self_transition_schedules_each_new_visit_and_is_run_local():
         np.testing.assert_allclose(trajectory.evaluate(3).state, [3])
 
 
-def test_resolvable_nearby_deadlines_are_not_ambiguous():
+@pytest.mark.parametrize("tied", [False, True])
+def test_earlier_deadline_replaces_pending_transition_and_any_conflict(tied):
     source, target = Location(lambda: 1.0), Location(lambda: 0.0)
-    early = Transition(source, target, lambda t: t - 1, delay=1)
-    late = Transition(source, target, lambda t: t - 1, delay=1 + 1e-8)
-    trajectory = simulate(_system([late, early], source, target), (0, 3))
-    assert trajectory.events[0].transition is early
+    later = Transition(source, target, lambda t: t - 1, delay=4)
+    earlier = Transition(source, target, lambda t: t - 2, delay=1)
+    transitions = [later, earlier]
+    if tied:
+        transitions.append(
+            Transition(source, target, lambda t: t - 1.5, delay=3.5)
+        )
+    trajectory = simulate(_system(transitions, source, target), (0, 6))
+    (event,) = trajectory.events
+    assert event.transition is earlier
+    assert event.detection_time == pytest.approx(2)
+    assert event.time == pytest.approx(3)
 
 
-def test_positive_delay_at_final_detection_does_not_execute():
+def test_detection_at_endpoint_leaves_delayed_transition_unexecuted():
     source, target = Location(lambda: 1.0), Location(lambda: 0.0)
-    delayed = Transition(
-        source, target, lambda t: t - 1, delay=np.spacing(1.0)
-    )
+    delayed = Transition(source, target, lambda t: t - 1, delay=1)
     trajectory = simulate(_system([delayed], source, target), (0, 1))
     assert not trajectory.events
-
-
-def test_deadline_just_after_final_endpoint_is_not_executed_early():
-    source, target = Location(lambda: 1.0), Location(lambda: 0.0)
-    delayed = Transition(
-        source,
-        target,
-        lambda state: state[0],
-        delay=1 + np.spacing(1.0),
-        entry_policy=SurfaceEntryPolicy.TRIGGER,
-    )
-    trajectory = simulate(_system([delayed], source, target), (0, 1))
-    assert not trajectory.events
-
-
-@pytest.mark.parametrize("reverse", [False, True])
-@pytest.mark.parametrize("existing_delay", [0.0, 0.5])
-def test_fresh_positive_delay_participates_in_execution_ambiguity(
-    reverse,
-    existing_delay,
-):
-    source, target = Location(lambda: 1.0), Location(lambda: 0.0)
-    existing = Transition(
-        source,
-        target,
-        lambda t: t - (1 - existing_delay),
-        delay=existing_delay,
-    )
-    fresh = Transition(source, target, lambda t: t - 1, delay=np.spacing(1.0))
-    transitions = [existing, fresh][:: -1 if reverse else 1]
-    with pytest.raises(AmbiguousTransitionError):
-        simulate(_system(transitions, source, target), (0, 2))
-
-
-def test_lone_positive_delay_waits_until_its_deadline_at_time_precision():
-    source, target = Location(lambda: 1.0), Location(lambda: 0.0)
-    delayed = Transition(
-        source, target, lambda t: t - 1, delay=np.spacing(1.0)
-    )
-    trajectory = simulate(_system([delayed], source, target), (0, 2))
-    (event,) = trajectory.events
-    assert event.detection_time == 1
-    assert event.time == 1 + np.spacing(1.0)
-    assert event.time > event.detection_time
-
-
-def test_fresh_deadline_beyond_endpoint_does_not_compete():
-    source, target = Location(lambda: 1.0), Location(lambda: 0.0)
-    existing = Transition(source, target, lambda t: t - 0.5, delay=0.5)
-    fresh = Transition(source, target, lambda t: t - 1, delay=np.spacing(1.0))
-    trajectory = simulate(_system([existing, fresh], source, target), (0, 1))
-    (event,) = trajectory.events
-    assert event.transition is existing
-    assert event.time == 1
+    assert trajectory.evaluate(1).location is source

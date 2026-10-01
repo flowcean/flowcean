@@ -257,10 +257,11 @@ class Transition:
         entry_policy: Behavior when the event surface is exactly zero upon
             entry to the source location.
         delay: Finite, nonnegative time from detection to execution, in the
-            model's time units. The first crossing schedules one occurrence;
+            model's time units. The first crossing schedules execution;
             further crossings neither cancel nor restart it. The source flow
             and residence clock continue until execution. Leaving the source
             visit, including a self-transition, cancels its pending occurrences.
+            An earlier outgoing deadline supersedes the pending transition.
             The reset receives the state and source context at execution.
             Zero (the default) takes the transition immediately.
     """

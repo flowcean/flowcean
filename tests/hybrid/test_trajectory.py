@@ -129,7 +129,7 @@ def test_zero_span_never_calls_solver(monkeypatch, chain):
     def fail(*args, **kwargs):
         pytest.fail("solver must not run")
 
-    monkeypatch.setattr("flowcean.hybrid.simulator.RK45", fail)
+    monkeypatch.setattr("flowcean.hybrid.simulator.solve_ivp", fail)
     system = chain_system(0) if chain else constant_system()
     trajectory = simulate(
         system, (0, 0), x0=(value for value in [5]), initial_location_time=4

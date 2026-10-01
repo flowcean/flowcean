@@ -166,17 +166,10 @@ SCENARIOS = (
     ),
     WIND_TURBINE,
     Scenario(
-        "Immediate Valve Closure",
-        lambda: valve_closure(delay=0.0),
-        ("flow", "valve", "threshold"),
-        "The inlet closes when water height reaches the threshold.",
-        (0.0, 5.0),
-    ),
-    Scenario(
         "Delayed Valve Closure",
         valve_closure,
         ("flow", "valve", "delay"),
-        "Filling continues for one time unit after threshold detection.",
+        "Filling continues for the closing delay after threshold detection.",
         (0.0, 5.0),
     ),
 )

@@ -6,7 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
-- Added the `valve_closure` benchmark with immediate and delayed variants in the hybrid systems gallery.
+- Added the `valve_closure` benchmark demonstrating delayed switching in the hybrid systems gallery.
 
 - Added fixed `Transition.delay` for hybrid simulation: the first detection schedules a switch while source dynamics and residence time continue; leaving the source visit cancels pending occurrences. Executed events expose `detection_time`, and automaton diagrams annotate positive delays.
 
@@ -26,7 +26,6 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
-- **Breaking:** Hybrid simulation rejects simultaneous transition execution requests, including competing delayed deadlines and immediate crossings, rather than selecting a transition by solver ordering.
 - **Breaking:** Constructing a hybrid `Event` directly now requires `detection_time`; `time` continues to denote execution.
 
 - **Breaking:** Renamed `plot_phase` to `plot_state_space`. Transition endpoint markers are now opt-in via `show_event_points=True` on `plot_trajectory` and `plot_state_space`; `show_events` still controls vertical event indicators on time-series plots.

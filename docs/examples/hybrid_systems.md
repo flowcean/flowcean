@@ -384,18 +384,9 @@ Its output is `examples/hybrid_systems/outputs/wind_turbine.png`.
 
 ## Delayed Valve Closure
 
-The [`valve_closure` benchmark](../reference/hybrid.md#flowcean.hybrid.benchmarks.valve_closure.valve_closure)
-fills a tank at one height unit per time unit. When the water reaches height 2,
-the inlet valve closes after the configured `delay`.
+The [`valve_closure` benchmark](../reference/hybrid.md#flowcean.hybrid.benchmarks.valve_closure.valve_closure) fills a tank at a constant rate. When the water reaches the closing threshold, the inlet valve closes after the configured `delay`. Filling continues during the delay, so the final water height exceeds the threshold.
 
-The gallery includes immediate and delayed closure as its final two scenarios:
-
-- `valve_closure(delay=0.0)` closes at time 2 and holds the height at 2.
-- `valve_closure(delay=1.0)` continues filling until time 3 and holds the height at 3.
-
-Both runs record `event.detection_time` near 2; their `event.time` values differ
-by one time unit. Run the gallery below to see both trajectories and use the
-standard diagram export to inspect their transitions.
+The trajectory records threshold detection in `event.detection_time` and valve closure in `event.time`. The delayed-closure scenario appears at the end of the gallery.
 
 ## Run the Gallery
 

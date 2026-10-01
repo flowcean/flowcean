@@ -85,43 +85,26 @@ Every transition starts a new visit and resets residence time to zero, including
 
 ### Delaying a Transition After Detection
 
-A crossing can schedule a switch for later. For example, an inlet valve may
-remain open for one time unit after the water reaches its threshold:
+A crossing can schedule a switch for later. For example, an inlet valve may remain open for a configured closing delay after the water reaches its threshold:
 
 ```python
 close_valve = Transition(
     source=filling,
     target=closed,
     event_surface=upper_boundary,
-    delay=1.0,
+    delay=closing_delay,
 )
 ```
 
-`delay` is a fixed, finite, nonnegative duration in the model's time units.
-It defaults to zero, which takes the transition immediately. A positive delay
-keeps the source location, flow, and residence clock active until execution.
-The reset, if present, uses the state, time, inputs, parameters, and source
-residence time at execution.
+`delay` is a fixed, finite, nonnegative duration in the model's time units. It defaults to zero, which takes the transition immediately. A positive delay keeps the source location, flow, and residence clock active until execution. The reset, if present, uses the state, time, inputs, parameters, and source residence time at execution.
 
-The first crossing schedules one occurrence per transition. Crossing back or
-crossing again neither cancels nor restarts it. Other outgoing transitions
-remain available, and several different transitions may be pending. Leaving
-the source visit cancels all its remaining pending occurrences, including when
-a self-transition starts a new visit.
+The first crossing schedules the transition. Crossing back or crossing again leaves its deadline unchanged. An outgoing transition with an earlier deadline replaces the pending transition; later deadlines are discarded. Leaving the source visit cancels the pending transition, including when a self-transition starts a new visit.
 
-Multiple simultaneous detections may schedule different deadlines. Multiple
-requests to **execute** at the same time are an error, including a pending
-deadline coinciding with an immediate transition. Times indistinguishable at
-root-finding precision are treated as simultaneous.
+Detected transitions with exactly equal deadlines raise `AmbiguousTransitionError` when execution is due. An earlier transition can still supersede them. Continuous crossing detection follows the solver’s event ordering.
 
-On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and
-starts its delay. Each run starts with no pending occurrences, including when
-an initial residence time is supplied. A deadline at the simulation endpoint
-executes; later deadlines do not. Only executed transitions count toward
-`max_jumps`.
+On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and starts its delay. Each run starts with no pending occurrences, including when an initial residence time is supplied. A deadline at the simulation endpoint executes; later deadlines do not. Only executed transitions count toward `max_jumps`.
 
-The [delayed valve example](../examples/hybrid_systems.md#delayed-valve-closure)
-compares immediate closure with closure one time unit after detection.
+The [delayed valve example](../examples/hybrid_systems.md#delayed-valve-closure) shows how continued filling during the delay raises the final water height.
 
 ## Construct and Simulate a Model
 
@@ -258,13 +241,9 @@ for event in trajectory.events:
     print(event.detection_time, event.time, event.transition.target.label)
 ```
 
-For a delayed transition, `event.detection_time` records the earlier crossing
-(or detection on entry), while `event.time` records execution. They are equal
-for zero-delay transitions. The trajectory records executed transitions.
+For a delayed transition, `event.detection_time` records the earlier crossing (or detection on entry), while `event.time` records execution. They are equal for zero-delay transitions. The trajectory records executed transitions.
 
-Detection may split continuous segments without starting a new location visit.
-Sampling during the delay still reports the source location and its continuing
-residence time. Event markers in plots mark execution.
+Detection may split continuous segments without starting a new location visit. Sampling during the delay still reports the source location and its continuing residence time. Event markers in plots mark execution.
 
 ### Choose When to Observe
 

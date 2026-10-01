@@ -15,9 +15,9 @@ from ..hybrid_system import (
 def valve_closure(delay: float = 1.0) -> HybridSystem:
     """Fill a tank until its inlet valve closes after threshold detection.
 
-    Water height starts at zero and rises at one height unit per time unit.
-    Reaching height 2 schedules valve closure. Filling continues during the
-    delay; after closure the height stays constant at ``2 + delay``.
+    Water height rises at a constant rate until it reaches the closing
+    threshold, which schedules valve closure. Filling continues during the
+    delay; after closure the height stays constant.
 
     Args:
         delay: Finite, nonnegative closing delay in model time units. Use zero
