@@ -4,12 +4,12 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-02
+
 ### Added
 
 - Added the `valve_closure` benchmark demonstrating delayed switching in the hybrid systems gallery.
-
 - Added fixed `Transition.delay` for hybrid simulation: the first detection schedules a switch while source dynamics and residence time continue; leaving the source visit cancels pending occurrences. Executed events expose `detection_time`, and automaton diagrams annotate positive delays.
-
 - Added simulator-managed `location_time` to hybrid flow, event-surface, and reset callbacks, with `initial_location_time` for starting mid-visit and separate residence-time values in traces, events, and tabular exports. Every transition, including a self-transition without a state reset, starts a new visit at age zero.
 - Added an illustrated gallery covering all hybrid-system benchmarks and an example-first hybrid systems guide.
 - Added a "Why Flowcean?" guide explaining its modeling perspective and relationship to other tools.
@@ -27,7 +27,6 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 ### Changed
 
 - **Breaking:** Constructing a hybrid `Event` directly now requires `detection_time`; `time` continues to denote execution.
-
 - **Breaking:** Renamed `plot_phase` to `plot_state_space`. Transition endpoint markers are now opt-in via `show_event_points=True` on `plot_trajectory` and `plot_state_space`; `show_events` still controls vertical event indicators on time-series plots.
 - **Breaking:** `wind_turbine_power` now takes rotor speeds and matching location labels rather than a Polars frame; supply turbine parameters explicitly as before.
 - **Breaking:** Hybrid vocabulary now distinguishes locations, flows, and sampled traces. `ContinuousDynamics(flow=...)` becomes `Flow(fn=...)`, `Location.dynamics` becomes `Location.flow`, and `Transition.event` becomes `Transition.event_surface`. `Event.transition` retains the exact transition definition instead of redundant endpoints and label strings. Rename `plot_trace` to `plot_trajectory`, and `mode_cycle(modes=...)` to `location_cycle(location_count=...)`.
@@ -65,5 +64,6 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 Changelog tracking begins with changes made after this release.
 
-[Unreleased]: https://github.com/flowcean/flowcean/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/flowcean/flowcean/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/flowcean/flowcean/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/flowcean/flowcean/releases/tag/v0.8.0
