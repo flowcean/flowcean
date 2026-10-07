@@ -269,7 +269,7 @@ A coarse observation grid can miss a short visit to a location. Keep the traject
 
 ### Prepare Learning Data
 
-Instead of writing every flow equation yourself, you can use **[HyDRA][flowcean.hybrid.hydra.HyDRALearner]** to learn flow models from data.
+Use **[HyDRA][flowcean.hybrid.hydra.HyDRALearner]** to discover flow models from recorded or simulated observations.
 
 For simulated data, request the rates of change alongside the state:
 
@@ -284,23 +284,103 @@ Here, `x0` contains temperature and `dx0` contains the rate returned by the acti
 
 If the run uses external inputs, include them with `include_inputs=True`. For measured recordings, derivatives must instead be supplied or estimated, taking care not to treat reset jumps as continuous rates of change.
 
-### Understand What Is Learned
+### Discover Shared Flows
 
-HyDRA fits continuous flow models. A **[selector][flowcean.hybrid.hydra.HybridDecisionTreeModel]** chooses which fitted model to use from the information supplied to it.
+HyDRA groups observations that share a continuous behavior and fits a model for each group. Here the target is the temperature derivative `dx0`. You can also learn another scalar target, such as circuit current from voltage.
 
-This produces flow models and a selection rule, rather than a reconstruction of the original automaton's locations, transitions, and resets. Different locations can share the same continuous behavior, so learned flow IDs need not correspond to native location IDs.
+Pass each independent trace as a Polars DataFrame and choose the input columns and one output column. The factory creates a fresh batch learner and regressor for each fit:
 
-The selector also needs enough information to distinguish the behaviors. Our room illustrates why: temperature alone cannot tell whether heating is on or off.
+```python
+from pysr import PySRRegressor
+from flowcean.pysr import PySRLearner
+from flowcean.hybrid.hydra import HyDRALearner
 
-### Simulate a Learned Model
+learner = HyDRALearner(
+    regressor_factory=lambda: PySRLearner(PySRRegressor(niterations=10)),
+    threshold=0.01,
+)
+frames = [learning_data]  # Add other independent sampled traces here.
+result = learner.learn(
+    frames,
+    input_features=["t", "x0"],
+    output_features=["dx0"],
+)
+```
 
-[`HyDRAModel.simulate`][flowcean.hybrid.hydra.HyDRAModel.simulate] chooses a flow at each requested grid point and integrates that flow until the next point. Consequently, changing this grid can change the simulated behavior. This differs from sampling an existing native trajectory, where observation times do not affect the run.
+HyDRA fits a candidate on growing windows within the first unassigned segment, groups matching observations across all traces, and refits the flow on those accepted observations. `start_width` sets the initial window size and `step_width` sets how many observations to add. Acceptance uses the strict comparison `error < threshold`. `learn` returns only when every supplied observation is assigned. If it cannot identify a segment, it raises [`HyDRAIdentificationError`][flowcean.hybrid.hydra.HyDRAIdentificationError]. To diagnose a failure, wrap the learning call above and inspect `.segment` for the failing trace and half-open row bounds:
 
-Its returned table uses `flow_id` for the selected model and `flow_time` for the time since that model became active.
+```python
+from flowcean.hybrid.hydra import HyDRAIdentificationError
 
-Two current limits matter when choosing this workflow:
+try:
+    result = learner.learn(
+        frames, input_features=["t", "x0"], output_features=["dx0"]
+    )
+except HyDRAIdentificationError as exc:
+    print(exc.segment.trace_index, exc.segment.start, exc.segment.stop)
+    raise
+```
 
-- Trace-based HyDRA learning supports one state/derivative pair.
-- Built-in learned-model simulation does not support selectors that require history.
+To watch discovery, pass `callback=PlotCallback(learning_data, columns=["x0"], time_column="t")` to the learner, importing [`PlotCallback`][flowcean.hybrid.hydra.PlotCallback] from `flowcean.hybrid.hydra`. Omit `time_column` to plot observation indices. For custom observers, subclass [`HyDRACallback`][flowcean.hybrid.hydra.HyDRACallback] and override the hooks you need: candidate hooks receive a segment and scalar fit, grouping receives accepted segments and the considered observation count, and `finish(result)` receives the fully assigned result only on success.
 
-The [identification walkthrough](../examples/simulated_hybrid_system.md) demonstrates fitting flows, training a selector, and comparing a learned run with its reference.
+### Inspect Models and Assignments
+
+[`LearnedFlows`][flowcean.hybrid.hydra.LearnedFlows] contains `result.flows`. Each [`LearnedFlow`][flowcean.hybrid.hydra.LearnedFlow] has a fitted `model` and accepted `segments`. Its position in `result.flows` is the shared flow ID. Several locations can share a flow.
+
+```python
+for flow_id, flow in enumerate(result.flows):
+    print(flow_id, flow.model, flow.segments)
+
+labeled_traces = result.to_labeled_frames(frames)
+flow_models = [flow.model for flow in result.flows]
+```
+
+Each [`TraceSegment`][flowcean.hybrid.hydra.TraceSegment] identifies a trace by `trace_index` and a half-open row range `[start, stop)`. Segments record candidate acceptance before the final refit and together cover every supplied observation. `to_labeled_frames(frames)` preserves original columns and adds a non-null Int64 `flow_id` to each row. For NumPy assignments, `to_flow_ids()` returns fresh, fully assigned int64 arrays in trace order.
+
+### Train a Selector and Predict
+
+A **[selector][flowcean.hybrid.hydra.HybridDecisionTreeModel]** chooses a fitted flow model for each observation. Give it features that distinguish the behaviors: in the room example, current and previous temperature provide information about whether the room is heating or cooling.
+
+```python
+from flowcean.hybrid.hydra import (
+    HybridDecisionTreeLearner,
+    SelectorFeatureConfig,
+)
+
+selector = HybridDecisionTreeLearner(
+    SelectorFeatureConfig(state_features=("x0",), state_history=1),
+).learn_from_traces(
+    labeled_traces,
+    flow_models_by_id=dict(enumerate(flow_models)),
+)
+```
+
+`state_history=1` adds the previous observation's temperature. History starts afresh at each trace boundary. Include external input features in the selector when they help distinguish the flows.
+
+Use [`HyDRAModel`][flowcean.hybrid.hydra.HyDRAModel] to route batch predictions through the selector:
+
+```python
+from flowcean.hybrid.hydra import HyDRAModel
+
+model = HyDRAModel(
+    flow_models,
+    input_features=result.input_features,
+    output_features=result.output_features,
+    selector=selector,
+)
+prediction = model.predict_with_diagnostics(
+    learning_data.select(result.input_features)
+)
+```
+
+Supply all flow inputs and selector features in the prediction frame. `prediction.outputs` contains the predicted derivatives, and `prediction.row_indices` maps them to the input rows. When routing multiple flows with one previous observation, prediction begins at the second row. A single discovered flow can predict directly with `selector=None`.
+
+The [identification walkthrough](../examples/simulated_hybrid_system.md) runs this workflow with two traces and an external target-temperature signal.
+
+### Roll Out Derivative Models
+
+For a learned derivative model, [`HyDRAModel.simulate`][flowcean.hybrid.hydra.HyDRAModel.simulate] integrates the state over a requested time grid. Supply a [`HyDRATraceSchema`][flowcean.hybrid.hydra.HyDRATraceSchema] with corresponding state and derivative columns, plus an input stream for any external inputs.
+
+Multi-flow rollout requires a selector using current time, state, and external input features. The history-based selector above is suitable for batch prediction; rollout with that selector is currently unsupported.
+
+Simulation chooses a flow at each grid point and integrates it until the next point, so choose the grid to resolve the switching behavior you need. The returned table contains state observations, `flow_id` for the selected model, and `flow_time` for the time since that model became active.

@@ -4,16 +4,18 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class HyDRATraceSchema:
-    """Column schema for HyDRA trace-based learning.
+    """Column roles for a learned derivative model and its rollout.
 
     Args:
         time: Time column name.
         state: State column names used as model inputs.
-        derivative: Derivative column names used as model outputs.
+        derivative: Derivative column names used as model outputs, in the
+            same order as their corresponding state columns.
         inputs: Optional external input column names.
 
-    HyDRA currently expects derivative columns to align with state columns and
-    supports single-output training in ``HyDRALearner``.
+    All column names must be distinct. ``input_features`` collects the time,
+    state, and external input columns. Rollout requires equal numbers of
+    state and derivative columns.
     """
 
     time: str

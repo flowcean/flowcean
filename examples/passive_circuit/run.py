@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Protocol
 
 import flowcean.cli
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
     HyDRALearner,
-    LogCallback,
+    HyDRAModel,
     SelectorFeatureConfig,
 )
 from flowcean.polars import DataFrame
@@ -18,8 +18,6 @@ from flowcean.utils import get_seed, initialize_random
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-    from flowcean.hybrid.hydra.model import HyDRAModel
 
 EXAMPLE_SEED = 42
 
@@ -83,7 +81,6 @@ def main() -> None:
         SelectorFeatureConfig(input_features=tuple(inputs)),
         random_state=7,
     )
-    callback = LogCallback()
     learner = HyDRALearner(
         regressor_factory=lambda: PySRLearner(
             model=PySRRegressor(
@@ -97,21 +94,33 @@ def main() -> None:
         threshold=1e-5,
         start_width=400,
         step_width=200,
-        selector_learner=selector_learner,
-        callback=callback,
     )
 
-    model = cast(
-        "HyDRAModel",
-        learner.learn(
-            raw_trace.select(inputs).lazy(),
-            raw_trace.select(outputs).lazy(),
-        ),
+    frames = [raw_trace]
+    result = learner.learn(
+        frames,
+        input_features=inputs,
+        output_features=outputs,
+    )
+    flow_models = [flow.model for flow in result.flows]
+    selector = selector_learner.learn_from_traces(
+        result.to_labeled_frames(frames),
+        flow_models_by_id=dict(enumerate(flow_models)),
+    )
+    model = HyDRAModel(
+        flow_models,
+        input_features=result.input_features,
+        output_features=result.output_features,
+        selector=selector,
+    )
+    print(
+        "prediction_preview",
+        model.predict(raw_trace.select(inputs).head(5)).collect(),
     )
 
     print(
         {
-            "flow_count": len(model.flow_models),
+            "flow_count": len(result.flows),
             "input_features": model.input_features,
             "output_features": model.output_features,
         },

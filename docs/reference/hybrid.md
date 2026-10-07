@@ -8,7 +8,7 @@ This page covers the public API of `flowcean.hybrid` and its subpackages:
 
 - [Modeling and simulation](#flowcean.hybrid): system definitions, automaton diagrams, trajectories, explicit sampling, and plotting.
 - [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories.
-- [HyDRA identification](#flowcean.hybrid.hydra): identification, callbacks, trace schemas, grid-scheduled rollouts, and flow-selector APIs. Selector-specific types and helpers are also available from `flowcean.hybrid.hydra.selector`.
+- [HyDRA identification](#flowcean.hybrid.hydra): `HyDRALearner` returns fully assigned `LearnedFlows` or raises `HyDRAIdentificationError` with the failing `segment`. Use `to_labeled_frames` for selector training or `to_flow_ids` for NumPy assignments. Progress observers use `HyDRACallback` or `PlotCallback`; selector helpers are also available from `flowcean.hybrid.hydra.selector`.
 
 See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.
 

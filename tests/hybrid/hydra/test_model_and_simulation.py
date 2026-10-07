@@ -293,6 +293,77 @@ def test_multi_flow_batch_prediction_routes_rows_with_decision_tree() -> None:
     assert diagnostics.row_indices == [0, 1, 2, 3]
 
 
+@pytest.mark.parametrize(
+    ("config", "error", "message"),
+    [
+        (
+            SelectorFeatureConfig(state_features=("x",), state_history=1),
+            NotImplementedError,
+            "stateful selector",
+        ),
+        (
+            SelectorFeatureConfig(derivative_features=("dx",)),
+            NotImplementedError,
+            "cannot supply derivative",
+        ),
+        (
+            SelectorFeatureConfig(input_features=("measured",)),
+            ValueError,
+            "lacks features",
+        ),
+    ],
+)
+def test_rollout_rejects_unavailable_selector_information(
+    config: SelectorFeatureConfig,
+    error: type[Exception],
+    message: str,
+) -> None:
+    selector = HybridDecisionTreeLearner(
+        config, random_state=0
+    ).learn_from_traces(
+        [
+            pl.DataFrame(
+                {
+                    "x": [-1.0, 0.0, 1.0, 2.0],
+                    "dx": [-1.0, -1.0, 1.0, 1.0],
+                    "measured": [-1.0, -1.0, 1.0, 1.0],
+                    "flow_id": [0, 0, 1, 1],
+                }
+            ),
+        ]
+    )
+    flow = DerivativeModel(lambda frame: np.ones(frame.height))
+    model = HyDRAModel(
+        [flow, flow],
+        input_features=["time", "x"],
+        output_features=["dx"],
+        selector=selector,
+        trace_schema=_schema(),
+    )
+    with pytest.raises(error, match=message):
+        model.simulate((0.0, 1.0), [1.0], sample_dt=0.1)
+    with pytest.raises(error, match=message):
+        model.predict_next_state([1.0], t=0.0, dt=0.1)
+
+
+def test_optional_predictor_validates_schema_roles() -> None:
+    flow = DerivativeModel(lambda frame: np.zeros(frame.height))
+    with pytest.raises(ValueError, match="input_features must match"):
+        HyDRAModel(
+            [flow],
+            input_features=["time", "wrong"],
+            output_features=["dx"],
+            trace_schema=_schema(),
+        )
+    with pytest.raises(ValueError, match="output_features must match"):
+        HyDRAModel(
+            [flow],
+            input_features=["time", "x"],
+            output_features=["wrong"],
+            trace_schema=_schema(),
+        )
+
+
 def _trace(times: list[float], states: list[list[float]]) -> pl.DataFrame:
     matrix = np.asarray(states, dtype=float)
     return pl.DataFrame(

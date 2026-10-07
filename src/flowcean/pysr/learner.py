@@ -15,7 +15,7 @@ except ModuleNotFoundError as error:
         missing_dependencies={"pysr"},
     )
 
-from flowcean.core import Model, SupervisedIncrementalLearner
+from flowcean.core import Model, SupervisedLearner
 
 logger = logging.getLogger(__name__)
 
@@ -56,18 +56,35 @@ class PySRModel(Model):
         return pl.from_numpy(predictions, schema=[self.output_column]).lazy()
 
 
-class PySRLearner(SupervisedIncrementalLearner):
-    """Wrapper for PySR symbolic regression learner."""
+class PySRLearner(SupervisedLearner):
+    """Fit a symbolic equation for one target from a batch of observations.
+
+    Args:
+        model: Configured PySR regressor used by ``learn``.
+
+    For HyDRA discovery, supply a factory that creates a fresh ``PySRLearner``
+    and ``PySRRegressor`` for each fit.
+    """
 
     def __init__(self, model: PySRRegressor) -> None:
         self.model = model
-        model.warm_start = True
 
-    def learn_incremental(
+    @override
+    def learn(
         self,
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
     ) -> Model:
+        """Fit the configured regressor and return its prediction model.
+
+        Args:
+            inputs: Lazy Polars frame of explanatory variables.
+            outputs: Lazy Polars frame with one target column and rows aligned
+                with ``inputs``.
+
+        Returns:
+            A ``PySRModel`` whose predictions use the target column name.
+        """
         output_columns = outputs.collect_schema().names()
         if len(output_columns) != 1:
             message = (
@@ -80,7 +97,6 @@ class PySRLearner(SupervisedIncrementalLearner):
         collected_outputs = dfs[1]
         self.model.fit(collected_inputs, collected_outputs)
 
-        # Return the trained PySRModel
         return PySRModel(self.model, output_columns[0])
 
 

@@ -677,7 +677,7 @@ def test_dataframe_source_consumers(monkeypatch):
     try:
         callback = PlotCallback(
             renamed.rename({"t": "clock"}),
-            state_columns=["position"],
+            columns=["position"],
             time_column="clock",
             ax=ax,
             show=False,
@@ -708,7 +708,7 @@ def test_plot_callback_uses_all_selected_state_columns_in_order():
     try:
         callback = PlotCallback(
             frame,
-            state_columns=["velocity", "position"],
+            columns=["velocity", "position"],
             ax=ax,
             show=False,
             pause=0,

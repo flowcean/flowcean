@@ -1,10 +1,7 @@
-"""Behavioral tests for HyDRA trace schemas and labels."""
+"""Behavioral tests for HyDRA trace schemas."""
 
-import numpy as np
-import polars as pl
 import pytest
 
-from flowcean.hybrid.hydra.learner import HyDRATrace, TraceSegment
 from flowcean.hybrid.hydra.schema import HyDRATraceSchema
 
 
@@ -52,35 +49,3 @@ def test_trace_schema_rejects_duplicate_columns_and_width_mismatch() -> None:
     )
     with pytest.raises(ValueError, match="widths must match"):
         schema.validate_state_derivative_width()
-
-
-def test_trace_labeling_is_immutable_and_segments_are_inclusive() -> None:
-    frame = pl.DataFrame({"time": [0.0, 1.0, 2.0], "x": [2.0, 3.0, 4.0]})
-    trace = HyDRATrace.unlabeled(frame)
-
-    labeled = trace.with_labeled_segment(
-        start_index=1,
-        end_index=2,
-        flow_id=7,
-    )
-
-    assert trace.flow_ids.tolist() == [-1, -1, -1]
-    assert labeled.flow_ids.tolist() == [-1, 7, 7]
-    assert labeled.unlabeled_indices() == [0]
-    assert labeled.to_labeled_frame()["flow_id"].to_list() == [None, 7, 7]
-    assert labeled.segment_frame(TraceSegment(0, 1, 2)).to_dict(
-        as_series=False,
-    ) == {"time": [1.0, 2.0], "x": [3.0, 4.0]}
-
-
-def test_trace_validates_label_shape_and_storage() -> None:
-    frame = pl.DataFrame({"x": [1.0, 2.0]})
-    with pytest.raises(ValueError, match="1D array"):
-        HyDRATrace(frame, np.array([[0, 1]]))
-    with pytest.raises(ValueError, match="match frame height"):
-        HyDRATrace(frame, np.array([0]))
-    with pytest.raises(ValueError, match="must not store flow IDs"):
-        HyDRATrace(
-            frame.with_columns(pl.Series("flow_id", [0, 1])),
-            np.array([0, 1]),
-        )

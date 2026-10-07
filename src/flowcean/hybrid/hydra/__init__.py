@@ -1,9 +1,16 @@
 """Curated HyDRA hybrid-system identification API."""
 
 from . import selector
-from .callbacks import LogCallback, PlotCallback
-from .learner import HyDRALearner
+from .callbacks import HyDRACallback
+from .learner import (
+    HyDRAIdentificationError,
+    HyDRALearner,
+    LearnedFlow,
+    LearnedFlows,
+    TraceSegment,
+)
 from .model import HyDRAModel
+from .plotting import PlotCallback
 from .schema import HyDRATraceSchema
 from .selector import (
     FlowPredictionResult,
@@ -23,12 +30,15 @@ from .simulation import StateTraceComparison, compare_state_traces
 
 __all__ = (
     "FlowPredictionResult",
+    "HyDRACallback",
+    "HyDRAIdentificationError",
     "HyDRALearner",
     "HyDRAModel",
     "HyDRATraceSchema",
     "HybridDecisionTreeLearner",
     "HybridDecisionTreeModel",
-    "LogCallback",
+    "LearnedFlow",
+    "LearnedFlows",
     "PlotCallback",
     "SelectorEvaluationReport",
     "SelectorFeatureConfig",
@@ -38,6 +48,7 @@ __all__ = (
     "SelectorNodeInspection",
     "StateTraceComparison",
     "StatefulHybridDecisionTreeSelector",
+    "TraceSegment",
     "compare_state_traces",
     "evaluate_selector_autoregressive",
     "evaluate_selector_oracle",

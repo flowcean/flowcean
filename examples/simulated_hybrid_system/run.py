@@ -66,6 +66,7 @@ def compare_learned_model_to_reference(
         (float(reference_frame["t"][0]), float(reference_frame["t"][-1])),
         reference_frame.select("x").row(0),
         sample_times=reference_frame["t"].to_numpy(),
+        input_stream=thermostat_target_stream,
     ).rename({"x0": "x"})
     return learned_frame, compare_state_traces(
         reference_frame, learned_frame, state_columns=["x"]
@@ -110,11 +111,16 @@ def main() -> None:
     flowcean.utils.initialize_random(EXAMPLE_SEED)
 
     system = thermostat()
-    reference_trajectory = simulate(
-        system,
-        t_span=(0.0, 20.0),
-        input_stream=thermostat_target_stream,
-    )
+    reference_trajectories = [
+        simulate(
+            system,
+            t_span=(0.0, 20.0),
+            x0=[temperature],
+            input_stream=thermostat_target_stream,
+        )
+        for temperature in (20.0, 20.5)
+    ]
+    reference_trajectory = reference_trajectories[0]
 
     print(
         "Plotting reference trajectory... close plot to continue...",
@@ -127,11 +133,17 @@ def main() -> None:
         show_event_labels=False,
         show=True,
     )
-    reference_frame = reference_trajectory.sample(
-        dt=0.02, include_derivatives=True
-    ).rename({"x0": "x", "dx0": "dx"})
-    schema = HyDRATraceSchema(time="t", state=("x",), derivative=("dx",))
-    callback = PlotCallback(reference_frame, state_columns=["x"])
+    frames = [
+        trajectory.sample(
+            dt=0.02, include_derivatives=True, include_inputs=True
+        ).rename({"x0": "x", "dx0": "dx", "u0": "target"})
+        for trajectory in reference_trajectories
+    ]
+    reference_frame = frames[0]
+    schema = HyDRATraceSchema(
+        time="t", state=("x",), derivative=("dx",), inputs=("target",)
+    )
+    callback = PlotCallback(reference_frame, columns=["x"], time_column="t")
     learner = HyDRALearner(
         regressor_factory=lambda: PySRLearner(
             model=PySRRegressor(
@@ -140,18 +152,36 @@ def main() -> None:
             ),
         ),
         threshold=1e-2,
-        selector_learner=HybridDecisionTreeLearner(
-            SelectorFeatureConfig(state_features=("x",)),
-            random_state=7,
-        ),
         callback=callback,
-        trace_schema=schema,
     )
 
-    model = learner.learn(
-        reference_frame.select(schema.input_features).lazy(),
-        reference_frame.select(schema.derivative).lazy(),
+    result = learner.learn(
+        frames,
+        input_features=schema.input_features,
+        output_features=schema.derivative,
     )
+    flow_models = [flow.model for flow in result.flows]
+    # Previous temperature helps the selector distinguish heating from cooling.
+    selector = HybridDecisionTreeLearner(
+        SelectorFeatureConfig(
+            state_features=("x",), input_features=("target",), state_history=1
+        ),
+        random_state=7,
+    ).learn_from_traces(
+        result.to_labeled_frames(frames),
+        flow_models_by_id=dict(enumerate(flow_models)),
+    )
+    model = HyDRAModel(
+        flow_models,
+        input_features=result.input_features,
+        output_features=result.output_features,
+        selector=selector,
+        trace_schema=schema,
+    )
+    diagnostics = model.predict_with_diagnostics(
+        reference_frame.select(schema.input_features)
+    )
+    print("batch_prediction_rows_after_warmup", len(diagnostics.row_indices))
 
     print(
         {
@@ -160,13 +190,19 @@ def main() -> None:
             .unique()
             .sort()
             .to_list(),
-            "flow_count": len(model.flow_models),
+            "flow_count": len(result.flows),
             "input_features": model.input_features,
             "output_features": model.output_features,
         },
     )
     if model.selector is not None:
         print_selector_outputs(model.selector, output_dir=OUTPUT_DIR)
+
+    if len(result.flows) > 1:
+        print(
+            "Rollout skipped: this selector requires history. Stateful learned-model rollout is not implemented."
+        )
+        return
 
     learned_frame, comparison = compare_learned_model_to_reference(
         model,

@@ -1,26 +1,26 @@
-"""Behavioral tests for HyDRA pending-segment grouping."""
+"""Behavioral tests for interval-based HyDRA grouping and subtraction."""
 
+from itertools import product
 from typing import override
 
 import numpy as np
 import polars as pl
+import pytest
 
 from flowcean.core import Model
 from flowcean.hybrid.hydra.learner import (
-    HyDRATrace,
     TraceSegment,
-    find_next_pending_segment,
-    label_matching_rows,
+    _first_pending_segment,
+    _group_matching_segments,
+    _segments_from_mask,
+    _subtract_segments,
 )
 
 
 class ZeroDerivativeModel(Model):
-    """Small deterministic flow model used to exercise grouping."""
-
     @override
     def _predict(
-        self,
-        input_features: pl.DataFrame | pl.LazyFrame,
+        self, input_features: pl.DataFrame | pl.LazyFrame
     ) -> pl.LazyFrame:
         frame = (
             input_features.collect()
@@ -30,64 +30,217 @@ class ZeroDerivativeModel(Model):
         return pl.DataFrame({"dx": [0.0] * frame.height}).lazy()
 
 
-def _trace(dx: list[float], labels: list[int]) -> HyDRATrace:
-    frame = pl.DataFrame(
+def _trace(dx: list[float]) -> pl.DataFrame:
+    return pl.DataFrame(
         {
             "time": [float(index) for index in range(len(dx))],
             "x": [10.0 + index for index in range(len(dx))],
             "dx": dx,
         },
     )
-    return HyDRATrace(frame, np.asarray(labels, dtype=np.int64))
 
 
-def test_find_next_pending_segment_scans_contiguous_runs_and_traces() -> None:
-    traces = [
-        _trace([0.0, 0.0], [3, 3]),
-        _trace([0.0, 0.0, 0.0, 0.0], [2, -1, -1, 2]),
-        _trace([0.0], [-1]),
+def test_first_pending_segment_uses_trace_and_row_order() -> None:
+    pending = [
+        [],
+        [TraceSegment(1, 1, 3), TraceSegment(1, 5, 6)],
+        [TraceSegment(2, 0, 1)],
     ]
+    assert _first_pending_segment(pending) == TraceSegment(1, 1, 3)
+    assert _first_pending_segment([[], [], []]) is None
+    assert _first_pending_segment([]) is None
 
-    assert find_next_pending_segment(traces) == TraceSegment(1, 1, 2)
-    assert (
-        find_next_pending_segment(
+
+@pytest.mark.parametrize(
+    ("mask", "expected"),
+    [
+        ([], []),
+        ([False], []),
+        ([True], [TraceSegment(2, 7, 8)]),
+        ([False, True, True], [TraceSegment(2, 8, 10)]),
+        ([True, True, False], [TraceSegment(2, 7, 9)]),
+        (
+            [True, False, True, True, False, True],
             [
-                trace.with_flow_ids(np.zeros(trace.height, dtype=np.int64))
-                for trace in traces
+                TraceSegment(2, 7, 8),
+                TraceSegment(2, 9, 11),
+                TraceSegment(2, 12, 13),
             ],
-        )
-        is None
+        ),
+    ],
+)
+def test_mask_runs_are_maximal_absolute_half_open_segments(
+    mask: list[bool], expected: list[TraceSegment]
+) -> None:
+    assert (
+        _segments_from_mask(np.asarray(mask), trace_index=2, start=7)
+        == expected
     )
 
 
-def test_label_matching_rows_labels_only_accurate_unlabeled_rows() -> None:
-    traces = [
-        _trace([0.0, 0.1, 9.0, 0.0], [-1, -1, 4, -1]),
-        _trace([0.2, 0.19], [-1, -1]),
-    ]
-    triggering_segment = TraceSegment(0, 0, 1)
+@pytest.mark.parametrize(
+    ("accepted", "expected"),
+    [
+        ([], [TraceSegment(0, 2, 8)]),
+        ([TraceSegment(0, 2, 4)], [TraceSegment(0, 4, 8)]),
+        ([TraceSegment(0, 6, 8)], [TraceSegment(0, 2, 6)]),
+        (
+            [TraceSegment(0, 4, 6)],
+            [TraceSegment(0, 2, 4), TraceSegment(0, 6, 8)],
+        ),
+        ([TraceSegment(0, 2, 8)], []),
+        (
+            [TraceSegment(0, 3, 4), TraceSegment(0, 4, 7)],
+            [TraceSegment(0, 2, 3), TraceSegment(0, 7, 8)],
+        ),
+    ],
+)
+def test_subtraction_prefix_suffix_interior_full_empty_and_adjacency(
+    accepted: list[TraceSegment], expected: list[TraceSegment]
+) -> None:
+    pending = [[TraceSegment(0, 2, 8)]]
+    assert _subtract_segments(pending, accepted) == [expected]
+    assert pending == [[TraceSegment(0, 2, 8)]]
 
-    result = label_matching_rows(
+
+def test_subtraction_preserves_gaps_and_fully_assigned_traces() -> None:
+    pending = [
+        [],
+        [TraceSegment(1, 0, 1), TraceSegment(1, 3, 6)],
+        [TraceSegment(2, 4, 5)],
+    ]
+    accepted = [
+        TraceSegment(1, 0, 1),
+        TraceSegment(1, 4, 5),
+        TraceSegment(2, 4, 5),
+    ]
+    assert _subtract_segments(pending, accepted) == [
+        [],
+        [TraceSegment(1, 3, 4), TraceSegment(1, 5, 6)],
+        [],
+    ]
+
+
+@pytest.mark.parametrize(
+    "accepted",
+    [
+        [TraceSegment(-1, 0, 1)],
+        [TraceSegment(2, 0, 1)],
+        [TraceSegment(0, 0, 1)],
+        [TraceSegment(1, 0, 1)],
+        [TraceSegment(1, 1, 4)],
+        [TraceSegment(1, 2, 5)],
+        [TraceSegment(1, 3, 4)],
+        [TraceSegment(1, 6, 8)],
+        [TraceSegment(1, 8, 9)],
+        [TraceSegment(1, 2, 2)],
+        [TraceSegment(1, 3, 2)],
+        [TraceSegment(1, 1, 3), TraceSegment(1, 2, 3)],
+        [TraceSegment(1, 4, 5), TraceSegment(1, 1, 2)],
+    ],
+)
+def test_subtraction_rejects_invalid_and_outside_pending_pieces(
+    accepted: list[TraceSegment],
+) -> None:
+    pending = [[], [TraceSegment(1, 1, 3), TraceSegment(1, 4, 7)]]
+    with pytest.raises(ValueError, match="Accepted segment"):
+        _subtract_segments(pending, accepted)
+
+
+def test_subtraction_exhaustive_short_tristate_masks() -> None:
+    # 0 = outside pending, 1 = pending unaccepted, 2 = pending accepted.
+    for length in range(7):
+        for states in product(range(3), repeat=length):
+            values = np.asarray(states)
+            pending = _segments_from_mask(values != 0, trace_index=0)
+            accepted = _segments_from_mask(values == 2, trace_index=0)
+            expected = _segments_from_mask(values == 1, trace_index=0)
+            assert _subtract_segments([pending], accepted) == [expected]
+
+
+def test_grouping_accepts_only_accurate_pending_rows_without_overwrite() -> (
+    None
+):
+    traces = [_trace([0.0, 0.1, 0.0, 0.0]), _trace([0.2, 0.19])]
+    pending = [
+        [TraceSegment(0, 0, 2), TraceSegment(0, 3, 4)],
+        [TraceSegment(1, 0, 2)],
+    ]
+    accepted = _group_matching_segments(
         traces=traces,
+        pending=pending,
         model=ZeroDerivativeModel(),
         input_columns=["time", "x"],
         output_columns=["dx"],
         threshold=0.2,
-        flow_id=5,
-        triggering_segment=triggering_segment,
     )
+    assert accepted == (
+        TraceSegment(0, 0, 2),
+        TraceSegment(0, 3, 4),
+        TraceSegment(1, 1, 2),
+    )
+    assert _subtract_segments(pending, accepted) == [
+        [],
+        [TraceSegment(1, 0, 1)],
+    ]
 
-    # Accuracy is strict: the row with error exactly equal to the threshold
-    # remains pending, and an existing label is never overwritten.
-    assert result.traces[0].flow_ids.tolist() == [5, 5, 4, 5]
-    assert result.traces[1].flow_ids.tolist() == [-1, 5]
-    assert result.accepted_rows["flow_id"].to_list() == [5, 5, 5, 5]
-    assert result.accepted_rows["dx"].to_list() == [0.0, 0.1, 0.0, 0.19]
 
-    grouping = result.grouping
-    assert grouping.flow_id == 5
-    assert grouping.triggering_segment == triggering_segment
-    assert grouping.traces[0].row_indices == [0, 1, 3]
-    assert grouping.traces[0].accepted_mask == [True, True, True]
-    assert grouping.traces[1].accepted_mask == [False, True]
-    assert grouping.traces[1].errors == [0.2, 0.19]
+def test_grouping_predicts_whole_batches_including_fully_assigned_traces() -> (
+    None
+):
+    class CenteredModel(Model):
+        def __init__(self) -> None:
+            self.batches: list[list[float]] = []
+
+        def _predict(
+            self, input_features: pl.DataFrame | pl.LazyFrame
+        ) -> pl.LazyFrame:
+            frame = (
+                input_features.collect()
+                if isinstance(input_features, pl.LazyFrame)
+                else input_features
+            )
+            self.batches.append(frame["x"].to_list())
+            x = frame["x"].to_numpy()
+            return pl.DataFrame({"dx": x - x.mean()}).lazy()
+
+    traces = [_trace([-1.5, -0.5, 0.5, 1.5]), _trace([-0.5, 0.5])]
+    pending = [[TraceSegment(0, 1, 2), TraceSegment(0, 3, 4)], []]
+    model = CenteredModel()
+    accepted = _group_matching_segments(
+        traces=traces,
+        pending=pending,
+        model=model,
+        input_columns=["x"],
+        output_columns=["dx"],
+        threshold=0.01,
+    )
+    assert model.batches == [[10.0, 11.0, 12.0, 13.0], [10.0, 11.0]]
+    assert accepted == tuple(pending[0])
+
+
+def test_grouping_validates_predictions_even_for_fully_assigned_trace() -> (
+    None
+):
+    class MalformedAssignedModel(ZeroDerivativeModel):
+        def _predict(
+            self, input_features: pl.DataFrame | pl.LazyFrame
+        ) -> pl.LazyFrame:
+            frame = (
+                input_features.collect()
+                if isinstance(input_features, pl.LazyFrame)
+                else input_features
+            )
+            if frame.height == 1:
+                return pl.DataFrame({"dx": [np.nan]}).lazy()
+            return super()._predict(frame)
+
+    with pytest.raises(ValueError, match="finite"):
+        _group_matching_segments(
+            traces=[_trace([0.0, 0.0]), _trace([0.0])],
+            pending=[[TraceSegment(0, 0, 2)], []],
+            model=MalformedAssignedModel(),
+            input_columns=["x"],
+            output_columns=["dx"],
+            threshold=0.1,
+        )

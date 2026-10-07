@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 from typing import override
@@ -20,6 +20,12 @@ from .selector.model import (
 
 @dataclass(frozen=True)
 class HyDRABatchPrediction:
+    """Batch outputs with their input row indices and selector decisions.
+
+    History warmup can omit initial observations. ``row_indices`` maps each
+    output row back to the supplied frame.
+    """
+
     outputs: pl.DataFrame
     row_indices: list[int]
     selector_results: list[FlowPredictionResult]
@@ -29,23 +35,23 @@ class HyDRAModel(Model):
     """Model composed of learned flow models and an optional selector.
 
     A single-flow model predicts directly with that flow model. A multi-flow model
-    needs a selector for batch prediction. Model persistence uses Flowcean's
-    trusted-only pickle-based model serialization.
+    needs a selector for batch prediction. Supply a trace schema for derivative
+    rollout. Persistence uses pickle: load models only from trusted sources.
     """
 
     def __init__(
         self,
         flow_models: list[Model],
         *,
-        input_features: list[str],
-        output_features: list[str],
+        input_features: Sequence[str],
+        output_features: Sequence[str],
         selector: HybridDecisionTreeModel | None = None,
         trace_schema: HyDRATraceSchema | None = None,
     ) -> None:
         super().__init__()
         self.flow_models = flow_models
-        self.input_features = input_features
-        self.output_features = output_features
+        self.input_features = list(input_features)
+        self.output_features = list(output_features)
         self.selector = selector
         self.trace_schema = trace_schema
         self._validate_trace_schema()
@@ -80,6 +86,18 @@ class HyDRAModel(Model):
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
     ) -> HyDRABatchPrediction:
+        """Route observations to flow models and retain row alignment details.
+
+        Args:
+            input_features: Frame containing all flow inputs and selector
+                features. Flow inputs are converted to Float64 for prediction.
+
+        Returns:
+            Predicted outputs, original row indices, and selector decisions.
+            History-based selectors begin after their required warmup rows.
+            Selectors using previous-flow features require the stateful
+            selector runtime.
+        """
         if not self.flow_models:
             message = "HyDRAModel contains no learned flows."
             raise ValueError(message)
@@ -91,7 +109,7 @@ class HyDRAModel(Model):
         if len(self.flow_models) == 1:
             return HyDRABatchPrediction(
                 outputs=self.flow_models[0]
-                .predict(frame.select(self.input_features))
+                .predict(frame.select(self.input_features).cast(pl.Float64))
                 .collect()
                 .select(self.output_features),
                 row_indices=list(range(frame.height)),
@@ -145,7 +163,11 @@ class HyDRAModel(Model):
             if not routed_row_indices:
                 continue
 
-            flow_inputs = frame[routed_row_indices].select(self.input_features)
+            flow_inputs = (
+                frame[routed_row_indices]
+                .select(self.input_features)
+                .cast(pl.Float64)
+            )
             flow_outputs = (
                 self.flow_models[flow_id]
                 .predict(flow_inputs)
@@ -183,13 +205,21 @@ class HyDRAModel(Model):
         atol: float = 1e-9,
         max_step: float | None = None,
     ) -> pl.DataFrame:
-        """Simulate a learned model on the requested time grid.
+        """Integrate a learned derivative model on the requested time grid.
 
-        Flow models are selected at each grid point, including the final
-        endpoint; changes within an integration interval are not detected.
-        ``flow_id`` identifies the selected model and ``flow_time`` measures
-        elapsed physical time since it became active at a grid point. This
-        rollout has no native locations, transitions, or events.
+        Requires a trace schema with matching state and derivative widths, and
+        an input stream for any external inputs. Multi-flow models require a
+        selector using current time, state, and external input features.
+
+        Select a flow at each grid point, including the final endpoint, and
+        integrate it until the next point. The chosen grid therefore determines
+        when flow changes can occur.
+
+        Returns:
+            Sampled frame with ``t``, state columns ``x0``, ``x1``, etc.,
+            ``flow_id`` for the selected model, and ``flow_time`` for the time
+            since it became active. With ``include_inputs=True``, also includes
+            external input columns ``u0``, ``u1``, etc.
         """
         schema = self._require_trace_schema()
         times = _prepare_simulation_times(t_span, sample_times, sample_dt)
@@ -389,6 +419,17 @@ class HyDRAModel(Model):
         if self.selector.feature_config.max_history > 0:
             message = "stateful selector simulation is not implemented."
             raise NotImplementedError(message)
+        if self.selector.feature_config.derivative_features:
+            raise NotImplementedError(
+                "Selector simulation cannot supply derivative features before selecting a flow."
+            )
+        missing = set(self.selector.feature_config.required_columns()) - set(
+            frame.columns
+        )
+        if missing:
+            raise ValueError(
+                f"Selector simulation lacks features: {sorted(missing)}."
+            )
 
         selector_frame = build_selector_inference_frame(
             frame,
@@ -416,7 +457,9 @@ class HyDRAModel(Model):
     ) -> np.ndarray:
         frame = self._build_simulation_frame(t, state, input_stream, schema)
         output_frame = (
-            flow_model.predict(frame.select(self.input_features))
+            flow_model.predict(
+                frame.select(self.input_features).cast(pl.Float64)
+            )
             .collect()
             .select(self.output_features)
         )
