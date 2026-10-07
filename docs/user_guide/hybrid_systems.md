@@ -288,7 +288,7 @@ If the run uses external inputs, include them with `include_inputs=True`. For me
 
 HyDRA groups observations that share a continuous behavior and fits a model for each group. Here the target is the temperature derivative `dx0`. You can also learn another scalar target, such as circuit current from voltage.
 
-Pass each independent trace as a Polars DataFrame and choose the input columns and one output column. The factory creates a fresh batch learner and regressor for each fit:
+Pass each independent trace as a Polars DataFrame and choose the input columns and one output column. The factory creates a fresh batch learner and regressor for each fit; later fits must not change previously returned models or their prediction-affecting state:
 
 ```python
 from pysr import PySRRegressor
@@ -307,7 +307,11 @@ result = learner.learn(
 )
 ```
 
-HyDRA fits a candidate on growing windows within the first unassigned segment, groups matching observations across all traces, and refits the flow on those accepted observations. `start_width` sets the initial window size and `step_width` sets how many observations to add. Acceptance uses the strict comparison `error < threshold`. `learn` returns only when every supplied observation is assigned. If it cannot identify a segment, it raises [`HyDRAIdentificationError`][flowcean.hybrid.hydra.HyDRAIdentificationError]. To diagnose a failure, wrap the learning call above and inspect `.segment` for the failing trace and half-open row bounds:
+HyDRA fits a candidate on growing windows within the first unassigned segment, groups matching observations across traces with unassigned observations, and refits the flow on those accepted observations. Grouping predicts and validates each such trace in full to preserve batch context. `start_width` sets the initial window size and `step_width` sets how many observations to add.
+
+Fitting and residual calculations use Polars Float64 for selected observations and predictions; Decimal values and large integers may lose precision. Original frames remain unchanged. Acceptance uses the strict comparison `error < threshold`.
+
+`learn` returns only when every supplied observation is assigned. If it cannot identify a segment, it raises [`HyDRAIdentificationError`][flowcean.hybrid.hydra.HyDRAIdentificationError]. To diagnose a failure, wrap the learning call above and inspect `.segment` for the failing trace and half-open row bounds:
 
 ```python
 from flowcean.hybrid.hydra import HyDRAIdentificationError

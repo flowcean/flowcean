@@ -27,9 +27,6 @@ class EventModel(Model):
         self.events = events
         self.value = value
 
-    def __deepcopy__(self, memo: dict[int, Any]) -> EventModel:
-        return EventModel(self.events, self.value)
-
     def _predict(
         self, input_features: pl.DataFrame | pl.LazyFrame
     ) -> pl.LazyFrame:

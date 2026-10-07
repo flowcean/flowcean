@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -189,7 +188,10 @@ class HyDRALearner:
     Args:
         regressor_factory: Creates a fresh batch ``SupervisedLearner`` for
             every candidate window and final fit. Each instance receives one
-            ``learn`` call with the observations for that fit.
+            ``learn`` call with the observations for that fit. Fitting state
+            must be independent: later fits must not mutate previously returned
+            models or any prediction-affecting state. A fresh wrapper around a
+            shared mutable estimator is insufficient; immutable sharing is fine.
         threshold: Finite, non-negative maximum absolute prediction error.
             Candidate acceptance uses the strict comparison error < threshold.
         start_width: Positive initial window size in consecutive observations.
@@ -252,7 +254,11 @@ class HyDRALearner:
 
         Selected columns must contain finite numeric values with no nulls.
         ``flow_id`` is reserved for assignments and must be absent from frames
-        and feature lists. Fitting uses Float64 values for selected columns.
+        and feature lists. Selected observations and backend predictions use
+        Polars Float64 as their computational representation for fitting and
+        residuals, not as a precision improvement. Decimal values and large
+        integers can collapse to the same Float64 value. Original frames are
+        unchanged.
 
         Returns:
             Models and segments assigning every supplied observation to a flow.
@@ -339,10 +345,16 @@ class HyDRALearner:
                     raise ValueError(
                         f"Trace {trace_index} is missing column {column!r}."
                     )
-                _validate_numeric_column(
-                    frame[column], context=f"Trace {trace_index}"
+            traces.append(
+                pl.DataFrame(
+                    [
+                        _validate_numeric_column(
+                            frame[column], context=f"Trace {trace_index}"
+                        )
+                        for column in input_columns + output_columns
+                    ]
                 )
-            traces.append(frame.select(input_columns + output_columns))
+            )
         return traces
 
     def _discover_flows(
@@ -418,11 +430,8 @@ class HyDRALearner:
 
             accepted_rows = pl.concat(
                 [
-                    _numeric_frame(
-                        traces[segment.trace_index].slice(
-                            segment.start, segment.stop - segment.start
-                        ),
-                        input_columns + output_columns,
+                    traces[segment.trace_index].slice(
+                        segment.start, segment.stop - segment.start
                     )
                     for segment in accepted_segments
                 ],
@@ -459,8 +468,8 @@ class HyDRALearner:
     ) -> Model:
         learner = self.regressor_factory()
         return learner.learn(
-            _numeric_frame(frame, input_columns).lazy(),
-            _numeric_frame(frame, output_columns).lazy(),
+            frame.select(input_columns).lazy(),
+            frame.select(output_columns).lazy(),
         )
 
     def _fit_candidate_flow(
@@ -473,9 +482,7 @@ class HyDRALearner:
         segment_start_index: int,
     ) -> Model | None:
         if trace_frame.height < self.start_width:
-            return deepcopy(
-                self._fit_rows(trace_frame, input_columns, output_columns)
-            )
+            return self._fit_rows(trace_frame, input_columns, output_columns)
 
         best_fit: float | None = None
         best_segment: TraceSegment | None = None
@@ -491,20 +498,15 @@ class HyDRALearner:
                 window_frame, input_columns, output_columns
             )
             prediction = candidate_model.predict(
-                _numeric_frame(window_frame, input_columns),
+                window_frame.select(input_columns),
             ).collect()
-            _validate_prediction(
+            prediction = _validate_prediction(
                 prediction, window_frame.height, output_columns
             )
-            # Python scalar conversion differs from Polars Float64 conversion
-            # for Decimal targets near strict threshold boundaries.
-            fit = max(
-                abs(float(actual) - float(predicted))
-                for actual, predicted in zip(
-                    window_frame[output_columns[0]],
-                    prediction[output_columns[0]],
-                    strict=True,
-                )
+            fit = float(
+                _absolute_residuals(
+                    window_frame, prediction, output_columns[0]
+                ).max()
             )
             segment = TraceSegment(
                 trace_index,
@@ -520,7 +522,7 @@ class HyDRALearner:
             if fit < self.threshold:
                 best_fit = fit
                 best_segment = segment
-                best_model = deepcopy(candidate_model)
+                best_model = candidate_model
                 if window_size == trace_frame.height:
                     break
                 continue
@@ -544,27 +546,23 @@ class HyDRALearner:
         return best_model
 
 
-def _numeric_frame(frame: pl.DataFrame, columns: list[str]) -> pl.DataFrame:
-    # Give regressors a consistent numeric schema.
-    return frame.select(columns).cast(pl.Float64)
-
-
-def _validate_numeric_column(series: pl.Series, *, context: str) -> None:
+def _validate_numeric_column(series: pl.Series, *, context: str) -> pl.Series:
+    """Validate the original numeric type and return finite Float64 values."""
     if not series.dtype.is_numeric():
         raise ValueError(f"{context} column {series.name!r} must be numeric.")
-    if series.null_count() or not np.all(
-        np.isfinite(series.cast(pl.Float64).to_numpy())
-    ):
+    normalized = series.cast(pl.Float64)
+    if series.null_count() or not np.all(np.isfinite(normalized.to_numpy())):
         raise ValueError(
             f"{context} column {series.name!r} must be finite with no nulls."
         )
+    return normalized
 
 
 def _validate_prediction(
     prediction: pl.DataFrame,
     row_count: int,
     output_columns: list[str],
-) -> None:
+) -> pl.DataFrame:
     if prediction.height != row_count:
         raise ValueError("Backend prediction row count must match input rows.")
     for column in output_columns:
@@ -572,9 +570,24 @@ def _validate_prediction(
             raise ValueError(
                 f"Backend prediction is missing output column {column!r}."
             )
-        _validate_numeric_column(
-            prediction[column], context="Backend prediction"
-        )
+    return pl.DataFrame(
+        [
+            _validate_numeric_column(
+                prediction[column], context="Backend prediction"
+            )
+            for column in output_columns
+        ]
+    )
+
+
+def _absolute_residuals(
+    observations: pl.DataFrame, predictions: pl.DataFrame, target_column: str
+) -> np.ndarray:
+    """Compute residuals from the normalized computational representation."""
+    return np.abs(
+        predictions[target_column].to_numpy()
+        - observations[target_column].to_numpy()
+    )
 
 
 def _first_pending_segment(
@@ -677,16 +690,15 @@ def _group_matching_segments(
     for trace_index, (trace, intervals) in enumerate(
         zip(traces, pending, strict=True)
     ):
-        # Predict the whole trace, including assigned rows: some backends or
-        # transforms depend on the context of the full input batch.
-        predictions = model.predict(
-            _numeric_frame(trace, input_columns)
-        ).collect()
-        _validate_prediction(predictions, trace.height, output_columns)
-        errors = np.abs(
-            predictions[target_column].cast(pl.Float64).to_numpy()
-            - trace[target_column].cast(pl.Float64).to_numpy()
+        if not intervals:
+            continue
+        # Predict the whole partially assigned trace, including assigned rows:
+        # backends or transforms may depend on the full input batch context.
+        predictions = model.predict(trace.select(input_columns)).collect()
+        predictions = _validate_prediction(
+            predictions, trace.height, output_columns
         )
+        errors = _absolute_residuals(trace, predictions, target_column)
         for interval in intervals:
             accepted_segments.extend(
                 _segments_from_mask(

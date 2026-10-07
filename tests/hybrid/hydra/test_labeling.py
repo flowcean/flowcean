@@ -185,7 +185,7 @@ def test_grouping_accepts_only_accurate_pending_rows_without_overwrite() -> (
     ]
 
 
-def test_grouping_predicts_whole_batches_including_fully_assigned_traces() -> (
+def test_grouping_predicts_whole_partial_batches_and_skips_completed_traces() -> (
     None
 ):
     class CenteredModel(Model):
@@ -215,13 +215,11 @@ def test_grouping_predicts_whole_batches_including_fully_assigned_traces() -> (
         output_columns=["dx"],
         threshold=0.01,
     )
-    assert model.batches == [[10.0, 11.0, 12.0, 13.0], [10.0, 11.0]]
+    assert model.batches == [[10.0, 11.0, 12.0, 13.0]]
     assert accepted == tuple(pending[0])
 
 
-def test_grouping_validates_predictions_even_for_fully_assigned_trace() -> (
-    None
-):
+def test_grouping_skips_invalid_predictions_for_fully_assigned_trace() -> None:
     class MalformedAssignedModel(ZeroDerivativeModel):
         def _predict(
             self, input_features: pl.DataFrame | pl.LazyFrame
@@ -235,11 +233,31 @@ def test_grouping_validates_predictions_even_for_fully_assigned_trace() -> (
                 return pl.DataFrame({"dx": [np.nan]}).lazy()
             return super()._predict(frame)
 
+    accepted = _group_matching_segments(
+        traces=[_trace([0.0, 0.0]), _trace([0.0])],
+        pending=[[TraceSegment(0, 0, 2)], []],
+        model=MalformedAssignedModel(),
+        input_columns=["x"],
+        output_columns=["dx"],
+        threshold=0.1,
+    )
+    assert accepted == (TraceSegment(0, 0, 2),)
+
+
+def test_grouping_validates_assigned_rows_in_partially_assigned_trace() -> (
+    None
+):
+    class MalformedPartialModel(ZeroDerivativeModel):
+        def _predict(
+            self, input_features: pl.DataFrame | pl.LazyFrame
+        ) -> pl.LazyFrame:
+            return pl.DataFrame({"dx": [np.nan, 0.0]}).lazy()
+
     with pytest.raises(ValueError, match="finite"):
         _group_matching_segments(
-            traces=[_trace([0.0, 0.0]), _trace([0.0])],
-            pending=[[TraceSegment(0, 0, 2)], []],
-            model=MalformedAssignedModel(),
+            traces=[_trace([0.0, 0.0])],
+            pending=[[TraceSegment(0, 1, 2)]],
+            model=MalformedPartialModel(),
             input_columns=["x"],
             output_columns=["dx"],
             threshold=0.1,

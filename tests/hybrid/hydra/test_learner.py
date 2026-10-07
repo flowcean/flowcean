@@ -307,38 +307,106 @@ def test_public_multitrace_reuse_boundaries_metadata_and_fresh_finalization() ->
     )
 
 
+class NonCopyableModel(LinearFeatureModel):
+    def __deepcopy__(self, memo: dict[int, object]) -> NonCopyableModel:
+        raise TypeError("Backend models cannot be deep-copied")
+
+
+class IndependentLearner(LinearLearner):
+    """Each fit returns its own mutable, non-deepcopy-compatible model."""
+
+    def __init__(self, models: list[NonCopyableModel]) -> None:
+        super().__init__()
+        self.models = models
+
+    def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+        fitted = super().learn(inputs, outputs)
+        assert isinstance(fitted, LinearFeatureModel)
+        model = NonCopyableModel(
+            fitted.feature, fitted.output, fitted.slope, fitted.intercept
+        )
+        self.models.append(model)
+        return model
+
+
 @pytest.mark.parametrize("start_width", [2, 10])
 @pytest.mark.parametrize("segment_start_index", [0, 7])
-def test_accepted_candidate_is_a_deep_snapshot(
+def test_candidate_retains_independent_noncopyable_backend_model(
     start_width: int, segment_start_index: int
 ) -> None:
-    source = LinearFeatureModel("x", "dx", 1.0, 0.0)
+    models: list[NonCopyableModel] = []
     callback = RecordingCallback()
     learner = HyDRALearner(
-        lambda: FixedLearner(source),
+        lambda: IndependentLearner(models),
         threshold=0.1,
         start_width=start_width,
+        step_width=2,
         callback=callback,
     )
     candidate = learner._fit_candidate_flow(
-        pl.DataFrame({"x": [0.0, 1.0], "dx": [0.0, 1.0]}),
+        pl.DataFrame(
+            {"x": [0.0, 1.0, 2.0, 3.0], "dx": [0.0, 1.0, 12.0, 13.0]}
+        ),
         ["x"],
         ["dx"],
         trace_index=0,
         segment_start_index=segment_start_index,
     )
+    assert candidate is not None
+    assert candidate is models[0]
     if start_width == 2:
+        assert len(models) == 2
         assert callback.candidates[0][0] == TraceSegment(
             0, segment_start_index, segment_start_index + 2
         )
+        assert callback.candidates[1][1] > learner.threshold
+        # Even mutating the rejected expansion's state leaves the retained
+        # candidate intact; no backend estimator is shared between fits.
+        models[1].intercept = 100.0
+        expected = [0.0, 1.0]
     else:
         assert callback.candidates == []
-    assert candidate is not None
-    assert candidate is not source
-    source.intercept = 100.0
+        expected = [-1.0, 4.0]
     np.testing.assert_allclose(
         candidate.predict(pl.DataFrame({"x": [0.0, 1.0]})).collect()["dx"],
-        [0.0, 1.0],
+        expected,
+        atol=1e-12,
+    )
+
+
+@pytest.mark.parametrize("start_width", [2, 10])
+def test_later_independent_fits_preserve_finalized_noncopyable_models(
+    start_width: int,
+) -> None:
+    models: list[NonCopyableModel] = []
+    learner = HyDRALearner(
+        lambda: IndependentLearner(models),
+        threshold=0.1,
+        start_width=start_width,
+    )
+    first = discover(
+        learner,
+        [
+            pl.DataFrame({"x": [0.0, 1.0], "dx": [0.0, 1.0]}),
+            pl.DataFrame({"x": [2.0, 3.0], "dx": [12.0, 13.0]}),
+        ],
+    )
+    assert len(first.flows) == 2
+    assert first.flows[0].model is models[1]
+    assert first.flows[1].model is models[3]
+    # The first finalized model survived another candidate and final fit in
+    # the same discovery; a subsequent discovery also has independent state.
+    second = discover(
+        learner, [pl.DataFrame({"x": [0.0, 1.0], "dx": [10.0, 11.0]})]
+    )
+    assert second.flows[0].model is models[5]
+    models[5].intercept = 100.0
+    np.testing.assert_allclose(
+        first.flows[0]
+        .model.predict(pl.DataFrame({"x": [2.0]}))
+        .collect()["dx"],
+        [2.0],
+        atol=1e-12,
     )
 
 
@@ -403,46 +471,75 @@ def test_selected_numeric_schemas_are_normalized_without_changing_traces(
 
 
 @pytest.mark.parametrize("dtype", [pl.Decimal(20, 2), pl.Decimal(38, 18)])
-@pytest.mark.parametrize("threshold", [0.01, 0.1])
-def test_decimal_targets_preserve_candidate_fit_and_acceptance(
-    dtype: pl.DataType, threshold: float
+@pytest.mark.parametrize("start_width", [2, 10])
+@pytest.mark.parametrize("boundary", ["below", "exact", "above"])
+def test_decimal_scoring_and_grouping_share_normalized_residuals(
+    dtype: pl.DataType, start_width: int, boundary: str
 ) -> None:
     value = Decimal("100000000000000.01")
+    predicted = Decimal("100000000000000.02")
     frame = pl.DataFrame(
-        {"x": [0.0, 1.0], "dx": pl.Series([value, value], dtype=dtype)}
+        {
+            "x": [0.0, 1.0],
+            "dx": pl.Series([value, value], dtype=dtype),
+            "metadata": ["a", "b"],
+        }
     )
-    numeric_target = float(frame["dx"].cast(pl.Float64).to_numpy().mean())
-    candidate_error = abs(float(value) - numeric_target)
-    assert candidate_error > 0.01
+    original = frame.clone()
+    prediction = pl.DataFrame(
+        {"dx": pl.Series([predicted, predicted], dtype=dtype)}
+    )
+    original_prediction = prediction.clone()
+    error = abs(
+        frame["dx"].cast(pl.Float64)[0] - prediction["dx"].cast(pl.Float64)[0]
+    )
+    assert error > 0
+    # Polars normalization, not Python Decimal conversion, defines residuals.
+    assert error != abs(float(value) - float(predicted))
+    threshold = {
+        "below": np.nextafter(error, -np.inf),
+        "exact": error,
+        "above": np.nextafter(error, np.inf),
+    }[boundary]
     callback = RecordingCallback()
 
-    class MeanLearner(SupervisedLearner):
+    class DecimalLearner(SupervisedLearner):
         def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
             input_frame, output_frame = pl.collect_all([inputs, outputs])
             assert input_frame.dtypes == [pl.Float64]
             assert output_frame.dtypes == [pl.Float64]
-            mean = float(output_frame["dx"].to_numpy().mean())
-            return FixedModel(
-                lambda data: pl.DataFrame({"dx": [mean] * data.height})
-            )
+            return FixedModel(lambda _: prediction)
 
     learner = HyDRALearner(
-        MeanLearner, threshold=threshold, start_width=2, callback=callback
+        DecimalLearner,
+        threshold=threshold,
+        start_width=start_width,
+        callback=callback,
     )
-    if candidate_error < threshold:
+    if boundary == "above":
         result = discover(learner, [frame])
         assert result.to_flow_ids()[0].tolist() == [0, 0]
         assert callback.groupings == [(0, (TraceSegment(0, 0, 2),), 2)]
         assert callback.finished == [result]
+        assert_frame_equal(
+            result.to_labeled_frames([frame])[0].drop("flow_id"), original
+        )
     else:
         with pytest.raises(HyDRAIdentificationError) as caught:
             discover(learner, [frame])
         assert caught.value.segment == TraceSegment(0, 0, 2)
-        assert "Trace 0 [0, 2)" in str(caught.value)
-        assert "Candidate accuracy did not meet" in str(caught.value)
-        assert not callback.groupings
+        if start_width == 2:
+            assert "Candidate accuracy did not meet" in str(caught.value)
+            assert not callback.groupings
+        else:
+            assert "grouping accepted no observations" in str(caught.value)
+            assert callback.groupings == [(0, (), 2)]
         assert not callback.finished
-    assert callback.candidates[0] == (TraceSegment(0, 0, 2), candidate_error)
+    assert callback.candidates == (
+        [(TraceSegment(0, 0, 2), error)] if start_width == 2 else []
+    )
+    assert_frame_equal(frame, original)
+    assert_frame_equal(prediction, original_prediction)
 
 
 def test_repeated_discovery_calls_are_independent() -> None:
@@ -784,6 +881,44 @@ def test_unexpected_errors_propagate(stage: str) -> None:
     assert callback.finished == []
 
 
+@pytest.mark.parametrize("start_width", [2, 10])
+def test_discovery_skips_invalid_predictions_on_completed_trace(
+    start_width: int,
+) -> None:
+    predictions: list[tuple[float, list[float]]] = []
+
+    class TraceSensitiveLearner(SupervisedLearner):
+        def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+            value = float(outputs.collect()["dx"][0])
+
+            def predict(frame: pl.DataFrame) -> pl.DataFrame:
+                predictions.append((value, frame["x"].to_list()))
+                # The second flow is invalid on the already completed trace.
+                invalid = value == 1.0 and frame["x"][0] == 0.0
+                return pl.DataFrame(
+                    {"dx": [np.nan if invalid else value] * frame.height}
+                )
+
+            return FixedModel(predict)
+
+    callback = RecordingCallback()
+    result = discover(
+        HyDRALearner(
+            TraceSensitiveLearner,
+            threshold=0.1,
+            start_width=start_width,
+            callback=callback,
+        ),
+        [
+            pl.DataFrame({"x": [0.0, 1.0], "dx": [0.0, 0.0]}),
+            pl.DataFrame({"x": [2.0, 3.0], "dx": [1.0, 1.0]}),
+        ],
+    )
+    assert [ids.tolist() for ids in result.to_flow_ids()] == [[0, 0], [1, 1]]
+    assert (1.0, [0.0, 1.0]) not in predictions
+    assert callback.finished == [result]
+
+
 def test_fragmented_grouping_final_fit_rows_and_callback_order() -> None:
     fits: list[list[float]] = []
     predictions: list[list[float]] = []
@@ -824,9 +959,9 @@ def test_fragmented_grouping_final_fit_rows_and_callback_order() -> None:
         [0, 1, 0, 1],
     ]
     assert fits == [[0, 1], [0, 1, 2, 4], [3], [3, 5]]
-    # Both grouping passes predict each whole trace, even once trace 0 is
-    # fully assigned. Neither short-segment candidate needs a window check.
-    assert predictions == [[0, 1], [2, 3, 4, 5], [0, 1], [2, 3, 4, 5]]
+    # Grouping skips completed trace 0 but retains the whole partial trace 1.
+    # Neither short-segment candidate needs a window check.
+    assert predictions == [[0, 1], [2, 3, 4, 5], [2, 3, 4, 5]]
     assert callback.candidates == []
     assert callback.groupings[1] == (1, result.flows[1].segments, 2)
     assert callback.finalized == list(enumerate(result.flows))
