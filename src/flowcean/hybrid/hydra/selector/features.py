@@ -60,7 +60,9 @@ def build_selector_dataset(
         raise ValueError(message)
 
     return SelectorDataset(
-        features=pl.concat(feature_frames, how="vertical"),
+        # Discovery retains original numeric schemas. Reconcile only the
+        # projected selector features, never unrelated trace metadata.
+        features=pl.concat(feature_frames, how="vertical_relaxed"),
         labels=pl.concat(label_series, how="vertical"),
         feature_columns=feature_columns,
         row_metadata=pl.concat(metadata_frames, how="vertical"),

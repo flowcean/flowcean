@@ -4,31 +4,28 @@ icon: lucide/scan-search
 
 # Simulated Hybrid System Identification
 
-This example runs a HyDRA identification loop on simulated room-temperature traces. The reference is the thermostat benchmark, switching between heating and cooling around a time-varying target temperature. HyDRA learns flow models, trains a selector for flow assignment, simulates the learned model, and compares the learned rollout frame with the sampled reference frame.
+Learn flow models from room-temperature observations, then train a selector to choose between them. This example uses a thermostat that heats and cools around a time-varying target temperature. It supplies two independently simulated traces to HyDRA, with temperature, its derivative, and the target signal sampled every `0.02` time units.
 
-The selector uses only current temperature, omitting the target signal and history. This limits its ability to reproduce the reference's switching behavior; the comparison measures the resulting approximation.
+## Run the Example
 
-Run it from the repository root:
+From the repository root:
 
 ```bash
 uv run --directory ./examples/simulated_hybrid_system python run.py
 ```
 
-The learner uses PySR for symbolic regression. PySR requires Julia, and the first run can take longer while Julia packages are resolved and compiled.
+The example uses PySR and requires Julia. The first run can take time to install and compile dependencies. Close the reference-trajectory plot to continue with learning.
 
-The script performs these steps:
+## Read the Results
 
-1. Create the two-location thermostat benchmark with heating and cooling flows.
-2. Simulate it with a varying target temperature to retain a hybrid reference trajectory for plotting.
-3. Sample that trajectory at `dt=0.02` with derivatives and rename `x0` and `dx0` to `x` and `dx` for learning.
-4. Train a `HyDRALearner` with PySR regressors for flow models.
-5. Train a `HybridDecisionTreeLearner` selector over the state feature `x`.
-6. Simulate the learned `HyDRAModel` on the reference time grid.
-7. Print selector diagnostics and state-trace comparison metrics.
-8. Save selector and comparison plot artifacts.
+HyDRA learns the temperature derivative `dx` from time `t`, temperature `x`, and target temperature `target`. Each entry in `result.flows` has a fitted `model` and accepted `segments` representing shared continuous behavior across the traces. Its position is the flow ID.
 
-The example passes `HyDRATraceSchema(time="t", state=("x",), derivative=("dx",))` to the learner. This records which learned input column is time, which column is state, and which output column is the derivative. `HyDRAModel.simulate()` returns a grid-scheduled Polars frame with `flow_id` and `flow_time`, not native locations or a trajectory. The script renames its `x0` state to `x` before comparing it with the reference frame.
+`HyDRALearner.learn` returns only after assigning every supplied observation. If a segment cannot be identified, it raises `HyDRAIdentificationError` with the failing trace index and half-open row bounds in `.segment`; the script lets this exception propagate.
 
-Expected printed output includes a summary dictionary containing `rows`, `locations`, `flow_count`, `input_features`, and `output_features`. If a selector is learned, the script also prints `selector_summary`, `selector_flow_summary`, `selector_tree`, and `selector_svg` diagnostics. The comparison block starts with `learned trace comparison` and reports `mae`, `rmse`, and `max_error`.
+`result.to_labeled_frames(frames)` adds non-null `flow_id` labels to the original observations. The example trains a decision-tree selector using current temperature, previous temperature, and current target temperature. The previous observation helps distinguish heating from cooling. Batch prediction then uses the selector to route observations to flow models; `batch_prediction_rows_after_warmup` reports how many rows have sufficient history for prediction.
 
-By default, artifacts are written to `examples/simulated_hybrid_system/outputs/selector_tree.svg` and `examples/simulated_hybrid_system/outputs/learned_vs_reference.png`.
+The script prints selector summaries and the decision tree. When SVG export is available, it writes `examples/simulated_hybrid_system/outputs/selector_tree.svg`.
+
+For multiple discovered flows, the example finishes after batch prediction: learned-model rollout currently requires a selector using current features only. If a single flow is discovered, the script also integrates that model on the reference time grid, prints state-error metrics, and saves `examples/simulated_hybrid_system/outputs/learned_vs_reference.png`.
+
+See [Move from Simulation to Learning](../user_guide/hybrid_systems.md#move-from-simulation-to-learning) for the discovery and prediction API workflow.

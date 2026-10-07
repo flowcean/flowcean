@@ -7,7 +7,17 @@ from flowcean.hybrid import benchmarks, hydra
 from flowcean.hybrid.benchmarks import bouncing_ball
 from flowcean.hybrid.graph import build_hybrid_system_dot, render_dot_svg
 from flowcean.hybrid.hybrid_system import HybridSystem, Location
-from flowcean.hybrid.hydra import HyDRALearner, HyDRAModel, selector
+from flowcean.hybrid.hydra import (
+    HyDRACallback,
+    HyDRAIdentificationError,
+    HyDRALearner,
+    HyDRAModel,
+    LearnedFlow,
+    LearnedFlows,
+    PlotCallback,
+    TraceSegment,
+    selector,
+)
 from flowcean.hybrid.plotting import plot_locations, plot_state_space
 from flowcean.hybrid.simulator import simulate
 from flowcean.hybrid.trajectory import HybridTrajectory, TrajectoryPoint
@@ -43,8 +53,21 @@ def test_hybrid_facade_exposes_nested_module_handles() -> None:
 
 def test_nested_facades_own_benchmark_and_identification_symbols() -> None:
     assert benchmarks.bouncing_ball is bouncing_ball
+    assert hydra.HyDRACallback is HyDRACallback
+    assert hydra.PlotCallback is PlotCallback
+    assert {"HyDRACallback", "PlotCallback"} <= set(hydra.__all__)
     assert hydra.HyDRALearner is HyDRALearner
+    assert hydra.HyDRAIdentificationError is HyDRAIdentificationError
     assert hydra.HyDRAModel is HyDRAModel
+    assert hydra.LearnedFlow is LearnedFlow
+    assert hydra.LearnedFlows is LearnedFlows
+    assert hydra.TraceSegment is TraceSegment
+    assert {
+        "HyDRAIdentificationError",
+        "LearnedFlow",
+        "LearnedFlows",
+        "TraceSegment",
+    } <= set(hydra.__all__)
     for name in selector.__all__:
         assert getattr(hydra, name) is getattr(selector, name)
     for name in ("bouncing_ball", "HyDRALearner", "HyDRAModel"):

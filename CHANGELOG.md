@@ -4,6 +4,18 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `HyDRALearner.learn` accepts independent Polars traces with explicit `input_features` and `output_features`, returning `LearnedFlows` rather than a predictor only when every supplied observation is assigned. Failure raises public `HyDRAIdentificationError` (`RuntimeError`), whose `.segment` and message identify the failing trace and half-open row bounds; no partial result is returned. `LearnedFlows` exposes `flows`, `trace_lengths`, `input_features`, and `output_features`; `to_flow_ids()` returns fully assigned int64 arrays and `to_labeled_frames(original_traces)` adds non-null Int64 `flow_id` labels for selector training. Train selectors and construct `HyDRAModel` separately; learner-level selector and schema arguments are removed.
+- **Breaking:** HyDRA observation segments use half-open `[start, stop)` row bounds. `TraceSegment.start_index` and `end_index` are replaced by `start` and `stop`.
+- **Breaking:** HyDRA factories now create a fresh batch `SupervisedLearner` for each candidate and final fit, with independent fitting state so later fits cannot mutate earlier models. Candidate models need not support deep copying. `PySRLearner.learn` replaces `learn_incremental` and no longer forces warm starts. Each fit receives only its supplied observations, without cumulative updates from overlapping windows. PySR searches restart rather than resume previous search state, which can increase runtime and change learned equations.
+- **Breaking:** HyDRA callbacks subclass `HyDRACallback` with optional hook overrides. Candidate hooks receive keyword-only `segment` and scalar `fit`; grouping receives accepted segments and a considered observation count; finalization receives `LearnedFlow`, and `finish(result)` runs only on success. Previously finalized flow notifications remain on identification failure; backend and callback exceptions propagate unchanged. Per-observation diagnostic payloads, `NoOpCallback`, `LogCallback`, and `learning_stopped` are removed; progress uses module logging. `PlotCallback` moves to `hydra.plotting` (still exported by the HyDRA facade), requires explicit `columns`, and defaults to observation indices unless `time_column` is supplied.
+
+### Fixed
+
+- HyDRA fits only selected numeric columns, preserving unrelated metadata and trace boundaries even when metadata schemas differ. Fitting, candidate scoring, and grouping consistently use Polars Float64 values, which can change Decimal threshold outcomes and lose precision for Decimal values or large integers. Invalid or non-finite backend predictions raise rather than silently affecting assignments.
+- HyDRA grouping skips fully assigned traces, avoiding irrelevant prediction failures. Traces with remaining unassigned observations are still predicted and validated in full.
+
 ## [0.9.0] - 2026-10-02
 
 ### Added
