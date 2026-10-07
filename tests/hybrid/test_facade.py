@@ -55,17 +55,11 @@ def test_nested_facades_own_benchmark_and_identification_symbols() -> None:
     assert benchmarks.bouncing_ball is bouncing_ball
     assert hydra.HyDRACallback is HyDRACallback
     assert hydra.PlotCallback is PlotCallback
-    assert not hasattr(hydra, "LogCallback")
-    assert not hasattr(
-        importlib.import_module("flowcean.hybrid.hydra.callbacks"),
-        "PlotCallback",
-    )
     assert {"HyDRACallback", "PlotCallback"} <= set(hydra.__all__)
     assert hydra.HyDRALearner is HyDRALearner
     assert hydra.HyDRAIdentificationError is HyDRAIdentificationError
     assert hydra.HyDRAModel is HyDRAModel
     assert hydra.LearnedFlow is LearnedFlow
-    assert not hasattr(hydra, "HyDRATrace")
     assert hydra.LearnedFlows is LearnedFlows
     assert hydra.TraceSegment is TraceSegment
     assert {

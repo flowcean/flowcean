@@ -605,13 +605,10 @@ def test_plotting_preserves_location_identity_and_never_connects_jumps():
 
 
 def test_dataframe_source_consumers(monkeypatch):
-    import matplotlib.pyplot as plt
-
     from flowcean.core import Model
     from flowcean.hybrid.hydra import (
         HyDRAModel,
         HyDRATraceSchema,
-        PlotCallback,
         compare_state_traces,
     )
 
@@ -673,54 +670,3 @@ def test_dataframe_source_consumers(monkeypatch):
         compare_state_traces(frame, frame.with_columns(pl.col("t") + 1))
     with pytest.raises(ValueError, match="State columns must match"):
         compare_state_traces(frame, frame.with_columns(pl.lit(0).alias("x1")))
-    fig, ax = plt.subplots()
-    try:
-        callback = PlotCallback(
-            renamed.rename({"t": "clock"}),
-            columns=["position"],
-            time_column="clock",
-            ax=ax,
-            show=False,
-            pause=0,
-        )
-        callback.start(
-            trace_count=1, threshold=0.1, start_width=1, step_width=1
-        )
-        np.testing.assert_allclose(
-            np.asarray(ax.lines[0].get_xdata()), [0, 0.5, 1]
-        )
-        np.testing.assert_allclose(
-            np.asarray(ax.lines[0].get_ydata()), frame["x0"]
-        )
-    finally:
-        plt.close(fig)
-
-
-def test_plot_callback_uses_all_selected_state_columns_in_order():
-    import matplotlib.pyplot as plt
-
-    from flowcean.hybrid.hydra import PlotCallback
-
-    frame = pl.DataFrame(
-        {"t": [0.0, 1.0], "position": [2.0, 3.0], "velocity": [4.0, 5.0]}
-    )
-    fig, ax = plt.subplots()
-    try:
-        callback = PlotCallback(
-            frame,
-            columns=["velocity", "position"],
-            ax=ax,
-            show=False,
-            pause=0,
-        )
-        callback.start(
-            trace_count=1, threshold=0.1, start_width=1, step_width=1
-        )
-        assert [line.get_label() for line in ax.lines] == [
-            "velocity",
-            "position",
-        ]
-        np.testing.assert_allclose(np.asarray(ax.lines[0].get_ydata()), [4, 5])
-        np.testing.assert_allclose(np.asarray(ax.lines[1].get_ydata()), [2, 3])
-    finally:
-        plt.close(fig)

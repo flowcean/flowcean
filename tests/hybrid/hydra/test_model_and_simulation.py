@@ -65,10 +65,17 @@ def _single_flow_model(
 
 
 def test_single_flow_batch_prediction_and_diagnostics() -> None:
-    model = _single_flow_model(
-        DerivativeModel(lambda frame: -2.0 * frame["x"].to_numpy()),
+    def derivative(frame: pl.DataFrame) -> np.ndarray:
+        assert frame.schema == {"time": pl.Float64, "x": pl.Float64}
+        assert frame["time"].to_list() == [0.0, 0.5, 1.0]
+        assert frame["x"].to_list() == [1.0, -2.0, 3.0]
+        return -2.0 * frame["x"].to_numpy()
+
+    model = _single_flow_model(DerivativeModel(derivative))
+    inputs = pl.DataFrame(
+        {"time": [0.0, 0.5, 1.0], "x": [1, -2, 3]},
+        schema={"time": pl.Float32, "x": pl.Int8},
     )
-    inputs = pl.DataFrame({"time": [0.0, 0.5, 1.0], "x": [1.0, -2.0, 3.0]})
 
     diagnostics = model.predict_with_diagnostics(inputs.lazy())
 
@@ -248,11 +255,36 @@ def test_model_reports_relevant_configuration_and_simulation_errors() -> None:
         input_model.predict_next_state([1.0], t=0.0, dt=0.1)
 
 
-def test_multi_flow_batch_prediction_routes_rows_with_decision_tree() -> None:
-    negative_flow = DerivativeModel(lambda frame: np.full(frame.height, -1.0))
-    positive_flow = DerivativeModel(lambda frame: np.full(frame.height, 2.0))
+def test_multi_flow_batch_prediction_requires_selector() -> None:
+    model = HyDRAModel(
+        [
+            DerivativeModel(lambda frame: np.full(frame.height, -1.0)),
+            DerivativeModel(lambda frame: np.full(frame.height, 2.0)),
+        ],
+        input_features=["x"],
+        output_features=["dx"],
+    )
+    with pytest.raises(NotImplementedError, match="requires a flow selector"):
+        model.predict(pl.DataFrame({"x": [1.0]})).collect()
+
+
+def test_multi_flow_batch_prediction_routes_rows_with_decision_tree(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def negative_derivative(frame: pl.DataFrame) -> np.ndarray:
+        assert frame.schema == {"time": pl.Float64, "x": pl.Float64}
+        assert frame["x"].to_list() == [-2.0, -1.0]
+        return np.full(frame.height, -1.0)
+
+    def positive_derivative(frame: pl.DataFrame) -> np.ndarray:
+        assert frame.schema == {"time": pl.Float64, "x": pl.Float64}
+        assert frame["x"].to_list() == [2.0, 3.0]
+        return np.full(frame.height, 2.0)
+
+    negative_flow = DerivativeModel(negative_derivative)
+    positive_flow = DerivativeModel(positive_derivative)
     selector_learner = HybridDecisionTreeLearner(
-        SelectorFeatureConfig(state_features=("x",)),
+        SelectorFeatureConfig(input_features=("phase",)),
         max_depth=1,
         random_state=0,
     )
@@ -260,7 +292,7 @@ def test_multi_flow_batch_prediction_routes_rows_with_decision_tree() -> None:
         [
             pl.DataFrame(
                 {
-                    "x": [-3.0, -2.0, -1.0, 1.0, 2.0, 3.0],
+                    "phase": pl.Series([-1, -1, -1, 1, 1, 1], dtype=pl.Int8),
                     "flow_id": [0, 0, 0, 1, 1, 1],
                 },
             ),
@@ -275,9 +307,21 @@ def test_multi_flow_batch_prediction_routes_rows_with_decision_tree() -> None:
         trace_schema=_schema(),
     )
     inputs = pl.DataFrame(
-        {"time": [0.0, 0.0, 0.0, 0.0], "x": [2.0, -2.0, 3.0, -1.0]},
+        {
+            "time": [0.0] * 4,
+            "x": [2, -2, 3, -1],
+            "phase": [1, -1, 1, -1],
+        },
+        schema={"time": pl.Float32, "x": pl.Int32, "phase": pl.Int8},
     )
+    predict_details = selector.predict_details
 
+    def check_selector_inputs(features: pl.DataFrame):
+        assert features.schema == {"phase": pl.Int8}
+        assert features["phase"].to_list() == [1, -1, 1, -1]
+        return predict_details(features)
+
+    monkeypatch.setattr(selector, "predict_details", check_selector_inputs)
     diagnostics = model.predict_with_diagnostics(inputs)
 
     assert [result.flow_id for result in diagnostics.selector_results] == [

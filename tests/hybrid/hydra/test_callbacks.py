@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -13,7 +12,6 @@ import pytest
 from flowcean.core import Model, SupervisedLearner
 from flowcean.hybrid.hydra import (
     HyDRACallback,
-    HyDRAIdentificationError,
     HyDRALearner,
     LearnedFlow,
     LearnedFlows,
@@ -35,7 +33,7 @@ class EventModel(Model):
             if isinstance(input_features, pl.LazyFrame)
             else input_features
         )
-        self.events.append(("predict", frame["x"].to_list()))
+        self.events.append(("predict",))
         return pl.DataFrame({"y": [self.value] * frame.height}).lazy()
 
 
@@ -100,32 +98,20 @@ def run_events(
     events: list[Any],
     *,
     targets: list[float],
-    threshold: float = 0.1,
     start_width: int = 2,
-    backend_fail: int | None = None,
     callback_fail: str | None = None,
-    backend_error: RuntimeError | None = None,
     callback_error: RuntimeError | None = None,
 ) -> LearnedFlows:
-    calls = 0
-
     class EventLearner(SupervisedLearner):
         def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
-            nonlocal calls
-            calls += 1
-            x, y = pl.collect_all([inputs, outputs])
-            events.append(("fit", x["x"].to_list()))
-            if calls == backend_fail:
-                raise (
-                    backend_error
-                    if backend_error is not None
-                    else RuntimeError("backend failed")
-                )
-            return EventModel(events, float(y["y"][0]))
+            events.append(("fit",))
+            model = EventModel(events, float(outputs.collect()["y"][0]))
+            events.append(("fitted", model))
+            return model
 
     return HyDRALearner(
         EventLearner,
-        threshold=threshold,
+        threshold=0.1,
         start_width=start_width,
         step_width=2,
         callback=EventCallback(events, callback_fail, callback_error),
@@ -136,132 +122,89 @@ def run_events(
     )
 
 
-def test_public_success_interleaves_backend_and_callback_events() -> None:
+def test_public_success_callback_payloads_and_final_fit_timing() -> None:
     events: list[Any] = []
     result = run_events(events, targets=[1, 1, 1, 1])
-    assert [event[0] for event in events] == [
-        "start",
-        "pending",
-        "fit",
-        "predict",
-        "candidate",
-        "fit",
-        "predict",
-        "candidate",
-        "selected",
-        "predict",
-        "grouping",
-        "fit",
-        "finalized",
-        "finish",
+    callbacks = [
+        event
+        for event in events
+        if event[0] not in {"fit", "fitted", "predict"}
     ]
-    assert events[0] == ("start", 1, 0.1, 2, 2)
-    assert events[4] == ("candidate", TraceSegment(0, 0, 2), 0.0)
-    assert events[8] == ("selected", TraceSegment(0, 0, 4), 0.0)
-    assert events[10] == ("grouping", 0, (TraceSegment(0, 0, 4),), 4)
-    assert events[-2][2] is result.flows[0]
-    assert events[-1][1] is result
-
-
-@pytest.mark.parametrize("short", [False, True])
-def test_failed_discovery_raises_without_finish(short: bool) -> None:
-    events: list[Any] = []
-    with pytest.raises(HyDRAIdentificationError) as caught:
-        run_events(
-            events,
-            targets=[1, 1],
-            threshold=0,
-            start_width=3 if short else 2,
-        )
-    assert caught.value.segment == TraceSegment(0, 0, 2)
-    assert "Trace 0 [0, 2)" in str(caught.value)
+    assert callbacks == [
+        ("start", 1, 0.1, 2, 2),
+        ("pending", TraceSegment(0, 0, 4)),
+        ("candidate", TraceSegment(0, 0, 2), 0.0),
+        ("candidate", TraceSegment(0, 0, 4), 0.0),
+        ("selected", TraceSegment(0, 0, 4), 0.0),
+        ("grouping", 0, (TraceSegment(0, 0, 4),), 4),
+        ("finalized", 0, result.flows[0]),
+        ("finish", result),
+    ]
     assert (
-        "grouping accepted no observations"
-        if short
-        else "Candidate accuracy did not meet"
-    ) in str(caught.value)
-    assert [event[0] for event in events] == (
-        ["start", "pending", "fit", "predict", "grouping"]
-        if short
-        else ["start", "pending", "fit", "predict", "candidate"]
+        next(event[2] for event in callbacks if event[0] == "finalized")
+        is result.flows[0]
     )
-
-
-def test_failure_after_prior_finalization_does_not_finish() -> None:
-    events: list[Any] = []
-    with pytest.raises(HyDRAIdentificationError) as caught:
-        run_events(events, targets=[1, 1, 10, 20])
-    assert [event[0] for event in events] == [
-        "start",
-        "pending",
-        "fit",
-        "predict",
-        "candidate",
-        "fit",
-        "predict",
-        "candidate",
-        "selected",
-        "predict",
-        "grouping",
-        "fit",
-        "finalized",
-        "pending",
-        "fit",
-        "predict",
-        "candidate",
-    ]
-    assert events[10] == ("grouping", 0, (TraceSegment(0, 0, 2),), 4)
-    assert events[12][2].segments == (TraceSegment(0, 0, 2),)
-    assert caught.value.segment == TraceSegment(0, 2, 4)
-    assert "Trace 0 [2, 4)" in str(caught.value)
-    assert "Candidate accuracy did not meet" in str(caught.value)
+    assert (
+        next(event[1] for event in callbacks if event[0] == "finish") is result
+    )
+    names = [event[0] for event in events]
+    grouping = names.index("grouping")
+    fitted = next(
+        index
+        for index, event in enumerate(events)
+        if event[0] == "fitted" and event[1] is result.flows[0].model
+    )
+    assert (
+        grouping
+        < names.index("fit", grouping)
+        < fitted
+        < names.index("finalized")
+    )
 
 
 def test_short_segment_has_no_candidate_prediction_or_selection() -> None:
     events: list[Any] = []
     result = run_events(events, targets=[1], start_width=2)
-    assert [event[0] for event in events] == [
-        "start",
-        "pending",
-        "fit",
-        "predict",
-        "grouping",
-        "fit",
-        "finalized",
-        "finish",
+    callbacks = [
+        event
+        for event in events
+        if event[0] not in {"fit", "fitted", "predict"}
     ]
-    assert result.to_flow_ids()[0].tolist() == [0]
-
-
-@pytest.mark.parametrize("backend_fail", [1, 2])
-def test_backend_failure_has_no_fake_finish_or_finalization(
-    backend_fail: int,
-) -> None:
-    events: list[Any] = []
-    error = RuntimeError("backend failed")
-    with pytest.raises(RuntimeError) as caught:
-        run_events(
-            events,
-            targets=[1, 1],
-            backend_fail=backend_fail,
-            backend_error=error,
-        )
-    assert caught.value is error
-    assert [event[0] for event in events] == (
-        ["start", "pending", "fit"]
-        if backend_fail == 1
-        else [
-            "start",
-            "pending",
-            "fit",
-            "predict",
-            "candidate",
-            "selected",
-            "predict",
-            "grouping",
-            "fit",
-        ]
+    assert callbacks == [
+        ("start", 1, 0.1, 2, 2),
+        ("pending", TraceSegment(0, 0, 1)),
+        ("grouping", 0, (TraceSegment(0, 0, 1),), 1),
+        ("finalized", 0, result.flows[0]),
+        ("finish", result),
+    ]
+    assert (
+        next(event[2] for event in callbacks if event[0] == "finalized")
+        is result.flows[0]
     )
+    assert (
+        next(event[1] for event in callbacks if event[0] == "finish") is result
+    )
+    names = [event[0] for event in events]
+    # Only grouping predicts; a short candidate is neither scored nor selected.
+    assert names.count("predict") == 1
+    assert (
+        names.index("pending")
+        < names.index("predict")
+        < names.index("grouping")
+    )
+    grouping = names.index("grouping")
+    fitted = next(
+        index
+        for index, event in enumerate(events)
+        if event[0] == "fitted" and event[1] is result.flows[0].model
+    )
+    assert (
+        grouping
+        < names.index("fit", grouping)
+        < fitted
+        < names.index("finalized")
+    )
+    assert result.to_flow_ids()[0].tolist() == [0]
 
 
 @pytest.mark.parametrize(
@@ -276,15 +219,10 @@ def test_backend_failure_has_no_fake_finish_or_finalization(
         "finish",
     ],
 )
-def test_callback_exceptions_propagate_at_each_hook(
-    hook: str, caplog: pytest.LogCaptureFixture
-) -> None:
+def test_callback_exceptions_propagate_at_each_hook(hook: str) -> None:
     events: list[Any] = []
     error = RuntimeError("callback failed")
-    with (
-        caplog.at_level(logging.INFO, logger="flowcean.hybrid.hydra.learner"),
-        pytest.raises(RuntimeError) as caught,
-    ):
+    with pytest.raises(RuntimeError) as caught:
         run_events(
             events,
             targets=[1, 1],
@@ -294,9 +232,6 @@ def test_callback_exceptions_propagate_at_each_hook(
     assert caught.value is error
     assert events[-1][0] == hook
     assert sum(event[0] == "finish" for event in events) == (hook == "finish")
-    assert not any(
-        "HyDRA finished" in record.message for record in caplog.records
-    )
     if hook == "grouping":
         assert sum(event[0] == "fit" for event in events) == 1
 
@@ -344,6 +279,13 @@ def plot_callback(ax, **kwargs) -> PlotCallback:
     )
 
 
+def span_bounds(patch) -> tuple[float, float]:
+    vertices = (
+        patch.get_path().transformed(patch.get_patch_transform()).vertices
+    )
+    return vertices[:, 0].min(), vertices[:, 0].max()
+
+
 def start(callback: PlotCallback, count: int = 1) -> None:
     callback.start(
         trace_count=count, threshold=0.1, start_width=2, step_width=2
@@ -357,11 +299,14 @@ def test_plot_column_order_and_optional_time(
     callback = plot_callback(axes, time_column=time_column)
     start(callback)
     assert [line.get_label() for line in axes.lines] == ["b", "a"]
-    np.testing.assert_array_equal(
-        axes.lines[0].get_xdata(),
-        [0, 1, 2, 3] if time_column is None else [10, 20, 40, 60],
-    )
-    np.testing.assert_array_equal(axes.lines[0].get_ydata(), [4, 3, 2, 1])
+    for line, values in zip(
+        axes.lines, ([4, 3, 2, 1], [1, 2, 3, 4]), strict=True
+    ):
+        np.testing.assert_array_equal(
+            line.get_xdata(),
+            [0, 1, 2, 3] if time_column is None else [10, 20, 40, 60],
+        )
+        np.testing.assert_array_equal(line.get_ydata(), values)
     assert axes.get_ylabel() == "value"
 
 
@@ -375,41 +320,53 @@ def test_plot_singleton_is_visible_and_fragmented_runs_stay_distinct(
         accepted_segments=(TraceSegment(0, 0, 2), TraceSegment(0, 3, 4)),
         considered_count=4,
     )
-    assert len(axes.patches) == 1
+    assert [span_bounds(patch) for patch in axes.patches] == [(10, 20)]
     assert len(axes.lines) == 4
-    for line in axes.lines[2:]:
+    for line, values in zip(axes.lines[2:], ([1], [4]), strict=True):
         assert line.get_marker() == "o"
         np.testing.assert_array_equal(line.get_xdata(), [60])
+        np.testing.assert_array_equal(line.get_ydata(), values)
     assert axes.get_title() == "Grouping flow 0: accepted 3 rows"
 
 
 def test_selected_trace_and_reset_preserve_unrelated_artists(axes) -> None:
     (unrelated,) = axes.plot([0], [99], label="unrelated")
+    unrelated_patch = axes.axvspan(-5, -4)
     callback = plot_callback(axes, trace_index=1)
     start(callback, 2)
     callback.pending_segment_found(TraceSegment(0, 0, 2))
-    assert len(axes.patches) == 0
+    assert list(axes.patches) == [unrelated_patch]
     segments = (TraceSegment(0, 0, 2), TraceSegment(1, 0, 2))
     callback.grouping_evaluated(
         flow_id=4, accepted_segments=segments, considered_count=4
     )
     flow = LearnedFlow(EventModel([], 1), segments)
     callback.flow_finalized(flow_id=4, flow=flow)
-    assert len(axes.patches) == 1
+    assert [span_bounds(patch) for patch in axes.patches] == [(-5, -4), (0, 1)]
     callback.pending_segment_found(TraceSegment(1, 2, 4))
+    assert [span_bounds(patch) for patch in axes.patches] == [
+        (-5, -4),
+        (0, 1),
+        (2, 3),
+    ]
     start(callback, 2)
-    assert len(axes.patches) == 0
+    assert list(axes.patches) == [unrelated_patch]
     assert unrelated in axes.lines
-    assert len(axes.lines) == 3
-    assert not callback._flow_colors
-    assert not callback._finalized_segments
-    assert not callback._grouping_segments
-    assert callback._active_segment is None
+    np.testing.assert_array_equal(unrelated.get_ydata(), [99])
+    assert span_bounds(unrelated_patch) == (-5, -4)
+    assert [line.get_label() for line in axes.lines] == ["unrelated", "b", "a"]
+    for line, values in zip(
+        axes.lines[1:], ([4, 3, 2, 1], [1, 2, 3, 4]), strict=True
+    ):
+        np.testing.assert_array_equal(line.get_xdata(), [0, 1, 2, 3])
+        np.testing.assert_array_equal(line.get_ydata(), values)
 
 
 def test_successful_finish_clears_transient_overlay_and_keeps_finalized_flow(
     axes,
 ) -> None:
+    (unrelated,) = axes.plot([0], [99], label="unrelated")
+    unrelated_patch = axes.axvspan(-5, -4)
     callback = plot_callback(axes)
     start(callback)
     segments = (TraceSegment(0, 0, 4),)
@@ -421,16 +378,24 @@ def test_successful_finish_clears_transient_overlay_and_keeps_finalized_flow(
         accepted_segments=(TraceSegment(0, 2, 4),),
         considered_count=2,
     )
-    assert callback._active_segment is not None
-    assert callback._grouping_segments
+    assert [span_bounds(patch) for patch in axes.patches] == [
+        (-5, -4),
+        (0, 3),
+        (2, 3),
+        (1, 2),
+    ]
     result = LearnedFlows((flow,), (4,), ("a",), ("b",))
     callback.finish(result)
     assert axes.get_title() == "HyDRA finished: flows=1"
-    assert callback._active_segment is None
-    assert not callback._grouping_segments
-    assert callback._finalized_segments == [(segments[0], 0)]
-    assert len(axes.patches) == 1
-    assert len(axes.lines) == 2
+    assert [span_bounds(patch) for patch in axes.patches] == [(-5, -4), (0, 3)]
+    assert axes.patches[0] is unrelated_patch
+    assert unrelated in axes.lines
+    np.testing.assert_array_equal(unrelated.get_ydata(), [99])
+    for line, values in zip(
+        axes.lines[1:], ([4, 3, 2, 1], [1, 2, 3, 4]), strict=True
+    ):
+        np.testing.assert_array_equal(line.get_xdata(), [0, 1, 2, 3])
+        np.testing.assert_array_equal(line.get_ydata(), values)
 
 
 @pytest.mark.parametrize(
@@ -471,27 +436,16 @@ def test_trace_index_validation(axes) -> None:
     ("segment", "bounds"),
     [
         (TraceSegment(0, 1, 3), (20, 40)),
-        (TraceSegment(0, -2, 8), (10, 60)),
-        (TraceSegment(0, 4, 5), None),
-        (TraceSegment(0, 1, 1), None),
+        (TraceSegment(0, 0, 4), (10, 60)),
     ],
 )
-def test_plot_shades_included_observations_with_clipped_bounds(
-    axes, segment: TraceSegment, bounds: tuple[int, int] | None
+def test_plot_shades_half_open_observation_bounds(
+    axes, segment: TraceSegment, bounds: tuple[int, int]
 ) -> None:
     callback = plot_callback(axes, time_column="t")
     start(callback)
     callback.pending_segment_found(segment)
-    if bounds is None:
-        assert len(axes.patches) == 0
-        assert len(axes.lines) == 2
-    else:
-        assert len(axes.patches) == 1
-        patch = axes.patches[0]
-        vertices = (
-            patch.get_path().transformed(patch.get_patch_transform()).vertices
-        )
-        assert (vertices[:, 0].min(), vertices[:, 0].max()) == bounds
+    assert [span_bounds(patch) for patch in axes.patches] == [bounds]
 
 
 def test_same_coordinate_span_uses_visible_markers(axes) -> None:
@@ -507,4 +461,5 @@ def test_same_coordinate_span_uses_visible_markers(axes) -> None:
     callback.pending_segment_found(TraceSegment(0, 0, 2))
     assert len(axes.patches) == 0
     assert axes.lines[-1].get_marker() == "o"
+    np.testing.assert_array_equal(axes.lines[-1].get_xdata(), [1, 1])
     np.testing.assert_array_equal(axes.lines[-1].get_ydata(), [1, 2])

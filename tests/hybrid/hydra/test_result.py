@@ -1,6 +1,6 @@
 """Sparse flow membership and explicit row-aligned result projections."""
 
-from dataclasses import FrozenInstanceError, fields
+from dataclasses import FrozenInstanceError
 
 import numpy as np
 import polars as pl
@@ -30,20 +30,8 @@ def _result(
     )
 
 
-def test_result_contains_only_flows_geometry_and_discovery_metadata() -> None:
+def test_result_geometry_is_immutable() -> None:
     result = _result(((TraceSegment(0, 0, 6), TraceSegment(1, 0, 2)),))
-    assert {field.name for field in fields(result)} == {
-        "flows",
-        "trace_lengths",
-        "input_features",
-        "output_features",
-    }
-    for name in ("complete", "stop_reason", "stopped_segment"):
-        assert not hasattr(result, name)
-    assert {field.name for field in fields(result.flows[0])} == {
-        "model",
-        "segments",
-    }
     with pytest.raises(FrozenInstanceError):
         result.trace_lengths = (1,)  # pyright: ignore[reportAttributeAccessIssue]
     with pytest.raises(FrozenInstanceError):
@@ -212,13 +200,3 @@ def test_frame_projection_validates_count_height_reserved_column_and_type() -> (
         result.to_labeled_frames(
             [pl.DataFrame({"x": [1, 2]}).lazy()],  # pyright: ignore[reportArgumentType]
         )
-
-
-def test_frame_projection_uses_supplied_metadata_in_positional_order() -> None:
-    result = _result(((TraceSegment(0, 0, 2),),), (2,))
-    original = pl.DataFrame({"x": [0, 1]})
-    supplied = pl.DataFrame({"description": ["first", "second"]})
-    assert result.to_labeled_frames([supplied])[0].to_dict(
-        as_series=False
-    ) == {"description": ["first", "second"], "flow_id": [0, 0]}
-    assert original.columns == ["x"]

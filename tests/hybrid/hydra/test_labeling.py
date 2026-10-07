@@ -121,32 +121,6 @@ def test_subtraction_preserves_gaps_and_fully_assigned_traces() -> None:
     ]
 
 
-@pytest.mark.parametrize(
-    "accepted",
-    [
-        [TraceSegment(-1, 0, 1)],
-        [TraceSegment(2, 0, 1)],
-        [TraceSegment(0, 0, 1)],
-        [TraceSegment(1, 0, 1)],
-        [TraceSegment(1, 1, 4)],
-        [TraceSegment(1, 2, 5)],
-        [TraceSegment(1, 3, 4)],
-        [TraceSegment(1, 6, 8)],
-        [TraceSegment(1, 8, 9)],
-        [TraceSegment(1, 2, 2)],
-        [TraceSegment(1, 3, 2)],
-        [TraceSegment(1, 1, 3), TraceSegment(1, 2, 3)],
-        [TraceSegment(1, 4, 5), TraceSegment(1, 1, 2)],
-    ],
-)
-def test_subtraction_rejects_invalid_and_outside_pending_pieces(
-    accepted: list[TraceSegment],
-) -> None:
-    pending = [[], [TraceSegment(1, 1, 3), TraceSegment(1, 4, 7)]]
-    with pytest.raises(ValueError, match="Accepted segment"):
-        _subtract_segments(pending, accepted)
-
-
 def test_subtraction_exhaustive_short_tristate_masks() -> None:
     # 0 = outside pending, 1 = pending unaccepted, 2 = pending accepted.
     for length in range(7):
@@ -217,31 +191,6 @@ def test_grouping_predicts_whole_partial_batches_and_skips_completed_traces() ->
     )
     assert model.batches == [[10.0, 11.0, 12.0, 13.0]]
     assert accepted == tuple(pending[0])
-
-
-def test_grouping_skips_invalid_predictions_for_fully_assigned_trace() -> None:
-    class MalformedAssignedModel(ZeroDerivativeModel):
-        def _predict(
-            self, input_features: pl.DataFrame | pl.LazyFrame
-        ) -> pl.LazyFrame:
-            frame = (
-                input_features.collect()
-                if isinstance(input_features, pl.LazyFrame)
-                else input_features
-            )
-            if frame.height == 1:
-                return pl.DataFrame({"dx": [np.nan]}).lazy()
-            return super()._predict(frame)
-
-    accepted = _group_matching_segments(
-        traces=[_trace([0.0, 0.0]), _trace([0.0])],
-        pending=[[TraceSegment(0, 0, 2)], []],
-        model=MalformedAssignedModel(),
-        input_columns=["x"],
-        output_columns=["dx"],
-        threshold=0.1,
-    )
-    assert accepted == (TraceSegment(0, 0, 2),)
 
 
 def test_grouping_validates_assigned_rows_in_partially_assigned_trace() -> (

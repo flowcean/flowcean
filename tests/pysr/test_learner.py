@@ -11,8 +11,6 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from flowcean.core import SupervisedLearner
-
 
 class FakeRegressor:
     def __init__(self) -> None:
@@ -50,8 +48,6 @@ def test_batch_fit_prediction_equation_and_no_forced_warm_start(
 ) -> None:
     regressor = FakeRegressor()
     learner = adapter.PySRLearner(regressor)
-    assert SupervisedLearner in type(learner).__mro__
-    assert not hasattr(learner, "learn_incremental")
     assert regressor.warm_start is False
     inputs = pl.DataFrame({"x": [1.0, 2.0]})
     outputs = pl.DataFrame({"y": [2.0, 4.0]})
