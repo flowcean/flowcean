@@ -6,7 +6,8 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
-- Hybrid `Transition.delay` accepts pure, deterministic callbacks using the same context as flows and resets. The duration is evaluated at detection, including entry triggers, and fixes the execution deadline while source dynamics continue. Fixed scalar delays remain supported.
+- Hybrid `Transition.delay` accepts pure, deterministic callbacks using the same context as flows and resets. Each accepted detection samples a duration and freezes that occurrence's deadline while source dynamics continue. Fixed scalar delays remain supported.
+- Hybrid `Transition.scheduling_policy` selects `TransitionSchedulingPolicy.FIRST_DETECTION` (default), `LATEST_DETECTION`, or `EACH_DETECTION` for repeated crossings during a source visit. Latest detections can advance or postpone execution; each-detection occurrences compete by earliest deadline, coalescing equal own deadlines with the earliest detection time.
 
 ### Changed
 
@@ -17,6 +18,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Fixed
 
+- Hybrid simulation processes all direction-qualified detections at an exactly equal numerical deadline before execution, independent of transition declaration order and unrelated candidates. Distinct transitions with equal earliest deadlines are ambiguous; a latest detection can instead postpone execution.
 - HyDRA fits only selected numeric columns, preserving unrelated metadata and trace boundaries even when metadata schemas differ. Fitting, candidate scoring, and grouping consistently use Polars Float64 values, which can change Decimal threshold outcomes and lose precision for Decimal values or large integers. Invalid or non-finite backend predictions raise rather than silently affecting assignments.
 - HyDRA grouping skips fully assigned traces, avoiding irrelevant prediction failures. Traces with remaining unassigned observations are still predicted and validated in full.
 

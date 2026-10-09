@@ -528,7 +528,7 @@ def test_competing_callback_delays_are_not_resampled_after_supersession():
             source, target, lambda t: np.sin(np.pi * (t - 0.5)), delay=delay
         ),
         Transition(source, target, lambda t: t - 1, delay=lambda: 3),
-        Transition(source, target, lambda t: t - 2, delay=delay),
+        Transition(source, target, lambda t: (t - 2) * (t - 3.5), delay=delay),
     ]
     trajectory = simulate(
         _system(transitions, source, target), (0, 5), max_step=0.1
