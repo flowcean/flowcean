@@ -96,13 +96,30 @@ close_valve = Transition(
 )
 ```
 
-`delay` is a fixed, finite, nonnegative duration in the model's time units. It defaults to zero, which takes the transition immediately. A positive delay keeps the source location, flow, and residence clock active until execution. The reset, if present, uses the state, time, inputs, parameters, and source residence time at execution.
+`delay` accepts either a fixed, finite, nonnegative scalar duration in the model's time units or a pure, deterministic callback returning one. It defaults to zero, which takes the transition immediately. A positive delay keeps the source location, flow, and residence clock active until execution. The reset, if present, uses the state, time, inputs, parameters, and source residence time at execution.
+
+For a delay that depends on conditions when the crossing is detected, use a callback:
+
+```python
+def closing_delay(t, parameters, input_stream):
+    return parameters["closing_time"] * (1 + abs(input_stream(t)[0]))
+
+
+close_valve = Transition(
+    source=filling,
+    target=closed,
+    event_surface=upper_boundary,
+    delay=closing_delay,
+)
+```
+
+Delay callbacks use the same [callback arguments and signatures][flowcean.hybrid.DelayFunction] as flows and resets: any named subset of `t`, `state`, `parameters`, `input_stream`, and `location_time`, or the four-positional form. They receive the source context at detection, including location-local parameter overrides and the current visit's residence time. The returned duration is evaluated once and fixes the deadline at `detection_time + delay`; changes in state or inputs while waiting do not resample it. A subsequent occurrence in a new source visit evaluates the callback again. Fixed delays are validated at construction; invalid callback results raise `ValueError` when detected, not when constructing the transition. A callback returning zero executes immediately.
 
 The first crossing schedules the transition. Crossing back or crossing again leaves its deadline unchanged. An outgoing transition with an earlier deadline replaces the pending transition; later deadlines are discarded. Leaving the source visit cancels the pending transition, including when a self-transition starts a new visit.
 
 Detected transitions with exactly equal deadlines raise `AmbiguousTransitionError` when execution is due. An earlier transition can still supersede them. Continuous crossing detection follows the solver’s event ordering.
 
-On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and starts its delay. Each run starts with no pending occurrences, including when an initial residence time is supplied. A deadline at the simulation endpoint executes; later deadlines do not. Only executed transitions count toward `max_jumps`.
+On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and starts its delay, evaluating a delay callback with the entry context. Each run starts with no pending occurrences, including when an initial residence time is supplied. A deadline at the simulation endpoint executes; later deadlines do not. Only executed transitions count toward `max_jumps`.
 
 The [delayed valve example](../examples/hybrid_systems.md#delayed-valve-closure) shows how continued filling during the delay raises the final water height.
 

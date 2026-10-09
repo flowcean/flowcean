@@ -84,19 +84,19 @@ class _EventFn:
 class _PendingTransition(NamedTuple):
     transition: Transition
     detection_time: float
+    deadline: float
     conflicts: tuple[Transition, ...] = ()
-
-    @property
-    def deadline(self) -> float:
-        return self.detection_time + self.transition.delay
 
 
 def _schedule(
-    pending: _PendingTransition | None, transition: Transition, time: float
+    pending: _PendingTransition | None,
+    transition: Transition,
+    time: float,
+    delay: float,
 ) -> _PendingTransition:
-    candidate = _PendingTransition(transition, time)
+    candidate = _PendingTransition(transition, time, time + delay)
     if not np.isfinite(candidate.deadline) or (
-        transition.delay > 0 and candidate.deadline <= time
+        delay > 0 and candidate.deadline <= time
     ):
         raise SimulationProgressError(
             "Transition delay cannot advance to a finite representable deadline."
@@ -115,6 +115,7 @@ class _EntryResult(NamedTuple):
     jumps: int
     clock: _ResidenceClock
     pending: _PendingTransition | None
+    detected: set[Transition]
 
 
 def simulate(
@@ -136,6 +137,7 @@ def simulate(
     input streams must be pure and deterministic under repeated evaluation.
     Equal endpoints resolve entry transitions without calling the ODE solver.
     Parameters are snapshotted for every location at the start of the run.
+    Delay callbacks are evaluated once at detection, freezing the deadline.
     A positive delay keeps the source flow and residence clock active until
     execution. Leaving the source visit cancels its pending transition.
     Deadlines at the final endpoint execute.
@@ -196,21 +198,23 @@ def simulate(
         jumps=0,
         max_jumps=max_jumps,
     )
-    state, location, events, jumps, clock, pending = entry
+    state, location, events, jumps, clock, pending, detected = entry
     execution.extend(events)
     current = start
     allow_same_time_detection = False
     while current < end:
         # The earliest deadline ends the source visit and cancels later ones.
-        # Skip surfaces whose delay would finish too late even if detected now.
+        # Do not resample detected occurrences, including superseded ones.
+        # Fixed delays can also be skipped if they cannot finish in time;
+        # callback delays are unknown until their surface is detected.
         transitions = [
             transition
             for transition in system.transitions_from(location)
-            if pending is None
-            or (
-                transition is not pending.transition
-                and transition not in pending.conflicts
-                and current + transition.delay <= pending.deadline
+            if transition not in detected
+            and (
+                pending is None
+                or callable(transition.delay)
+                or current + transition.delay <= pending.deadline
             )
         ]
         event_fns = [
@@ -265,16 +269,21 @@ def simulate(
             )
 
         if selected is not None:
-            index, event_time, _ = selected
-            pending = _schedule(pending, transitions[index], event_time)
+            index, event_time, event_state = selected
+            transition = transitions[index]
+            delay = bindings.delay(
+                transition, event_time, event_state, clock.age(event_time)
+            )
+            detected.add(transition)
+            pending = _schedule(pending, transition, event_time, delay)
         if pending is None or (selected is None and pending.deadline > end):
             break
         current = segment_end
         state = result.y[:, -1].copy()
         if pending.deadline > current:
             # Until execution, allow solver restarts without time progress.
-            # Each detected candidate is excluded as pending/conflicting or
-            # pruned for finishing too late, so it cannot block the restart.
+            # Each detected candidate is excluded for this visit, so it
+            # cannot block the restart or resample its delay.
             allow_same_time_detection = True
             continue
 
@@ -308,7 +317,7 @@ def simulate(
             jumps=jumps,
             max_jumps=max_jumps,
         )
-        state, location, events, jumps, clock, pending = entry
+        state, location, events, jumps, clock, pending, detected = entry
         execution.extend(events)
         current = event_time
         allow_same_time_detection = False
@@ -443,9 +452,14 @@ def _settle_location_entries(
             if value == 0.0
             and transition.entry_policy is SurfaceEntryPolicy.TRIGGER
         ]
-        immediate = [
-            transition for transition in triggers if transition.delay == 0
+        delays = [
+            (
+                transition,
+                bindings.delay(transition, time, state, clock.age(time)),
+            )
+            for transition in triggers
         ]
+        immediate = [transition for transition, delay in delays if delay == 0]
         if len(immediate) > 1:
             error = AmbiguousTransitionError(
                 f"Multiple transitions request an entry-time jump from {display_label(location)!r} "
@@ -457,10 +471,16 @@ def _settle_location_entries(
             raise error
         if not immediate:
             pending = None
-            for transition in triggers:
-                pending = _schedule(pending, transition, time)
+            for transition, delay in delays:
+                pending = _schedule(pending, transition, time, delay)
             return _EntryResult(
-                state, location, tuple(events), jumps, clock, pending
+                state,
+                location,
+                tuple(events),
+                jumps,
+                clock,
+                pending,
+                set(triggers),
             )
         transition = immediate[0]
         jumps = _increment_jumps(jumps, max_jumps)

@@ -2,7 +2,7 @@
 
 from ._graphviz import _escape_dot_label
 from ._graphviz import render_dot_svg as render_dot_svg
-from .hybrid_system import HybridSystem, display_label
+from .hybrid_system import HybridSystem, _callback_label, display_label
 
 
 def build_hybrid_system_dot(
@@ -25,7 +25,8 @@ def build_hybrid_system_dot(
     treated as literal text, not DOT markup or mathematical expressions.
     No simulation or callback evaluation is performed, and Graphviz need not
     be installed.
-    Positive transition delays are always annotated in model time units.
+    Positive fixed delays are annotated in model time units; delay callbacks
+    are annotated by name, without evaluation.
 
     Args:
         system: Constructed hybrid system to visualize.
@@ -79,7 +80,10 @@ def build_hybrid_system_dot(
             annotations.append(
                 f"entry_policy: {transition.entry_policy.value}"
             )
-        if transition.delay > 0:
+        if callable(transition.delay):
+            name = _callback_label(transition.delay) or f"delay_{index}"
+            annotations.append(f"delay: {name}")
+        elif transition.delay > 0:
             annotations.append(f"delay: {transition.delay:g}")
         edge = f"  location_{source} -> location_{target}"
         if annotations:

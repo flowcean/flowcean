@@ -17,10 +17,10 @@ Derivative = State | float
 class FlowFunction(Protocol):
     """Continuous-state derivative callback.
 
-    Flow, event-surface, and reset callbacks share these inputs: physical time
-    (``t``), the continuous ``state`` vector, effective ``parameters``, an
-    ``input_stream`` returning a vector for a requested time, and the current
-    visit's elapsed ``location_time``.
+    Flow, event-surface, reset, and delay callbacks share these inputs:
+    physical time (``t``), the continuous ``state`` vector, effective
+    ``parameters``, an ``input_stream`` returning a vector for a requested
+    time, and the current visit's elapsed ``location_time``.
 
     Model callbacks may declare any subset using these names, including
     keyword-only arguments. Named callbacks with ``**kwargs`` receive all five
@@ -77,6 +77,26 @@ class ResetFunction(Protocol):
         input_stream: InputStream,
         location_time: float,
     ) -> State: ...
+
+
+class DelayFunction(Protocol):
+    """Transition delay evaluated once at detection, not at execution.
+
+    Return a finite, nonnegative scalar duration in model time units. The
+    source location's state, effective parameters, and residence time are
+    supplied at detection. See [FlowFunction][flowcean.hybrid.FlowFunction]
+    for shared inputs, supported signatures, and purity requirements.
+    """
+
+    def __call__(
+        self,
+        *,
+        t: float,
+        state: State,
+        parameters: Parameters,
+        input_stream: InputStream,
+        location_time: float,
+    ) -> float: ...
 
 
 class CrossingDirection(IntEnum):
@@ -256,9 +276,15 @@ class Transition:
         reset: Optional reset applied upon transition.
         entry_policy: Behavior when the event surface is exactly zero upon
             entry to the source location.
-        delay: Finite, nonnegative time from detection to execution, in the
-            model's time units. The first crossing schedules execution;
-            further crossings neither cancel nor restart it. The source flow
+        delay: Fixed finite, nonnegative scalar duration, or a pure,
+            deterministic callback returning one in the model's time units.
+            See [DelayFunction][flowcean.hybrid.DelayFunction] for inputs.
+            The callback is evaluated at detection, including entry triggers,
+            and validated then; fixed values are validated on construction.
+            The first crossing freezes the deadline at detection time plus
+            delay; further crossings neither cancel nor restart it and do
+            not reevaluate the callback. A new source visit can detect a new
+            occurrence and evaluate the callback again. The source flow
             and residence clock continue until execution. Leaving the source
             visit, including a self-transition, cancels its pending occurrences.
             An earlier outgoing deadline supersedes the pending transition.
@@ -271,7 +297,7 @@ class Transition:
     event_surface: EventSurface
     reset: Reset | None = None
     entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR
-    delay: float = 0.0
+    delay: float | Callable[..., float] = 0.0
 
     def __init__(
         self,
@@ -281,7 +307,7 @@ class Transition:
         reset: Reset | Callable[..., State] | None = None,
         *,
         entry_policy: SurfaceEntryPolicy = SurfaceEntryPolicy.ERROR,
-        delay: float = 0.0,
+        delay: float | Callable[..., float] = 0.0,
     ) -> None:
         if not isinstance(source, Location):
             message = "source must be a Location."
@@ -306,9 +332,8 @@ class Transition:
         if type(entry_policy) is not SurfaceEntryPolicy:
             message = "entry_policy must be a SurfaceEntryPolicy."
             raise TypeError(message)
-        delay = float(delay)
-        if not np.isfinite(delay) or delay < 0:
-            raise ValueError("delay must be finite and nonnegative.")
+        if not callable(delay):
+            delay = _validate_delay(delay)
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "target", target)
         object.__setattr__(self, "event_surface", surface)
@@ -380,6 +405,19 @@ class HybridSystem:
             for transition in self.transitions
             if transition.source is location
         ]
+
+
+def _validate_delay(value: float) -> float:
+    """Validate a fixed delay or the result of a delay callback."""
+    if np.ndim(value) != 0:
+        raise ValueError("delay must be a scalar.")
+    try:
+        delay = float(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("delay must be a numeric scalar.") from error
+    if not np.isfinite(delay) or delay < 0:
+        raise ValueError("delay must be finite and nonnegative.")
+    return delay
 
 
 def display_label(obj: object, *, fallback: str | None = None) -> str:

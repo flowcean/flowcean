@@ -15,6 +15,7 @@ from .hybrid_system import (
     Parameters,
     State,
     Transition,
+    _validate_delay,
 )
 
 type _BoundFunction[T] = Callable[[float, State, float], T]
@@ -229,6 +230,19 @@ class _RunBindings:
                 }
             )
         )
+        self.delays: Mapping[Transition, _BoundFunction[float]] = (
+            MappingProxyType(
+                {
+                    transition: _bind_callback(
+                        transition.delay,
+                        self.parameters[transition.source],
+                        self.effective_input_stream,
+                    )
+                    for transition in system.transitions
+                    if callable(transition.delay)
+                }
+            )
+        )
         self.resets: Mapping[Transition, _BoundFunction[State]] = (
             MappingProxyType(
                 {
@@ -245,3 +259,17 @@ class _RunBindings:
                 }
             )
         )
+
+    def delay(
+        self,
+        transition: Transition,
+        time: float,
+        state: State,
+        location_time: float,
+    ) -> float:
+        """Resolve a delay using the source context at detection."""
+        if callable(transition.delay):
+            return _validate_delay(
+                self.delays[transition](time, state, location_time)
+            )
+        return transition.delay

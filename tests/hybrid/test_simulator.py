@@ -1095,7 +1095,7 @@ def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
         np.testing.assert_allclose(sampled_ages[sampled_times == 1.0], 0.0)
 
 
-@pytest.mark.parametrize("role", ["flow", "surface", "reset"])
+@pytest.mark.parametrize("role", ["flow", "surface", "reset", "delay"])
 @pytest.mark.parametrize(
     "form",
     [
@@ -1168,6 +1168,7 @@ def test_callback_dispatch_preserves_legacy_forms_and_exposes_age(
                 callback if role == "surface" else lambda: 0.0,
                 callback if role == "reset" else lambda state: state,
                 entry_policy=SurfaceEntryPolicy.TRIGGER,
+                delay=callback if role == "delay" else 0.0,
             )
         ]
         if role != "flow"

@@ -4,6 +4,7 @@ from . import benchmarks, hydra
 from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
     CrossingDirection,
+    DelayFunction,
     EventSurface,
     EventSurfaceFunction,
     Flow,
@@ -38,6 +39,7 @@ __all__ = (
     "AmbiguousTransitionError",
     "ContinuousSegment",
     "CrossingDirection",
+    "DelayFunction",
     "Event",
     "EventSurface",
     "EventSurfaceFunction",

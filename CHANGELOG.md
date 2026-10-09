@@ -4,6 +4,10 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ## [Unreleased]
 
+### Added
+
+- Hybrid `Transition.delay` accepts pure, deterministic callbacks using the same context as flows and resets. The duration is evaluated at detection, including entry triggers, and fixes the execution deadline while source dynamics continue. Fixed scalar delays remain supported.
+
 ### Changed
 
 - **Breaking:** `HyDRALearner.learn` accepts independent Polars traces with explicit `input_features` and `output_features`, returning `LearnedFlows` rather than a predictor only when every supplied observation is assigned. Failure raises public `HyDRAIdentificationError` (`RuntimeError`), whose `.segment` and message identify the failing trace and half-open row bounds; no partial result is returned. `LearnedFlows` exposes `flows`, `trace_lengths`, `input_features`, and `output_features`; `to_flow_ids()` returns fully assigned int64 arrays and `to_labeled_frames(original_traces)` adds non-null Int64 `flow_id` labels for selector training. Train selectors and construct `HyDRAModel` separately; learner-level selector and schema arguments are removed.
