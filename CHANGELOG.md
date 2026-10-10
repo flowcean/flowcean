@@ -4,6 +4,11 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ## [Unreleased]
 
+### Added
+
+- Hybrid `Transition.delay` accepts pure, deterministic callbacks using the same context as flows and resets. Each accepted detection samples a duration and freezes that occurrence's deadline while source dynamics continue. Fixed scalar delays remain supported.
+- Hybrid `Transition.scheduling_policy` selects `TransitionSchedulingPolicy.FIRST_DETECTION` (default), `LATEST_DETECTION`, or `EACH_DETECTION` for repeated crossings during a source visit. Latest detections can advance or postpone execution; each-detection occurrences compete by earliest deadline, coalescing equal own deadlines with the earliest detection time.
+
 ### Changed
 
 - **Breaking:** `HyDRALearner.learn` accepts independent Polars traces with explicit `input_features` and `output_features`, returning `LearnedFlows` rather than a predictor only when every supplied observation is assigned. Failure raises public `HyDRAIdentificationError` (`RuntimeError`), whose `.segment` and message identify the failing trace and half-open row bounds; no partial result is returned. `LearnedFlows` exposes `flows`, `trace_lengths`, `input_features`, and `output_features`; `to_flow_ids()` returns fully assigned int64 arrays and `to_labeled_frames(original_traces)` adds non-null Int64 `flow_id` labels for selector training. Train selectors and construct `HyDRAModel` separately; learner-level selector and schema arguments are removed.
@@ -13,6 +18,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Fixed
 
+- Hybrid simulation processes all direction-qualified detections at an exactly equal numerical deadline before execution, independent of transition declaration order and unrelated candidates. Distinct transitions with equal earliest deadlines are ambiguous; a latest detection can instead postpone execution.
 - HyDRA fits only selected numeric columns, preserving unrelated metadata and trace boundaries even when metadata schemas differ. Fitting, candidate scoring, and grouping consistently use Polars Float64 values, which can change Decimal threshold outcomes and lose precision for Decimal values or large integers. Invalid or non-finite backend predictions raise rather than silently affecting assignments.
 - HyDRA grouping skips fully assigned traces, avoiding irrelevant prediction failures. Traces with remaining unassigned observations are still predicted and validated in full.
 

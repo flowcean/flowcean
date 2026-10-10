@@ -47,9 +47,13 @@ class Event:
     target, event surface, and reset. ``time`` is physical simulation time;
     ``microstep`` orders events at that time, starting at zero.
     ``location_time_before`` is the age of the source visit before the jump.
-    ``detection_time`` is when the event surface was detected, possibly on
-    location entry. ``time`` is when the transition executed after its delay.
-    They are equal for zero-delay transitions.
+    ``detection_time`` identifies the detection that scheduled the executed
+    occurrence, possibly on location entry: the first for FIRST_DETECTION,
+    the latest for LATEST_DETECTION, or the earliest-deadline occurrence for
+    EACH_DETECTION (earliest detection when its own deadlines tie).
+    ``time`` is when the transition executed after its sampled delay.
+    They are equal for zero-delay transitions. Unexecuted detections are not
+    recorded as events.
     """
 
     time: float

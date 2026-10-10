@@ -7,6 +7,7 @@ from flowcean.hybrid import (
     AmbiguousTransitionError,
     CrossingDirection,
     EventSurface,
+    HybridSimulationError,
     HybridSystem,
     InvalidEventSurfaceValueError,
     Location,
@@ -42,6 +43,14 @@ def test_continuous_flow_matches_exponential_solution() -> None:
     np.testing.assert_allclose(frame["x0"], expected, rtol=2e-6, atol=1e-8)
     assert frame["location_label"].to_list() == ["growth"] * len(times)
     assert trace.events == ()
+
+
+def test_solver_failure_reports_hybrid_simulation_error() -> None:
+    """A finite-time blowup reports integration failure, not a partial trace."""
+    source = Location(lambda state: state**2)
+    system = HybridSystem([source], [], source, np.array([1.0]))
+    with pytest.raises(HybridSimulationError, match="ODE integration failed"):
+        simulate(system, (0, 2))
 
 
 @pytest.mark.parametrize(
@@ -547,8 +556,10 @@ def test_fixed_sample_grid_uses_post_reset_state_at_event() -> None:
             Transition(
                 source,
                 target,
+                # This sampling contract needs an exactly representable event
+                # time, not an approximately located state-space crossing.
                 EventSurface(
-                    lambda state: state[0] - 0.5,
+                    lambda t: t - 0.5,
                     direction=CrossingDirection.RISING,
                 ),
                 lambda: np.array([10.0]),
@@ -1095,7 +1106,7 @@ def test_visit_clock_aligns_at_boundary_for_every_sampling_mode(
         np.testing.assert_allclose(sampled_ages[sampled_times == 1.0], 0.0)
 
 
-@pytest.mark.parametrize("role", ["flow", "surface", "reset"])
+@pytest.mark.parametrize("role", ["flow", "surface", "reset", "delay"])
 @pytest.mark.parametrize(
     "form",
     [
@@ -1168,6 +1179,7 @@ def test_callback_dispatch_preserves_legacy_forms_and_exposes_age(
                 callback if role == "surface" else lambda: 0.0,
                 callback if role == "reset" else lambda state: state,
                 entry_policy=SurfaceEntryPolicy.TRIGGER,
+                delay=callback if role == "delay" else 0.0,
             )
         ]
         if role != "flow"

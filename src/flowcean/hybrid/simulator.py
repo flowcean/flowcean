@@ -1,10 +1,12 @@
 """SciPy event-driven hybrid simulation, independent of sampling grids."""
 
 from collections.abc import Callable, Iterable, Sequence
+from itertools import groupby
 from typing import NamedTuple
 
 import numpy as np
-from scipy.integrate import solve_ivp
+from scipy.integrate import RK45, DenseOutput, OdeSolution
+from scipy.optimize import brentq
 
 from ._runtime import (
     _BoundFunction,
@@ -18,6 +20,7 @@ from .hybrid_system import (
     Location,
     SurfaceEntryPolicy,
     Transition,
+    TransitionSchedulingPolicy,
     display_label,
 )
 from .trajectory import ContinuousSegment, Event, HybridTrajectory
@@ -58,7 +61,7 @@ class SimulationProgressError(HybridSimulationError):
 
 
 class _EventFn:
-    """Terminal event wrapper retaining SciPy's crossing-direction semantics."""
+    """Bound event surface with runtime validation."""
 
     def __init__(
         self,
@@ -70,7 +73,6 @@ class _EventFn:
         self.surface = surface
         self.clock = clock
         self.direction = int(transition.event_surface.direction)
-        self.terminal = True
 
     def __call__(self, t: float, y: np.ndarray) -> float:
         value = self.surface(t, y, self.clock.age(t))
@@ -84,28 +86,56 @@ class _EventFn:
 class _PendingTransition(NamedTuple):
     transition: Transition
     detection_time: float
-    conflicts: tuple[Transition, ...] = ()
-
-    @property
-    def deadline(self) -> float:
-        return self.detection_time + self.transition.delay
+    deadline: float
 
 
 def _schedule(
-    pending: _PendingTransition | None, transition: Transition, time: float
-) -> _PendingTransition:
-    candidate = _PendingTransition(transition, time)
+    pending: dict[Transition, _PendingTransition],
+    transition: Transition,
+    time: float,
+    delay: float,
+) -> None:
+    candidate = _PendingTransition(transition, time, time + delay)
     if not np.isfinite(candidate.deadline) or (
-        transition.delay > 0 and candidate.deadline <= time
+        delay > 0 and candidate.deadline <= time
     ):
         raise SimulationProgressError(
             "Transition delay cannot advance to a finite representable deadline."
         )
-    if pending is None or candidate.deadline < pending.deadline:
-        return candidate
-    if candidate.deadline == pending.deadline:
-        return pending._replace(conflicts=(*pending.conflicts, transition))
-    return pending
+    previous = pending.get(transition)
+    policy = transition.scheduling_policy
+    if (
+        previous is None
+        or policy is TransitionSchedulingPolicy.LATEST_DETECTION
+        or (
+            policy is TransitionSchedulingPolicy.EACH_DETECTION
+            and (candidate.deadline, candidate.detection_time)
+            < (previous.deadline, previous.detection_time)
+        )
+    ):
+        pending[transition] = candidate
+
+
+def _earliest(
+    pending: dict[Transition, _PendingTransition],
+) -> _PendingTransition | None:
+    return min(pending.values(), key=lambda item: item.deadline, default=None)
+
+
+def _check_conflicts(
+    pending: dict[Transition, _PendingTransition],
+    winner: _PendingTransition,
+) -> None:
+    tied = [
+        item.transition
+        for item in pending.values()
+        if item.deadline == winner.deadline
+    ]
+    if len(tied) > 1:
+        raise AmbiguousTransitionError(
+            f"Multiple transitions are scheduled for t={winner.deadline!r}: "
+            f"{_transition_descriptions(tied)}."
+        )
 
 
 class _EntryResult(NamedTuple):
@@ -114,7 +144,8 @@ class _EntryResult(NamedTuple):
     events: tuple[Event, ...]
     jumps: int
     clock: _ResidenceClock
-    pending: _PendingTransition | None
+    pending: dict[Transition, _PendingTransition]
+    consumed: set[Transition]
 
 
 def simulate(
@@ -136,9 +167,18 @@ def simulate(
     input streams must be pure and deterministic under repeated evaluation.
     Equal endpoints resolve entry transitions without calling the ODE solver.
     Parameters are snapshotted for every location at the start of the run.
-    A positive delay keeps the source flow and residence clock active until
-    execution. Leaving the source visit cancels its pending transition.
-    Deadlines at the final endpoint execute.
+    Each transition's scheduling policy selects accepted detections and
+    pending occurrences. Delay callbacks run once per accepted detection,
+    freezing that occurrence's deadline. A positive delay keeps the source
+    flow and residence clock active until execution. Leaving the source visit
+    cancels all its occurrences. At exactly equal numerical times, all
+    direction-qualified detections precede execution, even at the final
+    endpoint; a latest detection can postpone execution beyond the run.
+    Distinct transitions with equal earliest deadlines are ambiguous.
+
+    Root detection uses integration-step endpoint signs: multiple roots within
+    a step can be missed, and tangencies are step-dependent. Equality means
+    exact numerical equality, not mathematical simultaneity or a tolerance.
 
     Args:
         system: Model to simulate.
@@ -196,95 +236,29 @@ def simulate(
         jumps=0,
         max_jumps=max_jumps,
     )
-    state, location, events, jumps, clock, pending = entry
+    state, location, events, jumps, clock, pending, consumed = entry
     execution.extend(events)
     current = start
-    allow_same_time_detection = False
     while current < end:
-        # The earliest deadline ends the source visit and cancels later ones.
-        # Skip surfaces whose delay would finish too late even if detected now.
-        transitions = [
-            transition
-            for transition in system.transitions_from(location)
-            if pending is None
-            or (
-                transition is not pending.transition
-                and transition not in pending.conflicts
-                and current + transition.delay <= pending.deadline
-            )
-        ]
-        event_fns = [
-            _EventFn(transition, bindings.surfaces[transition], clock)
-            for transition in transitions
-        ]
-
-        result = solve_ivp(
-            _wrap_flow(bindings.flows[location], clock),
-            (current, min(end, pending.deadline) if pending else end),
-            state.copy(),
-            events=event_fns or None,
+        segment, winner = _integrate_visit(
+            system,
+            location,
+            state,
+            (current, end),
+            bindings,
+            clock,
+            pending,
+            consumed,
             rtol=rtol,
             atol=atol,
-            dense_output=True,
-            max_step=np.inf if max_step is None else max_step,
+            max_step=max_step,
         )
-        if not result.success:
-            raise HybridSimulationError(
-                f"ODE integration failed: {result.message}"
-            )
-        has_event = result.t_events and any(
-            len(times) for times in result.t_events
-        )
-        selected = (
-            _first_event(result.t_events, result.y_events)
-            if has_event
-            else None
-        )
-        if selected is not None:
-            _, event_time, _ = selected
-            if event_time <= current and not allow_same_time_detection:
-                error = SimulationProgressError(
-                    f"An event did not advance physical time (segment start={current!r}, event time={event_time!r}).",
-                )
-                error.add_note(
-                    "This can result from stateful callbacks, discontinuous event surfaces, "
-                    "or insufficient floating-point time resolution. Use deterministic "
-                    "callbacks and continuous event surfaces.",
-                )
-                raise error
-        segment_end = float(result.t[-1])
-        if segment_end > current:
-            execution.append(
-                ContinuousSegment(
-                    location,
-                    (current, segment_end),
-                    result.sol,
-                    clock,
-                    result.t,
-                )
-            )
-
-        if selected is not None:
-            index, event_time, _ = selected
-            pending = _schedule(pending, transitions[index], event_time)
-        if pending is None or (selected is None and pending.deadline > end):
+        execution.append(segment)
+        if winner is None:
             break
-        current = segment_end
-        state = result.y[:, -1].copy()
-        if pending.deadline > current:
-            # Until execution, allow solver restarts without time progress.
-            # Each detected candidate is excluded as pending/conflicting or
-            # pruned for finishing too late, so it cannot block the restart.
-            allow_same_time_detection = True
-            continue
-
-        if pending.conflicts:
-            raise AmbiguousTransitionError(
-                f"Multiple transitions are scheduled for t={current!r}: "
-                f"{_transition_descriptions((pending.transition, *pending.conflicts))}."
-            )
-        transition = pending.transition
-        event_time, event_state = current, state
+        transition = winner.transition
+        event_time = winner.deadline
+        event_state = segment.evaluate(event_time).state
         jumps = _increment_jumps(jumps, max_jumps)
         state, event = _apply_transition(
             transition,
@@ -293,7 +267,7 @@ def simulate(
             bindings,
             microstep=0,
             location_time=clock.age(event_time),
-            detection_time=pending.detection_time,
+            detection_time=winner.detection_time,
         )
         execution.append(event)
 
@@ -308,10 +282,9 @@ def simulate(
             jumps=jumps,
             max_jumps=max_jumps,
         )
-        state, location, events, jumps, clock, pending = entry
+        state, location, events, jumps, clock, pending, consumed = entry
         execution.extend(events)
         current = event_time
-        allow_same_time_detection = False
     return HybridTrajectory(
         system,
         (start, end),
@@ -335,29 +308,172 @@ def _wrap_flow(
     return flow
 
 
-def _first_event(
-    t_events: Sequence[np.ndarray],
-    y_events: Sequence[np.ndarray],
-) -> tuple[int, float, np.ndarray]:
-    """Select the earliest reported event; ties retain SciPy's ordering."""
-    earliest_time = float("inf")
-    earliest_index = -1
-    earliest_state = np.zeros(0, dtype=float)
-    for index, (times, states) in enumerate(
-        zip(t_events, y_events, strict=False)
-    ):
-        if len(times) == 0:
-            continue
-        time = float(times[0])
-        if time < earliest_time:
-            earliest_index, earliest_time, earliest_state = (
-                index,
-                time,
-                states[0],
+def _step_roots(
+    surfaces: Sequence[_EventFn],
+    values: dict[Transition, float],
+    consumed: set[Transition],
+    interval: tuple[float, float],
+    state: np.ndarray,
+    dense: DenseOutput,
+) -> list[tuple[float, Transition]]:
+    """Locate all direction-qualified roots of one accepted integration step.
+
+    Use actual endpoint values, not a value reevaluated at an approximate
+    root. A consumed endpoint zero remains latched until a nonzero endpoint;
+    this suppresses duplicate detections on departure or a zero plateau.
+    """
+    left, right = interval
+    roots = []
+    for surface in surfaces:
+        transition = surface.transition
+        before = values[transition]
+        after = surface(right, state)
+        rising = before <= 0 <= after
+        falling = before >= 0 >= after
+        crossing = (rising and surface.direction >= 0) or (
+            falling and surface.direction <= 0
+        )
+        if crossing and not (before == 0 and transition in consumed):
+            # Dense-output endpoint rounding can differ from the accepted
+            # state. Preserve the actual endpoint values defining the bracket.
+            def bracket_value(
+                time: float,
+                surface: _EventFn = surface,
+                before: float = before,
+                after: float = after,
+            ) -> float:
+                if time == left:
+                    return before
+                if time == right:
+                    return after
+                return surface(time, dense(time))
+
+            root = brentq(
+                bracket_value,
+                left,
+                right,
+                xtol=4 * np.finfo(float).eps,
+                rtol=4 * np.finfo(float).eps,
             )
-    if earliest_index < 0:
-        raise RuntimeError("Event requested but none were detected.")
-    return earliest_index, earliest_time, earliest_state
+            roots.append((root, transition))
+            if after == 0:
+                consumed.add(transition)
+        if after != 0:
+            consumed.discard(transition)
+        values[transition] = after
+    return sorted(roots, key=lambda item: item[0])
+
+
+def _integrate_visit(
+    system: HybridSystem,
+    location: Location,
+    state: np.ndarray,
+    t_span: tuple[float, float],
+    bindings: _RunBindings,
+    clock: _ResidenceClock,
+    pending: dict[Transition, _PendingTransition],
+    consumed: set[Transition],
+    *,
+    rtol: float,
+    atol: float,
+    max_step: float | None,
+) -> tuple[ContinuousSegment, _PendingTransition | None]:
+    """Integrate a visit, arbitrating every same-time root before execution.
+
+    Detections do not change the flow, so retain accepted steps rather than
+    restarting at approximate roots. A changed deadline can clip the current
+    interpolant or tighten the next solver's bound. Postponement can leave an
+    obsolete bound; resume exactly there, retaining endpoint signs and clock.
+    """
+    start, end = t_span
+    current = start
+    surfaces = [
+        _EventFn(transition, bindings.surfaces[transition], clock)
+        for transition in system.transitions_from(location)
+    ]
+    values = {
+        surface.transition: surface(start, state) for surface in surfaces
+    }
+    knots = [start]
+    interpolants: list[DenseOutput] = []
+    solver = None
+    winner = None
+    while current < end:
+        earliest = _earliest(pending)
+        bound = min(end, earliest.deadline) if earliest else end
+        if (
+            solver is None
+            or solver.status == "finished"
+            or solver.t_bound > bound
+        ):
+            solver = RK45(
+                _wrap_flow(bindings.flows[location], clock),
+                current,
+                state.copy(),
+                bound,
+                rtol=rtol,
+                atol=atol,
+                max_step=np.inf if max_step is None else max_step,
+            )
+        message = solver.step()
+        if solver.status == "failed":
+            raise HybridSimulationError(f"ODE integration failed: {message}")
+        dense = solver.dense_output()
+        right = float(solver.t)
+        # FIRST remembers even a currently losing candidate for the full visit.
+        active = [
+            surface
+            for surface in surfaces
+            if surface.transition not in pending
+            or surface.transition.scheduling_policy
+            is not TransitionSchedulingPolicy.FIRST_DETECTION
+        ]
+        roots = _step_roots(
+            active, values, consumed, (current, right), solver.y, dense
+        )
+        for time, group in groupby(roots, key=lambda item: item[0]):
+            earliest = _earliest(pending)
+            if earliest is not None and earliest.deadline < time:
+                break
+            if time <= start:
+                error = SimulationProgressError(
+                    f"An event did not advance physical time (segment start={start!r}, event time={time!r})."
+                )
+                error.add_note(
+                    "This can result from stateful callbacks, discontinuous event surfaces, "
+                    "or insufficient floating-point time resolution. Use deterministic "
+                    "callbacks and continuous event surfaces."
+                )
+                raise error
+            event_state = dense(time)
+            for _, transition in group:
+                delay = bindings.delay(
+                    transition, time, event_state, clock.age(time)
+                )
+                _schedule(pending, transition, time, delay)
+        earliest = _earliest(pending)
+        if earliest is not None and earliest.deadline <= right:
+            _check_conflicts(pending, earliest)
+            winner = earliest
+            right = earliest.deadline
+        if right > current:
+            knots.append(right)
+            interpolants.append(dense)
+        if winner is not None:
+            break
+        current = right
+        state = solver.y
+    times = np.array(knots)
+    return (
+        ContinuousSegment(
+            location,
+            (start, knots[-1]),
+            OdeSolution(times, interpolants),
+            clock,
+            times,
+        ),
+        winner,
+    )
 
 
 def _apply_transition(
@@ -443,9 +559,14 @@ def _settle_location_entries(
             if value == 0.0
             and transition.entry_policy is SurfaceEntryPolicy.TRIGGER
         ]
-        immediate = [
-            transition for transition in triggers if transition.delay == 0
+        delays = [
+            (
+                transition,
+                bindings.delay(transition, time, state, clock.age(time)),
+            )
+            for transition in triggers
         ]
+        immediate = [transition for transition, delay in delays if delay == 0]
         if len(immediate) > 1:
             error = AmbiguousTransitionError(
                 f"Multiple transitions request an entry-time jump from {display_label(location)!r} "
@@ -456,11 +577,17 @@ def _settle_location_entries(
             )
             raise error
         if not immediate:
-            pending = None
-            for transition in triggers:
-                pending = _schedule(pending, transition, time)
+            pending: dict[Transition, _PendingTransition] = {}
+            for transition, delay in delays:
+                _schedule(pending, transition, time, delay)
             return _EntryResult(
-                state, location, tuple(events), jumps, clock, pending
+                state,
+                location,
+                tuple(events),
+                jumps,
+                clock,
+                pending,
+                set(triggers),
             )
         transition = immediate[0]
         jumps = _increment_jumps(jumps, max_jumps)

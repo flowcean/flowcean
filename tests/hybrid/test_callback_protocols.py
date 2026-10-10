@@ -5,6 +5,7 @@ from inspect import Parameter, signature
 import numpy as np
 
 from flowcean.hybrid import (
+    DelayFunction,
     EventSurfaceFunction,
     FlowFunction,
     ResetFunction,
@@ -51,6 +52,7 @@ def test_callback_protocols_accept_five_named_inputs() -> None:
 
     flow_callback: FlowFunction = flow
     surface_callback: EventSurfaceFunction = surface
+    delay_callback: DelayFunction = surface
     reset_callback: ResetFunction = reset
     state: State = np.array([2.0])
     parameters: Parameters = {"gain": 3.0}
@@ -68,16 +70,17 @@ def test_callback_protocols_accept_five_named_inputs() -> None:
         ),
         [11.0],
     )
-    assert (
-        surface_callback(
-            t=1.0,
-            state=state,
-            parameters=parameters,
-            input_stream=input_stream,
-            location_time=4.0,
+    for callback in (surface_callback, delay_callback):
+        assert (
+            callback(
+                t=1.0,
+                state=state,
+                parameters=parameters,
+                input_stream=input_stream,
+                location_time=4.0,
+            )
+            == 11.0
         )
-        == 11.0
-    )
     np.testing.assert_allclose(
         reset_callback(
             t=1.0,
@@ -92,7 +95,12 @@ def test_callback_protocols_accept_five_named_inputs() -> None:
 
 def test_callback_protocol_signatures_are_five_required_keywords() -> None:
     canonical = ("t", "state", "parameters", "input_stream", "location_time")
-    for protocol in (FlowFunction, EventSurfaceFunction, ResetFunction):
+    for protocol in (
+        FlowFunction,
+        EventSurfaceFunction,
+        ResetFunction,
+        DelayFunction,
+    ):
         parameters = signature(protocol.__call__).parameters
         assert tuple(parameters) == ("self", *canonical)
         for name in canonical:

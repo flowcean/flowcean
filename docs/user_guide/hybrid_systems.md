@@ -96,13 +96,38 @@ close_valve = Transition(
 )
 ```
 
-`delay` is a fixed, finite, nonnegative duration in the model's time units. It defaults to zero, which takes the transition immediately. A positive delay keeps the source location, flow, and residence clock active until execution. The reset, if present, uses the state, time, inputs, parameters, and source residence time at execution.
+`delay` accepts either a fixed, finite, nonnegative scalar duration in the model's time units or a pure, deterministic callback returning one. It defaults to zero, which takes the transition immediately. A positive delay keeps the source location, flow, and residence clock active until execution. The reset, if present, uses the state, time, inputs, parameters, and source residence time at execution.
 
-The first crossing schedules the transition. Crossing back or crossing again leaves its deadline unchanged. An outgoing transition with an earlier deadline replaces the pending transition; later deadlines are discarded. Leaving the source visit cancels the pending transition, including when a self-transition starts a new visit.
+For a delay that depends on conditions when the crossing is detected, use a callback:
 
-Detected transitions with exactly equal deadlines raise `AmbiguousTransitionError` when execution is due. An earlier transition can still supersede them. Continuous crossing detection follows the solver’s event ordering.
+```python
+def closing_delay(t, parameters, input_stream):
+    return parameters["closing_time"] * (1 + abs(input_stream(t)[0]))
 
-On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and starts its delay. Each run starts with no pending occurrences, including when an initial residence time is supplied. A deadline at the simulation endpoint executes; later deadlines do not. Only executed transitions count toward `max_jumps`.
+
+close_valve = Transition(
+    source=filling,
+    target=closed,
+    event_surface=upper_boundary,
+    delay=closing_delay,
+)
+```
+
+Delay callbacks use the same [callback arguments and signatures][flowcean.hybrid.DelayFunction] as flows and resets: any named subset of `t`, `state`, `parameters`, `input_stream`, and `location_time`, or the four-positional form. They receive the source context at detection, including location-local parameter overrides and the current visit's residence time. Each accepted detection samples the duration once and freezes that occurrence's deadline at `detection_time + delay`. Fixed delays are validated at construction; invalid callback results raise `ValueError` when detected, not when constructing the transition.
+
+Choose how repeated crossings affect a transition with its keyword-only `scheduling_policy`, using [TransitionSchedulingPolicy][flowcean.hybrid.TransitionSchedulingPolicy]:
+
+- `FIRST_DETECTION` (the default): the first detection fixes the occurrence for the entire source visit. Further crossings do not reevaluate the delay, even if another transition currently has an earlier deadline. A losing candidate is still remembered.
+- `LATEST_DETECTION`: every direction-qualified crossing replaces this transition's pending occurrence. Its new deadline can be earlier or later than the previous one.
+- `EACH_DETECTION`: every direction-qualified crossing samples an independent occurrence. The earliest deadline wins. Equal deadlines belonging to this same transition coalesce, retaining the earliest `detection_time`.
+
+For example, add `scheduling_policy=TransitionSchedulingPolicy.LATEST_DETECTION` to `close_valve` to restart scheduling at every accepted crossing. Changes in state or inputs between crossings do not by themselves resample a delay. The earliest deadline among all outgoing transitions executes; another candidate can become the winner if a latest detection postpones the current winner. Every exit cancels all pending occurrences and crossing history, including a self-transition that starts a fresh visit.
+
+At an exactly equal numerical time, all direction-qualified detections are processed **before execution**. Thus a latest detection at its own deadline can postpone the transition, even beyond the simulation endpoint. After processing those detections, distinct transitions with equal earliest deadlines raise `AmbiguousTransitionError` when execution is due. There is no declaration-order priority or tolerance-based grouping of nearby times.
+
+Crossings are found from integration-step endpoint signs. Exact numerical equality does not guarantee that mathematically simultaneous roots will be reported together. Multiple crossings inside one step can be missed, and tangency detection depends on the step endpoints. Set `max_step` to resolve the time scale of your surfaces; it does not remove these numerical limitations.
+
+On entry, `SurfaceEntryPolicy.TRIGGER` detects the transition immediately and starts its delay, evaluating a delay callback with the entry context. Remaining on that zero surface does not repeatedly detect it. Each run starts with no pending occurrences, including when an initial residence time is supplied. A deadline at the simulation endpoint executes unless same-time detection replaces it; later deadlines do not. Only executed transitions count toward `max_jumps`.
 
 The [delayed valve example](../examples/hybrid_systems.md#delayed-valve-closure) shows how continued filling during the delay raises the final water height.
 
@@ -241,9 +266,9 @@ for event in trajectory.events:
     print(event.detection_time, event.time, event.transition.target.label)
 ```
 
-For a delayed transition, `event.detection_time` records the earlier crossing (or detection on entry), while `event.time` records execution. They are equal for zero-delay transitions. The trajectory records executed transitions.
+For a delayed transition, `event.detection_time` records the detection that scheduled the executed occurrence, while `event.time` records execution. This is the first detection for `FIRST_DETECTION`, the most recent for `LATEST_DETECTION`, or the detection with the winning deadline for `EACH_DETECTION` (earliest detection on a same-transition tie). Detection can occur on entry. The two times are equal for zero-delay transitions. The trajectory records executed transitions, not every detection.
 
-Detection may split continuous segments without starting a new location visit. Sampling during the delay still reports the source location and its continuing residence time. Event markers in plots mark execution.
+Sampling during the delay still reports the source location and its continuing residence time. Event markers in plots mark execution.
 
 ### Choose When to Observe
 

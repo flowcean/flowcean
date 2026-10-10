@@ -4,6 +4,7 @@ from . import benchmarks, hydra
 from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
     CrossingDirection,
+    DelayFunction,
     EventSurface,
     EventSurfaceFunction,
     Flow,
@@ -17,6 +18,7 @@ from .hybrid_system import (
     ResetFunction,
     SurfaceEntryPolicy,
     Transition,
+    TransitionSchedulingPolicy,
 )
 from .plotting import plot_locations, plot_state_space, plot_trajectory
 from .simulator import (
@@ -38,6 +40,7 @@ __all__ = (
     "AmbiguousTransitionError",
     "ContinuousSegment",
     "CrossingDirection",
+    "DelayFunction",
     "Event",
     "EventSurface",
     "EventSurfaceFunction",
@@ -58,6 +61,7 @@ __all__ = (
     "SurfaceEntryPolicy",
     "TrajectoryPoint",
     "Transition",
+    "TransitionSchedulingPolicy",
     "benchmarks",
     "build_hybrid_system_dot",
     "hydra",
