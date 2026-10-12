@@ -61,6 +61,8 @@ class SciKitModel(Model):
 
         outputs = self.estimator.predict(input_features)
         if len(self.output_names) == 1:
+            if outputs.ndim == 2 and outputs.shape[1] == 1:
+                outputs = outputs[:, 0]
             data = {self.output_names[0]: outputs}
         else:
             data = {
