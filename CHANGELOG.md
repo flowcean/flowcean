@@ -18,6 +18,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Fixed
 
+- Scikit-learn single-output predictions now use scalar Polars columns, including models fitted on one-column targets, fixing `LinearRegression` interoperability with HyDRA.
 - Hybrid simulation processes all direction-qualified detections at an exactly equal numerical deadline before execution, independent of transition declaration order and unrelated candidates. Distinct transitions with equal earliest deadlines are ambiguous; a latest detection can instead postpone execution.
 - HyDRA fits only selected numeric columns, preserving unrelated metadata and trace boundaries even when metadata schemas differ. Fitting, candidate scoring, and grouping consistently use Polars Float64 values, which can change Decimal threshold outcomes and lose precision for Decimal values or large integers. Invalid or non-finite backend predictions raise rather than silently affecting assignments.
 - HyDRA grouping skips fully assigned traces, avoiding irrelevant prediction failures. Traces with remaining unassigned observations are still predicted and validated in full.
