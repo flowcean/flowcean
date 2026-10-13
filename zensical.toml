@@ -57,6 +57,7 @@ nav = [
       { "Minimal Hybrid System" = "examples/hs_simple.md" },
       { "Hybrid Systems Gallery" = "examples/hybrid_systems.md" },
       { "Simulated Hybrid System Identification" = "examples/simulated_hybrid_system.md" },
+      { "Dainarx Sampled-System Identification" = "examples/dainarx.md" },
     ] },
     { "Learning and testing" = [
       { "One Tank Offline" = "examples/one_tank.md" },

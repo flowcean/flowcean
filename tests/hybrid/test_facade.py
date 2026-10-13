@@ -3,7 +3,7 @@
 import importlib
 
 from flowcean import hybrid
-from flowcean.hybrid import benchmarks, hydra
+from flowcean.hybrid import benchmarks, dainarx, hydra
 from flowcean.hybrid.benchmarks import bouncing_ball
 from flowcean.hybrid.graph import build_hybrid_system_dot, render_dot_svg
 from flowcean.hybrid.hybrid_system import HybridSystem, Location
@@ -41,11 +41,13 @@ def test_hybrid_facade_exports_modeling_and_simulation_api() -> None:
 def test_hybrid_facade_exposes_nested_module_handles() -> None:
     assert hybrid.benchmarks is benchmarks
     assert hybrid.hydra is hydra
+    assert hybrid.dainarx is dainarx
     assert hydra.selector is selector
     assert hybrid.benchmarks is importlib.import_module(
         "flowcean.hybrid.benchmarks",
     )
     assert hybrid.hydra is importlib.import_module("flowcean.hybrid.hydra")
+    assert hybrid.dainarx is importlib.import_module("flowcean.hybrid.dainarx")
     assert hydra.selector is importlib.import_module(
         "flowcean.hybrid.hydra.selector",
     )
