@@ -6,7 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
-- Added `flowcean.hybrid.dainarx` for noise-free sampled-system identification: NARX least-squares fitting, segmentation and pooled clustering with maximum per-output RMSE acceptance, output-and-input SVM guards, learned reset predictors, and explicit-history recursive rollout. A self-contained example demonstrates independent-trace learning and prediction.
+- Added `flowcean.hybrid.dainarx` to learn hybrid models from noise-free traces of inputs and outputs, with a runnable example showing how to predict a new trace.
 - Hybrid `Transition.delay` accepts pure, deterministic callbacks using the same context as flows and resets. Each accepted detection samples a duration and freezes that occurrence's deadline while source dynamics continue. Fixed scalar delays remain supported.
 - Hybrid `Transition.scheduling_policy` selects `TransitionSchedulingPolicy.FIRST_DETECTION` (default), `LATEST_DETECTION`, or `EACH_DETECTION` for repeated crossings during a source visit. Latest detections can advance or postpone execution; each-detection occurrences compete by earliest deadline, coalescing equal own deadlines with the earliest detection time.
 
