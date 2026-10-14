@@ -4,7 +4,7 @@ import importlib
 
 from flowcean import hybrid
 from flowcean.hybrid import benchmarks, dainarx, hydra
-from flowcean.hybrid.benchmarks import bouncing_ball
+from flowcean.hybrid.benchmarks import bouncing_ball, duffing_oscillator
 from flowcean.hybrid.graph import build_hybrid_system_dot, render_dot_svg
 from flowcean.hybrid.hybrid_system import HybridSystem, Location
 from flowcean.hybrid.hydra import (
@@ -55,6 +55,8 @@ def test_hybrid_facade_exposes_nested_module_handles() -> None:
 
 def test_nested_facades_own_benchmark_and_identification_symbols() -> None:
     assert benchmarks.bouncing_ball is bouncing_ball
+    assert benchmarks.duffing_oscillator is duffing_oscillator
+    assert "duffing_oscillator" in benchmarks.__all__
     assert hydra.HyDRACallback is HyDRACallback
     assert hydra.PlotCallback is PlotCallback
     assert {"HyDRACallback", "PlotCallback"} <= set(hydra.__all__)
@@ -72,6 +74,11 @@ def test_nested_facades_own_benchmark_and_identification_symbols() -> None:
     } <= set(hydra.__all__)
     for name in selector.__all__:
         assert getattr(hydra, name) is getattr(selector, name)
-    for name in ("bouncing_ball", "HyDRALearner", "HyDRAModel"):
+    for name in (
+        "bouncing_ball",
+        "duffing_oscillator",
+        "HyDRALearner",
+        "HyDRAModel",
+    ):
         assert name not in hybrid.__all__
         assert not hasattr(hybrid, name)

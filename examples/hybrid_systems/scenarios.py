@@ -9,6 +9,7 @@ from flowcean.hybrid import HybridSystem, InputStream
 from flowcean.hybrid.benchmarks import (
     bouncing_ball,
     buck_converter,
+    duffing_oscillator,
     hybrid_oscillator,
     impact_oscillator,
     location_cycle,
@@ -41,6 +42,10 @@ def thermostat_target_temperature(t: float) -> np.ndarray:
     return np.array([22.0 + 0.8 * np.sin(0.7 * t)])
 
 
+def duffing_force(t: float) -> np.ndarray:
+    return np.array([np.cos(t)])
+
+
 def impact_force(t: float) -> np.ndarray:
     return np.array([0.5 * np.sin(1.5 * t) + 0.2 * np.sin(0.2 * t)])
 
@@ -56,6 +61,18 @@ def pid_reference_and_rate(t: float) -> np.ndarray:
 def wind_speed(t: float) -> np.ndarray:
     return np.array([11.0 - 4.0 * np.cos(2.0 * np.pi * t / 120.0)])
 
+
+DUFFING_OSCILLATOR = Scenario(
+    name="Duffing Oscillator",
+    factory=duffing_oscillator,
+    tags=("oscillator", "nonlinear", "hysteresis", "reset", "input"),
+    description=(
+        "Forced nonlinear oscillator with hysteretic damping and cubic "
+        "stiffness changes and velocity resets."
+    ),
+    t_span=(0.0, 20.0),
+    input_stream=duffing_force,
+)
 
 WIND_TURBINE = Scenario(
     name="Wind Turbine",
@@ -135,6 +152,7 @@ SCENARIOS = (
         (0.0, 20.0),
         impact_force,
     ),
+    DUFFING_OSCILLATOR,
     Scenario(
         "PID-Controlled Plant",
         pid_controlled_plant,

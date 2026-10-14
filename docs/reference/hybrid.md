@@ -39,6 +39,10 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading_level: 4
 
+::: flowcean.hybrid.benchmarks.duffing_oscillator.duffing_oscillator
+    options:
+      heading_level: 4
+
 ::: flowcean.hybrid.benchmarks.hybrid_oscillator.hybrid_oscillator
     options:
       heading_level: 4

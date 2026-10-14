@@ -95,6 +95,8 @@ examples-hybrid_systems:
   @echo "🚀 Running example: Hybrid Systems"
   @uv run --directory ./examples/hybrid_systems/ python run.py
   @uv run --directory ./examples/hybrid_systems/ python export_graphs.py
+  @echo "Running example: Duffing Oscillator"
+  @uv run --directory ./examples/hybrid_systems/ python duffing_oscillator.py
   @echo "Running example: Wind Turbine"
   @uv run --directory ./examples/hybrid_systems/ python wind_turbine.py
 
