@@ -7,6 +7,7 @@ import pytest
 
 from flowcean.hybrid import HybridSystem, simulate
 from flowcean.hybrid.benchmarks import (
+    duffing_oscillator,
     impact_oscillator,
     pid_controlled_plant,
     thermostat,
@@ -20,6 +21,7 @@ from flowcean.hybrid.benchmarks import (
     [
         thermostat,
         impact_oscillator,
+        duffing_oscillator,
         time_varying_event_surface,
         pid_controlled_plant,
         wind_turbine,

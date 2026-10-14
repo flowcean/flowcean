@@ -9,6 +9,7 @@ from flowcean.hybrid import HybridSystem, InputStream, simulate
 from flowcean.hybrid.benchmarks import (
     bouncing_ball,
     buck_converter,
+    duffing_oscillator,
     hybrid_oscillator,
     impact_oscillator,
     location_cycle,
@@ -47,6 +48,7 @@ SMOKE_CASES: tuple[
     ("forced switch", time_forced_switch, (0, 5), None),
     ("affine", piecewise_affine, (0, 20), None),
     ("impact", impact_oscillator, (0, 20), _input(0)),
+    ("Duffing", duffing_oscillator, (0, 20), lambda t: np.array([np.cos(t)])),
     ("PID", pid_controlled_plant, (0, 20), _input(0, 0)),
     ("tanks", tank_valves, (0, 300), None),
     (
