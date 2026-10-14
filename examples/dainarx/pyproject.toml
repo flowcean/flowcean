@@ -2,7 +2,7 @@
 name = "dainarx-example"
 version = "0.1.0"
 requires-python = ">=3.12, <4.0"
-dependencies = ["flowcean", "numpy", "polars"]
+dependencies = ["flowcean", "matplotlib>=3.10.8", "numpy", "polars"]
 
 [tool.pyright]
 extends = "../../pyproject.toml"

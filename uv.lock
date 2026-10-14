@@ -1385,6 +1385,7 @@ version = "0.1.0"
 source = { virtual = "examples/dainarx" }
 dependencies = [
     { name = "flowcean" },
+    { name = "matplotlib" },
     { name = "numpy" },
     { name = "polars" },
 ]
@@ -1392,6 +1393,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "flowcean", editable = "." },
+    { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy" },
     { name = "polars" },
 ]

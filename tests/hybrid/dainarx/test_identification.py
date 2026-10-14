@@ -6,14 +6,16 @@ import pytest
 from sklearn.svm import SVC
 
 from flowcean.hybrid.dainarx import fit_dainarx
-from flowcean.hybrid.dainarx._narx import design
-from flowcean.hybrid.dainarx.learner import _cluster, _segment
+from flowcean.hybrid.dainarx.learner import _cluster
 
 from .conftest import sampled_system
 
 
 def test_segmentation_clustering_guards_and_reset_phases(identified):
     fit, training = identified
+    assert fit.eta == pytest.approx(
+        1e-6 * 0.1 * max(frame["x"].abs().max() for frame, _ in training)
+    )
     assert len(fit.model.locations) == 2
     assert len(fit.model.transitions) == 2
     for index, (frame, truth) in enumerate(training):
@@ -182,13 +184,75 @@ def test_order_one_seed_only_rollout_and_empty_input_boundary():
         )
 
 
-def test_posterior_screening_fails_instead_of_dropping_evidence():
-    x = np.asarray(100 + 0.001 * np.arange(100) ** 2, dtype=np.float64)[
-        :, None
-    ]
-    rows = design(x, np.empty((len(x), 0)), 1, ())
+def test_threshold_controls_screening_and_full_segment_acceptance():
+    frame = pl.DataFrame(
+        {
+            "time": np.arange(100) * 0.1,
+            "x": 100 + 0.001 * np.arange(100) ** 2,
+        }
+    )
+    kwargs = {
+        "input_features": [],
+        "output_features": ["x"],
+        "time_column": "time",
+        "order": 1,
+        "window": 5,
+        "guard_kernel": "linear",
+        "guard_c": 1.0,
+        "guard_gamma": "scale",
+    }
     with pytest.raises(ValueError, match="screening RMSE"):
-        _segment(rows, x[1:], order=1, window=5, eta=0.01, trace_index=0)
+        fit_dainarx([frame], **kwargs)
+    # Windows pass, but the full segment must still meet the same threshold.
+    with pytest.raises(
+        ValueError, match=r"segment \[0, 100\).*screening RMSE"
+    ):
+        fit_dainarx([frame], eta=0.01, **kwargs)
+    fit = fit_dainarx([frame], eta=0.1, **kwargs)
+    assert fit.eta == 0.1
+    assert len(fit.segments) == len(fit.model.locations) == 1
+    assert 0.01 < fit.model.locations[0].rmse <= fit.eta
+
+
+@pytest.mark.parametrize("eta", [-1.0, np.nan, np.inf, -np.inf])
+def test_invalid_threshold_fails(eta):
+    frame, _ = sampled_system(0)
+    with pytest.raises(ValueError, match="eta must be finite and nonnegative"):
+        fit_dainarx(
+            [frame],
+            input_features=["u"],
+            output_features=["x"],
+            time_column="time",
+            order=2,
+            window=8,
+            guard_kernel="linear",
+            guard_c=1e4,
+            guard_gamma="scale",
+            eta=eta,
+        )
+
+
+def test_zero_threshold_is_accepted_and_not_replaced_by_default():
+    frame, _ = sampled_system(0)
+    kwargs = {
+        "input_features": ["u"],
+        "output_features": ["x"],
+        "time_column": "time",
+        "order": 2,
+        "window": 8,
+        "guard_kernel": "linear",
+        "guard_c": 1e4,
+        "guard_gamma": "scale",
+    }
+    zeros = frame.with_columns(pl.lit(0.0).alias("x"))
+    for eta in (None, 0.0):
+        fit = fit_dainarx([zeros], eta=eta, **kwargs)
+        assert fit.eta == fit.model.locations[0].rmse == 0.0
+        assert len(fit.model.locations) == 1
+    # Nonzero floating-point residuals pass automatically but not at zero.
+    fit_dainarx([frame], **kwargs)
+    with pytest.raises(ValueError, match=r"screening RMSE.*exceeds eta 0"):
+        fit_dainarx([frame], eta=0.0, **kwargs)
 
 
 def test_short_terminal_segment_and_insufficient_reset_evidence_fail():

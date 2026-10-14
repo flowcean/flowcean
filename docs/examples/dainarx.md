@@ -14,7 +14,19 @@ From the repository root:
 just examples-dainarx
 ```
 
-The [example script](https://github.com/flowcean/flowcean/blob/main/examples/dainarx/run.py) generates its own noise-free data: four traces for learning and a fifth for prediction. Each trace contains time stamps in `time`, input values in `u`, and output values in `x`. Input commands `+2` and `-2` make the system switch locations, changing both the output and the rule it follows.
+The [example script](https://github.com/flowcean/flowcean/blob/main/examples/dainarx/run.py) generates its own noise-free data: four traces for learning and a fifth for prediction. Each trace contains time stamps in `time`, input values in `u`, and output values in `x`.
+
+## The Example System
+
+This is a synthetic system with one input and one output, observed every 0.1 time units. It starts in location 0. There, the previous output carries over with the same sign, and the output tends to settle near a positive value. In location 1, the previous output contributes with the opposite sign, so the output tends to alternate around a negative value. Both rules also use the current input.
+
+Ordinary inputs vary randomly between -0.5 and 0.5; there is no added measurement noise. A `+2` command switches from location 0 to location 1, and a `-2` command switches back. The switch takes effect at the **next observation**, not at the command itself. At that observation, a separate rule makes the output jump; the new location's normal rule resumes on the observation after that.
+
+[![Sampled input and output from the generated system: commands at times 2.5 and 5.0 lead to output jumps and location switches at 2.6 and 5.1.](../assets/dainarx/system-trace.svg)](../assets/dainarx/system-trace.svg){ target="\_blank" rel="noopener" }
+
+The plot shows the first six time units of the fifth generated trace. Each dot is one observation. Orange diamonds mark input commands in the upper panel and the resulting switches in the lower panel. After the jump at 2.6, look for the alternating output; after the jump at 5.1, it starts moving back toward positive values.
+
+Running the example also saves the plot to `examples/dainarx/outputs/system-trace.svg`.
 
 ## Learn from the Traces
 

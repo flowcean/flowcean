@@ -1,7 +1,11 @@
 """Identify a small sampled switching system, then recursively predict it."""
 
+import argparse
+from pathlib import Path
+
 import numpy as np
 import polars as pl
+from plot import save_trace_plot
 
 from flowcean.hybrid.dainarx import fit_dainarx
 
@@ -42,6 +46,14 @@ def sampled_trace(seed: int) -> pl.DataFrame:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--plot-path",
+        type=Path,
+        default=Path(__file__).parent / "outputs" / "system-trace.svg",
+        help="Save a plot of the generated system to this path.",
+    )
+    args = parser.parse_args()
     training = [sampled_trace(seed) for seed in range(4)]
     fit = fit_dainarx(
         training,
@@ -69,6 +81,8 @@ def main() -> None:
     )
     print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.3g}")
     assert np.max(np.abs(error)) < 1e-10
+    save_trace_plot(held_out, args.plot_path)
+    print(f"System trace plot: {args.plot_path}")
 
 
 if __name__ == "__main__":
