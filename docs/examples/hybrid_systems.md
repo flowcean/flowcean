@@ -8,23 +8,24 @@ These examples illustrate switching, hysteresis, and resets in hybrid systems, f
 
 ## What the Examples Illustrate
 
-| Example                                                   | Behavior                                      |
-| --------------------------------------------------------- | --------------------------------------------- |
-| [Thermostat](#thermostat)                                 | Hysteresis around a moving target             |
-| [Bouncing ball](#bouncing-ball)                           | Velocity resets at impact                     |
-| [Hybrid oscillator](#hybrid-oscillator)                   | Side-dependent damping                        |
-| [Switched linear](#switched-linear)                       | State-triggered switching of linear dynamics  |
-| [Relay integrator](#relay-integrator)                     | Relay control with hysteresis                 |
-| [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary    |
-| [Time-forced switch](#time-forced-switch)                 | Periodic switching after a fixed dwell time   |
-| [Piecewise affine](#piecewise-affine)                     | Affine dynamics and a linear event surface    |
-| [Impact oscillator](#impact-oscillator)                   | Forced oscillation with impact resets         |
-| [PID-controlled plant](#pid-controlled-plant)             | Actuator saturation and integral control      |
-| [Tank valves](#tank-valves)                               | Valve switching and gravity-driven drainage   |
-| [Location cycle](#location-cycle)                         | Repeated timed visits to linear locations     |
-| [Buck converter](#buck-converter)                         | Hysteretic switching and diode blocking       |
-| [Wind turbine](#wind-turbine)                             | Torque regimes and pitch control              |
-| [Delayed valve closure](#delayed-valve-closure)           | Fixed latency between detection and switching |
+| Example | Behavior |
+| --- | --- |
+| [Thermostat](#thermostat) | Hysteresis around a moving target |
+| [Bouncing ball](#bouncing-ball) | Velocity resets at impact |
+| [Hybrid oscillator](#hybrid-oscillator) | Side-dependent damping |
+| [Switched linear](#switched-linear) | State-triggered switching of linear dynamics |
+| [Relay integrator](#relay-integrator) | Relay control with hysteresis |
+| [Time-varying event surface](#time-varying-event-surface) | Switching at an externally driven boundary |
+| [Time-forced switch](#time-forced-switch) | Periodic switching after a fixed dwell time |
+| [Piecewise affine](#piecewise-affine) | Affine dynamics and a linear event surface |
+| [Impact oscillator](#impact-oscillator) | Forced oscillation with impact resets |
+| [Duffing oscillator](#duffing-oscillator) | Nonlinear spring, hysteresis, and speed loss |
+| [PID-controlled plant](#pid-controlled-plant) | Actuator saturation and integral control |
+| [Tank valves](#tank-valves) | Valve switching and gravity-driven drainage |
+| [Location cycle](#location-cycle) | Repeated timed visits to linear locations |
+| [Buck converter](#buck-converter) | Hysteretic switching and diode blocking |
+| [Wind turbine](#wind-turbine) | Torque regimes and pitch control |
+| [Delayed valve closure](#delayed-valve-closure) | Fixed latency between detection and switching |
 
 ## Thermostat
 
@@ -254,6 +255,40 @@ A damped oscillator is driven by a time-varying force and collides with a stop. 
 
 See the [`impact_oscillator` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.impact_oscillator.impact_oscillator) for the force input and model parameters.
 
+## Duffing Oscillator
+
+This idealized unit-mass oscillator represents a mass acted on by a nonlinear spring, a damper, and an external drive. Its state is position and velocity, $[x,v]$, and its input $u(t)$ is applied force per unit mass. All quantities use normalized units; the model does not prescribe an SI scale.
+
+In location $q$, the motion follows
+
+$$
+\dot{x}=v, \qquad \dot{v}=u(t)-d_qv-kx-c_qx^3.
+$$
+
+The signed linear coefficient $k$ is shared. Both damping $d_q$ and cubic stiffness $c_q$ change between `high_damping` and `low_damping`; the location names describe damping, not the entire restoring law. Negative linear stiffness pushes away from the origin at small displacements; positive cubic stiffness pulls back at larger ones.
+
+The locations switch hysteretically on either side of the origin. Moving toward the origin across either inner boundary selects `low_damping`; moving away across either outer boundary selects `high_damping`. Between those boundaries, the active location depends on the previous motion. Each switch preserves position and scales velocity by the retention coefficient, reducing speed without reversing its sign. These are switching losses, not collisions with a stop.
+
+<figure class="hybrid-figure hybrid-automaton" markdown="span">
+
+[![Duffing oscillator: an inward inner-boundary crossing selects low damping, and an outward outer-boundary crossing selects high damping; both switches retain a fraction of velocity.](../assets/hybrid_systems/duffing_oscillator-automaton.svg)](../assets/hybrid_systems/duffing_oscillator-automaton.svg){ target="\_blank" rel="noopener" }
+
+<figcaption>The two boundaries define a position hysteresis band. Switching changes both damping and cubic stiffness, as well as applying a velocity reset.</figcaption>
+
+</figure>
+
+The illustrated run applies a cosine force:
+
+<figure class="hybrid-figure" markdown="span">
+
+[![Cosine forcing, Duffing position with inner and outer boundaries, and velocity shaded by damping location; a first-switch zoom shows the sign-preserving velocity reset.](../assets/hybrid_systems/duffing_oscillator-trace.svg)](../assets/hybrid_systems/duffing_oscillator-trace.svg){ target="\_blank" rel="noopener" }
+
+<figcaption>Position stays continuous at switches, but velocity jumps toward zero. The expanded view shows one of these speed losses; shaded regions identify the active location.</figcaption>
+
+</figure>
+
+This hybrid variant follows [Example 1, Figure 2(a) in the Dainarx paper](https://arxiv.org/html/2507.16426v3#S2.F2). Flowcean simulates directed boundary crossings rather than treating the paper's guards as urgent inequalities. See the [`duffing_oscillator` factory](../reference/hybrid.md#flowcean.hybrid.benchmarks.duffing_oscillator.duffing_oscillator) for initialization, parameter, and input contracts, and the [gallery scenario](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/scenarios.py) for forcing and simulation settings.
+
 ## PID-Controlled Plant
 
 A PID controller drives a second-order plant. Its state contains position, velocity, and the integral of tracking error. The input supplies a reference and its time derivative.
@@ -398,6 +433,18 @@ uv run --directory ./examples/hybrid_systems python run.py
 
 The model configurations and input signals are in [`scenarios.py`](https://github.com/flowcean/flowcean/blob/main/examples/hybrid_systems/scenarios.py).
 
+For a dedicated Duffing plot with an expanded velocity reset, run:
+
+```bash
+uv run --directory ./examples/hybrid_systems python duffing_oscillator.py
+```
+
+This writes `examples/hybrid_systems/outputs/duffing_oscillator-trace.svg`. Use `--output` to select another path or image format. To regenerate its gallery trace from the same scenario:
+
+```bash
+uv run --directory ./examples/hybrid_systems python duffing_oscillator.py --output ../../docs/assets/hybrid_systems/duffing_oscillator-trace.svg
+```
+
 To work with an installed Flowcean package rather than the repository scripts, start with the [simulation example](../user_guide/hybrid_systems.md#construct-and-simulate-a-model). The [identification walkthrough](simulated_hybrid_system.md) shows how to learn a hybrid model from simulated traces.
 
 ## Export Automaton Diagrams
@@ -409,5 +456,7 @@ uv run --directory ./examples/hybrid_systems python export_graphs.py
 ```
 
 This writes one DOT file per example under `examples/hybrid_systems/outputs/automata/`. Add `--svg` to render SVG files; this requires Graphviz's `dot` executable on `PATH`.
+
+The Duffing gallery diagram is the generated `outputs/automata/duffing_oscillator.svg`; after an SVG export, copy it to `docs/assets/hybrid_systems/duffing_oscillator-automaton.svg` to update that illustration.
 
 For programmatic export and label options, see [`build_hybrid_system_dot`][flowcean.hybrid.build_hybrid_system_dot] and [`render_dot_svg`][flowcean.hybrid.render_dot_svg].

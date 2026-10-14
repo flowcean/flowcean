@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added `duffing_oscillator` and a gallery example showing forced nonlinear motion with velocity resets.
 - Hybrid `Transition.delay` accepts pure, deterministic callbacks using the same context as flows and resets. Each accepted detection samples a duration and freezes that occurrence's deadline while source dynamics continue. Fixed scalar delays remain supported.
 - Hybrid `Transition.scheduling_policy` selects `TransitionSchedulingPolicy.FIRST_DETECTION` (default), `LATEST_DETECTION`, or `EACH_DETECTION` for repeated crossings during a source visit. Latest detections can advance or postpone execution; each-detection occurrences compete by earliest deadline, coalescing equal own deadlines with the earliest detection time.
 
