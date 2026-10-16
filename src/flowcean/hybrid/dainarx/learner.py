@@ -59,7 +59,7 @@ class DainarxDynamics:
         segments: Half-open original-frame intervals ``[start, stop)``, ordered
             by independent trace and row, covering every observation once.
         trace_lengths: Original observation counts in input trace order.
-        eta: Finite nonnegative maximum per-output training RMSE threshold,
+        eta: Nonnegative maximum per-output training RMSE threshold,
             in output units, not a rollout error bound.
     """
 
@@ -238,10 +238,9 @@ class DainarxDynamics:
         """Add discovered ``location_id`` membership to original observations.
 
         Args:
-            traces: Original Polars frames in the same independent-trace order
-                and row correspondence as discovery. Count, types, heights,
-                and reserved-column collisions are checked, but same-length
-                reordered or changed observations cannot be detected.
+            traces: Original Polars frames in discovery order. Keep the
+                original row correspondence; observation identity is not
+                verified by the trace-length checks.
 
         Returns:
             Independent frames preserving every original column, column order,
@@ -384,12 +383,11 @@ def fit_dainarx(
     [Dainarx guide](../examples/dainarx.md) for the noise-free method and usage.
 
     Args:
-        traces: Independent ordered Polars frames with finite numeric selected
-            columns and a shared uniform sampling period. Start times and
-            lengths may differ; unselected columns are ignored.
+        traces: Independent Polars frames sampled at the same interval.
+            Start times and lengths may differ; only selected columns are used.
         input_features: Input column names, in input-vector order.
-        output_features: Nonempty output column names, in output-vector order.
-        time_column: Numeric timestamp column, strictly increasing per trace.
+        output_features: Output column names, in output-vector order.
+        time_column: Timestamp column, increasing within each trace.
         order: Number of previous output observations used for prediction.
         window: Number of observations per screening window, not regression
             targets. Each trace needs at least this many observations, and
@@ -408,7 +406,7 @@ def fit_dainarx(
             [NonlinearTerm][flowcean.hybrid.dainarx.NonlinearTerm] contract.
             Linear terms already include all outputs at every lag, current
             inputs, and bias.
-        eta: Finite nonnegative acceptance threshold in output units for the
+        eta: Nonnegative acceptance threshold in output units for the
             maximum per-output training RMSE. Applies to screening, clustering,
             location fits, and reset fits; it is not a rollout error guarantee.
             ``None`` uses the automatic threshold scaled from the sampling
@@ -502,12 +500,11 @@ def fit_dainarx_dynamics(
     rejected here: transition fitting determines whether resets are supported.
 
     Args:
-        traces: Independent ordered Polars frames with finite numeric selected
-            columns and a shared uniform sampling period. Start times and
-            lengths may differ; unselected columns are ignored.
+        traces: Independent Polars frames sampled at the same interval.
+            Start times and lengths may differ; only selected columns are used.
         input_features: Input column names, in input-vector order.
-        output_features: Nonempty output column names, in output-vector order.
-        time_column: Numeric timestamp column, strictly increasing per trace.
+        output_features: Output column names, in output-vector order.
+        time_column: Timestamp column, increasing within each trace.
         order: Number of preceding output observations used for prediction.
         window: Screening window observation count. Each trace needs at least
             this many rows; ``window - order`` must exceed the per-output
@@ -516,17 +513,15 @@ def fit_dainarx_dynamics(
             also need more targets than that count; rank deficiency is allowed.
         nonlinear_terms: Ordered regression feature functions following the
             [NonlinearTerm][flowcean.hybrid.dainarx.NonlinearTerm] contract.
-        eta: Finite nonnegative maximum per-output training RMSE threshold in
+        eta: Nonnegative maximum per-output training RMSE threshold in
             output units. ``None`` uses the automatic threshold scaled from
             the sampling period and largest absolute selected training output
             across traces; explicit zero is honored. Applies
             to screening, clustering, and final location fitting, not rollout.
 
     Returns:
-        Complete [DainarxDynamics][flowcean.hybrid.dainarx.DainarxDynamics],
-            not a partial executable hybrid model. Discovery raises
-            ``ValueError`` on insufficient or rejected segment evidence;
-            transition learning may fail separately after discovery succeeds.
+        A [DainarxDynamics][flowcean.hybrid.dainarx.DainarxDynamics] result
+            containing location predictors and original-trace assignments.
     """
     if eta is not None and (not np.isfinite(eta) or eta < 0):
         raise ValueError("eta must be finite and nonnegative")
@@ -620,12 +615,9 @@ def fit_dainarx_transitions(
     phase. They share ordinary fitting's coefficient-count and RMSE gates.
 
     Args:
-        traces: The same original observations used for dynamics discovery,
-            in the same independent-trace order and row correspondence, not
-            arbitrary frames of matching length. Frame types, counts, heights,
-            finite numeric selected columns, and the shared uniform time grid
-            are checked. Changed observations or reordered same-length traces
-            cannot be detected without retaining the original data.
+        traces: Original observation frames, in the same trace and row order
+            used for discovery. Matching lengths alone do not establish that
+            the observations are unchanged.
         dynamics: Complete discovery result supplying locations, segment
             provenance, trace lengths, feature template, and acceptance eta.
         guard_kernel: SVM kernel: ``"linear"``, ``"poly"``, ``"rbf"``, or
@@ -638,13 +630,11 @@ def fit_dainarx_transitions(
 
     Returns:
         Learned transitions, ready for ``DainarxModel(dynamics.locations,
-            transitions)``. No segmentation, clustering, or ordinary fitting
-            is repeated. Nonlinear features are evaluated only for required
-            post-switch targets, not all ordinary regression rows again.
+            transitions)``.
 
-    Same-location boundaries, insufficient guard/reset evidence, incomplete
-    reset contexts, rejected reset RMSE, and guard fitting errors still fail
-    rather than inventing transitions or returning a partial fit.
+    Raises:
+        ValueError: Transition evidence is insufficient or rejected, or a
+            detected boundary has the same location on both sides.
     """
     if not isinstance(dynamics, DainarxDynamics):
         raise ValueError("Supply a DainarxDynamics discovery result")

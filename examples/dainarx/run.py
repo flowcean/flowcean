@@ -1,4 +1,4 @@
-"""Identify sampled Duffing dynamics and report incomplete identification honestly."""
+"""Identify sampled Duffing dynamics with Dainarx."""
 
 import numpy as np
 import polars as pl
@@ -11,43 +11,39 @@ from flowcean.hybrid.dainarx import (
     fit_dainarx_transitions,
 )
 
-TIME_SPAN = (0.0, 20.0)
-SAMPLING_PERIOD = 0.001
-ORDER = 2
-TRAINING_INITIAL_STATES = (
-    (1.2, 0.0),
-    (1.1, 0.15),
-    (1.3, -0.1),
-    (1.0, -0.2),
-)
-HELD_OUT_INITIAL_STATE = (1.15, -0.075)
-
-
-def observe(initial_state: tuple[float, float]) -> pl.DataFrame:
-    """Simulate from position and velocity, retaining only learner observations."""
-    trajectory = simulate(
-        duffing_oscillator(initial_state=np.asarray(initial_state)),
-        t_span=TIME_SPAN,
-        input_stream=lambda t: np.array([np.cos(t)]),
-        rtol=1e-11,
-        atol=1e-13,
-        max_step=0.005,
-    )
-    return trajectory.sample(dt=SAMPLING_PERIOD, include_inputs=True).select(
-        "t",
-        pl.col("u0").alias("force"),
-        pl.col("x0").alias("position"),
-    )
-
 
 def main() -> None:
-    training = [observe(initial) for initial in TRAINING_INITIAL_STATES]
+    order = 2
+    traces = []
+    for initial_state in (
+        (1.2, 0.0),
+        (1.1, 0.15),
+        (1.3, -0.1),
+        (1.0, -0.2),
+        (1.15, -0.075),  # Held-out trace.
+    ):
+        trajectory = simulate(
+            duffing_oscillator(initial_state=np.asarray(initial_state)),
+            t_span=(0.0, 20.0),
+            input_stream=lambda t: np.array([np.cos(t)]),
+            rtol=1e-11,
+            atol=1e-13,
+            max_step=0.005,
+        )
+        traces.append(
+            trajectory.sample(dt=0.001, include_inputs=True).select(
+                "t",
+                pl.col("u0").alias("force"),
+                pl.col("x0").alias("position"),
+            )
+        )
+    training, held_out = traces[:-1], traces[-1]
     dynamics = fit_dainarx_dynamics(
         training,
         input_features=["force"],
         output_features=["position"],
         time_column="t",
-        order=ORDER,
+        order=order,
         window=10,
         nonlinear_terms=(
             lambda history, _: history[-1] ** 3,
@@ -57,38 +53,29 @@ def main() -> None:
     print(f"Discovered segments: {len(dynamics.segments)}")
     print(f"Learned locations: {len(dynamics.locations)}")
     print(f"Training RMSE threshold: {dynamics.eta:.6g}")
-    for location_id, model in enumerate(dynamics.locations):
-        print(f"Location {location_id} training RMSE: {model.rmse:.6g}")
-
-    try:
-        transitions = fit_dainarx_transitions(
-            training,
-            dynamics,
-            guard_kernel="rbf",
-            guard_c=1e6,
-            guard_gamma="scale",
+    for location_id, location_model in enumerate(dynamics.locations):
+        print(
+            f"Location {location_id} training RMSE: {location_model.rmse:.6g}"
         )
-    except ValueError as error:
-        print(f"Transition fitting did not complete: {error}")
-        print("No executable model or held-out prediction was produced.")
-        return
 
+    transitions = fit_dainarx_transitions(
+        training,
+        dynamics,
+        guard_kernel="rbf",
+        guard_c=1e6,
+        guard_gamma="scale",
+    )
     model = DainarxModel(dynamics.locations, transitions)
-    held_out = observe(HELD_OUT_INITIAL_STATE)
-    # These initial conditions all start in the same physical location,
-    # before any switch. Its learned ID comes from the first training segment.
-    try:
-        predicted = model.rollout(
-            held_out.select("t", "force"),
-            output_history=held_out.select("position").head(ORDER).to_numpy(),
-            initial_location=dynamics.segments[0].location_id,
-        )
-    except ValueError as error:
-        print(f"Held-out rollout did not complete: {error}")
-        return
+    # All chosen initial states share a location, before any switch.
+    # Its learned ID comes from the first training segment.
+    predicted = model.rollout(
+        held_out.select("t", "force"),
+        output_history=held_out.select("position").head(order).to_numpy(),
+        initial_location=dynamics.segments[0].location_id,
+    )
     error = (
-        predicted["position"].to_numpy()[ORDER:]
-        - held_out["position"].to_numpy()[ORDER:]
+        predicted["position"].to_numpy()[order:]
+        - held_out["position"].to_numpy()[order:]
     )
     print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.6g}")
     print(f"Maximum held-out absolute error: {np.max(np.abs(error)):.6g}")

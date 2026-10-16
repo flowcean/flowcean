@@ -64,10 +64,9 @@ class DainarxModel:
         Args:
             inputs: Polars frame with known timestamps and selected inputs
                 for all rows, including seeds, at the models' shared sampling
-                period. Selected columns must be finite and numeric;
-                unrelated columns are ignored. Exactly ``order`` rows are
-                allowed for a seed-only return.
-            output_history: Finite ``(order, n_outputs)`` seed array, oldest
+                period. Unrelated columns are ignored. Exactly ``order``
+                rows are allowed for a seed-only return.
+            output_history: Seed array of shape ``(order, n_outputs)``, oldest
                 row first, in selected output-feature order. ``n_outputs``
                 is the number of selected outputs.
             initial_location: Learned location ID at the last seed row,

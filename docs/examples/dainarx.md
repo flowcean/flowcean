@@ -26,9 +26,7 @@ These are training results, not prediction errors on unseen trajectories. Succes
 
 ## Interpret Incomplete Identification
 
-With the current configuration, dynamics discovery completes, but transition fitting rejects a post-switch predictor because its training error exceeds the acceptance threshold. The script prints the reason and ends normally, explicitly reporting that no executable model or held-out prediction was produced.
-
-This is a limitation of the current implementation and configuration. Completing the command is not a claim that identification succeeded.
+With the current configuration, dynamics discovery completes, but transition fitting raises a `ValueError` because a post-switch predictor's training error exceeds the acceptance threshold. The command stops there without producing an executable model or held-out prediction. This is a limitation of the current implementation and configuration.
 
 If transition fitting succeeds, the script attempts a separate held-out rollout. It supplies initial position history, the starting location inferred from the first training segment, and the prescribed force. The chosen initial conditions start in the same physical location. Later recorded positions are used only to score predictions, not fed back into the learned model. Reported errors exclude the supplied initial history, and no near-zero error is required.
 

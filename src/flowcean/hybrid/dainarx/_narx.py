@@ -15,7 +15,7 @@ type NonlinearTerm = Callable[[FloatArray, FloatArray], ArrayLike]
 ``current_input`` has shape ``(n_inputs,)`` and is aligned with the output
 being predicted. Here ``n_outputs`` and ``n_inputs`` count the selected
 output and input features. Columns follow their selected feature order.
-Return a finite ``(n_outputs,)`` vector in output-feature order, with one
+Return a ``(n_outputs,)`` vector in output-feature order, with one
 feature value for each output's regression.
 """
 
@@ -39,6 +39,11 @@ def columns(frame: pl.DataFrame, names: Sequence[str]) -> FloatArray:
 
 
 def sampling_period(frame: pl.DataFrame, name: str, dt: float | None) -> float:
+    """Check timestamp spacing and return the sampling interval.
+
+    Infer the interval when ``dt`` is absent; otherwise check against it.
+    This validates observation timing without resampling the trace.
+    """
     time = columns(frame, (name,))[:, 0]
     if len(time) == 0:
         raise ValueError("A sampled trace needs at least one timestamp")
@@ -193,13 +198,13 @@ class NarxModel:
         features, respectively.
 
         Args:
-            history: Finite ``(order, n_outputs)`` array, oldest observation
-                first, with columns in ``output_features`` order.
-            current_input: Finite ``(n_inputs,)`` vector in ``input_features``
-                order, aligned with the output being predicted, not lagged.
+            history: Output history of shape ``(order, n_outputs)``, oldest
+                observation first, with columns in ``output_features`` order.
+            current_input: A ``(n_inputs,)`` vector in ``input_features`` order,
+                aligned with the output being predicted, not lagged.
 
         Returns:
-            A finite ``(n_outputs,)`` vector in ``output_features`` order.
+            A ``(n_outputs,)`` vector in ``output_features`` order.
         """
         past = finite_array(history, "Output history")
         inputs = finite_array(current_input, "Current input")
@@ -231,12 +236,11 @@ def fit_narx(
     features. Rank-deficient fits are allowed.
 
     Args:
-        traces: Independent ordered Polars frames with finite numeric selected
-            columns and a shared uniform sampling period. Start times and
-            lengths may differ; unselected columns are ignored.
+        traces: Independent Polars frames sampled at the same interval.
+            Start times and lengths may differ; only selected columns are used.
         input_features: Input column names, in input-vector order.
-        output_features: Nonempty output column names, in output-vector order.
-        time_column: Numeric timestamp column, strictly increasing per trace.
+        output_features: Output column names, in output-vector order.
+        time_column: Timestamp column, increasing within each trace.
         order: Number of previous output observations used for prediction.
         nonlinear_terms: Ordered nonlinear regression features following the
             [NonlinearTerm][flowcean.hybrid.dainarx.NonlinearTerm] contract.
