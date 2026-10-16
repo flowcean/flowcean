@@ -17,22 +17,6 @@ from ..hybrid_system import (
 )
 
 
-def duffing_force(t: float) -> np.ndarray:
-    """Return the cosine forcing used by the Duffing examples.
-
-    This is an explicit experiment input, not an intrinsic part of the
-    oscillator or a default input supplied by its factory.
-
-    Args:
-        t: Time in the oscillator's normalized time units.
-
-    Returns:
-        A shape ``(1,)`` array containing force per unit mass in normalized
-            acceleration units.
-    """
-    return np.array([np.cos(t)])
-
-
 def duffing_oscillator(
     damping_high: float = 0.5,
     damping_low: float = 0.2,

@@ -4,7 +4,7 @@ import numpy as np
 import polars as pl
 
 from flowcean.hybrid import simulate
-from flowcean.hybrid.benchmarks import duffing_force, duffing_oscillator
+from flowcean.hybrid.benchmarks import duffing_oscillator
 from flowcean.hybrid.dainarx import (
     DainarxModel,
     fit_dainarx_dynamics,
@@ -28,16 +28,12 @@ def observe(initial_state: tuple[float, float]) -> pl.DataFrame:
     trajectory = simulate(
         duffing_oscillator(initial_state=np.asarray(initial_state)),
         t_span=TIME_SPAN,
-        input_stream=duffing_force,
+        input_stream=lambda t: np.array([np.cos(t)]),
         rtol=1e-11,
         atol=1e-13,
         max_step=0.005,
     )
-    times = np.linspace(
-        *TIME_SPAN,
-        round((TIME_SPAN[1] - TIME_SPAN[0]) / SAMPLING_PERIOD) + 1,
-    )
-    return trajectory.sample(times=times, include_inputs=True).select(
+    return trajectory.sample(dt=SAMPLING_PERIOD, include_inputs=True).select(
         "t",
         pl.col("u0").alias("force"),
         pl.col("x0").alias("position"),
