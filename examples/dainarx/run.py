@@ -1,88 +1,101 @@
-"""Identify a small sampled switching system, then recursively predict it."""
-
-import argparse
-from pathlib import Path
+"""Identify sampled Duffing dynamics and report incomplete identification honestly."""
 
 import numpy as np
 import polars as pl
-from plot import save_trace_plot
 
-from flowcean.hybrid.dainarx import fit_dainarx
+from flowcean.hybrid import simulate
+from flowcean.hybrid.benchmarks import duffing_force, duffing_oscillator
+from flowcean.hybrid.dainarx import (
+    DainarxModel,
+    fit_dainarx_dynamics,
+    fit_dainarx_transitions,
+)
+
+TIME_SPAN = (0.0, 20.0)
+SAMPLING_PERIOD = 0.001
+ORDER = 2
+TRAINING_INITIAL_STATES = (
+    (1.2, 0.0),
+    (1.1, 0.15),
+    (1.3, -0.1),
+    (1.0, -0.2),
+)
+HELD_OUT_INITIAL_STATE = (1.15, -0.075)
 
 
-def sampled_trace(seed: int) -> pl.DataFrame:
-    """Generate independent noise-free observations, not training labels.
-
-    Input ``u`` commands +2/-2 switch locations on the following row; ordinary
-    inputs lie in [-0.5, 0.5]. A switch changes both dynamics and output ``x``.
-    Every trace starts in the same location, but with a different output.
-
-    Args:
-        seed: Random seed for inputs and the initial output.
-
-    Returns:
-        A Polars frame with ``time`` (sample timestamps), ``u`` (input), and
-            ``x`` (output) columns.
-    """
-    rng = np.random.default_rng(seed)
-    u = rng.uniform(-0.5, 0.5, 240)
-    for index, t in enumerate(range(25, len(u), 25)):
-        u[t] = 2 if index % 2 == 0 else -2
-    x = np.empty(len(u))
-    x[0] = rng.uniform(-1, 1)
-    location = 0
-    for t in range(1, len(u)):
-        switch = (location == 0 and u[t - 1] > 1) or (
-            location == 1 and u[t - 1] < -1
-        )
-        if switch:
-            location = 1 - location
-            x[t] = 0.4 * x[t - 1] + 0.1 * u[t] + (1 if location else -1)
-        elif location == 0:
-            x[t] = 0.8 * x[t - 1] + 0.2 * u[t] + 0.1
-        else:
-            x[t] = -0.5 * x[t - 1] + 0.3 * u[t] - 0.2
-    return pl.DataFrame({"time": np.arange(len(u)) * 0.1, "u": u, "x": x})
+def observe(initial_state: tuple[float, float]) -> pl.DataFrame:
+    """Simulate from position and velocity, retaining only learner observations."""
+    trajectory = simulate(
+        duffing_oscillator(initial_state=np.asarray(initial_state)),
+        t_span=TIME_SPAN,
+        input_stream=duffing_force,
+        rtol=1e-11,
+        atol=1e-13,
+        max_step=0.005,
+    )
+    times = np.linspace(
+        *TIME_SPAN,
+        round((TIME_SPAN[1] - TIME_SPAN[0]) / SAMPLING_PERIOD) + 1,
+    )
+    return trajectory.sample(times=times, include_inputs=True).select(
+        "t",
+        pl.col("u0").alias("force"),
+        pl.col("x0").alias("position"),
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--plot-path",
-        type=Path,
-        default=Path(__file__).parent / "outputs" / "system-trace.svg",
-        help="Save a plot of the generated system to this path.",
-    )
-    args = parser.parse_args()
-    training = [sampled_trace(seed) for seed in range(4)]
-    fit = fit_dainarx(
+    training = [observe(initial) for initial in TRAINING_INITIAL_STATES]
+    dynamics = fit_dainarx_dynamics(
         training,
-        input_features=["u"],
-        output_features=["x"],
-        time_column="time",
-        order=1,
-        window=6,
-        guard_kernel="linear",
-        guard_c=1e4,
-        guard_gamma="scale",
+        input_features=["force"],
+        output_features=["position"],
+        time_column="t",
+        order=ORDER,
+        window=10,
+        nonlinear_terms=(
+            lambda history, _: history[-1] ** 3,
+            lambda history, _: history[-2] ** 3,
+        ),
     )
-    held_out = sampled_trace(42)
-    # All traces start in the same physical location. Its learned ID is known
-    # from the first training segment, not inferred from future test outputs.
-    initial_location = fit.segments[0].location_id
-    predicted = fit.model.rollout(
-        held_out.select("time", "u"),
-        output_history=held_out.select("x").head(1).to_numpy(),
-        initial_location=initial_location,
+    print(f"Discovered segments: {len(dynamics.segments)}")
+    print(f"Learned locations: {len(dynamics.locations)}")
+    print(f"Training RMSE threshold: {dynamics.eta:.6g}")
+    for location_id, model in enumerate(dynamics.locations):
+        print(f"Location {location_id} training RMSE: {model.rmse:.6g}")
+
+    try:
+        transitions = fit_dainarx_transitions(
+            training,
+            dynamics,
+            guard_kernel="rbf",
+            guard_c=1e6,
+            guard_gamma="scale",
+        )
+    except ValueError as error:
+        print(f"Transition fitting did not complete: {error}")
+        print("No executable model or held-out prediction was produced.")
+        return
+
+    model = DainarxModel(dynamics.locations, transitions)
+    held_out = observe(HELD_OUT_INITIAL_STATE)
+    # These initial conditions all start in the same physical location,
+    # before any switch. Its learned ID comes from the first training segment.
+    try:
+        predicted = model.rollout(
+            held_out.select("t", "force"),
+            output_history=held_out.select("position").head(ORDER).to_numpy(),
+            initial_location=dynamics.segments[0].location_id,
+        )
+    except ValueError as error:
+        print(f"Held-out rollout did not complete: {error}")
+        return
+    error = (
+        predicted["position"].to_numpy()[ORDER:]
+        - held_out["position"].to_numpy()[ORDER:]
     )
-    error = predicted["x"].to_numpy()[1:] - held_out["x"].to_numpy()[1:]
-    print(
-        f"{len(fit.segments)} segments; {len(fit.model.locations)} locations"
-    )
-    print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.3g}")
-    assert np.max(np.abs(error)) < 1e-10
-    save_trace_plot(held_out, args.plot_path)
-    print(f"System trace plot: {args.plot_path}")
+    print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.6g}")
+    print(f"Maximum held-out absolute error: {np.max(np.abs(error)):.6g}")
 
 
 if __name__ == "__main__":

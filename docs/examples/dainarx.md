@@ -4,7 +4,9 @@ icon: lucide/workflow
 
 # Learning with Dainarx
 
-This example learns a system that follows two different rules. An input command switches it from one location to the other. Dainarx receives the recorded inputs and outputs, but not the location labels. We then use the learned model to predict a new trace.
+This example applies Dainarx to the [Duffing oscillator benchmark](hybrid_systems.md#duffing-oscillator). A cosine force drives a nonlinear spring system whose damping and stiffness switch between locations. Switching also reduces its velocity. The gallery explains the physical model and shows its behavior.
+
+The learner receives sampled position and force, but neither velocity nor the simulator's location labels. The aim is to explore identification on a standard benchmark, not to require a perfect fit.
 
 ## Run the Example
 
@@ -14,64 +16,20 @@ From the repository root:
 just examples-dainarx
 ```
 
-The [example script](https://github.com/flowcean/flowcean/blob/main/examples/dainarx/run.py) generates its own noise-free data: four traces for learning and a fifth for prediction. Each trace contains time stamps in `time`, input values in `u`, and output values in `x`.
+The [example script](https://github.com/flowcean/flowcean/blob/main/examples/dainarx/run.py) generates independent training traces with the native simulator and different initial states. It retains timestamps in `t`, the prescribed input in `force`, and the observed output in `position`. The script owns the experiment's initial conditions, sampling settings, and learner configuration.
 
-## The Example System
+## Read the Discovery Results
 
-This is a synthetic system with one input and one output, observed every 0.1 time units. It starts in location 0. There, the previous output carries over with the same sign, and the output tends to settle near a positive value. In location 1, the previous output contributes with the opposite sign, so the output tends to alternate around a negative value. Both rules also use the current input.
+Dainarx first segments and groups the observations, fitting NARX predictors from position history, cubic features, and the current force. The script reports the discovered segments, learned locations, acceptance threshold, and ordinary location-fitting errors.
 
-Ordinary inputs vary randomly between -0.5 and 0.5; there is no added measurement noise. A `+2` command switches from location 0 to location 1, and a `-2` command switches back. The switch takes effect at the **next observation**, not at the command itself. At that observation, a separate rule makes the output jump; the new location's normal rule resumes on the observation after that.
+These are training results, not prediction errors on unseen trajectories. Successful dynamics discovery does not by itself provide an executable hybrid model: switching conditions and post-switch predictors still need to be learned.
 
-[![Sampled input and output from the generated system: commands at times 2.5 and 5.0 lead to output jumps and location switches at 2.6 and 5.1.](../assets/dainarx/system-trace.svg)](../assets/dainarx/system-trace.svg){ target="\_blank" rel="noopener" }
+## Interpret Incomplete Identification
 
-The plot shows the first six time units of the fifth generated trace. Each dot is one observation. Orange diamonds mark input commands in the upper panel and the resulting switches in the lower panel. After the jump at 2.6, look for the alternating output; after the jump at 5.1, it starts moving back toward positive values.
+With the current configuration, dynamics discovery completes, but transition fitting rejects a post-switch predictor because its training error exceeds the acceptance threshold. The script prints the reason and ends normally, explicitly reporting that no executable model or held-out prediction was produced.
 
-Running the example also saves the plot to `examples/dainarx/outputs/system-trace.svg`.
+This is a limitation of the current implementation and configuration. Completing the command is not a claim that identification succeeded.
 
-## Learn from the Traces
+If transition fitting succeeds, the script attempts a separate held-out rollout. It supplies initial position history, the starting location inferred from the first training segment, and the prescribed force. The chosen initial conditions start in the same physical location. Later recorded positions are used only to score predictions, not fed back into the learned model. Reported errors exclude the supplied initial history, and no near-zero error is required.
 
-Dainarx looks for changes in the traces and groups the parts that follow the same rule. It also learns when to switch locations and how the output changes at a switch.
-
-The script passes the four training traces as separate Polars frames. That way, the final output of one trace is not used to predict the first output of another:
-
-```python
-from flowcean.hybrid.dainarx import fit_dainarx
-
-fit = fit_dainarx(
-    training,
-    input_features=["u"],
-    output_features=["x"],
-    time_column="time",
-    order=1,
-    window=6,
-    guard_kernel="linear",
-    guard_c=1e4,
-    guard_gamma="scale",
-)
-```
-
-Here, `order=1` tells the model to predict each output from the previous output and the current input. With `window=6`, Dainarx examines six observations at a time to look for changes. The guard options control how it learns the conditions for switching locations.
-
-## Predict a New Trace
-
-The fifth trace was not used for learning. To start predicting it, we supply its first output, its starting location, and its input values:
-
-```python
-predicted = fit.model.rollout(
-    held_out.select("time", "u"),
-    output_history=held_out.select("x").head(1).to_numpy(),
-    initial_location=fit.segments[0].location_id,
-)
-```
-
-All traces in this example start in the same location, so we take its learned ID from the first training segment. For another dataset, you need to supply the starting location yourself.
-
-After the first output, the model uses its own predictions to calculate each next output. It does not read the remaining recorded outputs. Those are kept for comparison. The returned frame contains the times, predicted outputs, and location IDs; it also includes the first output we supplied.
-
-## Read the Results
-
-The script prints the number of segments and learned locations, followed by the prediction error. You should see two locations. There are more segments: Dainarx splits each trace at the changes it detects, and several of those parts can belong to the same location.
-
-The error is the root-mean-square error (RMSE) between the predicted and recorded outputs, excluding the first output used to start the prediction. This example has no noise and follows rules that the model can represent, so the error should be close to zero.
-
-See the [API reference](../reference/hybrid.md#flowcean.hybrid.dainarx) for configuration options, including nonlinear terms. The method is described in the [Dainarx paper](https://arxiv.org/html/2507.16426v3).
+See the [API reference](../reference/hybrid.md#flowcean.hybrid.dainarx) for separate dynamics discovery, observation annotations, transition fitting, and rollout. The method is described in the [Dainarx paper](https://arxiv.org/html/2507.16426v3).

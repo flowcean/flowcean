@@ -2,7 +2,7 @@
 
 from .bouncing_ball import bouncing_ball
 from .buck_converter import buck_converter
-from .duffing_oscillator import duffing_oscillator
+from .duffing_oscillator import duffing_force, duffing_oscillator
 from .hybrid_oscillator import hybrid_oscillator
 from .impact_oscillator import impact_oscillator
 from .location_cycle import location_cycle
@@ -20,6 +20,7 @@ from .wind_turbine import wind_turbine, wind_turbine_power
 __all__ = [
     "bouncing_ball",
     "buck_converter",
+    "duffing_force",
     "duffing_oscillator",
     "hybrid_oscillator",
     "impact_oscillator",

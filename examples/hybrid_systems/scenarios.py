@@ -9,6 +9,7 @@ from flowcean.hybrid import HybridSystem, InputStream
 from flowcean.hybrid.benchmarks import (
     bouncing_ball,
     buck_converter,
+    duffing_force,
     duffing_oscillator,
     hybrid_oscillator,
     impact_oscillator,
@@ -40,10 +41,6 @@ class Scenario:
 
 def thermostat_target_temperature(t: float) -> np.ndarray:
     return np.array([22.0 + 0.8 * np.sin(0.7 * t)])
-
-
-def duffing_force(t: float) -> np.ndarray:
-    return np.array([np.cos(t)])
 
 
 def impact_force(t: float) -> np.ndarray:
