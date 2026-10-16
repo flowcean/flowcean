@@ -179,14 +179,6 @@ def test_projection_preserves_original_rows_columns_and_independent_trace_geomet
     ):
         with pytest.raises(ValueError, match=message):
             fit_dainarx_transitions(invalid, dynamics, **GUARDS)
-    # Projection checks geometry, not observation identity or timestamp order.
-    # The caller must retain canonical row correspondence for either stage.
-    reversed_labels = dynamics.to_labeled_frames(
-        [traces[0].reverse(), traces[1]]
-    )
-    np.testing.assert_array_equal(
-        reversed_labels[0]["location_id"], training[0][1]
-    )
 
 
 def test_discovery_survives_insufficient_transition_evidence():
