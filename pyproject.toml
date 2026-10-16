@@ -93,6 +93,7 @@ members = [
   "examples/boiler",
   "examples/callbacks",
   "examples/coffee_machine",
+  "examples/dainarx",
   "examples/energy_system",
   "examples/hybrid_systems",
   "examples/hs-simple",
