@@ -55,7 +55,12 @@ def main() -> None:
         f"Unassigned rows: {sum(segment.stop - segment.start for segment in discovery.segments if segment.location_id is None)}"
     )
     dynamics = fit_famos_dynamics(training, discovery, order=1)
-    selector = fit_famos_transitions(training, discovery)
+    selector = fit_famos_transitions(
+        discovery.to_labeled_frames(training),
+        output_features=discovery.output_features,
+        input_features=discovery.input_features,
+        n_locations=len(discovery.location_keys),
+    )
     for location, error in enumerate(dynamics.rmse):
         print(
             f"Location {location}: n={dynamics.sample_counts[location]}, "

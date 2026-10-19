@@ -16,6 +16,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** `fit_famos_transitions` now accepts independent frames with explicit nullable integer `location_id` labels, ordered output/input features, and a declared location count instead of `FamosDiscovery`. `FamosModel` checks feature order and location count rather than discovery identity; callers must align location meanings and training timing. The MMSR example compares soft-membership symbolic guards with hardened-label FaMoS trees on the same fixed CSR dynamics.
 - The `pysr` extra now requires PySR 2.3.0 or newer.
 - **Breaking:** `HyDRALearner.learn` accepts independent Polars traces with explicit `input_features` and `output_features`, returning `LearnedFlows` rather than a predictor only when every supplied observation is assigned. Failure raises public `HyDRAIdentificationError` (`RuntimeError`), whose `.segment` and message identify the failing trace and half-open row bounds; no partial result is returned. `LearnedFlows` exposes `flows`, `trace_lengths`, `input_features`, and `output_features`; `to_flow_ids()` returns fully assigned int64 arrays and `to_labeled_frames(original_traces)` adds non-null Int64 `flow_id` labels for selector training. Train selectors and construct `HyDRAModel` separately; learner-level selector and schema arguments are removed.
 - **Breaking:** HyDRA observation segments use half-open `[start, stop)` row bounds. `TraceSegment.start_index` and `end_index` are replaced by `start` and `stop`.

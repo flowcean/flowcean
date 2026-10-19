@@ -13,13 +13,17 @@ from .transitions import FamosTransitionSelector
 
 @dataclass(frozen=True)
 class FamosModel:
-    """Sampled dynamics and next-location selection sharing one discovery.
+    """Compose sampled dynamics and next-location selection.
+
+    Feature order and location count must match. The caller is responsible
+    for matching location meanings and source-time training alignment;
+    structural checks cannot certify provenance. Each artifact uses its own
+    training scales and exchanges physical-unit values, so scales may differ.
 
     Attributes:
         dynamics: Affine output-history dynamics.
-        selector: Source-conditioned next-location trees. Its discovery must
-            be the same artifact as dynamics.discovery, ensuring consistent
-            location meanings, feature order, timing, and scales.
+        selector: Source-conditioned next-location trees with matching
+            output/input feature order and location count.
     """
 
     dynamics: FamosDynamics
@@ -54,9 +58,13 @@ class FamosModel:
             predicted location is included even without a following output.
         """
         discovery = self.dynamics.discovery
-        if self.selector.discovery is not discovery:
+        if (
+            self.selector.output_features != discovery.output_features
+            or self.selector.input_features != discovery.input_features
+            or self.selector.n_locations != len(discovery.location_keys)
+        ):
             raise ValueError(
-                "Dynamics and selector must share one discovery artifact"
+                "Dynamics and selector must match feature order and location count"
             )
         if not 0 <= initial_location < len(discovery.location_keys):
             raise ValueError(
