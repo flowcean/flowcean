@@ -1,9 +1,11 @@
 """Tests for the canonical hybrid-system public namespaces."""
 
 import importlib
+import subprocess
+import sys
 
 from flowcean import hybrid
-from flowcean.hybrid import benchmarks, dainarx, famos, hydra
+from flowcean.hybrid import benchmarks, dainarx, famos, hydra, mmsr
 from flowcean.hybrid.benchmarks import bouncing_ball, duffing_oscillator
 from flowcean.hybrid.graph import build_hybrid_system_dot, render_dot_svg
 from flowcean.hybrid.hybrid_system import HybridSystem, Location
@@ -43,6 +45,8 @@ def test_hybrid_facade_exposes_nested_module_handles() -> None:
     assert hybrid.hydra is hydra
     assert hybrid.dainarx is dainarx
     assert hybrid.famos is famos
+    assert hybrid.mmsr is mmsr
+    assert "mmsr" in hybrid.__all__
     assert hydra.selector is selector
     assert hybrid.benchmarks is importlib.import_module(
         "flowcean.hybrid.benchmarks",
@@ -50,8 +54,21 @@ def test_hybrid_facade_exposes_nested_module_handles() -> None:
     assert hybrid.hydra is importlib.import_module("flowcean.hybrid.hydra")
     assert hybrid.dainarx is importlib.import_module("flowcean.hybrid.dainarx")
     assert hybrid.famos is importlib.import_module("flowcean.hybrid.famos")
+    assert hybrid.mmsr is importlib.import_module("flowcean.hybrid.mmsr")
     assert hydra.selector is importlib.import_module(
         "flowcean.hybrid.hydra.selector",
+    )
+
+
+def test_hybrid_import_does_not_load_optional_symbolic_backend() -> None:
+    subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; import flowcean.hybrid; "
+            "assert not {'pysr', 'juliacall', 'juliapkg'} & sys.modules.keys()",
+        ],
+        check=True,
     )
 
 
