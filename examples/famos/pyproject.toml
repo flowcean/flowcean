@@ -1,0 +1,11 @@
+[project]
+name = "famos-example"
+version = "0.1.0"
+requires-python = ">=3.12, <4.0"
+dependencies = ["flowcean", "numpy", "polars"]
+
+[tool.pyright]
+extends = "../../pyproject.toml"
+
+[tool.uv.sources]
+flowcean = { workspace = true }

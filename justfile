@@ -36,7 +36,7 @@ docs-serve:
   @echo "Serving documentation with Zensical"
   @uv run --only-group docs zensical serve
 
-examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-dainarx examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor examples-trace_prediction examples-hs-simple examples-hybrid_systems examples-simulated_hybrid_system examples-system_behavior_learning
+examples: examples-alp examples-boiler examples-callbacks examples-coffee_machine examples-dainarx examples-famos examples-linear_data examples-one_tank examples-robot_localization_failure examples-energy_system examples-xor examples-trace_prediction examples-hs-simple examples-hybrid_systems examples-simulated_hybrid_system examples-system_behavior_learning
 
 examples-alp:
   @echo "🚀 Running example: Automatic Lashing Platform"
@@ -57,6 +57,10 @@ examples-callbacks:
 examples-dainarx:
   @echo "Running example: Dainarx sampled-system identification"
   @uv run --directory ./examples/dainarx/ python run.py
+
+examples-famos:
+  @echo "Running example: FaMoS-DTW sampled thermostat identification"
+  @uv run --directory ./examples/famos/ python run.py
 
 examples-ddtig:
   @echo "🚀 Running example: DDTIG"

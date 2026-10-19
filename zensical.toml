@@ -58,6 +58,7 @@ nav = [
       { "Hybrid Systems Gallery" = "examples/hybrid_systems.md" },
       { "Simulated Hybrid System Identification" = "examples/simulated_hybrid_system.md" },
       { "Learning with Dainarx" = "examples/dainarx.md" },
+      { "Learning with FaMoS-DTW" = "examples/famos.md" },
     ] },
     { "Learning and testing" = [
       { "One Tank Offline" = "examples/one_tank.md" },
