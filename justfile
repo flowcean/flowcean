@@ -62,6 +62,10 @@ examples-famos:
   @echo "Running example: FaMoS-DTW sampled thermostat identification"
   @uv run --directory ./examples/famos/ python run.py
 
+examples-mmsr:
+  @echo "Running example: MMSR sampled thermostat mappings and guards"
+  @JULIA_NUM_THREADS=1 PYTHON_JULIACALL_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 uv run --directory ./examples/mmsr/ python run.py
+
 examples-ddtig:
   @echo "🚀 Running example: DDTIG"
   @uv run --directory ./examples/ddtig/ run.py

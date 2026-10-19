@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added `flowcean.hybrid.mmsr` for clustered symbolic regression with scalar outputs and separate soft-membership transition modeling, using the optional PySR backend, with inspectable expressions, variances, guards, stopping diagnostics, and a sampled thermostat example.
 - Added `flowcean.hybrid.famos` for independent FaMoS-DTW location discovery, sampled affine ARX dynamics, source-conditioned next-location trees, and recursive rollout, with a native thermostat example and exact C-backed DTW dependency.
 - Added `flowcean.hybrid.dainarx` to learn hybrid models from noise-free traces of inputs and outputs, with a Duffing benchmark example that reports discovery results and incomplete transition fitting.
 - Added staged Dainarx identification: `fit_dainarx_dynamics` returns complete `DainarxDynamics` with original-row location annotations; `fit_dainarx_transitions` separately learns guards and post-switch predictors. `fit_dainarx` composes both stages, while discovery results remain usable when transition fitting fails.
@@ -15,6 +16,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- The `pysr` extra now requires PySR 2.3.0 or newer.
 - **Breaking:** `HyDRALearner.learn` accepts independent Polars traces with explicit `input_features` and `output_features`, returning `LearnedFlows` rather than a predictor only when every supplied observation is assigned. Failure raises public `HyDRAIdentificationError` (`RuntimeError`), whose `.segment` and message identify the failing trace and half-open row bounds; no partial result is returned. `LearnedFlows` exposes `flows`, `trace_lengths`, `input_features`, and `output_features`; `to_flow_ids()` returns fully assigned int64 arrays and `to_labeled_frames(original_traces)` adds non-null Int64 `flow_id` labels for selector training. Train selectors and construct `HyDRAModel` separately; learner-level selector and schema arguments are removed.
 - **Breaking:** HyDRA observation segments use half-open `[start, stop)` row bounds. `TraceSegment.start_index` and `end_index` are replaced by `start` and `stop`.
 - **Breaking:** HyDRA factories now create a fresh batch `SupervisedLearner` for each candidate and final fit, with independent fitting state so later fits cannot mutate earlier models. Candidate models need not support deep copying. `PySRLearner.learn` replaces `learn_incremental` and no longer forces warm starts. Each fit receives only its supplied observations, without cumulative updates from overlapping windows. PySR searches restart rather than resume previous search state, which can increase runtime and change learned equations.

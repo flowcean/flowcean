@@ -47,7 +47,7 @@ palaestrai = [
   "lightning>=2.4.0",
   "torch>=2.5.0",
 ]
-pysr = ["pysr>=1.5.9"]
+pysr = ["pysr>=2.3.0"]
 river = ["river>=0.21.0"]
 torch = ["lightning>=2.4.0", "torch>=2.5.0"]
 xgboost = ["xgboost>=3.0.2"]
@@ -71,7 +71,7 @@ dev = [
   "dvc>=3.59.0",
   "ipykernel>=6.30.1",
   "pre-commit>=4.6.0",
-  "pysr>=1.5.9",
+  "pysr>=2.3.0",
   "pytest-cov>=7.1.0",
   "pytest>=9.0.3",
   "river>=0.21.0",
@@ -101,6 +101,7 @@ members = [
   "examples/hs-simple",
   "examples/linear_data",
   "examples/multi_linear_data",
+  "examples/mmsr",
   "examples/one_tank",
   "examples/robot_localization_failure",
   "examples/passive_circuit",

@@ -1,0 +1,11 @@
+[project]
+name = "mmsr-example"
+version = "0.1.0"
+requires-python = ">=3.12, <4.0"
+dependencies = ["flowcean[pysr]", "numpy", "polars", "pysr>=2.3.0"]
+
+[tool.pyright]
+extends = "../../pyproject.toml"
+
+[tool.uv.sources]
+flowcean = { workspace = true }
