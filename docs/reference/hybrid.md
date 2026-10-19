@@ -10,6 +10,7 @@ This page covers the public API of `flowcean.hybrid` and its subpackages:
 - [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories.
 - [HyDRA identification](#flowcean.hybrid.hydra): `HyDRALearner` returns fully assigned `LearnedFlows` or raises `HyDRAIdentificationError` with the failing `segment`. Use `to_labeled_frames` for selector training or `to_flow_ids` for NumPy assignments. Progress observers use `HyDRACallback` or `PlotCallback`; selector helpers are also available from `flowcean.hybrid.hydra.selector`.
 - [Dainarx identification](#flowcean.hybrid.dainarx): `fit_dainarx_dynamics` discovers sampled NARX dynamics; `fit_dainarx_transitions` learns guards and post-switch predictors. `fit_dainarx` composes both stages. See the [Dainarx example](../examples/dainarx.md).
+- [FaMoS-DTW identification](#flowcean.hybrid.famos): independent partial location discovery, sampled affine ARX fitting, and source-conditioned next-location trees. See the [FaMoS example](../examples/famos.md).
 
 See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.
 
@@ -102,4 +103,9 @@ See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling con
     options:
       heading: Dainarx identification
       toc_label: Dainarx identification
+
+::: flowcean.hybrid.famos
+    options:
+      heading: FaMoS-DTW identification
+      toc_label: FaMoS-DTW identification
 <!-- prettier-ignore-end -->

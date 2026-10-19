@@ -1,6 +1,6 @@
 """Hybrid-system modeling, automaton diagrams, simulation, and traces."""
 
-from . import benchmarks, dainarx, hydra
+from . import benchmarks, dainarx, famos, hydra
 from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
     CrossingDirection,
@@ -65,6 +65,7 @@ __all__ = (
     "benchmarks",
     "build_hybrid_system_dot",
     "dainarx",
+    "famos",
     "hydra",
     "plot_locations",
     "plot_state_space",

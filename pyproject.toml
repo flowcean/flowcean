@@ -20,6 +20,7 @@ authors = [{ name = "The AGenC Team", email = "agenc.team@tuhh.de" }]
 dependencies = [
   "aalpy>=1.6.2,<2",
   "cloudpickle>=3.1.1",
+  "dtaidistance>=2.4.0,<3",
   "matplotlib>=3.10.8",
   "numpy>=1.26.4",
   "omegaconf>=2.3.0",
@@ -95,6 +96,7 @@ members = [
   "examples/coffee_machine",
   "examples/dainarx",
   "examples/energy_system",
+  "examples/famos",
   "examples/hybrid_systems",
   "examples/hs-simple",
   "examples/linear_data",

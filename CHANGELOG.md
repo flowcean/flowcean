@@ -6,6 +6,7 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added `flowcean.hybrid.famos` for independent FaMoS-DTW location discovery, sampled affine ARX dynamics, source-conditioned next-location trees, and recursive rollout, with a native thermostat example and exact C-backed DTW dependency.
 - Added `flowcean.hybrid.dainarx` to learn hybrid models from noise-free traces of inputs and outputs, with a Duffing benchmark example that reports discovery results and incomplete transition fitting.
 - Added staged Dainarx identification: `fit_dainarx_dynamics` returns complete `DainarxDynamics` with original-row location annotations; `fit_dainarx_transitions` separately learns guards and post-switch predictors. `fit_dainarx` composes both stages, while discovery results remain usable when transition fitting fails.
 - Added `duffing_oscillator` and a gallery example showing forced nonlinear motion with velocity resets.
