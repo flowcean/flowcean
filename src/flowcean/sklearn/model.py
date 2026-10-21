@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, cast, override
+import math
+from typing import TYPE_CHECKING, Any, Protocol, override, runtime_checkable
 
+import numpy as np
 import polars as pl
 
-from flowcean.core.model import Model
+from flowcean.polars.model import PolarsModel
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -12,23 +14,88 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
+@runtime_checkable
 class SupportsPredict(Protocol):
-    """Protocol describing an object that has a `predict` method."""
+    """The prediction boundary of a scikit-learn estimator."""
 
-    def predict(self, X: Any) -> NDArray: ...
-
-
-class SupportsPredictProba(Protocol):
-    """Protocol describing an object that has a `predict_proba` method."""
-
-    def predict_proba(self, X: Any) -> NDArray: ...
+    def predict(self, X: Any) -> object: ...
 
 
-class SciKitModel(Model):
+@runtime_checkable
+class SupportsClassifier(SupportsPredict, Protocol):
+    """A fitted classifier exposing labels and class probabilities."""
+
+    @property
+    def classes_(self) -> object: ...
+
+    def predict_proba(self, X: Any) -> object: ...
+
+
+def prediction_frame(
+    outputs: object,
+    rows: int,
+    names: list[str],
+) -> pl.LazyFrame:
+    """Validate estimator output before assigning target column names."""
+    if not isinstance(outputs, np.ndarray):
+        message = "Estimator predictions must be NumPy arrays"
+        raise TypeError(message)
+    if outputs.ndim == 1 and len(names) == 1:
+        outputs = outputs.reshape(-1, 1)
+    if outputs.ndim != 2 or outputs.shape != (rows, len(names)):
+        message = "Prediction shape must match input rows and output columns"
+        raise ValueError(message)
+    return pl.DataFrame(outputs, schema=names, orient="row").lazy()
+
+
+def validate_threshold(threshold: float | None) -> None:
+    """Require an optional finite probability threshold."""
+    if threshold is not None and (
+        not math.isfinite(threshold) or not 0 <= threshold <= 1
+    ):
+        message = "threshold must be finite and between 0 and 1"
+        raise ValueError(message)
+
+
+def binary_classes(
+    classes: object,
+    names: list[str],
+) -> NDArray[Any]:
+    """Validate the single-target binary probability contract."""
+    if (
+        len(names) != 1
+        or not isinstance(classes, np.ndarray)
+        or classes.ndim != 1
+        or len(classes) != 2
+    ):
+        message = "Binary probabilities require one target and two classes"
+        raise ValueError(message)
+    return classes
+
+
+def positive_probabilities(
+    probabilities: object,
+    rows: int,
+) -> NDArray[Any]:
+    """Validate the binary probability matrix and select classes_[1]."""
+    if (
+        not isinstance(probabilities, np.ndarray)
+        or probabilities.ndim != 2
+        or probabilities.shape != (rows, 2)
+    ):
+        message = "Binary probabilities must have shape (input rows, 2)"
+        raise ValueError(message)
+    if (
+        not np.isfinite(probabilities).all()
+        or ((probabilities < 0) | (probabilities > 1)).any()
+    ):
+        message = "Probabilities must be finite and between 0 and 1"
+        raise ValueError(message)
+    return probabilities[:, 1]
+
+
+class SciKitModel(PolarsModel):
     """A model that wraps a scikit-learn estimator."""
-
-    estimator: SupportsPredict
-    output_names: list[str]
 
     def __init__(
         self,
@@ -37,17 +104,13 @@ class SciKitModel(Model):
         output_names: Iterable[str],
         name: str | None = None,
     ) -> None:
-        """Initialize the model.
-
-        Args:
-            estimator: The scikit-learn estimator.
-            output_names: The names of the output columns.
-            name: The name of the model.
-        """
         super().__init__()
-        if name is None:
-            name = estimator.__class__.__name__
-        self._name = name
+        if not isinstance(estimator, SupportsPredict) or not callable(
+            estimator.predict
+        ):
+            message = "Estimator must implement predict"
+            raise TypeError(message)
+        self._name = name or estimator.__class__.__name__
         self.estimator = estimator
         self.output_names = list(output_names)
 
@@ -58,96 +121,82 @@ class SciKitModel(Model):
     ) -> pl.LazyFrame:
         if isinstance(input_features, pl.LazyFrame):
             input_features = input_features.collect()
-
-        outputs = self.estimator.predict(input_features)
-        if len(self.output_names) == 1:
-            if outputs.ndim == 2 and outputs.shape[1] == 1:
-                outputs = outputs[:, 0]
-            data = {self.output_names[0]: outputs}
-        else:
-            data = {
-                self.output_names[i]: outputs[:, i]
-                for i in range(len(self.output_names))
-            }
-        return pl.LazyFrame(data)
+        return prediction_frame(
+            self.estimator.predict(input_features),
+            input_features.height,
+            self.output_names,
+        )
 
 
 class SciKitClassifierModel(SciKitModel):
-    """A SciKit model for classifiers with probability predictions.
+    """Native classifier predictions, or explicit binary thresholding.
 
-    Supports threshold-based predictions via the ``threshold`` attribute and
-    exposes class probabilities via ``predict_proba``. The estimator must
-    implement ``predict_proba``.
+    ``None`` preserves the estimator's labels and multiclass predictions.
+    ``predict_proba`` exposes only the probability of ``classes_[1]`` for
+    single-target binary classifiers, without label postprocessing.
     """
-
-    threshold: float
 
     def __init__(
         self,
-        estimator: SupportsPredict,
+        estimator: SupportsClassifier,
         *,
         output_names: Iterable[str],
-        threshold: float = 0.5,
+        threshold: float | None = None,
         name: str | None = None,
     ) -> None:
-        """Initialize the classifier model.
-
-        Args:
-            estimator: The scikit-learn classifier (must support
-                ``predict_proba``).
-            output_names: The names of the output columns.
-            threshold: Decision threshold for the positive class
-                (default: 0.5).
-            name: The name of the model.
-        """
+        if not isinstance(estimator, SupportsClassifier) or not callable(
+            estimator.predict_proba
+        ):
+            message = (
+                "Classifier must expose predict, predict_proba and classes_"
+            )
+            raise TypeError(message)
         super().__init__(estimator, output_names=output_names, name=name)
+        self.classifier = estimator
+        validate_threshold(threshold)
         self.threshold = threshold
+        if threshold is not None:
+            binary_classes(self.classifier.classes_, self.output_names)
 
     def _predict_proba(
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
     ) -> pl.LazyFrame:
-        """Predict class probabilities (without preprocessing)."""
         if isinstance(input_features, pl.LazyFrame):
             input_features = input_features.collect()
-
-        estimator = cast("SupportsPredictProba", self.estimator)
-        probas = estimator.predict_proba(input_features)[:, 1]
-
-        if len(self.output_names) == 1:
-            data = {self.output_names[0]: probas}
-        else:
-            data = {
-                self.output_names[i]: probas[:, i]
-                for i in range(len(self.output_names))
-            }
-        return pl.LazyFrame(data)
+        binary_classes(self.classifier.classes_, self.output_names)
+        probabilities = positive_probabilities(
+            self.classifier.predict_proba(input_features),
+            input_features.height,
+        )
+        return prediction_frame(
+            probabilities,
+            input_features.height,
+            self.output_names,
+        )
 
     def predict_proba(
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
     ) -> pl.LazyFrame:
-        """Predict class probabilities, applying preprocessing transforms.
-
-        Args:
-            input_features: The inputs for which to predict probabilities.
-
-        Returns:
-            The predicted probabilities for the positive class.
-        """
-        input_features = self.preprocess(input_features)
-        return self._predict_proba(input_features)
+        """Predict binary probabilities, applying preprocessing exactly once."""
+        return self._predict_proba(self.preprocess(input_features))
 
     @override
     def _predict(
         self,
         input_features: pl.DataFrame | pl.LazyFrame,
     ) -> pl.LazyFrame:
-        if isinstance(input_features, pl.LazyFrame):
-            input_features = input_features.collect()
-
-        probas = self._predict_proba(input_features).collect()
-        predictions = {}
-        for col in probas.columns:
-            predictions[col] = (probas[col] >= self.threshold).cast(pl.Int64)
-        return pl.LazyFrame(predictions)
+        validate_threshold(self.threshold)
+        if self.threshold is None:
+            return super()._predict(input_features)
+        classes = binary_classes(self.classifier.classes_, self.output_names)
+        probabilities = self._predict_proba(input_features).collect()
+        labels = np.where(
+            probabilities.to_series().to_numpy() >= self.threshold,
+            classes[1],
+            classes[0],
+        )
+        return prediction_frame(
+            labels, probabilities.height, self.output_names
+        )

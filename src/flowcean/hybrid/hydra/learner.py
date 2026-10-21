@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import polars as pl
+from numpy.typing import NDArray
 
 from flowcean.core.learner import SupervisedLearner
 
@@ -59,7 +60,7 @@ class LearnedFlow:
     Membership is recorded before the final model refit.
     """
 
-    model: Model
+    model: Model[pl.LazyFrame, pl.LazyFrame]
     segments: tuple[TraceSegment, ...]
 
 
@@ -134,7 +135,7 @@ class LearnedFlows:
             if previous_stop != length:
                 raise ValueError("Accepted segments must cover every row.")
 
-    def to_flow_ids(self) -> list[np.ndarray]:
+    def to_flow_ids(self) -> list[NDArray[np.int64]]:
         """Return fresh, fully populated int64 arrays of row assignments."""
         flow_ids = [
             np.empty(length, dtype=np.int64) for length in self.trace_lengths
@@ -199,7 +200,12 @@ class HyDRALearner:
         callback: Observer for discovery progress; defaults to a no-op ``HyDRACallback``.
     """
 
-    regressor_factory: Callable[[], SupervisedLearner]
+    regressor_factory: Callable[
+        [],
+        SupervisedLearner[
+            pl.LazyFrame, pl.LazyFrame, Model[pl.LazyFrame, pl.LazyFrame]
+        ],
+    ]
     threshold: float
     start_width: int
     step_width: int
@@ -207,7 +213,12 @@ class HyDRALearner:
 
     def __init__(
         self,
-        regressor_factory: Callable[[], SupervisedLearner],
+        regressor_factory: Callable[
+            [],
+            SupervisedLearner[
+                pl.LazyFrame, pl.LazyFrame, Model[pl.LazyFrame, pl.LazyFrame]
+            ],
+        ],
         threshold: float,
         start_width: int = 10,
         step_width: int = 5,
@@ -465,7 +476,7 @@ class HyDRALearner:
         frame: pl.DataFrame,
         input_columns: list[str],
         output_columns: list[str],
-    ) -> Model:
+    ) -> Model[pl.LazyFrame, pl.LazyFrame]:
         learner = self.regressor_factory()
         return learner.learn(
             frame.select(input_columns).lazy(),
@@ -480,13 +491,13 @@ class HyDRALearner:
         *,
         trace_index: int,
         segment_start_index: int,
-    ) -> Model | None:
+    ) -> Model[pl.LazyFrame, pl.LazyFrame] | None:
         if trace_frame.height < self.start_width:
             return self._fit_rows(trace_frame, input_columns, output_columns)
 
         best_fit: float | None = None
         best_segment: TraceSegment | None = None
-        best_model: Model | None = None
+        best_model: Model[pl.LazyFrame, pl.LazyFrame] | None = None
         window_size = self.start_width - self.step_width
         while window_size < trace_frame.height:
             window_size = min(
@@ -498,7 +509,7 @@ class HyDRALearner:
                 window_frame, input_columns, output_columns
             )
             prediction = candidate_model.predict(
-                window_frame.select(input_columns),
+                window_frame.select(input_columns).lazy(),
             ).collect()
             prediction = _validate_prediction(
                 prediction, window_frame.height, output_columns
@@ -582,7 +593,7 @@ def _validate_prediction(
 
 def _absolute_residuals(
     observations: pl.DataFrame, predictions: pl.DataFrame, target_column: str
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     """Compute residuals from the normalized computational representation."""
     return np.abs(
         predictions[target_column].to_numpy()
@@ -600,7 +611,7 @@ def _first_pending_segment(
 
 
 def _segments_from_mask(
-    mask: np.ndarray, *, trace_index: int, start: int = 0
+    mask: NDArray[np.bool_], *, trace_index: int, start: int = 0
 ) -> list[TraceSegment]:
     segments: list[TraceSegment] = []
     run_start: int | None = None
@@ -679,7 +690,7 @@ def _group_matching_segments(
     *,
     traces: Sequence[pl.DataFrame],
     pending: Sequence[Sequence[TraceSegment]],
-    model: Model,
+    model: Model[pl.LazyFrame, pl.LazyFrame],
     input_columns: list[str],
     output_columns: list[str],
     threshold: float,
@@ -694,7 +705,9 @@ def _group_matching_segments(
             continue
         # Predict the whole partially assigned trace, including assigned rows:
         # backends or transforms may depend on the full input batch context.
-        predictions = model.predict(trace.select(input_columns)).collect()
+        predictions = model.predict(
+            trace.select(input_columns).lazy()
+        ).collect()
         predictions = _validate_prediction(
             predictions, trace.height, output_columns
         )

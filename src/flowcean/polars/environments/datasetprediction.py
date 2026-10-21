@@ -1,4 +1,4 @@
-from typing import cast, override
+from typing import override
 
 import polars as pl
 
@@ -7,7 +7,9 @@ from flowcean.core import ActiveEnvironment, Finished
 from .dataframe import DataFrame
 
 
-class DatasetPredictionEnvironment(ActiveEnvironment):
+class DatasetPredictionEnvironment(
+    ActiveEnvironment[pl.LazyFrame, pl.DataFrame]
+):
     """Dataset prediction environment."""
 
     environment: DataFrame
@@ -28,26 +30,34 @@ class DatasetPredictionEnvironment(ActiveEnvironment):
             batch_size: The batch size of the prediction.
         """
         super().__init__()
+        if batch_size <= 0:
+            message = "batch_size must be positive"
+            raise ValueError(message)
         self.environment = environment
         self.batch_size = batch_size
 
     @override
     def _observe(self) -> pl.LazyFrame:
         if self.data is None:
-            self.data = cast("pl.LazyFrame", self.environment.observe())
+            self.data = self.environment.observe()
         if self.slice is None:
-            self.slice = self.data.slice(self.i, self.batch_size)
+            batch = self.data.slice(self.i, self.batch_size)
+            if batch.head(1).collect().is_empty():
+                raise Finished
+            self.slice = batch
         print("Provided input for prediction is: ", self.slice)
         return self.slice.lazy()
 
     @override
     def step(self) -> None:
         if self.data is None:
-            self.data = cast("pl.LazyFrame", self.environment.observe())
+            self.data = self.environment.observe()
         self.i += self.batch_size
-        self.slice = self.data.slice(self.i, self.batch_size)
-        if self.slice.slice(0, 1).collect().select(pl.len()).item(0, 0) == 0:
+        self.slice = None
+        batch = self.data.slice(self.i, self.batch_size)
+        if batch.head(1).collect().is_empty():
             raise Finished
+        self.slice = batch
 
     @override
     def act(self, action: pl.DataFrame) -> None:

@@ -416,7 +416,8 @@ class HybridSystem:
         if not isinstance(self.initial_location, Location):
             message = "initial_location must be a Location."
             raise TypeError(message)
-        if self.parameters is not None and not isinstance(
+        # Runtime inputs may use None; normalization below turns it into {}.
+        if self.parameters is not None and not isinstance(  # pyright: ignore[reportUnnecessaryComparison]
             self.parameters,
             Mapping,
         ):

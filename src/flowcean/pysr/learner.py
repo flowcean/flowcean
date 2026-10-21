@@ -15,12 +15,13 @@ except ModuleNotFoundError as error:
         missing_dependencies={"pysr"},
     )
 
-from flowcean.core import Model, SupervisedLearner
+from flowcean.core import SupervisedLearner
+from flowcean.polars.model import PolarsModel
 
 logger = logging.getLogger(__name__)
 
 
-class PySRModel(Model):
+class PySRModel(PolarsModel):
     def __init__(self, model: PySRRegressor, output_column: str) -> None:
         self.model = model
         self.output_column = output_column
@@ -46,7 +47,9 @@ class PySRModel(Model):
         return type(self.model).__name__
 
     @override
-    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(
+        self, input_features: pl.DataFrame | pl.LazyFrame
+    ) -> pl.LazyFrame:
         df = (
             input_features.collect()
             if isinstance(input_features, pl.LazyFrame)
@@ -56,7 +59,7 @@ class PySRModel(Model):
         return pl.from_numpy(predictions, schema=[self.output_column]).lazy()
 
 
-class PySRLearner(SupervisedLearner):
+class PySRLearner(SupervisedLearner[pl.LazyFrame, pl.LazyFrame, PySRModel]):
     """Fit a symbolic equation for one target from a batch of observations.
 
     Args:
@@ -74,7 +77,7 @@ class PySRLearner(SupervisedLearner):
         self,
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
-    ) -> Model:
+    ) -> PySRModel:
         """Fit the configured regressor and return its prediction model.
 
         Args:

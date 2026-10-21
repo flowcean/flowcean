@@ -37,7 +37,7 @@ class CNN(lightning.LightningModule):
         )
 
         # Compute flattened size dynamically
-        dummy_input = torch.zeros(  # pyright: ignore[reportPrivateImportUsage]
+        dummy_input = torch.zeros(
             in_channels,
             image_size,
             image_size,

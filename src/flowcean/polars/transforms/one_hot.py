@@ -4,12 +4,12 @@ from typing import Any, Self, override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class OneHot(Transform):
+class OneHot(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Transforms integer features into a set of binary one-hot features.
 
     Transforms integer features into a set of binary one-hot features. The

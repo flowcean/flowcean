@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 from flowcean._optional import raise_for_missing_optional_dependency
 
 try:
     import lightning
     import torch
+    from lightning.pytorch.utilities.types import OptimizerLRSchedulerConfig
     from torch import Tensor
     from torch.optim.adam import Adam
 except ModuleNotFoundError as error:
@@ -59,12 +60,12 @@ class MultilayerPerceptron(lightning.LightningModule):
         self.model = torch.nn.Sequential(*layers)
 
     @override
-    def forward(self, *args: Any, **kwargs: Any) -> Tensor:
-        y: Tensor = self.model(*args, **kwargs)
+    def forward(self, inputs: Tensor) -> Tensor:
+        y: Tensor = self.model(inputs)
         return y
 
     @override
-    def training_step(self, batch: Any) -> Tensor:
+    def training_step(self, batch: tuple[Tensor, Tensor]) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
         loss = torch.nn.functional.mse_loss(outputs, targets)
@@ -76,7 +77,7 @@ class MultilayerPerceptron(lightning.LightningModule):
         return loss
 
     @override
-    def configure_optimizers(self) -> Any:
+    def configure_optimizers(self) -> OptimizerLRSchedulerConfig:
         optimizer = Adam(
             self.parameters(),
             lr=self.learning_rate,

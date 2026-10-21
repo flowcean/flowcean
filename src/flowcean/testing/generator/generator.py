@@ -1,12 +1,14 @@
 import sys
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
+
+import polars as pl
 
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.polars.environments.dataframe import DataFrame, collect
 
 
-class TestcaseGenerator(IncrementalEnvironment):
+class TestcaseGenerator(IncrementalEnvironment[pl.LazyFrame], ABC):
     """A generator that produces test cases for a model."""
 
     @abstractmethod

@@ -8,7 +8,7 @@ from flowcean.core.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-class DetectDelocalizations(Transform):
+class DetectDelocalizations(Transform[pl.LazyFrame, pl.LazyFrame]):
     def __init__(
         self,
         counter_column: str,

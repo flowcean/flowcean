@@ -251,7 +251,8 @@ class TestToTimeSeries(unittest.TestCase):
 
     def test_rejects_mapping(self) -> None:
         with pytest.raises(TypeError, match="single column name"):
-            ToTimeSeries({"value": "t"})  # type: ignore[arg-type]
+            # Mapping input is deliberately outside the constructor contract.
+            ToTimeSeries({"value": "t"})  # pyright: ignore[reportArgumentType]
 
     def test_struct_aware_helpers_and_transforms(self) -> None:
         data = pl.LazyFrame(
@@ -303,7 +304,7 @@ class TestToTimeSeries(unittest.TestCase):
     ],
 )
 def test_singleton_composes_with_statistics(
-    transform: Transform,
+    transform: Transform[pl.LazyFrame, pl.LazyFrame],
     expected: float,
 ) -> None:
     data = DataFrame(

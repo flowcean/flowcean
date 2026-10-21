@@ -1,7 +1,7 @@
 import io
 from collections.abc import Sequence
 from pathlib import Path
-from typing import override
+from typing import TypedDict, override
 
 import numpy as np
 import torch
@@ -9,7 +9,6 @@ from harl.sac.brain import SACBrain
 from palaestrai.agent.objective import Objective
 
 from flowcean.core.learner import ActiveLearner
-from flowcean.core.model import Model
 from flowcean.core.strategies.active import (
     Action,
     ActiveInterface,
@@ -27,7 +26,19 @@ from flowcean.palaestrai.util import (
 MODEL_ID = "SACModel"
 
 
-class SACLearner(ActiveLearner):
+class _BrainParameters(TypedDict):
+    replay_size: int
+    fc_dims: Sequence[int]
+    activation: str
+    gamma: float
+    polyak: float
+    lr: float
+    batch_size: int
+    update_after: int
+    update_every: int
+
+
+class SACLearner(ActiveLearner[Observation, Action, SACModel]):
     """Learner class for the palaestrAI SAC agent."""
 
     model: SACModel
@@ -91,7 +102,7 @@ class SACLearner(ActiveLearner):
         self.agent_objective = agent_objective
         self.objective_values = []
         self.rewards = []
-        self.brain_params = {
+        self.brain_params: _BrainParameters = {
             "replay_size": replay_size,
             "fc_dims": fc_dims,
             "activation": activation,
@@ -124,7 +135,9 @@ class SACLearner(ActiveLearner):
         )
 
     @override
-    def learn_active(self, action: Action, observation: Observation) -> Model:
+    def learn_active(
+        self, action: Action, observation: Observation
+    ) -> SACModel:
         filtered_action = filter_action(action, self.actuator_ids)
         filtered_observation = filter_observation(observation, self.sensor_ids)
         rewards = convert_to_reward_information(observation)

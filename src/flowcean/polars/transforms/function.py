@@ -4,12 +4,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Lambda(Transform):
+class Lambda(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Apply a custom function to the data of an environment."""
 
     def __init__(self, fn: Callable[[pl.LazyFrame], pl.LazyFrame]) -> None:

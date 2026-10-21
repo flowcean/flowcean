@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 BVA_SPLIT_RANGE_COUNT = 2
 
 
-def reverse_list_by_value(numbers_list: list) -> list:
+def reverse_list_by_value[Number: (int, float)](
+    numbers_list: list[Number],
+) -> list[Number]:
     """Reverse values by magnitude while preserving positions.
 
     Args:
@@ -63,9 +65,9 @@ class TestGenerator:
 
     def __init__(
         self,
-        equivalence_classes: list,
+        equivalence_classes: list[tuple[Interval, ...]],
         seed: int,
-        type_specs: dict,
+        type_specs: dict[int, dict[str, str]],
     ) -> None:
         """Initializes the Test Generator.
 
@@ -78,7 +80,10 @@ class TestGenerator:
         """
         self.equivalence_classes = equivalence_classes
         self.type_specs = type_specs
-        self.testplans = []
+        self.testplans: list[
+            list[tuple[float, float] | tuple[tuple[float, float], ...]]
+        ] = []
+        self.n_testinputs_lst: list[int] = []
         random.seed(seed)
 
     # Generates a test plan for Boundary Value Analysis (BVA).
@@ -87,7 +92,7 @@ class TestGenerator:
         self,
         epsilon: float,
         eqclass_interval: Interval,
-    ) -> tuple:
+    ) -> tuple[tuple[float, float], ...]:
         if (
             eqclass_interval.left_endpoint == IntervalEndpoint.LEFT_OPEN
             or eqclass_interval.right_endpoint == IntervalEndpoint.RIGHT_OPEN
@@ -127,7 +132,7 @@ class TestGenerator:
         upper: float,
         n_testinputs: int,
         feature: int,
-    ) -> list:
+    ) -> list[float]:
         if lower > upper:
             tmp = upper
             upper = lower
@@ -146,11 +151,13 @@ class TestGenerator:
         self,
         n_testinputs: int,
         test_coverage_criterium: str,
-        eqclass: tuple,
+        eqclass: tuple[Interval, ...],
         epsilon: float = 0.0,
-    ) -> list:
+    ) -> list[tuple[float, ...]]:
         input_samples = []
-        testplan = []
+        testplan: list[
+            tuple[float, float] | tuple[tuple[float, float], ...]
+        ] = []
         for interval in eqclass:
             if test_coverage_criterium == "dtc":
                 lower, upper = self._dtc_testplan(interval)
@@ -198,10 +205,10 @@ class TestGenerator:
     def _generate_n_testinputs_list(
         self,
         n_testinputs: int,
-        eqclass_prio: list,
+        eqclass_prio: list[float],
         *,
         inverse_alloc: bool,
-    ) -> list:
+    ) -> list[int]:
         exact_values = [n_testinputs * prio for prio in eqclass_prio]
         n_testinputs_lst = [int(x) for x in exact_values]
 
@@ -220,12 +227,12 @@ class TestGenerator:
     def generate_testinputs(
         self,
         test_coverage_criterium: str,
-        eqclass_prio: list,
+        eqclass_prio: list[float],
         n_testinputs: int,
         *,
         inverse_alloc: bool,
         epsilon: float,
-    ) -> list:
+    ) -> list[tuple[float, ...]]:
         """Generates abstract test inputs for all equivalence classes.
 
         Args:

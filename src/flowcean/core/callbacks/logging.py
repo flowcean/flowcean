@@ -9,7 +9,6 @@ import logging
 from typing import Any
 
 from flowcean.core.callbacks.base import LearnerCallback
-from flowcean.core.model import Model
 from flowcean.core.named import Named
 
 
@@ -61,7 +60,7 @@ class LoggingCallback(LearnerCallback):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Named,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Log learning completion."""

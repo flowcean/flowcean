@@ -21,7 +21,9 @@ DatasetFactory = Callable[[pl.DataFrame], Dataset]
 logger = logging.getLogger(__name__)
 
 
-class ImageBasedLightningLearner(SupervisedLearner):
+class ImageBasedLightningLearner(
+    SupervisedLearner[pl.DataFrame, pl.DataFrame, "ImageBasedPyTorchModel"],
+):
     """A learner that uses PyTorch Lightning for image-based datasets."""
 
     def __init__(
@@ -98,7 +100,7 @@ class ImageBasedLightningLearner(SupervisedLearner):
         )
 
 
-class ImageBasedPyTorchModel(Model):
+class ImageBasedPyTorchModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """PyTorch model wrapper for image-based datasets."""
 
     def __init__(

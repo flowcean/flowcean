@@ -29,6 +29,9 @@ class TorchDataset(Dataset[tuple[Tensor, Tensor]]):
             outputs: The output data. Defaults to None.
         """
         super().__init__()
+        if outputs is not None and inputs.height != outputs.height:
+            message = "Inputs and outputs must have equal row counts"
+            raise ValueError(message)
         self.inputs = inputs
         self.outputs = outputs
 

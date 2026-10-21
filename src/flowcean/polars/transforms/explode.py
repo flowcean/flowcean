@@ -4,12 +4,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Explode(Transform):
+class Explode(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """This wraps the `explode` method of Polars.
 
     Reference: https://docs.pola.rs/api/python/stable/reference/dataframe/api/polars.DataFrame.explode.html#polars.DataFrame.explode

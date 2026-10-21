@@ -4,8 +4,7 @@ from pathlib import Path
 import polars as pl
 import tqdm
 
-from flowcean.core import Model
-from flowcean.core.data import Data
+from flowcean.core import Predictor
 from flowcean.core.environment.incremental import IncrementalEnvironment
 from flowcean.testing.predicates import Predicate
 
@@ -13,9 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 def run_model_tests(
-    model: Model,
-    test_data: IncrementalEnvironment,
-    predicate: Predicate,
+    model: Predictor[pl.LazyFrame, pl.LazyFrame],
+    test_data: IncrementalEnvironment[pl.LazyFrame],
+    predicate: Predicate[
+        pl.DataFrame | pl.LazyFrame, pl.DataFrame | pl.LazyFrame
+    ],
     *,
     path: str | Path | None = None,
     show_progress: bool = False,
@@ -51,8 +52,8 @@ def run_model_tests(
             predicate and ``path`` is not provided.
     """
     number_of_failures = 0
-    failure_data: list[Data] = []
-    failure_prediction: list[Data] = []
+    failure_data: list[pl.DataFrame | pl.LazyFrame] = []
+    failure_prediction: list[pl.DataFrame | pl.LazyFrame] = []
     # Run the model on the test data
     for input_data in (
         tqdm.tqdm(
@@ -63,29 +64,13 @@ def run_model_tests(
         if show_progress
         else test_data
     ):
-        prediction = model.predict(input_data)
-
-        # Handle dataframes and lazyframes separately
-        # Those may contain multiple rows / samples and need to be
-        # sliced to get the individual samples for testing
-        if isinstance(prediction, pl.LazyFrame | pl.DataFrame) and isinstance(
-            input_data,
-            pl.LazyFrame | pl.DataFrame,
-        ):
-            input_data_collected = input_data.lazy().collect()
-            prediction = prediction.lazy().collect()
-
-            test_inputs = [
-                input_data_collected.slice(i, 1)
-                for i in range(len(input_data_collected))
-            ]
-            predictions = [
-                prediction.slice(i, 1) for i in range(len(prediction))
-            ]
-
-        else:
-            test_inputs = [input_data]
-            predictions = [prediction]
+        prediction = model.predict(input_data).collect()
+        input_data_collected = input_data.collect()
+        test_inputs = [
+            input_data_collected.slice(i, 1)
+            for i in range(len(input_data_collected))
+        ]
+        predictions = [prediction.slice(i, 1) for i in range(len(prediction))]
 
         # Check if the prediction satisfies the predicate
         for test_input, prediction in zip(
@@ -135,7 +120,11 @@ class TestFailed(Exception):
     predicate.
     """
 
-    def __init__(self, input_data: list[Data], prediction: list[Data]) -> None:
+    def __init__(
+        self,
+        input_data: list[pl.DataFrame | pl.LazyFrame],
+        prediction: list[pl.DataFrame | pl.LazyFrame],
+    ) -> None:
         self.input_data = [data.lazy().collect() for data in input_data]
         self.prediction = [data.lazy().collect() for data in prediction]
 

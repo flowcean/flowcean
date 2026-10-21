@@ -10,7 +10,7 @@ from flowcean.core.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-class LocalizationStatus(Transform):
+class LocalizationStatus(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Detects localization status based on position and heading errors."""
 
     def __init__(

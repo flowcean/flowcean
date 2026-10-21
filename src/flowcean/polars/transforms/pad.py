@@ -4,7 +4,7 @@ from typing import Any, cast, override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 from flowcean.polars.is_time_series import is_timeseries_feature
 from flowcean.polars.time_series_type import (
     get_time_series_time_type,
@@ -14,7 +14,7 @@ from flowcean.polars.time_series_type import (
 logger = logging.getLogger(__name__)
 
 
-class Pad(Transform):
+class Pad(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Pad time-series features to the specified length.
 
     Pad time-series features to the specified end-time by holding their last
@@ -45,10 +45,7 @@ class Pad(Transform):
         """
         self.length = length
         self.features = (
-            cast(
-                "list[str]",
-                ([features] if isinstance(features, str) else list(features)),
-            )
+            ([features] if isinstance(features, str) else list(features))
             if features is not None
             else None
         )

@@ -15,9 +15,14 @@ except ModuleNotFoundError as error:
         missing_dependencies={"xgboost"},
     )
 
-from flowcean.core import LearnerCallback, create_callback_manager
+from flowcean.core import (
+    CallbackManager,
+    LearnerCallback,
+    create_callback_manager,
+)
 from flowcean.core.learner import SupervisedLearner
 from flowcean.core.named import Named
+from flowcean.sklearn.model import validate_threshold
 
 from .model import XGBoostClassifierModel, XGBoostRegressorModel
 
@@ -31,7 +36,7 @@ class XGBoostCallbackBridge(TrainingCallback):
     def __init__(
         self,
         learner: Named,
-        callback_manager: Any,
+        callback_manager: CallbackManager,
         max_iterations: int | None = None,
     ) -> None:
         self.learner = learner
@@ -81,11 +86,13 @@ class XGBoostCallbackBridge(TrainingCallback):
         return model
 
 
-class XGBoostClassifierLearner(SupervisedLearner):
+class XGBoostClassifierLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, XGBoostClassifierModel],
+):
     """Wrapper for XGBoost classifiers.
 
     Args:
-        threshold: Decision threshold for binary classification (default: 0.5).
+        threshold: Optional binary threshold. None preserves native predictions.
         callbacks: Optional callbacks for progress feedback. Use `None` for
             silent learning.
         **kwargs: Arguments passed to XGBClassifier
@@ -94,10 +101,11 @@ class XGBoostClassifierLearner(SupervisedLearner):
 
     def __init__(
         self,
-        threshold: float = 0.5,
+        threshold: float | None = None,
         callbacks: list[LearnerCallback] | LearnerCallback | None = None,
         **kwargs: Any,
     ) -> None:
+        validate_threshold(threshold)
         self.threshold = threshold
         self.classifier = XGBClassifier(**kwargs)
         self.callback_manager = create_callback_manager(callbacks)
@@ -160,7 +168,9 @@ class XGBoostClassifierLearner(SupervisedLearner):
             return model
 
 
-class XGBoostRegressorLearner(SupervisedLearner):
+class XGBoostRegressorLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, XGBoostRegressorModel],
+):
     """Wrapper for XGBoost regressor.
 
     Args:

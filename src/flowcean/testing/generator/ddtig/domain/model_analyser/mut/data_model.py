@@ -85,7 +85,7 @@ class DataModel:
     def _generate_samples(
         self,
         n_samples: int,
-        int_features: list | None = None,
+        int_features: list[int] | None = None,
     ) -> DataFrame:
         """Generates n random input samples for all features using KDE.
 
@@ -134,7 +134,7 @@ class DataModel:
         *,
         original_data: bool = False,
         n_samples: int = 0,
-    ) -> list:
+    ) -> list[tuple[dict[str, Any], Any]]:
         """Generates a dataset of inputs and corresponding model predictions.
 
         If original_data is True, uses the original training data.

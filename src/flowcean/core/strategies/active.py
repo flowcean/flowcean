@@ -6,9 +6,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 from flowcean.core.environment.active import ActiveEnvironment
+from flowcean.core.environment.incremental import Finished
 from flowcean.core.learner import ActiveLearner
 from flowcean.core.metric import ActiveMetric
-from flowcean.core.model import Model
+from flowcean.core.model import Predictor
 from flowcean.core.report import Report, ReportEntry
 
 
@@ -97,10 +98,10 @@ class StopLearning(Exception):
     """
 
 
-def learn_active(
-    environment: ActiveEnvironment,
-    learner: ActiveLearner,
-) -> Model:
+def learn_active[ObservationT, ActionT, LearnedModel](
+    environment: ActiveEnvironment[ObservationT, ActionT],
+    learner: ActiveLearner[ObservationT, ActionT, LearnedModel],
+) -> LearnedModel:
     """Learn from an active environment.
 
     Learn from an active environment by interacting with it and
@@ -124,7 +125,7 @@ def learn_active(
             environment.step()
             observations = environment.observe()
             model = learner.learn_active(action, observations)
-    except StopLearning:
+    except (StopLearning, Finished):
         pass
     if model is None:
         message = "No model was learned."
@@ -133,9 +134,9 @@ def learn_active(
 
 
 def evaluate_active(
-    environment: ActiveEnvironment,
-    model: Model,
-    metrics: list[ActiveMetric],
+    environment: ActiveEnvironment[Observation, Action],
+    model: Predictor[Observation, Action],
+    metrics: list[ActiveMetric[Observation, Action]],
 ) -> Report:
     """Evaluate on an active environment.
 
@@ -161,16 +162,27 @@ def evaluate_active(
 
     """
     observations: list[Observation] = []
-    actions: list[Action] = [Action(actuators=[])]
+    actions: list[Action] = []
     try:
+        observations.append(environment.observe())
+        actions.append(Action(actuators=[]))
         while True:
-            observations.append(environment.observe())
-            actions.append(model.predict(observations[-1]))
-            environment.act(actions[-1])
-            environment.step()
-    except StopLearning:
+            action = model.predict(observations[-1])
+            environment.act(action)
+            try:
+                environment.step()
+            except (StopLearning, Finished):
+                # Some active systems expose a terminal observation; exhausted
+                # dataset streams do not. Only record matched action/outcome pairs.
+                observation = environment.observe()
+                observations.append(observation)
+                actions.append(action)
+                break
+            observation = environment.observe()
+            observations.append(observation)
+            actions.append(action)
+    except (StopLearning, Finished):
         pass
-    observations.append(environment.observe())
     entries: dict[str, ReportEntry] = {}
     entries[model.name] = ReportEntry(
         {metric.name: metric(observations, actions) for metric in metrics},

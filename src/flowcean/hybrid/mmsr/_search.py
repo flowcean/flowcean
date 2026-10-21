@@ -16,6 +16,9 @@ from flowcean._optional import raise_for_missing_optional_dependency
 if TYPE_CHECKING:
     from pysr import PySRRegressor
 
+# Private search helpers shared by mapping and transition identification.
+__all__ = ["_aic", "_inputs", "_search"]
+
 type _Array = NDArray[np.float64]
 type _SearchFactory = Callable[[], "PySRRegressor"]
 

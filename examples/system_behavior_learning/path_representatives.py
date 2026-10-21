@@ -18,7 +18,7 @@ if __package__:
         sample_all_scenarios,
     )
 else:
-    from experiment import (  # pyright: ignore[reportImplicitRelativeImport]
+    from experiment import (
         CONFIG,
         SYSTEMS,
         Config,

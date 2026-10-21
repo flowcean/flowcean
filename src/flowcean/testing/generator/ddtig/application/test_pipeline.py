@@ -12,6 +12,7 @@ from flowcean.testing.generator.ddtig.application import ModelHandler
 from flowcean.testing.generator.ddtig.domain import (
     EquivalenceClassesHandler,
     HoeffdingTree,
+    Interval,
     TestCompiler,
     TestGenerator,
     TestTree,
@@ -83,7 +84,7 @@ class TestPipeline:
 
     def __init__(
         self,
-        model: Model,
+        model: Model[pl.LazyFrame, pl.LazyFrame],
         n_testinputs: int,
         test_coverage_criterium: str,
         dataset: pl.DataFrame | None = None,
@@ -143,6 +144,13 @@ class TestPipeline:
             specs_file=specs_file,
         )
         self.feature_names = self.specs_handler.extract_feature_names()
+        self.eqclasses: list[tuple[Interval, ...]] = []
+        self.testinputs: list[tuple[float, ...]] = []
+        self.testplans: list[
+            list[tuple[float, float] | tuple[tuple[float, float], ...]]
+        ] = []
+        self.n_testinputs_lst: list[int] = []
+        self.testinputs_df = pl.DataFrame()
         self.hoeffding_tree = None
         self.classification = classification
         self.inverse_alloc = inverse_alloc

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 
@@ -81,6 +82,9 @@ class SystemSpecsHandler:
                 is not provided.
             specs_file: JSON file containing system specifications.
         """
+        self.n_features = 0
+        # Specifications originate in JSON and retain heterogeneous field values.
+        self.specs: dict[str, Any] = {}
         if data is not None:
             self._load_from_data(data)
         elif specs_file is not None:
@@ -140,7 +144,7 @@ class SystemSpecsHandler:
             self._validate_feature(feature)
         logger.info("Specifications successfully extracted from file.")
 
-    def _validate_feature(self, feature: dict) -> None:
+    def _validate_feature(self, feature: dict[str, Any]) -> None:
         has_required_keys = all(
             key in feature for key in REQUIRED_FEATURE_KEYS
         )
@@ -190,7 +194,7 @@ class SystemSpecsHandler:
         """
         return len(self.specs["features"])
 
-    def get_nominal_features(self) -> list:
+    def get_nominal_features(self) -> list[int]:
         """Returns the indices of nominal features.
 
         Returns:
@@ -202,7 +206,7 @@ class SystemSpecsHandler:
             if self.specs["features"][feature]["nominal"]
         ]
 
-    def get_numerical_features(self) -> list:
+    def get_numerical_features(self) -> list[int]:
         """Returns the indices of numerical features.
 
         Returns:
@@ -214,7 +218,7 @@ class SystemSpecsHandler:
             if not self.specs["features"][feature]["nominal"]
         ]
 
-    def get_int_features(self) -> list:
+    def get_int_features(self) -> list[int]:
         """Returns the indices of features with type 'int'.
 
         Returns:
@@ -226,7 +230,7 @@ class SystemSpecsHandler:
             if self.specs["features"][feature]["type"] == "int"
         ]
 
-    def extract_minmax_values(self) -> dict:
+    def extract_minmax_values(self) -> dict[int, dict[str, float]]:
         """Extracts the min and max values for each feature.
 
         Returns:
@@ -247,7 +251,7 @@ class SystemSpecsHandler:
             minmax_dict[feature] = feature_range
         return minmax_dict
 
-    def extract_input_types(self) -> dict:
+    def extract_input_types(self) -> dict[int, dict[str, str]]:
         """Extract the input type of each feature from the specifications.
 
         Returns:
@@ -267,7 +271,7 @@ class SystemSpecsHandler:
             type_dict.update({feature: feature_type})
         return type_dict
 
-    def extract_feature_names(self) -> list:
+    def extract_feature_names(self) -> list[str]:
         """Extract the name of each feature from the specifications.
 
         Returns:
@@ -281,7 +285,7 @@ class SystemSpecsHandler:
             for feature in range(self.n_features)
         ]
 
-    def extract_feature_names_with_idx(self) -> dict:
+    def extract_feature_names_with_idx(self) -> dict[str, int]:
         """Extract feature names along with their corresponding indices.
 
         Returns:
@@ -299,7 +303,7 @@ class SystemSpecsHandler:
             for feature in range(self.n_features)
         }
 
-    def extract_feature_names_with_idx_reversed(self) -> dict:
+    def extract_feature_names_with_idx_reversed(self) -> dict[int, str]:
         """Extract feature indices along with their corresponding names.
 
         Returns:

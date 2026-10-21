@@ -6,6 +6,7 @@ import polars as pl
 from sklearn.tree import DecisionTreeClassifier, export_text
 
 from flowcean.core import Model
+from flowcean.polars.model import PolarsModel
 
 from .config import SelectorFeatureConfig
 from .graph import build_selector_dot, render_dot_svg
@@ -45,16 +46,17 @@ class FlowPredictionResult:
     flow_id: int | None
     probabilities: dict[int, float] = field(default_factory=dict)
     leaf_id: int | None = None
-    flow_model: Model | None = None
+    flow_model: Model[pl.LazyFrame, pl.LazyFrame] | None = None
 
 
-class HybridDecisionTreeModel(Model):
+class HybridDecisionTreeModel(PolarsModel):
     def __init__(
         self,
         classifier: DecisionTreeClassifier,
         feature_columns: tuple[str, ...],
         feature_config: SelectorFeatureConfig,
-        flow_models_by_id: dict[int, Model] | None = None,
+        flow_models_by_id: dict[int, Model[pl.LazyFrame, pl.LazyFrame]]
+        | None = None,
     ) -> None:
         self.classifier = classifier
         self.feature_columns = feature_columns
@@ -115,7 +117,9 @@ class HybridDecisionTreeModel(Model):
 
         return results
 
-    def resolve_flow(self, flow_id: int) -> Model | None:
+    def resolve_flow(
+        self, flow_id: int
+    ) -> Model[pl.LazyFrame, pl.LazyFrame] | None:
         return self.flow_models_by_id.get(flow_id)
 
     def feature_importances(self) -> dict[str, float]:

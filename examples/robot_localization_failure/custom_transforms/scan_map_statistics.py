@@ -27,7 +27,7 @@ RAYCAST_TOLERANCE = 0.1  # meters
 RAYCAST_EPSILON = 0.05  # meters
 
 
-class ScanMapStatistics(Transform):
+class ScanMapStatistics(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Computes features based on comparing a Laserscan to an occupancy map."""
 
     def __init__(
@@ -358,10 +358,9 @@ class ScanMapStatistics(Transform):
             list: Detected finite lines represented as (x1, y1, x2, y2).
         """
         # Detect edges using Canny Edge Detector
-        image = np.uint8(
-            occupancy_grid * 2.55,
-        )  # Scale grid to 0-255 for edge detection
-        edges = cv2.Canny(image, threshold1, threshold2)  # type: ignore  # noqa: PGH003
+        # Scale grid to 0-255 for edge detection.
+        image = (occupancy_grid * 2.55).astype(np.uint8)
+        edges = cv2.Canny(image, threshold1, threshold2)
 
         # OpenCV creates an accumulator internally with `cv2.HoughLinesP`
 

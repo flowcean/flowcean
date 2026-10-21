@@ -4,7 +4,7 @@ from typing import Any, Self, override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 from .one_hot import (
     NoCategoriesError,
@@ -14,7 +14,7 @@ from .one_hot import (
 logger = logging.getLogger(__name__)
 
 
-class OneCold(Transform):
+class OneCold(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Transforms integer features into a set of binary one-cold features.
 
     Transforms integer features into a set of binary one-cold features. The

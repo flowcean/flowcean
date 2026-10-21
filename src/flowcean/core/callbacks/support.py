@@ -4,7 +4,6 @@ from collections.abc import Callable
 from typing import Any
 
 from flowcean.core.callbacks.base import CallbackManager, LearnerCallback
-from flowcean.core.model import Model
 from flowcean.core.named import Named
 
 
@@ -41,7 +40,8 @@ def get_default_callbacks() -> list[LearnerCallback]:
 class CallbackMixin:
     """Mixin to add callback support to learners."""
 
-    callback_manager: CallbackManager
+    # Concrete learners initialize this mixin requirement in their constructors.
+    callback_manager: CallbackManager  # pyright: ignore[reportUninitializedInstanceVariable]
 
     def _setup_callbacks(
         self,
@@ -53,12 +53,12 @@ class CallbackMixin:
             callbacks = get_default_callbacks()
         return create_callback_manager(callbacks)
 
-    def _wrap_learning_with_callbacks(
+    def _wrap_learning_with_callbacks[LearnedModel: Named](
         self,
         learner: Named,
-        learning_fn: Callable[[], Model],
+        learning_fn: Callable[[], LearnedModel],
         context: dict[str, Any] | None = None,
-    ) -> Model:
+    ) -> LearnedModel:
         """Wrap a learning function with callback invocations."""
         callback_manager = self.callback_manager
 

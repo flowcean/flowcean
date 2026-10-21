@@ -10,7 +10,6 @@ from .callbacks import (
     create_callback_manager,
     get_default_callbacks,
 )
-from .data import Data
 from .environment.actable import Actable
 from .environment.active import ActiveEnvironment
 from .environment.base import Environment
@@ -21,8 +20,8 @@ from .learner import (
     SupervisedIncrementalLearner,
     SupervisedLearner,
 )
-from .metric import ActiveMetric, Metric
-from .model import ClassifierModel, Model
+from .metric import ActiveMetric, Metric, MetricCallable
+from .model import ClassifierModel, Model, Predictor
 from .report import Report, Reportable
 from .strategies.active import (
     Action,
@@ -37,10 +36,16 @@ from .strategies.offline import evaluate_offline, learn_offline, tune_threshold
 from .transform import (
     ChainedTransforms,
     Identity,
+    IncrementallyFittable,
     Invertible,
+    InvertibleLambda,
     InvertibleTransform,
     Lambda,
+    StatelessTransform,
     Transform,
+    fit_incremental,
+    inverse,
+    validate_incremental_fit,
 )
 
 __all__ = [
@@ -56,25 +61,29 @@ __all__ = [
     "ChainedOfflineEnvironments",
     "ChainedTransforms",
     "ClassifierModel",
-    "Data",
     "Environment",
     "Finished",
     "Identity",
     "IncrementalEnvironment",
+    "IncrementallyFittable",
     "Invertible",
+    "InvertibleLambda",
     "InvertibleTransform",
     "Lambda",
     "LearnerCallback",
     "LoggingCallback",
     "Metric",
+    "MetricCallable",
     "Model",
     "Observation",
     "OfflineEnvironment",
+    "Predictor",
     "Report",
     "Reportable",
     "RichCallback",
     "RichSpinnerCallback",
     "SilentCallback",
+    "StatelessTransform",
     "Stepable",
     "StopLearning",
     "SupervisedIncrementalLearner",
@@ -83,9 +92,12 @@ __all__ = [
     "create_callback_manager",
     "deploy",
     "evaluate_offline",
+    "fit_incremental",
     "get_default_callbacks",
+    "inverse",
     "learn_active",
     "learn_incremental",
     "learn_offline",
     "tune_threshold",
+    "validate_incremental_fit",
 ]

@@ -5,6 +5,7 @@ from typing import Any, cast, override
 import polars as pl
 
 from flowcean._optional import raise_for_missing_optional_dependency
+from flowcean.polars.model import PolarsModel
 
 try:
     from river.base import Regressor
@@ -18,7 +19,6 @@ except ModuleNotFoundError as error:
 
 from flowcean.core import (
     LearnerCallback,
-    Model,
     SupervisedIncrementalLearner,
     create_callback_manager,
 )
@@ -26,13 +26,15 @@ from flowcean.core import (
 logger = logging.getLogger(__name__)
 
 
-class RiverModel(Model):
+class RiverModel(PolarsModel):
     def __init__(self, model: Regressor, output_column: str) -> None:
         self.model = model
         self.output_column = output_column
 
     @override
-    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(
+        self, input_features: pl.DataFrame | pl.LazyFrame
+    ) -> pl.LazyFrame:
         df = (
             input_features.collect()
             if isinstance(input_features, pl.LazyFrame)
@@ -46,7 +48,9 @@ class RiverModel(Model):
         return pl.LazyFrame({self.output_column: predictions})
 
 
-class RiverLearner(SupervisedIncrementalLearner):
+class RiverLearner(
+    SupervisedIncrementalLearner[pl.LazyFrame, pl.LazyFrame, RiverModel],
+):
     """Wrapper for River regressors.
 
     Args:
@@ -73,11 +77,17 @@ class RiverLearner(SupervisedIncrementalLearner):
         self,
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
-    ) -> Model:
+    ) -> RiverModel:
         # Collect the inputs and outputs into DataFrames
         inputs_df = inputs.collect()
         outputs_df = outputs.collect()
 
+        if inputs_df.height != outputs_df.height:
+            message = "Inputs and outputs must have equal row counts"
+            raise ValueError(message)
+        if outputs_df.width != 1:
+            message = "River requires exactly one target column"
+            raise ValueError(message)
         total_samples = len(inputs_df)
 
         # Notify callbacks that learning is starting
@@ -94,7 +104,7 @@ class RiverLearner(SupervisedIncrementalLearner):
                 zip(
                     inputs_df.iter_rows(named=True),
                     outputs_df.iter_rows(named=True),
-                    strict=False,
+                    strict=True,
                 ),
                 start=1,
             ):

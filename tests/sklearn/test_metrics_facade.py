@@ -2,7 +2,7 @@
 
 from flowcean import sklearn
 from flowcean.sklearn import metrics
-from flowcean.sklearn.metrics._multioutput import MultiOutputMixin
+from flowcean.sklearn.metrics._multioutput import MultiOutputMetric
 
 EXPECTED_METRICS = (
     "Accuracy",
@@ -12,7 +12,7 @@ EXPECTED_METRICS = (
     "MeanAbsoluteError",
     "MeanAbsolutePercentageError",
     "MeanSquaredError",
-    "MultiOutputMixin",
+    "MultiOutputMetric",
     "PrecisionScore",
     "R2Score",
     "Recall",
@@ -21,11 +21,11 @@ EXPECTED_METRICS = (
 
 def test_metrics_facade_exports_the_complete_metric_api() -> None:
     assert metrics.__all__ == EXPECTED_METRICS
-    assert metrics.MultiOutputMixin is MultiOutputMixin
+    assert metrics.MultiOutputMetric is MultiOutputMetric
 
     for name in metrics.__all__:
-        if name != "MultiOutputMixin":
+        if name != "MultiOutputMetric":
             assert getattr(sklearn, name) is getattr(metrics, name)
 
-    assert "MultiOutputMixin" not in sklearn.__all__
-    assert not hasattr(sklearn, "MultiOutputMixin")
+    assert "MultiOutputMetric" not in sklearn.__all__
+    assert not hasattr(sklearn, "MultiOutputMetric")

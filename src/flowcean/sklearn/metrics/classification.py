@@ -1,12 +1,12 @@
-from typing import Any, override
+from typing import override
 
+import polars as pl
 from sklearn import metrics
 
-from flowcean.core import Data, Metric
-from flowcean.polars import LazyMixin, SelectMixin
+from flowcean.polars import PolarsMetric
 
 
-class Accuracy(SelectMixin, LazyMixin, Metric):
+class Accuracy(PolarsMetric[float]):
     """Accuracy classification score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html).
@@ -25,11 +25,11 @@ class Accuracy(SelectMixin, LazyMixin, Metric):
         super().__init__(features=features)
 
     @override
-    def _compute(self, true: Data, predicted: Data) -> Any:
-        return metrics.accuracy_score(true, predicted)
+    def _compute(self, true: pl.DataFrame, predicted: pl.DataFrame) -> float:
+        return float(metrics.accuracy_score(true, predicted))
 
 
-class ClassificationReport(SelectMixin, LazyMixin, Metric):
+class ClassificationReport(PolarsMetric[str]):
     """Build a text report showing the main classification metrics.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html).
@@ -48,13 +48,13 @@ class ClassificationReport(SelectMixin, LazyMixin, Metric):
         super().__init__(features=features)
 
     @override
-    def _compute(self, true: Data, predicted: Data) -> Any:
+    def _compute(self, true: pl.DataFrame, predicted: pl.DataFrame) -> str:
         return "\n" + str(
             metrics.classification_report(true, predicted),
         )
 
 
-class FBetaScore(SelectMixin, LazyMixin, Metric):
+class FBetaScore(PolarsMetric[float]):
     """F-beta score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html).
@@ -77,11 +77,11 @@ class FBetaScore(SelectMixin, LazyMixin, Metric):
         self.beta = beta
 
     @override
-    def _compute(self, true: Data, predicted: Data) -> Any:
-        return metrics.fbeta_score(true, predicted, beta=self.beta)
+    def _compute(self, true: pl.DataFrame, predicted: pl.DataFrame) -> float:
+        return float(metrics.fbeta_score(true, predicted, beta=self.beta))
 
 
-class PrecisionScore(SelectMixin, LazyMixin, Metric):
+class PrecisionScore(PolarsMetric[float]):
     """Precision classification score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html).
@@ -100,11 +100,11 @@ class PrecisionScore(SelectMixin, LazyMixin, Metric):
         super().__init__(features=features)
 
     @override
-    def _compute(self, true: Data, predicted: Data) -> Any:
-        return metrics.precision_score(true, predicted)
+    def _compute(self, true: pl.DataFrame, predicted: pl.DataFrame) -> float:
+        return float(metrics.precision_score(true, predicted))
 
 
-class Recall(SelectMixin, LazyMixin, Metric):
+class Recall(PolarsMetric[float]):
     """Recall classification score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html).
@@ -123,5 +123,5 @@ class Recall(SelectMixin, LazyMixin, Metric):
         super().__init__(features=features)
 
     @override
-    def _compute(self, true: Data, predicted: Data) -> Any:
-        return metrics.recall_score(true, predicted)
+    def _compute(self, true: pl.DataFrame, predicted: pl.DataFrame) -> float:
+        return float(metrics.recall_score(true, predicted))

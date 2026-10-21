@@ -38,30 +38,34 @@ classDiagram
   Environment <|-- ActiveEnvironment
 
   class Environment{
-    Provides data to a learner.
-    + load() -> Self
-    + with_transform(transform) -> TransformedEnvironment[Self]
+    + observe() -> Observation
+    + append_transform(transform) -> Self
   }
   class IncrementalEnvironment{
-    Loads data in an iterative way.
-    + collect(n: int) -> DataFrame
+    + step()
+    + num_steps() -> int or None
   }
   class OfflineEnvironment{
-    Loads data only once and in an non-interactive way.
-    + get_data() -> DataFrame
+    + chain(other) -> ChainedOfflineEnvironments
   }
   class ActiveEnvironment{
-    Loads data in an interactive way
-    allowing to act on the environment.
     + act(Action)
     + step()
-    + observe() -> Observation
   }
 ```
 
-It is possible to apply [Transforms](https://flowcean.me/user_guide/transform/) to an environment.
-This is done by applying a transformation (e.g. resampling or normalization) to the _DataFrame_ that the environment provides.
-As can be seen in the class diagram, the parent class `Environment` has a method `with_transform()` which allows to specify the transforms that are applied to an environment.
+`Environment[Observation]` describes the type returned by `observe()`.
+`ActiveEnvironment[Observation, Action]` also describes the type accepted by `act()`; these types need not be dataframes.
+
+Apply [transforms](transform.md) in either of two ways:
+
+- `environment.append_transform(transform)` mutates the environment and preserves its observation type and concrete class.
+- `environment | transform` creates a new view and may change the observation type. The view retains offline, incremental, or active behavior, but not custom methods of the source's concrete class.
+
+Views share their source's lifecycle; they are not independent copies or replayable streams.
+Incremental environments signal exhaustion with `Finished`, and subsequent iteration remains exhausted unless the source supports an explicit reset.
+Resetting a test generator also restores iteration through its existing transformed views.
+Batch sizes must be positive.
 
 Depending on the environment class, different [Learning Strategies](https://flowcean.me/user_guide/learning_strategies/) can be applied.
 An active learning strategy, for example, can only be applied to an `ActiveEnvironment`.

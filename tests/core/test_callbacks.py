@@ -24,7 +24,7 @@ class MockLearner(Named):
         self._name = name
 
 
-class MockModel(Model):
+class MockModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """Mock model for testing."""
 
     def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:

@@ -4,7 +4,6 @@ from typing import Any
 import polars as pl
 
 from flowcean.core import Model
-from flowcean.core.data import Data
 from flowcean.polars.environments.dataframe import DataFrame
 from flowcean.testing.generator.ddtig.application.test_pipeline import (
     TestPipeline,
@@ -35,7 +34,7 @@ class DDTIGenerator(TestcaseGenerator):
 
     def __init__(
         self,
-        model: Model,
+        model: Model[pl.LazyFrame, pl.LazyFrame],
         *,
         n_testinputs: int,
         test_coverage_criterium: str,
@@ -105,6 +104,7 @@ class DDTIGenerator(TestcaseGenerator):
 
     def reset(self) -> None:
         self._streaming_env = self.data.to_incremental()
+        self._finished = False
 
     def step(self) -> None:
         self._streaming_env.step()
@@ -121,5 +121,5 @@ class DDTIGenerator(TestcaseGenerator):
     def save_hoeffding_tree(self, path: str | Path) -> None:
         self.test_pipeline.save_hoeffding_tree(path)
 
-    def _observe(self) -> Data:
+    def _observe(self) -> pl.LazyFrame:
         return self._streaming_env.observe()

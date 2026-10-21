@@ -3,13 +3,12 @@ from pathlib import Path
 
 import polars as pl
 
-from flowcean.core import Model
 from flowcean.core.strategies.offline import learn_offline
 from flowcean.polars import DataFrame
 from flowcean.testing import run_model_tests
 from flowcean.testing.generator import DDTIGenerator
 from flowcean.testing.predicates import PolarsPredicate
-from flowcean.torch import LightningLearner, MultilayerPerceptron
+from flowcean.torch import LightningLearner, MultilayerPerceptron, PyTorchModel
 from flowcean.utils import initialize_random
 
 BODYFAT_MAX = 40
@@ -82,7 +81,7 @@ def generate_test_inputs() -> None:
     csv_file = dirpath / dataset
     df = pl.read_csv(csv_file)
 
-    model = Model.load(model_file)
+    model = PyTorchModel.load(model_file)
 
     # Initialize the test pipeline and generate test inputs
 

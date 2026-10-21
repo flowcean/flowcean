@@ -3,12 +3,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class SliceTimeSeries(Transform):
+class SliceTimeSeries(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Slices a time series at given slice points.
 
     The transform takes two columns as input: 'time_series' and 'slice_points.'

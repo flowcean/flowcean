@@ -1,5 +1,5 @@
 import logging
-from abc import abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import Iterable
 from functools import reduce
 from typing import Protocol, override, runtime_checkable
@@ -7,13 +7,13 @@ from typing import Protocol, override, runtime_checkable
 import polars as pl
 import sympy
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
-class FilterExpr(Protocol):
+class FilterExpr(Protocol, metaclass=ABCMeta):
     """Expression to be used in a Filter transform."""
 
     @abstractmethod
@@ -24,7 +24,7 @@ class FilterExpr(Protocol):
         return self.get()
 
 
-class Filter(Transform):
+class Filter(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Filter an environment based on one or multiple expressions.
 
     This transform allows to filter an environment based on or multiple boolean
@@ -106,7 +106,7 @@ def _str_to_pl(expression: str) -> pl.Expr:
     return lambda_expr(*[pl.col(str(symbol)) for symbol in symbols])
 
 
-class CollectionExpr(FilterExpr):
+class CollectionExpr(FilterExpr, ABC):
     expr_collection: Iterable[pl.Expr]
 
     def __init__(

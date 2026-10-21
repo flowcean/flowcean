@@ -20,7 +20,7 @@ from flowcean.palaestrai.util import (
 )
 
 
-class SACModel(Model):
+class SACModel(Model[Observation, Action]):
     def __init__(
         self,
         action: Action,

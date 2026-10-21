@@ -1,7 +1,8 @@
 import logging
 from collections.abc import Iterable
-from typing import Any, Protocol, cast, override
+from typing import Any, Protocol, Self, override
 
+import numpy as np
 import numpy.typing as npt
 import polars as pl
 
@@ -12,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 class Clusterer(Protocol):
     def fit(self, X: npt.ArrayLike) -> Any: ...
-    def predict(self, X: npt.ArrayLike) -> npt.ArrayLike: ...
+    def predict(self, X: npt.ArrayLike) -> object: ...
 
 
-class Cluster(Transform):
+class Cluster(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Cluster data using a clustering algorithm.
 
     This transform allows to cluster data using a specified clustering
@@ -52,17 +53,21 @@ class Cluster(Transform):
             data = data.collect()
 
         cluster_features = data.to_numpy(writable=True)
-        labels = cast(
-            "Iterable[Any]",
-            self.clusterer.predict(cluster_features),
-        )
+        labels = self.clusterer.predict(cluster_features)
+        if not isinstance(labels, np.ndarray) or labels.shape != (
+            data.height,
+        ):
+            message = (
+                "Cluster predictions must be a vector matching input rows"
+            )
+            raise ValueError(message)
         data = data.with_columns(
             pl.Series(self.cluster_feature_name, labels),
         )
         return data.lazy()
 
     @override
-    def fit(self, data: pl.LazyFrame | pl.DataFrame) -> "Cluster":
+    def fit(self, data: pl.LazyFrame | pl.DataFrame) -> Self:
         data = data.select(self.features or pl.all())
         if isinstance(data, pl.LazyFrame):
             data = data.collect()

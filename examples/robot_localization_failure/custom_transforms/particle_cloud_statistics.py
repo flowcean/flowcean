@@ -13,7 +13,7 @@ from flowcean.core.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-class ParticleCloudStatistics(Transform):
+class ParticleCloudStatistics(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Calculates statistical features from particle cloud data.
 
     This class provides methods to calculate various statistical features from

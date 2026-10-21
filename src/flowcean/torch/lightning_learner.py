@@ -19,6 +19,7 @@ except ModuleNotFoundError as error:
     )
 
 from flowcean.core import (
+    CallbackManager,
     LearnerCallback,
     SupervisedLearner,
     create_callback_manager,
@@ -38,7 +39,7 @@ class LightningCallbackBridge(lightning.Callback):
     def __init__(
         self,
         learner: Named,
-        callback_manager: Any,
+        callback_manager: CallbackManager,
     ) -> None:
         super().__init__()
         self.learner = learner
@@ -53,7 +54,7 @@ class LightningCallbackBridge(lightning.Callback):
         context = {
             "max_epochs": trainer.max_epochs,
             "batch_size": (
-                trainer.train_dataloader.batch_size  # type: ignore[union-attr]
+                trainer.train_dataloader.batch_size
                 if trainer.train_dataloader
                 else None
             ),
@@ -79,7 +80,7 @@ class LightningCallbackBridge(lightning.Callback):
             progress = None
 
         # Extract metrics from logged values
-        metrics = {
+        metrics: dict[str, Any] = {
             "epoch": trainer.current_epoch + 1,
             "batch": batch_idx + 1,
         }
@@ -92,7 +93,7 @@ class LightningCallbackBridge(lightning.Callback):
         if has_callback_metrics:
             for key, value in pl_module.trainer.callback_metrics.items():
                 if hasattr(value, "item"):
-                    metrics[key] = value.item()  # type: ignore[assignment]
+                    metrics[key] = value.item()
 
         self.callback_manager.on_learning_progress(
             self.learner,
@@ -110,7 +111,9 @@ class LightningCallbackBridge(lightning.Callback):
         # to have access to the wrapped model
 
 
-class LightningLearner(SupervisedLearner):
+class LightningLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, PyTorchModel],
+):
     """A learner that uses PyTorch Lightning.
 
     Args:

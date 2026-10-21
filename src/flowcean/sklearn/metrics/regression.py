@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import Literal, override
 
+import polars as pl
 from sklearn import metrics
 
-from flowcean.core import Data, Metric, Reportable
-from flowcean.polars import LazyMixin, SelectMixin
+from flowcean.polars import PolarsMetric
 
-from ._multioutput import MultiOutputMixin
+from ._multioutput import MultiOutputMetric
 
 
-class MaxError(SelectMixin, LazyMixin, Metric):
+class MaxError(PolarsMetric[float]):
     """Max error regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.max_error.html).
@@ -27,16 +27,11 @@ class MaxError(SelectMixin, LazyMixin, Metric):
         super().__init__(features=features)
 
     @override
-    def _compute(self, true: Data, predicted: Data) -> Reportable:
-        return metrics.max_error(true, predicted)
+    def _compute(self, true: pl.DataFrame, predicted: pl.DataFrame) -> float:
+        return float(metrics.max_error(true, predicted))
 
 
-class MeanAbsoluteError(
-    SelectMixin,
-    LazyMixin,
-    MultiOutputMixin,
-    Metric,
-):
+class MeanAbsoluteError(MultiOutputMetric):
     """Mean absolute error (MAE) regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html).
@@ -64,9 +59,9 @@ class MeanAbsoluteError(
     @override
     def _compute(
         self,
-        true: Data,
-        predicted: Data,
-    ) -> Reportable | dict[str, Reportable]:
+        true: pl.DataFrame,
+        predicted: pl.DataFrame,
+    ) -> float | dict[str, float]:
         error = metrics.mean_absolute_error(
             true,
             predicted,
@@ -75,12 +70,7 @@ class MeanAbsoluteError(
         return self._finalize_result(error, true)
 
 
-class MeanAbsolutePercentageError(
-    SelectMixin,
-    LazyMixin,
-    MultiOutputMixin,
-    Metric,
-):
+class MeanAbsolutePercentageError(MultiOutputMetric):
     """Mean absolute percentage error (MAPE) regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_percentage_error.html).
@@ -108,9 +98,9 @@ class MeanAbsolutePercentageError(
     @override
     def _compute(
         self,
-        true: Data,
-        predicted: Data,
-    ) -> Reportable | dict[str, Reportable]:
+        true: pl.DataFrame,
+        predicted: pl.DataFrame,
+    ) -> float | dict[str, float]:
         error = metrics.mean_absolute_percentage_error(
             true,
             predicted,
@@ -119,12 +109,7 @@ class MeanAbsolutePercentageError(
         return self._finalize_result(error, true)
 
 
-class MeanSquaredError(
-    SelectMixin,
-    LazyMixin,
-    MultiOutputMixin,
-    Metric,
-):
+class MeanSquaredError(MultiOutputMetric):
     """Mean squared error (MSE) regression loss.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html).
@@ -152,9 +137,9 @@ class MeanSquaredError(
     @override
     def _compute(
         self,
-        true: Data,
-        predicted: Data,
-    ) -> Reportable | dict[str, Reportable]:
+        true: pl.DataFrame,
+        predicted: pl.DataFrame,
+    ) -> float | dict[str, float]:
         error = metrics.mean_squared_error(
             true,
             predicted,
@@ -163,12 +148,7 @@ class MeanSquaredError(
         return self._finalize_result(error, true)
 
 
-class R2Score(
-    SelectMixin,
-    LazyMixin,
-    MultiOutputMixin,
-    Metric,
-):
+class R2Score(MultiOutputMetric):
     """R^2 (coefficient of determination) regression score.
 
     As defined by [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html).
@@ -196,9 +176,9 @@ class R2Score(
     @override
     def _compute(
         self,
-        true: Data,
-        predicted: Data,
-    ) -> Reportable | dict[str, Reportable]:
+        true: pl.DataFrame,
+        predicted: pl.DataFrame,
+    ) -> float | dict[str, float]:
         error = metrics.r2_score(
             true,
             predicted,

@@ -68,10 +68,13 @@ For this example, a simple mockup adapter is used to simulate the CPS, which rea
 The code to set up the adapter and use the model for prediction can be found in the following listing.
 
 ```python
-model = Model.load(Path("xor_model.fml"))
+from flowcean.core import Identity
+from flowcean.sklearn import SciKitModel
+
+model = SciKitModel.load(Path("xor_model.fml"))
 # Setup an adapter to read from a DataFrame environment and write results to a CSV file
 adapter = DataFrameAdapter(
-    DataFrame.from_csv("data.csv"),
+    DataFrame.from_csv("./data/data.csv"),
     input_features=["x", "y"],
     result_path="result.csv",
 )
@@ -79,6 +82,8 @@ adapter = DataFrameAdapter(
 start_prediction_loop(
     model,
     adapter,
+    adapter_to_model_transforms=Identity(),
+    model_to_adapter_transforms=Identity(),
 )
 ```
 

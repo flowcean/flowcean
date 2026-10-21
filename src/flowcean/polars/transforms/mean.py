@@ -4,12 +4,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Mean(Transform):
+class Mean(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Replaces time-series features with their mean value."""
 
     def __init__(

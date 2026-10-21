@@ -3,7 +3,7 @@ from collections.abc import Iterable
 
 import polars as pl
 
-from flowcean.core.transform import Transform
+from flowcean.core.transform import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def zero_order_hold_align(
     )
 
 
-class ZeroOrderHold(Transform):
+class ZeroOrderHold(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Aligns multiple time series features using zero-order-hold."""
 
     def __init__(

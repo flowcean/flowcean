@@ -55,6 +55,10 @@ Transforms can be applied to the input features of the dataset and the outputs.
 The last step is to learn the model using a learning algorithm.
 For this, the learning algorithm receives the entire transformed dataset at once.
 
+The built-in offline and incremental strategies require lazy Polars observations and retain the learner's concrete model type.
+They attach input preprocessing and the inverse output transform to the returned, mutable model.
+Output transforms must support inversion; an unsupported or invalid fitted inverse is rejected before the learner is called.
+
 ## Incremental Learning
 
 For the incremental learning strategy, a learner is connected to an [IncrementalEnvironment](../reference/core.md#flowcean.core.IncrementalEnvironment).
@@ -64,6 +68,10 @@ Transforms can be applied to the input features of the dataset and the outputs.
 The next step is to incrementally learn the model using a learning algorithm.
 This means the model is updated in the process.
 The learning process stops when the environment ends, i.e. when the data stream is stopped or the dataset is empty.
+
+Input and output transforms must each support incremental fitting, including every component of a composition.
+Batch-only transforms are rejected rather than silently treated as frozen.
+If no observations are available, learning raises `ValueError` because no model has been learned.
 
 ## Active Learning
 

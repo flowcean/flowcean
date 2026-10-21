@@ -41,7 +41,7 @@ class TrainTestSplit:
 
     def split(
         self,
-        environment: OfflineEnvironment,
+        environment: OfflineEnvironment[pl.LazyFrame],
     ) -> tuple[DataFrame, DataFrame]:
         """Split the data into train and test sets.
 

@@ -5,15 +5,17 @@ import numpy as np
 import polars as pl
 from sklearn.ensemble import AdaBoostClassifier
 
-from flowcean.core import Model, SupervisedLearner
+from flowcean.core import SupervisedLearner
 from flowcean.utils import get_seed
 
-from .model import SciKitClassifierModel
+from .model import SciKitClassifierModel, validate_threshold
 
 logger = logging.getLogger(__name__)
 
 
-class AdaBoost(SupervisedLearner):
+class AdaBoost(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, SciKitClassifierModel]
+):
     """Wrapper class for sklearn's AdaBoostClassifier.
 
     Reference: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html
@@ -28,12 +30,13 @@ class AdaBoost(SupervisedLearner):
         n_estimators: int = 50,
         learning_rate: float = 1.0,
         random_state: int | None = None,
-        threshold: float = 0.5,
+        threshold: float | None = None,
     ) -> None:
         """Initialize the AdaBoost classifier learner.
 
         Reference: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html
         """
+        validate_threshold(threshold)
         self.classifier = AdaBoostClassifier(
             estimator=estimator,
             n_estimators=n_estimators,
@@ -47,7 +50,7 @@ class AdaBoost(SupervisedLearner):
         self,
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
-    ) -> Model:
+    ) -> SciKitClassifierModel:
         collected_inputs = inputs.collect()
         collected_outputs = outputs.collect()
 
@@ -62,13 +65,10 @@ class AdaBoost(SupervisedLearner):
             logger.warning("Input data contains NaN values; replacing with 0")
             x = np.nan_to_num(x, nan=0.0)
 
-        # Convert outputs to 1D numeric array
+        if collected_outputs.width != 1:
+            msg = "AdaBoost requires exactly one target column"
+            raise ValueError(msg)
         y = collected_outputs.to_numpy().ravel()
-        if not np.issubdtype(y.dtype, np.number):
-            msg = f"Output data contains non-numeric values: {y.dtype}"
-            raise ValueError(
-                msg,
-            )
 
         self.classifier.fit(x, y)
         return SciKitClassifierModel(

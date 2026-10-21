@@ -23,7 +23,7 @@ class TestCompiler:
     def __init__(
         self,
         n_features: int,
-        testinputs: list,
+        testinputs: list[tuple[float, ...]],
     ) -> None:
         """Initializes the TestCompiler.
 
@@ -35,7 +35,7 @@ class TestCompiler:
         self.abst_testinputs = testinputs
 
     # Initializes a dictionary to store test inputs sorted by feature index.
-    def _init_input_dict(self) -> dict:
+    def _init_input_dict(self) -> dict[str, list[float]]:
         input_dict = {}
         for feature in range(self.n_features):
             input_dict[str(feature)] = []
@@ -43,7 +43,7 @@ class TestCompiler:
 
     def compute_executable_testinputs(
         self,
-        feature_names: list,
+        feature_names: list[str],
     ) -> pl.DataFrame:
         """Convert abstract test inputs into a Polars DataFrame.
 

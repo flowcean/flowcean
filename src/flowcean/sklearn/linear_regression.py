@@ -5,7 +5,11 @@ from flowcean.core.learner import SupervisedLearner
 from flowcean.sklearn.model import SciKitModel
 
 
-class LinearRegression(SupervisedLearner):
+class LinearRegression(
+    SupervisedLearner[
+        pl.DataFrame | pl.LazyFrame, pl.DataFrame | pl.LazyFrame, SciKitModel
+    ],
+):
     def learn(
         self,
         inputs: pl.LazyFrame | pl.DataFrame,

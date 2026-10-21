@@ -12,13 +12,14 @@ from typing import Any
 import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
+import polars as pl
 from matplotlib.table import Table
 
 # flowcean libraries
 from transforms.derivative import Derivative
 
 import flowcean.cli
-from flowcean.core import SupervisedLearner, evaluate_offline, learn_offline
+from flowcean.core import evaluate_offline, learn_offline
 from flowcean.polars import (
     DataFrame,
     Filter,
@@ -152,7 +153,7 @@ def inspect_data(
             plot_row(args, observed_data)
 
 
-def print_overview(observed_data: DataFrame) -> None:
+def print_overview(observed_data: pl.DataFrame) -> None:
     logger.info("Data overview:")
     print(observed_data)
 
@@ -482,7 +483,7 @@ def plot_row(args: argparse.Namespace, observed_data: Any) -> None:
 def build_tree_learner(
     args: argparse.Namespace,
     **tree_params: Any,
-) -> SupervisedLearner:
+) -> RegressionTree:
     if args.store_graph:
         Path.mkdir(Path("./graphs"), exist_ok=True)
         tree_path = Path(

@@ -19,7 +19,9 @@ class XGBoostClassifierLearnerTest(unittest.TestCase):
         )
 
         model = XGBoostClassifierLearner(
-            objective="reg:squarederror",
+            objective="binary:logistic",
+            min_child_weight=0,
+            reg_lambda=0,
         ).learn(
             df.lazy().select("x"),
             df.lazy().select("y"),

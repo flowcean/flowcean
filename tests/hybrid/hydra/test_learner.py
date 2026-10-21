@@ -25,7 +25,7 @@ from flowcean.hybrid.hydra import (
 )
 
 
-class LinearFeatureModel(Model):
+class LinearFeatureModel(Model[pl.LazyFrame, pl.LazyFrame]):
     def __init__(
         self, feature: str, output: str, slope: float, intercept: float
     ) -> None:
@@ -54,7 +54,9 @@ class LinearFeatureModel(Model):
         ).lazy()
 
 
-class LinearLearner(SupervisedLearner):
+class LinearLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, LinearFeatureModel]
+):
     """Batch least squares, recording each instance's single supplied fit."""
 
     def __init__(self, feature: str = "x") -> None:
@@ -63,7 +65,9 @@ class LinearLearner(SupervisedLearner):
         self.model: LinearFeatureModel | None = None
 
     @override
-    def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+    def learn(
+        self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+    ) -> LinearFeatureModel:
         assert not self.fits, (
             "Each factory instance must be learned exactly once"
         )
@@ -270,7 +274,7 @@ def test_rejected_expansion_retains_noncopyable_candidate() -> None:
     ]
     assert callback.candidates[1][1] > learner.threshold
     np.testing.assert_allclose(
-        candidate.predict(pl.DataFrame({"x": [0.0, 1.0]})).collect()["dx"],
+        candidate.predict(pl.LazyFrame({"x": [0.0, 1.0]})).collect()["dx"],
         [0.0, 1.0],
         atol=1e-12,
     )
@@ -287,7 +291,7 @@ def test_later_discovery_preserves_finalized_noncopyable_models() -> None:
         ],
     )
     assert first.flows[-1].model is factory.instances[-1].model
-    probe = pl.DataFrame({"x": [2.0]})
+    probe = pl.LazyFrame({"x": [2.0]})
     before = [
         flow.model.predict(probe).collect()["dx"] for flow in first.flows
     ]
@@ -507,7 +511,7 @@ def test_frames_are_validated_before_backend(
     assert not factory.instances
 
 
-class FixedModel(Model):
+class FixedModel(Model[pl.LazyFrame, pl.LazyFrame]):
     def __init__(
         self, predict: Callable[[pl.DataFrame], pl.DataFrame]
     ) -> None:
@@ -524,11 +528,11 @@ class FixedModel(Model):
         return self.function(frame).lazy()
 
 
-class FixedLearner(SupervisedLearner):
-    def __init__(self, model: Model) -> None:
+class FixedLearner(SupervisedLearner[pl.LazyFrame, pl.LazyFrame, FixedModel]):
+    def __init__(self, model: FixedModel) -> None:
         self.model = model
 
-    def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+    def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> FixedModel:
         return self.model
 
 
@@ -590,7 +594,9 @@ def test_final_fit_error_propagates_without_normal_finish() -> None:
     error = RuntimeError("final fit failed")
 
     class FailingFinalLearner(LinearLearner):
-        def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+        def learn(
+            self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+        ) -> LinearFeatureModel:
             raise error
 
     def factory() -> LinearLearner:
@@ -635,7 +641,7 @@ def test_complete_records_candidate_acceptance_not_final_refit_accuracy() -> (
     assert result.flows[0].segments == (TraceSegment(0, 0, 2),)
     assert (
         result.flows[0]
-        .model.predict(pl.DataFrame({"x": [0.0]}))
+        .model.predict(pl.LazyFrame({"x": [0.0]}))
         .collect()["dx"][0]
         == 99.0
     )
@@ -646,13 +652,15 @@ def test_unexpected_errors_propagate(stage: str) -> None:
     error = RuntimeError("backend failure")
 
     class FailingLearner(LinearLearner):
-        def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+        def learn(
+            self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+        ) -> LinearFeatureModel:
             raise error
 
     def predict(_: pl.DataFrame) -> pl.DataFrame:
         raise error
 
-    def factory() -> SupervisedLearner:
+    def factory() -> LinearLearner | FixedLearner:
         if stage == "factory":
             raise error
         if stage == "learn":
@@ -676,8 +684,12 @@ def test_fragmented_grouping_final_fit_rows_and_prediction_batches() -> None:
     fits: list[list[float]] = []
     predictions: list[list[float]] = []
 
-    class ConstantLearner(SupervisedLearner):
-        def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+    class ConstantLearner(
+        SupervisedLearner[pl.LazyFrame, pl.LazyFrame, FixedModel]
+    ):
+        def learn(
+            self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+        ) -> FixedModel:
             fits.append(inputs.collect()["x"].to_list())
             value = outputs.collect()["dx"][0]
 

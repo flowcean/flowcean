@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from typing import cast
 
 import polars as pl
 
@@ -7,7 +6,7 @@ from flowcean.core import Adapter, Finished
 from flowcean.polars.environments.dataframe import DataFrame
 
 
-class DataFrameAdapter(Adapter):
+class DataFrameAdapter(Adapter[pl.LazyFrame, pl.LazyFrame]):
     """Adapter wrapper for a DataFrame.
 
     This class allows to use a DataFrame as an Adapter and an input source
@@ -30,7 +29,9 @@ class DataFrameAdapter(Adapter):
     ) -> None:
         super().__init__()
 
-        self.df = cast("pl.LazyFrame", source.observe()).select(input_features)
+        self.df = source.observe().select(input_features)
+        self.result_df = pl.DataFrame()
+        self.count = 0
         self.df_len = self.df.select(pl.len()).collect().item()
         self.result_path = result_path
 

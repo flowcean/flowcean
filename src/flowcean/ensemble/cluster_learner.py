@@ -1,14 +1,17 @@
 import polars as pl
 
 from flowcean.core.learner import SupervisedLearner
-from flowcean.core.model import Model
+from flowcean.core.model import Predictor
+from flowcean.polars.model import PolarsModel
 
 
-class ClusterModel(Model):
+class ClusterModel(PolarsModel):
     def __init__(
         self,
         cluster_feature: str,
-        cluster_model_mapping: dict[int, Model],
+        cluster_model_mapping: dict[
+            int, Predictor[pl.LazyFrame, pl.LazyFrame]
+        ],
         *,
         exclude_cluster_feature: bool = False,
     ) -> None:
@@ -20,7 +23,7 @@ class ClusterModel(Model):
     def _predict(
         self,
         input_features: pl.LazyFrame | pl.DataFrame,
-    ) -> pl.DataFrame:
+    ) -> pl.LazyFrame:
         if isinstance(input_features, pl.LazyFrame):
             input_features = input_features.collect()
 
@@ -34,19 +37,21 @@ class ClusterModel(Model):
                     if self.exclude_cluster_feature
                     else row
                 ).lazy(),
-            )
-            if isinstance(prediction, pl.LazyFrame):
-                prediction = prediction.collect()
+            ).collect()
             result.append(prediction)
 
-        return pl.concat(result)
+        return pl.concat(result).lazy()
 
 
-class ClusterLearner(SupervisedLearner):
+class ClusterLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, ClusterModel]
+):
     def __init__(
         self,
         cluster_feature: str,
-        learner: SupervisedLearner,
+        learner: SupervisedLearner[
+            pl.LazyFrame, pl.LazyFrame, Predictor[pl.LazyFrame, pl.LazyFrame]
+        ],
         *,
         remove_cluster_feature: bool = True,
     ) -> None:
@@ -63,12 +68,7 @@ class ClusterLearner(SupervisedLearner):
         dfs = pl.collect_all([inputs, outputs])
 
         inputs_with_labels = dfs[0]
-        outputs_with_labels = dfs[1].with_columns(
-            pl.Series(
-                self.cluster_feature,
-                inputs_with_labels[self.cluster_feature],
-            ),
-        )
+        output_features = dfs[1]
 
         labels = (
             inputs_with_labels.select(self.cluster_feature)
@@ -80,17 +80,12 @@ class ClusterLearner(SupervisedLearner):
         models = {}
 
         for label in labels:
-            input_subset = inputs_with_labels.filter(
-                pl.col(self.cluster_feature) == label,
-            )
-
-            output_subset = outputs_with_labels.filter(
-                pl.col(self.cluster_feature) == label,
-            )
+            rows = inputs_with_labels[self.cluster_feature] == label
+            input_subset = inputs_with_labels.filter(rows)
+            output_subset = output_features.filter(rows)
 
             if self.exclude_cluster_feature:
                 input_subset = input_subset.drop(self.cluster_feature)
-                output_subset = output_subset.drop(self.cluster_feature)
 
             model = self.learner.learn(
                 input_subset.lazy(),

@@ -43,6 +43,6 @@ def test_linear_regression_interoperates_with_hydra() -> None:
     assert result.flows[0].segments == (TraceSegment(0, 0, trace.height),)
     assert result.to_flow_ids()[0].tolist() == [0] * trace.height
     assert_frame_equal(
-        result.flows[0].model.predict(trace.select("x")).collect(),
+        result.flows[0].model.predict(trace.select("x").lazy()).collect(),
         trace.select("dx"),
     )

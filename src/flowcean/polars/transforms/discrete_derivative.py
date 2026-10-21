@@ -4,14 +4,14 @@ from typing import Literal, override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 DiscreteDerivativeKind = Literal["forward", "backward", "central"]
 
 
-class DiscreteDerivative(Transform):
+class DiscreteDerivative(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Calculates the discrete derivative of time series features.
 
     Calculates the discrete derivative of time series features using either

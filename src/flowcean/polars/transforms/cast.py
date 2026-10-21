@@ -5,12 +5,12 @@ from typing import override
 import polars as pl
 from polars._typing import PolarsDataType
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Cast(Transform):
+class Cast(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Cast features to a different datatype.
 
     This transform allows to change the datatype of features in a DataFrame.

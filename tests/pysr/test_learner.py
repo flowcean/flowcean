@@ -30,7 +30,7 @@ class FakeRegressor:
 @pytest.fixture
 def adapter(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     stub = ModuleType("pysr")
-    stub.PySRRegressor = FakeRegressor  # type: ignore[attr-defined]
+    monkeypatch.setattr(stub, "PySRRegressor", FakeRegressor, raising=False)
     monkeypatch.setitem(sys.modules, "pysr", stub)
     path = Path(__file__).parents[2] / "src/flowcean/pysr/learner.py"
     spec = importlib.util.spec_from_file_location(

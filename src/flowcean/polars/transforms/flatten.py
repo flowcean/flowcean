@@ -4,13 +4,13 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 from flowcean.polars.is_time_series import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
 
-class Flatten(Transform):
+class Flatten(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Flatten all time series in a DataFrame to individual features.
 
     The given DataFrame's time series are converted into individual features,

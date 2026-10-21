@@ -1,20 +1,20 @@
 from flowcean.core.adapter import Adapter
 from flowcean.core.environment.incremental import Finished
-from flowcean.core.model import Model
-from flowcean.core.transform import Identity, Transform
+from flowcean.core.model import Predictor
+from flowcean.core.transform import Transform
 
 
-def start_prediction_loop(
-    model: Model,
-    adapter: Adapter,
+def start_prediction_loop[Observation, Input, Output, Action](
+    model: Predictor[Input, Output],
+    adapter: Adapter[Observation, Action],
     *,
-    adapter_to_model_transforms: Transform | None = None,
-    model_to_adapter_transforms: Transform | None = None,
+    adapter_to_model_transforms: Transform[Observation, Input],
+    model_to_adapter_transforms: Transform[Output, Action],
 ) -> None:
-    """Start a prediction loop with the given model and adapter."""
-    adapter_to_model_transforms = adapter_to_model_transforms or Identity()
-    model_to_adapter_transforms = model_to_adapter_transforms or Identity()
+    """Run predictions with explicit representation adapters.
 
+    Pass Identity() for an unchanged representation.
+    """
     # Start the adapter
     adapter.start()
 

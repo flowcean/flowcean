@@ -1,7 +1,4 @@
-from typing import Protocol
-
-
-class Named(Protocol):
+class Named:
     """A mixin for named objects."""
 
     _name: str | None = None

@@ -1,65 +1,104 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from collections.abc import Iterable, Iterator
+from abc import ABC, ABCMeta, abstractmethod
+from collections.abc import Iterator
 from typing import Protocol, override, runtime_checkable
 
-from flowcean.core.data import Data
 from flowcean.core.environment.base import Environment
+from flowcean.core.transform import Transform
 
 
 @runtime_checkable
-class Stepable(Protocol):
-    """Base class for stepable environments.
-
-    Stepable environments are environments that can be advanced by a step.
-    Usually, this is combined with an observable to provide a stream of data.
-    """
+class Stepable(Protocol, metaclass=ABCMeta):
+    """An environment that can advance by one step."""
 
     @abstractmethod
     def step(self) -> None:
-        """Advance the environment by one step."""
+        """Advance, raising Finished when no observations remain."""
 
 
 class Finished(Exception):
-    """Exception raised when the environment is finished.
-
-    This exception is raised when the environment is finished, and no more data
-    can be retrieved.
-    """
+    """The environment has no further observations."""
 
 
-@runtime_checkable
-class IncrementalEnvironment(
-    Environment,
-    Stepable,
-    Iterable[Data],
-    Protocol,
+class IncrementalEnvironment[Observation](
+    Environment[Observation], Stepable, ABC
 ):
-    """An environment providing incremental (streaming) learning data.
+    """An observation stream, yielding the current observation before stepping."""
 
-    Incremental environments provide data as a continuous stream of samples
-    or small batches. The environment is advanced by stepping through data,
-    observing the current state at each step. This supports incremental
-    learning (also known as passive online learning), where the model is
-    continuously updated as new data arrives.
-    """
+    _exhausted: bool = False
+
+    @property
+    def _finished(self) -> bool:
+        return self._exhausted
+
+    @_finished.setter
+    def _finished(self, value: bool) -> None:
+        self._exhausted = value
 
     @override
-    def __iter__(self) -> Iterator[Data]:
-        yield self.observe()
-        while True:
-            try:
-                self.step()
-            except Finished:
-                break
+    def observe(self) -> Observation:
+        if self._finished:
+            raise Finished
+        try:
+            return super().observe()
+        except Finished:
+            self._finished = True
+            raise
+
+    def __iter__(self) -> Iterator[Observation]:
+        try:
             yield self.observe()
+            while True:
+                self.step()
+                yield self.observe()
+        except Finished:
+            self._finished = True
 
     def num_steps(self) -> int | None:
-        """Return the number of steps in the environment.
-
-        Returns:
-            The number of steps in the environment, or None if the number of
-            steps is unknown.
-        """
+        """Return the number of steps, if known."""
         return None
+
+    @override
+    def __or__[Result](
+        self,
+        transform: Transform[Observation, Result],
+    ) -> IncrementalEnvironment[Result]:
+        return _TransformedIncrementalEnvironment(self, transform)
+
+
+class _TransformedIncrementalEnvironment[Input, Output](
+    IncrementalEnvironment[Output]
+):
+    def __init__(
+        self,
+        source: IncrementalEnvironment[Input],
+        transform: Transform[Input, Output],
+    ) -> None:
+        self.source = source
+        self.observation_transform = transform
+
+    @property
+    @override
+    def _finished(self) -> bool:
+        return self.source._finished
+
+    @_finished.setter
+    def _finished(self, value: bool) -> None:
+        self.source._finished = value
+
+    @override
+    def _observe(self) -> Output:
+        return self.observation_transform(self.source.observe())
+
+    @override
+    def step(self) -> None:
+        try:
+            self.source.step()
+        except Finished:
+            self.source._finished = True
+            raise
+
+    @override
+    def num_steps(self) -> int | None:
+        return self.source.num_steps()

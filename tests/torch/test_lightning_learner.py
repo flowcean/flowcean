@@ -47,8 +47,9 @@ class TestLightningLearner(unittest.TestCase):
 
     def setUp(self) -> None:
         """Sets up test fixtures."""
-        self.simple_module = _create_simple_module()
-        self.inputs, self.outputs = _create_sample_data()
+        # unittest initializes these fixtures before each test, not in __init__.
+        self.simple_module = _create_simple_module()  # pyright: ignore[reportUninitializedInstanceVariable]
+        self.inputs, self.outputs = _create_sample_data()  # pyright: ignore[reportUninitializedInstanceVariable]
 
     def test_init(self) -> None:
         """Tests initialization of LightningLearner."""

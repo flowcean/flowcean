@@ -4,7 +4,7 @@ from io import BytesIO
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from flowcean.core import Model, learn_incremental, learn_offline
+from flowcean.core import learn_incremental, learn_offline
 from flowcean.polars import (
     DataFrame,
     Select,
@@ -44,7 +44,7 @@ class TestSaveLoad(unittest.TestCase):
         model.save(model_bytes)
         model_bytes.seek(0)
 
-        loaded_model = Model.load(model_bytes)
+        loaded_model = SciKitModel.load(model_bytes)
         assert isinstance(loaded_model, SciKitModel)
 
         # Test a random prediction
@@ -87,7 +87,7 @@ class TestSaveLoad(unittest.TestCase):
         model.save(model_bytes)
         model_bytes.seek(0)
 
-        loaded_model = Model.load(model_bytes)
+        loaded_model = PyTorchModel.load(model_bytes)
         assert isinstance(loaded_model, PyTorchModel)
 
         # Test a random prediction
@@ -127,7 +127,7 @@ class TestSaveLoad(unittest.TestCase):
         model.save(model_bytes)
         model_bytes.seek(0)
 
-        loaded_model = Model.load(model_bytes)
+        loaded_model = SciKitModel.load(model_bytes)
 
         # Test a random prediction
         test_frame = pl.DataFrame(

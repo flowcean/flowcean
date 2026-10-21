@@ -58,7 +58,7 @@ def run_active() -> None:
     logger.info("Finished!")
 
 
-class MyModel(Model):
+class MyModel(Model[Observation, Action]):
     best_action: float
     action: Action
     observation: Observation
@@ -79,12 +79,10 @@ class MyModel(Model):
         for actuator in self.action.actuators:
             new_actuator = copy(actuator)
             if (
-                new_actuator.value_min is not None
-                and isinstance(
+                isinstance(
                     new_actuator.value_min,
                     int | float | np.ndarray,
                 )
-                and new_actuator.value_max is not None
                 and isinstance(
                     new_actuator.value_max,
                     int | float | np.ndarray,
@@ -101,7 +99,7 @@ class MyModel(Model):
         return Action(actuators=actuators)
 
 
-class MyLearner(ActiveLearner):
+class MyLearner(ActiveLearner[Observation, Action, MyModel]):
     model: MyModel
     rewards: list[ActiveInterface]
     actuator_ids: list[str]
@@ -129,7 +127,7 @@ class MyLearner(ActiveLearner):
         self,
         action: Action,
         observation: Observation,
-    ) -> Model:
+    ) -> MyModel:
         _ = action
 
         self.rewards.append(observation.rewards[0])

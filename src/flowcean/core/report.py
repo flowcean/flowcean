@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from rich.style import StyleType
 
 
-class Reportable(Protocol):
+class Reportable(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __str__(self) -> str:
         """Return a string representation."""
@@ -73,7 +73,7 @@ class Report(dict[str, ReportEntry]):
         ]
         table = pl.DataFrame(rows)
         return (
-            table.style.tab_spanner_delim(": ")  # pyright: ignore[reportUnknownMemberType] until https://github.com/posit-dev/great-tables/pull/770 is merged
+            table.style.tab_spanner_delim(": ")
             .tab_header(
                 title="Model Evaluation Report",
                 subtitle="Metrics for each trained model",

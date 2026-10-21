@@ -5,7 +5,7 @@ import polars as pl
 from flowcean.core.transform import Transform
 
 
-class Derivative(Transform):
+class Derivative(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Calculate the derivative applied to a flatten LazyFrame."""
 
     def __init__(self, column: str) -> None:

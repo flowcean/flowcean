@@ -1,81 +1,84 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, final, override, runtime_checkable
+from abc import ABC
+from collections.abc import Iterable
+from typing import override
 
 from flowcean.core.environment.base import Environment
 from flowcean.core.environment.incremental import (
     Finished,
     IncrementalEnvironment,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
-
-    from flowcean.core.data import Data
+from flowcean.core.transform import Transform
 
 
-@runtime_checkable
-class OfflineEnvironment(Environment, Protocol):
-    """Base class for offline environments.
+class OfflineEnvironment[Observation](Environment[Observation], ABC):
+    """A fixed dataset, composable into an incremental stream."""
 
-    Offline environments represent static, pre-recorded datasets collected
-    upfront. They support the offline learning strategy where a fixed batch
-    of data is processed at once to train a model. Offline environments can
-    be transformed and chained together to create new datasets.
-    """
-
-    def chain(self, *other: Environment) -> ChainedOfflineEnvironments:
-        """Chain this offline environment with other offline environments.
-
-        Chaining offline environments will create a new incremental environment
-        that will first observe the data from this environment and then the
-        data from the other environments.
-
-        Args:
-            other: The other offline environments to chain.
-
-        Returns:
-            The chained offline environments.
-        """
+    def chain(
+        self,
+        *other: Environment[Observation],
+    ) -> ChainedOfflineEnvironments[Observation]:
         return ChainedOfflineEnvironments([self, *other])
 
-    @final
-    def __add__(self, other: Environment) -> ChainedOfflineEnvironments:
-        """Shorthand for `chain`."""
+    def __add__(
+        self,
+        other: Environment[Observation],
+    ) -> ChainedOfflineEnvironments[Observation]:
         return self.chain(other)
 
+    @override
+    def __or__[Result](
+        self,
+        transform: Transform[Observation, Result],
+    ) -> OfflineEnvironment[Result]:
+        return _TransformedOfflineEnvironment(self, transform)
 
-class ChainedOfflineEnvironments(IncrementalEnvironment):
-    """Chained offline environments.
 
-    This environment chains multiple offline environments together. The
-    environment will first observe the data from the first environment and then
-    the data from the other environments.
-    """
-
-    _environments: Iterator[Environment]
-    _element: Environment
-
-    def __init__(self, environments: Iterable[Environment]) -> None:
-        """Initialize the chained offline environments.
-
-        Args:
-            environments: The offline environments to chain.
-        """
-        self._environments = iter(environments)
-        try:
-            self._element = next(self._environments)
-        except StopIteration as e:
-            msg = "environments must contain at least one element"
-            raise ValueError(msg) from e
+class _TransformedOfflineEnvironment[Input, Output](
+    OfflineEnvironment[Output]
+):
+    def __init__(
+        self,
+        source: OfflineEnvironment[Input],
+        transform: Transform[Input, Output],
+    ) -> None:
+        self.source = source
+        self.observation_transform = transform
 
     @override
-    def _observe(self) -> Data:
+    def _observe(self) -> Output:
+        return self.observation_transform(self.source.observe())
+
+
+class ChainedOfflineEnvironments[Observation](
+    IncrementalEnvironment[Observation]
+):
+    """Observe each source in order, applying its transforms exactly once."""
+
+    def __init__(
+        self, environments: Iterable[Environment[Observation]]
+    ) -> None:
+        self._environments = iter(environments)
+        self._element: Environment[Observation] | None
+        try:
+            self._element = next(self._environments)
+        except StopIteration as error:
+            message = "environments must contain at least one element"
+            raise ValueError(message) from error
+
+    @override
+    def _observe(self) -> Observation:
+        if self._element is None:
+            raise Finished
         return self._element.observe()
 
     @override
     def step(self) -> None:
+        if self._element is None:
+            raise Finished
         try:
             self._element = next(self._environments)
-        except StopIteration:
-            raise Finished from StopIteration
+        except StopIteration as error:
+            self._element = None
+            raise Finished from error

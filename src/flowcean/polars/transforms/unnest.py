@@ -5,12 +5,12 @@ from typing import override
 import polars as pl
 from polars._typing import ColumnNameOrSelector
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Unnest(Transform):
+class Unnest(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Decompose struct columns into separate columns for each field.
 
     Example:

@@ -34,7 +34,8 @@ def test_scheduling_policy_defaults_and_requires_exact_enum():
     ]
     for invalid in ["first_detection", SurfaceEntryPolicy.TRIGGER, None, 0]:
         with pytest.raises(TypeError, match="TransitionSchedulingPolicy"):
-            Transition(source, target, lambda: 1, scheduling_policy=invalid)
+            # Invalid policy types must fail at runtime, too.
+            Transition(source, target, lambda: 1, scheduling_policy=invalid)  # pyright: ignore[reportArgumentType]
     with pytest.raises(TypeError):
         Transition(
             source,

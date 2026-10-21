@@ -1177,7 +1177,8 @@ def test_callback_dispatch_preserves_legacy_forms_and_exposes_age(
                 source,
                 target,
                 callback if role == "surface" else lambda: 0.0,
-                callback if role == "reset" else lambda state: state,
+                # Exercise runtime scalar-to-state coercion for reset callbacks.
+                callback if role == "reset" else lambda state: state,  # pyright: ignore[reportArgumentType]
                 entry_policy=SurfaceEntryPolicy.TRIGGER,
                 delay=callback if role == "delay" else 0.0,
             )
