@@ -17,7 +17,7 @@ just examples-mmsr
 
 PySR requires Julia and may provision its runtime on first use. Ordinary `flowcean.hybrid` imports do not load PySR or Julia. The dedicated recipe runs serial, one-thread searches and can take several minutes; it is intentionally outside the aggregate example recipe and CI.
 
-[`examples/mmsr/run.py`](https://github.com/flowcean/flowcean/blob/main/examples/mmsr/run.py) contains the fixed search budgets, operators, and separate initialization/search seeds. CSR and TM use the same predeclared per-search budget, with a continuing search-seed stream. The script prints the selected expressions, original tree complexities, variances, stopping diagnostics, guards, and recursive held-out errors. Errors propagate rather than being hidden behind a fallback predictor.
+[`examples/mmsr/run.py`](https://github.com/flowcean/flowcean/blob/main/examples/mmsr/run.py) contains the fixed search budgets, operators, and separate initialization/search seeds. CSR and TM use the same predeclared per-search budget, with a continuing search-seed stream. The script prints the selected expressions, original tree complexities, variances, stopping diagnostics, guards, FaMoS tree rules and scales, and both recursive held-out errors. Errors propagate rather than being hidden behind a fallback predictor.
 
 ## Prepare Aligned Observations
 
@@ -35,11 +35,19 @@ Pass the original ordered traces and CSR artifact to `fit_mmsr_transitions`, sup
 
 Missing source departure/stay evidence or an unusable edge raises an error; the CSR artifact remains independently available. The edge collection does not define implicit self edges, competing-guard arbitration, or probability propagation.
 
+## Compare With FaMoS Trees
+
+The same example fits CSR once and holds its sampled dynamics fixed while comparing symbolic TM guards with [FaMoS next-location trees](famos.md). TM learns from soft memberships; the trees learn from explicit hard labels obtained by taking each stored training membership row's argmax, with ties resolved to the lowest positional location ID. These are different training targets, not interchangeable objectives.
+
+Tree training uses the original sampled frames with one nullable integer `location_id` column. Each mapping row receives its stored membership label; the final raw sample remains null because no next-temperature target was observed for membership inference. Adjacent pairs with either label null are excluded without bridging gaps or traces. Every switch-straddling mapping interval remains. Only current `temperature` is a tree feature, not `next_temperature`; there are no exogenous input features in this fixed-target comparison. Here FaMoS `output_features` denotes current physical observations and `input_features` denotes controls, whereas MMSR `input_features` denotes regression features, which can include observations.
+
+Both recursive evaluations use the exact same CSR artifact, initial observed temperature, and first-training-row argmax location. The trees return a next location directly, including self targets. This isolates transition selection on fixed dynamics, not the effect of refitting or tuning either learner.
+
 ## Interpret Timing and Results
 
 Flowcean chooses source-time transition training: regressors at row n and location n predict location n+1. The paper's formal mapping convention elsewhere is inconsistent with this TM indexing, so this is an explicit implementation contract rather than a claim of paper-exact execution semantics.
 
-The two-location example has exactly one outgoing guard per source. Its short feedback loop computes both next temperature and next location from the old predicted temperature and old location, then advances both. All initial temperatures start in heating by construction. The predictor's initial location comes from the first training row's largest membership, not a held-out posterior or simulator location. Only the held-out initial temperature seeds prediction; future measurements are used solely for scoring.
+The two-location example has exactly one outgoing guard per source. Each feedback loop computes both next temperature and next location from the old predicted temperature and old location, then advances both. The symbolic selector takes its outgoing edge when the guard is active and otherwise stays. All initial temperatures start in heating by construction. The predictor's initial location comes from the first training row's largest membership, not a held-out posterior or simulator location. Only the held-out initial temperature seeds prediction; future measurements are used solely for scoring.
 
 Finite fresh searches can worsen the incumbent and need not recover distinct functions. `error_stable` means five complete sweeps with less than 2% relative error change, not successful discovery; even collapsed mappings can be stable. `no_usable_candidate` preserves the last valid mixture and is not convergence. Invalid initialization or committed mixtures raise errors. Inspect the expressions and predictive behavior as well as memberships and losses.
 

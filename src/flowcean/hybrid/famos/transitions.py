@@ -9,7 +9,6 @@ from numpy.typing import ArrayLike
 from sklearn.tree import DecisionTreeClassifier
 
 from ._data import FloatArray, columns, finite_array
-from .discovery import FamosDiscovery
 
 
 @dataclass(frozen=True)
@@ -20,13 +19,21 @@ class FamosTransitionSelector:
     categorical tree; numeric location IDs are never ordered input features.
 
     Attributes:
-        discovery: Feature order, scales, and location IDs used for training.
+        output_features: Current observed physical outputs in vector order.
+        input_features: Current exogenous controls in vector order.
+        n_locations: Declared number of categorical locations.
+        output_scales: Training maximum absolute outputs, zero replaced by one.
+        input_scales: Corresponding training maximum absolute inputs.
         trees: Source-indexed fitted sklearn trees. Features are normalized
             current outputs followed by current inputs; targets are next-row
             location IDs, including self transitions.
     """
 
-    discovery: FamosDiscovery
+    output_features: tuple[str, ...]
+    input_features: tuple[str, ...]
+    n_locations: int
+    output_scales: FloatArray
+    input_scales: FloatArray
     trees: tuple[DecisionTreeClassifier, ...]
 
     def predict(
@@ -35,65 +42,90 @@ class FamosTransitionSelector:
         """Return q[t+1] from q[t], physical-unit y[t], and u[t].
 
         Output and input vectors have shapes ``(n_outputs,)`` and
-        ``(n_inputs,)``, in discovery feature order. No future observations
-        or target-time inputs are used.
+        ``(n_inputs,)``, in stored feature order. No future observations
+        or target-time inputs are used. Training scales are not refitted
+        or clipped for prediction.
         """
-        if not 0 <= current_location < len(self.trees):
+        if not 0 <= current_location < self.n_locations:
             raise ValueError("Unknown transition source location")
         y = finite_array(outputs, "Outputs")
         u = finite_array(inputs, "Inputs")
-        if y.shape != (len(self.discovery.output_features),) or u.shape != (
-            len(self.discovery.input_features),
+        if y.shape != (len(self.output_features),) or u.shape != (
+            len(self.input_features),
         ):
             raise ValueError("Outputs and inputs must match selected features")
-        state = np.concatenate(
-            (y / self.discovery.output_scales, u / self.discovery.input_scales)
-        )
+        state = np.concatenate((y / self.output_scales, u / self.input_scales))
         return int(self.trees[current_location].predict(state[None, :])[0])
 
 
 def fit_famos_transitions(
     traces: Sequence[pl.DataFrame],
-    discovery: FamosDiscovery,
     *,
+    output_features: Sequence[str],
+    input_features: Sequence[str],
+    n_locations: int,
     max_depth: int | None = None,
     min_samples_leaf: int = 1,
     random_state: int = 0,
 ) -> FamosTransitionSelector:
-    """Fit next-location trees from adjacent assigned training rows.
+    """Fit next-location trees from adjacent explicitly labeled training rows.
 
     Args:
-        traces: Original discovery frames in the same trace/row order.
-        discovery: Partial assignments. Include switches but exclude pairs
-            with either label null. Never create cross-trace pairs.
+        traces: Independent eager frames in caller-supplied row order, with
+            nullable integer ``location_id`` in ``[0, n_locations)``. A label
+            governs the interval beginning at its row. Exclude pairs with
+            either label null, without bridging gaps or trace boundaries.
+            No timestamps or sampling periods are inferred; unrelated
+            columns are ignored. FaMoS discovery labels can be supplied via
+            ``discovery.to_labeled_frames(original_traces)``.
+        output_features: Ordered current observed physical outputs, not
+            next-row targets. At least one output is required.
+        input_features: Ordered current exogenous controls; may be empty.
+            Feature names must be unique and cannot include ``location_id``.
+        n_locations: Positive number of declared source locations. The caller
+            is responsible for location meanings and source-time alignment.
         max_depth: Maximum depth of each source's sklearn decision tree.
         min_samples_leaf: Minimum training observations in each tree leaf.
         random_state: Seed controlling sklearn split tie breaking.
 
     Returns:
-        Source-conditioned trees, including valid constant-target trees.
+        Source-conditioned trees, including valid constant-target trees,
+        with training-only maximum-absolute feature scales (zero becomes one).
         A source without any outgoing training pair raises ValueError
         rather than acquiring an invented self loop.
     """
-    selected = [
-        trace.select(
-            discovery.time_column,
-            *discovery.output_features,
-            *discovery.input_features,
-        )
-        for trace in traces
-    ]
-    labeled = discovery.to_labeled_frames(selected)
-    rows: list[list[FloatArray]] = [[] for _ in discovery.location_keys]
-    targets: list[list[int]] = [[] for _ in discovery.location_keys]
-    for trace in labeled:
-        y = columns(trace, discovery.output_features) / discovery.output_scales
-        u = columns(trace, discovery.input_features) / discovery.input_scales
+    outputs, inputs = tuple(output_features), tuple(input_features)
+    names = (*outputs, *inputs)
+    if not outputs or len(names) != len(set(names)) or "location_id" in names:
+        raise ValueError("Select distinct features and at least one output")
+    if not isinstance(n_locations, int) or n_locations < 1:
+        raise ValueError("n_locations must be a positive integer")
+    if not traces or not any(trace.height for trace in traces):
+        raise ValueError("Supply nonempty training observations")
+    features = []
+    for trace in traces:
+        if (
+            "location_id" not in trace.columns
+            or not trace.schema["location_id"].is_integer()
+        ):
+            raise ValueError("location_id must be a nullable integer column")
+        if any(
+            label is not None and not 0 <= label < n_locations
+            for label in trace["location_id"].to_list()
+        ):
+            raise ValueError("location_id must lie in [0, n_locations)")
+        features.append(columns(trace, names))
+    scales = np.max(np.abs(np.concatenate(features)), axis=0)
+    scales[scales == 0] = 1.0
+    rows: list[list[FloatArray]] = [[] for _ in range(n_locations)]
+    targets: list[list[int]] = [[] for _ in range(n_locations)]
+    for trace, values in zip(traces, features, strict=True):
+        normalized = values / scales
         labels = trace["location_id"].to_list()
         for t in range(trace.height - 1):
             source, destination = labels[t : t + 2]
             if source is not None and destination is not None:
-                rows[source].append(np.concatenate((y[t], u[t])))
+                rows[source].append(normalized[t])
                 targets[source].append(destination)
     trees = []
     for location, (x, y) in enumerate(zip(rows, targets, strict=True)):
@@ -108,4 +140,11 @@ def fit_famos_transitions(
         )
         tree.fit(np.asarray(x), np.asarray(y))
         trees.append(tree)
-    return FamosTransitionSelector(discovery, tuple(trees))
+    return FamosTransitionSelector(
+        outputs,
+        inputs,
+        n_locations,
+        scales[: len(outputs)],
+        scales[len(outputs) :],
+        tuple(trees),
+    )

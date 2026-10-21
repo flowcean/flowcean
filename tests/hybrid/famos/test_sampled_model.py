@@ -78,8 +78,6 @@ def test_rank_deficiency_reported_and_unusable_discovery_stays_independent():
     )
     with pytest.raises(ValueError, match="no usable regression targets"):
         fit_famos_dynamics([trace], partial)
-    with pytest.raises(ValueError, match="no outgoing training pairs"):
-        fit_famos_transitions([trace], partial)
 
 
 def test_next_location_trees_are_source_conditional_and_label_permutation_invariant():
@@ -88,31 +86,86 @@ def test_next_location_trees_are_source_conditional_and_label_permutation_invari
             "t": np.arange(8, dtype=float),
             "y": [0, 1, 2, 0, 1, 2, 0, 1],
             "u": [0] * 8,
-            "location_id": [99] * 8,  # Unselected native labels are ignored.
+            "location_id": [0, 0, 0, 1, 1, 1, 0, 0],
+            "next_y": [999] * 8,  # Unrelated columns are not predictors.
         }
     )
-    discovery = discovery_for(
-        [trace], [(0, 0, 3, 0), (0, 3, 6, 1), (0, 6, 8, 0)], locations=2
+    selector = fit_famos_transitions(
+        [trace], output_features=["y"], input_features=["u"], n_locations=2
     )
-    selector = fit_famos_transitions([trace], discovery)
-    swapped = replace(
-        discovery,
-        segments=tuple(
-            replace(
-                s,
-                location_id=1 - s.location_id
-                if s.location_id is not None
-                else None,
-            )
-            for s in discovery.segments
-        ),
+    swapped = trace.with_columns(
+        (1 - pl.col("location_id")).alias("location_id")
     )
-    other = fit_famos_transitions([trace], swapped)
+    other = fit_famos_transitions(
+        [swapped], output_features=["y"], input_features=["u"], n_locations=2
+    )
+    np.testing.assert_array_equal(selector.output_scales, [2])
+    np.testing.assert_array_equal(selector.input_scales, [1])
     for source in range(2):
         for y in (0, 1, 2):
             expected = 1 - source if y == 2 else source
             assert selector.predict(source, [y], [0]) == expected
             assert other.predict(1 - source, [y], [0]) == 1 - expected
+
+
+def test_labeled_tree_pairs_keep_source_time_null_gaps_and_trace_boundaries():
+    traces = [
+        pl.DataFrame(
+            {
+                "y": [10, 90, 80, 70, 60, 20, 95],
+                "location_id": pl.Series(
+                    [0, 1, None, 0, None, 1, 0], dtype=pl.Int64
+                ),
+                "metadata": ["ignored"] * 7,
+            }
+        ),
+        pl.DataFrame({"y": [30, 40, 50, 100], "location_id": [1, 0, 0, 0]}),
+    ]
+    selector = fit_famos_transitions(
+        traces, output_features=["y"], input_features=[], n_locations=2
+    )
+    assert [tree.tree_.n_node_samples[0] for tree in selector.trees] == [3, 2]
+    for source, value, target in (
+        (0, 10, 1),
+        (1, 20, 0),
+        (1, 30, 0),
+        (0, 40, 0),
+        (0, 50, 0),
+    ):
+        assert selector.predict(source, [value], []) == target
+    np.testing.assert_array_equal(selector.output_scales, [100])
+    assert selector.input_scales.size == 0
+    # Constant-target sources remain valid, including outside training range.
+    assert selector.predict(1, [1000], []) == 0
+    # Predict without clipping or changing training scales.
+    assert selector.predict(0, [1000], []) == 0
+    np.testing.assert_array_equal(selector.output_scales, [100])
+    with pytest.raises(
+        ValueError, match="Location 2 has no outgoing training pairs"
+    ):
+        fit_famos_transitions(
+            traces, output_features=["y"], input_features=[], n_locations=3
+        )
+
+
+@pytest.mark.parametrize("labels", [[0.0, 1.0], [0, 2], [0, -1]])
+def test_tree_labels_require_integer_declared_ids(labels):
+    trace = pl.DataFrame({"y": [0, 1], "location_id": labels})
+    with pytest.raises(ValueError, match="location_id"):
+        fit_famos_transitions(
+            [trace], output_features=["y"], input_features=[], n_locations=2
+        )
+
+
+def test_tree_categorical_label_is_not_a_numeric_predictor():
+    trace = pl.DataFrame({"y": [0, 1], "location_id": [0, 0]})
+    with pytest.raises(ValueError, match="distinct features"):
+        fit_famos_transitions(
+            [trace],
+            output_features=["y"],
+            input_features=["location_id"],
+            n_locations=1,
+        )
 
 
 def test_rollout_uses_old_location_source_input_and_updates_history():
@@ -138,10 +191,14 @@ def test_rollout_uses_old_location_source_input_and_updates_history():
         (np.zeros(1), np.zeros(1)),
     )
     # Switching depends on the OLD output: q0 switches only below y=5.
-    tree0 = DecisionTreeClassifier().fit([[0, 0], [10, 0]], [1, 0])
+    # Independent selector scales differ from dynamics, in physical units.
+    tree0 = DecisionTreeClassifier().fit([[0, 0], [5, 0]], [1, 0])
     tree1 = DecisionTreeClassifier().fit([[0, 0]], [0])
     model = FamosModel(
-        dynamics, FamosTransitionSelector(discovery, (tree0, tree1))
+        dynamics,
+        FamosTransitionSelector(
+            ("y",), ("u",), 2, np.array([2.0]), np.array([3.0]), (tree0, tree1)
+        ),
     )
     result = model.rollout(
         inputs, output_history=[[1], [2]], initial_location=0
@@ -161,3 +218,17 @@ def test_rollout_uses_old_location_source_input_and_updates_history():
         ).height
         == 2
     )
+    for mismatch in (
+        {"output_features": ("other",)},
+        {"input_features": ()},
+        {"n_locations": 3},
+    ):
+        incompatible = replace(
+            model, selector=replace(model.selector, **mismatch)
+        )
+        with pytest.raises(
+            ValueError, match="feature order and location count"
+        ):
+            incompatible.rollout(
+                inputs, output_history=[[1], [2]], initial_location=0
+            )
