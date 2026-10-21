@@ -1,20 +1,88 @@
-"""Trajectory-aware plots that keep continuous evolution separate from jumps."""
+"""Native trajectory plots and aligned sampled-trace comparisons."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from math import isfinite
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import rcParams
 from matplotlib.axes import Axes
+from matplotlib.rcsetup import cycler
 
+from ._plot_style import (
+    ANNOTATION_SIZE,
+    BAND_ALPHA,
+    FONT_FAMILY,
+    INK,
+    LEGEND_FONT,
+    LINE_WIDTH,
+    MUTED,
+    PALETTE,
+    location_color_map,
+    style_axes,
+)
+from .evaluation import TraceComparison
 from .hybrid_system import Location, display_label
 from .trajectory import ContinuousSegment, HybridTrajectory
 
 
+@contextmanager
+def plot_style() -> Iterator[None]:
+    """Temporarily use hybrid plotting defaults for custom Matplotlib figures.
+
+    Use ``with plot_style():`` or decorate an application function with
+    ``@plot_style()``. Defaults cover typography, lines, categorical colors,
+    legends, backgrounds, and a light grid. Ordinary Matplotlib artist
+    arguments can override them. Existing artists are not restyled.
+
+    Matplotlib rc settings are restored on exit, including exceptional exit.
+    This context neither selects nor restores a backend and never draws,
+    shows, saves, or closes figures. As with Matplotlib's ``rc_context``,
+    settings are process-wide while the explicit context is active. Library
+    renderers apply their own local styling and do not enter this context.
+    """
+    with plt.rc_context(
+        {
+            "font.family": FONT_FAMILY,
+            "font.size": 10,
+            "font.weight": "normal",
+            "text.color": INK,
+            "figure.facecolor": "white",
+            "figure.edgecolor": "white",
+            "axes.facecolor": "white",
+            "axes.edgecolor": "#D1D5DB",
+            "axes.linewidth": 0.6,
+            "axes.grid": True,
+            "axes.axisbelow": True,
+            "axes.labelcolor": INK,
+            "axes.labelweight": "normal",
+            "axes.titleweight": "normal",
+            "axes.prop_cycle": cycler(color=PALETTE),
+            "xtick.color": INK,
+            "ytick.color": INK,
+            "xtick.major.width": 0.6,
+            "ytick.major.width": 0.6,
+            "grid.color": "#E5E7EB",
+            "grid.linewidth": 0.6,
+            "grid.linestyle": "-",
+            "grid.alpha": 1,
+            "lines.linewidth": LINE_WIDTH,
+            "lines.linestyle": "-",
+            "legend.fontsize": LEGEND_FONT["size"],
+            "legend.title_fontsize": LEGEND_FONT["size"],
+            "legend.frameon": False,
+            "legend.labelcolor": INK,
+            "savefig.facecolor": "auto",
+            "savefig.edgecolor": "auto",
+        }
+    ):
+        yield
+
+
 def _axes(ax: Axes | None) -> Axes:
     if ax is None:
-        _, ax = plt.subplots()
+        _, ax = plt.subplots(facecolor="white")
+    style_axes(ax)
     return ax
 
 
@@ -23,20 +91,65 @@ def _segment_data(segment: ContinuousSegment) -> tuple[np.ndarray, np.ndarray]:
     return times, np.array([segment.evaluate(float(t)).state for t in times])
 
 
-def _location_color_map(
-    locations: Sequence[Location],
-    location_colors: Mapping[Location, str] | None,
-) -> dict[Location, str]:
-    palette = rcParams["axes.prop_cycle"].by_key().get("color", []) or [
-        f"C{i}" for i in range(10)
-    ]
-    colors = {
-        location: palette[i % len(palette)]
-        for i, location in enumerate(locations)
-    }
-    if location_colors is not None:
-        colors.update(location_colors)
-    return colors
+def plot_comparison(
+    comparison: TraceComparison,
+    column: str,
+    *,
+    reference_label: str = "Reference",
+    prediction_label: str = "Prediction",
+    ax: Axes | None = None,
+) -> Axes:
+    """Plot one named quantity from a validated sampled comparison.
+
+    Reference is solid and prediction dashed, in the same quantity color.
+    Colors follow the comparison's declared column order, independent of panel
+    order. No units, scaling, interpolation, or categorical ID alignment are
+    inferred. Set units with the returned axes' ordinary labeling API.
+
+    Missing/nonfinite prefix values remain gaps. A shaded prefix and dotted
+    boundary mark where scoring starts, not which rows are measured seeds.
+    The legend gives the excluded row count; at duplicate timestamps the
+    excluded and scored rows can coincide visually. Each trace keeps its own
+    time values (which may differ within the comparison tolerance).
+
+    This helper never shows, saves, or closes a figure and does not select a
+    backend or change global Matplotlib settings.
+    """
+    if column not in comparison.columns:
+        raise ValueError("Select a signal column declared in the comparison.")
+    ax = _axes(ax)
+    color = PALETTE[comparison.columns.index(column) % len(PALETTE)]
+    for frame, label, linestyle in (
+        (comparison.reference, reference_label, "-"),
+        (comparison.prediction, prediction_label, "--"),
+    ):
+        values = np.asarray(frame[column].to_numpy(), dtype=float).copy()
+        values[~np.isfinite(values)] = np.nan
+        ax.plot(
+            frame[comparison.time_column].to_numpy(),
+            values,
+            label=label,
+            color=color,
+            linestyle=linestyle,
+            linewidth=LINE_WIDTH,
+        )
+    if comparison.excluded_rows:
+        times = comparison.reference[comparison.time_column]
+        start = float(times[0])
+        boundary = float(times[comparison.excluded_rows])
+        ax.axvspan(start, boundary, color=MUTED, alpha=BAND_ALPHA, linewidth=0)
+        ax.axvline(
+            boundary,
+            color=MUTED,
+            linestyle=":",
+            linewidth=1,
+            label=f"Excluded prefix: {comparison.excluded_rows} "
+            + ("row" if comparison.excluded_rows == 1 else "rows"),
+        )
+    ax.set_xlabel(comparison.time_column)
+    ax.set_ylabel(column)
+    ax.legend(loc="best", prop=LEGEND_FONT, frameon=False)
+    return ax
 
 
 def plot_trajectory(
@@ -49,7 +162,6 @@ def plot_trajectory(
     show_events: bool = True,
     show_event_labels: bool = True,
     show_event_points: bool = False,
-    show: bool = False,
     ax: Axes | None = None,
 ) -> Axes:
     """Plot state coordinates against time without lines across resets.
@@ -57,6 +169,7 @@ def plot_trajectory(
     ``show_events`` controls vertical transition indicators and labels;
     ``show_event_points`` separately marks the states before and after each
     transition. Markers are off by default, including at continuous switches.
+    Returns the axes; the caller owns showing, saving, and closing the figure.
     """
     ax = _axes(ax)
     dims = (
@@ -65,13 +178,14 @@ def plot_trajectory(
         else list(dims)
     )
     for dim in dims:
-        color = None
+        color = PALETTE[dim % len(PALETTE)]
         for i, segment in enumerate(trajectory.segments):
             times, states = _segment_data(segment)
             (line,) = ax.plot(
                 times,
                 states[:, dim],
                 color=color,
+                linewidth=LINE_WIDTH,
                 label=f"x{dim}" if i == 0 else "_nolegend_",
             )
             color = line.get_color()
@@ -81,6 +195,8 @@ def plot_trajectory(
                 [trajectory.t_span[0]],
                 [point.state[dim]],
                 marker="o",
+                color=color,
+                linewidth=LINE_WIDTH,
                 label=f"x{dim}",
             )
             color = line.get_color()
@@ -114,14 +230,13 @@ def plot_trajectory(
                     rotation=90,
                     va="bottom",
                     ha="left",
-                    fontsize=8,
+                    fontsize=ANNOTATION_SIZE,
+                    fontfamily=FONT_FAMILY,
                 )
     ax.set_xlabel("t")
     ax.set_ylabel("state")
     if handles:
-        ax.legend(handles, labels, loc="best")
-    if show:
-        plt.show()
+        ax.legend(handles, labels, loc="best", prop=LEGEND_FONT, frameon=False)
     return ax
 
 
@@ -133,17 +248,17 @@ def plot_state_space(
     location_colors: Mapping[Location, str] | None = None,
     show_location_legend: bool = True,
     show_event_points: bool = False,
-    show: bool = False,
     ax: Axes | None = None,
 ) -> Axes:
     """Plot two selected continuous state coordinates, with time implicit.
 
     Each continuous segment is drawn separately so reset jumps are not joined.
     ``show_event_points`` optionally marks states on both sides of transitions;
-    switches without resets are unmarked by default.
+    switches without resets are unmarked by default. Returns the axes without
+    showing, saving, or closing the figure.
     """
     ax = _axes(ax)
-    colors = _location_color_map(trajectory.system.locations, location_colors)
+    colors = location_color_map(trajectory.system.locations, location_colors)
     labeled: set[Location] = set()
     for segment in trajectory.segments:
         _, states = _segment_data(segment)
@@ -152,6 +267,7 @@ def plot_state_space(
             states[:, x_dim],
             states[:, y_dim],
             color=colors[location],
+            linewidth=LINE_WIDTH,
             label=display_label(location)
             if location not in labeled
             else "_nolegend_",
@@ -189,9 +305,7 @@ def plot_state_space(
     ax.set_xlabel(f"x{x_dim}")
     ax.set_ylabel(f"x{y_dim}")
     if show_location_legend:
-        ax.legend(loc="best")
-    if show:
-        plt.show()
+        ax.legend(loc="best", prop=LEGEND_FONT, frameon=False)
     return ax
 
 
@@ -200,14 +314,14 @@ def plot_locations(
     *,
     location_colors: Mapping[Location, str] | None = None,
     show_labels: bool = False,
-    alpha: float = 0.08,
+    alpha: float = BAND_ALPHA,
     ax: Axes | None = None,
 ) -> Axes:
     """Shade actual positive-duration segments, using Location identity."""
     if not isfinite(alpha) or not 0 <= alpha <= 1:
         raise ValueError("alpha must be finite and between 0 and 1.")
     ax = _axes(ax)
-    colors = _location_color_map(trajectory.system.locations, location_colors)
+    colors = location_color_map(trajectory.system.locations, location_colors)
     labeled: set[Location] = set()
     for segment in trajectory.segments:
         start, end = segment.t_span
@@ -231,6 +345,7 @@ def plot_locations(
                 transform=ax.get_xaxis_transform(),
                 ha="center",
                 va="top",
-                fontsize=9,
+                fontsize=ANNOTATION_SIZE,
+                fontfamily=FONT_FAMILY,
             )
     return ax

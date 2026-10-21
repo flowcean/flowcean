@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -326,7 +327,7 @@ def test_plot_singleton_is_visible_and_fragmented_runs_stay_distinct(
         assert line.get_marker() == "o"
         np.testing.assert_array_equal(line.get_xdata(), [60])
         np.testing.assert_array_equal(line.get_ydata(), values)
-    assert axes.get_title() == "Grouping flow 0: accepted 3 rows"
+    assert axes.get_title() == "Trace 0 | Grouping flow 0: accepted 3 rows"
 
 
 def test_selected_trace_and_reset_preserve_unrelated_artists(axes) -> None:
@@ -386,7 +387,7 @@ def test_successful_finish_clears_transient_overlay_and_keeps_finalized_flow(
     ]
     result = LearnedFlows((flow,), (4,), ("a",), ("b",))
     callback.finish(result)
-    assert axes.get_title() == "HyDRA finished: flows=1"
+    assert axes.get_title() == "Trace 0 | HyDRA finished: flows=1"
     assert [span_bounds(patch) for patch in axes.patches] == [(-5, -4), (0, 3)]
     assert axes.patches[0] is unrelated_patch
     assert unrelated in axes.lines
@@ -425,6 +426,57 @@ def test_plot_validates_supplied_time(time: str) -> None:
         )
 
 
+def test_headless_callback_roles_are_distinct_without_gui_or_global_style(
+    axes, monkeypatch
+) -> None:
+    backend = mpl.get_backend()
+    settings = dict(mpl.rcParams)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail(
+            "show=False must not manage GUI events, figures, or backend"
+        )
+
+    with monkeypatch.context() as patch:
+        for name in ("show", "pause", "close", "savefig"):
+            patch.setattr(plt, name, forbidden)
+        patch.setattr(mpl, "use", forbidden)
+        patch.setattr(axes.figure.canvas, "draw_idle", forbidden)
+        patch.setattr(axes.figure.canvas, "flush_events", forbidden)
+        patch.setattr(axes.figure.canvas, "start_event_loop", forbidden)
+        callback = plot_callback(axes, trace_index=1)
+        callback.pause = (
+            0.1  # Must be ignored in headless mode, not just zero.
+        )
+        start(callback, 2)
+        callback.flow_finalized(
+            flow_id=0,
+            flow=LearnedFlow(EventModel([], 1), (TraceSegment(1, 0, 2),)),
+        )
+        callback.pending_segment_found(TraceSegment(1, 1, 3))
+        callback.grouping_evaluated(
+            flow_id=1,
+            accepted_segments=(TraceSegment(1, 2, 4),),
+            considered_count=2,
+        )
+        final, provisional, active = axes.patches
+        assert final.get_hatch() is None
+        assert provisional.get_hatch() == "//"
+        assert active.get_linestyle() == ":"
+        assert active.get_facecolor()[-1] == 0
+        assert axes.get_title().startswith("Trace 1 |")
+        assert axes.xaxis.label.get_fontfamily() == ["DejaVu Sans"]
+        assert [text.get_text() for text in axes.get_legend().get_texts()] == [
+            "flow 0",
+            "grouping flow 1",
+            "active window",
+            "b",
+            "a",
+        ]
+        assert dict(mpl.rcParams) == settings
+        assert mpl.get_backend() == backend
+
+
 def test_trace_index_validation(axes) -> None:
     with pytest.raises(ValueError, match="non-negative"):
         plot_callback(axes, trace_index=-1)
@@ -460,6 +512,6 @@ def test_same_coordinate_span_uses_visible_markers(axes) -> None:
     start(callback)
     callback.pending_segment_found(TraceSegment(0, 0, 2))
     assert len(axes.patches) == 0
-    assert axes.lines[-1].get_marker() == "o"
+    assert axes.lines[-1].get_marker() == "s"
     np.testing.assert_array_equal(axes.lines[-1].get_xdata(), [1, 1])
     np.testing.assert_array_equal(axes.lines[-1].get_ydata(), [1, 2])

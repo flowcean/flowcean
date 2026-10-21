@@ -1,13 +1,24 @@
 """Deterministic DOT export for declared hybrid-system structure."""
 
-from ._graphviz import _escape_dot_label
+from collections.abc import Mapping
+
+from matplotlib.colors import to_hex
+
+from ._graphviz import _dot_style, _escape_dot_label
 from ._graphviz import render_dot_svg as render_dot_svg
-from .hybrid_system import HybridSystem, _callback_label, display_label
+from ._plot_style import INK, location_color_map, pale_color
+from .hybrid_system import (
+    HybridSystem,
+    Location,
+    _callback_label,
+    display_label,
+)
 
 
 def build_hybrid_system_dot(
     system: HybridSystem,
     *,
+    location_colors: Mapping[Location, str] | None = None,
     show_event_labels: bool = True,
     show_reset_labels: bool = True,
     show_direction: bool = False,
@@ -30,6 +41,10 @@ def build_hybrid_system_dot(
 
     Args:
         system: Constructed hybrid system to visualize.
+        location_colors: Optional colors keyed by Location identity, using
+            Matplotlib color names or hex values, as in native plots. Defaults
+            follow this system's declaration order; matching colors across
+            different artifacts do not establish corresponding locations.
         show_event_labels: Annotate transitions with event-surface labels.
         show_reset_labels: Annotate transitions that have resets with labels.
         show_direction: Include the event surface's zero-crossing direction.
@@ -41,17 +56,23 @@ def build_hybrid_system_dot(
     location_indices = {
         id(location): index for index, location in enumerate(system.locations)
     }
+    colors = location_color_map(system.locations, location_colors)
     lines = [
         "digraph HybridSystem {",
+        *_dot_style(),
         "  rankdir=LR;",
-        "  start [shape=point];",
+        f'  start [shape=point, fillcolor="{INK}"];',
     ]
 
     for index, location in enumerate(system.locations):
         label = _escape_dot_label(
             display_label(location, fallback=f"location_{index}"),
         )
-        lines.append(f'  location_{index} [label="{label}"];')
+        color = to_hex(colors[location])
+        lines.append(
+            f'  location_{index} [label="{label}", color="{color}", '
+            f'fillcolor="{pale_color(color)}"];'
+        )
 
     initial_index = location_indices[id(system.initial_location)]
     lines.append(f"  start -> location_{initial_index};")

@@ -26,7 +26,6 @@ from .selector import (
     evaluate_selector_autoregressive,
     evaluate_selector_oracle,
 )
-from .simulation import StateTraceComparison, compare_state_traces
 
 __all__ = (
     "FlowPredictionResult",
@@ -46,10 +45,8 @@ __all__ = (
     "SelectorInspection",
     "SelectorLeafInspection",
     "SelectorNodeInspection",
-    "StateTraceComparison",
     "StatefulHybridDecisionTreeSelector",
     "TraceSegment",
-    "compare_state_traces",
     "evaluate_selector_autoregressive",
     "evaluate_selector_oracle",
     "selector",

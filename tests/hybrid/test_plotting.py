@@ -1,17 +1,26 @@
 """Plots use continuous segments, not the resolution of a sampled frame."""
 
+from contextlib import nullcontext
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import polars as pl
 import pytest
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from matplotlib.rcsetup import cycler
 
 from flowcean.hybrid import (
     HybridSystem,
     Location,
     SurfaceEntryPolicy,
     Transition,
+    compare_traces,
+    plot_comparison,
     plot_locations,
     plot_state_space,
+    plot_style,
     plot_trajectory,
     simulate,
 )
@@ -222,6 +231,191 @@ def test_self_reset_creates_separate_positive_shading_intervals() -> None:
 def test_plot_locations_rejects_invalid_alpha(alpha: float) -> None:
     with pytest.raises(ValueError, match="alpha"):
         plot_locations(simulate(_system()[0], (0, 1)), alpha=alpha)
+
+
+def test_comparison_roles_gaps_coverage_and_caller_axes(monkeypatch) -> None:
+    reference = pl.DataFrame(
+        {
+            "clock": [0, 1, 2, 3],
+            "temperature": [1, 2, 3, 4],
+            "pressure": [5, 6, 7, 8],
+        }
+    )
+    prediction = reference.with_columns(
+        pl.Series("temperature", [None, None, 3.5, 4.5])
+    )
+    comparison = compare_traces(
+        reference,
+        prediction,
+        columns=["temperature", "pressure"],
+        time_column="clock",
+        exclude_initial=2,
+    )
+    fig, (ax, other) = plt.subplots(1, 2)
+    backend = mpl.get_backend()
+    settings = dict(mpl.rcParams)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail(
+            "Renderer must not manage GUI, backend, or figure lifetime"
+        )
+
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(plt, "show", forbidden)
+            patch.setattr(plt, "close", forbidden)
+            patch.setattr(plt, "savefig", forbidden)
+            patch.setattr(mpl, "use", forbidden)
+            (unrelated,) = ax.plot([0, 3], [9, 9], color="red", linewidth=4)
+            returned = plot_comparison(
+                comparison,
+                "temperature",
+                reference_label="Observed",
+                prediction_label="Learned",
+                ax=ax,
+            )
+            assert returned is ax
+            assert unrelated in ax.lines
+            assert unrelated.get_color() == "red"
+            assert unrelated.get_linewidth() == 4
+            ref, pred, boundary = list(ax.lines)[1:]
+            assert ref.get_color() == pred.get_color()
+            assert (ref.get_linestyle(), pred.get_linestyle()) == ("-", "--")
+            assert np.isnan(pred.get_ydata()[:2]).all()
+            assert list(boundary.get_xdata()) == [2, 2]
+            np.testing.assert_allclose(_patch_spans(ax), [(0, 2)], atol=1e-12)
+            assert not ax.texts
+            assert ax.get_legend_handles_labels()[1] == [
+                "Observed",
+                "Learned",
+                "Excluded prefix: 2 rows",
+            ]
+            assert (ax.get_xlabel(), ax.get_ylabel()) == (
+                "clock",
+                "temperature",
+            )
+            plot_comparison(comparison, "pressure", ax=other)
+            assert other.lines[0].get_color() != ref.get_color()
+            plot_comparison(comparison, "temperature", ax=other)
+            assert other.lines[3].get_color() == ref.get_color()
+            assert mpl.get_backend() == backend
+            assert dict(mpl.rcParams) == settings
+    finally:
+        plt.close(fig)
+
+
+def test_comparison_duplicate_boundary_reports_row_exclusion() -> None:
+    reference = pl.DataFrame({"t": [0, 0, 0], "x": [1, 2, 3]})
+    comparison = compare_traces(
+        reference, reference, columns=["x"], exclude_initial=1
+    )
+    ax = plot_comparison(comparison, "x")
+    try:
+        assert (
+            ax.get_legend_handles_labels()[1][-1] == "Excluded prefix: 1 row"
+        )
+        np.testing.assert_array_equal(ax.lines[-1].get_xdata(), [0, 0])
+    finally:
+        assert isinstance(ax.figure, Figure)
+        plt.close(ax.figure)
+    comparison = compare_traces(reference, reference, columns=["x"])
+    ax = plot_comparison(comparison, "x")
+    try:
+        assert len(ax.lines) == 2
+        assert not ax.patches
+        assert not ax.texts
+        with pytest.raises(ValueError, match="declared"):
+            plot_comparison(comparison, "other", ax=ax)
+    finally:
+        assert isinstance(ax.figure, Figure)
+        plt.close(ax.figure)
+
+
+def test_native_baseline_is_local_and_keeps_caller_artists(
+    monkeypatch,
+) -> None:
+    trajectory = simulate(_system()[0], (0, 1))
+    with mpl.rc_context({"font.family": "serif", "axes.facecolor": "black"}):
+        settings = dict(mpl.rcParams)
+        fig, axes = plt.subplots(1, 3)
+        backend = mpl.get_backend()
+
+        def forbidden(*args, **kwargs):
+            pytest.fail(
+                "Static renderers must not manage figures or GUI events"
+            )
+
+        try:
+            monkeypatch.setattr(plt, "show", forbidden)
+            monkeypatch.setattr(plt, "pause", forbidden)
+            monkeypatch.setattr(plt, "savefig", forbidden)
+            monkeypatch.setattr(mpl, "use", forbidden)
+            monkeypatch.setattr(fig.canvas, "flush_events", forbidden)
+            for ax, renderer in zip(
+                axes,
+                (plot_trajectory, plot_state_space, plot_locations),
+                strict=True,
+            ):
+                (line,) = ax.plot([0, 1], [7, 7], color="red", linewidth=4)
+                assert renderer(trajectory, ax=ax) is ax
+                assert line.get_linewidth() == 4
+                assert line.get_color() == "red"
+                assert ax.get_facecolor() == (1, 1, 1, 1)
+                assert ax.xaxis.label.get_fontfamily() == ["DejaVu Sans"]
+                assert dict(mpl.rcParams) == settings
+                assert mpl.get_backend() == backend
+        finally:
+            plt.close(fig)
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_public_style_context_styles_custom_figures_and_restores_settings(
+    fail,
+) -> None:
+    backend = mpl.get_backend()
+    with mpl.rc_context(
+        {
+            "font.family": "serif",
+            "axes.facecolor": "black",
+            "axes.grid": False,
+            "lines.linewidth": 7,
+            "legend.frameon": True,
+            "axes.prop_cycle": cycler(color=["magenta"]),
+        }
+    ):
+        settings = dict(mpl.rcParams)
+        fig = None
+        try:
+            expected = (
+                pytest.raises(RuntimeError, match="example failure")
+                if fail
+                else nullcontext()
+            )
+            with expected, plot_style():
+                fig, ax = plt.subplots()
+                (first,) = ax.plot([0, 1], [0, 1], label="first")
+                (second,) = ax.plot([0, 1], [1, 2], label="second")
+                (custom,) = ax.plot([0, 1], [2, 3], color="red", linewidth=4)
+                legend = ax.legend()
+                assert ax.get_facecolor() == (1, 1, 1, 1)
+                assert ax.xaxis.label.get_fontfamily() == ["DejaVu Sans"]
+                assert first.get_linewidth() == 1.6
+                assert first.get_color() != "magenta"
+                assert first.get_color() != second.get_color()
+                assert any(line.get_visible() for line in ax.get_xgridlines())
+                assert not legend.get_frame_on()
+                assert (custom.get_color(), custom.get_linewidth()) == (
+                    "red",
+                    4,
+                )
+                assert mpl.get_backend() == backend
+                if fail:
+                    raise RuntimeError("example failure")
+            assert dict(mpl.rcParams) == settings
+            assert mpl.get_backend() == backend
+        finally:
+            if fig is not None:
+                plt.close(fig)
 
 
 def test_equal_endpoints_have_no_positive_shading() -> None:

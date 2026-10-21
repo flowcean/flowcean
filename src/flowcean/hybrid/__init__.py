@@ -1,6 +1,7 @@
 """Hybrid-system modeling, automaton diagrams, simulation, and traces."""
 
 from . import benchmarks, dainarx, famos, hydra, mmsr
+from .evaluation import TraceComparison, compare_traces
 from .graph import build_hybrid_system_dot, render_dot_svg
 from .hybrid_system import (
     CrossingDirection,
@@ -20,7 +21,13 @@ from .hybrid_system import (
     Transition,
     TransitionSchedulingPolicy,
 )
-from .plotting import plot_locations, plot_state_space, plot_trajectory
+from .plotting import (
+    plot_comparison,
+    plot_locations,
+    plot_state_space,
+    plot_style,
+    plot_trajectory,
+)
 from .simulator import (
     AmbiguousTransitionError,
     HybridSimulationError,
@@ -59,17 +66,21 @@ __all__ = (
     "SimulationProgressError",
     "SurfaceEntryError",
     "SurfaceEntryPolicy",
+    "TraceComparison",
     "TrajectoryPoint",
     "Transition",
     "TransitionSchedulingPolicy",
     "benchmarks",
     "build_hybrid_system_dot",
+    "compare_traces",
     "dainarx",
     "famos",
     "hydra",
     "mmsr",
+    "plot_comparison",
     "plot_locations",
     "plot_state_space",
+    "plot_style",
     "plot_trajectory",
     "render_dot_svg",
     "simulate",

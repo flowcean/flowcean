@@ -1,5 +1,6 @@
-from flowcean.hybrid._graphviz import _escape_dot_label
+from flowcean.hybrid._graphviz import _dot_style, _escape_dot_label
 from flowcean.hybrid._graphviz import render_dot_svg as render_dot_svg
+from flowcean.hybrid._plot_style import PALETTE, pale_color
 
 from .inspection import SelectorInspection
 
@@ -37,17 +38,26 @@ def _validate_child_reference(
 
 
 def build_selector_dot(inspection: SelectorInspection) -> str:
+    """Draw a classifier tree with True/False predicate branches.
+
+    Leaf colors identify flow IDs within this fitted selector only; matching
+    colors do not align flows with native locations or another fitted model.
+    No viewer is opened and no model execution is required.
+    """
     leaves_by_id = {leaf.node_id: leaf for leaf in inspection.leaves}
     known_node_ids = {node.node_id for node in inspection.nodes}
-    lines = ["digraph Selector {", "  node [shape=box];"]
+    lines = ["digraph Selector {", *_dot_style(), "  node [shape=box];"]
 
     for node in inspection.nodes:
+        attributes = ""
         if node.is_leaf:
             leaf = leaves_by_id.get(node.node_id)
             if leaf is None:
                 message = f"leaf node {node.node_id} is missing leaf summary"
                 raise _invalid_inspection(message)
             label = _build_leaf_label(leaf.flow_id, leaf.flow_summary)
+            color = PALETTE[leaf.flow_id % len(PALETTE)]
+            attributes = f', color="{color}", fillcolor="{pale_color(color)}"'
         else:
             if node.feature_name is None or node.threshold is None:
                 message = (
@@ -73,16 +83,16 @@ def build_selector_dot(inspection: SelectorInspection) -> str:
             )
 
         lines.append(
-            f'  node_{node.node_id} [label="{_escape_dot_label(label)}"];',
+            f'  node_{node.node_id} [label="{_escape_dot_label(label)}"{attributes}];',
         )
 
         if node.left_child_id is not None:
             lines.append(
-                f"  node_{node.node_id} -> node_{node.left_child_id};",
+                f'  node_{node.node_id} -> node_{node.left_child_id} [label="True"];',
             )
         if node.right_child_id is not None:
             lines.append(
-                f"  node_{node.node_id} -> node_{node.right_child_id};",
+                f'  node_{node.node_id} -> node_{node.right_child_id} [label="False"];',
             )
 
     lines.append("}")

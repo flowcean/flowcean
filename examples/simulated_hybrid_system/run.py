@@ -9,7 +9,13 @@ from pysr import PySRRegressor
 
 import flowcean.cli
 import flowcean.utils
-from flowcean.hybrid import plot_trajectory, simulate
+from flowcean.hybrid import (
+    TraceComparison,
+    compare_traces,
+    plot_comparison,
+    plot_trajectory,
+    simulate,
+)
 from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
@@ -19,8 +25,6 @@ from flowcean.hybrid.hydra import (
     HyDRATraceSchema,
     PlotCallback,
     SelectorFeatureConfig,
-    StateTraceComparison,
-    compare_state_traces,
 )
 from flowcean.pysr import PySRLearner
 
@@ -61,47 +65,39 @@ def print_selector_outputs(
 def compare_learned_model_to_reference(
     model: HyDRAModel,
     reference_frame: pl.DataFrame,
-) -> tuple[pl.DataFrame, StateTraceComparison]:
+) -> TraceComparison:
     learned_frame = model.simulate(
         (float(reference_frame["t"][0]), float(reference_frame["t"][-1])),
         reference_frame.select("x").row(0),
         sample_times=reference_frame["t"].to_numpy(),
         input_stream=thermostat_target_stream,
     ).rename({"x0": "x"})
-    return learned_frame, compare_state_traces(
-        reference_frame, learned_frame, state_columns=["x"]
+    return compare_traces(
+        reference_frame, learned_frame, columns=["x"], exclude_initial=1
     )
 
 
 def save_trace_comparison_plot(
-    reference_frame: pl.DataFrame,
-    learned_frame: pl.DataFrame,
+    comparison: TraceComparison,
     path: Path,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots()
-    ax.plot(reference_frame["t"], reference_frame["x"], label="reference x")
-    ax.plot(
-        learned_frame["t"],
-        learned_frame["x"],
-        label="learned x",
-        linestyle="--",
-    )
-    ax.set_xlabel("t")
-    ax.set_ylabel("x")
-    ax.legend(loc="best")
+    plot_comparison(comparison, "x", prediction_label="Learned", ax=ax)
     fig.tight_layout()
     fig.savefig(path)
     plt.close(fig)
 
 
-def format_comparison_summary(comparison: StateTraceComparison) -> str:
+def format_comparison_summary(comparison: TraceComparison) -> str:
+    score = comparison.scores.row(0, named=True)
     return "\n".join(
         (
-            "learned trace comparison",
-            f"mae: {comparison.mae:.6g}",
-            f"rmse: {comparison.rmse:.6g}",
-            f"max_error: {comparison.max_error:.6g}",
+            "learned trace comparison: x",
+            f"scored rows: {comparison.scored_rows}/{comparison.total_rows}",
+            f"mae: {score['mae']:.6g}",
+            f"rmse: {score['rmse']:.6g}",
+            f"max_error: {score['max_error']:.6g}",
         ),
     )
 
@@ -131,8 +127,8 @@ def main() -> None:
         show_location_labels=False,
         show_events=True,
         show_event_labels=False,
-        show=True,
     )
+    plt.show()
     frames = [
         trajectory.sample(
             dt=0.02, include_derivatives=True, include_inputs=True
@@ -204,13 +200,13 @@ def main() -> None:
         )
         return
 
-    learned_frame, comparison = compare_learned_model_to_reference(
+    comparison = compare_learned_model_to_reference(
         model,
         reference_frame,
     )
     print(format_comparison_summary(comparison))
     comparison_path = OUTPUT_DIR / "learned_vs_reference.png"
-    save_trace_comparison_plot(reference_frame, learned_frame, comparison_path)
+    save_trace_comparison_plot(comparison, comparison_path)
     print("trace_comparison_plot", comparison_path)
 
 
