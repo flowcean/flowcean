@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flowcean.testing.generator.ddtig.domain import Interval, TestTree
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +44,8 @@ class EquivalenceClassesHandler:
 
     def __init__(
         self,
-        test_tree: Any,
-        minmax_values_specs: dict,
+        test_tree: TestTree,
+        minmax_values_specs: dict[int, dict[str, float]],
         n_features: int,
     ) -> None:
         """Initializes the EquivalenceClassesHandler.
@@ -64,7 +67,7 @@ class EquivalenceClassesHandler:
     # Equivalence class is stored a dictionary with:
     #   keys = feature indices
     #   values = min and max values of corresponding key
-    def _init_equivalence_class(self) -> dict:
+    def _init_equivalence_class(self) -> dict[int, dict[str, float | None]]:
         equivalence_class = {}
         for feature in range(self.n_features):
             range_ec = {"min": None, "max": None}
@@ -75,7 +78,7 @@ class EquivalenceClassesHandler:
     # based on the parent node's split.
     def _update_equivalence_class(
         self,
-        equivalence_class: dict,
+        equivalence_class: dict[int, dict[str, float | None]],
         parent: int,
         node: int,
     ) -> None:
@@ -89,7 +92,9 @@ class EquivalenceClassesHandler:
             equivalence_class[split_feature_idx]["min"] = split_threshold
 
     # Recursively collects all paths from the root to leaf nodes.
-    def _collect_paths(self, node: int, path: list, paths: list) -> None:
+    def _collect_paths(
+        self, node: int, path: list[int], paths: list[list[int]]
+    ) -> None:
         child_left = self.test_tree[node].child_left
         child_right = self.test_tree[node].child_right
         path.append(node)
@@ -106,14 +111,16 @@ class EquivalenceClassesHandler:
         path.pop()
 
     # Collects all paths from the root to leaf nodes.
-    def _collect_all_paths(self, root: int) -> list:
+    def _collect_all_paths(self, root: int) -> list[list[int]]:
         path, paths = [], []
         self._collect_paths(root, path, paths)
         return paths
 
     # Extracts raw equivalence classes from tree paths.
     # Each leaf in the tree corresponds to one individual equivalence class.
-    def _extract_equivalence_classes(self, paths: list) -> list:
+    def _extract_equivalence_classes(
+        self, paths: list[list[int]]
+    ) -> list[dict[int, dict[str, float | None]]]:
         equivalence_classes = []
 
         # Traverse all paths from root to a leaf
@@ -138,7 +145,9 @@ class EquivalenceClassesHandler:
         return equivalence_classes
 
     # Formats raw equivalence classes into Interval objects.
-    def _format_equivalence_classes(self, equivalence_classes: list) -> list:
+    def _format_equivalence_classes(
+        self, equivalence_classes: list[dict[int, dict[str, float | None]]]
+    ) -> list[tuple[Interval, ...]]:
         from flowcean.testing.generator.ddtig.domain import (
             Interval,
             IntervalEndpoint,
@@ -180,7 +189,7 @@ class EquivalenceClassesHandler:
         # Returns formatted equivalence classes as tuples of Intervals.
         return equivalence_classes_formatted
 
-    def get_equivalence_classes(self) -> list:
+    def get_equivalence_classes(self) -> list[tuple[Interval, ...]]:
         """Extracts and formats equivalence classes from the decision tree.
 
         Returns:
@@ -196,7 +205,7 @@ class EquivalenceClassesHandler:
         return equivalence_classes_formatted
 
     @staticmethod
-    def to_str(eqclass: tuple) -> str:
+    def to_str(eqclass: tuple[Interval, ...]) -> str:
         """Converts a single equivalence class to a string.
 
         Args:
@@ -214,7 +223,9 @@ class EquivalenceClassesHandler:
         return eqclass_str
 
     @staticmethod
-    def to_strs(eqclasses: list, feature_names: list) -> str:
+    def to_strs(
+        eqclasses: list[tuple[Interval, ...]], feature_names: list[str]
+    ) -> str:
         """Converts a list of equivalence classes to a readable string format.
 
         Args:
@@ -240,7 +251,9 @@ class EquivalenceClassesHandler:
         return eqclasses_str
 
     @staticmethod
-    def is_subset(eqclass1: tuple, eqclass2: tuple) -> tuple | None:
+    def is_subset(
+        eqclass1: tuple[Interval, ...], eqclass2: tuple[Interval, ...]
+    ) -> tuple[Interval, ...] | None:
         """Compares interval ranges of features between classes.
 
         Compares the interval ranges of all features between two equivalence

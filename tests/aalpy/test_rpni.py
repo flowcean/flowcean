@@ -120,7 +120,7 @@ def test_persistence(trained, tmp_path):
     model, inputs, outputs, _ = trained
     path = tmp_path / "automaton.fml"
     model.save(path)
-    restored = Model.load(path)
+    restored = type(model).load(path)
     assert type(restored) is type(model)
     assert_frame_equal(restored.predict(inputs).collect(), outputs)
 

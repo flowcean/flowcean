@@ -1,55 +1,13 @@
-"""This module provides abstractions for transforms.
-
-Transforms are reusable, composable operations that modify data in preparation
-for machine learning or analysis. Transforms unify pre-processing, feature
-engineering, and augmentation under a single protocol-based interface.
-
-## Nomenclature
-
-Transforms are a set of operations that modify data. They can include
-operations such as data normalization, dimensionality reduction, data
-augmentation, and much more. These transformations are essential for preparing
-data for machine learning tasks and improving model performance.
-
-We use the generalized term _transform_ for all types of _pre-processing of
-data_, _feature engineering_, and _data augmentation_, as they all involve the
-same fundamental concept of transforming data to obtain a modified dataset.
-
-flowcean provides a flexible and unified interface to apply transforms to data.
-The framework allows to combine these transforming steps steps as needed.
-
-## Using Transforms
-
-Here's a basic example:
-
-```python
-from flowcean.polars import Select, Standardize
-from flowcean.core import Lambda
-
-# Define a simple pipeline
-transform = (
-    Select(features=["x", "y"])
-    | Standardize()
-    | Lambda(lambda df: df.with_columns(z=df["x"] * df["y"]))
-)
-
-# Fit and apply
-transform.fit(dataset)
-transformed = transform(dataset)
-
-# Invert (if supported)
-restored = transform.inverse()(transformed)
-```
-"""
+"""Typed, composable transforms and explicit optional capabilities."""
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import (
-    TYPE_CHECKING,
     Protocol,
     Self,
-    cast,
+    TypeGuard,
     final,
     override,
     runtime_checkable,
@@ -59,268 +17,180 @@ import cloudpickle
 
 from .named import Named
 
-if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
 
-    from flowcean.core.data import Data
+class Transform[Input, Output](Named, ABC):
+    """A reusable operation, with optional batch fitting.
 
-
-class Transform(Named, Protocol):
-    """Base protocol for all transforms in Flowcean.
-
-    A transform is a reusable operation that modifies data. Examples include
-    preprocessing (e.g., standardization), feature engineering (e.g., feature
-    selection, PCA), or augmentation (noise injection, synthetic features).
-
-    Transforms are composable via the ``|`` operator, allowing complex
-    transformation pipelines to be expressed in a clean and functional style:
-
-    Example:
-        ```
-        >>> transform = Select(features=["x"]) | Standardize()
-        >>> transformed = transform(dataset)
-        ```
+    Composition is binary and applies left to right. Use inverse() and
+    fit_incremental() functions to check optional capabilities across a chain.
     """
 
     @abstractmethod
-    def apply(self, data: Data) -> Data:
-        """Apply the transform to data.
-
-        Args:
-            data: The data to transform.
-
-        Returns:
-            The transformed data.
-        """
+    def apply(self, data: Input) -> Output:
+        """Transform data."""
 
     @final
-    def __call__(self, data: Data) -> Data:
-        """Apply the transform to data.
-
-        Equivalent to ``self.apply(data)``.
-
-        Args:
-            data: The data to transform.
-
-        Returns:
-            The transformed data.
-        """
+    def __call__(self, data: Input) -> Output:
         return self.apply(data)
 
-    def chain(
+    def chain[Result](
         self,
-        other: Transform,
-    ) -> Transform:
-        """Chain this transform with ``other``.
-
-        This can be used to chain multiple transforms together. Chained
-        transforms are applied left-to-right:
-
-        Example:
-            ```python
-            chained = TransformA().chain(TransformB())
-            chained(data)  # Equivalent to TransformB(TransformA(data))
-            ```
-
-        Args:
-            other: The transforms to chain.
-
-        Returns:
-            A new chained transform.
-        """
+        other: Transform[Output, Result],
+    ) -> ChainedTransforms[Input, Output, Result]:
+        """Create a new composition, without mutating either transform."""
         return ChainedTransforms(self, other)
 
-    def __or__(
+    def __or__[Result](
         self,
-        other: Transform,
-    ) -> Transform:
-        """Shorthand for chaining transforms.
-
-        Example:
-            ```python
-            chained = TransformA() | TransformB()
-            ```
-
-        Args:
-            other: The transform to chain.
-
-        Returns:
-            A new Chain transform.
-        """
+        other: Transform[Output, Result],
+    ) -> ChainedTransforms[Input, Output, Result]:
         return self.chain(other)
 
-    def fit(self, data: Data) -> Self:
-        """Fit the transform to data.
-
-        Many transforms (e.g. scaling, PCA) require statistics from the dataset
-        before applying. Default implementation is a no-op.
-        This is meant to be idempotent, i.e., calling ``fit()`` multiple times
-        should have the same effect as calling it once.
-
-        Args:
-            data: The data to fit to.
-        """
-        _ = data
-        return self
-
-    def fit_incremental(self, data: Data) -> Self:
-        """Incrementally fit the transform to streaming/batched data.
-
-        Default implementation is a no-op.
-
-        Args:
-            data: The data to fit to.
-        """
-        _ = data
+    def fit(self, data: Input) -> Self:
+        """Fit to a batch. The default implementation is a no-op."""
         return self
 
 
 @runtime_checkable
-class Invertible(Protocol):
-    """Protocol for transforms that support inversion.
+class Invertible[Input, Output](Protocol):
+    """Guarantees an inverse operation; fitting may still be required."""
 
-    An invertible transform can undo its effect via ``inverse()``.
+    def inverse(self) -> Transform[Output, Input]:
+        """Return the inverse transform."""
+        ...
 
-    Example:
-        ```
-        >>> scaler = Standardize().fit(data)
-        >>> restored = scaler.inverse()(scaler(data))
-        ```
-    """
+
+@runtime_checkable
+class IncrementallyFittable[Input](Protocol):
+    """A transform that supports learning from successive batches."""
+
+    def fit_incremental(self, data: Input) -> Self: ...
+
+
+class InvertibleTransform[Input, Output](Transform[Input, Output], ABC):
+    """A transform with a guaranteed inverse operation."""
 
     @abstractmethod
-    def inverse(self) -> Transform:
-        """Return a new transform that inverts this one.
-
-        Returns:
-            The inverse of the transform.
-        """
+    def inverse(self) -> Transform[Output, Input]:
+        """Return the inverse transform, after fitting if necessary."""
 
 
-class ChainedTransforms(Invertible, Transform):
-    """A composition of multiple transforms applied sequentially.
+class StatelessTransform[Input, Output](Transform[Input, Output], ABC):
+    """A transform requiring no fitting, including on incremental batches."""
 
-    Chained transforms are applied left-to-right. Useful for building
-    preprocessing pipelines.
-    """
+    def fit_incremental(self, data: Input) -> Self:
+        """No state needs to be fitted."""
+        return self
 
-    transforms: Sequence[Transform]
+
+class ChainedTransforms[Input, Intermediate, Output](Transform[Input, Output]):
+    """Two transforms applied and fitted in observation order."""
 
     def __init__(
         self,
-        *transforms: Transform,
+        first: Transform[Input, Intermediate],
+        second: Transform[Intermediate, Output],
     ) -> None:
-        """Initialize the chained transforms.
+        self.first = first
+        self.second = second
 
-        Args:
-            transforms: The transforms to chain.
-        """
-        self.transforms = transforms
+    @override
+    def apply(self, data: Input) -> Output:
+        return self.second(self.first(data))
+
+    @override
+    def fit(self, data: Input) -> Self:
+        self.first.fit(data)
+        self.second.fit(self.first(data))
+        return self
+
+    def inverse_chain(self) -> Transform[Output, Input]:
+        return inverse(self.second) | inverse(self.first)
+
+    def validate_incremental_fit(self) -> None:
+        validate_incremental_fit(self.first)
+        validate_incremental_fit(self.second)
+
+    def fit_incremental_chain(self, data: Input) -> None:
+        self.validate_incremental_fit()
+        fit_incremental(self.first, data)
+        fit_incremental(self.second, self.first(data))
+
+
+def inverse[Input, Output](
+    transform: Transform[Input, Output],
+) -> Transform[Output, Input]:
+    """Resolve an inverse, checking every leaf of a composition.
+
+    General chains do not satisfy Invertible: this checked operation rejects
+    unsupported leaves and unfitted or noninvertible fitted state.
+    """
+    if isinstance(transform, ChainedTransforms):
+        return transform.inverse_chain()
+    if _is_invertible(transform):
+        return transform.inverse()
+    message = f"{transform.name} does not support inversion"
+    raise TypeError(message)
+
+
+def validate_incremental_fit[Input, Output](
+    transform: Transform[Input, Output],
+) -> None:
+    """Reject unsupported leaves before any transform or learner mutation."""
+    if isinstance(transform, ChainedTransforms):
+        transform.validate_incremental_fit()
+    elif not isinstance(transform, IncrementallyFittable):
+        message = f"{transform.name} does not support incremental fitting"
+        raise TypeError(message)
+
+
+def fit_incremental[Input, Output](
+    transform: Transform[Input, Output],
+    data: Input,
+) -> None:
+    """Validate the whole pipeline, then fit in application order."""
+    validate_incremental_fit(transform)
+    if isinstance(transform, ChainedTransforms):
+        transform.fit_incremental_chain(data)
+    elif _is_incrementally_fittable(transform):
+        transform.fit_incremental(data)
+
+
+def _is_invertible[Input, Output](
+    transform: Transform[Input, Output],
+) -> TypeGuard[Invertible[Input, Output]]:
+    # Capability type parameters follow the transform's input/output contract.
+    return isinstance(transform, Invertible)
+
+
+def _is_incrementally_fittable[Input, Output](
+    transform: Transform[Input, Output],
+) -> TypeGuard[IncrementallyFittable[Input]]:
+    return isinstance(transform, IncrementallyFittable)
+
+
+class Identity[Data](
+    StatelessTransform[Data, Data], InvertibleTransform[Data, Data]
+):
+    """Return data unchanged."""
 
     @override
     def apply(self, data: Data) -> Data:
-        for transform in self.transforms:
-            data = transform.apply(data)
         return data
 
     @override
-    def chain(
-        self,
-        other: Transform,
-    ) -> Transform:
-        return ChainedTransforms(*self.transforms, other)
-
-    @override
-    def fit(self, data: Data) -> Self:
-        for transform in self.transforms:
-            transform.fit(data)
-            data = transform.apply(data)
+    def inverse(self) -> Identity[Data]:
         return self
 
-    @override
-    def fit_incremental(self, data: Data) -> Self:
-        for transform in self.transforms:
-            transform.fit_incremental(data)
-            data = transform.apply(data)
-        return self
 
-    @override
-    def inverse(self) -> Transform:
-        non_inv = [t for t in self.transforms if not isinstance(t, Invertible)]
-        if non_inv:
-            msg = f"Transforms {non_inv} do not support inversion."
-            raise NotImplementedError(msg)
-        transforms = cast("Sequence[Invertible]", self.transforms)
-        return ChainedTransforms(
-            *(t.inverse() for t in reversed(transforms)),
-        )
+class Lambda[Input, Output](StatelessTransform[Input, Output]):
+    """Wrap a function. Use InvertibleLambda when an inverse is available."""
 
-
-class InvertibleTransform(Transform, Invertible, Protocol): ...
-
-
-class Identity(Invertible, Transform):
-    """A no-op transform that returns data unchanged.
-
-    Often used as a placeholder or default transform.
-    """
-
-    def __init__(self) -> None:
-        """Initialize the identity transform."""
-        super().__init__()
-
-    @override
-    def apply(self, data: Data) -> Data:
-        return data
-
-    @override
-    def inverse(self) -> Transform:
-        return self
-
-    @override
-    def chain(
-        self,
-        other: Transform,
-    ) -> Transform:
-        return other
-
-
-class Lambda(Transform, Invertible):
-    """A transform wrapping a function.
-
-    Useful for quick one-off transformations without creating a dedicated
-    class.
-
-    Example:
-        ```
-        >>> to_float = Lambda(lambda df: df.cast(pl.Float64))
-        >>> normalized = Lambda(
-        ...     lambda df: (df - df.mean()) / df.std(),
-        ...     inverse_func=lambda df: df * df.std() + df.mean(),
-        ... )
-        ```
-    """
-
-    func: Callable[[Data], Data]
-    inverse_func: Callable[[Data], Data] | None
-
-    def __init__(
-        self,
-        func: Callable[[Data], Data],
-        *,
-        inverse_func: Callable[[Data], Data] | None = None,
-    ) -> None:
-        """Initialize the lambda transform.
-
-        Args:
-            func: Function that transforms data.
-            inverse_func: Optional function that inverts ``func``.
-        """
+    def __init__(self, func: Callable[[Input], Output]) -> None:
         self.func = func
-        self.inverse_func = inverse_func
 
     @override
-    def apply(self, data: Data) -> Data:
+    def apply(self, data: Input) -> Output:
         return self.func(data)
 
     def __getstate__(self) -> dict[str, bytes]:
@@ -329,8 +199,33 @@ class Lambda(Transform, Invertible):
     def __setstate__(self, state: dict[str, bytes]) -> None:
         self.func = cloudpickle.loads(state["func"])
 
-    def inverse(self) -> Transform:
-        if self.inverse_func is None:
-            msg = "This transform does not have an inverse."
-            raise NotImplementedError(msg)
-        return Lambda(self.inverse_func, inverse_func=self.func)
+
+class InvertibleLambda[Input, Output](
+    Lambda[Input, Output],
+    InvertibleTransform[Input, Output],
+):
+    """Wrap a function and its inverse, preserving both during serialization."""
+
+    def __init__(
+        self,
+        func: Callable[[Input], Output],
+        inverse_func: Callable[[Output], Input],
+    ) -> None:
+        super().__init__(func)
+        self.inverse_func = inverse_func
+
+    @override
+    def inverse(self) -> InvertibleLambda[Output, Input]:
+        return InvertibleLambda(self.inverse_func, self.func)
+
+    @override
+    def __getstate__(self) -> dict[str, bytes]:
+        return {
+            "func": cloudpickle.dumps(self.func),
+            "inverse_func": cloudpickle.dumps(self.inverse_func),
+        }
+
+    @override
+    def __setstate__(self, state: dict[str, bytes]) -> None:
+        super().__setstate__(state)
+        self.inverse_func = cloudpickle.loads(state["inverse_func"])

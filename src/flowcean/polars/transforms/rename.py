@@ -3,12 +3,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Rename(Transform):
+class Rename(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Rename features in an environment."""
 
     def __init__(self, mapping: dict[str, str]) -> None:

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import polars as pl
 from torch.nn import Module
@@ -33,7 +34,7 @@ class ModelHandler:
 
     def __init__(
         self,
-        model: Model,
+        model: Model[pl.LazyFrame, pl.LazyFrame],
     ) -> None:
         """Initializes the ModelHandler.
 
@@ -76,7 +77,7 @@ class ModelHandler:
     def get_model_prediction_as_lst(
         self,
         input_features: pl.DataFrame,
-    ) -> list:
+    ) -> list[Any]:
         """Generate predictions and return them as a Python list.
 
         Args:

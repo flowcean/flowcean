@@ -2,10 +2,10 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 
-class SlidingWindow(Transform):
+class SlidingWindow(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Transforms the data with a sliding window.
 
     The sliding window transform transforms the data by creating a sliding

@@ -5,9 +5,11 @@ from typing import override
 
 import numpy as np
 import polars as pl
+from numpy.typing import NDArray
 from scipy.integrate import solve_ivp
 
 from flowcean.core.model import Model
+from flowcean.polars.model import PolarsModel
 
 from ..hybrid_system import InputStream
 from .schema import HyDRATraceSchema
@@ -31,7 +33,7 @@ class HyDRABatchPrediction:
     selector_results: list[FlowPredictionResult]
 
 
-class HyDRAModel(Model):
+class HyDRAModel(PolarsModel):
     """Model composed of learned flow models and an optional selector.
 
     A single-flow model predicts directly with that flow model. A multi-flow model
@@ -41,7 +43,7 @@ class HyDRAModel(Model):
 
     def __init__(
         self,
-        flow_models: list[Model],
+        flow_models: list[Model[pl.LazyFrame, pl.LazyFrame]],
         *,
         input_features: Sequence[str],
         output_features: Sequence[str],
@@ -109,7 +111,9 @@ class HyDRAModel(Model):
         if len(self.flow_models) == 1:
             return HyDRABatchPrediction(
                 outputs=self.flow_models[0]
-                .predict(frame.select(self.input_features).cast(pl.Float64))
+                .predict(
+                    frame.select(self.input_features).cast(pl.Float64).lazy()
+                )
                 .collect()
                 .select(self.output_features),
                 row_indices=list(range(frame.height)),
@@ -170,7 +174,7 @@ class HyDRAModel(Model):
             )
             flow_outputs = (
                 self.flow_models[flow_id]
-                .predict(flow_inputs)
+                .predict(flow_inputs.lazy())
                 .collect()
                 .select(self.output_features)
                 .with_columns(pl.Series("__row_index", routed_row_indices))
@@ -306,7 +310,7 @@ class HyDRAModel(Model):
         rtol: float = 1e-7,
         atol: float = 1e-9,
         max_step: float | None = None,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         schema = self._require_trace_schema()
         initial_state = self._coerce_state(state, schema)
         if not np.isfinite(t):
@@ -338,7 +342,7 @@ class HyDRAModel(Model):
 
     def _integrate_next_state(
         self,
-        flow_model: Model,
+        flow_model: Model[pl.LazyFrame, pl.LazyFrame],
         state: Iterable[float],
         *,
         t: float,
@@ -347,7 +351,7 @@ class HyDRAModel(Model):
         rtol: float,
         atol: float,
         max_step: float | None,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         schema = self._require_trace_schema()
         initial_state = self._coerce_state(state, schema)
         if not np.isfinite(t):
@@ -357,7 +361,9 @@ class HyDRAModel(Model):
             message = "dt must be finite and greater than zero."
             raise ValueError(message)
 
-        def derivative(time: float, current_state: np.ndarray) -> np.ndarray:
+        def derivative(
+            time: float, current_state: NDArray[np.float64]
+        ) -> NDArray[np.float64]:
             return self._predict_derivative(
                 flow_model,
                 time,
@@ -366,18 +372,15 @@ class HyDRAModel(Model):
                 schema,
             )
 
-        solve_kwargs = {
-            "fun": derivative,
-            "t_span": (t, t + dt),
-            "y0": initial_state,
-            "t_eval": [t + dt],
-            "rtol": rtol,
-            "atol": atol,
-        }
-        if max_step is not None:
-            solve_kwargs["max_step"] = max_step
-
-        result = solve_ivp(**solve_kwargs)
+        result = solve_ivp(
+            fun=derivative,
+            t_span=(t, t + dt),
+            y0=initial_state,
+            t_eval=[t + dt],
+            rtol=rtol,
+            atol=atol,
+            max_step=max_step if max_step is not None else np.inf,
+        )
         if not result.success:
             message = f"ODE integration failed: {result.message}"
             raise RuntimeError(message)
@@ -394,7 +397,7 @@ class HyDRAModel(Model):
         self,
         state: Iterable[float],
         schema: HyDRATraceSchema,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         state_array = np.asarray(list(state), dtype=float)
         if state_array.ndim != 1 or state_array.size != len(schema.state):
             message = "state dimension must match trace_schema.state."
@@ -449,16 +452,16 @@ class HyDRAModel(Model):
 
     def _predict_derivative(
         self,
-        flow_model: Model,
+        flow_model: Model[pl.LazyFrame, pl.LazyFrame],
         t: float,
-        state: np.ndarray,
+        state: NDArray[np.float64],
         input_stream: InputStream | None,
         schema: HyDRATraceSchema,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         frame = self._build_simulation_frame(t, state, input_stream, schema)
         output_frame = (
             flow_model.predict(
-                frame.select(self.input_features).cast(pl.Float64)
+                frame.select(self.input_features).cast(pl.Float64).lazy()
             )
             .collect()
             .select(self.output_features)
@@ -474,7 +477,7 @@ class HyDRAModel(Model):
     def _build_simulation_frame(
         self,
         t: float,
-        state: np.ndarray,
+        state: NDArray[np.float64],
         input_stream: InputStream | None,
         schema: HyDRATraceSchema,
     ) -> pl.DataFrame:
@@ -516,11 +519,11 @@ class HyDRAModel(Model):
 
     def _capture_simulation_inputs(
         self,
-        times: np.ndarray,
+        times: NDArray[np.float64],
         input_stream: InputStream,
         schema: HyDRATraceSchema,
-    ) -> np.ndarray:
-        values: list[np.ndarray] = []
+    ) -> NDArray[np.float64]:
+        values: list[NDArray[np.float64]] = []
         input_dim: int | None = None
         for time in times:
             input_values = np.asarray(input_stream(float(time)), dtype=float)
@@ -549,7 +552,7 @@ def _prepare_simulation_times(
     t_span: tuple[float, float],
     sample_times: Iterable[float] | None,
     sample_dt: float | None,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     t_start = float(t_span[0])
     t_end = float(t_span[1])
     if not np.isfinite(t_start) or not np.isfinite(t_end):
@@ -573,7 +576,7 @@ def _prepare_simulation_times(
 
 def _simulation_times_from_samples(
     sample_times: Iterable[float],
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     times = np.asarray(
         sample_times
         if isinstance(sample_times, np.ndarray)
@@ -595,7 +598,7 @@ def _simulation_times_from_dt(
     t_start: float,
     t_end: float,
     sample_dt: float | None,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     if sample_dt is None or not np.isfinite(sample_dt):
         message = "sample_dt must be finite."
         raise ValueError(message)
@@ -617,7 +620,7 @@ def _simulation_times_from_dt(
 
 
 def _validate_simulation_time_grid(
-    times: np.ndarray,
+    times: NDArray[np.float64],
     t_start: float,
     t_end: float,
 ) -> None:

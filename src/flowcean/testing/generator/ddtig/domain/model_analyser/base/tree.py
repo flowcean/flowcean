@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 def convert_river_tree(
     river_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier,
-    feature_dict: dict,
-) -> dict:
+    feature_dict: dict[str, int],
+) -> dict[int, Node]:
     """Extract the structure of a River Hoeffding tree.
 
     Store the extracted structure in a dictionary.
@@ -41,7 +41,9 @@ def convert_river_tree(
     root = vars(river_tree).get("_root")
 
     # Yields: parent index, parent node, child node, child index, branch
-    def iterate(node: object | None = None) -> Iterator[tuple]:
+    def iterate(
+        node: Any = None,
+    ) -> Iterator[tuple[int | None, Any, Any, int, int | None]]:
         if node is None:
             yield None, None, root, 0, None
             yield from iterate(root)
@@ -88,9 +90,9 @@ def convert_river_tree(
 
 
 def convert_sklearn_tree(
-    sklearn_tree: sklearnTree,
-    feature_dict: dict,
-) -> dict:
+    sklearn_tree: Any,
+    feature_dict: dict[int, str],
+) -> dict[int, Node]:
     """Extract the structure of a scikit-learn decision tree.
 
     Store the extracted structure in a dictionary.
@@ -104,7 +106,7 @@ def convert_sklearn_tree(
     """
     # Scikit-learn's runtime Tree object exposes these attributes, but the
     # available type information may be incomplete for static checkers.
-    sk_tree = cast("Any", sklearn_tree)
+    sk_tree = sklearn_tree
     n_nodes = int(sk_tree.node_count)
     tree = {}
 
@@ -186,9 +188,7 @@ class TestTree:
 
     def __init__(
         self,
-        model_tree: HoeffdingTreeRegressor
-        | HoeffdingTreeClassifier
-        | sklearnTree,
+        model_tree: HoeffdingTreeRegressor | HoeffdingTreeClassifier | Any,
         specs_handler: SystemSpecsHandler,
     ) -> None:
         """Initializes the TestTree from a model tree.
@@ -206,8 +206,8 @@ class TestTree:
                 "Converted a scikit-learn tree to TestTree successfully.",
             )
         else:
-            feature_dict = specs_handler.extract_feature_names_with_idx()
-            self.test_tree = convert_river_tree(model_tree, feature_dict)
+            river_features = specs_handler.extract_feature_names_with_idx()
+            self.test_tree = convert_river_tree(model_tree, river_features)
             logger.info("Converted a River tree to TestTree successfully.")
 
     def get_n_samples(self) -> int:

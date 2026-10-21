@@ -28,10 +28,10 @@ from flowcean.polars import DataFrame
 logger = logging.getLogger("energysystem")
 
 
-class EnergySystemActive(ActiveEnvironment):
+class EnergySystemActive(ActiveEnvironment[Observation, Action]):
     _data_for_simulation: dict[str, int | float | NDArray[Any] | None]
     _data_from_simulation: dict[str, int | float | NDArray[Any] | None]
-    reward: Callable
+    reward: Callable[[list[ActiveInterface]], list[ActiveInterface]]
 
     def __init__(
         self,
@@ -41,7 +41,8 @@ class EnergySystemActive(ActiveEnvironment):
         scenario_file: str | None = None,
         end: int = 86_400,
         seed: int | None = None,
-        reward_func: Callable | None = None,
+        reward_func: Callable[[list[ActiveInterface]], list[ActiveInterface]]
+        | None = None,
     ) -> None:
         super().__init__()
 
@@ -51,8 +52,10 @@ class EnergySystemActive(ActiveEnvironment):
         else:
             self.reward = reward_func
 
-        self.sensor_queue = queue.Queue(1)
-        self.actuator_queue = queue.Queue(1)
+        self.sensor_queue: queue.Queue[tuple[bool, dict[str, Any]]] = (
+            queue.Queue(1)
+        )
+        self.actuator_queue: queue.Queue[dict[str, Any]] = queue.Queue(1)
         self.sync_finished = threading.Event()
         self.sync_terminate = threading.Event()
         self.sim_finished = threading.Event()
@@ -152,10 +155,9 @@ class EnergySystemActive(ActiveEnvironment):
     def act(self, action: Action) -> None:
         logger.info("Preparing actions on the environment ...")
         self._data_for_simulation = {}
-        if action.actuators is not None:
-            for actuator in action.actuators:
-                self._data_for_simulation[actuator.uid] = actuator.value
-        else:
+        for actuator in action.actuators:
+            self._data_for_simulation[actuator.uid] = actuator.value
+        if not action.actuators:
             logger.info("Simulation will step without setpoints")
         # self._data_received = False
         self.action = action
@@ -246,8 +248,8 @@ def start_mosaik(
     *,
     sensors: list[str],
     actuators: list[str],
-    sensor_queue: queue.Queue,
-    actuator_queue: queue.Queue,
+    sensor_queue: queue.Queue[tuple[bool, dict[str, Any]]],
+    actuator_queue: queue.Queue[dict[str, Any]],
     sync_finished: threading.Event,
     sync_terminate: threading.Event,
     sim_finished: threading.Event,

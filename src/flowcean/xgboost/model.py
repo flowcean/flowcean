@@ -1,5 +1,7 @@
-from typing import override
+from copy import copy
+from typing import Any, override
 
+import numpy as np
 import polars as pl
 
 from flowcean._optional import raise_for_missing_optional_dependency
@@ -15,10 +17,15 @@ except ModuleNotFoundError as error:
     )
 
 from flowcean.core.model import Model
-from flowcean.core.transform import Identity
+from flowcean.sklearn.model import (
+    binary_classes,
+    positive_probabilities,
+    prediction_frame,
+    validate_threshold,
+)
 
 
-class XGBoostClassifierModel(Model):
+class XGBoostClassifierModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """Wrapper for an XGBoost classifier model with threshold support."""
 
     classifier: XGBClassifier
@@ -32,29 +39,29 @@ class XGBoostClassifierModel(Model):
         *,
         input_features: list[str],
         output_features: list[str],
-        threshold: float = 0.5,
+        threshold: float | None = None,
     ) -> None:
+        super().__init__()
+        validate_threshold(threshold)
+        if threshold is not None:
+            binary_classes(classifier.classes_, output_features)
         self.classifier = classifier
         self.input_features = input_features
         self.output_features = output_features
         self.threshold = threshold
-        # Initialize Protocol attributes
-        self.pre_transform = Identity()
-        self.post_transform = Identity()
 
     def _predict_proba(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
         """Predict probability of positive class."""
-        proba = self.classifier.predict_proba(
-            input_features.select(self.input_features).collect().to_numpy(),
-        )[:, 1]  # Get positive class probability
-
-        return pl.from_numpy(
-            proba,
-            self.output_features,
-        ).lazy()
+        binary_classes(self.classifier.classes_, self.output_features)
+        inputs = input_features.select(self.input_features).collect()
+        proba = positive_probabilities(
+            self.classifier.predict_proba(inputs.to_numpy()),
+            inputs.height,
+        )
+        return prediction_frame(proba, inputs.height, self.output_features)
 
     def predict_proba(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
         """Predict class probabilities, applying preprocessing transforms.
@@ -68,50 +75,44 @@ class XGBoostClassifierModel(Model):
         input_features = self.preprocess(input_features)
         return self._predict_proba(input_features)
 
-    def __getstate__(self) -> dict:
-        """Remove callbacks when pickling (they contain unpickleable locks)."""
+    def __getstate__(self) -> dict[str, Any]:
+        """Remove callbacks from a copy, preserving the live fitted estimator."""
         state = self.__dict__.copy()
-        if "classifier" in state:
-            # Copy the full fitted state and null out callbacks only
-            classifier_dict = state["classifier"].__dict__.copy()
-            classifier_dict["callbacks"] = None
-            new_classifier = XGBClassifier.__new__(XGBClassifier)
-            new_classifier.__dict__.update(classifier_dict)
-            state["classifier"] = new_classifier
+        classifier = copy(self.classifier)
+        classifier.callbacks = None
+        state["classifier"] = classifier
         return state
-
-    def __setstate__(self, state: dict) -> None:
-        """Restore state after unpickling."""
-        self.__dict__.update(state)
 
     @override
     def _predict(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
-        """Predict class labels using threshold."""
+        """Preserve native predictions unless a binary threshold is explicit."""
+        validate_threshold(self.threshold)
         if self.threshold is not None:
-            # Use threshold-based prediction
+            classes = binary_classes(
+                self.classifier.classes_, self.output_features
+            )
             probas = self._predict_proba(input_features).collect()
-            predictions = {}
-            for col in probas.columns:
-                predictions[col] = (probas[col] >= self.threshold).cast(
-                    pl.Int64,
-                )
-            return pl.LazyFrame(predictions)
+            labels = np.where(
+                probas.to_series().to_numpy() >= self.threshold,
+                classes[1],
+                classes[0],
+            )
+            return prediction_frame(
+                labels, probas.height, self.output_features
+            )
 
-        # Use default prediction
-        return pl.from_numpy(
-            self.classifier.predict(
-                input_features.select(self.input_features)
-                .collect()
-                .to_numpy(),
-            ),
+        inputs = input_features.select(self.input_features).collect()
+        return prediction_frame(
+            self.classifier.predict(inputs.to_numpy()),
+            inputs.height,
             self.output_features,
-        ).lazy()
+        )
 
 
-class XGBoostRegressorModel(Model):
+class XGBoostRegressorModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """Wrapper for an XGBoost regressor model."""
 
     regressor: XGBRegressor
@@ -131,32 +132,22 @@ class XGBoostRegressorModel(Model):
         self.input_features = input_features
         self.output_features = output_features
 
-    def __getstate__(self) -> dict:
-        """Remove callbacks when pickling (they contain unpickleable locks)."""
+    def __getstate__(self) -> dict[str, Any]:
+        """Remove callbacks from a copy, preserving the live fitted estimator."""
         state = self.__dict__.copy()
-        if "regressor" in state:
-            # Copy the full fitted state and null out callbacks only
-            regressor_dict = state["regressor"].__dict__.copy()
-            regressor_dict["callbacks"] = None
-            new_regressor = XGBRegressor.__new__(XGBRegressor)
-            new_regressor.__dict__.update(regressor_dict)
-            state["regressor"] = new_regressor
+        regressor = copy(self.regressor)
+        regressor.callbacks = None
+        state["regressor"] = regressor
         return state
-
-    def __setstate__(self, state: dict) -> None:
-        """Restore state after unpickling."""
-        self.__dict__.update(state)
 
     @override
     def _predict(
         self,
         input_features: pl.LazyFrame,
     ) -> pl.LazyFrame:
-        return pl.from_numpy(
-            self.regressor.predict(
-                input_features.select(self.input_features)
-                .collect()
-                .to_numpy(),
-            ),
+        inputs = input_features.select(self.input_features).collect()
+        return prediction_frame(
+            self.regressor.predict(inputs.to_numpy()),
+            inputs.height,
             self.output_features,
-        ).lazy()
+        )

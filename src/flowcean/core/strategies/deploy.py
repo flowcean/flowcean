@@ -1,16 +1,21 @@
+import polars as pl
+
 from flowcean.core.environment.active import ActiveEnvironment
 from flowcean.core.environment.incremental import IncrementalEnvironment
-from flowcean.core.model import Model
+from flowcean.core.model import Predictor
 from flowcean.core.transform import Identity, Transform
 
 
 def deploy(
-    environment: ActiveEnvironment | IncrementalEnvironment,
-    model: Model,
-    input_transforms: Transform | None = None,
-    output_transforms: Transform | None = None,
+    environment: ActiveEnvironment[pl.LazyFrame, pl.DataFrame]
+    | IncrementalEnvironment[pl.LazyFrame],
+    model: Predictor[pl.LazyFrame, pl.LazyFrame],
+    input_transforms: Transform[pl.LazyFrame, pl.LazyFrame] | None = None,
+    output_transforms: Transform[pl.LazyFrame, pl.LazyFrame] | None = None,
 ) -> None:
-    """Deploy a trained model to a custom environment.
+    """Make one tabular prediction and, for an active environment, act once.
+
+    The action is collected eagerly. This is not a streaming deployment loop.
 
     Args:
         environment: custom system environment

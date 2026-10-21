@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 if __package__:
     from .experiment import SystemEvaluation, run_experiment
 else:
-    from experiment import (  # pyright: ignore[reportImplicitRelativeImport]
+    from experiment import (
         SystemEvaluation,
         run_experiment,
     )

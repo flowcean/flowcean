@@ -1,6 +1,6 @@
 """Classification and regression metrics backed by scikit-learn."""
 
-from ._multioutput import MultiOutputMixin
+from ._multioutput import MultiOutputMetric
 from .classification import (
     Accuracy,
     ClassificationReport,
@@ -24,7 +24,7 @@ __all__ = (
     "MeanAbsoluteError",
     "MeanAbsolutePercentageError",
     "MeanSquaredError",
-    "MultiOutputMixin",
+    "MultiOutputMetric",
     "PrecisionScore",
     "R2Score",
     "Recall",

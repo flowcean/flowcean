@@ -4,7 +4,7 @@ from pathlib import Path
 import polars as pl
 
 import flowcean.cli
-from flowcean.core import evaluate_offline, learn_offline
+from flowcean.core import OfflineEnvironment, evaluate_offline, learn_offline
 from flowcean.polars import DataFrame, SlidingWindow, TrainTestSplit
 from flowcean.sklearn import (
     MeanAbsoluteError,
@@ -24,8 +24,8 @@ OUTPUTS = ["temperature_3"]
 
 @dataclass
 class TracePredictionData:
-    train: DataFrame
-    test: DataFrame
+    train: OfflineEnvironment[pl.LazyFrame]
+    test: OfflineEnvironment[pl.LazyFrame]
     source_rows: int
     train_rows: int
     test_rows: int
@@ -33,7 +33,7 @@ class TracePredictionData:
     output_features: list[str]
 
 
-def _row_count(environment: DataFrame) -> int:
+def _row_count(environment: OfflineEnvironment[pl.LazyFrame]) -> int:
     return environment.observe().select(pl.len()).collect().item()
 
 

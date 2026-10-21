@@ -1,5 +1,5 @@
 import logging
-from typing import override
+from typing import Any, override
 
 import polars as pl
 from numpy.typing import NDArray
@@ -7,7 +7,6 @@ from sklearn.tree import DecisionTreeRegressor, export_graphviz
 
 from flowcean.core import (
     LearnerCallback,
-    Model,
     SupervisedLearner,
     create_callback_manager,
 )
@@ -18,7 +17,9 @@ from .model import SciKitModel
 logger = logging.getLogger(__name__)
 
 
-class RegressionTree(SupervisedLearner):
+class RegressionTree(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, SciKitModel]
+):
     """Wrapper class for sklearn's DecisionTreeRegressor.
 
     Reference: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html
@@ -41,7 +42,7 @@ class RegressionTree(SupervisedLearner):
         max_leaf_nodes: int | None = None,
         min_impurity_decrease: float = 0.0,
         ccp_alpha: float = 0.0,
-        monotonic_cst: NDArray | None = None,
+        monotonic_cst: NDArray[Any] | None = None,
         callbacks: list[LearnerCallback] | LearnerCallback | None = None,
     ) -> None:
         """Initialize the regression tree learner.
@@ -96,7 +97,7 @@ class RegressionTree(SupervisedLearner):
         self,
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
-    ) -> Model:
+    ) -> SciKitModel:
         dfs = pl.collect_all([inputs, outputs])
         collected_inputs = dfs[0]
         collected_outputs = dfs[1]

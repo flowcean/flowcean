@@ -20,7 +20,7 @@ from flowcean.hybrid.hydra import (
 )
 
 
-class EventModel(Model):
+class EventModel(Model[pl.LazyFrame, pl.LazyFrame]):
     def __init__(self, events: list[Any], value: float) -> None:
         self.events = events
         self.value = value
@@ -102,8 +102,12 @@ def run_events(
     callback_fail: str | None = None,
     callback_error: RuntimeError | None = None,
 ) -> LearnedFlows:
-    class EventLearner(SupervisedLearner):
-        def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+    class EventLearner(
+        SupervisedLearner[pl.LazyFrame, pl.LazyFrame, EventModel]
+    ):
+        def learn(
+            self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+        ) -> EventModel:
             events.append(("fit",))
             model = EventModel(events, float(outputs.collect()["y"][0]))
             events.append(("fitted", model))
@@ -245,8 +249,10 @@ def test_partial_subclass_and_default_noops() -> None:
 
     events: list[Any] = []
 
-    class Learner(SupervisedLearner):
-        def learn(self, inputs: pl.LazyFrame, outputs: pl.LazyFrame) -> Model:
+    class Learner(SupervisedLearner[pl.LazyFrame, pl.LazyFrame, EventModel]):
+        def learn(
+            self, inputs: pl.LazyFrame, outputs: pl.LazyFrame
+        ) -> EventModel:
             return EventModel(events, 1)
 
     for callback in (None, HyDRACallback(), FinishOnly()):

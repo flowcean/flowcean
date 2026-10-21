@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from os import PathLike
 
 
-class DataFrame(OfflineEnvironment):
+class DataFrame(OfflineEnvironment[pl.LazyFrame]):
     """A dataset environment.
 
     This environment represents static tabular datasets.

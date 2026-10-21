@@ -6,7 +6,7 @@ import numpy as np
 import polars as pl
 from scipy.interpolate import CubicSpline
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 from flowcean.polars.is_time_series import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 InterpolationMethod = Literal["linear", "cubic"]
 
 
-class Resample(Transform):
+class Resample(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Resample time series features to a given sampling rate."""
 
     def __init__(

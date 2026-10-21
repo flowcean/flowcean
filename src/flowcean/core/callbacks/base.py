@@ -10,14 +10,13 @@ Example:
     >>> manager.on_learning_start(learner)
 """
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Any, Protocol
 
-from flowcean.core.model import Model
 from flowcean.core.named import Named
 
 
-class LearnerCallback(Protocol):
+class LearnerCallback(Protocol, metaclass=ABCMeta):
     """Protocol for learner callbacks."""
 
     @abstractmethod
@@ -41,7 +40,7 @@ class LearnerCallback(Protocol):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Named,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Called when learning completes successfully."""
@@ -84,7 +83,7 @@ class CallbackManager:
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Named,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Notify all callbacks that learning has completed."""
@@ -122,7 +121,7 @@ class SilentCallback:
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Named,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Do nothing when learning ends."""

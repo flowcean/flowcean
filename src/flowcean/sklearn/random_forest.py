@@ -1,5 +1,5 @@
 import logging
-from typing import override
+from typing import Any, override
 
 import polars as pl
 from numpy.typing import NDArray
@@ -7,14 +7,15 @@ from sklearn.ensemble import RandomForestRegressor
 
 from flowcean.core import LearnerCallback, create_callback_manager
 from flowcean.core.learner import SupervisedLearner
-from flowcean.core.model import Model
 from flowcean.sklearn import SciKitModel
 from flowcean.utils.random import get_seed
 
 logger = logging.getLogger(__name__)
 
 
-class RandomForestRegressorLearner(SupervisedLearner):
+class RandomForestRegressorLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, SciKitModel],
+):
     """Wrapper class for sklearn's RandomForestRegressor.
 
     Reference: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
@@ -42,7 +43,7 @@ class RandomForestRegressorLearner(SupervisedLearner):
         warm_start: bool = False,
         ccp_alpha: float = 0.0,
         max_samples: int | float | None = None,  # noqa: PYI041
-        monotonic_cst: NDArray | None = None,
+        monotonic_cst: NDArray[Any] | None = None,
         callbacks: list[LearnerCallback] | LearnerCallback | None = None,
     ) -> None:
         """Initialize the random forest learner.
@@ -109,7 +110,7 @@ class RandomForestRegressorLearner(SupervisedLearner):
         self,
         inputs: pl.LazyFrame,
         outputs: pl.LazyFrame,
-    ) -> Model:
+    ) -> SciKitModel:
         """Fit the random forest regressor on the given inputs and outputs."""
         dfs = pl.collect_all([inputs, outputs])
         collected_inputs = dfs[0]

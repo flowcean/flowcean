@@ -10,7 +10,7 @@ from flowcean.core.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-class KLDivergence(Transform):
+class KLDivergence(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Computes KL divergence for multiple features based on a target column.
 
     For each feature specified, this transform computes KL divergence between

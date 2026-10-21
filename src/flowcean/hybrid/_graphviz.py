@@ -3,6 +3,8 @@
 import shutil
 import subprocess
 
+__all__ = ["_escape_dot_label", "render_dot_svg"]
+
 
 def _escape_dot_label(label: str) -> str:
     """Normalize line endings and escape text for a quoted DOT label."""

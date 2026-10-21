@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import override
 
 import polars as pl
 from aalpy.automata import MealyMachine, MooreMachine
 
-from flowcean.core import Model
+from flowcean.polars.model import PolarsModel
 
 from ._data import Symbol, read_traces
 
 
-class _RPNIModel[Automaton: MealyMachine | MooreMachine](Model):
+class _RPNIModel[
+    Automaton: MealyMachine[Symbol, Symbol] | MooreMachine[Symbol, Symbol]
+](
+    PolarsModel,
+    ABC,
+):
     def __init__(
         self,
         automaton: Automaton,
@@ -67,7 +72,7 @@ class _RPNIModel[Automaton: MealyMachine | MooreMachine](Model):
     def _predict_trace(self, word: list[Symbol]) -> list[Symbol]: ...
 
 
-class RPNIMealyModel(_RPNIModel[MealyMachine]):
+class RPNIMealyModel(_RPNIModel[MealyMachine[Symbol, Symbol]]):
     """A Flowcean model wrapping an AALpy Mealy machine by composition.
 
     Predictions require the training input column's name and scalar dtype. They
@@ -90,7 +95,7 @@ class RPNIMealyModel(_RPNIModel[MealyMachine]):
         return outputs
 
 
-class RPNIMooreModel(_RPNIModel[MooreMachine]):
+class RPNIMooreModel(_RPNIModel[MooreMachine[Symbol, Symbol]]):
     """A Flowcean model wrapping an AALpy Moore machine by composition.
 
     Predictions require the training input column's name and scalar dtype. They

@@ -5,12 +5,12 @@ from typing import override
 import polars as pl
 from polars._typing import IntoExpr
 
-from flowcean.core.transform import Transform
+from flowcean.core.transform import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Select(Transform):
+class Select(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Selects a subset of features from the data."""
 
     def __init__(self, features: IntoExpr | Iterable[IntoExpr]) -> None:

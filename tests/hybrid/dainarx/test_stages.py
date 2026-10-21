@@ -13,16 +13,20 @@ from flowcean.hybrid.dainarx import (
     fit_dainarx_transitions,
 )
 
-from .conftest import sampled_system
+from .conftest import DynamicsSettings, GuardSettings, sampled_system
 
-DYNAMICS = {
+DYNAMICS: DynamicsSettings = {
     "input_features": ["u"],
     "output_features": ["x"],
     "time_column": "time",
     "order": 2,
     "window": 8,
 }
-GUARDS = {"guard_kernel": "linear", "guard_c": 1e4, "guard_gamma": "scale"}
+GUARDS: GuardSettings = {
+    "guard_kernel": "linear",
+    "guard_c": 1e4,
+    "guard_gamma": "scale",
+}
 
 
 @pytest.mark.parametrize("empty_column", ["u", "x", "time"])
@@ -102,12 +106,15 @@ def test_staged_and_full_fit_agree_on_discovery_guards_phases_and_rollout():
                 left.guard.predict(rows), right.guard.predict(rows)
             )
     held_out, _ = sampled_system(93)
-    kwargs = {
-        "output_history": held_out["x"][:2].to_numpy()[:, None],
-        "initial_location": 0,
-    }
-    result = staged.rollout(held_out, **kwargs)
-    assert result.equals(full.model.rollout(held_out, **kwargs))
+    history = held_out["x"][:2].to_numpy()[:, None]
+    result = staged.rollout(
+        held_out, output_history=history, initial_location=0
+    )
+    assert result.equals(
+        full.model.rollout(
+            held_out, output_history=history, initial_location=0
+        )
+    )
     np.testing.assert_allclose(result["x"], held_out["x"], atol=1e-11)
 
 
@@ -155,9 +162,11 @@ def test_projection_preserves_original_rows_columns_and_independent_trace_geomet
         [None, traces[1]],
     ):
         with pytest.raises(ValueError, match=r"original|Polars DataFrame"):
-            dynamics.to_labeled_frames(invalid)
+            # Deliberately includes a non-DataFrame to check runtime validation.
+            dynamics.to_labeled_frames(invalid)  # pyright: ignore[reportArgumentType]
         with pytest.raises(ValueError, match=r"original|Polars DataFrame"):
-            fit_dainarx_transitions(invalid, dynamics, **GUARDS)
+            # Deliberately includes a non-DataFrame to check runtime validation.
+            fit_dainarx_transitions(invalid, dynamics, **GUARDS)  # pyright: ignore[reportArgumentType]
     with pytest.raises(ValueError, match="reserved"):
         dynamics.to_labeled_frames(frames)
     for invalid, message in (

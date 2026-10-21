@@ -1,226 +1,124 @@
-import logging
+import math
 from collections.abc import Iterable, Sequence
+
+import polars as pl
 
 from flowcean.core.environment.offline import OfflineEnvironment
 from flowcean.core.learner import SupervisedLearner
-from flowcean.core.metric import Metric
-from flowcean.core.model import ClassifierModel, Model
-from flowcean.core.report import Report, ReportEntry
-from flowcean.core.transform import Identity, InvertibleTransform, Transform
-
-logger = logging.getLogger(__name__)
+from flowcean.core.metric import MetricCallable
+from flowcean.core.model import ClassifierModel, Model, Predictor
+from flowcean.core.report import Report, Reportable, ReportEntry
+from flowcean.core.transform import Identity, Transform, inverse
 
 
-def learn_offline(
-    environment: OfflineEnvironment,
-    learner: SupervisedLearner,
+def learn_offline[LearnedModel: Model[pl.LazyFrame, pl.LazyFrame]](
+    environment: OfflineEnvironment[pl.LazyFrame],
+    learner: SupervisedLearner[pl.LazyFrame, pl.LazyFrame, LearnedModel],
     inputs: list[str],
     outputs: list[str],
     *,
-    input_transform: Transform | None = None,
-    output_transform: InvertibleTransform | None = None,
-) -> Model:
-    """Learn from an offline environment.
+    input_transform: Transform[pl.LazyFrame, pl.LazyFrame] | None = None,
+    output_transform: Transform[pl.LazyFrame, pl.LazyFrame] | None = None,
+) -> LearnedModel:
+    """Fit transforms and a mutable tabular model, retaining its concrete type.
 
-    Learn from an offline environment by learning from the input-output pairs.
-
-    Args:
-        environment: The offline environment.
-        learner: The supervised learner.
-        inputs: The input feature names.
-        outputs: The output feature names.
-        input_transform: The transform to apply to the input features.
-            Will be part of the final model.
-        output_transform: The transform to apply to the output features.
-            Its inverse will be part of the final model.
-
-    Returns:
-        The model learned from the environment.
+    The output inverse is resolved before learning, so unsupported transforms
+    or noninvertible fitted state cannot mutate the learner.
     """
     if input_transform is None:
         input_transform = Identity()
     if output_transform is None:
         output_transform = Identity()
 
-    logger.info("Learning with offline strategy")
     data = environment.observe()
-
-    logger.info("Selecting input and output features")
     input_features = data.select(inputs)
     output_features = data.select(outputs)
-
-    logger.info("Fitting transforms and applying them to features")
     input_transform.fit(input_features)
-    input_features = input_transform.apply(input_features)
-
-    logger.info("Fitting output transform and applying it to output features")
     output_transform.fit(output_features)
-    output_features = output_transform.apply(output_features)
-
-    logger.info("Learning model")
-    model = learner.learn(inputs=input_features, outputs=output_features)
-
-    model.pre_transform |= input_transform
-    model.post_transform |= output_transform.inverse()
-
+    output_inverse = inverse(output_transform)
+    model = learner.learn(
+        input_transform(input_features),
+        output_transform(output_features),
+    )
+    # New input preprocessing runs before any existing model preprocessing.
+    model.pre_transform = input_transform | model.pre_transform
+    model.post_transform = model.post_transform | output_inverse
     return model
 
 
 def evaluate_offline(
-    models: Model | Iterable[Model],
-    environment: OfflineEnvironment,
+    models: Predictor[pl.LazyFrame, pl.LazyFrame]
+    | Iterable[Predictor[pl.LazyFrame, pl.LazyFrame]],
+    environment: OfflineEnvironment[pl.LazyFrame],
     inputs: Sequence[str],
     outputs: Sequence[str],
-    metrics: Sequence[Metric],
+    metrics: Sequence[
+        MetricCallable[pl.LazyFrame, Reportable | dict[str, Reportable]]
+    ],
 ) -> Report:
-    """Evaluate a model on an offline environment.
-
-    Evaluate a model on an offline environment by predicting the outputs from
-    the inputs and comparing them to the true outputs.
-
-    Args:
-        models: The models to evaluate.
-        environment: The offline environment.
-        inputs: The input feature names.
-        outputs: The output feature names.
-        metrics: The metrics to evaluate the model with.
-
-    Returns:
-        The evaluation report.
-    """
+    """Evaluate tabular predictions against selected target columns."""
     model_list = list(models) if isinstance(models, Iterable) else [models]
     data = environment.observe()
     input_features = data.select(inputs)
     output_features = data.select(outputs)
     entries: dict[str, ReportEntry] = {}
-
     for model in model_list:
         predictions = model.predict(input_features)
-
         entries[model.name] = ReportEntry(
             {
-                metric.name: metric(output_features, predictions.lazy())
+                metric.name: metric(output_features, predictions)
                 for metric in metrics
-            },
+            }
         )
     return Report(entries)
 
 
 def tune_threshold(
-    model: ClassifierModel,
-    environment: OfflineEnvironment,
+    model: ClassifierModel[pl.LazyFrame, pl.LazyFrame],
+    environment: OfflineEnvironment[pl.LazyFrame],
     inputs: Sequence[str],
     outputs: Sequence[str],
-    metric: Metric,
+    metric: MetricCallable[pl.LazyFrame, float],
     *,
     thresholds: Sequence[float] | None = None,
     num_thresholds: int = 19,
 ) -> tuple[float, dict[float, float]]:
-    """Find optimal decision threshold for a classifier.
+    """Maximize a scalar metric over explicit binary decision thresholds.
 
-    Evaluates the model at multiple threshold values and returns the threshold
-    that maximizes the given metric.
-
-    Args:
-        model: The classifier model to tune.
-        environment: The offline environment with validation/test data.
-        inputs: The input feature names.
-        outputs: The output feature names.
-        metric: The metric to optimize (e.g., FBetaScore, Accuracy).
-        thresholds: Specific thresholds to evaluate. If None, generates
-            num_thresholds evenly spaced values between 0.05 and 0.95.
-        num_thresholds: Number of thresholds to evaluate if thresholds is
-            None (default: 19).
-
-    Returns:
-        Tuple of (best_threshold, results_dict) where results_dict maps
-        each threshold to its metric score.
-
-    Example:
-        >>> from flowcean.sklearn.metrics.classification import FBetaScore
-        >>> metric = FBetaScore(beta=1.0)
-        >>> best_threshold, results = tune_threshold(
-        ...     model, eval_env, inputs, outputs, metric
-        ... )
-        >>> print(f"Best threshold: {best_threshold:.3f}")
-        >>> model.threshold = best_threshold  # Apply the best threshold
+    The original threshold, including None (native classification), is restored
+    even when prediction or metric computation fails.
     """
-    import numpy as np
-
-    # Generate thresholds if not provided
-    thresholds_to_test: Sequence[float]
     if thresholds is None:
-        thresholds_to_test = list(np.linspace(0.05, 0.95, num_thresholds))
-    else:
-        thresholds_to_test = thresholds
+        if num_thresholds < 1:
+            message = "num_thresholds must be positive"
+            raise ValueError(message)
+        thresholds = [
+            0.05 + 0.9 * index / max(num_thresholds - 1, 1)
+            for index in range(num_thresholds)
+        ]
+    if not thresholds:
+        message = "thresholds must not be empty"
+        raise ValueError(message)
+    if any(
+        not math.isfinite(value) or not 0 <= value <= 1 for value in thresholds
+    ):
+        message = "thresholds must be finite values in [0, 1]"
+        raise ValueError(message)
 
-    # Store original threshold
+    data = environment.observe()
+    input_features = data.select(inputs)
+    output_features = data.select(outputs)
     original_threshold = model.threshold
-
-    # Evaluate at each threshold
     results: dict[float, float] = {}
-    best_threshold = 0.5
-    best_score = -float("inf")
-
-    logger.info(
-        "Tuning threshold for %s using %s",
-        model.name,
-        metric.name,
-    )
-
     try:
-        for threshold in thresholds_to_test:
-            # Set threshold and evaluate
+        for threshold in thresholds:
             model.threshold = float(threshold)
-            report = evaluate_offline(
-                model,
-                environment,
-                inputs,
-                outputs,
-                [metric],
-            )
-
-            # Extract metric score from report
-            # Report is dict[str, ReportEntry]
-            # ReportEntry is dict[str, Reportable]
-            model_entry = report.get(model.name)
-            if model_entry is None:
-                continue
-
-            score_value = model_entry.get(metric.name)
-            if score_value is None:
-                continue
-
-            # Convert Reportable to float (it should be a numeric value)
-            if isinstance(score_value, (int, float)):
-                score = float(score_value)
-            else:
-                # Try to convert via string representation
-                try:
-                    score = float(str(score_value))
-                except (ValueError, TypeError):
-                    logger.warning(
-                        "Could not convert metric value to float: %s",
-                        score_value,
-                    )
-                    continue
-
+            score = metric(output_features, model.predict(input_features))
+            if not math.isfinite(score):
+                message = "threshold metric must return a finite scalar score"
+                raise ValueError(message)
             results[float(threshold)] = score
-
-            # Track best threshold
-            if score > best_score:
-                best_score = score
-                best_threshold = float(threshold)
-
-            logger.debug(
-                "Threshold %.3f: %s = %.4f",
-                threshold,
-                metric.name,
-                score,
-            )
-
     finally:
-        # Restore original threshold
         model.threshold = original_threshold
-
+    best_threshold = max(results, key=lambda threshold: results[threshold])
     return best_threshold, results

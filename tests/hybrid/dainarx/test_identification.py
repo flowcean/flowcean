@@ -8,7 +8,7 @@ from sklearn.svm import SVC
 from flowcean.hybrid.dainarx import fit_dainarx
 from flowcean.hybrid.dainarx.learner import _cluster
 
-from .conftest import sampled_system
+from .conftest import FitSettings, sampled_system
 
 
 def test_segmentation_clustering_guards_and_reset_phases(identified):
@@ -126,7 +126,7 @@ def test_same_location_reset_fails_but_independent_traces_can_share_location():
     for t in range(1, len(x)):
         x[t] = -3 if t % 20 == 0 else x[t - 1] + 0.1
     frame = pl.DataFrame({"time": np.arange(len(x)) * 0.1, "x": x})
-    kwargs = {
+    kwargs: FitSettings = {
         "input_features": [],
         "output_features": ["x"],
         "time_column": "time",
@@ -191,7 +191,7 @@ def test_threshold_controls_screening_and_full_segment_acceptance():
             "x": 100 + 0.001 * np.arange(100) ** 2,
         }
     )
-    kwargs = {
+    kwargs: FitSettings = {
         "input_features": [],
         "output_features": ["x"],
         "time_column": "time",
@@ -234,7 +234,7 @@ def test_invalid_threshold_fails(eta):
 
 def test_zero_threshold_is_accepted_and_not_replaced_by_default():
     frame, _ = sampled_system(0)
-    kwargs = {
+    kwargs: FitSettings = {
         "input_features": ["u"],
         "output_features": ["x"],
         "time_column": "time",
@@ -257,7 +257,7 @@ def test_zero_threshold_is_accepted_and_not_replaced_by_default():
 
 def test_short_terminal_segment_and_insufficient_reset_evidence_fail():
     frame, _ = sampled_system(0, length=42)
-    kwargs = {
+    kwargs: FitSettings = {
         "input_features": ["u"],
         "output_features": ["x"],
         "time_column": "time",

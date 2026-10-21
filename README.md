@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/github/license/flowcean/flowcean)](https://github.com/flowcean/flowcean/blob/main/LICENSE)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flowcean)](https://pypi.python.org/pypi/flowcean)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Pyright](https://img.shields.io/badge/types-Pyright-blue.svg)](https://github.com/microsoft/pyright)
+[![basedpyright](https://img.shields.io/badge/types-basedpyright-blue.svg)](https://docs.basedpyright.com/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 Flowcean is a research-oriented Python toolkit for defining, simulating, identifying, evaluating, and reproducing models of cyber-physical systems.

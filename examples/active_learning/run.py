@@ -21,7 +21,7 @@ from flowcean.core import (
 logger = logging.getLogger(__name__)
 
 
-class MyEnvironment(ActiveEnvironment):
+class MyEnvironment(ActiveEnvironment[pl.LazyFrame, pl.DataFrame]):
     state: float
     max_value: float
     last_action: pl.DataFrame | None
@@ -65,14 +65,14 @@ class MyEnvironment(ActiveEnvironment):
         return self.max_value - abs(self.state - self.last_action["action"][0])
 
 
-class MyModel(Model):
+class MyModel(Model[pl.LazyFrame, pl.DataFrame]):
     best_action: float
 
     def __init__(self, best_action: float) -> None:
         self.best_action = best_action
 
     @override
-    def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
+    def _predict(self, input_features: pl.LazyFrame) -> pl.DataFrame:
         return pl.DataFrame(
             {
                 "action": [
@@ -80,10 +80,10 @@ class MyModel(Model):
                     for _ in range(len(input_features.collect()))
                 ],
             },
-        ).lazy()
+        )
 
 
-class MyLearner(ActiveLearner):
+class MyLearner(ActiveLearner[pl.LazyFrame, pl.DataFrame, MyModel]):
     model: MyModel
     rewards: list[float]
 
@@ -94,9 +94,9 @@ class MyLearner(ActiveLearner):
     @override
     def learn_active(
         self,
-        action: pl.LazyFrame,
+        action: pl.DataFrame,
         observation: pl.LazyFrame,
-    ) -> Model:
+    ) -> MyModel:
         _ = action
         self.model = MyModel(best_action=random.random())
         self.rewards.append(
@@ -110,7 +110,7 @@ class MyLearner(ActiveLearner):
         sensor_df = pl.DataFrame({"sensor": sensor})
         action = self.model.predict(sensor_df.lazy())
         return pl.concat(
-            [sensor_df, action.collect()],
+            [sensor_df, action],
             how="horizontal",
         )
 

@@ -5,13 +5,13 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 from flowcean.polars.is_time_series import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
 
-class TimeWindow(Transform):
+class TimeWindow(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Limit time series to a certain time window."""
 
     def __init__(

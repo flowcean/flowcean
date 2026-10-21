@@ -1,92 +1,58 @@
 from abc import ABC, abstractmethod
 
-from flowcean.core.data import Data
 
-
-class Predicate(ABC):
-    """Base class for predicates.
-
-    A predicate is a function that takes the prediction of an model and returns
-    a boolean value indicating whether the prediction satisfies a certain
-    condition. Predicates can be combined using logical operators (AND, OR,
-    NOT) to create more complex predicates.
-    """
+class Predicate[Input, Prediction](ABC):
+    """A condition on model inputs and predictions, composable with logic."""
 
     @abstractmethod
-    def __call__(self, input_data: Data, prediction: Data) -> bool:
-        """Evaluate the predicate on a model prediction.
+    def __call__(self, input_data: Input, prediction: Prediction) -> bool:
+        """Return whether the input and prediction satisfy the condition."""
 
-        Args:
-            input_data: The input data used to generate the prediction.
-            prediction: The prediction to evaluate.
-
-        Returns:
-            bool: True if the prediction satisfies the predicate,
-                False otherwise.
-        """
-
-    def __and__(self, other: "Predicate") -> "AndPredicate":
-        """Combine two predicates with a logical AND operation.
-
-        Args:
-            other: The other predicate to combine with.
-
-        Returns:
-            Predicate: A new predicate that is the logical AND of this and
-                other.
-        """
+    def __and__(
+        self,
+        other: "Predicate[Input, Prediction]",
+    ) -> "AndPredicate[Input, Prediction]":
         return AndPredicate(self, other)
 
-    def __or__(self, other: "Predicate") -> "OrPredicate":
-        """Combine two predicates with a logical OR operation.
-
-        Args:
-            other: The other predicate to combine with.
-
-        Returns:
-            Predicate: A new predicate that is the logical OR of this and
-                other.
-        """
+    def __or__(
+        self,
+        other: "Predicate[Input, Prediction]",
+    ) -> "OrPredicate[Input, Prediction]":
         return OrPredicate(self, other)
 
-    def __invert__(self) -> "NotPredicate":
-        """Negate the predicate.
-
-        Returns:
-            Predicate: A new predicate that is the negation of the original.
-        """
+    def __invert__(self) -> "NotPredicate[Input, Prediction]":
         return NotPredicate(self)
 
 
-class AndPredicate(Predicate):
-    """Combine multiple predicates with a logical AND operation."""
+class AndPredicate[Input, Prediction](Predicate[Input, Prediction]):
+    """Combine predicates with a logical AND operation."""
 
-    def __init__(self, *predicates: Predicate) -> None:
+    def __init__(self, *predicates: Predicate[Input, Prediction]) -> None:
         self.predicates = predicates
 
-    def __call__(self, input_data: Data, prediction: Data) -> bool:
+    def __call__(self, input_data: Input, prediction: Prediction) -> bool:
         return all(
             predicate(input_data, prediction) for predicate in self.predicates
         )
 
 
-class OrPredicate(Predicate):
-    """Combine multiple predicates with a logical OR operation."""
+class OrPredicate[Input, Prediction](Predicate[Input, Prediction]):
+    """Combine predicates with a logical OR operation."""
 
-    def __init__(self, *predicates: Predicate) -> None:
+    def __init__(self, *predicates: Predicate[Input, Prediction]) -> None:
         self.predicates = predicates
 
-    def __call__(self, input_data: Data, prediction: Data) -> bool:
+    def __call__(self, input_data: Input, prediction: Prediction) -> bool:
         return any(
             predicate(input_data, prediction) for predicate in self.predicates
         )
 
 
-class NotPredicate(Predicate):
+class NotPredicate[Input, Prediction](Predicate[Input, Prediction]):
     """Negate a predicate."""
 
-    def __init__(self, predicate: Predicate) -> None:
+    def __init__(self, predicate: Predicate[Input, Prediction]) -> None:
         self.predicate = predicate
 
-    def __call__(self, input_data: Data, prediction: Data) -> bool:
+    def __call__(self, input_data: Input, prediction: Prediction) -> bool:
         return not self.predicate(input_data, prediction)

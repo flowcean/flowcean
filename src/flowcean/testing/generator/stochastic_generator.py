@@ -2,7 +2,6 @@ import random
 
 import polars as pl
 
-from flowcean.core.data import Data
 from flowcean.core.environment.incremental import Finished
 from flowcean.testing.domain import Domain
 
@@ -72,6 +71,7 @@ class StochasticGenerator(TestcaseGenerator):
         """Reset the generator to its initial state."""
         self.count = 0
         self.step()
+        self._finished = False
 
     def step(self) -> None:
         self.count += 1
@@ -84,5 +84,5 @@ class StochasticGenerator(TestcaseGenerator):
             {domain.feature_name: domain() for domain in self.domains},
         )
 
-    def _observe(self) -> Data:
+    def _observe(self) -> pl.LazyFrame:
         return self.data.lazy()

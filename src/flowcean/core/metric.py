@@ -1,54 +1,41 @@
-from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import Protocol, final
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, final
-
-from flowcean.core.named import Named
-
-if TYPE_CHECKING:
-    from .data import Data
-    from .report import Reportable
-    from .strategies.active import Action, Observation
+from .named import Named
+from .report import Reportable
 
 
-class Metric(Named, Protocol):
-    """Quantitative measure for evaluating model performance.
-
-    Metrics compare predictions with true outputs to assess model quality.
-
-    Call flow:
-      __call__ -> prepare(true), prepare(predicted) -> compute(true, predicted)
-    """
-
-    def prepare(self, data: Data) -> Data:
-        """Hook to normalize/collect/select data before computing metric.
-
-        Default: identity. Mixins override and call super().prepare(...)
-        """
-        return data
+class Metric[Input, Prepared, Result](Named, ABC):
+    """Prepare observations and compute a precisely typed metric result."""
 
     @abstractmethod
-    def _compute(self, true: Data, predicted: Data) -> Reportable:
-        """Implement metric logic on prepared inputs."""
+    def prepare(self, data: Input) -> Prepared:
+        """Normalize data for the metric implementation."""
+
+    @abstractmethod
+    def _compute(self, true: Prepared, predicted: Prepared) -> Result:
+        """Calculate the result on prepared inputs."""
+
+    def compute(self, true: Input, predicted: Input) -> Result:
+        """Prepare inputs and calculate the result."""
+        return self._compute(self.prepare(true), self.prepare(predicted))
 
     @final
-    def __call__(
-        self,
-        true: Data,
-        predicted: Data,
-    ) -> Reportable | dict[str, Reportable]:
-        """Execute metric: prepare inputs then compute."""
+    def __call__(self, true: Input, predicted: Input) -> Result:
         return self.compute(true, predicted)
 
-    def compute(self, true: Data, predicted: Data) -> Reportable:
-        """Implement metric logic on prepared inputs."""
-        t = self.prepare(true)
-        p = self.prepare(predicted)
-        return self._compute(t, p)
+
+class MetricCallable[Input, Result](Protocol):
+    """The named callable consumed by evaluation and scalar optimization."""
+
+    @property
+    def name(self) -> str: ...
+
+    def __call__(self, true: Input, predicted: Input) -> Result: ...
 
 
-class ActiveMetric(Named, Protocol):
-    """Base class for metrics for active environments."""
+class ActiveMetric[Observation, Action](Named, ABC):
+    """Evaluate observations and the actions that produced them."""
 
     @abstractmethod
     def __call__(
@@ -56,12 +43,4 @@ class ActiveMetric(Named, Protocol):
         observations: list[Observation],
         actions: list[Action],
     ) -> Reportable | dict[str, Reportable]:
-        """Calculate the metric value based on the observations.
-
-        Args:
-            observations: list of observations of the environment
-            actions: list of actions of the learner
-
-        Returns:
-            Metric value
-        """
+        """Calculate a reportable active evaluation result."""

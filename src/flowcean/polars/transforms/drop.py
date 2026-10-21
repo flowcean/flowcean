@@ -3,10 +3,10 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 
-class Drop(Transform):
+class Drop(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Drop features from the data."""
 
     def __init__(

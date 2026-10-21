@@ -3,7 +3,7 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import polars as pl
 from opcua import Client, Node, Subscription, ua
@@ -11,7 +11,6 @@ from opcua.client.client import KeepAlive
 from ruamel.yaml import YAML
 
 from flowcean.core.adapter import Adapter
-from flowcean.core.data import Data
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +50,7 @@ class StreamingHandler:
         self._is_streaming = val
 
 
-class OPCAdapter(Adapter):
+class OPCAdapter(Adapter[pl.LazyFrame, pl.DataFrame | pl.LazyFrame]):
     """Flowcean adapter for OPC (Open Platform Communications) protocol."""
 
     opc_client: Client
@@ -256,7 +255,7 @@ class OPCAdapter(Adapter):
         self.client.disconnect()
         logger.info("OPC client disconnected from server")
 
-    def get_data(self) -> Data:
+    def get_data(self) -> pl.LazyFrame:
         """Get data from the OPC server and return it to flowcean."""
         self.recorded_data.clear()
 
@@ -335,7 +334,7 @@ class OPCAdapter(Adapter):
             data: Polars DataFrame or LazyFrame containing the data to send.
         """
         # Convert the data into a Dataframe
-        df = cast("pl.DataFrame | pl.LazyFrame", data).lazy().collect()
+        df = data.lazy().collect()
 
         # Check if the data contains all required output features
         if not all(feature in df.columns for feature in self.output_features):

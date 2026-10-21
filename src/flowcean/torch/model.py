@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 import numpy as np
 import polars as pl
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from torch.nn import Module
 
 
-class PyTorchModel(Model):
+class PyTorchModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """PyTorch model wrapper."""
 
     def __init__(
@@ -54,9 +54,9 @@ class PyTorchModel(Model):
                 },
             ).lazy()
 
-        inputs = torch.as_tensor(  # pyright: ignore[reportPrivateImportUsage]
-            collected_inputs.to_numpy(),
-            dtype=torch.float32,  # pyright: ignore[reportPrivateImportUsage]
+        inputs = torch.as_tensor(
+            collected_inputs.to_numpy(writable=True),
+            dtype=torch.float32,
         )
         self.module.eval()
         module_device = self._module_device()
@@ -66,12 +66,27 @@ class PyTorchModel(Model):
         with torch.inference_mode():
             for input_batch in self._iter_input_batches(inputs):
                 output_batch = self.module(input_batch)
+                if not isinstance(output_batch, torch.Tensor):
+                    message = "Module predictions must be tensors"
+                    raise TypeError(message)
+                if output_batch.ndim == 1 and len(self.output_names) == 1:
+                    output_batch = output_batch.reshape(-1, 1)
+                if output_batch.ndim != 2 or output_batch.shape != (
+                    input_batch.shape[0],
+                    len(self.output_names),
+                ):
+                    message = "Prediction shape must match batch rows and output columns"
+                    raise ValueError(message)
                 predictions.append(output_batch.detach().cpu().numpy())
 
         prediction_array = np.concatenate(predictions, axis=0)
-        return pl.DataFrame(prediction_array, schema=self.output_names).lazy()
+        return pl.DataFrame(
+            prediction_array,
+            schema=self.output_names,
+            orient="row",
+        ).lazy()
 
-    def _module_device(self) -> Any:
+    def _module_device(self) -> torch.device:
         """Determine the device where the wrapped module expects inputs."""
         first_parameter = next(self.module.parameters(), None)
         if first_parameter is not None:
@@ -81,7 +96,7 @@ class PyTorchModel(Model):
         if first_buffer is not None:
             return first_buffer.device
 
-        return torch.device("cpu")  # pyright: ignore[reportPrivateImportUsage]
+        return torch.device("cpu")
 
     def _iter_input_batches(
         self,

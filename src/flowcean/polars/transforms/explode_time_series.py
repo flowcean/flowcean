@@ -3,10 +3,10 @@ from typing import override
 import polars as pl
 from polars._typing import ColumnNameOrSelector
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 
-class ExplodeTimeSeries(Transform):
+class ExplodeTimeSeries(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Transform that explodes nested time series data into individual rows.
 
     Each time series is represented as a list of structs, where each struct

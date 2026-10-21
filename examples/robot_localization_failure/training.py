@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 def define_transforms(
     position_threshold: float,
     heading_threshold: float,
-) -> Transform:
+) -> Transform[pl.LazyFrame, pl.LazyFrame]:
     def convert_map_to_bool(df: pl.LazyFrame) -> pl.LazyFrame:
         return df.with_columns(
             pl.col("/map").struct.with_fields(

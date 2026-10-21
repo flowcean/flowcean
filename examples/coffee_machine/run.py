@@ -17,8 +17,12 @@ from flowcean.core import (
 from flowcean.polars import DataFrame, Lambda, TrainTestSplit, collect
 
 
-class TraceAccuracy(Metric):
+class TraceAccuracy(Metric[pl.LazyFrame, pl.LazyFrame, float]):
     """Fraction of completely correct output words."""
+
+    @override
+    def prepare(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        return data
 
     @override
     def _compute(self, true: pl.LazyFrame, predicted: pl.LazyFrame) -> float:

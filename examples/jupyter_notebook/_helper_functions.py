@@ -9,7 +9,7 @@ from flowcean.core import OfflineEnvironment, Transform
 from flowcean.core.model import Model
 
 
-class ShiftInTime(Transform):
+class ShiftInTime(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Shift specified features in time by a given number of steps."""
 
     def __init__(
@@ -39,8 +39,8 @@ class ShiftInTime(Transform):
 
 
 def plot_predictions_vs_ground_truth(
-    environment: OfflineEnvironment,
-    models: list[Model],
+    environment: OfflineEnvironment[pl.LazyFrame],
+    models: list[Model[pl.LazyFrame, pl.LazyFrame]],
     input_names: list[str],
     output_names: list[str],
 ) -> None:

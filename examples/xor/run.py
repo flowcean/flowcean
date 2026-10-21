@@ -2,11 +2,12 @@ from pathlib import Path
 
 import polars as pl
 
-from flowcean.core.model import Model
+from flowcean.core import Identity
 from flowcean.core.strategies import learn_offline
 from flowcean.core.tool import start_prediction_loop
 from flowcean.polars.adapter.dataframe_adapter import DataFrameAdapter
 from flowcean.polars.environments.dataframe import DataFrame
+from flowcean.sklearn import SciKitModel
 from flowcean.sklearn.regression_tree import RegressionTree
 from flowcean.testing import run_model_tests
 from flowcean.testing.domain import Discrete
@@ -40,7 +41,7 @@ def main() -> None:
 
     # Use the trained model to make predictions
 
-    model = Model.load(Path("xor_model.fml"))
+    model = SciKitModel.load(Path("xor_model.fml"))
     # Create a fake adapter from a DataFrame
     adapter = DataFrameAdapter(
         DataFrame.from_csv("./data/data.csv"),
@@ -53,6 +54,8 @@ def main() -> None:
     start_prediction_loop(
         model,
         adapter,
+        adapter_to_model_transforms=Identity(),
+        model_to_adapter_transforms=Identity(),
     )
 
     # Use the trained model for testing

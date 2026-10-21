@@ -8,7 +8,7 @@ from flowcean.core.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-class Collapse(Transform):
+class Collapse(Transform[pl.LazyFrame, pl.LazyFrame]):
     """Collapse a time series feature into a single value."""
 
     def __init__(

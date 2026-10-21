@@ -6,16 +6,18 @@ import polars as pl
 from flowcean.core import OfflineEnvironment
 
 
-class JoinedOfflineEnvironment(OfflineEnvironment):
+class JoinedOfflineEnvironment(OfflineEnvironment[pl.LazyFrame]):
     """Environment that joins multiple offline environments.
 
     Attributes:
         environments: The offline environments to join.
     """
 
-    environments: Iterable[OfflineEnvironment]
+    environments: Iterable[OfflineEnvironment[pl.LazyFrame]]
 
-    def __init__(self, environments: Iterable[OfflineEnvironment]) -> None:
+    def __init__(
+        self, environments: Iterable[OfflineEnvironment[pl.LazyFrame]]
+    ) -> None:
         """Initialize the joined offline environment.
 
         Args:

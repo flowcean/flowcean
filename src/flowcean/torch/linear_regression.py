@@ -21,7 +21,9 @@ from flowcean.core import SupervisedIncrementalLearner
 from .model import PyTorchModel
 
 
-class LinearRegression(SupervisedIncrementalLearner):
+class LinearRegression(
+    SupervisedIncrementalLearner[pl.LazyFrame, pl.LazyFrame, PyTorchModel],
+):
     """Linear regression learner."""
 
     def __init__(
@@ -61,10 +63,10 @@ class LinearRegression(SupervisedIncrementalLearner):
     ) -> PyTorchModel:
         self.optimizer.zero_grad()
         dfs = pl.collect_all([inputs, outputs])
-        features = torch.from_numpy(  # pyright: ignore[reportPrivateImportUsage]
+        features = torch.from_numpy(
             dfs[0].to_numpy(writable=True),
         )
-        labels = torch.from_numpy(  # pyright: ignore[reportPrivateImportUsage]
+        labels = torch.from_numpy(
             dfs[1].to_numpy(writable=True),
         )
         prediction = self.model(features)

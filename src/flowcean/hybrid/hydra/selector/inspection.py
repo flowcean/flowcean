@@ -1,15 +1,13 @@
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from flowcean.core import Model
-
 
 @runtime_checkable
 class SupportsFlowSummary(Protocol):
     def flow_summary(self) -> str: ...
 
 
-def summarize_flow_model(model: Model | None) -> str:
+def summarize_flow_model(model: object | None) -> str:
     if model is None:
         return "<unresolved flow>"
 

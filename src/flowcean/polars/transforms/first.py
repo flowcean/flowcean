@@ -4,12 +4,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class First(Transform):
+class First(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Selects the first time value of a time-series feature."""
 
     def __init__(

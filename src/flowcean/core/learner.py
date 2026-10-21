@@ -1,75 +1,38 @@
-from abc import abstractmethod
-from typing import Protocol
+from abc import ABC, abstractmethod
 
-from .data import Data
-from .model import Model
 from .named import Named
 
 
-class SupervisedLearner(Named, Protocol):
-    """Base class for supervised learners.
+class SupervisedLearner[Input, Output, LearnedModel](Named, ABC):
+    """Learn a concrete model from input-output training data.
 
-    A supervised learner learns from input-output pairs.
+    Training representations need not match the model's prediction types.
     """
 
     @abstractmethod
-    def learn(self, inputs: Data, outputs: Data) -> Model:
-        """Learn from the data.
-
-        Args:
-            inputs: The input data.
-            outputs: The output data.
-
-        Returns:
-            The model learned from the data.
-        """
+    def learn(self, inputs: Input, outputs: Output) -> LearnedModel:
+        """Learn from a batch of input-output pairs."""
 
 
-class SupervisedIncrementalLearner(Named, Protocol):
-    """Base class for incremental supervised learners.
-
-    An incremental supervised learner learns from input-output pairs
-    incrementally.
-    """
+class SupervisedIncrementalLearner[Input, Output, LearnedModel](Named, ABC):
+    """Learn a concrete model from successive batches."""
 
     @abstractmethod
-    def learn_incremental(self, inputs: Data, outputs: Data) -> Model:
-        """Learn from the data incrementally.
-
-        Args:
-            inputs: The input data.
-            outputs: The output data.
-
-        Returns:
-            The model learned from the data.
-        """
+    def learn_incremental(
+        self, inputs: Input, outputs: Output
+    ) -> LearnedModel:
+        """Update the model with another batch."""
 
 
-class ActiveLearner(Named, Protocol):
-    """Base class for active learners.
-
-    Active learners require actions to be taken to learn.
-    """
+class ActiveLearner[Observation, Action, LearnedModel](Named, ABC):
+    """Learn from actions and the observations they produce."""
 
     @abstractmethod
-    def learn_active(self, action: Data, observation: Data) -> Model:
-        """Learn from actions and observations.
-
-        Args:
-            action: The action performed.
-            observation: The observation of the environment.
-
-        Returns:
-            The model learned from the data.
-        """
+    def learn_active(
+        self, action: Action, observation: Observation
+    ) -> LearnedModel:
+        """Learn from an action and its resulting observation."""
 
     @abstractmethod
-    def propose_action(self, observation: Data) -> Data:
-        """Propose an action based on an observation.
-
-        Args:
-            observation: The observation of an environment.
-
-        Returns:
-            The action to perform.
-        """
+    def propose_action(self, observation: Observation) -> Action:
+        """Propose an action for the current observation."""

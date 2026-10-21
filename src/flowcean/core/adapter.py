@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 
-from .data import Data
 
-
-class Adapter(ABC):
+class Adapter[Observation, Action](ABC):
     """Abstract base class for adapters.
 
     A component connecting Flowcean to cyber-physical systems. An adapter
@@ -32,7 +30,7 @@ class Adapter(ABC):
         """
 
     @abstractmethod
-    def get_data(self) -> Data:
+    def get_data(self) -> Observation:
         """Get data from the CPS through the adapter.
 
         Retrieve a data record from the CPS. This method should block until
@@ -44,7 +42,7 @@ class Adapter(ABC):
         """
 
     @abstractmethod
-    def send_data(self, data: Data) -> None:
+    def send_data(self, data: Action) -> None:
         """Send data to the CPS through the adapter.
 
         This method allows sending data to the CPS. It is used by the tool loop

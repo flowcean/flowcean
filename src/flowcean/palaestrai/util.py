@@ -1,5 +1,3 @@
-from typing import Any
-
 import numpy as np
 import torch
 from harl.sac.action_type import ActionType
@@ -148,10 +146,7 @@ def convert_to_interface(
                     value_min=space.low,
                     value_max=space.high,
                     shape=space.shape,
-                    dtype=space.dtype
-                    if space.dtype
-                    in (type[np.floating[Any]], type[np.integer[Any]])
-                    else np.float64,
+                    dtype=space.dtype.type,
                 ),
             )
 

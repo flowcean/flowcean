@@ -15,7 +15,13 @@ from .features import (
 from .model import HybridDecisionTreeModel
 
 
-class HybridDecisionTreeLearner(SupervisedLearner):
+class HybridDecisionTreeLearner(
+    SupervisedLearner[
+        pl.DataFrame | pl.LazyFrame,
+        pl.DataFrame | pl.LazyFrame,
+        HybridDecisionTreeModel,
+    ],
+):
     classifier: DecisionTreeClassifier
 
     def __init__(
@@ -70,7 +76,8 @@ class HybridDecisionTreeLearner(SupervisedLearner):
     def learn_from_traces(
         self,
         traces: list[pl.DataFrame],
-        flow_models_by_id: dict[int, Model] | None = None,
+        flow_models_by_id: dict[int, Model[pl.LazyFrame, pl.LazyFrame]]
+        | None = None,
     ) -> HybridDecisionTreeModel:
         validate_global_flow_ids(traces)
         dataset = build_selector_dataset(traces, self.feature_config)

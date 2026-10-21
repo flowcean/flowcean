@@ -17,7 +17,7 @@ from flowcean.hybrid.hydra import (
 )
 
 
-class DerivativeModel(Model):
+class DerivativeModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """Test flow model backed by a deterministic row expression."""
 
     def __init__(

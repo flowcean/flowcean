@@ -11,7 +11,10 @@ from flowcean.core import (
 )
 
 
-class DummyLearner(SupervisedLearner, SupervisedIncrementalLearner):
+class DummyLearner(
+    SupervisedLearner[pl.LazyFrame, pl.LazyFrame, "DummyModel"],
+    SupervisedIncrementalLearner[pl.LazyFrame, pl.LazyFrame, "DummyModel"],
+):
     """Dummy learner that learns nothing.
 
     This learner is useful for testing purposes.
@@ -34,7 +37,7 @@ class DummyLearner(SupervisedLearner, SupervisedIncrementalLearner):
         return DummyModel(outputs.collect_schema().names())
 
 
-class DummyModel(Model):
+class DummyModel(Model[pl.LazyFrame, pl.LazyFrame]):
     """Dummy model that predicts zeros.
 
     This model is useful for testing purposes.

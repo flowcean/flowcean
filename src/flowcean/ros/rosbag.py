@@ -131,7 +131,7 @@ def _get_dataframe(
 
 
 def _collect_type_definitions(
-    message_paths: Iterable[str | PathLike],
+    message_paths: Iterable[str | PathLike[str]],
 ) -> Typesdict:
     return {
         k: v

@@ -18,6 +18,9 @@ from .hybrid_system import (
     _validate_delay,
 )
 
+# Shared private helpers used by the simulator and trajectory modules.
+__all__ = ["_ResidenceClock", "_RunBindings", "_coerce_input", "_readonly"]
+
 type _BoundFunction[T] = Callable[[float, State, float], T]
 
 

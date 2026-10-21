@@ -5,14 +5,14 @@ from typing import Literal, override
 import polars as pl
 from scipy.signal import butter, sosfilt
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 SignalFilterType = Literal["lowpass", "highpass"]
 
 
-class SignalFilter(Transform):
+class SignalFilter(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Applies a Butterworth filter to time series features.
 
     Applies a Butterworth lowpass or highpass filter to time series

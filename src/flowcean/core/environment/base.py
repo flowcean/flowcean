@@ -1,61 +1,60 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol, Self, final, runtime_checkable
+from abc import ABC, abstractmethod
+from typing import Self, override
 
 from flowcean.core.named import Named
 from flowcean.core.transform import Identity, Transform
 
-if TYPE_CHECKING:
-    from flowcean.core.data import Data
 
+class Environment[Observation](Named, ABC):
+    """A source of observations with type-preserving mutable transforms."""
 
-@runtime_checkable
-class Environment(Named, Protocol):
-    """Abstraction for data sources in learning and evaluation.
+    @property
+    def transform(self) -> Transform[Observation, Observation]:
+        if "_transform" not in self.__dict__:
+            self._transform: Transform[Observation, Observation] = Identity()
+        return self._transform
 
-    An environment describes the possible data sources for the learning and
-    evaluation procedure. Environments can be offline (pre-recorded datasets),
-    incremental (streaming data), or active (interactive systems where the
-    learner can influence the environment). All environments support applying
-    transforms to observations.
-    """
-
-    transform: Transform = Identity()
+    @transform.setter
+    def transform(
+        self, transform: Transform[Observation, Observation]
+    ) -> None:
+        self._transform = transform
 
     def append_transform(
         self,
-        transform: Transform,
+        transform: Transform[Observation, Observation],
     ) -> Self:
-        """Append a transform to the observation.
-
-        Args:
-            transform: Transform to append.
-
-        Returns:
-            This observable with the appended transform.
-        """
-        self.transform = self.transform.chain(transform)
+        """Mutate this environment without changing its observation type."""
+        self.transform = self.transform | transform
         return self
 
     @abstractmethod
-    def _observe(self) -> Data:
-        """Observe and return the observation without applying the transform.
+    def _observe(self) -> Observation:
+        """Return an untransformed observation."""
 
-        This method must be implemented by subclasses.
-
-        Returns:
-            The raw observation.
-        """
-
-    def observe(self) -> Data:
-        """Observe and return the observation."""
+    def observe(self) -> Observation:
+        """Observe, then apply this environment's transforms."""
         return self.transform(self._observe())
 
-    @final
-    def __or__(
+    def __or__[Result](
         self,
-        transform: Transform,
-    ) -> Self:
-        """Shortcut for `with_transform`."""
-        return self.append_transform(transform)
+        transform: Transform[Observation, Result],
+    ) -> Environment[Result]:
+        """Create a new view, optionally changing the observation type."""
+        return _TransformedEnvironment(self, transform)
+
+
+class _TransformedEnvironment[Input, Output](Environment[Output]):
+    def __init__(
+        self,
+        source: Environment[Input],
+        transform: Transform[Input, Output],
+    ) -> None:
+        self.source = source
+        self.observation_transform = transform
+
+    @override
+    def _observe(self) -> Output:
+        return self.observation_transform(self.source.observe())

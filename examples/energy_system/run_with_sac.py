@@ -2,7 +2,7 @@ import logging
 import math
 from pathlib import Path
 from statistics import mean, median, stdev
-from typing import Any, cast, override
+from typing import Any, TypedDict, cast, override
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,11 +19,18 @@ from flowcean.core.strategies.active import (
 from flowcean.mosaik.energy_system import (
     EnergySystemActive,
 )
-from flowcean.palaestrai import SACLearner, SACModel
+from flowcean.palaestrai import SACLearner
 
 logger = logging.getLogger("energy_example_sac")
 END = 5 * 24 * 60 * 60
 TEST_END = 10 * 24 * 60 * 60
+
+
+class LearningParameters(TypedDict):
+    update_after: int
+    update_every: int
+    batch_size: int
+    fc_dims: tuple[int, ...]
 
 
 def run_active(end: int = END, test_end: int = TEST_END) -> None:
@@ -40,7 +47,7 @@ def run_active(end: int = END, test_end: int = TEST_END) -> None:
     with (data_path / "sensors.txt").open("r") as f:
         sensor_ids = f.read().splitlines()
 
-    learning_params = [
+    learning_params: list[LearningParameters] = [
         {
             "update_after": 2000,
             "update_every": 200,
@@ -104,7 +111,7 @@ def run_active(end: int = END, test_end: int = TEST_END) -> None:
         test_sim_result_files.append(test_results_file)
 
         logger.warning("Starting evaluation #%02d ...", (i + 1))
-        cast("SACModel", model).eval()
+        model.eval()
         try:
             reports.append(
                 evaluate_active(
@@ -332,7 +339,7 @@ def calculate_reward(sensors: list) -> list:
     return voltage_rewards + lineload_rewards
 
 
-class VoltageDeviation(ActiveMetric):
+class VoltageDeviation(ActiveMetric[Observation, Action]):
     @override
     def __call__(
         self,
@@ -350,7 +357,7 @@ class VoltageDeviation(ActiveMetric):
         return sum(values) / len(values)
 
 
-class VoltagePeaks(ActiveMetric):
+class VoltagePeaks(ActiveMetric[Observation, Action]):
     @override
     def __call__(
         self,
@@ -368,7 +375,7 @@ class VoltagePeaks(ActiveMetric):
         return max(values) - 1.0
 
 
-class VoltageDrops(ActiveMetric):
+class VoltageDrops(ActiveMetric[Observation, Action]):
     @override
     def __call__(
         self,
@@ -386,7 +393,7 @@ class VoltageDrops(ActiveMetric):
         return 1.0 - min(values)
 
 
-class LineLoadings(ActiveMetric):
+class LineLoadings(ActiveMetric[Observation, Action]):
     @override
     def __call__(
         self,

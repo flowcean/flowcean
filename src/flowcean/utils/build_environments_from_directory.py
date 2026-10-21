@@ -5,17 +5,17 @@ from tqdm import tqdm
 
 from flowcean.core.environment.offline import OfflineEnvironment
 
-EnvironmentBuilder = Callable[[Path], OfflineEnvironment]
+type EnvironmentBuilder[Output] = Callable[[Path], OfflineEnvironment[Output]]
 
 
-def build_environments_from_directory(
+def build_environments_from_directory[Output](
     path: Path | str,
-    builder: EnvironmentBuilder,
+    builder: EnvironmentBuilder[Output],
     *,
     pattern: str = "*",
     include_files: bool = True,
     include_folders: bool = True,
-) -> Iterable[OfflineEnvironment]:
+) -> Iterable[OfflineEnvironment[Output]]:
     """Build environments from a directory.
 
     This helper function can be used to build environments from multiple files

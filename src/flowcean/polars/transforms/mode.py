@@ -4,13 +4,13 @@ from typing import cast, override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 from flowcean.polars.time_series_type import get_time_series_value_type
 
 logger = logging.getLogger(__name__)
 
 
-class Mode(Transform):
+class Mode(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Mode finds the value that appears most often in time-series features."""
 
     def __init__(
@@ -39,7 +39,7 @@ class Mode(Transform):
             time_series_type = get_time_series_value_type(
                 cast("pl.DataType", schema.get(feature)),
             )
-            if time_series_type in (pl.Float32, pl.Float64):
+            if time_series_type in (pl.Float32(), pl.Float64()):
                 logger.warning(
                     "Feature %s is a floating point number. "
                     "The mode is not well defined for floating point numbers.",

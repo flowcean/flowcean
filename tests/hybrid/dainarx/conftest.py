@@ -1,8 +1,28 @@
+from typing import Literal, TypedDict
+
 import numpy as np
 import polars as pl
 import pytest
 
 from flowcean.hybrid.dainarx import fit_dainarx
+
+
+class DynamicsSettings(TypedDict):
+    input_features: list[str]
+    output_features: list[str]
+    time_column: str
+    order: int
+    window: int
+
+
+class GuardSettings(TypedDict):
+    guard_kernel: Literal["linear", "poly", "rbf", "sigmoid"]
+    guard_c: float
+    guard_gamma: float | Literal["scale", "auto"]
+
+
+class FitSettings(DynamicsSettings, GuardSettings):
+    pass
 
 
 def sampled_system(seed, length=200):

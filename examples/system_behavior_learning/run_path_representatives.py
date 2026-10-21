@@ -26,7 +26,7 @@ if __package__:
         run_path_representatives,
     )
 else:
-    from path_representatives import (  # pyright: ignore[reportImplicitRelativeImport]
+    from path_representatives import (
         PathRepresentativeEvaluation,
         PathRepresentativeStudy,
         inverse_transform_complete_targets,

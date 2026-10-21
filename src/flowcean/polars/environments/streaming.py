@@ -1,18 +1,18 @@
 import math
-from typing import cast, override
+from typing import override
 
 import polars as pl
 
 from flowcean.core import Finished, IncrementalEnvironment, OfflineEnvironment
 
 
-class StreamingOfflineEnvironment(IncrementalEnvironment):
+class StreamingOfflineEnvironment(IncrementalEnvironment[pl.LazyFrame]):
     """Streaming offline environment.
 
     This environment streams data from an offline environment in batches.
     """
 
-    environment: OfflineEnvironment
+    environment: OfflineEnvironment[pl.LazyFrame]
     batch_size: int
     data: pl.LazyFrame | None = None
     slice: pl.LazyFrame | None = None
@@ -20,7 +20,7 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
 
     def __init__(
         self,
-        environment: OfflineEnvironment,
+        environment: OfflineEnvironment[pl.LazyFrame],
         batch_size: int,
         *,
         size: int | None = None,
@@ -33,6 +33,9 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
             size: The number of samples in the environment. If provided, the
                 number of steps will be calculated based on this value.
         """
+        if batch_size <= 0:
+            message = "batch_size must be positive"
+            raise ValueError(message)
         self.environment = environment
         self.batch_size = batch_size
         self.sample_count = size
@@ -40,19 +43,21 @@ class StreamingOfflineEnvironment(IncrementalEnvironment):
     @override
     def _observe(self) -> pl.LazyFrame:
         if self.data is None:
-            self.data = cast("pl.LazyFrame", self.environment.observe())
+            self.data = self.environment.observe()
         if self.slice is None:
-            self.slice = self.data.slice(self.i, self.batch_size)
+            batch = self.data.slice(self.i, self.batch_size)
+            if batch.head(1).collect().is_empty():
+                raise Finished
+            self.slice = batch
         return self.slice
 
     @override
     def step(self) -> None:
         if self.data is None:
-            self.data = cast("pl.LazyFrame", self.environment.observe())
+            self.data = self.environment.observe()
         self.i += self.batch_size
-        self.slice = self.data.slice(self.i, self.batch_size)
-        if self.slice.slice(0, 1).collect().select(pl.len()).item(0, 0) == 0:
-            raise Finished
+        self.slice = None
+        self._observe()
 
     @override
     def num_steps(self) -> int | None:

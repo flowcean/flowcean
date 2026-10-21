@@ -4,13 +4,13 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 from flowcean.polars.is_time_series import is_timeseries_feature
 
 logger = logging.getLogger(__name__)
 
 
-class TimeSeriesSlidingWindow(Transform):
+class TimeSeriesSlidingWindow(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Convert single large time series into a set of smaller sub-series.
 
     Applies a sliding window to each individual time series sample of all or

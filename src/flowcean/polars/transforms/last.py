@@ -4,12 +4,12 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
 
-class Last(Transform):
+class Last(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Selects the last time value of a time-series feature."""
 
     def __init__(

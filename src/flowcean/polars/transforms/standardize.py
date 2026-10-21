@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Self, override
 
 import polars as pl
 from polars._typing import PythonLiteral
 
-from flowcean.core import Data, Invertible, Transform
+from flowcean.core import InvertibleTransform
 
 
 @dataclass
-class Standardize(Invertible, Transform):
+class Standardize(InvertibleTransform[pl.LazyFrame, pl.LazyFrame]):
     r"""Standardize features by removing the mean and scaling to unit variance.
 
     A sample $x$ is standardized as:
@@ -45,11 +47,6 @@ class Standardize(Invertible, Transform):
         return self
 
     @override
-    def fit_incremental(self, data: Data) -> Self:
-        msg = "Incremental fitting is not supported for Standardize transform"
-        raise NotImplementedError(msg)
-
-    @override
     def apply(self, data: pl.LazyFrame) -> pl.LazyFrame:
         if self.mean is None or self.std is None:
             message = "Standardize transform has not been fitted"
@@ -64,22 +61,19 @@ class Standardize(Invertible, Transform):
         )
 
     @override
-    def inverse(self) -> Transform:
+    def inverse(self) -> Standardize:
         if self.mean is None or self.std is None:
             message = "Standardize transform has not been fitted"
             raise RuntimeError(message)
 
+        if self.mean.keys() != self.std.keys():
+            message = (
+                "Standardize mean and std must have matching feature names"
+            )
+            raise ValueError(message)
         return Standardize(
-            mean={
-                c: -m * s
-                for c, m, s in zip(
-                    self.mean,
-                    self.mean.values(),
-                    self.std.values(),
-                    strict=True,
-                )
-            },
-            std={c: 1.0 / s for c, s in self.std.items()},
+            mean={c: -m / (self.std[c] or 1.0) for c, m in self.mean.items()},
+            std={c: 1.0 / (s or 1.0) for c, s in self.std.items()},
         )
 
 

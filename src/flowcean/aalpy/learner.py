@@ -14,7 +14,13 @@ from ._data import read_traces, rpni_samples
 from .model import RPNIMealyModel, RPNIMooreModel
 
 
-class RPNIMealyLearner(SupervisedLearner):
+class RPNIMealyLearner(
+    SupervisedLearner[
+        pl.DataFrame | pl.LazyFrame,
+        pl.DataFrame | pl.LazyFrame,
+        RPNIMealyModel,
+    ],
+):
     """Learn a Mealy machine from full input/output traces using AALpy RPNI.
 
     Inputs and outputs must each select exactly one list column, with one trace
@@ -53,7 +59,13 @@ class RPNIMealyLearner(SupervisedLearner):
         )
 
 
-class RPNIMooreLearner(SupervisedLearner):
+class RPNIMooreLearner(
+    SupervisedLearner[
+        pl.DataFrame | pl.LazyFrame,
+        pl.DataFrame | pl.LazyFrame,
+        RPNIMooreModel,
+    ],
+):
     """Learn a Moore machine, including its initial-state output.
 
     Accepts the same ordered scalar-word representation as

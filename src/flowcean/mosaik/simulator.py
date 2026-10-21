@@ -6,7 +6,7 @@ from typing import Any, override
 import mosaik_api_v3
 import numpy as np
 from mosaik.exceptions import SimulationError
-from mosaik_api_v3.types import Meta
+from mosaik_api_v3.types import CreateResult, Meta
 
 logger = logging.getLogger("flowcean.mosaik.simulator")
 META = {
@@ -37,8 +37,8 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self.sensors: dict[str, Any] = {}
         self._notified_done: bool = False
 
-        self.sensor_queue: queue.Queue
-        self.actuator_queue: queue.Queue
+        self.sensor_queue: queue.Queue[tuple[bool, dict[str, Any]]]
+        self.actuator_queue: queue.Queue[dict[str, Any]]
         self.sync_finished: threading.Event
         self.sync_terminate: threading.Event
 
@@ -50,11 +50,11 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         *,
         step_size: int = 0,
         end: int = 0,
-        sensor_queue: queue.Queue | None = None,
-        actuator_queue: queue.Queue | None = None,
+        sensor_queue: queue.Queue[tuple[bool, dict[str, Any]]] | None = None,
+        actuator_queue: queue.Queue[dict[str, Any]] | None = None,
         sync_finished: threading.Event | None = None,
         sync_terminate: threading.Event | None = None,
-        **sim_params: dict[str, Any],
+        **sim_params: object,
     ) -> Meta:
         if sensor_queue is None:
             msg = "sensor_queue is None. Terminating!"
@@ -84,8 +84,8 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         self,
         num: int,
         model: str,
-        **model_params: dict[str, Any],
-    ) -> list:
+        **model_params: object,
+    ) -> list[CreateResult]:
         if num > 1:
             msg = (
                 f"Only one model per sensor/actuator allowed but {num} were "
@@ -93,10 +93,8 @@ class SyncSimulator(mosaik_api_v3.Simulator):
             )
             raise ValueError(msg)
 
-        uid = (
-            model_params["uid"] if isinstance(model_params["uid"], str) else ""
-        )
-        if not uid:
+        uid = model_params.get("uid")
+        if not isinstance(uid, str) or not uid:
             msg = f"UID of the {model} model is empty"
             raise ValueError(msg)
 
@@ -113,7 +111,12 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         return [{"eid": eid, "type": model}]
 
     @override
-    def step(self, time: int, inputs: dict, max_advance: int = 0) -> int:
+    def step(
+        self,
+        time: int,
+        inputs: dict[str, dict[str, dict[str, Any]]],
+        max_advance: int = 0,
+    ) -> int:
         if self.sync_terminate.is_set():
             msg = "Stop was requested (step). Terminating simulation."
             raise SimulationError(msg)
@@ -147,7 +150,9 @@ class SyncSimulator(mosaik_api_v3.Simulator):
         return time + self.step_size
 
     @override
-    def get_data(self, outputs: dict) -> dict:
+    def get_data(
+        self, outputs: dict[str, list[str]]
+    ) -> dict[str, dict[str, Any]]:
         data = {}
         ctr = 0
         while True:

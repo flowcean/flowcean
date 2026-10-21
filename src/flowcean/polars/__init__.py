@@ -10,7 +10,8 @@ from .environments.join import JoinedOfflineEnvironment
 from .environments.streaming import StreamingOfflineEnvironment
 from .environments.train_test_split import TrainTestSplit
 from .is_time_series import is_timeseries_feature
-from .metric import LazyMixin, SelectMixin
+from .metric import PolarsMetric
+from .model import PolarsModel
 from .transforms.cast import Cast
 from .transforms.cluster import Cluster
 from .transforms.discrete_derivative import DiscreteDerivative
@@ -77,7 +78,6 @@ __all__ = [
     "JoinedOfflineEnvironment",
     "Lambda",
     "Last",
-    "LazyMixin",
     "MatchSamplingRate",
     "Mean",
     "Median",
@@ -90,11 +90,12 @@ __all__ = [
     "OneHot",
     "Or",
     "Pad",
+    "PolarsMetric",
+    "PolarsModel",
     "Rename",
     "Resample",
     "ScaleToRange",
     "Select",
-    "SelectMixin",
     "SignalFilter",
     "SignalFilterType",
     "SliceTimeSeries",

@@ -20,8 +20,9 @@ class TestMetrics(unittest.TestCase):
         assert AdaBoost is AdaBoostImplementation
 
     def setUp(self) -> None:
-        self.true = pl.DataFrame({"a": [0, 1, 0, 1]}).lazy()
-        self.predicted = pl.DataFrame({"a": [1, 1, 0, 0]}).lazy()
+        # unittest initializes these fixtures before each test, not in __init__.
+        self.true = pl.DataFrame({"a": [0, 1, 0, 1]}).lazy()  # pyright: ignore[reportUninitializedInstanceVariable]
+        self.predicted = pl.DataFrame({"a": [1, 1, 0, 0]}).lazy()  # pyright: ignore[reportUninitializedInstanceVariable]
 
     def test_name(self) -> None:
         assert Accuracy().name == "Accuracy"

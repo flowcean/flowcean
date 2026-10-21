@@ -22,7 +22,6 @@ from rich.progress import (
 from rich.text import Text
 
 from flowcean.core.callbacks.base import LearnerCallback
-from flowcean.core.model import Model
 from flowcean.core.named import Named
 
 
@@ -119,7 +118,7 @@ class RichCallback(LearnerCallback):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Named,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Display learning completion message."""
@@ -200,7 +199,7 @@ class RichSpinnerCallback(LearnerCallback):
     def on_learning_end(
         self,
         learner: Named,
-        model: Model,
+        model: Named,
         metrics: dict[str, Any] | None = None,
     ) -> None:
         """Display learning completion message."""

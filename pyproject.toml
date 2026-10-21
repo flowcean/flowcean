@@ -114,10 +114,41 @@ members = [
 testpaths = ["tests"]
 addopts = ["--import-mode=importlib"]
 
-[tool.pyright]
+[tool.basedpyright]
+include = ["src", "tests", "examples"]
+exclude = ["**/.venv/**", "**/__pycache__/**"]
+extraPaths = ["src", "."]
 pythonVersion = "3.12"
-strict = ["src/flowcean/core"]
-typeCheckingMode = "standard"
+typeCheckingMode = "strict"
+# Dependencies expose dynamic values; owned signatures must still be explicit.
+reportMissingTypeStubs = false
+reportAny = false
+reportExplicitAny = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownLambdaType = false
+reportMissingParameterType = "error"
+reportUnknownParameterType = "error"
+reportMissingTypeArgument = "error"
+reportInvalidCast = "error"
+reportUninitializedInstanceVariable = "error"
+reportIncompatibleUnannotatedOverride = "error"
+reportPropertyTypeMismatch = "error"
+reportUnsafeMultipleInheritance = "error"
+reportImplicitAbstractClass = "error"
+reportInvalidAbstractMethod = "error"
+# Runtime validation and intentional internal access remain useful.
+reportUnnecessaryIsInstance = false
+reportPrivateUsage = false
+enableTypeIgnoreComments = false
+reportIgnoreCommentWithoutRule = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+executionEnvironments = [
+  { root = "tests", reportMissingParameterType = false, reportUnknownParameterType = false, reportMissingTypeArgument = false },
+  { root = "examples", reportMissingParameterType = false, reportUnknownParameterType = false, reportMissingTypeArgument = false, reportPrivateUsage = "error" },
+  { root = "src" },
+]
 
 [tool.coverage.run]
 source_pkgs = ["flowcean"]

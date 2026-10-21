@@ -6,7 +6,9 @@ import sympy  # type:ignore[reportMissingTypeStubs]
 from .predicate import Predicate
 
 
-class PolarsPredicate(Predicate):
+class PolarsPredicate(
+    Predicate[pl.DataFrame | pl.LazyFrame, pl.DataFrame | pl.LazyFrame],
+):
     """Predicate for Polars DataFrame.
 
     This predicate allows for two different ways to provide the predicate

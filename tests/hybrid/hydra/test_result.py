@@ -11,7 +11,7 @@ from flowcean.core import Model
 from flowcean.hybrid.hydra import LearnedFlow, LearnedFlows, TraceSegment
 
 
-class UnusedModel(Model):
+class UnusedModel(Model[pl.LazyFrame, pl.LazyFrame]):
     def _predict(
         self, input_features: pl.DataFrame | pl.LazyFrame
     ) -> pl.LazyFrame:

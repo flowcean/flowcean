@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Hashable
 from typing import Any
 
 import polars as pl
@@ -129,7 +130,7 @@ class HoeffdingTree:
         for i, (x, y) in enumerate(self.samples, start=1):
             y_true = self._normalize_target(y, classification=classification)
             y_pred = self._normalize_prediction(
-                model.predict_one(x),
+                model.predict_one(dict[Hashable, Any](x.items())),
                 classification=classification,
             )
             metric.update(y_true, y_pred)

@@ -17,7 +17,7 @@ from flowcean.hybrid.hydra.learner import (
 )
 
 
-class ZeroDerivativeModel(Model):
+class ZeroDerivativeModel(Model[pl.LazyFrame, pl.LazyFrame]):
     @override
     def _predict(
         self, input_features: pl.DataFrame | pl.LazyFrame
@@ -162,7 +162,7 @@ def test_grouping_accepts_only_accurate_pending_rows_without_overwrite() -> (
 def test_grouping_predicts_whole_partial_batches_and_skips_completed_traces() -> (
     None
 ):
-    class CenteredModel(Model):
+    class CenteredModel(Model[pl.LazyFrame, pl.LazyFrame]):
         def __init__(self) -> None:
             self.batches: list[list[float]] = []
 

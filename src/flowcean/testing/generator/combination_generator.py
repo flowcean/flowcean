@@ -3,7 +3,6 @@ import itertools
 
 import polars as pl
 
-from flowcean.core.data import Data
 from flowcean.core.environment.incremental import Finished
 from flowcean.testing.domain import Discrete
 
@@ -73,6 +72,7 @@ class CombinationGenerator(TestcaseGenerator):
         )
         # Perform a first step to initialize the data
         self.step()
+        self._finished = False
 
     def step(self) -> None:
         try:
@@ -83,5 +83,5 @@ class CombinationGenerator(TestcaseGenerator):
             dict(test_case),
         )
 
-    def _observe(self) -> Data:
+    def _observe(self) -> pl.LazyFrame:
         return self.data.lazy()

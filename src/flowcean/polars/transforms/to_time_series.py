@@ -2,10 +2,10 @@ from typing import override
 
 import polars as pl
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 
-class ToTimeSeries(Transform):
+class ToTimeSeries(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Turn a table of timestamped measurements into a single time series.
 
     Each row becomes a ``{time, value}`` sample, using ``time_feature`` as

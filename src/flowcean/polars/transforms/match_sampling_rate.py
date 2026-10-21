@@ -4,7 +4,7 @@ from typing import Literal, cast
 import polars as pl
 import polars.selectors as cs
 
-from flowcean.core import Transform
+from flowcean.core import StatelessTransform
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ FillStrategy = Literal[
 ]
 
 
-class MatchSamplingRate(Transform):
+class MatchSamplingRate(StatelessTransform[pl.LazyFrame, pl.LazyFrame]):
     """Matches the sampling rate of all time series in the DataFrame.
 
     Interpolates the time series to match the sampling rate of the reference

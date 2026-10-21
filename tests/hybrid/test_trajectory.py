@@ -612,11 +612,11 @@ def test_dataframe_source_consumers(monkeypatch):
         compare_state_traces,
     )
 
-    class DerivativeModel(Model):
-        def __init__(self, rate):
+    class DerivativeModel(Model[pl.LazyFrame, pl.LazyFrame]):
+        def __init__(self, rate: float) -> None:
             self.rate = rate
 
-        def _predict(self, input_features):
+        def _predict(self, input_features: pl.LazyFrame) -> pl.LazyFrame:
             return input_features.lazy().select(
                 (pl.col("drive") * self.rate).alias("velocity")
             )
