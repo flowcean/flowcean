@@ -1,16 +1,14 @@
 """Run the wind turbine through a smooth 7..15..7 m/s wind cycle."""
 
+import argparse
 from pathlib import Path
 
 import matplotlib as mpl
-import numpy as np
-
-mpl.use("Agg")
-
 import matplotlib.pyplot as plt
+import numpy as np
 from scenarios import WIND_TURBINE
 
-from flowcean.hybrid import plot_locations, simulate
+from flowcean.hybrid import plot_locations, plot_style, simulate
 from flowcean.hybrid.benchmarks import wind_turbine_power
 from flowcean.hybrid.hybrid_system import display_label
 
@@ -20,7 +18,17 @@ def _caption(label: str) -> str:
     return label.replace("_", " ")
 
 
+@plot_style()
 def main() -> None:
+    mpl.use("Agg")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(__file__).parent / "outputs" / "wind_turbine.png",
+        help="figure path (SVG or another Matplotlib-supported format)",
+    )
+    args = parser.parse_args()
     # The default rotor is already turning; this is not startup from rest.
     system = WIND_TURBINE.factory()
     trajectory = simulate(
@@ -56,22 +64,28 @@ def main() -> None:
         ),
     )
     fig, axes = plt.subplots(
-        len(signals), 1, sharex=True, figsize=(9, 11), layout="constrained"
+        len(signals),
+        1,
+        sharex=True,
+        figsize=(9, 11),
+        layout="constrained",
     )
     for ax, (label, values) in zip(axes, signals, strict=True):
-        ax.plot(frame["t"], values, color="#263238")
-        plot_locations(trajectory, ax=ax, alpha=0.16)
+        ax.plot(frame["t"], values, color="0.25")
+        plot_locations(trajectory, ax=ax)
         ax.set_ylabel(label)
-        ax.grid(alpha=0.25)
     rated_power_mw = system.parameters["rated_mechanical_power"] / 1e6
     rated_line = axes[-1].axhline(
         rated_power_mw,
-        color="black",
+        color="0.25",
         linestyle="--",
         linewidth=1,
         label=f"Rated power: {rated_power_mw:.2f} MW",
     )
-    axes[-1].legend(handles=[rated_line], loc="lower center")
+    axes[-1].legend(
+        handles=[rated_line],
+        loc="lower center",
+    )
     axes[-1].set_xlabel("Time (s)")
     axes[-1].set_xlim(trajectory.t_span)
     fig.suptitle("Running wind turbine")
@@ -84,14 +98,14 @@ def main() -> None:
         loc="outside lower center",
         ncols=2,
         title="Controller mode",
-        frameon=False,
     )
 
-    output_path = Path(__file__).parent / "outputs" / "wind_turbine.png"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=150)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    metadata = {"Date": None} if args.output.suffix.lower() == ".svg" else None
+    with mpl.rc_context({"svg.hashsalt": "flowcean-wind-turbine"}):
+        fig.savefig(args.output, dpi=150, metadata=metadata)
     plt.close(fig)
-    print(f"Wrote {output_path}")
+    print(f"Wrote {args.output}")
 
 
 if __name__ == "__main__":

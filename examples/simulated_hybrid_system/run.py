@@ -4,12 +4,11 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import polars as pl
 from pysr import PySRRegressor
 
 import flowcean.cli
 import flowcean.utils
-from flowcean.hybrid import plot_trajectory, simulate
+from flowcean.hybrid import plot_style, plot_trajectory, simulate
 from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.hydra import (
     HybridDecisionTreeLearner,
@@ -19,8 +18,6 @@ from flowcean.hybrid.hydra import (
     HyDRATraceSchema,
     PlotCallback,
     SelectorFeatureConfig,
-    StateTraceComparison,
-    compare_state_traces,
 )
 from flowcean.pysr import PySRLearner
 
@@ -58,54 +55,6 @@ def print_selector_outputs(
     print("selector_svg", svg_path)
 
 
-def compare_learned_model_to_reference(
-    model: HyDRAModel,
-    reference_frame: pl.DataFrame,
-) -> tuple[pl.DataFrame, StateTraceComparison]:
-    learned_frame = model.simulate(
-        (float(reference_frame["t"][0]), float(reference_frame["t"][-1])),
-        reference_frame.select("x").row(0),
-        sample_times=reference_frame["t"].to_numpy(),
-        input_stream=thermostat_target_stream,
-    ).rename({"x0": "x"})
-    return learned_frame, compare_state_traces(
-        reference_frame, learned_frame, state_columns=["x"]
-    )
-
-
-def save_trace_comparison_plot(
-    reference_frame: pl.DataFrame,
-    learned_frame: pl.DataFrame,
-    path: Path,
-) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fig, ax = plt.subplots()
-    ax.plot(reference_frame["t"], reference_frame["x"], label="reference x")
-    ax.plot(
-        learned_frame["t"],
-        learned_frame["x"],
-        label="learned x",
-        linestyle="--",
-    )
-    ax.set_xlabel("t")
-    ax.set_ylabel("x")
-    ax.legend(loc="best")
-    fig.tight_layout()
-    fig.savefig(path)
-    plt.close(fig)
-
-
-def format_comparison_summary(comparison: StateTraceComparison) -> str:
-    return "\n".join(
-        (
-            "learned trace comparison",
-            f"mae: {comparison.mae:.6g}",
-            f"rmse: {comparison.rmse:.6g}",
-            f"max_error: {comparison.max_error:.6g}",
-        ),
-    )
-
-
 def main() -> None:
     flowcean.cli.initialize()
     flowcean.utils.initialize_random(EXAMPLE_SEED)
@@ -131,8 +80,8 @@ def main() -> None:
         show_location_labels=False,
         show_events=True,
         show_event_labels=False,
-        show=True,
     )
+    plt.show()
     frames = [
         trajectory.sample(
             dt=0.02, include_derivatives=True, include_inputs=True
@@ -204,13 +153,52 @@ def main() -> None:
         )
         return
 
-    learned_frame, comparison = compare_learned_model_to_reference(
-        model,
-        reference_frame,
+    learned_frame = model.simulate(
+        (float(reference_frame["t"][0]), float(reference_frame["t"][-1])),
+        reference_frame.select("x").row(0),
+        sample_times=reference_frame["t"].to_numpy(),
+        input_stream=thermostat_target_stream,
+    ).rename({"x0": "x"})
+    # Rollout uses the reference grid; exclude its supplied initial temperature.
+    error = (
+        learned_frame["x"].to_numpy()[1:] - reference_frame["x"].to_numpy()[1:]
     )
-    print(format_comparison_summary(comparison))
+    print("learned temperature errors")
+    print(f"scored rows: {error.size}/{reference_frame.height}")
+    print(f"mae: {np.mean(np.abs(error)):.6g}")
+    print(f"rmse: {np.sqrt(np.mean(error**2)):.6g}")
+    print(f"max_error: {np.max(np.abs(error)):.6g}")
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     comparison_path = OUTPUT_DIR / "learned_vs_reference.png"
-    save_trace_comparison_plot(reference_frame, learned_frame, comparison_path)
+    with plot_style():
+        fig, ax = plt.subplots()
+        ax.plot(
+            reference_frame["t"],
+            reference_frame["x"],
+            color="C0",
+            label="Reference",
+        )
+        ax.plot(
+            learned_frame["t"],
+            learned_frame["x"],
+            color="C0",
+            linestyle="--",
+            label="Learned",
+        )
+        ax.axvline(
+            reference_frame["t"][1],
+            color="0.4",
+            linestyle=":",
+            linewidth=1,
+            label="Initial row excluded",
+        )
+        ax.set_xlabel("t")
+        ax.set_ylabel("Temperature")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(comparison_path)
+        plt.close(fig)
     print("trace_comparison_plot", comparison_path)
 
 

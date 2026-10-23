@@ -609,7 +609,6 @@ def test_dataframe_source_consumers(monkeypatch):
     from flowcean.hybrid.hydra import (
         HyDRAModel,
         HyDRATraceSchema,
-        compare_state_traces,
     )
 
     class DerivativeModel(Model):
@@ -660,13 +659,3 @@ def test_dataframe_source_consumers(monkeypatch):
     np.testing.assert_allclose(frame["x0"], [0, 1, 0], atol=1e-14)
     assert frame["flow_id"].to_list() == [0, 1, 1]
     assert frame["flow_time"].to_list() == [0, 0, 0.5]
-    assert compare_state_traces(frame, frame).max_error == 0
-    renamed = frame.rename({"x0": "position"})
-    assert (
-        compare_state_traces(renamed, renamed, state_columns=["position"]).mae
-        == 0
-    )
-    with pytest.raises(ValueError, match="Time grids must match"):
-        compare_state_traces(frame, frame.with_columns(pl.col("t") + 1))
-    with pytest.raises(ValueError, match="State columns must match"):
-        compare_state_traces(frame, frame.with_columns(pl.lit(0).alias("x1")))

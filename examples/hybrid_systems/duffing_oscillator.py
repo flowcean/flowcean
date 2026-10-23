@@ -8,18 +8,21 @@ import argparse
 from pathlib import Path
 
 import matplotlib as mpl
-import numpy as np
-
-mpl.use("Agg")
-
 import matplotlib.pyplot as plt
+import numpy as np
 from scenarios import DUFFING_OSCILLATOR
 
-from flowcean.hybrid import plot_locations, plot_trajectory, simulate
+from flowcean.hybrid import (
+    plot_locations,
+    plot_style,
+    plot_trajectory,
+    simulate,
+)
 
 
+@plot_style()
 def main() -> None:
-    mpl.rcParams["svg.hashsalt"] = "flowcean-duffing-oscillator"
+    mpl.use("Agg")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--output",
@@ -46,8 +49,8 @@ def main() -> None:
     )
     axes[1].sharex(axes[0])
     axes[2].sharex(axes[0])
-    axes[0].plot(frame["t"], frame["u0"], color="#263238")
-    plot_locations(trajectory, ax=axes[0], alpha=0.16)
+    axes[0].plot(frame["t"], frame["u0"], color="0.25")
+    plot_locations(trajectory, ax=axes[0])
     for dimension, ax in enumerate(axes[1:3]):
         plot_trajectory(
             trajectory,
@@ -57,14 +60,14 @@ def main() -> None:
             show_events=False,
         )
         ax.get_legend().remove()
-        plot_locations(trajectory, ax=ax, alpha=0.16)
+        plot_locations(trajectory, ax=ax)
     threshold_lines = []
     for name, style in (("inner_radius", ":"), ("outer_radius", "--")):
         radius = system.parameters[name]
         for sign in (-1, 1):
             line = axes[1].axhline(
                 sign * radius,
-                color="#616161",
+                color="0.4",
                 linestyle=style,
                 linewidth=0.9,
                 label=name.replace("_", " ") if sign == 1 else "_nolegend_",
@@ -72,13 +75,14 @@ def main() -> None:
             if sign == 1:
                 threshold_lines.append(line)
     axes[1].legend(
-        handles=threshold_lines, loc="lower right", fontsize=8, framealpha=0.9
+        handles=threshold_lines,
+        loc="lower right",
     )
     for event in trajectory.events:
         axes[2].plot(
             [event.time, event.time],
             [event.state_before[1], event.state_after[1]],
-            color="#263238",
+            color="0.25",
             linestyle="--",
             linewidth=1.2,
         )
@@ -97,12 +101,13 @@ def main() -> None:
             show_events=False,
         )
         zoom.get_legend().remove()
-        plot_locations(trajectory, ax=zoom, alpha=0.16)
+        plot_locations(trajectory, ax=zoom)
         zoom.plot(
             [event.time, event.time],
             [event.state_before[1], event.state_after[1]],
-            color="#263238",
+            color="0.25",
             linestyle="--",
+            linewidth=1.2,
             marker="o",
             markersize=3,
         )
@@ -136,8 +141,6 @@ def main() -> None:
     axes[0].tick_params(labelbottom=False)
     axes[1].tick_params(labelbottom=False)
     axes[2].set_xlabel("Time (normalized)")
-    for ax in axes:
-        ax.grid(alpha=0.25)
     fig.suptitle("Driven Duffing oscillator")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(
@@ -145,11 +148,11 @@ def main() -> None:
         [label.replace("_", " ").capitalize() for label in labels],
         loc="outside lower center",
         ncols=2,
-        frameon=False,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     metadata = {"Date": None} if args.output.suffix.lower() == ".svg" else None
-    fig.savefig(args.output, metadata=metadata, dpi=150)
+    with mpl.rc_context({"svg.hashsalt": "flowcean-duffing-oscillator"}):
+        fig.savefig(args.output, metadata=metadata, dpi=150)
     plt.close(fig)
     if args.output.suffix.lower() == ".svg":
         # Match repository whitespace checks as part of actual generation.

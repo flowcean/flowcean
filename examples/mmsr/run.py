@@ -164,9 +164,11 @@ def main() -> None:
                 next_location = selector.predict(location, [predicted[-1]], [])
             predicted.append(next_temperature)
             location = next_location
+        # Both predictors start from the same supplied temperature seed.
         error = (
             np.asarray(predicted[1:]) - held_out["temperature"].to_numpy()[1:]
         )
+        print(f"{method} scored held-out rows: {error.size}/{held_out.height}")
         print(
             f"{method} recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.8g}"
         )

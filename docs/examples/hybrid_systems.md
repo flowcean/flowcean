@@ -415,7 +415,7 @@ Run the standalone example to print location changes and save a plot:
 uv run --directory ./examples/hybrid_systems python wind_turbine.py
 ```
 
-Its output is `examples/hybrid_systems/outputs/wind_turbine.png`.
+Its output is `examples/hybrid_systems/outputs/wind_turbine.png`. Use `--output` to choose another path or format; the stacked panels retain each quantity's units.
 
 ## Delayed Valve Closure
 
@@ -458,5 +458,7 @@ uv run --directory ./examples/hybrid_systems python export_graphs.py
 This writes one DOT file per example under `examples/hybrid_systems/outputs/automata/`. Add `--svg` to render SVG files; this requires Graphviz's `dot` executable on `PATH`.
 
 The Duffing gallery diagram is the generated `outputs/automata/duffing_oscillator.svg`; after an SVG export, copy it to `docs/assets/hybrid_systems/duffing_oscillator-automaton.svg` to update that illustration.
+
+Native diagrams and plots use the same location palette within a system. To customize it, pass the same `location_colors` mapping keyed by `Location` objects to the diagram and plotting helpers.
 
 For programmatic export and label options, see [`build_hybrid_system_dot`][flowcean.hybrid.build_hybrid_system_dot] and [`render_dot_svg`][flowcean.hybrid.render_dot_svg].

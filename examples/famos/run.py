@@ -78,10 +78,12 @@ def main() -> None:
         output_history=held_out.select("temperature").head(1).to_numpy(),
         initial_location=initial_location,
     )
+    # The first temperature was supplied as the rollout seed, not predicted.
     error = (
         predicted["temperature"].to_numpy()[1:]
         - held_out["temperature"].to_numpy()[1:]
     )
+    print(f"Scored held-out rows: {error.size}/{held_out.height}")
     print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.6g}")
     print(f"Maximum held-out absolute error: {np.max(np.abs(error)):.6g}")
     print(

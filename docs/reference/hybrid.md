@@ -6,21 +6,21 @@ icon: lucide/workflow
 
 This page covers the public API of `flowcean.hybrid` and its subpackages:
 
-- [Modeling and simulation](#flowcean.hybrid): system definitions, automaton diagrams, trajectories, explicit sampling, and plotting.
+- [Modeling, Simulation, and Plotting](#flowcean.hybrid): system definitions, automaton diagrams, trajectories, explicit sampling, plotting, and the opt-in `plot_style()` context for custom Matplotlib figures.
 - [Benchmarks](#flowcean.hybrid.benchmarks): reusable system factories.
 - [HyDRA identification](#flowcean.hybrid.hydra): `HyDRALearner` returns fully assigned `LearnedFlows` or raises `HyDRAIdentificationError` with the failing `segment`. Use `to_labeled_frames` for selector training or `to_flow_ids` for NumPy assignments. Progress observers use `HyDRACallback` or `PlotCallback`; selector helpers are also available from `flowcean.hybrid.hydra.selector`.
 - [Dainarx identification](#flowcean.hybrid.dainarx): `fit_dainarx_dynamics` discovers sampled NARX dynamics; `fit_dainarx_transitions` learns guards and post-switch predictors. `fit_dainarx` composes both stages. See the [Dainarx example](../examples/dainarx.md).
 - [FaMoS-DTW identification](#flowcean.hybrid.famos): independent partial location discovery, sampled affine ARX fitting, and source-conditioned next-location trees. See the [FaMoS example](../examples/famos.md).
 - [MMSR identification](#flowcean.hybrid.mmsr): coupled scalar symbolic regression and separate soft-membership transition modeling, with inspectable mappings and guards. See the [MMSR example](../examples/mmsr.md).
 
-See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and examples.
+See the [hybrid systems guide](../user_guide/hybrid_systems.md) for modeling concepts and the [evaluation guide](../user_guide/evaluation.md) for selecting observations and scoring predictions with existing tools.
 
 <!-- prettier-ignore-start -->
 <!-- Mkdocstrings option blocks require indentation that Prettier removes. -->
 ::: flowcean.hybrid
     options:
-      heading: Modeling and simulation
-      toc_label: Modeling and simulation
+      heading: Modeling, Simulation, and Plotting
+      toc_label: Modeling, Simulation, and Plotting
 
 ::: flowcean.hybrid.benchmarks
     options:

@@ -1,13 +1,22 @@
 """DOT export and external rendering of hybrid-system structure."""
 
+import re
 from types import SimpleNamespace
 from typing import Never
 from unittest.mock import Mock
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.colors import to_hex
 
-from flowcean.hybrid import _graphviz, build_hybrid_system_dot, render_dot_svg
+from flowcean.hybrid import (
+    _graphviz,
+    build_hybrid_system_dot,
+    plot_locations,
+    render_dot_svg,
+    simulate,
+)
 from flowcean.hybrid.hybrid_system import (
     CrossingDirection,
     EventSurface,
@@ -48,7 +57,7 @@ def _system(
     )
 
 
-def test_exact_dot_preserves_order_nonfirst_initial_isolated_and_parallel_edges() -> (
+def test_dot_preserves_order_nonfirst_initial_isolated_and_parallel_edges() -> (
     None
 ):
     first = Location(AnonymousCallback(), label="same")
@@ -61,21 +70,20 @@ def test_exact_dot_preserves_order_nonfirst_initial_isolated_and_parallel_edges(
         Transition(second, second, event, reset=Reset(AnonymousCallback())),
     ]
     system = _system([first, second, isolated], transitions, initial=second)
-    assert build_hybrid_system_dot(system) == "\n".join(
-        [
-            "digraph HybridSystem {",
-            "  rankdir=LR;",
-            "  start [shape=point];",
-            '  location_0 [label="same"];',
-            '  location_1 [label="flow"];',
-            '  location_2 [label="same"];',
-            "  start -> location_1;",
-            '  location_0 -> location_1 [label="event: arrive"];',
-            '  location_0 -> location_1 [label="event: arrive"];',
-            '  location_1 -> location_1 [label="event: arrive\\nreset: reset_2"];',
-            "}",
-        ],
-    )
+    dot = build_hybrid_system_dot(system)
+    assert "rankdir=LR" in dot
+    assert "start [shape=point" in dot
+    assert re.findall(r'  (location_\d+) \[label="([^"]*)"', dot) == [
+        ("location_0", "same"),
+        ("location_1", "flow"),
+        ("location_2", "same"),
+    ]
+    assert [line for line in dot.splitlines() if " -> " in line] == [
+        "  start -> location_1;",
+        '  location_0 -> location_1 [label="event: arrive"];',
+        '  location_0 -> location_1 [label="event: arrive"];',
+        '  location_1 -> location_1 [label="event: arrive\\nreset: reset_2"];',
+    ]
 
 
 def test_anonymous_fallbacks_and_original_display_label_behavior() -> None:
@@ -89,7 +97,7 @@ def test_anonymous_fallbacks_and_original_display_label_behavior() -> None:
         [Transition(location, target, event, reset)],
     )
     dot = build_hybrid_system_dot(system)
-    assert 'location_0 [label="location_0"]' in dot
+    assert 'location_0 [label="location_0",' in dot
     assert 'label="event: event_0\\nreset: reset_0"' in dot
     assert "0x" not in dot
     assert display_label(location, fallback="stable") == "stable"
@@ -116,10 +124,10 @@ def test_callable_names_and_explicit_label_precedence() -> None:
         [Transition(location, from_callback, event, reset)],
     )
     dot = build_hybrid_system_dot(system)
-    assert 'location_0 [label="location"]' in dot
-    assert 'location_1 [label="flow"]' in dot
+    assert 'location_0 [label="location",' in dot
+    assert 'location_1 [label="flow",' in dot
     assert (
-        'location_2 [label="test_callable_names_and_explicit_label_precedence.<locals>.named_callback"]'
+        'location_2 [label="test_callable_names_and_explicit_label_precedence.<locals>.named_callback",'
         in dot
     )
     assert (
@@ -139,7 +147,7 @@ def test_dot_labels_escape_special_characters_and_crlf() -> None:
     dot = build_hybrid_system_dot(
         _system([first, second], [Transition(first, second, event, reset)]),
     )
-    assert 'location_0 [label="\\"quoted\\"\\\\slash\\n<html>\\nlast"]' in dot
+    assert 'location_0 [label="\\"quoted\\"\\\\slash\\n<html>\\nlast",' in dot
     assert 'label="event: e\\"\\\\\\n<b>\\nreset: r\\nnext"' in dot
     assert "<html>" in dot
     assert "<b>" in dot
@@ -257,7 +265,7 @@ def test_build_does_not_require_dot_or_run_subprocess(
     run = Mock(side_effect=AssertionError("unexpected subprocess"))
     monkeypatch.setattr(_graphviz.subprocess, "run", run)
     location = Location(AnonymousCallback())
-    assert 'location_0 [label="location_0"]' in build_hybrid_system_dot(
+    assert 'location_0 [label="location_0",' in build_hybrid_system_dot(
         _system([location], []),
     )
     run.assert_not_called()
@@ -308,43 +316,78 @@ def test_render_svg_missing_executable_and_nonzero_exit(
         render_dot_svg("bad DOT")
 
 
-def test_selector_shared_helper_regression(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    assert selector_graph.render_dot_svg is render_dot_svg
-    assert selector_graph._escape_dot_label is _graphviz._escape_dot_label
+def test_selector_predicate_branches_escaping_and_artifact_colors() -> None:
     inspection = SelectorInspection(
         nodes=(
             SelectorNodeInspection(
                 node_id=0,
-                is_leaf=True,
-                sample_count=1,
+                is_leaf=False,
+                sample_count=2,
                 impurity=0.0,
                 predicted_flow_id=2,
-                weighted_class_support={2: 1.0},
+                weighted_class_support={2: 2.0},
+                feature_name='temperature"',
+                threshold=22.0,
+                left_child_id=1,
+                right_child_id=2,
+            ),
+            *(
+                SelectorNodeInspection(
+                    node_id=index,
+                    is_leaf=True,
+                    sample_count=1,
+                    impurity=0.0,
+                    predicted_flow_id=2,
+                    weighted_class_support={2: 1.0},
+                )
+                for index in (1, 2)
             ),
         ),
-        leaves=(
+        leaves=tuple(
             SelectorLeafInspection(
-                node_id=0,
+                node_id=index,
                 flow_id=2,
                 sample_count=1,
                 weighted_class_support={2: 1.0},
-                flow_summary="line one\nline two",
-            ),
+                flow_summary='line "one"\\value\nline two',
+            )
+            for index in (1, 2)
         ),
         flows=(),
-        feature_columns=(),
+        feature_columns=('temperature"',),
         classes=(2,),
-        max_depth=0,
-        n_leaves=1,
+        max_depth=1,
+        n_leaves=2,
     )
-    assert selector_graph.build_selector_dot(inspection) == (
-        "digraph Selector {\n  node [shape=box];\n"
-        '  node_0 [label="flow_id=2\\nflow=line one | line two"];\n}'
+    dot = selector_graph.build_selector_dot(inspection)
+    assert "node [shape=box]" in dot
+    assert 'temperature\\" <= 22\\nraw_samples=2' in dot
+    assert 'node_0 -> node_1 [label="True"]' in dot
+    assert 'node_0 -> node_2 [label="False"]' in dot
+    assert dot.count(r"flow_id=2\nflow=line \"one\"\\value | line two") == 2
+    colors = re.findall(r'node_[12] \[.*color="(#[0-9a-fA-F]+)"', dot)
+    assert len(colors) == 2
+    assert colors[0] == colors[1]
+    assert 'fontname="DejaVu Sans"' in dot
+    assert "penwidth=1.6" in dot
+
+
+def test_native_dot_and_plots_share_explicit_location_colors() -> None:
+    first = Location(lambda: np.array([1.0]), label="same")
+    second = Location(lambda: np.array([0.0]), label="same")
+    system = _system(
+        [first, second], [Transition(first, second, lambda t: t - 0.5)]
     )
-    monkeypatch.setattr(_graphviz.shutil, "which", lambda _: None)
-    with pytest.raises(
-        RuntimeError, match="Graphviz 'dot' executable not found"
-    ):
-        selector_graph.render_dot_svg("digraph Selector {}")
+    colors = {first: "red", second: "#123456"}
+    dot = build_hybrid_system_dot(system, location_colors=colors)
+    assert 'fontname="DejaVu Sans"' in dot
+    assert 'fontcolor="#17212B"' in dot
+    assert "penwidth=1.6" in dot
+    fig, ax = plt.subplots()
+    try:
+        plot_locations(simulate(system, (0, 1)), location_colors=colors, ax=ax)
+        for index, patch in enumerate(ax.patches):
+            color = to_hex(patch.get_facecolor())
+            assert f'location_{index} [label="same", color="{color}"' in dot
+    finally:
+        plt.close(fig)

@@ -3,6 +3,19 @@
 import shutil
 import subprocess
 
+from ._plot_style import FONT_FAMILY, INK
+
+
+def _dot_style() -> tuple[str, ...]:
+    """Shared presentation only; each graph owns its layout and semantics."""
+    return (
+        f'  graph [fontname="{FONT_FAMILY}", bgcolor="white"];',
+        f'  node [fontname="{FONT_FAMILY}", fontsize=11, fontcolor="{INK}", '
+        f'color="{INK}", penwidth=1.6, style=filled, fillcolor="white"];',
+        f'  edge [fontname="{FONT_FAMILY}", fontsize=9, fontcolor="{INK}", '
+        f'color="{INK}", penwidth=1.6, arrowsize=0.7];',
+    )
+
 
 def _escape_dot_label(label: str) -> str:
     """Normalize line endings and escape text for a quoted DOT label."""

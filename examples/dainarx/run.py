@@ -73,10 +73,12 @@ def main() -> None:
         output_history=held_out.select("position").head(order).to_numpy(),
         initial_location=dynamics.segments[0].location_id,
     )
+    # Exclude the measured position history supplied to the rollout.
     error = (
         predicted["position"].to_numpy()[order:]
         - held_out["position"].to_numpy()[order:]
     )
+    print(f"Scored held-out rows: {error.size}/{held_out.height}")
     print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.6g}")
     print(f"Maximum held-out absolute error: {np.max(np.abs(error)):.6g}")
 

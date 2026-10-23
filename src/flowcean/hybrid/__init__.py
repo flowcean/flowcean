@@ -20,7 +20,12 @@ from .hybrid_system import (
     Transition,
     TransitionSchedulingPolicy,
 )
-from .plotting import plot_locations, plot_state_space, plot_trajectory
+from .plotting import (
+    plot_locations,
+    plot_state_space,
+    plot_style,
+    plot_trajectory,
+)
 from .simulator import (
     AmbiguousTransitionError,
     HybridSimulationError,
@@ -70,6 +75,7 @@ __all__ = (
     "mmsr",
     "plot_locations",
     "plot_state_space",
+    "plot_style",
     "plot_trajectory",
     "render_dot_svg",
     "simulate",

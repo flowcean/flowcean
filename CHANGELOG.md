@@ -6,6 +6,8 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Added
 
+- Added `flowcean.hybrid.plot_style()` as an opt-in context manager or function decorator for custom Matplotlib figures, restoring prior settings on exit without selecting a backend.
+- Native plots, HyDRA discovery overlays, and DOT diagrams share typography and an artifact-local palette without changing global Matplotlib settings.
 - Added `flowcean.hybrid.mmsr` for clustered symbolic regression with scalar outputs and separate soft-membership transition modeling, using the optional PySR backend, with inspectable expressions, variances, guards, stopping diagnostics, and a sampled thermostat example.
 - Added `flowcean.hybrid.famos` for independent FaMoS-DTW location discovery, sampled affine ARX dynamics, source-conditioned next-location trees, and recursive rollout, with a native thermostat example and exact C-backed DTW dependency.
 - Added `flowcean.hybrid.dainarx` to learn hybrid models from noise-free traces of inputs and outputs, with a Duffing benchmark example that reports discovery results and incomplete transition fitting.
@@ -16,6 +18,9 @@ This changelog records notable user-facing changes to Flowcean. Its format is ba
 
 ### Changed
 
+- **Breaking:** Native `plot_trajectory` and `plot_state_space` no longer accept `show`; they return axes and leave display, saving, and closing to the caller. Use `matplotlib.pyplot.show()` explicitly. Interactive `PlotCallback` remains available; `show=False` now also disables explicit redraws, GUI event processing, and pauses. Discovery overlays distinguish provisional grouping and active windows by hatching and outlines, and selector diagrams label predicate branches.
+- Native automaton diagrams accept `location_colors` keyed by `Location`, matching the same override in native plots.
+- **Breaking:** Removed HyDRA's `compare_state_traces`, `StateTraceComparison`, and `hydra.simulation` module. Select and align observations in experiment code, then use existing NumPy, scikit-learn, or Flowcean metrics.
 - **Breaking:** `fit_famos_transitions` now accepts independent frames with explicit nullable integer `location_id` labels, ordered output/input features, and a declared location count instead of `FamosDiscovery`. `FamosModel` checks feature order and location count rather than discovery identity; callers must align location meanings and training timing. The MMSR example compares soft-membership symbolic guards with hardened-label FaMoS trees on the same fixed CSR dynamics.
 - The `pysr` extra now requires PySR 2.3.0 or newer.
 - **Breaking:** `HyDRALearner.learn` accepts independent Polars traces with explicit `input_features` and `output_features`, returning `LearnedFlows` rather than a predictor only when every supplied observation is assigned. Failure raises public `HyDRAIdentificationError` (`RuntimeError`), whose `.segment` and message identify the failing trace and half-open row bounds; no partial result is returned. `LearnedFlows` exposes `flows`, `trace_lengths`, `input_features`, and `output_features`; `to_flow_ids()` returns fully assigned int64 arrays and `to_labeled_frames(original_traces)` adds non-null Int64 `flow_id` labels for selector training. Train selectors and construct `HyDRAModel` separately; learner-level selector and schema arguments are removed.

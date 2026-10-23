@@ -1,9 +1,13 @@
 """Plots use continuous segments, not the resolution of a sampled frame."""
 
+from contextlib import nullcontext
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.axes import Axes
+from matplotlib.rcsetup import cycler
 
 from flowcean.hybrid import (
     HybridSystem,
@@ -12,6 +16,7 @@ from flowcean.hybrid import (
     Transition,
     plot_locations,
     plot_state_space,
+    plot_style,
     plot_trajectory,
     simulate,
 )
@@ -222,6 +227,93 @@ def test_self_reset_creates_separate_positive_shading_intervals() -> None:
 def test_plot_locations_rejects_invalid_alpha(alpha: float) -> None:
     with pytest.raises(ValueError, match="alpha"):
         plot_locations(simulate(_system()[0], (0, 1)), alpha=alpha)
+
+
+def test_native_baseline_is_local_and_keeps_caller_artists(
+    monkeypatch,
+) -> None:
+    trajectory = simulate(_system()[0], (0, 1))
+    with mpl.rc_context({"font.family": "serif", "axes.facecolor": "black"}):
+        settings = dict(mpl.rcParams)
+        fig, axes = plt.subplots(1, 3)
+        backend = mpl.get_backend()
+
+        def forbidden(*args, **kwargs):
+            pytest.fail(
+                "Static renderers must not manage figures or GUI events"
+            )
+
+        try:
+            monkeypatch.setattr(plt, "show", forbidden)
+            monkeypatch.setattr(plt, "pause", forbidden)
+            monkeypatch.setattr(plt, "savefig", forbidden)
+            monkeypatch.setattr(mpl, "use", forbidden)
+            monkeypatch.setattr(fig.canvas, "flush_events", forbidden)
+            for ax, renderer in zip(
+                axes,
+                (plot_trajectory, plot_state_space, plot_locations),
+                strict=True,
+            ):
+                (line,) = ax.plot([0, 1], [7, 7], color="red", linewidth=4)
+                assert renderer(trajectory, ax=ax) is ax
+                assert line.get_linewidth() == 4
+                assert line.get_color() == "red"
+                assert ax.get_facecolor() == (1, 1, 1, 1)
+                assert ax.xaxis.label.get_fontfamily() == ["DejaVu Sans"]
+                assert dict(mpl.rcParams) == settings
+                assert mpl.get_backend() == backend
+        finally:
+            plt.close(fig)
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_public_style_context_styles_custom_figures_and_restores_settings(
+    fail,
+) -> None:
+    backend = mpl.get_backend()
+    with mpl.rc_context(
+        {
+            "font.family": "serif",
+            "axes.facecolor": "black",
+            "axes.grid": False,
+            "lines.linewidth": 7,
+            "legend.frameon": True,
+            "axes.prop_cycle": cycler(color=["magenta"]),
+        }
+    ):
+        settings = dict(mpl.rcParams)
+        fig = None
+        try:
+            expected = (
+                pytest.raises(RuntimeError, match="example failure")
+                if fail
+                else nullcontext()
+            )
+            with expected, plot_style():
+                fig, ax = plt.subplots()
+                (first,) = ax.plot([0, 1], [0, 1], label="first")
+                (second,) = ax.plot([0, 1], [1, 2], label="second")
+                (custom,) = ax.plot([0, 1], [2, 3], color="red", linewidth=4)
+                legend = ax.legend()
+                assert ax.get_facecolor() == (1, 1, 1, 1)
+                assert ax.xaxis.label.get_fontfamily() == ["DejaVu Sans"]
+                assert first.get_linewidth() == 2.0
+                assert first.get_color() != "magenta"
+                assert first.get_color() != second.get_color()
+                assert any(line.get_visible() for line in ax.get_xgridlines())
+                assert not legend.get_frame_on()
+                assert (custom.get_color(), custom.get_linewidth()) == (
+                    "red",
+                    4,
+                )
+                assert mpl.get_backend() == backend
+                if fail:
+                    raise RuntimeError("example failure")
+            assert dict(mpl.rcParams) == settings
+            assert mpl.get_backend() == backend
+        finally:
+            if fig is not None:
+                plt.close(fig)
 
 
 def test_equal_endpoints_have_no_positive_shading() -> None:

@@ -247,9 +247,27 @@ A transition belongs to the model; an event records one occurrence of it. The sa
 To plot the run, use [`plot_trajectory`][flowcean.hybrid.plot_trajectory]:
 
 ```python
+import matplotlib.pyplot as plt
+
 from flowcean.hybrid import plot_trajectory
 
-plot_trajectory(trajectory, show=True)
+ax = plot_trajectory(trajectory)
+plt.show()
+```
+
+Static plotting helpers return axes; your application owns showing, saving, and closing figures. Native plots and automaton diagrams share colors within a system. Pass the same `location_colors` mapping, keyed by `Location` objects, to customize both; matching colors across independently learned or constructed artifacts do not imply matching locations.
+
+For custom Matplotlib figures, [`plot_style`][flowcean.hybrid.plot_style] temporarily applies the same visual defaults. Settings are restored when the context exits, including on errors; ordinary Matplotlib arguments still override defaults.
+
+```python
+from flowcean.hybrid import plot_style
+
+with plot_style():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [20, 21], label="Temperature")
+    ax.set_ylabel("Temperature (deg C)")
+    ax.legend()
+    plt.show()
 ```
 
 To read the temperature and active location at a particular time, use [`evaluate`][flowcean.hybrid.HybridTrajectory.evaluate]:

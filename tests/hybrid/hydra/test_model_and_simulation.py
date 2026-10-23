@@ -13,7 +13,6 @@ from flowcean.hybrid.hydra import (
     HyDRAModel,
     HyDRATraceSchema,
     SelectorFeatureConfig,
-    compare_state_traces,
 )
 
 
@@ -405,40 +404,4 @@ def test_optional_predictor_validates_schema_roles() -> None:
             input_features=["time", "x"],
             output_features=["wrong"],
             trace_schema=_schema(),
-        )
-
-
-def _trace(times: list[float], states: list[list[float]]) -> pl.DataFrame:
-    matrix = np.asarray(states, dtype=float)
-    return pl.DataFrame(
-        {"t": times, **{f"x{i}": matrix[:, i] for i in range(matrix.shape[1])}}
-    )
-
-
-def test_compare_state_traces_calculates_elementwise_and_summary_metrics() -> (
-    None
-):
-    reference = _trace([0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]])
-    predicted = _trace([0.0, 1.0], [[0.0, 4.0], [3.0, 2.0]])
-
-    comparison = compare_state_traces(reference, predicted)
-
-    np.testing.assert_allclose(
-        comparison.absolute_error,
-        [[1.0, 2.0], [0.0, 2.0]],
-    )
-    assert comparison.mae == pytest.approx(1.25)
-    assert comparison.rmse == pytest.approx(1.5)
-    assert comparison.max_error == pytest.approx(2.0)
-
-
-def test_compare_state_traces_validates_grid_and_shape() -> None:
-    reference = _trace([0.0, 1.0], [[1.0], [2.0]])
-
-    with pytest.raises(ValueError, match="Time grids must match"):
-        compare_state_traces(reference, _trace([0.0, 1.1], [[1.0], [2.0]]))
-    with pytest.raises(ValueError, match="State columns must match"):
-        compare_state_traces(
-            reference,
-            _trace([0.0, 1.0], [[1.0, 2.0], [2.0, 3.0]]),
         )

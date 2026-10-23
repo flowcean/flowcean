@@ -9,9 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib as mpl
-
-mpl.use("Agg")
-
 import matplotlib.pyplot as plt
 from scenarios import SCENARIOS, Scenario
 
@@ -59,6 +56,7 @@ def format_benchmark_summary(summary: BenchmarkRunSummary) -> str:
 
 
 def main() -> None:
+    mpl.use("Agg")
     specs = SCENARIOS
     output_path = Path("outputs") / "benchmarks.png"
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -71,6 +69,7 @@ def main() -> None:
         cols,
         figsize=(cols * 5.0, rows * 3.0),
         layout="constrained",
+        facecolor="white",
     )
     axes_list = axes.flatten()
 
@@ -97,6 +96,7 @@ def main() -> None:
         ax.axis("off")
 
     fig.savefig(output_path, dpi=150)
+    plt.close(fig)
     print(f"wrote {output_path}")
 
 
