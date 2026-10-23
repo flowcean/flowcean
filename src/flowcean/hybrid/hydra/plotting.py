@@ -226,6 +226,7 @@ class PlotCallback(HyDRACallback):
             loc="best",
             prop=LEGEND_FONT,
             frameon=False,
+            labelcolor=INK,
         )
         ax.set_title(f"Trace {self.trace_index} | {status}")
         if self.show:

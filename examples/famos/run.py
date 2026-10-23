@@ -3,7 +3,7 @@
 import numpy as np
 import polars as pl
 
-from flowcean.hybrid import compare_traces, simulate
+from flowcean.hybrid import simulate
 from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.famos import (
     FamosModel,
@@ -78,15 +78,14 @@ def main() -> None:
         output_history=held_out.select("temperature").head(1).to_numpy(),
         initial_location=initial_location,
     )
-    comparison = compare_traces(
-        held_out, predicted, columns=["temperature"], exclude_initial=1
+    # The first temperature was supplied as the rollout seed, not predicted.
+    error = (
+        predicted["temperature"].to_numpy()[1:]
+        - held_out["temperature"].to_numpy()[1:]
     )
-    print(
-        f"Scored held-out rows: {comparison.scored_rows}/{comparison.total_rows}"
-    )
-    score = comparison.scores.row(0, named=True)
-    print(f"Recursive held-out RMSE: {score['rmse']:.6g}")
-    print(f"Maximum held-out absolute error: {score['max_error']:.6g}")
+    print(f"Scored held-out rows: {error.size}/{held_out.height}")
+    print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.6g}")
+    print(f"Maximum held-out absolute error: {np.max(np.abs(error)):.6g}")
     print(
         "Fixed target only: constant input and bias are collinear; arbitrary target response is not identified."
     )

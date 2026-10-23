@@ -8,7 +8,7 @@ import polars as pl
 from pysr import PySRRegressor
 from sklearn.tree import export_text
 
-from flowcean.hybrid import compare_traces, simulate
+from flowcean.hybrid import simulate
 from flowcean.hybrid.benchmarks import thermostat
 from flowcean.hybrid.famos import fit_famos_transitions
 from flowcean.hybrid.mmsr import fit_mmsr_csr, fit_mmsr_transitions
@@ -164,19 +164,16 @@ def main() -> None:
                 next_location = selector.predict(location, [predicted[-1]], [])
             predicted.append(next_temperature)
             location = next_location
-        prediction = pl.DataFrame(
-            {"t": held_out["t"], "temperature": predicted}
+        # Both predictors start from the same supplied temperature seed.
+        error = (
+            np.asarray(predicted[1:]) - held_out["temperature"].to_numpy()[1:]
         )
-        comparison = compare_traces(
-            held_out, prediction, columns=["temperature"], exclude_initial=1
+        print(f"{method} scored held-out rows: {error.size}/{held_out.height}")
+        print(
+            f"{method} recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.8g}"
         )
         print(
-            f"{method} scored held-out rows: {comparison.scored_rows}/{comparison.total_rows}"
-        )
-        score = comparison.scores.row(0, named=True)
-        print(f"{method} recursive held-out RMSE: {score['rmse']:.8g}")
-        print(
-            f"{method} maximum held-out absolute error: {score['max_error']:.8g}"
+            f"{method} maximum held-out absolute error: {np.max(np.abs(error)):.8g}"
         )
     print(
         "Fixed-target sampled maps, not ODEs or arbitrary-target response. "

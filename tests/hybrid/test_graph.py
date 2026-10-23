@@ -369,7 +369,7 @@ def test_selector_predicate_branches_escaping_and_artifact_colors() -> None:
     assert len(colors) == 2
     assert colors[0] == colors[1]
     assert 'fontname="DejaVu Sans"' in dot
-    assert "penwidth=1.2" in dot
+    assert "penwidth=1.6" in dot
 
 
 def test_native_dot_and_plots_share_explicit_location_colors() -> None:
@@ -381,8 +381,8 @@ def test_native_dot_and_plots_share_explicit_location_colors() -> None:
     colors = {first: "red", second: "#123456"}
     dot = build_hybrid_system_dot(system, location_colors=colors)
     assert 'fontname="DejaVu Sans"' in dot
-    assert 'fontcolor="#374151"' in dot
-    assert "penwidth=1.2" in dot
+    assert 'fontcolor="#17212B"' in dot
+    assert "penwidth=1.6" in dot
     fig, ax = plt.subplots()
     try:
         plot_locations(simulate(system, (0, 1)), location_colors=colors, ax=ax)

@@ -11,9 +11,9 @@ def _dot_style() -> tuple[str, ...]:
     return (
         f'  graph [fontname="{FONT_FAMILY}", bgcolor="white"];',
         f'  node [fontname="{FONT_FAMILY}", fontsize=11, fontcolor="{INK}", '
-        f'color="{INK}", penwidth=1.2, style=filled, fillcolor="white"];',
+        f'color="{INK}", penwidth=1.6, style=filled, fillcolor="white"];',
         f'  edge [fontname="{FONT_FAMILY}", fontsize=9, fontcolor="{INK}", '
-        f'color="{INK}", penwidth=1.2, arrowsize=0.7];',
+        f'color="{INK}", penwidth=1.6, arrowsize=0.7];',
     )
 
 

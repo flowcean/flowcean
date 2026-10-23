@@ -13,11 +13,12 @@ if TYPE_CHECKING:
 
 PALETTE = ("#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9")
 FONT_FAMILY = "DejaVu Sans"
-INK = "#374151"
-MUTED = "#6B7280"
-LINE_WIDTH = 1.6
+INK = "#17212B"
+BORDER = "#697586"
+LINE_WIDTH = 2.0
 ANNOTATION_SIZE = 8
-BAND_ALPHA = 0.08
+BAND_ALPHA = 0.22
+_NODE_FILL_ALPHA = 0.36
 LEGEND_FONT = {"family": FONT_FAMILY, "size": 9}
 
 
@@ -36,9 +37,10 @@ def location_color_map(
 
 
 def pale_color(color: str) -> str:
-    """Opaque equivalent of a light band on white, for DOT node fills."""
+    """Blend diagram colors with white, stronger than plot background bands."""
     red, green, blue = (
-        1 - BAND_ALPHA + BAND_ALPHA * value for value in to_rgb(color)
+        1 - _NODE_FILL_ALPHA + _NODE_FILL_ALPHA * value
+        for value in to_rgb(color)
     )
     return to_hex((red, green, blue))
 
@@ -48,10 +50,11 @@ def style_axes(ax: Axes) -> None:
     ax.set_facecolor("white")
     ax.set_axisbelow(True)
     ax.grid(True, color="#E5E7EB", linewidth=0.6, linestyle="-", alpha=1)
-    ax.tick_params(colors=INK, width=0.6, labelfontfamily=FONT_FAMILY)
+    ax.tick_params(colors=INK, width=0.8, labelfontfamily=FONT_FAMILY)
     for spine in ax.spines.values():
-        spine.set_color("#D1D5DB")
-        spine.set_linewidth(0.6)
+        spine.set_color(BORDER)
+        spine.set_linewidth(0.9)
     for label in (ax.xaxis.label, ax.yaxis.label, ax.title):
+        label.set_color(INK)
         label.set_fontfamily(FONT_FAMILY)
         label.set_fontweight("normal")

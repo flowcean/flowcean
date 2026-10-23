@@ -1,4 +1,4 @@
-"""Native trajectory plots and aligned sampled-trace comparisons."""
+"""Native trajectory plots and styling for custom Matplotlib figures."""
 
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
@@ -12,16 +12,15 @@ from matplotlib.rcsetup import cycler
 from ._plot_style import (
     ANNOTATION_SIZE,
     BAND_ALPHA,
+    BORDER,
     FONT_FAMILY,
     INK,
     LEGEND_FONT,
     LINE_WIDTH,
-    MUTED,
     PALETTE,
     location_color_map,
     style_axes,
 )
-from .evaluation import TraceComparison
 from .hybrid_system import Location, display_label
 from .trajectory import ContinuousSegment, HybridTrajectory
 
@@ -50,8 +49,8 @@ def plot_style() -> Iterator[None]:
             "figure.facecolor": "white",
             "figure.edgecolor": "white",
             "axes.facecolor": "white",
-            "axes.edgecolor": "#D1D5DB",
-            "axes.linewidth": 0.6,
+            "axes.edgecolor": BORDER,
+            "axes.linewidth": 0.9,
             "axes.grid": True,
             "axes.axisbelow": True,
             "axes.labelcolor": INK,
@@ -60,8 +59,8 @@ def plot_style() -> Iterator[None]:
             "axes.prop_cycle": cycler(color=PALETTE),
             "xtick.color": INK,
             "ytick.color": INK,
-            "xtick.major.width": 0.6,
-            "ytick.major.width": 0.6,
+            "xtick.major.width": 0.8,
+            "ytick.major.width": 0.8,
             "grid.color": "#E5E7EB",
             "grid.linewidth": 0.6,
             "grid.linestyle": "-",
@@ -89,67 +88,6 @@ def _axes(ax: Axes | None) -> Axes:
 def _segment_data(segment: ContinuousSegment) -> tuple[np.ndarray, np.ndarray]:
     times = segment._knots
     return times, np.array([segment.evaluate(float(t)).state for t in times])
-
-
-def plot_comparison(
-    comparison: TraceComparison,
-    column: str,
-    *,
-    reference_label: str = "Reference",
-    prediction_label: str = "Prediction",
-    ax: Axes | None = None,
-) -> Axes:
-    """Plot one named quantity from a validated sampled comparison.
-
-    Reference is solid and prediction dashed, in the same quantity color.
-    Colors follow the comparison's declared column order, independent of panel
-    order. No units, scaling, interpolation, or categorical ID alignment are
-    inferred. Set units with the returned axes' ordinary labeling API.
-
-    Missing/nonfinite prefix values remain gaps. A shaded prefix and dotted
-    boundary mark where scoring starts, not which rows are measured seeds.
-    The legend gives the excluded row count; at duplicate timestamps the
-    excluded and scored rows can coincide visually. Each trace keeps its own
-    time values (which may differ within the comparison tolerance).
-
-    This helper never shows, saves, or closes a figure and does not select a
-    backend or change global Matplotlib settings.
-    """
-    if column not in comparison.columns:
-        raise ValueError("Select a signal column declared in the comparison.")
-    ax = _axes(ax)
-    color = PALETTE[comparison.columns.index(column) % len(PALETTE)]
-    for frame, label, linestyle in (
-        (comparison.reference, reference_label, "-"),
-        (comparison.prediction, prediction_label, "--"),
-    ):
-        values = np.asarray(frame[column].to_numpy(), dtype=float).copy()
-        values[~np.isfinite(values)] = np.nan
-        ax.plot(
-            frame[comparison.time_column].to_numpy(),
-            values,
-            label=label,
-            color=color,
-            linestyle=linestyle,
-            linewidth=LINE_WIDTH,
-        )
-    if comparison.excluded_rows:
-        times = comparison.reference[comparison.time_column]
-        start = float(times[0])
-        boundary = float(times[comparison.excluded_rows])
-        ax.axvspan(start, boundary, color=MUTED, alpha=BAND_ALPHA, linewidth=0)
-        ax.axvline(
-            boundary,
-            color=MUTED,
-            linestyle=":",
-            linewidth=1,
-            label=f"Excluded prefix: {comparison.excluded_rows} "
-            + ("row" if comparison.excluded_rows == 1 else "rows"),
-        )
-    ax.set_xlabel(comparison.time_column)
-    ax.set_ylabel(column)
-    ax.legend(loc="best", prop=LEGEND_FONT, frameon=False)
-    return ax
 
 
 def plot_trajectory(
@@ -220,7 +158,7 @@ def plot_trajectory(
         )
     if show_events:
         for event in trajectory.events:
-            ax.axvline(event.time, color="black", alpha=0.2, linewidth=1)
+            ax.axvline(event.time, color=INK, alpha=0.45, linewidth=1)
             if show_event_labels:
                 ax.text(
                     event.time,
@@ -232,11 +170,19 @@ def plot_trajectory(
                     ha="left",
                     fontsize=ANNOTATION_SIZE,
                     fontfamily=FONT_FAMILY,
+                    color=INK,
                 )
     ax.set_xlabel("t")
     ax.set_ylabel("state")
     if handles:
-        ax.legend(handles, labels, loc="best", prop=LEGEND_FONT, frameon=False)
+        ax.legend(
+            handles,
+            labels,
+            loc="best",
+            prop=LEGEND_FONT,
+            frameon=False,
+            labelcolor=INK,
+        )
     return ax
 
 
@@ -305,7 +251,7 @@ def plot_state_space(
     ax.set_xlabel(f"x{x_dim}")
     ax.set_ylabel(f"x{y_dim}")
     if show_location_legend:
-        ax.legend(loc="best", prop=LEGEND_FONT, frameon=False)
+        ax.legend(loc="best", prop=LEGEND_FONT, frameon=False, labelcolor=INK)
     return ax
 
 
@@ -347,5 +293,6 @@ def plot_locations(
                 va="top",
                 fontsize=ANNOTATION_SIZE,
                 fontfamily=FONT_FAMILY,
+                color=INK,
             )
     return ax

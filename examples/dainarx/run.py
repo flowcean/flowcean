@@ -3,7 +3,7 @@
 import numpy as np
 import polars as pl
 
-from flowcean.hybrid import compare_traces, simulate
+from flowcean.hybrid import simulate
 from flowcean.hybrid.benchmarks import duffing_oscillator
 from flowcean.hybrid.dainarx import (
     DainarxModel,
@@ -73,15 +73,14 @@ def main() -> None:
         output_history=held_out.select("position").head(order).to_numpy(),
         initial_location=dynamics.segments[0].location_id,
     )
-    comparison = compare_traces(
-        held_out, predicted, columns=["position"], exclude_initial=order
+    # Exclude the measured position history supplied to the rollout.
+    error = (
+        predicted["position"].to_numpy()[order:]
+        - held_out["position"].to_numpy()[order:]
     )
-    print(
-        f"Scored held-out rows: {comparison.scored_rows}/{comparison.total_rows}"
-    )
-    score = comparison.scores.row(0, named=True)
-    print(f"Recursive held-out RMSE: {score['rmse']:.6g}")
-    print(f"Maximum held-out absolute error: {score['max_error']:.6g}")
+    print(f"Scored held-out rows: {error.size}/{held_out.height}")
+    print(f"Recursive held-out RMSE: {np.sqrt(np.mean(error**2)):.6g}")
+    print(f"Maximum held-out absolute error: {np.max(np.abs(error)):.6g}")
 
 
 if __name__ == "__main__":
